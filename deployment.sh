@@ -1,6 +1,7 @@
 # This script is to restart the server in production mode.
 # This will install all the required libraries.
 git pull origin master
+npm install -g forever
 cd client
 npm install
 npm run build
