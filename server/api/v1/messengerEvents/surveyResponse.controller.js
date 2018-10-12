@@ -21,7 +21,7 @@ exports.surveyResponse = function (req, res) {
         let subscriber = subscribers[0]
         if (subscriber) {
           logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`)
-          sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_survey', value: resp.poll_id })
+          //  sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_survey', value: resp.poll_id })
         }
       })
       .catch(err => {
