@@ -4,7 +4,6 @@ const mongoose = require('mongoose')
 const needle = require('needle')
 const SurveysDataLayer = require('../surveys/surveys.datalayer')
 const {callApi} = require('../utility')
-const sequenceController = require('../sequenceMessaging/sequence.controller')
 
 exports.surveyResponse = function (req, res) {
   res.status(200).json({
