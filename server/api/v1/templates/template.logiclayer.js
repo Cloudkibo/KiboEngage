@@ -1,5 +1,5 @@
 
-exports.getCriteriasPolls = function (req) {
+exports.getCriterias = function (req) {
   if (req.body.first_page === 'first') {
     let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
@@ -24,4 +24,13 @@ exports.getCriteriasPolls = function (req) {
     }
     return findCriteria
   }
+}
+exports.createDataPolls = function (req) {
+  let pollPayload = {
+    title: req.body.title,
+    statement: req.body.statement,
+    options: req.body.options,
+    category: req.body.category
+  }
+  return pollPayload
 }

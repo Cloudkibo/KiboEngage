@@ -28,13 +28,13 @@ exports.allPolls = function (req, res) {
 
 exports.getAllPolls = function (req, res) {
   if (req.body.first_page === 'first') {
-    let findCriteria = logicLayer.getCriteriasPolls(req)
+    let findCriteria = logicLayer.getCriterias(req)
     dataLayer.pollTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
     ])
     .then(pollsCount => {
-      dataLayer.pollTemplateaggregateLimit(findCriteria, req)
+      dataLayer.pollTemplateaggregateLimit({findCriteria, req})
       .then(polls => {
         res.status(200).json({
           status: 'success',
@@ -50,13 +50,13 @@ exports.getAllPolls = function (req, res) {
     })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-    let findCriteria = logicLayer.getCriteriasPolls(req) 
+    let findCriteria = logicLayer.getCriterias(req) 
     dataLayer.pollTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
     ])
     .then(pollsCount => {
-      dataLayer.pollTemplateaggregateLimitNext(findCriteria, recordsToSkip, req)
+      dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
       .then(polls => {
         res.status(200).json({
           status: 'success',
@@ -72,17 +72,17 @@ exports.getAllPolls = function (req, res) {
     })
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
-    let findCriteria = logicLayer.getCriteriasPolls(req) 
+    let findCriteria = logicLayer.getCriterias(req) 
     dataLayer.pollTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
     ])
     .then(pollsCount => {
-      dataLayer.pollTemplateaggregateLimitNext(findCriteria, recordsToSkip, req)
+      dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
       .then(polls => {
         res.status(200).json({
           status: 'success',
-          payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
+          payload: {polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : ''}
         })
       })
       .catch(err => {
@@ -96,105 +96,68 @@ exports.getAllPolls = function (req, res) {
 }
 
 exports.getAllSurveys = function (req, res) {
-  /*
-  body = {
-    first_page:
-    last_id:
-    number_of_records:
-    filter_criteria: {
-      search_value:
-      category_value:
-    }
-  }
-  */
   if (req.body.first_page === 'first') {
-    let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
-    let findCriteria = {
-      title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
-      category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
-    }
-    TemplateSurveys.aggregate([
+    let findCriteria = logicLayer.getCriterias(req)
+    dataLayer.surveyTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
-    ], (err, surveysCount) => {
-      if (err) {
-        return res.status(404)
-          .json({status: 'failed', description: 'SurveysCount not found'})
-      }
-      TemplateSurveys.aggregate([{$match: findCriteria}, {$sort: {datetime: -1}}]).limit(req.body.number_of_records)
-      .exec((err, surveys) => {
-        if (err) {
-          logger.serverLog(TAG, `Error: ${err}`)
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error${JSON.stringify(err)}`
-          })
-        }
+    ])
+    .then(surveysCount => {
+      dataLayer.surveyTemplateaggregateLimit({findCriteria, req})
+      .then(surveys => {
         res.status(200).json({
           status: 'success',
           payload: {surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0}
         })
       })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
     })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-    let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
-    let findCriteria = {
-      title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
-      category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
-    }
-    TemplateSurveys.aggregate([
+    let findCriteria = logicLayer.getCriterias(req) 
+    dataLayer.surveyTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
-    ], (err, surveysCount) => {
-      if (err) {
-        return res.status(404)
-          .json({status: 'failed', description: 'PollsCount not found'})
-      }
-      TemplateSurveys.aggregate([{$match: {$and: [findCriteria, {_id: {$lt: mongoose.Types.ObjectId(req.body.last_id)}}]}}, {$sort: {datetime: -1}}]).skip(recordsToSkip).limit(req.body.number_of_records)
-      .exec((err, surveys) => {
-        if (err) {
-          logger.serverLog(TAG, `Error: ${err}`)
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error${JSON.stringify(err)}`
-          })
-        }
+    ])
+    .then(surveysCount => {
+      dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+      .then(surveys => {
         res.status(200).json({
           status: 'success',
-          payload: {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : ''}
-        })
+          payload: {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : ''}        })
       })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
     })
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
-    let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
-    let findCriteria = {
-      title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
-      category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
-    }
-    TemplateSurveys.aggregate([
+    let findCriteria = logicLayer.getCriterias(req) 
+    dataLayer.surveyTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
-    ], (err, surveysCount) => {
-      if (err) {
-        return res.status(404)
-          .json({status: 'failed', description: 'PollsCount not found'})
-      }
-      TemplateSurveys.aggregate([{$match: {$and: [findCriteria, {_id: {$gt: mongoose.Types.ObjectId(req.body.last_id)}}]}}, {$sort: {datetime: 1}}]).skip(recordsToSkip).limit(req.body.number_of_records)
-      .exec((err, surveys) => {
-        if (err) {
-          logger.serverLog(TAG, `Error: ${err}`)
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error${JSON.stringify(err)}`
-          })
-        }
+    ])
+    .then(surveysCount => {
+      dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+      .then(surveys => {
         res.status(200).json({
           status: 'success',
-          payload: {surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : ''}
-        })
+          payload: {surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : ''}        })
       })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
     })
   }
 }
@@ -210,103 +173,64 @@ exports.allSurveys = function (req, res) {
     .catch(err => {
       return res.status(500).json({status: 'failed', payload: err})
     })
- /* TemplateSurveys.find({}, (err, surveys) => {
-    if (err) {
-      logger.serverLog(TAG, `Error: ${err}`)
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error${JSON.stringify(err)}`
-      })
-    }
-    // SurveyQuestions.aggregate([{
-    //   $group: {
-    //     _id: {surveyId: '$surveyId', statement: '$statement', options: '$options'}
-    //   }},
-    //   { $project: { statement: 1, options: 1, surveyId: 1 } }
-    // ], (err2, questions) => {
-    //   if (err2) {
-    //     return res.status(404)
-    //     .json({status: 'failed', description: 'Surveys not found'})
-    //   }
-    res.status(200).json({
-      status: 'success',
-      payload: surveys
-    })
-  })*/
 }
 
 exports.createPoll = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!companyUser) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'The user account does not belong to any company. Please contact support'
-      })
-    }
-    CompanyProfile.findOne({ownerId: req.user._id}, (err, companyProfile) => {
-      if (err) {
-        return res.status(500).json({
+  dataLayer.findOneCompanyUsersbyEmail(req)
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
           status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
+          description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      PlanUsage.findOne({planId: companyProfile.planId}, (err, planUsage) => {
-        if (err) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err)}`
-          })
-        }
-        CompanyUsage.findOne({companyId: companyUser.companyId}, (err, companyUsage) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
-            })
-          }
-          if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
-            })
-          }
-          let pollPayload = {
-            title: req.body.title,
-            statement: req.body.statement,
-            options: req.body.options,
-            category: req.body.category
-          }
-          const poll = new TemplatePolls(pollPayload)
+      dataLayer.findOneCompanyProfiles(req)
+      .then(companyProfile => {
+        dataLayer.findOnePlanUsage(companyProfile)
+        .then(planUsage => {
+          dataLayer.findOneCompanyUsage(companyUser)
+          .then(companyUsage => {
 
-          // save model to MongoDB
-          poll.save((err, pollCreated) => {
-            if (err) {
-              res.status(500).json({
-                status: 'Failed',
-                description: 'Failed to insert record'
+            if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
               })
-            } else {
-              if (!req.user.isSuperUser) {
-                CompanyUsage.update({companyId: companyUser.companyId},
-                  { $inc: { polls_templates: 1 } }, (err, updated) => {
-                    if (err) {
-                      logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
-                    }
-                  })
-              }
-              res.status(201).json({status: 'success', payload: pollCreated})
             }
+            let pollPayload = logicLayer.pollPayload(req);
+            const poll = new TemplatePolls(pollPayload)
+            dataLayer.savePolls(poll)
+            .then(pollCreated => {
+              if (!req.user.isSuperUser) {1
+                dataLayer.companyUsageUpdate(companyUser)
+                .then(update => {
+                res.status(201).json({status: 'success', payload: pollCreated})
+                })
+                .catch(err => {
+                  return res.status(500).json({status: 'failed', payload: err})
+                })
+              }
+              
+            })
+            .catch(err => {
+              return res.status(500).json({status: 'failed', description: 'Failed to insert record'})
+            })
+          })
+          .catch(err => {
+            return res.status(500).json({status: 'failed', payload: err})
           })
         })
+        .catch(err => {
+          return res.status(500).json({status: 'failed', payload: err})
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
       })
     })
-  })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })          
 }
 
 exports.createSurvey = function (req, res) {
