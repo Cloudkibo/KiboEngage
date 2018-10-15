@@ -4,7 +4,7 @@ const config = require('../config/environment')
 const jwt = require('jsonwebtoken')
 const expressJwt = require('express-jwt')
 const compose = require('composable-middleware')
-//  const Users = require('../api/v1/users/users.model')
+const Users = require('../api/v1/users/users.model')
 const validateJwt = expressJwt({secret: config.secrets.session})
 
 const logger = require('../components/logger')
@@ -26,21 +26,21 @@ function isAuthenticated () {
       validateJwt(req, res, next)
     })
     // Attach user to request
-    // .use((req, res, next) => {
-    //   Users.findOne({fbId: req.user._id}, (err, user) => {
-    //     if (err) {
-    //       return res.status(500)
-    //         .json({status: 'failed', description: 'Internal Server Error'})
-    //     }
-    //     if (!user) {
-    //       return res.status(401)
-    //         .json({status: 'failed', description: 'Unauthorized'})
-    //     }
-    //
-    //     req.user = user
-    //     next()
-    //   })
-    // })
+    .use((req, res, next) => {
+      Users.findOne({fbId: req.user._id}, (err, user) => {
+        if (err) {
+          return res.status(500)
+            .json({status: 'failed', description: 'Internal Server Error'})
+        }
+        if (!user) {
+          return res.status(401)
+            .json({status: 'failed', description: 'Unauthorized'})
+        }
+
+        req.user = user
+        next()
+      })
+    })
 }
 
 /**
