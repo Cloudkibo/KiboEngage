@@ -4,7 +4,7 @@ const config = require('../config/environment')
 const jwt = require('jsonwebtoken')
 const expressJwt = require('express-jwt')
 const compose = require('composable-middleware')
-const Users = require('../api/v1/users/users.model')
+//  const Users = require('../api/v1/users/users.model')
 const validateJwt = expressJwt({secret: config.secrets.session})
 
 const logger = require('../components/logger')
@@ -26,21 +26,21 @@ function isAuthenticated () {
       validateJwt(req, res, next)
     })
     // Attach user to request
-    .use((req, res, next) => {
-      Users.findOne({fbId: req.user._id}, (err, user) => {
-        if (err) {
-          return res.status(500)
-            .json({status: 'failed', description: 'Internal Server Error'})
-        }
-        if (!user) {
-          return res.status(401)
-            .json({status: 'failed', description: 'Unauthorized'})
-        }
-
-        req.user = user
-        next()
-      })
-    })
+    // .use((req, res, next) => {
+    //   Users.findOne({fbId: req.user._id}, (err, user) => {
+    //     if (err) {
+    //       return res.status(500)
+    //         .json({status: 'failed', description: 'Internal Server Error'})
+    //     }
+    //     if (!user) {
+    //       return res.status(401)
+    //         .json({status: 'failed', description: 'Unauthorized'})
+    //     }
+    //
+    //     req.user = user
+    //     next()
+    //   })
+    // })
 }
 
 /**
@@ -82,6 +82,20 @@ function setTokenCookie (req, res) {
   return res.redirect('/')
 }
 
+function isItWebhookServer () {
+  return compose().use((req, res, next) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
+      req.socket.remoteAddress || req.connection.socket.remoteAddress
+    logger.serverLog(TAG, req.ip)
+    logger.serverLog(TAG, ip)
+    logger.serverLog(TAG, 'This is middleware')
+    logger.serverLog(TAG, req.body)
+    if (ip === '::ffff:' + config.webhook_ip) next()
+    else res.send(403)
+  })
+}
+
+exports.isItWebhookServer = isItWebhookServer
 exports.isAuthenticated = isAuthenticated
 exports.signToken = signToken
 exports.setTokenCookie = setTokenCookie
