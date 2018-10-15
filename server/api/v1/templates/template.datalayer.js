@@ -6,6 +6,8 @@ const mongoose = require('mongoose')
 const CompanyUsage = require('./../featureUsage/companyUsage.model')
 const PlanUsage = require('./../featureUsage/planUsage.model')
 const CompanyProfile = require('./../companyprofile/companyprofile.model')
+const SurveyQuestions = require('./surveyQuestion.model')
+
 exports.allPolls = () => {
   return TemplatePolls.find({})
       .exec()
@@ -29,7 +31,7 @@ exports.allSurvey = () => {
         .exec()
 }
 
-exports.surveyTemplateaggregateCount=(aggregateObject) => {
+exports.surveyTemplateaggregateCount = (aggregateObject) => {
   return TemplateSurveys.aggregate(aggregateObject)
       .exec()
 }
@@ -79,9 +81,48 @@ exports.savePolls = (poll) => {
 
 }
 
+exports.saveSurveys = (survey) => {
+  
+  return  survey.save()
+  .exec()
+ 
+ }
+
+ exports.createSurveys = (survey) => {
+
+   return TemplateSurveys.create(survey)
+   .exec()
+ }
+
 exports.companyUsageUpdate=(companyUser) => {
 
    return  CompanyUsage.update({companyId: companyUser.companyId},
     { $inc: { polls_templates: 1 } })
     .exec()
+}
+
+exports.CategoryFind = (companyUser) => {
+
+  return Category.find({'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]})
+  .exec()
+}
+exports.CategorySave = (category) => {
+
+  return category.save()
+  .exec()
+}
+
+exports.findCategroryById = (req) => {
+  return Category.findById(req.body._id)
+  .exec()
+}
+
+exports.findSurveyById = (req) => {
+  return TemplateSurveys.find({_id: req.params.surveyid})
+  .exec()
+}
+
+exports.findQuestionById = (req) => {
+  SurveyQuestions.find({surveyId: req.params.surveyid}).populate('surveyId')  
+ .exec()
 }

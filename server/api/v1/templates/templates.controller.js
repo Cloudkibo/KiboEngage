@@ -13,6 +13,7 @@ const CompanyProfile = require('./../companyprofile/companyprofile.model')
 const TAG = 'api/templates/templates.controller.js'
 const dataLayer = require('./template.datalayer')
 const logicLayer = require('./template.logiclayer')
+const callApi = require('../utility/index') 
 exports.allPolls = function (req, res) {
   dataLayer.allPolls()
     .then(polls => {
@@ -176,7 +177,7 @@ exports.allSurveys = function (req, res) {
 }
 
 exports.createPoll = function (req, res) {
-  dataLayer.findOneCompanyUsersbyEmail(req)
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -184,11 +185,11 @@ exports.createPoll = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      dataLayer.findOneCompanyProfiles(req)
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
       .then(companyProfile => {
-        dataLayer.findOnePlanUsage(companyProfile)
+        callApi.callApi('permissions_plan/query', 'post', {planId: companyProfile.planId})
         .then(planUsage => {
-          dataLayer.findOneCompanyUsage(companyUser)
+          callApi.callApi('featureUsage/query', 'post', {companyId: companyUser.companyId})
           .then(companyUsage => {
 
             if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
@@ -197,20 +198,19 @@ exports.createPoll = function (req, res) {
                 description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
               })
             }
-            let pollPayload = logicLayer.pollPayload(req);
+            let pollPayload = logicLayer.createDataPolls(req)
             const poll = new TemplatePolls(pollPayload)
             dataLayer.savePolls(poll)
             .then(pollCreated => {
-              if (!req.user.isSuperUser) {1
-                dataLayer.companyUsageUpdate(companyUser)
+              if (!req.user.isSuperUser) {
+                callApi.callApi('featureUsage/update', 'post', {companyId: companyUser.companyId})
                 .then(update => {
-                res.status(201).json({status: 'success', payload: pollCreated})
+                  res.status(201).json({status: 'success', payload: pollCreated})
                 })
                 .catch(err => {
                   return res.status(500).json({status: 'failed', payload: err})
                 })
-              }
-              
+              }            
             })
             .catch(err => {
               return res.status(500).json({status: 'failed', description: 'Failed to insert record'})
@@ -234,205 +234,173 @@ exports.createPoll = function (req, res) {
 }
 
 exports.createSurvey = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!companyUser) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'The user account does not belong to any company. Please contact support'
-      })
-    }
-    CompanyProfile.findOne({ownerId: req.user._id}, (err, companyProfile) => {
-      if (err) {
-        return res.status(500).json({
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
           status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
+          description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      PlanUsage.findOne({planId: companyProfile.planId}, (err, planUsage) => {
-        if (err) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err)}`
-          })
-        }
-        CompanyUsage.findOne({companyId: companyUser.companyId}, (err, companyUsage) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
-            })
-          }
-          if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
-            })
-          }
-          let surveyPayload = {
-            title: req.body.survey.title,
-            description: req.body.survey.description,
-            category: req.body.survey.category
-          }
-          const survey = new TemplateSurveys(surveyPayload)
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
+      .then(companyProfile => {
+        callApi.callApi('permissions_plan/query', 'post', {planId: companyProfile.planId})
+        .then(planUsage => {
+          callApi.callApi('featureUsage/query', 'post', {companyId: companyUser.companyId})
+          .then(companyUsage => {
 
-          TemplateSurveys.create(survey, (err, survey) => {
-            if (err) {
+            if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
               return res.status(500).json({
                 status: 'failed',
-                description: `Internal Server Error ${JSON.stringify(err)}`
+                description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
               })
             }
-            if (!req.user.isSuperUser) {
-              CompanyUsage.update({companyId: companyUser.companyId},
-                { $inc: { survey_templates: 1 } }, (err, updated) => {
-                  if (err) {
-                    logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
-                  }
+            let surveyPayload = logicLayer.createDataSurvey(req)
+            const survey = new TemplatePolls(surveyPayload)
+            dataLayer.createSurveys(survey)
+            .then(surveyCreated => {
+              if (!req.user.isSuperUser) {
+                dataLayer.companyUsageUpdate(companyUser)
+                .then(update => {
+                  
                 })
-            }
-            // after survey is created, create survey questions
-            for (let question in req.body.questions) {
-              let options = []
-              options = req.body.questions[question].options
-              const surveyQuestion = new SurveyQuestions({
-                statement: req.body.questions[question].statement, // question statement
-                options, // array of question options
-                surveyId: survey._id
-              })
+                .catch(err => {
+                  return res.status(500).json({status: 'failed', payload: err})
+                })
+              }
 
-              surveyQuestion.save((err2, question1) => {
-                if (err2) {
-                  return res.status(404).json({ status: 'failed', description: 'Survey Question not created' })
-                }
-              })
-            }
-            return res.status(201).json({status: 'success', payload: survey})
+              for (let question in req.body.questions) {
+                let options = []
+                options = req.body.questions[question].options
+                const surveyQuestion = new SurveyQuestions({
+                  statement: req.body.questions[question].statement, // question statement
+                  options, // array of question options
+                  surveyId: survey._id
+                })
+                dataLayer.saveSurveys(surveyQuestion)
+                .then(survey => {
+                })
+                .catch(err => {
+                  return res.status(500).json({status: 'failed', payload: err})
+                })
+              }        
+              return res.status(201).json({status: 'success', payload: survey})                 
+            })
+            .catch(err => {
+              return res.status(500).json({status: 'failed', description: 'Failed to insert record'})
+            })
+          })
+          .catch(err => {
+            return res.status(500).json({status: 'failed', payload: err})
           })
         })
+        .catch(err => {
+          return res.status(500).json({status: 'failed', payload: err})
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
       })
     })
-  })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
 }
 
 exports.allCategories = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  .then(companyUser => {
     if (!companyUser) {
       return res.status(404).json({
         status: 'failed',
         description: 'The user account does not belong to any company. Please contact support'
       })
     }
-    Category.find({'$or': [{
-      companyId: companyUser.companyId}, {createdBySuperUser: true}]}, (err, categories) => {
-      if (err) {
-        logger.serverLog(TAG, `Error: ${err}`)
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error${JSON.stringify(err)}`
-        })
-      }
+    dataLayer.CategoryFind(companyUser)
+    .then(categories => {
       res.status(200).json({
         status: 'success',
         payload: categories
       })
     })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
   })
 }
 
 exports.createCategory = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  .then(companyUser => {
     if (!companyUser) {
       return res.status(404).json({
         status: 'failed',
         description: 'The user account does not belong to any company. Please contact support'
       })
     }
-    let categoryPayload = {
-      name: req.body.name,
-      userId: req.user._id,
-      companyId: companyUser.companyId
-    }
+    let categoryPayload = logicLayer.createDataCategory({req, companyUser})
     if (req.user.isSuperUser) {
       categoryPayload.createdBySuperUser = true
     }
     const category = new Category(categoryPayload)
-
-    // save model to MongoDB
-    category.save((err, categoryCreated) => {
-      if (err) {
-        res.status(500).json({
-          status: 'Failed',
-          description: 'Failed to insert record'
-        })
-      } else {
-        res.status(201).json({status: 'success', payload: categoryCreated})
-      }
+    dataLayer.CategorySave(category)
+    .then(categoryCreated => {
+      res.status(201).json({
+        status: 'success',
+        payload: categoryCreated
+      })
     })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
   })
 }
 
 exports.editCategory = function (req, res) {
-  Category.findById(req.body._id, (err, category) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
-    if (!category) {
-      return res.status(404)
-        .json({status: 'failed', description: 'Record not found'})
-    }
-    category.name = req.body.name
-    category.save((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'Poll update failed'})
+  dataLayer.findCategroryById(req)
+    .then(category => {
+      if (!category) {
+        return res.status(404)
+          .json({status: 'failed', description: 'Record not found'})
       }
-      res.status(201).json({status: 'success', payload: category})
+      category.name = req.body.name
+      dataLayer.CategorySave(category)
+      .then(categoryCreated => {
+        res.status(201).json({
+          status: 'success',
+          payload: categoryCreated
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
+      })
     })
-  })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
 }
 
 exports.surveyDetails = function (req, res) {
-  TemplateSurveys.find({_id: req.params.surveyid}, (err, survey) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    // find questions
-    SurveyQuestions.find({surveyId: req.params.surveyid})
-      .populate('surveyId')
-      .exec((err2, questions) => {
-        if (err2) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err2)}`
-          })
-        }
-        return res.status(200).json({status: 'success', payload: {survey, questions}})
-      })
-  })
+  dataLayer.findSurveyById(req)
+   .then(survey => {
+     dataLayer.findQuestionById(req)
+    .then(questions => {
+      return res.status(200).json({status: 'success', payload: {survey, questions}})
+    })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+   })
+   .catch(err => {
+     return res.status(500).json({status: 'failed', payload: err})
+   })
 }
-
 exports.pollDetails = function (req, res) {
   TemplatePolls.findOne({_id: req.params.pollid}, (err, poll) => {
     if (err) {
@@ -1027,57 +995,6 @@ exports.botDetails = function (req, res) {
 
 // todo temporary bot template for DNC, will be data driven
 exports.getPoliticsBotTemplate = function (req, res) {
-  let payload = [
-    {
-      questions: ['What is your policy on immigration?', 'How do you deal with illegal immigrants?', 'What is your policy for undocumented immigrants', 'How will you improve immigration system?'],
-      answer: 'We called for fixing the "broken immigration system," including a path to citizenship for 11 million undocumented immigrants.',
-      intent_name: 'q1-immigration'
-    },
-    {
-      questions: ['What is your policy on same-sex marriage?', 'Do you agree with Supreme Court decision that legalized same-sex marriage?', 'Where do you stand on matter of same-sex marriage?'],
-      answer: 'We applauded the U.S. Supreme Court decision that legalized same-sex marriage.',
-      intent_name: 'q2-same-sex-marriage'
-    },
-    {
-      questions: ['Are you in favor of abortion?', 'What is your policy on abortion?', 'Do you think every woman has right to abortion?'],
-      answer: 'We believe unequivocally, like the majority of Americans, that every woman should have access to quality reproductive health care services, including safe and legal abortion.',
-      intent_name: 'q2-abortion'
-    },
-    {
-      questions: ['What is your policy on climate change?', 'Do you think climate change is a problem?', 'Ho do you tackle climate change?'],
-      answer: 'Climate change poses a real and urgent threat to our economy, our national security, and our children\'s health and futures.',
-      intent_name: 'q2-climate-change'
-    },
-    {
-      questions: ['What is your policy on medicare?', 'How do you think can improve medicare?', 'What are facilities you would provide in the area of medicare?'],
-      answer: 'We would not only would "fight any attempts by Republicans in Congress to privatize, voucherize, or \'phase out\' Medicare," but would allow Americans older than 55 to enroll.',
-      intent_name: 'q2-medicare'
-    },
-    {
-      questions: ['What is your stand on wall street issues?', 'What is your promise regarding wall street?', 'How can you improve the enforcement of regulations in wall street?'],
-      answer: 'Our party promised to "vigorously implement, enforce, and build on" banking regulations enacted to curb risky practices by financial institutions and "will stop dead in its tracks every Republican effort to weaken it."',
-      intent_name: 'q2-wall-street'
-    },
-    {
-      questions: ['What are your views on Iran?', 'What is your policy regarding Iran?', 'What type of relations do you want with Iran?'],
-      answer: 'President Barack Obama\'s agreement to relax economic sanctions on Iran in exchange for curbs on its nuclear program "verifiably cuts off all of Iran\'s pathways to a bomb without resorting to war."',
-      intent_name: 'q2-iran'
-    },
-    {
-      questions: ['What are your views of Israel??', 'What is your policy on Israel as Jewish state?', 'What are your views on conflict between Israel and Palestine'],
-      answer: 'The platform backed a "secure and democratic Jewish state" of Israel and a chance for Palestinians to "govern themselves in their own viable state, in peace and dignity."',
-      intent_name: 'q2-israel'
-    },
-    {
-      questions: ['How do you think money should be used in politics?', 'What is your policy to fund your campaigns?', 'How do you raise money for your campaign?'],
-      answer: 'We need to end secret, unaccountable money in politics by requiring, through executive order or legislation, significantly more disclosure and transparency -- by outside groups, federal contractors, and public corporations to their shareholders',
-      intent_name: 'q2-money-in-politics'
-    },
-    {
-      questions: ['What is your policy on voting rights?', 'How do you think you would ensure the right to vote for all the communities?', 'How you can implement voting rights in US?'],
-      answer: 'We would fight laws requiring certain forms of voter identification "to preserve the fundamental right to vote."',
-      intent_name: 'q2-voting-rights'
-    }
-  ]
+  let payload = logicLayer.getPoliticsBotTemplate()
   return res.status(200).json({status: 'success', payload})
 }
