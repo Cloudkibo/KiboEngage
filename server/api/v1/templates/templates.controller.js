@@ -389,6 +389,12 @@ exports.editCategory = function (req, res) {
 exports.surveyDetails = function (req, res) {
   dataLayer.findSurveyById(req)
    .then(survey => {
+    if (!survey) {
+      return res.status(404).json({
+        status: 'failed',
+        description: `survey not found.`
+      })
+    }
      dataLayer.findQuestionById(req)
     .then(questions => {
       return res.status(200).json({status: 'success', payload: {survey, questions}})
@@ -402,120 +408,99 @@ exports.surveyDetails = function (req, res) {
    })
 }
 exports.pollDetails = function (req, res) {
-  TemplatePolls.findOne({_id: req.params.pollid}, (err, poll) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error${JSON.stringify(err)}`
-      })
-    }
+  dataLayer.findPollById(req)
+   .then(poll => {
     if (!poll) {
       return res.status(404).json({
         status: 'failed',
-        description: `Poll not found.`
+        description: `survey not found.`
       })
     }
-    return res.status(200)
-    .json({status: 'success', payload: poll})
-  })
+    
+    return res.status(200).json({status: 'success', payload: poll})
+    
+   })
+   .catch(err => {
+     return res.status(500).json({status: 'failed', payload: poll})
+   })
 }
 
 exports.deletePoll = function (req, res) {
-  TemplatePolls.findById(req.params.id, (err, poll) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.pollFindById(req)
+  .then(poll => {
     if (!poll) {
       return res.status(404)
         .json({status: 'failed', description: 'Record not found'})
     }
-    poll.remove((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'poll update failed'})
-      }
-      return res.status(200)
-      .json({status: 'success'})
-    })
+  dataLayer.removePoll(poll)
+  .then (success => {
+    return res.status(500).json({status: 'success'})
+  })
+})
+  .catch(err => {
+    return res.status(500)
+        .json({status: 'failed', description: 'Internal Server Error'})
   })
 }
 
 exports.deleteCategory = function (req, res) {
-  Category.findById(req.params.id, (err, category) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.pollCategoryById(req)
+  .then(category => {
     if (!category) {
       return res.status(404)
         .json({status: 'failed', description: 'Record not found'})
     }
-    category.remove((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'category update failed'})
-      }
-      return res.status(200)
-      .json({status: 'success'})
-    })
+  dataLayer.removeCategory(category)
+  .then (success => {
+    return res.status(500).json({status: 'success'})
+  })
+})
+  .catch(err => {
+    return res.status(500)
+        .json({status: 'failed', description: 'Internal Server Error'})
   })
 }
 
 exports.deleteSurvey = function (req, res) {
-  TemplateSurveys.findById(req.params.id, (err, survey) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.surveyFindById(req)
+  .then(survey => {
     if (!survey) {
       return res.status(404)
         .json({status: 'failed', description: 'Record not found'})
     }
-    survey.remove((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'survey update failed'})
-      }
-      return res.status(200)
-      .json({status: 'success'})
-    })
+  dataLayer.removeSurvey(survey)
+  .then (success => {
+    return res.status(500).json({status: 'success'})
+  })
+})
+  .catch(err => {
+    return res.status(500)
+        .json({status: 'failed', description: 'Internal Server Error'})
   })
 }
 
 exports.editSurvey = function (req, res) {
-  TemplateSurveys.findById(req.body.survey._id, (err, survey) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.surveyId(req)
+  .then(survey => {
     if (!survey) {
       return res.status(404)
         .json({status: 'failed', description: 'Record not found'})
     }
-      // after survey is created, create survey questions
     survey.title = req.body.survey.title
     survey.description = req.body.survey.description
     survey.category = req.body.survey.category
-    survey.save((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'Poll update failed'})
-      }
-      SurveyQuestions.find({surveyId: req.body.survey._id}, (err2, questions) => {
-        if (err2) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err2)}`
-          })
-        }
+
+    dataLayer.saveSurveys(survey)
+    .then(success => {
+      dataLayer.findQuestionSurveyById(req)
+      .then(questions => {
         for (let i = 0; i < questions.length; i++) {
-          questions[i].remove((err2) => {
-            if (err2) {
-              return res.status(500)
-                .json({status: 'failed', description: 'survey update failed'})
-            }
+           dataLayer.removeQuestion(questions[i])
+           .then(success => {})
+           .catch(err => {
+            return res.status(500).json({status: 'failed', payload: err})
           })
+
         }
         for (let question in req.body.questions) {
           let options = []
@@ -525,25 +510,29 @@ exports.editSurvey = function (req, res) {
             options, // array of question options
             surveyId: survey._id
           })
-
-          surveyQuestion.save((err2, question1) => {
-            if (err2) {
-              return res.status(404).json({ status: 'failed', description: 'Survey Question not created' })
-            }
+          dataLayer.saveSurveys(surveyQuestion)
+          .then(survey => {
           })
-        }
-        return res.status(201).json({status: 'success', payload: survey})
+          .catch(err => {
+            return res.status(500).json({status: 'failed', payload: err})
+          })
+        } 
+        
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
       })
     })
+    .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
+      })
+
   })
 }
 
 exports.editPoll = function (req, res) {
-  TemplatePolls.findById(req.body._id, (err, poll) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.pollFindById(req)
+  .then(poll => {
     if (!poll) {
       return res.status(404)
         .json({status: 'failed', description: 'Record not found'})
@@ -552,123 +541,104 @@ exports.editPoll = function (req, res) {
     poll.statement = req.body.statement
     poll.options = req.body.options
     poll.category = req.body.category
-    poll.save((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'Poll update failed'})
-      }
-      res.status(201).json({status: 'success', payload: poll})
+    dataLayer.savePolls(poll)
+    .then(success => {
+      res.status(201).json({
+        status: 'success',
+        payload: poll
+      })
     })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
   })
 }
 
 exports.createBroadcast = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!companyUser) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'The user account does not belong to any company. Please contact support'
-      })
-    }
-    CompanyProfile.findOne({ownerId: req.user._id}, (err, companyProfile) => {
-      if (err) {
-        return res.status(500).json({
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
           status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
+          description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      PlanUsage.findOne({planId: companyProfile.planId}, (err, planUsage) => {
-        if (err) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err)}`
-          })
-        }
-        CompanyUsage.findOne({companyId: companyUser.companyId}, (err, companyUsage) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
-            })
-          }
-          if (planUsage.broadcast_templates !== -1 && companyUsage.broadcast_templates >= planUsage.broadcast_templates) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
-            })
-          }
-          let broadcastPayload = {
-            title: req.body.title,
-            category: req.body.category,
-            payload: req.body.payload,
-            userId: req.user._id,
-            companyId: companyUser.companyId
-          }
-          if (req.user.isSuperUser) {
-            broadcastPayload.createdBySuperUser = true
-          }
-          const broadcast = new TemplateBroadcasts(broadcastPayload)
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
+      .then(companyProfile => {
+        callApi.callApi('permissions_plan/query', 'post', {planId: companyProfile.planId})
+        .then(planUsage => {
+          callApi.callApi('featureUsage/query', 'post', {companyId: companyUser.companyId})
+          .then(companyUsage => {
 
-          // save model to MongoDB
-          broadcast.save((err, broadcastCreated) => {
-            if (err) {
-              res.status(500).json({
-                status: 'Failed',
-                description: 'Failed to insert record'
+            if (planUsage.broadcast_templates !== -1 && companyUsage.broadcast_templates >= planUsage.broadcast_templates) {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
               })
-            } else {
-              if (!req.user.isSuperUser) {
-                CompanyUsage.update({companyId: companyUser.companyId},
-                  { $inc: { broadcast_templates: 1 } }, (err, updated) => {
-                    if (err) {
-                      logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
-                    }
-                  })
-              }
-              res.status(201).json({status: 'success', payload: broadcastCreated})
             }
+            let broadcastPayload = logicLayer.createDataBroadcast(req)
+            if (req.user.isSuperUser) {
+              broadcastPayload.createdBySuperUser = true
+            }
+            const broadcast = new TemplateBroadcasts(broadcastPayload)
+            dataLayer.saveBroadcast(broadcast)
+            .then(broadcastCreated => {
+              if (!req.user.isSuperUser) {
+                callApi.callApi('featureUsage/update', 'post', {companyId: companyUser.companyId},{ $inc: { broadcast_templates: 1 } })
+                .then(update => {
+                  res.status(201).json({status: 'success', payload: broadcastCreated})
+                })
+                .catch(err => {
+                  return res.status(500).json({status: 'failed', payload: err})
+                })
+              }            
+            })
+            .catch(err => {
+              return res.status(500).json({status: 'failed', description: 'Failed to insert record'})
+            })
+          })
+          .catch(err => {
+            return res.status(500).json({status: 'failed', payload: err})
           })
         })
+        .catch(err => {
+          return res.status(500).json({status: 'failed', payload: err})
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: err})
       })
     })
-  })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
 }
 
 exports.allBroadcasts = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  .then(companyUser => {
     if (!companyUser) {
       return res.status(404).json({
         status: 'failed',
         description: 'The user account does not belong to any company. Please contact support'
       })
     }
-    TemplateBroadcasts.find({'$or': [{
-      companyId: companyUser.companyId}, {createdBySuperUser: true}]
-    }, (err, broadcasts) => {
-      if (err) {
-        logger.serverLog(TAG, `Error: ${err}`)
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error${JSON.stringify(err)}`
-        })
-      }
+    dataLayer.broadcastFind(companyUser)
+    .then(broadcasts => {
       res.status(200).json({
         status: 'success',
         payload: broadcasts
       })
     })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
   })
 }
 
@@ -794,32 +764,27 @@ exports.getAllBroadcasts = function (req, res) {
 }
 
 exports.deleteBroadcast = function (req, res) {
-  TemplateBroadcasts.findById(req.params.id, (err, broadcast) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.BroadcastFindById(req)
+  .then(broadcast => {
     if (!broadcast) {
       return res.status(404)
         .json({status: 'failed', description: 'Record not found'})
     }
-    broadcast.remove((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'poll update failed'})
-      }
-      return res.status(200)
-      .json({status: 'success'})
-    })
+  dataLayer.removeBroadcast(broadcast)
+  .then (success => {
+    return res.status(500).json({status: 'success'})
+  })
+})
+  .catch(err => {
+    return res.status(500)
+        .json({status: 'failed', description: 'Internal Server Error'})
   })
 }
 
 exports.editBroadcast = function (req, res) {
-  TemplateBroadcasts.findById(req.body._id, (err, broadcast) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
+
+  dataLayer.BroadcastFindById(req)
+  .then(broadcast => {
     if (!broadcast) {
       return res.status(404)
         .json({status: 'failed', description: 'Record not found'})
@@ -827,174 +792,154 @@ exports.editBroadcast = function (req, res) {
     broadcast.title = req.body.title
     broadcast.payload = req.body.payload
     broadcast.category = req.body.category
-    broadcast.save((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'Poll update failed'})
-      }
-      res.status(201).json({status: 'success', payload: broadcast})
-    })
+  dataLayer.saveBroadcast(broadcast)
+  .then (success => {
+    res.status(201).json({status: 'success', payload: broadcast})
+  })
+})
+  .catch(err => {
+    return res.status(500)
+        .json({status: 'failed', description: 'Internal Server Error'})
   })
 }
 
 exports.broadcastDetails = function (req, res) {
-  //
-  TemplateBroadcasts.findOne({_id: req.params.broadcastid}, (err, broadcast) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error${JSON.stringify(err)}`
-      })
-    }
+  dataLayer.findBroadcastById(req)
+   .then(broadcast => {
     if (!broadcast) {
       return res.status(404).json({
         status: 'failed',
-        description: `Poll not found.`
+        description: `broadcast not found.`
       })
     }
-    return res.status(200)
-    .json({status: 'success', payload: broadcast})
-  })
+    
+    return res.status(200).json({status: 'success', payload: broadcast})
+    
+   })
+   .catch(err => {
+     return res.status(500).json({status: 'failed', payload: 'broadcast not found'})
+   })
 }
 
 exports.createBotTemplate = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  .then(companyUser => {
     if (!companyUser) {
       return res.status(404).json({
         status: 'failed',
         description: 'The user account does not belong to any company. Please contact support'
       })
     }
-    let botTemplatePayload = {
-      title: req.body.title,
-      category: req.body.category,
-      payload: req.body.payload,
-      userId: req.user._id,
-      companyId: companyUser.companyId
-    }
+    let botTemplatePayload =logicLayer.createDataBots(req)
     if (req.user.isSuperUser) {
       botTemplatePayload.createdBySuperUser = true
     }
-    const botPayload = new TemplateBots(botTemplatePayload)
-
-    // save model to MongoDB
-    botPayload.save((err, botTemplateCreated) => {
-      if (err) {
-        res.status(500).json({
-          status: 'failed',
-          description: 'Failed to insert record'
-        })
-      } else {
-        res.status(201).json({status: 'success', payload: botTemplateCreated})
-      }
+    dataLayer.botSave(botTemplatePayload)
+    .then(botTemplateCreated => {
+      res.status(200).json({
+        status: 'success',
+        payload: botTemplateCreated
+      })
     })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
   })
 }
 
 exports.allBots = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  .then(companyUser => {
     if (!companyUser) {
       return res.status(404).json({
         status: 'failed',
         description: 'The user account does not belong to any company. Please contact support'
       })
     }
-    TemplateBots.find({'$or': [{
-      companyId: companyUser.companyId}, {createdBySuperUser: true}]
-    }, (err, bots) => {
-      if (err) {
-        logger.serverLog(TAG, `Error: ${err}`)
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error${JSON.stringify(err)}`
-        })
-      }
+    dataLayer.botFind(companyUser)
+    .then(bots => {
       res.status(200).json({
         status: 'success',
         payload: bots
       })
     })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
   })
 }
 
 exports.deleteBot = function (req, res) {
-  TemplateBots.findById(req.params.id, (err, botFound) => {
-    if (err) {
-      return res.status(500)
-      .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.BotFindById(req)
+  .then(botFound => {
     if (!botFound) {
       return res.status(404)
-      .json({status: 'failed', description: 'Record not found'})
+        .json({status: 'failed', description: 'Record not found'})
     }
-    botFound.remove((err2) => {
-      if (err2) {
-        return res.status(500)
-        .json({status: 'failed', description: 'Deleting bot failed'})
-      }
-      return res.status(200)
-      .json({status: 'success'})
-    })
+  dataLayer.removeBot(botFound)
+  .then (success => {
+    return res.status(500).json({status: 'success'})
+  })
+})
+  .catch(err => {
+    return res.status(500)
+        .json({status: 'failed', description: 'Internal Server Error'})
   })
 }
 
 exports.editBot = function (req, res) {
-  TemplateBots.findById(req.body._id, (err, botTemplateFound) => {
-    if (err) {
-      return res.status(500)
-      .json({status: 'failed', description: 'Internal Server Error'})
-    }
+  dataLayer.BotFindById(req)
+  .then(botTemplateFound => {
     if (!botTemplateFound) {
       return res.status(404)
-      .json({status: 'failed', description: 'Record not found'})
+        .json({status: 'failed', description: 'Record not found'})
     }
     botTemplateFound.title = req.body.title
     botTemplateFound.payload = req.body.payload
     botTemplateFound.category = req.body.category
-    botTemplateFound.save((err2) => {
-      if (err2) {
-        return res.status(500)
-        .json({status: 'failed', description: 'Bot update failed'})
-      }
-      res.status(201).json({status: 'success', payload: botTemplateFound})
+    dataLayer.botSave(botTemplateFound)
+    .then(success => {
+      res.status(201).json({
+        status: 'success',
+        payload: botTemplateFound
+      })
     })
+    .catch(err => {
+      return res.status(500).json({status: 'failed', payload: err})
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
   })
 }
 
 exports.botDetails = function (req, res) {
-  //
-  TemplateBots.findOne({_id: req.params.botid}, (err, bot) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error${JSON.stringify(err)}`
-      })
-    }
-    if (!bot) {
-      return res.status(404).json({
-        status: 'failed',
-        description: `Bot not found.`
-      })
-    }
-    return res.status(200)
-    .json({status: 'success', payload: bot})
+  dataLayer.findBotById(req)
+  .then(bot => {
+   if (!bot) {
+     return res.status(404).json({
+       status: 'failed',
+       description: `Bot not found.`
+     })
+   }
+   
+   return res.status(200).json({status: 'success', payload: bot})
+   
   })
+  .catch(err => {
+    return res.status(500).json({status: 'failed', payload: err})
+  })
+
 }
 
 // todo temporary bot template for DNC, will be data driven
 exports.getPoliticsBotTemplate = function (req, res) {
   let payload = logicLayer.getPoliticsBotTemplate()
-  return res.status(200).json({status: 'success', payload})
+  return res.status(200).json({status: 'success', payload: payload})
 }

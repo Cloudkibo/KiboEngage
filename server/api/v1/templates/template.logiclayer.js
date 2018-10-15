@@ -51,6 +51,29 @@ exports.createDataCategory = function (object) {
   }
   return categoryPayload
 }
+
+
+exports.createDataBots = function (req) {
+  let botTemplatePayload = {
+    title: req.body.title,
+    category: req.body.category,
+    payload: req.body.payload,
+    userId: req.user._id,
+    companyId: companyUser.companyId
+  }
+  return botTemplatePayload
+}
+
+exports.createDataBroadcast = function (req) {
+  let broadcastPayload = {
+    title: req.body.title,
+    category: req.body.category,
+    payload: req.body.payload,
+    userId: req.user._id,
+    companyId: companyUser.companyId
+  }
+  return broadcastPayload
+}
 exports.getPoliticsBotTemplate = function () {
   let payload = [
     {

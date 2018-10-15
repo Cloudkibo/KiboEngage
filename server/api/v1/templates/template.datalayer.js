@@ -7,6 +7,9 @@ const CompanyUsage = require('./../featureUsage/companyUsage.model')
 const PlanUsage = require('./../featureUsage/planUsage.model')
 const CompanyProfile = require('./../companyprofile/companyprofile.model')
 const SurveyQuestions = require('./surveyQuestion.model')
+const TemplateBroadcasts = require('./broadcastTemplate.model')
+const TemplateBots = require('./bots_template.model')
+
 
 exports.allPolls = () => {
   return TemplatePolls.find({})
@@ -122,7 +125,101 @@ exports.findSurveyById = (req) => {
   .exec()
 }
 
-exports.findQuestionById = (req) => {
+exports.findQuestionById = (req) => {findCategroryById
   SurveyQuestions.find({surveyId: req.params.surveyid}).populate('surveyId')  
  .exec()
+}
+
+exports.findPollById = (req) => {
+  return TemplatePolls.findOne({_id: req.params.pollid})
+  .exec()
+}
+
+exports.pollFindById = (req) => {
+  return TemplatePolls.findById(req.params.id)
+  .exec()
+
+}
+exports.removePoll = (poll) => {
+  return poll.remove()
+  .exec()
+}
+
+exports.pollCategoryById = (req) => {
+  return Category.findById(req.params.id)
+  .exec()
+
+}
+
+exports.removeCategory = (category) => {
+  return category.remove()
+  .exec()
+}
+
+exports.surveyFindById = (req) => {
+  return TemplateSurveys.findById(req.params.id)
+  .exec()
+
+}
+exports.removeSurvey = (survey) => {
+  return survey.remove()
+  .exec()
+}
+
+
+exports.BroadcastFindById = (req) => {
+  return TemplateBroadcasts.findById(req.params.id)
+  .exec()
+}
+
+exports.removeBroadcast = (broadcast) => {
+  return broadcast.remove()
+  .exec()
+}
+
+exports.saveBroadcast = (broadcast) => {
+
+  return broadcast.save()
+  .exec()
+}
+
+exports.findBroadcastById = (req) => {
+  return TemplateBroadcasts.findOne({_id: req.params.broadcastid})
+  .exec()
+}
+
+exports.findBotById = (req) => {
+  return TemplateBots.findOne({_id: req.params.botid})
+  .exec()
+}
+exports.BotFindById = (req) => {
+  return TemplateBots.findById(req.body._id)
+  .exec()
+}
+exports.botSave = (bot) => {
+
+  return bot.save()
+  .exec()
+}
+exports.removeBot = (bot) => {
+  return bot.remove()
+  .exec()
+}
+exports.botFind = (companyUser) => {
+
+  return TemplateBots.find({'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]})
+  .exec()
+}
+exports.broadcastFind = (companyUser) => {
+
+  return TemplateBroadcasts.find({'$or': [{ companyId: companyUser.companyId}, {createdBySuperUser: true}]})
+  .exec()
+}
+
+exports.surveyId = (req) => {
+  TemplateSurveys.findById(req.body.survey._id)
+}
+
+exports.findQuestionSurveyById = (req) => {
+  SurveyQuestions.find({surveyId: req.body.survey._id})
 }
