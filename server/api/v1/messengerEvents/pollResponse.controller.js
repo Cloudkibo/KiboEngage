@@ -1,7 +1,7 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/pollResponse.controller.js'
 const mongoose = require('mongoose')
-const Polls = require('../polls/polls.datalayer')
+const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const needle = require('needle')
 const sequenceController = require('../sequenceMessaging/sequence.controller')
 const {callApi} = require('../utility')
@@ -85,7 +85,7 @@ function savepoll (req, resp) {
           logger.serverLog(TAG, err)
         })
       if (temp === true) {
-        Polls.createForPollResponse(pollbody)
+        PollResponseDataLayer.createForPollResponse(pollbody)
           .then(pollresponse => {
             array.push(pollbody)
           })
