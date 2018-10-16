@@ -42,6 +42,7 @@ const checkPlanLimit = (subscriptionType, planUsage, companyUsage) => {
       return false
     }
   }
+  return true
 }
 
 const handleTwitterAutoposts = (subscriptionUrl, autoPostingPayload) => {
