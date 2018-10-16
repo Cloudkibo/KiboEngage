@@ -39,7 +39,7 @@ exports.upload = function (req, res) {
                     conditions: 'initial_list',
                     initialList: true
                   }
-                  utility.callApi(`lists/update`, 'put', {query: query, update: update, options: {upsert: true}})
+                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
                     .then(savedList => {
                       fs.rename(req.files.file.path, directory.dir + '/userfiles' + directory.serverPath, err => {
                         if (err) {
@@ -78,7 +78,8 @@ exports.upload = function (req, res) {
                                         .then(saved => {
                                           utility.callApi(`updateCompany/`, 'put', {
                                             query: {companyId: companyUser.companyId},
-                                            newPayload: { $inc: { phone_invitation: 1 } }
+                                            newPayload: { $inc: { phone_invitation: 1 } },
+                                            options: {}
                                           })
                                             .then(updated => {})
                                             .catch(error => {
@@ -105,7 +106,7 @@ exports.upload = function (req, res) {
                                       pageId: req.body._id,
                                       fileName: filename
                                     }
-                                    utility.callApi(`phone/update`, 'put', {query: query, update: update, options: {upsert: true}})
+                                    utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
                                       .then(phonenumbersaved => {
                                         utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: newFileName})
                                           .then(number => {
@@ -116,7 +117,7 @@ exports.upload = function (req, res) {
                                                   let content = logicLayer.getContent(subscribers)
                                                   let query = {listName: newFileName, userId: req.user._id, companyId: companyUser.companyId}
                                                   let update = { content: content }
-                                                  utility.callApi(`lists/update`, 'put', {query: query, update: update, options: {}})
+                                                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}})
                                                     .then(savedList => {
                                                     })
                                                     .catch(error => {
@@ -269,7 +270,7 @@ exports.sendNumbers = function (req, res) {
                     conditions: 'initial_list',
                     initialList: true
                   }
-                  utility.callApi(`lists/update`, 'put', {query: query, update: update, options: {upsert: true}})
+                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
                     .then(savedList => {
                     })
                     .catch(error => {
@@ -299,7 +300,8 @@ exports.sendNumbers = function (req, res) {
                                   .then(saved => {
                                     utility.callApi(`updateCompany/`, 'put', {
                                       query: {companyId: req.body.companyId},
-                                      newPayload: { $inc: { phone_invitation: 1 } }
+                                      newPayload: { $inc: { phone_invitation: 1 } },
+                                      options: {}
                                     })
                                       .then(updated => {
                                       })
@@ -327,7 +329,7 @@ exports.sendNumbers = function (req, res) {
                                 pageId: req.body._id,
                                 fileName: filename
                               }
-                              utility.callApi(`phone/update`, 'put', {query: query, update: update, options: {upsert: true}})
+                              utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
                                 .then(phonenumbersaved => {
                                   utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: 'Other'})
                                     .then(number => {
@@ -338,7 +340,7 @@ exports.sendNumbers = function (req, res) {
                                             let content = logicLayer.getContent(subscribers)
                                             let query = {listName: 'Other', userId: req.user._id, companyId: companyUser.companyId}
                                             let update = { content: content }
-                                            utility.callApi(`lists/update`, 'put', {query: query, update: update, options: {}})
+                                            utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}})
                                               .then(savedList => {})
                                               .catch(error => {
                                                 return res.status(500).json({
