@@ -59,17 +59,10 @@ exports.allPolls = function (req, res) {
                   }}])
                     .then(responsesCount1 => {
                       let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
-                      if (req.body.first_page === 'previous') {
-                        res.status(200).json({
-                          status: 'success',
-                          payload: {polls: polls.reverse(), pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
-                        })
-                      } else {
-                        res.status(200).json({
-                          status: 'success',
-                          payload: {polls: polls, pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
-                        })
-                      }
+                      res.status(200).json({
+                        status: 'success',
+                        payload: {polls: req.body.first_page === 'previous' ? polls.reverse() : polls, pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
+                      })
                     })
                     .catch(error => {
                       return res.status(500).json({status: 'failed', payload: `Failed to aggregate poll responses ${JSON.stringify(error)}`})

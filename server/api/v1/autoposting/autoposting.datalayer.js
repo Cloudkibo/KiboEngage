@@ -16,7 +16,7 @@ exports.findOneAutopostingObjectUsingQuery = (queryObject) => {
 }
 
 exports.findAllAutopostingObjectsUsingQuery = (queryObject) => {
-  return AutoPostingModel.find(queryObject)
+  return AutoPostingModel.find(queryObject).populate('userId companyId')
     .exec()
 }
 
