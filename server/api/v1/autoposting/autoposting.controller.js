@@ -1,6 +1,6 @@
 const AutopostingDataLayer = require('./autoposting.datalayer')
 const AutoPostingLogicLayer = require('./autoposting.logiclayer')
-const utility = '../../../utility/api.caller.service'
+const utility = '../utility'
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
