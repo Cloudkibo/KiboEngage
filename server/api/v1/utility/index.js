@@ -1,5 +1,6 @@
 const fetch = require('isomorphic-fetch')
-const config = require('../config/environment/index')
+const config = require('../../../config/environment/index')
+
 exports.callApi = (endpoint, method = 'get', body, type = 'accounts') => {
   console.log('endpoint', endpoint)
   let headers = {
@@ -18,14 +19,14 @@ exports.callApi = (endpoint, method = 'get', body, type = 'accounts') => {
   }).then(response => {
     return response
   }).then(response => response.json().then(json => ({ json, response })))
-   .then(({ json, response }) => {
-     if (!response.ok) {
-       return Promise.reject(json)
-     }
-     return json
-   })
-   .then(
-     response => response,
-     error => error
-   )
+    .then(({ json, response }) => {
+      if (!response.ok) {
+        return Promise.reject(json)
+      }
+      return json
+    })
+    .then(
+      response => response,
+      error => error
+    )
 }
