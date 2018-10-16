@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+let _ = require('lodash')
 
 exports.getCriterias = function (body, companyUser) {
   let search = ''
@@ -72,4 +73,69 @@ exports.getCriterias = function (body, companyUser) {
     finalCriteria,
     countCriteria
   }
+}
+exports.ListFindCriteria = function (body) {
+  let ListFindCriteria = {}
+  ListFindCriteria = _.merge(ListFindCriteria,
+    {
+      _id: {
+        $in: body.segmentationList
+      }
+    })
+  return ListFindCriteria
+}
+
+exports.subsFindCriteriaForList = function (lists, page) {
+  let subsFindCriteria = {pageId: page._id}
+  let listData = []
+  if (lists.length > 1) {
+    for (let i = 0; i < lists.length; i++) {
+      for (let j = 0; j < lists[i].content.length; j++) {
+        if (exists(listData, lists[i].content[j]) === false) {
+          listData.push(lists[i].content[j])
+        }
+      }
+    }
+    subsFindCriteria = _.merge(subsFindCriteria, {
+      _id: {
+        $in: listData
+      }
+    })
+  } else {
+    subsFindCriteria = _.merge(subsFindCriteria, {
+      _id: {
+        $in: lists[0].content
+      }
+    })
+  }
+  return subsFindCriteria
+}
+exports.subsFindCriteria = function (body, page) {
+  let subscriberFindCriteria = {pageId: page._id, isSubscribed: true}
+  if (body.isSegmented) {
+    if (body.segmentationGender.length > 0) {
+      subscriberFindCriteria = _.merge(subscriberFindCriteria,
+        {
+          gender: {
+            $in: body.segmentationGender
+          }
+        })
+    }
+    if (body.segmentationLocale.length > 0) {
+      subscriberFindCriteria = _.merge(subscriberFindCriteria, {
+        locale: {
+          $in: body.segmentationLocale
+        }
+      })
+    }
+  }
+  return subscriberFindCriteria
+}
+function exists (list, content) {
+  for (let i = 0; i < list.length; i++) {
+    if (JSON.stringify(list[i]) === JSON.stringify(content)) {
+      return true
+    }
+  }
+  return false
 }
