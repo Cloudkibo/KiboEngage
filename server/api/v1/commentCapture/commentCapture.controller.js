@@ -1,7 +1,7 @@
 const logger = require('../../../components/logger')
 const needle = require('needle')
 const TAG = 'api/commentCapture/commentCapture.controller.js'
-const utility = require('../utility')
+const utility = require('../utility/index.js')
 const logicLayer = require('./commentCapture.logiclayer')
 
 exports.index = function (req, res) {
