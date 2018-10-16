@@ -82,6 +82,20 @@ function setTokenCookie (req, res) {
   return res.redirect('/')
 }
 
+function isItWebhookServer () {
+  return compose().use((req, res, next) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
+      req.socket.remoteAddress || req.connection.socket.remoteAddress
+    logger.serverLog(TAG, req.ip)
+    logger.serverLog(TAG, ip)
+    logger.serverLog(TAG, 'This is middleware')
+    logger.serverLog(TAG, req.body)
+    if (ip === '::ffff:' + config.webhook_ip) next()
+    else res.send(403)
+  })
+}
+
+exports.isItWebhookServer = isItWebhookServer
 exports.isAuthenticated = isAuthenticated
 exports.signToken = signToken
 exports.setTokenCookie = setTokenCookie

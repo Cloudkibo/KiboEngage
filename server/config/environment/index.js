@@ -12,7 +12,10 @@ const all = {
   root: path.normalize(`${__dirname}/../../..`),
 
   // Server port
-  port: process.env.PORT || 8000,
+  port: process.env.PORT || 3000,
+
+  // Secure Server port
+  secure_port: process.env.SECURE_PORT || 8443,
 
   ip: process.env.IP || undefined,
 
@@ -25,7 +28,13 @@ const all = {
         safe: true
       }
     }
-  }
+  },
+
+  API_URL: process.env.NODE_ENV === 'production' ? 'https://app.kibopush.com/api' : process.env.NODE_ENV === 'staging' ? 'https://staging.kibopush.com/api' : 'http://localhost:3000/api',
+
+  ACCOUNTS_URL: process.env.NODE_ENV === 'production' ? 'https://accounts.cloudkibo.com/api/v1' : process.env.NODE_ENV === 'staging' ? 'https://saccounts.cloudkibo.com/api/v1' : 'http://localhost:3000/api/v1',
+
+  CHAT_URL: process.env.NODE_ENV === 'production' ? 'https://kibochat.cloudkibo.com/api/v1' : process.env.NODE_ENV === 'staging' ? 'https://kibochat.cloudkibo.com/api/v1' : 'http://localhost:3000/api/v1'
 }
 
 module.exports = _.merge(
