@@ -72,7 +72,8 @@ exports.createList = function (req, res) {
                     .then(listCreated => {
                       utility.callApi(`updateCompany/`, 'put', {
                         query: {companyId: req.body.companyId},
-                        newPayload: { $inc: { segmentation_lists: 1 } }
+                        newPayload: { $inc: { segmentation_lists: 1 } },
+                        options: {}
                       })
                         .then(updated => {
                         })
@@ -220,7 +221,8 @@ exports.deleteList = function (req, res) {
         .then(result => {
           utility.callApi(`updateCompany/`, 'put', {
             query: {companyId: companyUser.companyId},
-            newPayload: { $inc: { segmentation_lists: -1 } }
+            newPayload: { $inc: { segmentation_lists: -1 } },
+            options: {}
           })
             .then(updated => {})
             .catch(error => {
