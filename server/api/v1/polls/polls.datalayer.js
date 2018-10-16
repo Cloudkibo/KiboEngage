@@ -13,3 +13,7 @@ exports.aggregateForPolls = (query) => {
   return Polls.aggregate(query)
     .exec()
 }
+exports.deleteForPolls = (id) => {
+  return Polls.deleteOne({_id: id})
+    .exec()
+}

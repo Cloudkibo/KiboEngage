@@ -28,25 +28,18 @@ router.post('/create',
   validate({body: validationSchema.createPayload}),
   controller.create)
 
-router.post('/report',
-  auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('polls'),
-  auth.doesRolePermitsThisAction('pollsPermission'),
-  validate({body: validationSchema.reportPayload}),
-  controller.report)
-
 router.post('/send',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
-  validate({body: validationSchema.sendPayload}),
+  validate({body: validationSchema.createPayload}),
   controller.send)
 
 router.post('/sendPollDirectly',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
-  validate({body: validationSchema.sendPayload}),
+  validate({body: validationSchema.createPayload}),
   controller.sendPoll)
 
 router.get('/responses/:id',
