@@ -8,3 +8,8 @@ exports.genericFind = (query) => {
   return SurveyResponse.find(query).populate('surveyId questionId subscriberId')
     .exec()
 }
+
+exports.aggregateForSurveyResponse = (query) => {
+  return SurveyResponse.aggregate(query)
+    .exec()
+}

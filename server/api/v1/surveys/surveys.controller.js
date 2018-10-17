@@ -6,8 +6,11 @@
 const logger = require('../../../components/logger')
 const Surveys = require('./surveys.model')
 const SurveyQuestions = require('./surveyquestions.model')
+const surveyQuestionsDataLayer = require('./surveyquestion.datalayer')
+
 const SurveyResponses = require('./surveyresponse.model')
 const SurveyPage = require('../page_survey/page_survey.model')
+const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const CompanyUsers = require('./../companyuser/companyuser.model')
 const CompanyProfile = require('./../companyprofile/companyprofile.model')
 const AutomationQueue = require('./../automation_queue/automation_queue.model')
@@ -19,7 +22,9 @@ const Webhooks = require('./../webhooks/webhooks.model')
 const CompanyUsage = require('./../featureUsage/companyUsage.model')
 const PlanUsage = require('./../featureUsage/planUsage.model')
 const webhookUtility = require('./../webhooks/webhooks.utility')
-
+const surveyDataLayer = require('./surveys.datalayer')
+const surveyLogicLayer = require('./surveys.logiclayer')
+const surveyResponseDataLayer = require('./surveyresponse.datalayer')
 let _ = require('lodash')
 
 const needle = require('needle')
@@ -29,161 +34,47 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 
 exports.allSurveys = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!companyUser) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'The user account does not belong to any company. Please contact support'
-      })
-    }
-    if (req.body.first_page === 'first') {
-      let startDate = new Date()  // Current date
-      startDate.setDate(startDate.getDate() - req.body.days)
-      startDate.setHours(0)   // Set the hour, minute and second components to 0
-      startDate.setMinutes(0)
-      startDate.setSeconds(0)
-      let findCriteria = {
-        companyId: companyUser.companyId,
-        'datetime': req.body.days !== '0' ? {
-          $gte: startDate
-        } : {$exists: true}
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
       }
-      Surveys.aggregate([
-        { $match: findCriteria },
-        { $group: { _id: null, count: { $sum: 1 } } }
-      ], (err, surveysCount) => {
-        if (err) {
-          return res.status(404)
-            .json({status: 'failed', description: 'BroadcastsCount not found'})
-        }
-        Surveys.aggregate([{$match: findCriteria}, {$sort: {datetime: -1}}]).limit(req.body.number_of_records)
-        .exec((err, surveys) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
-            })
-          }
-          SurveyPage.find({companyId: companyUser.companyId}, (err, surveypages) => {
-            if (err) {
-              return res.status(404)
-              .json({status: 'failed', description: 'Surveys not found'})
-            }
-            Surveys.find({}, {_id: 1, isresponded: 1}, (err2, responsesCount) => {
-              if (err2) {
-                return res.status(404)
-                .json({status: 'failed', description: 'responses count not found'})
-              }
-              res.status(200).json({
-                status: 'success',
-                payload: {surveys: surveys, surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
-              })
+      let criterias = surveyLogicLayer.getCriterias(req.body, companyUser)
+      surveyDataLayer.aggregateForSurveys(criterias.countCriteria)
+    .then(surveysCount => {
+      surveyDataLayer.aggregateForPolls(criterias.fetchCriteria)
+      .then(surveys => {
+        SurveyPageDataLayer.genericFind({companyId: companyUser.companyId})
+        .then(surveypages => {
+          surveyDataLayer.surveyFind()
+          .then(responsesCount => {
+            res.status(200).json({
+              status: 'success',
+              payload: {surveys: req.body.first_page === 'previous' ? surveys.reverse() : surveys, surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
             })
           })
-        })
-      })
-    } else if (req.body.first_page === 'next') {
-      let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-      let startDate = new Date()  // Current date
-      startDate.setDate(startDate.getDate() - req.body.days)
-      startDate.setHours(0)   // Set the hour, minute and second components to 0
-      startDate.setMinutes(0)
-      startDate.setSeconds(0)
-      let findCriteria = {
-        companyId: companyUser.companyId,
-        'datetime': req.body.days !== '0' ? {
-          $gte: startDate
-        } : {$exists: true}
-      }
-      Surveys.aggregate([
-        { $match: findCriteria },
-        { $group: { _id: null, count: { $sum: 1 } } }
-      ], (err, surveysCount) => {
-        if (err) {
-          return res.status(404)
-            .json({status: 'failed', description: 'BroadcastsCount not found'})
-        }
-        Surveys.aggregate([{$match: {$and: [findCriteria, {_id: {$lt: mongoose.Types.ObjectId(req.body.last_id)}}]}}, {$sort: {datetime: -1}}]).skip(recordsToSkip).limit(req.body.number_of_records)
-        .exec((err, surveys) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
-            })
-          }
-          SurveyPage.find({companyId: companyUser.companyId}, (err, surveypages) => {
-            if (err) {
-              return res.status(404)
-              .json({status: 'failed', description: 'Surveys not found'})
-            }
-            Surveys.find({}, {_id: 1, isresponded: 1}, (err2, responsesCount) => {
-              if (err2) {
-                return res.status(404)
-                .json({status: 'failed', description: 'responses count not found'})
-              }
-              res.status(200).json({
-                status: 'success',
-                payload: {surveys: surveys, surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
-              })
-            })
+          .catch(error => {
+            return res.status(500).json({status: 'failed', payload: error })
           })
         })
-      })
-    } else if (req.body.first_page === 'previous') {
-      let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
-      let startDate = new Date()  // Current date
-      startDate.setDate(startDate.getDate() - req.body.days)
-      startDate.setHours(0)   // Set the hour, minute and second components to 0
-      startDate.setMinutes(0)
-      startDate.setSeconds(0)
-      let findCriteria = {
-        companyId: companyUser.companyId,
-        'datetime': req.body.days !== '0' ? {
-          $gte: startDate
-        } : {$exists: true}
-      }
-      Surveys.aggregate([
-        { $match: findCriteria },
-        { $group: { _id: null, count: { $sum: 1 } } }
-      ], (err, surveysCount) => {
-        if (err) {
-          return res.status(404)
-            .json({status: 'failed', description: 'BroadcastsCount not found'})
-        }
-        Surveys.aggregate([{$match: {$and: [findCriteria, {_id: {$gt: mongoose.Types.ObjectId(req.body.last_id)}}]}}, {$sort: {datetime: 1}}]).skip(recordsToSkip).limit(req.body.number_of_records)
-        .exec((err, surveys) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
-            })
-          }
-          SurveyPage.find({companyId: companyUser.companyId}, (err, surveypages) => {
-            if (err) {
-              return res.status(404)
-              .json({status: 'failed', description: 'Surveys not found'})
-            }
-            Surveys.find({}, {_id: 1, isresponded: 1}, (err2, responsesCount) => {
-              if (err2) {
-                return res.status(404)
-                .json({status: 'failed', description: 'responses count not found'})
-              }
-              res.status(200).json({
-                status: 'success',
-                payload: {surveys: surveys.reverse(), surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
-              })
-            })
-          })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: error})
         })
       })
-    }
-  })
+      .catch(error => {
+        return res.status(500).json({status: 'failed', payload: error})
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: error})
+    })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: error })
+    })
 }
 
 exports.create = function (req, res) {
@@ -372,91 +263,72 @@ exports.edit = function (req, res) {
    options: Array of String
    },...]
    } */
-  Surveys.findById(req.body.survey._id, (err, survey) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
+  surveyDataLayer.findServeyById(req)
+   .then(survey => {
+     survey.title = req.body.survey.title
+     survey.description = req.body.survey.description
+     survey.image = req.body.survey.image
+     surveyDataLayer.save(survey)
+   .then(success => {
+     surveyQuestionsDataLayer.removeSurvey(survey)
+    .then(success => {
+      for (let question in req.body.questions) {
+        let options = []
+        options = req.body.questions[question].options
+        const surveyQuestion = new SurveyQuestions({
+          statement: req.body.questions[question].statement, // question statement
+          options, // array of question options
+          type: 'multichoice', // type can be text/multichoice
+          surveyId: survey._id
 
-    survey.title = req.body.survey.title
-    survey.description = req.body.survey.description
-    survey.image = req.body.survey.image
+        })
 
-    survey.save((err2) => {
-      if (err2) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err2)}`
+        surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
+        .then(success => {
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: error})
         })
       }
-
-      SurveyQuestions.remove({surveyId: survey._id}, (err3) => {
-        if (err3) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err3)}`
-          })
-        }
-        for (let question in req.body.questions) {
-          let options = []
-          options = req.body.questions[question].options
-          const surveyQuestion = new SurveyQuestions({
-            statement: req.body.questions[question].statement, // question statement
-            options, // array of question options
-            type: 'multichoice', // type can be text/multichoice
-            surveyId: survey._id
-
-          })
-
-          surveyQuestion.save((err2) => {
-            if (err2) {
-              // return res.status(404).json({ status: 'failed', description: 'Survey Question not created' });
-            }
-          })
-        }
-
-        return res.status(200)
+      return res.status(200)
           .json({status: 'success', payload: req.body.survey})
-      })
     })
-  })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: error})
+    })
+   })
+   .catch(error => {
+     return res.status(500).json({status: 'failed', payload: error})
+   })
+   })
+   .catch(error => {
+     return res.status(500).json({status: 'failed', payload: error})
+   })
 }
 
 // Get a single survey
 exports.show = function (req, res) {
-  Surveys.findById(req.params.id).populate('userId').exec((err, survey) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    // find questions
-    SurveyQuestions.find({surveyId: survey._id})
-      .populate('surveyId')
-      .exec((err2, questions) => {
-        if (err2) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err2)}`
-          })
-        }
-        SurveyResponses.find({surveyId: survey._id})
-          .populate('surveyId subscriberId questionId')
-          .exec((err3, responses) => {
-            if (err3) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error ${JSON.stringify(err3)}`
-              })
-            }
-            return res.status(200)
+
+  surveyDataLayer.findByIdPopulate(req)
+        .then(survey => {
+          surveyQuestionsDataLayer.findSurveyWithId()
+          .then(questions => {
+            surveyResponseDataLayer.genericFind(survey)
+            .then(responses => {
+              return res.status(200)
               .json({status: 'success', payload: {survey, questions, responses}})
+            })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: error})
+            })
           })
-      })
-  })
+          .catch(error => {
+            return res.status(500).json({status: 'failed', payload: error})
+          })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: error})
+        })
 }
 
 // Get a single survey
