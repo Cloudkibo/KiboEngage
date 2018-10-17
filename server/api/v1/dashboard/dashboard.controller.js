@@ -83,7 +83,7 @@ exports.sentVsSeen = function (req, res) {
                         .then(pollSeenCount => {
                             SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
                                 .then(surveyResponseCount => {
-                                    PollsDataLayer.findPoll({companyId: companyUser.companyId})
+                                    PollsDataLayer.genericFindForPolls({companyId: companyUser.companyId})
                                         .then(polls => {
                                             PagePollDataLayer.find({companyId: companyUser.companyId})
                                                 .then(pollPages => {
@@ -574,7 +574,7 @@ exports.graphData = function (req, res) {
             description: 'The user account does not belong to any company. Please contact support'
             })
         }
-        BroadcastsDataLayer.aggregate([
+        BroadcastsDataLayer.aggregateForBroadcasts([
             {
             $match: { companyId: companyUser.companyId,
                 'datetime': {
@@ -591,7 +591,7 @@ exports.graphData = function (req, res) {
                 count: {$sum: 1}}
         }])
         .then(broadcastsgraphdata => {
-            PollsDataLayer.aggregatePoll([
+            PollsDataLayer.aggregateForPolls([
                 {
                     $match: { companyId: companyUser.companyId,
                     'datetime': {
