@@ -1,9 +1,10 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/pollResponse.controller.js'
 const mongoose = require('mongoose')
-const Polls = require('../polls/polls.datalayer')
+const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const needle = require('needle')
 const sequenceController = require('../sequenceMessaging/sequence.controller')
+const notificationsUtility = require('../notifications/notifications.utility')
 const {callApi} = require('../utility')
 
 var array = []
@@ -76,7 +77,7 @@ function savepoll (req, resp) {
                     })
                 }
               } else {
-              //  webhookUtility.saveNotification(webhook)
+                notificationsUtility.saveNotification(webhook)
               }
             })
           }
@@ -85,7 +86,7 @@ function savepoll (req, resp) {
           logger.serverLog(TAG, err)
         })
       if (temp === true) {
-        Polls.createForPollResponse(pollbody)
+        PollResponseDataLayer.createForPollResponse(pollbody)
           .then(pollresponse => {
             array.push(pollbody)
           })

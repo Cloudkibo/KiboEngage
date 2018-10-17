@@ -19,10 +19,7 @@ exports.findAllAutopostingObjectsUsingQuery = (queryObject) => {
   return AutoPostingModel.find(queryObject).populate('userId companyId')
     .exec()
 }
-exports.findAllAutopostingObjectsUsingQueryAndPopulate = (queryObject) => {
-  return AutoPostingModel.find(queryObject)
-    .exec()
-}
+
 exports.findAutopostingObjectUsingAggregate = (aggregateObject) => {
   return AutoPostingModel.aggregate(aggregateObject)
     .exec()

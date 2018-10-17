@@ -68,7 +68,7 @@ function subscribeToSequence (sequenceId, req) {
               // CASE-1 Subscriber already exists
               if (sequenceSubscriber && sequenceSubscriber.length > 0 && sequenceSubscriber !== {} && sequenceSubscriber !== null) {
                 sequenceSubscriber = sequenceSubscriber[0]
-                SequencesDataLayer.genericFindForSequenceSubscribers({ _id: sequenceSubscriber._id }, { status: 'subscribed' }, {})
+                SequencesDataLayer.genericUpdateForSequenceSubscribers({ _id: sequenceSubscriber._id }, { status: 'subscribed' }, {})
                   .then(updated => {})
                   .catch(err => {
                     logger.serverLog(TAG, `Failed to update sequence subscriber ${JSON.stringify(err)}`)
