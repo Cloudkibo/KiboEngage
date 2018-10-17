@@ -20,3 +20,11 @@ exports.deleteMany = (query) => {
   return SequenceMessageQueue.deleteMany(query)
     .exec()
 }
+exports.genericFind = (query) => {
+  return SequenceMessageQueue.find(query)
+    .exec()
+}
+exports.findOne = (objectId) => {
+  return SequenceMessageQueue.findOne({_id: objectId})
+    .exec()
+}
