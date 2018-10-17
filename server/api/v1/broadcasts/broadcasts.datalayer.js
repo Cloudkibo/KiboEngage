@@ -12,3 +12,15 @@ exports.createForBroadcast = (payload) => {
   let obj = new Broadcasts(payload)
   return obj.save()
 }
+
+exports.countBroadcasts = (query) => {
+    return Broadcasts.count(query)
+        .exec()
+}
+
+exports.findBroadcastsWithSortLimit = (query, sort, limit) => {
+    return Broadcasts.find(query)
+        .sort(sort)
+        .limit(limit)
+        .exec()
+}

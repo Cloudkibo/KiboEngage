@@ -22,3 +22,8 @@ exports.deleteForPolls = (id) => {
   return Polls.deleteOne({_id: id})
     .exec()
 }
+
+exports.countPolls = (query) => {
+  return Polls.count(query)
+    .exec()
+}

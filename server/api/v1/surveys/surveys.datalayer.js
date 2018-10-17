@@ -15,3 +15,8 @@ exports.aggregateSurvey = (query) => {
   return Surveys.aggregate(query)
     .exec()
 }
+
+exports.countSurveys = (query) => {
+  return Surveys.count(query)
+    .exec()
+}

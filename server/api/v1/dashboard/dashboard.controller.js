@@ -12,7 +12,7 @@ const SurveysDataLayer = require('../surveys/surveys.datalayer')
 const PageBroadcastDataLayer = require('../page_broadcast/page_broadcast.datalayer')
 const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
 const PagePollDataLayer = require('../page_poll/page_poll.datalayer')
-const LiveChat = require('../livechat/livechat.model')
+const LiveChatDataLayer = require('../livechat/livechat.datalayer')
 const TAG = 'api/pages/dashboard.controller.js'
 const PollResponse = require('../polls/pollresponse.model')
 const mongoose = require('mongoose')
@@ -455,69 +455,77 @@ exports.stats = function (req, res) {
                                         let subscribersCount = subscribers.length
 
                                         payload.subscribers = subscribersCount
-                                        Broadcasts.find({companyId: companyUser.companyId})
-                                        .sort('datetime')
-                                        .limit(10)
-                                        .exec(
-                                            (err3, recentBroadcasts) => {
-                                            if (err3) {
-                                                return res.status(500).json({
-                                                status: 'failed',
-                                                description: JSON.stringify(err3)
-                                                })
-                                            }
+                                        BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, 'datetime', 10)
+                                            .then(recentBroadcasts => {
+
                                             payload.recentBroadcasts = recentBroadcasts
-                                            Broadcasts.count({companyId: companyUser.companyId},
-                                                (err4, broadcastsCount) => {
-                                                if (err4) {
-                                                    return res.status(500).json({
-                                                    status: 'failed',
-                                                    description: JSON.stringify(err4)
-                                                    })
-                                                }
-                                                Polls.count({companyId: companyUser.companyId},
-                                                    (err5, pollsCount) => {
-                                                    if (err5) {
+                                            BroadcastsDataLayer.countBroadcasts({companyId: companyUser.companyId})
+                                                .then(broadcastCount => {
+                                                    PollsDataLayer.countPolls({companyId: companyUser.companyId})
+                                                        .then(pollsCount => {
+                                                            SurveysDataLayer.countSurveys({companyId: companyUser.companyId})
+                                                                .then(surveysCount => {
+                                                                    payload.activityChart = {
+                                                                        messages: broadcastsCount,
+                                                                        polls: pollsCount,
+                                                                        surveys: surveysCount
+                                                                    } 
+                                                                    LiveChatDataLayer.countLiveChat({
+                                                                        company_id: companyUser.companyId,
+                                                                        status: 'unseen',
+                                                                        format: 'facebook'
+                                                                    })
+                                                                    .then(unreadCount => {
+                                                                        payload.unreadCount = unreadCount
+                                                                        res.status(200).json({
+                                                                            status: 'success',
+                                                                            payload
+                                                                        })
+                                                                    })  
+                                                                    .catch(err => {
+                                                                        if (err) {
+                                                                            return res.status(500).json({
+                                                                                status: 'failed',
+                                                                                description: JSON.stringify(err)
+                                                                            })
+                                                                        }
+                                                                    })        
+                                                                })
+                                                                .catch(err => {
+                                                                    if (err) {
+                                                                        return res.status(500).json({
+                                                                        status: 'failed',
+                                                                        description: JSON.stringify(err)
+                                                                        })
+                                                                    }
+                                                                })
+                                                        })
+                                                        .catch(err => {
+                                                            if (err) {
+                                                                return res.status(500).json({
+                                                                status: 'failed',
+                                                                description: JSON.stringify(err)
+                                                                })
+                                                            }
+                                                        })
+                                                })
+                                                .catch(err => {
+                                                    if (err) {
                                                         return res.status(500).json({
                                                         status: 'failed',
-                                                        description: JSON.stringify(err5)
+                                                        description: JSON.stringify(err)
                                                         })
                                                     }
-                                                    Surveys.count(
-                                                        {companyId: companyUser.companyId},
-                                                        (err6, surveysCount) => {
-                                                        if (err6) {
-                                                            return res.status(500).json({
-                                                            status: 'failed',
-                                                            description: JSON.stringify(err6)
-                                                            })
-                                                        }
-                                                        payload.activityChart = {
-                                                            messages: broadcastsCount,
-                                                            polls: pollsCount,
-                                                            surveys: surveysCount
-                                                        }
-                
-                                                        LiveChat.count({
-                                                            company_id: companyUser.companyId,
-                                                            status: 'unseen',
-                                                            format: 'facebook'
-                                                        }, (err7, unreadCount) => {
-                                                            if (err7) {
-                                                            return res.status(500).json({
-                                                                status: 'failed',
-                                                                description: JSON.stringify(err7)
-                                                            })
-                                                            }
-                                                            payload.unreadCount = unreadCount
-                                                            res.status(200).json({
-                                                            status: 'success',
-                                                            payload
-                                                            })
-                                                        })
-                                                        })
-                                                    })
                                                 })
+
+                                            })
+                                            .catch(err => {
+                                                if (err) {
+                                                    return res.status(500).json({
+                                                    status: 'failed',
+                                                    description: JSON.stringify(err)
+                                                    })
+                                                }
                                             })
 
                                     })
@@ -626,33 +634,6 @@ exports.graphData = function (req, res) {
                         count: {$sum: 1}}
                 }])
                 .then(surveysgraphdata => {
-
-                })
-                .catch(err => {
-                    if (err) {
-                        return res.status(404).json({
-                            status: 'failed',
-                            description: `Error in getting surveys count ${JSON.stringify(err)}`
-                        })
-                    }
-                })
-                SurveysDataLayer.aggregateSurvey([
-                    {
-                    $match: { companyId: companyUser.companyId,
-                        'datetime': {
-                        $gte: new Date(
-                            (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                        $lt: new Date(
-                            (new Date().getTime()))
-                        }
-                    }
-                    },
-                    {
-                    $group: {
-                        _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
-                        count: {$sum: 1}}
-                }])
-                .then(surveysgraphdata => {
                     SessionsDataLayer.aggregateSession([
                         {
                             $match: {
@@ -696,6 +677,14 @@ exports.graphData = function (req, res) {
                         })
                     }
                 })
+                .catch(err => {
+                    if (err) {
+                        return res.status(404).json({
+                            status: 'failed',
+                            description: `Error in getting surveys count ${JSON.stringify(err)}`
+                        })
+                    }
+                })
             })
             .catch(err => {
                 if (err) {
@@ -724,72 +713,82 @@ exports.graphData = function (req, res) {
 }
 
 exports.toppages = function (req, res) {
-  CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!companyUser) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'The user account does not belong to any company. Please contact support'
-      })
-    }
-    Pages.find({connected: true, companyId: companyUser.companyId}, (err, pages) => {
-      if (err) {
-        return res.status(404).json({
-          status: 'failed',
-          description: `Error in getting pages ${JSON.stringify(err)}`
-        })
-      }
-      Subscribers.aggregate([
-        {$match: {companyId: companyUser.companyId}}, {
-          $group: {
-            _id: {pageId: '$pageId'},
-            count: {$sum: 1}
+
+  callApi.callApi('companyuser/query', post, {domain_email: req.user.domain_email})
+    .then(companyUser => {
+        if (!companyUser) {
+            return res.status(404).json({
+              status: 'failed',
+              description: 'The user account does not belong to any company. Please contact support'
+            })
           }
-        }], (err2, gotSubscribersCount) => {
-        if (err2) {
-          return res.status(404).json({
-            status: 'failed',
-            description: `Error in getting pages subscriber count ${JSON.stringify(
-              err2)}`
-          })
-        }
-        let pagesPayload = []
-        for (let i = 0; i < pages.length; i++) {
-          pagesPayload.push({
-            _id: pages[i]._id,
-            pageId: pages[i].pageId,
-            pageName: pages[i].pageName,
-            userId: pages[i].userId,
-            pagePic: pages[i].pagePic,
-            connected: pages[i].connected,
-            pageUserName: pages[i].pageUserName,
-            likes: pages[i].likes,
-            subscribers: 0
-          })
-        }
-        for (let i = 0; i < pagesPayload.length; i++) {
-          for (let j = 0; j < gotSubscribersCount.length; j++) {
-            if (pagesPayload[i]._id.toString() ===
-              gotSubscribersCount[j]._id.pageId.toString()) {
-              pagesPayload[i].subscribers = gotSubscribersCount[j].count
-            }
-          }
-        }
-        let sorted = sortBy(pagesPayload, 'subscribers')
-        let top10 = _.takeRight(sorted, 10)
-        top10 = top10.reverse()
-        res.status(200).json({
-          status: 'success',
-          payload: top10
-        })
-      })
+          callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId})
+            .then(pages => {
+                callApi.callApi('subscribers/aggregate', 'post', [
+                    {$match: {companyId: companyUser.companyId}}, {
+                      $group: {
+                        _id: {pageId: '$pageId'},
+                        count: {$sum: 1}
+                      }
+                }])
+                .then(gotSubscribersCount => {
+                    let pagesPayload = []
+                    for (let i = 0; i < pages.length; i++) {
+                      pagesPayload.push({
+                        _id: pages[i]._id,
+                        pageId: pages[i].pageId,
+                        pageName: pages[i].pageName,
+                        userId: pages[i].userId,
+                        pagePic: pages[i].pagePic,
+                        connected: pages[i].connected,
+                        pageUserName: pages[i].pageUserName,
+                        likes: pages[i].likes,
+                        subscribers: 0
+                      })
+                    }
+                    for (let i = 0; i < pagesPayload.length; i++) {
+                      for (let j = 0; j < gotSubscribersCount.length; j++) {
+                        if (pagesPayload[i]._id.toString() ===
+                          gotSubscribersCount[j]._id.pageId.toString()) {
+                          pagesPayload[i].subscribers = gotSubscribersCount[j].count
+                        }
+                      }
+                    }
+                    let sorted = sortBy(pagesPayload, 'subscribers')
+                    let top10 = _.takeRight(sorted, 10)
+                    top10 = top10.reverse()
+                    res.status(200).json({
+                      status: 'success',
+                      payload: top10
+                    })
+                })
+                .catch(err => {
+                    if (err2) {
+                        return res.status(404).json({
+                          status: 'failed',
+                          description: `Error in getting pages subscriber count ${JSON.stringify(
+                            err2)}`
+                        })
+                    }
+                })
+            })
+            .catch(err => {
+                if (err) {
+                    return res.status(404).json({
+                      status: 'failed',
+                      description: `Error in getting pages ${JSON.stringify(err)}`
+                    })
+                  }
+            })
     })
-  })
+    .catch(err => {
+        if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Internal Server Error ${JSON.stringify(err)}`
+            })
+          }
+    })
 }
 
 exports.getAllSubscribers = function (req, res) {
@@ -798,76 +797,92 @@ exports.getAllSubscribers = function (req, res) {
     pageId: mongoose.Types.ObjectId(req.params.pageid),
     $or: [{firstName: {$regex: search}}, {lastName: {$regex: search}}],
     gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
-    locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true}
+    locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
+    $limit: req.body.number_of_records
   }
   if (req.body.first_page === 'first') {
-    Subscribers.aggregate([
-      { $match: findCriteria },
-      { $group: { _id: null, count: { $sum: 1 } } }
-    ], (err, subscribersCount) => {
-      if (err) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Ssubscribers not found'})
-      }
-      Subscribers.find(findCriteria).limit(req.body.number_of_records)
-      .exec((err, subscribers) => {
+    callApi.callApi('subscribers/aggregate', 'post', [
+        { $match: findCriteria },
+        { $group: { _id: null, count: { $sum: 1 } } }
+    ])
+    .then(subscribersCount => {
+        callApi.callApi('subscribers/query', findCriteria)
+            .then(subscribers => {
+                res.status(200).json({
+                    status: 'success',
+                    payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
+                })
+            })
+            .catch(err => {
+                if (err) {
+                    return res.status(404).json({
+                      status: 'failed',
+                      description: `Error in getting subscribers ${JSON.stringify(err)}`
+                    })
+                }
+            })
+    })
+    .catch(err => {
         if (err) {
-          return res.status(404).json({
-            status: 'failed',
-            description: `Error in getting subscribers ${JSON.stringify(err)}`
-          })
+            return res.status(404)
+              .json({status: 'failed', description: 'Ssubscribers not found'})
         }
-        res.status(200).json({
-          status: 'success',
-          payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
-        })
-      })
     })
   } else if (req.body.first_page === 'next') {
-    Subscribers.aggregate([
-      { $match: findCriteria },
-      { $group: { _id: null, count: { $sum: 1 } } }
-    ], (err, subscribersCount) => {
-      if (err) {
-        return res.status(404)
-          .json({status: 'failed', description: 'BroadcastsCount not found'})
-      }
-      Subscribers.find(Object.assign(findCriteria, {_id: {$gt: req.body.last_id}})).limit(req.body.number_of_records)
-      .exec((err, subscribers) => {
+    callApi.callApi('subscribers/aggregate', 'post', [
+        { $match: findCriteria },
+        { $group: { _id: null, count: { $sum: 1 } } }
+    ])
+    .then(subscribersCount => {
+        callApi.callApi('subscribers/query', 'post', Object.assign(findCriteria, {_id: {$gt: req.body.last_id}}))
+            .then(subscribers => {
+                res.status(200).json({
+                    status: 'success',
+                    payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
+                })
+            })
+            .catch(err => {
+                if (err) {
+                    return res.status(404).json({
+                      status: 'failed',
+                      description: `Error in getting subscribers ${JSON.stringify(err)}`
+                    })
+                }
+            })
+    })
+    .catch(err => {
         if (err) {
-          return res.status(404).json({
-            status: 'failed',
-            description: `Error in getting subscribers ${JSON.stringify(err)}`
-          })
-        }
-        res.status(200).json({
-          status: 'success',
-          payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
-        })
-      })
+            return res.status(404)
+              .json({status: 'failed', description: 'BroadcastsCount not found'})
+          }
     })
   } else if (req.body.first_page === 'previous') {
-    Subscribers.aggregate([
-      { $match: findCriteria },
-      { $group: { _id: null, count: { $sum: 1 } } }
-    ], (err, subscribersCount) => {
-      if (err) {
-        return res.status(404)
-          .json({status: 'failed', description: 'BroadcastsCount not found'})
-      }
-      Subscribers.find(Object.assign(findCriteria, {_id: {$lt: req.body.last_id}})).limit(req.body.number_of_records)
-      .exec((err, subscribers) => {
+    callApi.callApi('subscribers/query', 'post', [
+        { $match: findCriteria },
+        { $group: { _id: null, count: { $sum: 1 } } }
+    ])
+    .then(subscribersCount => {
+        callApi.callApi('subscribers/query', Object.assign(findCriteria, {_id: {$lt: req.body.last_id}}))
+            .then(subscribers => {
+                res.status(200).json({
+                    status: 'success',
+                    payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
+                })
+            })
+            .catch(err => {
+                if (err) {
+                    return res.status(404).json({
+                      status: 'failed',
+                      description: `Error in getting subscribers ${JSON.stringify(err)}`
+                    })
+                }
+            })
+    })
+    .catch(err => {
         if (err) {
-          return res.status(404).json({
-            status: 'failed',
-            description: `Error in getting subscribers ${JSON.stringify(err)}`
-          })
+            return res.status(404)
+              .json({status: 'failed', description: 'BroadcastsCount not found'})
         }
-        res.status(200).json({
-          status: 'success',
-          payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
-        })
-      })
     })
   }
 }
