@@ -3,7 +3,10 @@ const TAG = 'api/v1/messengerEvents/surveyResponse.controller.js'
 const mongoose = require('mongoose')
 const needle = require('needle')
 const SurveysDataLayer = require('../surveys/surveys.datalayer')
+const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
+const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const {callApi} = require('../utility')
+const notificationsUtility = require('../notifications/notifications.utility')
 
 exports.surveyResponse = function (req, res) {
   res.status(200).json({
@@ -63,7 +66,7 @@ function savesurvey (req) {
                     })
                 }
               } else {
-                //  webhookUtility.saveNotification(webhook)
+                notificationsUtility.saveNotification(webhook)
               }
             })
           }
@@ -71,7 +74,7 @@ function savesurvey (req) {
         .catch(err => {
           logger.serverLog(TAG, err)
         })
-      SurveysDataLayer.genericUpdateForResponse.update({
+      SurveyResponseDataLayer.genericUpdateForResponse.update({
         surveyId: resp.survey_id,
         questionId: resp.question_id,
         subscriberId: subscriber._id
@@ -80,7 +83,7 @@ function savesurvey (req) {
           logger.serverLog(TAG,
             `Raw${JSON.stringify(surveyresponse)}`)
           // send the next question
-          SurveysDataLayer.genericfindForSurveyQuestions({surveyId: resp.survey_id, _id: { $gt: resp.question_id }})
+          SurveyQuestionDataLayer.genericfindForSurveyQuestions({surveyId: resp.survey_id, _id: { $gt: resp.question_id }})
             .then(questions => {
               if (questions.length > 0) {
                 let firstQuestion = questions[0]

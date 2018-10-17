@@ -14,3 +14,15 @@ exports.find = (query) => {
   return PagePoll.find(query)
     .exec()
 }
+exports.genericFind = (query) => {
+  return PagePoll.find(query).populate('companyId userId pollId')
+    .exec()
+}
+exports.createForPollPage = (payload) => {
+  let obj = new PagePoll(payload)
+  return obj.save()
+}
+exports.deleteForPollPage = (query) => {
+  return PagePoll.deleteMany(query)
+    .exec()
+}

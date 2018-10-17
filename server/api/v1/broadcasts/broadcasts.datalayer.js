@@ -1,11 +1,14 @@
-const BroadcastsModel = require('./broadcasts.model')
+const Broadcasts = require('./broadcasts.model')
 
-exports.findOneBroadcastObjectUsingQuery = (query) => {
-  return BroadcastsModel.findOne(query)
+exports.aggregateForBroadcasts = (aggregateObject) => {
+  return Broadcasts.aggregate(aggregateObject)
     .exec()
 }
-
-exports.aggregate = (query) => {
-    return BroadcastsModel.aggregate(query)
-      .exec()
+exports.deleteForBroadcasts = (id) => {
+  return Broadcasts.deleteOne({_id: id})
+    .exec()
+}
+exports.createForBroadcast = (payload) => {
+  let obj = new Broadcasts(payload)
+  return obj.save()
 }
