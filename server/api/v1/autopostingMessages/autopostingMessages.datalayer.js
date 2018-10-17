@@ -8,3 +8,7 @@ exports.updateOneAutopostingMessage = (id, payload) => {
   return AutopostingMessages.updateOne({_id: id}, payload)
     .exec()
 }
+exports.findOneAutopostingMessage = (id) => {
+  return AutopostingMessages.find({_id: id}).populate('pageId companyId autopostingId')
+    .exec()
+}

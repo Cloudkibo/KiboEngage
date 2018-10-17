@@ -9,6 +9,11 @@ exports.findOneURL = (id) => {
     .populate('subscriberId')
     .exec()
 }
+exports.genericFind = (query) => {
+  return URL.findOne(query)
+    .populate('subscriberId')
+    .exec()
+}
 exports.updateOneURL = (id, payload) => {
   return URL.updateOne({_id: id}, payload)
     .exec()

@@ -4,3 +4,7 @@ exports.genericUpdate = (query, updated, options) => {
   return PageSurvey.update(query, updated, options)
     .exec()
 }
+exports.createForSurveyPage = (payload) => {
+  let obj = new PageSurvey(payload)
+  return obj.save()
+}
