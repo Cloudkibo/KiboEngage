@@ -18,20 +18,20 @@ router.post('/allBroadcasts',
   validate({body: validationSchema.allBroadcastsPayload}),
   controller.index)
 
-// router.post('/sendConversation',
-//   auth.isAuthenticated(),
-//   auth.doesPlanPermitsThisAction('broadcasts'),
-//   auth.doesRolePermitsThisAction('broadcastPermission'),
-//   multipartyMiddleware,
-//   controller.sendConversation)
-//
-// router.post('/upload',
-//   auth.isAuthenticated(),
-//   auth.doesPlanPermitsThisAction('broadcasts'),
-//   auth.doesRolePermitsThisAction('broadcastPermission'),
-//   multipartyMiddleware,
-//   controller.upload)
-//
+router.post('/sendConversation',
+  auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('broadcasts'),
+  auth.doesRolePermitsThisAction('broadcastPermission'),
+  multipartyMiddleware,
+  controller.sendConversation)
+
+router.post('/upload',
+  auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('broadcasts'),
+  auth.doesRolePermitsThisAction('broadcastPermission'),
+  multipartyMiddleware,
+  controller.upload)
+
 
 router.get('/delete/:id',
   auth.isAuthenticated(),

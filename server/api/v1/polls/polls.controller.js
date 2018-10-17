@@ -9,6 +9,7 @@ const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const TAG = 'api/v1/polls/polls.controller.js'
 const utility = require('../utility')
 const compUtility = require('../../../components/utility')
+const notificationsUtility = require('../notifications/notifications.utility')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -129,7 +130,7 @@ exports.create = function (req, res) {
                                       })
                                   }
                                 } else {
-                                //  webhookUtility.saveNotification(webhook)
+                                  notificationsUtility.saveNotification(webhook)
                                 }
                               })
                             }
@@ -538,7 +539,7 @@ exports.sendPoll = function (req, res) {
                                                   })
                                               }
                                             } else {
-                                            //  webhookUtility.saveNotification(webhook)
+                                              notificationsUtility.saveNotification(webhook)
                                             }
                                           })
                                         }
