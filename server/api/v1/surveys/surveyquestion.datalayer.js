@@ -20,3 +20,14 @@ exports.saveQuestion = (surveyQuestion) => {
   .exec()
 
 }
+
+exports.findSurveyQuestionById = (req)  => {
+  return  SurveyQuestions.find({surveyId: req.params.id})
+  .exec()
+
+}
+
+exports.removeQuestion = (surveyquestion) => {
+  return surveyquestion.remove()
+  .exec()
+}

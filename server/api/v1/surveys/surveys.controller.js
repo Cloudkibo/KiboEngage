@@ -369,19 +369,24 @@ exports.submitresponse = function (req, res) {
 
     })
 
-    surveyResponse.save((err) => {
-      if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
-      }
-    })
+     surveyResponseDataLayer.saveResponse(surveyResponse)
+     .then (success => {
+     })
+
+     .catch(error => {
+      return res.status(500).json({status: 'failed', description: error})
+})
+
   }
+
+  surveyDataLayer.genericUpdateForSurvey({_id: mongoose.Types.ObjectId(req.body.surveyId)}, {$inc: {isresponded: 1}})
+  .then (success => {
+    return res.status(200).json({status: 'success', payload: 'Response submitted successfully'})
+  })
   //  Surveys.update({ _id: mongoose.Types.ObjectId(req.body.surveyId) }, { $set: { isresponded: true } })
-  Surveys.update({_id: mongoose.Types.ObjectId(req.body.surveyId)}, {$inc: {isresponded: 1}})
-  return res.status(200)
-    .json({status: 'success', payload: 'Response submitted successfully'})
+  .catch(error => {
+    return res.status(500).json({status: 'failed', description: error})
+})
 }
 function exists (list, content) {
   for (let i = 0; i < list.length; i++) {
@@ -1427,64 +1432,79 @@ exports.sendSurvey = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
-  Surveys.findById(req.params.id, (err, survey) => {
-    if (err) {
-      return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
-    }
-    if (!survey) {
-      return res.status(404)
-        .json({status: 'failed', description: 'Record not found'})
-    }
-    survey.remove((err2) => {
-      if (err2) {
-        return res.status(500)
-          .json({status: 'failed', description: 'survey update failed'})
+
+     surveyDataLayer.findServeyById(req)
+     .then (survey => {
+      if (!survey) {
+        return res.status(404)
+          .json({status: 'failed', description: 'Record not found'})
       }
-      SurveyPage.find({surveyId: req.params.id}, (err, surveypages) => {
-        if (err) {
-          return res.status(404)
-          .json({status: 'failed', description: 'Polls not found'})
-        }
-        surveypages.forEach(surveypage => {
-          surveypage.remove((err2) => {
-            if (err2) {
-              return res.status(500)
-                .json({status: 'failed', description: 'poll update failed'})
-            }
-          })
-        })
-        SurveyResponses.find({surveyId: req.params.id}, (err, surveyresponses) => {
-          if (err) {
-            return res.status(404)
-            .json({status: 'failed', description: 'Polls not found'})
-          }
-          surveyresponses.forEach(surveyresponse => {
-            surveyresponse.remove((err2) => {
-              if (err2) {
-                return res.status(500)
-                  .json({status: 'failed', description: 'poll update failed'})
-              }
+
+      surveyDataLayer.removeSurvey(survey)
+      .then (success => {
+
+        SurveyPageDataLayer.findSurveyPagesById(req)
+        .then(surveypages => {
+          surveypages.forEach(surveypage => {
+            SurveyPageDataLayer.removeSurvey(survey)
+            .then(success => {
+               
             })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', description: error})
+        })
           })
-          SurveyQuestions.find({surveyId: req.params.id}, (err, surveyquestions) => {
-            if (err) {
-              return res.status(404)
-              .json({status: 'failed', description: 'Polls not found'})
-            }
-            surveyquestions.forEach(surveyquestion => {
-              surveyquestion.remove((err2) => {
-                if (err2) {
-                  return res.status(500)
-                    .json({status: 'failed', description: 'poll update failed'})
-                }
+
+          surveyResponseDataLayer.findSurveyResponseById(req)
+          .then(surveyresponses => {
+
+            surveyresponses.forEach(surveyresponse => {
+              surveyResponseDataLayer.removeResponse(surveyresponse)
+              .then(success => {
+                 
               })
-            })
-            return res.status(200)
-            .json({status: 'success'})
+              .catch(error => {
+                return res.status(500).json({status: 'failed', description: error})
           })
+            })
+
+            surveyQuestionsDataLayer.findSurveyQuestionById(req)
+            .then(surveyquestions => {
+  
+              surveyquestions.forEach(surveyquestion => {
+                surveyQuestionsDataLayer.removeQuestion(surveyquestions)
+                .then(success => {
+                   
+                })
+                .catch(error => {
+                  return res.status(500).json({status: 'failed', description: error})
+            })
+              })
+
+              return res.status(200).json({status: 'success'})
+  
+            })
+  
+            .catch(error => {
+              return res.status(500).json({status: 'failed', description: error})
         })
+
+          })
+
+          .catch(error => {
+            return res.status(500).json({status: 'failed', description: error})
       })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', description: error})
     })
+        
+      })
+      .catch(error => {
+        return res.status(500).json({status: 'failed', description: error})
   })
+     })
+     .catch(error => {
+      return res.status(500).json({status: 'failed', description: error})
+})
 }

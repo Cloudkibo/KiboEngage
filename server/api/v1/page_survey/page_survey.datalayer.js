@@ -8,3 +8,13 @@ exports.genericFind = (query) => {
   return PageSurvey.find(query).populate('companyId userId SurveyId')
     .exec()
 }
+
+exports.findSurveyPagesById= (req) => {
+  return  SurveyPage.find({surveyId: req.params.id})
+  .exec()
+}
+
+exports.removeSurvey= (survey) => {
+  return surveypage.remove()
+  .exec()
+}

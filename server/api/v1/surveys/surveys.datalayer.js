@@ -29,3 +29,13 @@ exports.findByIdPopulate = (req) => {
   return Surveys.findById(req.params.id).populate('userId')
   .exec()
 }
+
+exports.surveyFindById = () => {
+  return Surveys.findById(req.params.id)
+  .exec()
+}
+
+exports.removeSurvey = (survey) => {
+ return survey.remove()
+ .exec()
+}
