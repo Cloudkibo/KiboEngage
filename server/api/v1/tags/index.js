@@ -25,22 +25,27 @@ router.post('/',
 
 router.post('/rename',
   auth.isAuthenticated(),
+  validate({body: validationSchema.renamePayload}),
   controller.rename)
 
 router.post('/delete',
   auth.isAuthenticated(),
+  validate({body: validationSchema.deletePayload}),
   controller.delete)
 
 router.post('/assign',
   auth.isAuthenticated(),
+  validate({body: validationSchema.assignPayload}),
   controller.assign)
 
 router.post('/unassign',
   auth.isAuthenticated(),
+  validate({body: validationSchema.assignPayload}),
   controller.unassign)
 
 router.post('/subscribertags',
   auth.isAuthenticated(),
+  validate({body: validationSchema.subscriberTagsPayload}),
   controller.subscribertags)
 
 module.exports = router

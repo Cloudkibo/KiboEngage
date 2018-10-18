@@ -7,13 +7,8 @@ const TAG = 'api/tags/tags.controller.js'
 
 const TagsDataLayer = require('./tags.datalayer')
 const Tags = require('./tags.model')
+const TagsSubscribersDataLayer = require('./../tags_subscribers/tags_subscribers.datalayer')
 const TagsSubscribers = require('./../tags_subscribers/tags_subscribers.model')
-const CompanyUsers = require('./../companyuser/companyuser.model')
-const Subscribers = require('./../subscribers/Subscribers.model')
-const _ = require('lodash')
-const CompanyUsage = require('./../featureUsage/companyUsage.model')
-const PlanUsage = require('./../featureUsage/planUsage.model')
-const CompanyProfile = require('./../companyprofile/companyprofile.model')
 
 const callApi = require('../../../utility/api.caller.service')
 
@@ -143,82 +138,16 @@ exports.create = function (req, res) {
 }
 
 exports.rename = function (req, res) {
-  let parametersMissing = false
-
-  if (!_.has(req.body, 'tagId')) parametersMissing = true
-  if (!_.has(req.body, 'tagName')) parametersMissing = true
-
-  if (parametersMissing) {
-    return res.status(400)
-      .json({status: 'failed', description: 'Parameters are missing'})
-  }
-
-  Tags.findOne({_id: req.body.tagId}, (err, tagPayload) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!tagPayload) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'No tag is available on server with given tagId.'
-      })
-    }
-    tagPayload.tag = req.body.tagName
-    tagPayload.save((err, newTag) => {
-      if (err) {
-        return res.status(500).json({
+  TagsDataLayer.findTag({_id: req.body.tagId})
+    .then(tagPayload => {
+      if (!tagPayload) {
+        return res.status(404).json({
           status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
+          description: 'No tag is available on server with given tagId.'
         })
       }
-      require('./../../../config/socketio').sendMessageToClient({
-        room_id: newTag.companyId,
-        body: {
-          action: 'tag_rename',
-          payload: {
-            tag_id: newTag._id,
-            tag_name: newTag.tag
-          }
-        }
-      })
-      res.status(200).json({status: 'success', payload: newTag})
-    })
-  })
-}
-
-exports.delete = function (req, res) {
-  let parametersMissing = false
-
-  if (!_.has(req.body, 'tagId')) parametersMissing = true
-
-  if (parametersMissing) {
-    return res.status(400)
-      .json({status: 'failed', description: 'Parameters are missing'})
-  }
-  Tags.findOne({_id: req.body.tagId}, (err, tagPayload) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!tagPayload) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'No tag is available on server with given tagId.'
-      })
-    }
-    TagsSubscribers.remove({tagId: req.body.tagId}, (err) => {
-      if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
-      }
-      Tags.remove({_id: req.body.tagId}, (err) => {
+      tagPayload.tag = req.body.tagName
+      tagPayload.save((err, newTag) => {
         if (err) {
           return res.status(500).json({
             status: 'failed',
@@ -226,148 +155,186 @@ exports.delete = function (req, res) {
           })
         }
         require('./../../../config/socketio').sendMessageToClient({
-          room_id: tagPayload.companyId,
+          room_id: newTag.companyId,
           body: {
-            action: 'tag_remove',
+            action: 'tag_rename',
             payload: {
-              tag_id: req.body.tagId
+              tag_id: newTag._id,
+              tag_name: newTag.tag
             }
           }
         })
-        res.status(200)
-          .json({status: 'success', description: 'Tag removed successfully'})
+        res.status(200).json({status: 'success', payload: newTag})
       })
     })
-  })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
+        })
+      }
+    })
+}
+
+exports.delete = function (req, res) {
+  TagsDataLayer.findTag({_id: req.body.tagId})
+    .then(tagPayload => {
+      if (!tagPayload) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'No tag is available on server with given tagId.'
+        })
+      }
+      TagsSubscribersDataLayer.genericRemove({tagId: req.body.tagId})
+        .then(() => {
+          TagsDataLayer.removeTag({_id: req.body.tagId})
+            .then(() => {
+              require('./../../../config/socketio').sendMessageToClient({
+                room_id: tagPayload.companyId,
+                body: {
+                  action: 'tag_remove',
+                  payload: {
+                    tag_id: req.body.tagId
+                  }
+                }
+              })
+              res.status(200)
+                .json({status: 'success', description: 'Tag removed successfully'})
+            })
+            .catch(err => {
+              if (err) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Internal Server Error ${JSON.stringify(err)}`
+                })
+              }
+            })
+        })
+        .catch(err => {
+          if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Internal Server Error ${JSON.stringify(err)}`
+            })
+          }
+        })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
+        })
+      }
+    })
 }
 
 exports.assign = function (req, res) {
-  let parametersMissing = false
-
-  if (!_.has(req.body, 'tagId')) parametersMissing = true
-  if (!_.has(req.body, 'subscribers')) parametersMissing = true
-
-  if (parametersMissing) {
-    return res.status(400)
-      .json({status: 'failed', description: 'Parameters are missing'})
-  }
-  Tags.findOne({_id: req.body.tagId}, (err, tagPayload) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!tagPayload) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'No tag is available on server with given tagId.'
-      })
-    }
-    req.body.subscribers.forEach((subscriberId) => {
-      Subscribers.findById(subscriberId, (err, subscriber) => {
-        if (err) {
-          logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`)
-        }
-        if (!subscriber) {
-          logger.serverLog(TAG,
-            `WRONG SUBSCRIBER ID ${subscriberId} SENT IN ${JSON.stringify(
-              req.body.payload)}`)
-        }
-        let subscriberTagsPayload = new TagsSubscribers({
-          tagId: tagPayload._id,
-          subscriberId: subscriber._id,
-          companyId: tagPayload.companyId
+  TagsDataLayer.findTag({_id: req.body.tagId})
+    .then(tagPayload => {
+      if (!tagPayload) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'No tag is available on server with given tagId.'
         })
-        subscriberTagsPayload.save((err) => {
-          if (err) {
+      }
+      req.body.subscribers.forEach((subscriberId) => {
+        callApi.callApi(`subscribers/${subscriberId}`, subscriber => {
+          if (!subscriber) {
             logger.serverLog(TAG,
-              `Internal Server Error ${JSON.stringify(err)}`)
+              `WRONG SUBSCRIBER ID ${subscriberId} SENT IN ${JSON.stringify(
+                req.body.payload)}`)
+          }
+          let subscriberTagsPayload = new TagsSubscribers({
+            tagId: tagPayload._id,
+            subscriberId: subscriber._id,
+            companyId: tagPayload.companyId
+          })
+          subscriberTagsPayload.save((err) => {
+            if (err) {
+              logger.serverLog(TAG,
+                `Internal Server Error ${JSON.stringify(err)}`)
+            }
+          })
+        })
+        .catch(err => {
+          if (err) {
+            logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`)
           }
         })
       })
-    })
-    require('./../../../config/socketio').sendMessageToClient({
-      room_id: tagPayload.companyId,
-      body: {
-        action: 'tag_assign',
-        payload: {
-          tag_id: req.body.tagId,
-          subscriber_ids: req.body.subscribers
+      require('./../../../config/socketio').sendMessageToClient({
+        room_id: tagPayload.companyId,
+        body: {
+          action: 'tag_assign',
+          payload: {
+            tag_id: req.body.tagId,
+            subscriber_ids: req.body.subscribers
+          }
         }
+      })
+      res.status(201).json({
+        status: 'success',
+        description: 'Tag assigned successfully'
+      })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
+        })
       }
     })
-    res.status(201).json({
-      status: 'success',
-      description: 'Tag assigned successfully'
-    })
-  })
 }
 
 exports.unassign = function (req, res) {
-  let parametersMissing = false
-
-  if (!_.has(req.body, 'tagId')) parametersMissing = true
-  if (!_.has(req.body, 'subscribers')) parametersMissing = true
-
-  if (parametersMissing) {
-    return res.status(400)
-      .json({status: 'failed', description: 'Parameters are missing'})
-  }
-  Tags.findOne({_id: req.body.tagId}, (err, tagPayload) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    if (!tagPayload) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'No tag is available on server with given tagId.'
-      })
-    }
-    TagsSubscribers.remove(
-      {tagId: req.body.tagId, subscriberId: {$in: req.body.subscribers}},
-      (err) => {
-        if (err) {
-          return res.status(400)
-          .json({status: 'failed', description: 'Parameters are missing'})
-        }
-        require('./../../../config/socketio').sendMessageToClient({
-          room_id: tagPayload.companyId,
-          body: {
-            action: 'tag_unassign',
-            payload: {
-              tag_id: req.body.tagId,
-              subscriber_ids: req.body.subscribers
+  TagsDataLayer.findTag({_id: req.body.tagId})
+    .then(tagPayload => {
+      if (!tagPayload) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'No tag is available on server with given tagId.'
+        })
+      }
+      TagsSubscribersDataLayer.genericRemove({tagId: req.body.tagId, subscriberId: {$in: req.body.subscribers}})
+        .then(() => {
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: tagPayload.companyId,
+            body: {
+              action: 'tag_unassign',
+              payload: {
+                tag_id: req.body.tagId,
+                subscriber_ids: req.body.subscribers
+              }
             }
+          })
+          res.status(201).json({
+            status: 'success',
+            description: 'Tag unassigned successfully'
+          })
+        })
+        .catch(err => {
+          if (err) {
+            return res.status(400)
+            .json({status: 'failed', description: 'Parameters are missing'})
           }
         })
-        res.status(201).json({
-          status: 'success',
-          description: 'Tag unassigned successfully'
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
         })
-      })
-  })
+      }
+    })
 }
 
 exports.subscribertags = function (req, res) {
-  let parametersMissing = false
-
-  if (!_.has(req.body, 'subscriberId')) parametersMissing = true
-
-  if (parametersMissing) {
-    return res.status(400)
-      .json({status: 'failed', description: 'Parameters are missing'})
-  }
-  TagsSubscribers.find({subscriberId: req.body.subscriberId})
-    .populate('tagId')
-    .exec((err, tagsSubscriber) => {
-      if (err) {
-        return res.status(400)
-          .json({status: 'failed', description: 'Parameters are missing'})
-      }
+  TagsSubscribersDataLayer.genericfind({subscriberId: req.body.subscriberId})
+    .then(tagsSubscriber => {
       let payload = []
       for (let i = 0; i < tagsSubscriber.length; i++) {
         payload.push({
@@ -380,5 +347,11 @@ exports.subscribertags = function (req, res) {
         status: 'success',
         payload: payload
       })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(400)
+          .json({status: 'failed', description: 'Parameters are missing'})
+      }
     })
 }
