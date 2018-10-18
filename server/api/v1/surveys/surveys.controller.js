@@ -333,27 +333,19 @@ exports.show = function (req, res) {
 
 // Get a single survey
 exports.showQuestions = function (req, res) {
-  Surveys.findById(req.params.id).populate('userId').exec((err, survey) => {
-    if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
-    }
-    // find questions
-    SurveyQuestions.find({surveyId: survey._id})
-      .populate('surveyId')
-      .exec((err2, questions) => {
-        if (err2) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err2)}`
-          })
-        }
-
-        return res.status(200)
-          .json({status: 'success', payload: {survey, questions}})
-      })
+  surveyDataLayer.findByIdPopulate(req)
+  .then(survey => {
+    surveyQuestionsDataLayer.findSurveyWithId(req)
+  .then(questions => {
+    return res.status(200)
+    .json({status: 'success', payload: {survey, questions}})
+  })
+  .catch(error => {
+    return res.status(500).json({status: 'failed', payload: error})
+  })
+  })
+  .catch(error => {
+    return res.status(500).json({status: 'failed', payload: error})
   })
 }
 
