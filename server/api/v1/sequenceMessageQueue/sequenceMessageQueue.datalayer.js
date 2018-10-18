@@ -14,5 +14,21 @@ exports.findAll = () => {
 }
 exports.deleteOneObject = (id) => {
   return SequenceMessageQueue.delete({_id: id})
+  .exec()
+}
+exports.genericUpdate = (query, updated, options) => {
+  return SequenceMessageQueue.update(query, updated, options)
+    .exec()
+}
+exports.removeForSequenceSubscribers = (sequenceId, subscriberId) => {
+  return SequenceMessageQueue.remove(sequenceId).where('subscriberId').equals(subscriberId)
+    .exec()
+}
+exports.genericFind = (query) => {
+  return SequenceMessageQueue.find(query)
+    .exec()
+}
+exports.findOne = (objectId) => {
+  return SequenceMessageQueue.findOne({_id: objectId})
     .exec()
 }
