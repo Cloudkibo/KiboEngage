@@ -5,6 +5,10 @@ exports.genericUpdate = (query, updated, options) => {
     .exec()
 }
 
+exports.aggregate = (query) => {
+  return PageBroadcast.aggregate(query)
+    .exec()
+}
 exports.genericFind = (query) => {
   return PageBroadcast.find(query)
     .exec()
