@@ -44,6 +44,7 @@ exports.create = function (req, res) {
       }
       utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id})
         .then(companyProfile => {
+          // calling accounts feature usage for this
           utility.callApi(`featureUsage/planUsage/query`, 'post', {planId: companyProfile.planId})
             .then(planUsage => {
               utility.callApi('featureUsage/companyUsage/query', 'post', {companyId: companyProfile._id})

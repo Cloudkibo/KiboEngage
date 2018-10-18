@@ -1,6 +1,6 @@
 const BroadcastLogicLayer = require('./broadcasts.logiclayer')
 const BroadcastDataLayer = require('./broadcasts.datalayer')
-const BroadcastPageDataLayer = require('../page_broadcast.datalayer')
+const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
 const URLDataLayer = require('../URLforClickedCount/URL.datalayer')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const logger = require('../../../components/logger')
