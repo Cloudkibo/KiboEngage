@@ -8,3 +8,8 @@ exports.createForSurveyPage = (payload) => {
   let obj = new PageSurvey(payload)
   return obj.save()
 }
+
+exports.aggregate = (query) => {
+  return PageSurvey.aggregate(query)
+    .exec()
+}

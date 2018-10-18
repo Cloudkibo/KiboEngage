@@ -1,6 +1,6 @@
-const Tags = require('./tags.model')
+const TagsModel = require('./tags.model')
 
-exports.genericFind = (query) => {
-  return Tags.find(query)
+exports.findTag = (query) => {
+  return TagsModel.find(query)
     .exec()
 }
