@@ -43,6 +43,10 @@ exports.genericUpdateForSubscriberMessages = (query, updated, options) => {
   return SequenceSubscribersMessages.update(query, updated, options)
     .exec()
 }
+exports.genericFindForSubscriberMessages = (query, updated, options) => {
+  return SequenceSubscribersMessages.find(query).populate('subscriberId messageId companyId')
+    .exec()
+}
 exports.genericUpdateForSequenceSubscribers = (query, updated, options) => {
   return SequenceSubscribers.update(query, updated, options)
     .exec()
@@ -53,6 +57,10 @@ exports.removeForSequenceSubscribers = (sequenceId, subscriberId) => {
 }
 exports.createForSequenceSubcriber = (payload) => {
   let obj = new SequenceSubscribers(payload)
+  return obj.save()
+}
+exports.createForSequenceSubscribersMessages = (payload) => {
+  let obj = new SequenceSubscribersMessages(payload)
   return obj.save()
 }
 exports.createSequence = (payload) => {

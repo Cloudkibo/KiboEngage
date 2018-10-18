@@ -1,6 +1,11 @@
 const PollResponse = require('./pollresponse.model')
 const Polls = require('./polls.model')
 
+exports.findOnePoll = (id) => {
+  return Polls.find({_id: id}).populate('companyId userId')
+    .exec()
+}
+
 exports.genericFindForPolls = (query) => {
   return Polls.find(query).populate('companyId userId')
     .exec()
