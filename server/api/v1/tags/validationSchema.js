@@ -27,3 +27,37 @@ exports.renamePayload = {
       }
   }
 }
+
+exports.deletePayload = {
+  type: 'object',
+  properties: {
+      tagId: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+
+exports.assignPayload = {
+  type: 'object',
+  properties: {
+      tagId: {
+      type: 'string',
+      required: true
+    },
+    subscribers: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+
+exports.subscriberTagsPayload = {
+  type: 'object',
+  properties: {
+    subscriberId: {
+      type: 'string',
+      required: true
+    }
+  }
+}
