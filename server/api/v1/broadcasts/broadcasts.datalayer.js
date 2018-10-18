@@ -18,6 +18,11 @@ exports.countBroadcasts = (query) => {
         .exec()
 }
 
+exports.updateBroadcast = (query) => {
+    return Broadcasts.update(query)
+        .exec()
+}
+
 exports.findBroadcastsWithSortLimit = (query, sort, limit) => {
     return Broadcasts.find(query)
         .sort(sort)

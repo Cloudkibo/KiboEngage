@@ -21,6 +21,8 @@ const sortBy = require('sort-array')
 const Users = require('./../user/Users.model')
 const needle = require('needle')
 
+const callApi = require('../../../utility/api.caller.service')
+
 let _ = require('lodash')
 
 exports.index = function (req, res) {
