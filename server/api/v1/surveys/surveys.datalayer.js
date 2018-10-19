@@ -30,7 +30,7 @@ exports.findByIdPopulate = (req) => {
   .exec()
 }
 
-exports.surveyFindById = () => {
+exports.surveyFindById = (req) => {
   return Surveys.findById(req.params.id)
   .exec()
 }
@@ -38,4 +38,13 @@ exports.surveyFindById = () => {
 exports.removeSurvey = (survey) => {
  return survey.remove()
  .exec()
+}
+
+exports.createSurvey = (survey) => {
+  return Surveys.create(survey)
+  .exec()  
+}
+exports.findServey = (req) => {
+return Surveys.findOne({_id: req.body._id})
+.exec()
 }

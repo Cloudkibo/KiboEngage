@@ -22,12 +22,18 @@ exports.saveQuestion = (surveyQuestion) => {
 }
 
 exports.findSurveyQuestionById = (req)  => {
-  return  SurveyQuestions.find({surveyId: req.params.id})
+  return SurveyQuestions.find({surveyId: req.params.id})
   .exec()
 
 }
 
 exports.removeQuestion = (surveyquestion) => {
   return surveyquestion.remove()
+  .exec()
+}
+
+exports.findQuestionSurveyById = (req) => {
+  return SurveyQuestions.find({surveyId: req.body._id})
+  .populate('surveyId')
   .exec()
 }

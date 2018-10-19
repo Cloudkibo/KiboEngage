@@ -44,3 +44,53 @@ exports.getCriterias = function (body, companyUser) {
     ]
     return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
   }
+
+exports.createSurveyPayload = function (req, companyUser) {
+  let surveyPayload = {
+    title: req.body.survey.title,
+    description: req.body.survey.description,
+    userId: req.user._id,
+    companyId: companyUser.companyId,
+    isresponded: 0
+  }
+  if (req.body.isSegmented) {
+    surveyPayload.isSegmented = true
+    surveyPayload.segmentationPageIds = (req.body.segmentationPageIds)
+      ? req.body.segmentationPageIds
+      : null
+    surveyPayload.segmentationGender = (req.body.segmentationGender)
+      ? req.body.segmentationGender
+      : null
+    surveyPayload.segmentationLocale = (req.body.segmentationLocale)
+      ? req.body.segmentationLocale
+      : null
+    surveyPayload.segmentationTags = (req.body.segmentationTags)
+      ? req.body.segmentationTags
+      : null
+    surveyPayload.segmentationSurvey = (req.body.segmentationSurvey)
+      ? req.body.segmentationSurvey
+      : null
+  }
+  if (req.body.isList) {
+    surveyPayload.isList = true
+    surveyPayload.segmentationList = (req.body.segmentationList)
+      ? req.body.segmentationList
+      : null
+  }
+  return surveyPayload
+  }
+
+exports.pageFindCriteria = function (req, companyUser) {
+
+  let pagesFindCriteria = {companyId: companyUser.companyId, connected: true}
+  if (req.body.isSegmented) {
+    if (req.body.segmentationPageIds.length > 0) {
+      pagesFindCriteria = _.merge(pagesFindCriteria, {
+        pageId: {
+          $in: req.body.segmentationPageIds
+        }
+      })
+    }
+  }
+  return pagesFindCriteria
+  }

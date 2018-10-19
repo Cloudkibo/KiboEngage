@@ -15,7 +15,7 @@ exports.aggregateForSurveyResponse = (query) => {
 }
 
 exports.findSurveyResponseById = (req) => {
-  return SurveyResponses.find({surveyId: req.params.id})
+  return SurveyResponse.find({surveyId: req.params.id})
   .exec()
 }
 exports.removeResponse = (Response) => {
