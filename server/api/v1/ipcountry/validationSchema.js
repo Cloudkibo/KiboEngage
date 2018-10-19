@@ -5,11 +5,11 @@ Now the middleware will automatically send error response if the payload fails
 */
 
 exports.findPayload = {
-    type: 'object',
-    properties: {
-        company_id: {
-        type: 'string',
-        required: true
-      }
+  type: 'object',
+  properties: {
+    company_id: {
+      type: 'string',
+      required: true
+    }
   }
 }

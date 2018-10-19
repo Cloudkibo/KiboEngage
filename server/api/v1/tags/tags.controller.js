@@ -13,7 +13,6 @@ const TagsSubscribers = require('./../tags_subscribers/tags_subscribers.model')
 const callApi = require('../../../utility/api.caller.service')
 
 exports.index = function (req, res) {
-
   callApi.callApi('companyuser/query', post, {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
@@ -60,7 +59,6 @@ exports.create = function (req, res) {
               }
               callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
                 .then(companyUser => {
-
                   if (!companyUser) {
                     return res.status(404).json({
                       status: 'failed',
@@ -258,11 +256,11 @@ exports.assign = function (req, res) {
             }
           })
         })
-        .catch(err => {
-          if (err) {
-            logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`)
-          }
-        })
+          .catch(err => {
+            if (err) {
+              logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`)
+            }
+          })
       })
       require('./../../../config/socketio').sendMessageToClient({
         room_id: tagPayload.companyId,
@@ -318,7 +316,7 @@ exports.unassign = function (req, res) {
         .catch(err => {
           if (err) {
             return res.status(400)
-            .json({status: 'failed', description: 'Parameters are missing'})
+              .json({status: 'failed', description: 'Parameters are missing'})
           }
         })
     })

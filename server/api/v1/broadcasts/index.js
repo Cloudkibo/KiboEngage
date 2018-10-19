@@ -32,7 +32,6 @@ router.post('/upload',
   multipartyMiddleware,
   controller.upload)
 
-
 router.get('/delete/:id',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('broadcasts'),

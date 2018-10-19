@@ -27,7 +27,7 @@ class App extends Component {
 
 function mapStateToProps (state) {
   return {
-    message: state.testReducer.serverMessage,
+    message: state.testReducer.serverMessage
   }
 }
 

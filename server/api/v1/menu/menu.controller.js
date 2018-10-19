@@ -28,7 +28,7 @@ exports.index = function (req, res) {
         .catch(err => {
           logger.serverLog(TAG, `Internal Server Error on fetch ${err}`)
           return res.status(500)
-          .json({status: 'failed', description: 'Internal Server Error'})
+            .json({status: 'failed', description: 'Internal Server Error'})
         })
     })
     .catch(err => {
@@ -40,7 +40,6 @@ exports.index = function (req, res) {
 }
 
 exports.indexByPage = function (req, res) {
-
   callApi.callApi('companyuser/query', post, {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
@@ -60,7 +59,7 @@ exports.indexByPage = function (req, res) {
           if (err) {
             logger.serverLog(TAG, `Internal Server Error on fetch ${err}`)
             return res.status(500)
-            .json({status: 'failed', description: 'Internal Server Error'})
+              .json({status: 'failed', description: 'Internal Server Error'})
           }
         })
     })
@@ -100,7 +99,7 @@ exports.create = function (req, res) {
                   companyId: companyUser.companyId,
                   jsonStructure: req.body.jsonStructure
                 })
-      
+
                 // save model to MongoDB
                 menu.save((err, savedMenu) => {
                   if (err) {
@@ -124,7 +123,7 @@ exports.create = function (req, res) {
                       }
                     })
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-      
+
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (err) {
@@ -148,7 +147,7 @@ exports.create = function (req, res) {
                 MenuDataLayer.updateOneMenuObjectUsingQuery({pageId: req.body.pageId}, {jsonStructure: req.body.jsonStructure})
                   .then(updated => {
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-      
+
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: companyUser.companyId,
                       body: {
@@ -161,7 +160,7 @@ exports.create = function (req, res) {
                         }
                       }
                     })
-      
+
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (!err) {

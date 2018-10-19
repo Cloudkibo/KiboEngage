@@ -6,6 +6,6 @@ exports.findOneInviteAgentTokenUsingQuery = (query) => {
 }
 
 exports.removeInviteAgentTokenUsingQuery = (query) => {
-    return InviteAgentTokenModel.remove(query)
-      .exec()
-  }
+  return InviteAgentTokenModel.remove(query)
+    .exec()
+}

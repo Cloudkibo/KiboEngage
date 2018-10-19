@@ -1,7 +1,7 @@
 const fetch = require('isomorphic-fetch')
 const config = require('../config/environment/index')
 
-exports.callApi = (endpoint, method = 'get', body, type='accounts') => {
+exports.callApi = (endpoint, method = 'get', body, type = 'accounts') => {
   console.log('endpoint', endpoint)
   let headers = {
     'content-type': 'application/json'

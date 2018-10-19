@@ -1,5 +1,4 @@
 
-
 const logger = require('../../../components/logger')
 const TAG = 'api/invitations/invitations.controller.js'
 const InvitationsDataLayer = require('./invitations.datalayer.js')
@@ -49,18 +48,18 @@ exports.cancel = function (req, res) {
       InvitationsDataLayer.removeInvitationObjectUsingQuery({email: req.body.email, companyId: companyUser.companyId})
         .then(() => {
           InviteAgentTokenDataLayer.removeInviteAgentTokenUsingQuery({email: req.body.email, companyId: companyUser.companyId})
-          .then(() => {
-            res.status(200).json({
-              status: 'success',
-              description: 'Invitation has been cancelled.'
+            .then(() => {
+              res.status(200).json({
+                status: 'success',
+                description: 'Invitation has been cancelled.'
+              })
             })
-          })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
+            .catch(err => {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Internal Server Error ${JSON.stringify(err)}`
+              })
             })
-          })
         })
         .catch(err => {
           return res.status(500).json({

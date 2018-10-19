@@ -7,16 +7,14 @@ exports.getCriterias = function (req) {
       category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
-  }
-  else if (req.body.first_page === 'next') {
+  } else if (req.body.first_page === 'next') {
     let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
       title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
       category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
-  }
-  else if (req.body.first_page === 'previous') {
+  } else if (req.body.first_page === 'previous') {
     let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
       title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
@@ -34,8 +32,7 @@ exports.getCriteriasBroadcast = function (object) {
       category: object.req.body.filter_criteria.category_value !== '' ? object.req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
-  }
-  else if (object.req.body.first_page === 'next') {
+  } else if (object.req.body.first_page === 'next') {
     let search = new RegExp('.*' + object.req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
       '$or': [{companyId: object.companyUser.companyId}, {createdBySuperUser: true}],
@@ -79,7 +76,6 @@ exports.createDataCategory = function (object) {
   }
   return categoryPayload
 }
-
 
 exports.createDataBots = function (req) {
   let botTemplatePayload = {

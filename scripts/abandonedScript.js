@@ -40,8 +40,8 @@ CheckoutInfo.find({ isPurchased: false,
   } else {
     setTimeout(function (mongoose) { closeDB(mongoose) }, 2000)
   }
-   // If data clause check
-})  // CheckoutInfo find ends here
+  // If data clause check
+}) // CheckoutInfo find ends here
 
 function closeDB () {
   logger.serverLog(TAG, `Closing Database Connection`)

@@ -80,7 +80,7 @@ exports.sequence = function (req, res) {
                       })
                     }
                     if (seqMessages && seqMessages.length > 0) {
-                       // iterate through all the messages of this sequence.
+                      // iterate through all the messages of this sequence.
                       for (let message of seqMessages) {
                       // check if this message is in the trigger of any message of this sequence then add it to queue.
                         if (message.trigger.value !== '') {
@@ -129,4 +129,3 @@ exports.sequence = function (req, res) {
       }
     })
 }
-

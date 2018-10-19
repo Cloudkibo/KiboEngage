@@ -23,7 +23,7 @@ router.post('/edit',
   controller.edit)
 
 router.delete('/delete/:id',
-    auth.isAuthenticated(),
-    controller.delete)
+  auth.isAuthenticated(),
+  controller.delete)
 
 module.exports = router

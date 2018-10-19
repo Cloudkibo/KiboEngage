@@ -6,6 +6,6 @@ exports.findOneInvitationObjectUsingQuery = (query) => {
 }
 
 exports.removeInvitationObjectUsingQuery = (query) => {
-    return InvitationsModel.remove(query)
-      .exec()
-  }
+  return InvitationsModel.remove(query)
+    .exec()
+}
