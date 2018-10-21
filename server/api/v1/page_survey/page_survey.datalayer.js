@@ -14,7 +14,12 @@ exports.findSurveyPagesById= (req) => {
   .exec()
 }
 
-exports.removeSurvey= (survey) => {
+exports.removeSurvey= (surveypage) => {
   return surveypage.remove()
+  .exec()
+}
+
+exports.savePage= (surveypage) => {
+  return surveypage.save()
   .exec()
 }

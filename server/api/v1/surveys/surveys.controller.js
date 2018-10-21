@@ -13,10 +13,12 @@ const SurveyPage = require('../page_survey/page_survey.model')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const CompanyUsers = require('./../companyuser/companyuser.model')
 const CompanyProfile = require('./../companyprofile/companyprofile.model')
-const AutomationQueue = require('./../automation_queue/automation_queue.model')
+const AutomationQueue = require('./../automationQueue/automationQueue.model')
+const AutomationQueueDataLayer = require('./../automationQueue/automationQueue.datalayer')
 const TAG = 'api/surveys/surveys.controller.js'
 const mongoose = require('mongoose')
 const Lists = require('../lists/lists.model')
+const listsDataLayer = require('../lists/list.datalayer')
 const Users = require('./../user/Users.model')
 const Webhooks = require('./../webhooks/webhooks.model')
 const DataLayerwebhooks = require('./../webhooks/webhooks.datalayer')
@@ -409,10 +411,8 @@ exports.send = function (req, res) {
                               $in: req.body.segmentationList
                             }
                           })
-                        Lists.find(ListFindCriteria, (err, lists) => {
-                          if (err) {
-                            return logger.serverLog(TAG, `Error ${JSON.stringify(err)}`)
-                          }
+                        listsDataLayer.listFind(ListFindCriteria)
+                        .then (lists => {
                           let subsFindCriteria = {pageId: pages[z]._id}
                           let listData = []
                           if (lists.length > 1) {
@@ -435,36 +435,20 @@ exports.send = function (req, res) {
                               }
                             })
                           }
-                          Subscribers.find(subsFindCriteria, (err, subscribers) => {
-                            if (err) {
-                              return logger.serverLog(TAG, `Error ${JSON.stringify(err)}`)
-                            }
-
+                          utility.callApi(`subscribers/query`, 'post', { subsFindCriteria })
+                          .then(subscribers => {                         
                             needle.get(
-                            `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
-                            (err, resp) => {
-                              if (err) {
-                                logger.serverLog(TAG,
-                                `Page access token from graph api error ${JSON.stringify(
-                                err)}`)
-                              }
+                            `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
+                            .then(resp => {
                               utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                 subscribers = taggedSubscribers
                                 utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                   subscribers = repliedSubscribers
                                   for (let j = 0; j < subscribers.length && !abort; j++) {
-                                    CompanyUsage.update({companyId: companyUser.companyId},
-                                      { $inc: { surveys: 1 } }, (err, updated) => {
-                                        if (err) {
-                                          logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
-                                        }
-                                        CompanyUsage.findOne({companyId: companyUser.companyId}, (err, companyUsage) => {
-                                          if (err) {
-                                            return res.status(500).json({
-                                              status: 'failed',
-                                              description: `Internal Server Error ${JSON.stringify(err)}`
-                                            })
-                                          }
+                                    utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                    .then(updated => {
+                                      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+                                      .then(companyUsage => {
                                           if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                             abort = true
                                           }
@@ -494,14 +478,8 @@ exports.send = function (req, res) {
                                             if (isLastMessage) {
                                               logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data))
                                               needle.post(
-                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
-                                              data, (err, resp) => {
-                                                if (err) {
-                                                  return res.status(500).json({
-                                                    status: 'failed',
-                                                    description: JSON.stringify(err)
-                                                  })
-                                                }
+                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
+                                              .then(resp => {
                                                 let surveyPage = new SurveyPage({
                                                   pageId: pages[z].pageId,
                                                   userId: req.user._id,
@@ -511,14 +489,8 @@ exports.send = function (req, res) {
                                                   companyId: companyUser.companyId
                                                 })
 
-                                                surveyPage.save((err2) => {
-                                                  if (err2) {
-                                                    logger.serverLog(TAG, {
-                                                      status: 'failed',
-                                                      description: 'PollBroadcast create failed',
-                                                      err2
-                                                    })
-                                                  } else {
+                                                SurveyPageDataLayer.savePage(surveyPage)
+                                                .then(success => {
                                                     require('./../../../config/socketio').sendMessageToClient({
                                                       room_id: companyUser.companyId,
                                                       body: {
@@ -531,39 +503,57 @@ exports.send = function (req, res) {
                                                         }
                                                       }
                                                     })
-                                                  }
+                                                  
                                                 })
+                                                .catch(error => {
+                                                  return res.status(500).json({status: 'failed', description: error})
+                                                })
+                                              })
+                                              .catch(error => {
+                                                return res.status(500).json({status: 'failed', description: error})
                                               })
                                             } else {
                                               logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                               let timeNow = new Date()
-                                              let automatedQueueMessage = new AutomationQueue({
+                                              let automatedQueueMessage = {
                                                 automatedMessageId: req.body._id,
                                                 subscriberId: subscribers[j]._id,
                                                 companyId: companyUser.companyId,
                                                 type: 'survey',
                                                 scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
-                                              })
+                                              }
 
-                                              automatedQueueMessage.save((error) => {
-                                                if (error) {
-                                                  logger.serverLog(TAG, {
-                                                    status: 'failed',
-                                                    description: 'Automation Queue Survey Message create failed',
-                                                    error
-                                                  })
-                                                }
+                                              AutomationQueueDataLayer.createAutomationQueueObject(automatedQueueMessage)
+                                              .then(success =>{
+                                              })
+                                              .catch(error => {
+                                                return res.status(500).json({status: 'failed', description: error})
                                               })
                                             }
                                           })
                                         })
+                                        .catch(error => {
+                                          return res.status(500).json({status: 'failed', description: error})
+                                        })
+                                      })
+                                      .catch(error => {
+                                        return res.status(500).json({status: 'failed', description: error})
                                       })
                                   }
                                 })
                               })
                             })
+                            .catch(error => {
+                              return res.status(500).json({status: 'failed', description: error})
                           })
+                          })
+                          .catch(error => {
+                            return res.status(500).json({status: 'failed', description: error})
                         })
+                        })
+                        .catch(error => {
+                          return res.status(500).json({status: 'failed', description: error})
+                      })
                       } else {
                         let subscriberFindCriteria = {
                           pageId: pages[z]._id,
@@ -586,37 +576,20 @@ exports.send = function (req, res) {
                             })
                           }
                         }
-                        Subscribers.find(subscriberFindCriteria, (err, subscribers) => {
-                          if (err) {
-                            return res.status(404)
-                            .json({status: 'failed', description: 'Subscribers not found'})
-                          }
-
+                        utility.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                        .then(subscribers =>{
                           needle.get(
-                          `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
-                          (err, resp) => {
-                            if (err) {
-                              logger.serverLog(TAG,
-                              `Page access token from graph api error ${JSON.stringify(
-                              err)}`)
-                            }
+                          `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
+                          .then(resp => {
                             utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                               subscribers = taggedSubscribers
                               utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                 subscribers = repliedSubscribers
                                 for (let j = 0; j < subscribers.length && !abort; j++) {
-                                  CompanyUsage.update({companyId: companyUser.companyId},
-                                    { $inc: { surveys: 1 } }, (err, updated) => {
-                                      if (err) {
-                                        logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
-                                      }
-                                      CompanyUsage.findOne({companyId: companyUser.companyId}, (err, companyUsage) => {
-                                        if (err) {
-                                          return res.status(500).json({
-                                            status: 'failed',
-                                            description: `Internal Server Error ${JSON.stringify(err)}`
-                                          })
-                                        }
+                                  utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                  .then(updated => {
+                                    utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                      .then(companyUsage => {
                                         if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                           abort = true
                                         }
@@ -647,14 +620,8 @@ exports.send = function (req, res) {
                                           if (isLastMessage) {
                                             logger.serverLog(TAG, 'inside send survey' + JSON.stringify(data))
                                             needle.post(
-                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
-                                              data, (err, resp) => {
-                                                if (err) {
-                                                  return res.status(500).json({
-                                                    status: 'failed',
-                                                    description: JSON.stringify(err)
-                                                  })
-                                                }
+                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
+                                              .then(resp => {
                                                 let surveyPage = new SurveyPage({
                                                   pageId: pages[z].pageId,
                                                   userId: req.user._id,
@@ -664,14 +631,8 @@ exports.send = function (req, res) {
                                                   companyId: companyUser.companyId
                                                 })
 
-                                                surveyPage.save((err2) => {
-                                                  if (err2) {
-                                                    logger.serverLog(TAG, {
-                                                      status: 'failed',
-                                                      description: 'PollBroadcast create failed',
-                                                      err2
-                                                    })
-                                                  } else {
+                                                SurveyPageDataLayer.savePage(surveyPage)
+                                                .then(updated => {
                                                     require('./../../../config/socketio').sendMessageToClient({
                                                       room_id: companyUser.companyId,
                                                       body: {
@@ -684,7 +645,7 @@ exports.send = function (req, res) {
                                                         }
                                                       }
                                                     })
-                                                  }
+                                                  
                                                 // not using now
                                                 // Sessions.findOne({
                                                 //   subscriber_id: subscribers[j]._id,
@@ -722,35 +683,50 @@ exports.send = function (req, res) {
                                                 //   })
                                                 // })
                                                 })
+                                                .catch(error => {
+                                                  return res.status(500).json({status: 'failed', description: error})
+                                                })
+                                              })
+                                              .catch(error => {
+                                                return res.status(500).json({status: 'failed', description: error})
                                               })
                                           } else {
                                             logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                             let timeNow = new Date()
-                                            let automatedQueueMessage = new AutomationQueue({
+                                            let payload = {
                                               automatedMessageId: req.body._id,
                                               subscriberId: subscribers[j]._id,
                                               companyId: companyUser.companyId,
                                               type: 'survey',
                                               scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                            }
+                                        
+                                            AutomationQueueDataLayer.createAutomationQueueObject(payload)
+                                              .then(success =>{
                                             })
-
-                                            automatedQueueMessage.save((error) => {
-                                              if (error) {
-                                                logger.serverLog(TAG, {
-                                                  status: 'failed',
-                                                  description: 'Automation Queue Survey Message create failed',
-                                                  error
-                                                })
-                                              }
+                                            .catch(error => {
+                                              return res.status(500).json({status: 'failed', description: error})
                                             })
                                           }
                                         })
                                       })
+                                      .catch(error => {
+                                        return res.status(500).json({status: 'failed', description: error})
+                                      })
+                                    })
+                                    .catch(error => {
+                                      return res.status(500).json({status: 'failed', description: error})
                                     })
                                 }
                               })
                             })
                           })
+                          .catch(error => {
+                            return res.status(500).json({status: 'failed', description: error})
+                          })
+                        })
+                        .catch(error => {
+                          return res.status(500).json({status: 'failed', description: error})
                         })
                       }
                     }
