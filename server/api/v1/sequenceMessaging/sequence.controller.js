@@ -1,4 +1,4 @@
-const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue.datalayer')
+const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
 const SequenceDatalayer = require('./sequence.datalayer')
 const SequenceUtility = require('./utility')
 const SequenceMessages = require('./message.model')

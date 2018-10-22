@@ -1,6 +1,6 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/sequenceMessaging/logiclayer.js'
-const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue/SequenceMessageQueue.datalayer')
+const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
 const SequenceDatalayer = require('./sequence.datalayer')
 
 function addToMessageQueue (sequenceId, scheduleDate, messageId) {
