@@ -36,7 +36,12 @@ exports.surveyFindById = () => {
 }
 
 exports.removeSurvey = (survey) => {
- return survey.remove()
+  return survey.remove()
  .exec()
+}
+
+exports.findQuestionSurveyById = () => (req) {
+  return  Surveys.findOne({_id: survey._id})
+  .exec()
 }
 
