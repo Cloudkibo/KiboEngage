@@ -1,6 +1,14 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/autoposting/migrations.controller.js'
-const TwitterUtility = require('../../../config/integrations/twitter')
+const config = require('../../../config/environment/index')
+let Twit = require('twit')
+
+let twitterClient = new Twit({
+  consumer_key: config.twitter.consumer_key,
+  consumer_secret: config.twitter.consumer_secret,
+  access_token: config.twitter.consumer_token,
+  access_token_secret: config.twitter.consumer_token_secret
+})
 
 const prepareAutopostingPayload = (req, companyUser) => {
   let autoPostingPayload = {
@@ -42,6 +50,7 @@ const checkPlanLimit = (subscriptionType, planUsage, companyUsage) => {
       return false
     }
   }
+  return true
 }
 
 const handleTwitterAutoposts = (subscriptionUrl, autoPostingPayload) => {
@@ -49,7 +58,7 @@ const handleTwitterAutoposts = (subscriptionUrl, autoPostingPayload) => {
   let urlAfterDot = url.substring(url.indexOf('.') + 1)
   let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
   if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
-  TwitterUtility.findUser(screenName, (err, data) => {
+  findUser(screenName, (err, data) => {
     if (err) {
       logger.serverLog(TAG, `Twitter URL parse Error ${err}`)
     }
@@ -93,9 +102,26 @@ const prepareEditPayload = (req) => {
   autoposting.isActive = req.body.isActive
   return autoposting
 }
+
+function findUser (screenName, fn) {
+  twitterClient.get('users/show', {screen_name: screenName},
+    (err, data, response) => {
+      if (err) {
+        fn(err)
+      }
+      if (data.errors) {
+        if (data.errors[0].code === 50) {
+          fn('User not found on Twitter')
+        }
+      }
+      fn(null, data)
+    })
+}
+
 exports.prepareAutopostingPayload = prepareAutopostingPayload
 exports.checkPlanLimit = checkPlanLimit
 exports.handleTwitterAutoposts = handleTwitterAutoposts
 exports.getFacebookScreenName = getFacebookScreenName
 exports.getChannelName = getChannelName
 exports.prepareEditPayload = prepareEditPayload
+exports.findUser = findUser

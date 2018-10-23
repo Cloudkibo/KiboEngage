@@ -4,7 +4,23 @@ module.exports = function (app) {
   const env = app.get('env')
   // API middlewares go here
   app.use('/api/v1/test', require('./api/v1/test'))
-  app.use('/api/v1/messengerEvents', require('./api/v1/messengerEvents'))
+  app.use('/api/messengerEvents', require('./api/v1/messengerEvents'))
+  app.use('/api/automationQueue', require('./api/v1/automationQueue'))
+  app.use('/api/autoposting', require('./api/v1/autoposting'))
+  app.use('/api/broadcasts', require('./api/v1/broadcasts'))
+  app.use('/api/facebookEvents', require('./api/v1/facebookEvents'))
+  app.use('/api/invitations', require('./api/v1/invitations'))
+  app.use('/api/invite_verification', require('./api/v1/inviteagenttoken'))
+  app.use('/api/ip2country', require('./api/v1/ipcountry'))
+  app.use('/api/lists', require('./api/v1/lists'))
+  app.use('/api/menu', require('./api/v1/menu'))
+  app.use('/api/notifications', require('./api/v1/notifications'))
+  app.use('/api/growthtools', require('./api/v1/phoneNumber'))
+  app.use('/api/polls', require('./api/v1/polls'))
+  //  app.use('/api/sequenceMessaging', require('./api/v1/sequenceMessaging'))
+  //  app.use('/api/surveys', require('./api/v1/surveys'))
+  //  app.use('/api/URL', require('./api/v1/URLForClickedCount'))
+
   // auth middleware go here if you authenticate on same server
   // app.use('/auth', require('./auth'))
 

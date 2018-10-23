@@ -1,6 +1,9 @@
 const utility = require('../utility')
 const logicLayer = require('./lists.logiclayer')
-const dataLayer = require('./lists.datalayer')
+const PollDataLayer = require('../polls/polls.datalayer')
+const SurveyDataLayer = require('../surveys/surveys.datalayer')
+const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
+const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 
 exports.getAll = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -250,10 +253,10 @@ exports.deleteList = function (req, res) {
 exports.repliedPollSubscribers = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
-      dataLayer.findPolls({companyId: companyUser.companyId})
+      PollDataLayer.genericFindForPolls({companyId: companyUser.companyId})
         .then(polls => {
           let criteria = logicLayer.pollResponseCriteria(polls)
-          dataLayer.findPollResponses(criteria)
+          PollResponseDataLayer.genericFindForPollResponse(criteria)
             .then(responses => {
               let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
               utility.callApi(`subscribers/find`, 'post', subscriberCriteria)
@@ -292,10 +295,10 @@ exports.repliedPollSubscribers = function (req, res) {
 exports.repliedSurveySubscribers = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
-      dataLayer.findSurveys({companyId: companyUser.companyId})
+      SurveyDataLayer.genericFind({companyId: companyUser.companyId})
         .then(surveys => {
           let criteria = logicLayer.pollResponseCriteria(surveys)
-          dataLayer.findSurveyResponses(criteria)
+          SurveyResponseDataLayer.genericFind(criteria)
             .then(responses => {
               let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
               utility.callApi(`subscribers/find`, 'post', subscriberCriteria)

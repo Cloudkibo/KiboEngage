@@ -5,6 +5,7 @@ const logicLayer = require('./phoneNumber.logiclayer')
 const fs = require('fs')
 const csv = require('csv-parser')
 let request = require('request')
+const notificationsUtility = require('../notifications/notifications.utility')
 
 exports.upload = function (req, res) {
   let directory = logicLayer.directory(req)
@@ -63,8 +64,7 @@ exports.upload = function (req, res) {
                                     if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                                       if (!abort) {
                                         abort = true
-                                        // to do in kibochat
-                                        // webhookUtility.limitReachedNotification('invitations', companyProfile)
+                                        notificationsUtility.limitReachedNotification('invitations', companyProfile)
                                       }
                                     } else {
                                       utility.callApi(`phone`, 'post', {
@@ -288,7 +288,7 @@ exports.sendNumbers = function (req, res) {
                             if (found.length === 0) {
                               if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                                 abort = true
-                                //  webhookUtility.limitReachedNotification('invitations', companyProfile)
+                                notificationsUtility.limitReachedNotification('invitations', companyProfile)
                               } else {
                                 utility.callApi(`phone`, 'post', { name: '',
                                   number: result,

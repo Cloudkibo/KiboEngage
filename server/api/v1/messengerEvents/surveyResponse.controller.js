@@ -6,6 +6,7 @@ const SurveysDataLayer = require('../surveys/surveys.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const {callApi} = require('../utility')
+const notificationsUtility = require('../notifications/notifications.utility')
 
 exports.surveyResponse = function (req, res) {
   res.status(200).json({
@@ -65,7 +66,7 @@ function savesurvey (req) {
                     })
                 }
               } else {
-                //  webhookUtility.saveNotification(webhook)
+                notificationsUtility.saveNotification(webhook)
               }
             })
           }

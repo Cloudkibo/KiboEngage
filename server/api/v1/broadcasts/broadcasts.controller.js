@@ -1,7 +1,8 @@
 const BroadcastLogicLayer = require('./broadcasts.logiclayer')
 const BroadcastDataLayer = require('./broadcasts.datalayer')
-const BroadcastPageDataLayer = require('../page_broadcast.datalayer')
-const URLDataLayer = require('../URLforClickedCount/URL.datalayer')
+const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
+const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
+const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/broadcast/broadcasts.controller.js'
 const utility = require('../utility')
@@ -14,6 +15,7 @@ let _ = require('lodash')
 const mongoose = require('mongoose')
 let request = require('request')
 const crypto = require('crypto')
+const broadcastUtility = require('./broadcasts.utility')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -277,3 +279,191 @@ exports.upload = function (req, res) {
     }
   )
 }
+exports.sendConversation = function (req, res) {
+  logger.serverLog(TAG, `Sending Broadcast ${JSON.stringify(req.body)}`)
+  // validate braodcast
+  if (!broadcastUtility.validateInput(req.body)) {
+    logger.serverLog(TAG, 'Parameters are missing.')
+    return res.status(400)
+      .json({status: 'failed', description: 'Please fill all the required fields'})
+  }
+  // restrict to one page
+  if (req.body.segmentationPageIds.length !== 1) {
+    return res.status(400)
+      .json({status: 'failed', description: 'Please select only one page'})
+  }
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+    .then(companyUser => {
+      utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
+        .then(page => {
+          page = page[0]
+          let payloadData = req.body.payload
+          if (req.body.self) {
+            let payload = updatePayload(req.body.self, payloadData)
+            let interval = setInterval(() => {
+              if (payload) {
+                clearInterval(interval)
+                sendTestBroadcast(companyUser, page, payload, req, res)
+              }
+            }, 3000)
+          } else {
+            BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
+              .then(broadcast => {
+                require('./../../../config/socketio').sendMessageToClient({
+                  room_id: companyUser.companyId,
+                  body: {
+                    action: 'new_broadcast',
+                    payload: {
+                      broadcast_id: broadcast._id,
+                      user_id: req.user._id,
+                      user_name: req.user.name
+                    }
+                  }
+                })
+                let payload = updatePayload(req.body.self, payloadData, broadcast)
+                broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
+                if (req.body.isList === true) {
+                  utility.callApi(`lists/query`, 'post', BroadcastDataLayer.ListFindCriteria(req.body))
+                    .then(lists => {
+                      let subsFindCriteria = BroadcastDataLayer.subsFindCriteriaForList(lists, page)
+                      let interval = setInterval(() => {
+                        if (payload) {
+                          clearInterval(interval)
+                          sendToSubscribers(subsFindCriteria, req, res, page, broadcast, companyUser, payload)
+                        }
+                      }, 3000)
+                    })
+                    .catch(error => {
+                      return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
+                    })
+                } else {
+                  let subscriberFindCriteria = BroadcastDataLayer.subsFindCriteria(req.body, page)
+                  let interval = setInterval(() => {
+                    if (payload) {
+                      clearInterval(interval)
+                      sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, companyUser, payload)
+                    }
+                  }, 3000)
+                }
+              })
+              .catch(error => {
+                return res.status(500).json({status: 'failed', payload: `Failed to create broadcast ${JSON.stringify(error)}`})
+              })
+          }
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch companyUser ${JSON.stringify(error)}`})
+    })
+}
+const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
+  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
+    .then(subscribers => {
+      broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+        taggedSubscribers.forEach((subscriber, index) => {
+          // update broadcast sent field
+          BroadcastPageDataLayer.createForBroadcast({
+            pageId: page.pageId,
+            userId: req.user._id,
+            subscriberId: subscriber.senderId,
+            broadcastId: broadcast._id,
+            seen: false,
+            companyId: companyUser.companyId
+          })
+            .then(savedpagebroadcast => {
+              broadcastUtility.getBatchData(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag)
+            })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: `Failed to create page_broadcast ${JSON.stringify(error)}`})
+            })
+        })
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+    })
+}
+const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength) => {
+  const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
+    if (err) {
+      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to send broadcast ${JSON.stringify(err)}`
+      })
+    }
+    // Following change is to incorporate persistant menu
+
+    if (res === 'menu') {
+      // we don't need to send res for persistant menu
+    } else {
+      logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
+      if (subscriberNumber === (subscribersLength - 1)) {
+        return res.status(200)
+          .json({status: 'success', description: 'Conversation sent successfully!'})
+      }
+    }
+  })
+  const form = r.form()
+  form.append('access_token', page.accessToken)
+  form.append('batch', batchMessages)
+}
+const updatePayload = (self, payload, broadcast) => {
+  let shouldReturn = false
+  logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`)
+  for (let j = 0; j < payload.length; j++) {
+    if (!self && payload[j].componentType === 'list') {
+      payload[j].listItems.forEach((element, lindex) => {
+        if (element.default_action) {
+          URLDataLayer.createURLObject({
+            originalURL: element.default_action.url,
+            module: {
+              id: broadcast._id,
+              type: 'broadcast'
+            }
+          })
+            .then(savedurl => {
+              let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+              payload[j].listItems[lindex].default_action.url = newURL
+            })
+            .catch(error => {
+              logger.serverLog(TAG, error)
+            })
+        }
+        if (lindex === (payload[j].listItems.length - 1)) {
+          shouldReturn = operation(j, payload.length - 1)
+        }
+      })
+    } else {
+      shouldReturn = operation(j, payload.length - 1)
+    }
+  }
+  if (shouldReturn) {
+    return payload
+  }
+}
+
+const sendTestBroadcast = (companyUser, page, payload, req, res) => {
+  PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
+    .then(subscriptionUser => {
+      subscriptionUser = subscriptionUser[0]
+      let temp = subscriptionUser.userId.facebookInfo.name.split(' ')
+      let fname = temp[0]
+      let lname = temp[1] ? temp[1] : ''
+      broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, req.body.fbMessageTag)
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch adminsubscription ${JSON.stringify(error)}`})
+    })
+}
+const operation = (index, length) => {
+  if (index === length) {
+    return true
+  } else {
+    return false
+  }
+}
+exports.sendBroadcast = sendBroadcast

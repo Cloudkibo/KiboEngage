@@ -4,7 +4,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/invitations/invitations.controller.js'
 const InvitationsDataLayer = require('./invitations.datalayer.js')
 const InviteAgentTokenDataLayer = require('../inviteagenttoken/inviteagenttoken.datalayer')
-const callApi = require('..')
+const callApi = require('../utility')
 
 exports.index = function (req, res) {
   callApi.callApi('companyuser/query', post, {domain_email: req.user.domain_email})
