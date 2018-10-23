@@ -1,4 +1,4 @@
-const TAG = 'api/v1/urlForClickedCount/url.controller.js'
+const TAG = 'api/v1/URLForClickedCount/url.controller.js'
 const URLDataLayer = require('./URL.datalayer')
 const AutopostingMessagesDataLayer = require('./../autopostingMessages/autopostingMessages.datalayer')
 const BroadcastsDataLayer = require('./../broadcasts/broadcasts.datalayer')
@@ -129,4 +129,3 @@ exports.sequence = function (req, res) {
       }
     })
 }
-
