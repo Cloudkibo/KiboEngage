@@ -355,3 +355,19 @@ exports.subscribertags = function (req, res) {
       }
     })
 }
+
+exports.query = function (req, res) {
+  TagsSubscribersDataLayer.genericfind(req.body)
+    .then(tags => {
+      res.status(200).json({
+        status: 'success',
+        payload: tags
+      })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(400)
+          .json({status: 'failed', description: 'Parameters are missing'})
+      }
+    })
+}

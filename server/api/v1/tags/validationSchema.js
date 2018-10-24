@@ -61,3 +61,13 @@ exports.subscriberTagsPayload = {
     }
   }
 }
+
+exports.queryPayload = {
+    type: 'object',
+    properties: {
+        query: {
+        type: 'object',
+        required: true
+      }
+  }
+}
