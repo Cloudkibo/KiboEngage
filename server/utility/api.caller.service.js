@@ -1,5 +1,8 @@
 const requestPromise = require('request-promise')
 const config = require('../config/environment/index')
+const util = require('util')
+const TAG = 'api/v1/utility/index.js'
+const logger = require('../components/logger')
 
 exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => {
   let headers = {
@@ -17,9 +20,9 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     body,
     json: true
   }
-  // logger.serverLog(TAG, `requestPromise body ${util.inspect(headers)}`)
+  logger.serverLog(TAG, `requestPromise body ${util.inspect(headers)}`)
   return requestPromise(options).then(response => {
-    // logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
+    logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
     return new Promise((resolve, reject) => {
       if (response.status === 'success') {
         resolve(response.payload)
