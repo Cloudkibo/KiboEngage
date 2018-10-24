@@ -48,4 +48,9 @@ router.post('/subscribertags',
   validate({body: validationSchema.subscriberTagsPayload}),
   controller.subscribertags)
 
+router.post('/query',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.queryPayload}),
+  controller.query)
+
 module.exports = router

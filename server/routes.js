@@ -17,6 +17,7 @@ module.exports = function (app) {
   app.use('/api/notifications', require('./api/v1/notifications'))
   app.use('/api/growthtools', require('./api/v1/phoneNumber'))
   app.use('/api/polls', require('./api/v1/polls'))
+  app.use('/api/tags', require('./api/v1/tags'))
   //  app.use('/api/sequenceMessaging', require('./api/v1/sequenceMessaging'))
   //  app.use('/api/surveys', require('./api/v1/surveys'))
   //  app.use('/api/URL', require('./api/v1/URLForClickedCount'))
