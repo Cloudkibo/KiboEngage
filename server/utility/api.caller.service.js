@@ -9,7 +9,7 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     'content-type': 'application/json',
     'Authorization': token
   }
-  let apiUrl = config.ACCOUNT_URL
+  let apiUrl = config.ACCOUNTS_URL
   if (type === 'chat') {
     apiUrl = config.CHAT_URL
   }
