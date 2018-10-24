@@ -4,7 +4,7 @@ module.exports = function (app) {
   const env = app.get('env')
   // API middlewares go here
   app.use('/api/v1/test', require('./api/v1/test'))
-  app.use('/api/v1/messengerEvents', require('./api/v1/messengerEvents'))
+  // app.use('/api/v1/messengerEvents', require('./api/v1/messengerEvents'))
   // auth middleware go here if you authenticate on same server
   // app.use('/auth', require('./auth'))
 
