@@ -34,7 +34,7 @@ exports.findServeyById = (req) => {
 
 exports.save = (survey) => {
   return survey.save()
-  .exec()    
+  .exec()
 }
 
 exports.findByIdPopulate = (req) => {
@@ -52,7 +52,7 @@ exports.removeSurvey = (survey) => {
  .exec()
 }
 
-exports.findQuestionSurveyById = () => (req) {
+exports.findQuestionSurveyById = (survey) => {
   return  Surveys.findOne({_id: survey._id})
   .exec()
 }
@@ -72,4 +72,3 @@ exports.countSurveys = (query) => {
   return Surveys.count(query)
     .exec()
 }
-
