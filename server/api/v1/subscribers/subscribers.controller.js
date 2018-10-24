@@ -12,7 +12,7 @@ exports.index = function (req, res) {
       utility.callApi(`subscribers/query`, 'post', {companyId: companyuser.companyId, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization) // fetch subscribers of company
         .then(subscribers => {
           let subscriberIds = logicLayer.getSubscriberIds(subscribers)
-          tagsSubscriberDataLayer.findTaggedSubscribers({subscriberId: {$in: subscriberIds}})
+          tagsSubscriberDataLayer.genericfind({subscriberId: {$in: subscriberIds}})
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
               return res.status(200).json({
@@ -48,7 +48,7 @@ exports.allSubscribers = function (req, res) {
       utility.callApi(`subscribers/query`, 'post', {companyId: companyuser.companyId, isEnabledByPage: true}, req.headers.authorization) // fetch subscribers of company
         .then(subscribers => {
           let subscriberIds = logicLayer.getSubscriberIds(subscribers)
-          tagsSubscriberDataLayer.findTaggedSubscribers({subscriberId: {$in: subscriberIds}})
+          tagsSubscriberDataLayer.genericfind({subscriberId: {$in: subscriberIds}})
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
               return res.status(200).json({
@@ -114,7 +114,7 @@ exports.getAll = function (req, res) {
             .then(subscribers => {
               let subscriberIds = logicLayer.getSubscriberIds(subscribers)
               logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
-              tagsSubscriberDataLayer.findTaggedSubscribers({subscriberId: {$in: subscriberIds}})
+              tagsSubscriberDataLayer.genericfind({subscriberId: {$in: subscriberIds}})
                 .then(tags => {
                   logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
                   let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
