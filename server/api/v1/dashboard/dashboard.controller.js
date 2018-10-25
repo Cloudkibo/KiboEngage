@@ -519,28 +519,28 @@ exports.stats = function (req, res) {
                     .catch(err => {
                       if (err) {
                         return res.status(500).json(
-                          {status: 'failed to retrieve subscribers', description: JSON.stringify(err)})
+                          {status: 'failed to retrieve subscribers', description: err})
                       }
                     })
                 })
                 .catch(err => {
                   if (err) {
                     return res.status(500)
-                      .json({status: 'failed to retrieve userPages', description: JSON.stringify(err)})
+                      .json({status: 'failed to retrieve userPages', description: err})
                   }
                 })
             })
             .catch(err => {
               if (err) {
                 return res.status(500)
-                  .json({status: 'failed to retrieve userPages', description: JSON.stringify(err)})
+                  .json({status: 'failed to retrieve userPages', description: err})
               }
             })
         })
         .catch(err => {
           if (err) {
             return res.status(500)
-              .json({status: 'failed to retrieve pages', description: JSON.stringify(err)})
+              .json({status: 'failed to retrieve pages', description: err})
           }
         })
     })
@@ -548,7 +548,7 @@ exports.stats = function (req, res) {
       if (err) {
         return res.status(500).json({
           status: 'failed to retrieve companyUser',
-          description: `Internal Server Error ${JSON.stringify(err)}`
+          description: `Internal Server Error ${err}`
         })
       }
     })
