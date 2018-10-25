@@ -1,7 +1,6 @@
 const logicLayer = require('./subscribers.logiclayer')
 const utility = require('../utility')
 const dataLayer = require('./subscribers.datalayer')
-const tagsSubscriberDataLayer = require('../tags_subscribers/tags_subscribers.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
 const util = require('util')
@@ -12,7 +11,7 @@ exports.index = function (req, res) {
       utility.callApi(`subscribers/query`, 'post', {companyId: companyuser.companyId, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization) // fetch subscribers of company
         .then(subscribers => {
           let subscriberIds = logicLayer.getSubscriberIds(subscribers)
-          tagsSubscriberDataLayer.genericfind({subscriberId: {$in: subscriberIds}})
+          utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
               return res.status(200).json({
@@ -48,7 +47,7 @@ exports.allSubscribers = function (req, res) {
       utility.callApi(`subscribers/query`, 'post', {companyId: companyuser.companyId, isEnabledByPage: true}, req.headers.authorization) // fetch subscribers of company
         .then(subscribers => {
           let subscriberIds = logicLayer.getSubscriberIds(subscribers)
-          tagsSubscriberDataLayer.genericfind({subscriberId: {$in: subscriberIds}})
+          utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
               return res.status(200).json({
@@ -114,7 +113,7 @@ exports.getAll = function (req, res) {
             .then(subscribers => {
               let subscriberIds = logicLayer.getSubscriberIds(subscribers)
               logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
-              tagsSubscriberDataLayer.genericfind({subscriberId: {$in: subscriberIds}})
+              utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
                 .then(tags => {
                   logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
                   let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
