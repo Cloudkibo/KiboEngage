@@ -35,7 +35,6 @@ function isAuthenticated () {
           'Authorization': req.headers.authorization
         }
         let path = config.ACCOUNTS_URL.slice(0, config.ACCOUNTS_URL.length - 7)
-        console.log('path in auth.service', path)
         let options = {
           method: 'GET',
           uri: `${path}/auth/verify`,
@@ -112,11 +111,9 @@ function doesPlanPermitsThisAction (action) {
   if (!action) throw new Error('Action needs to be set')
 
   return compose().use(function meetsRequirements (req, res, next) {
-    console.log('user: ', JSON.stringify(req.user.plan))
-    apiCaller.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.plan.plan_id._id}, req.headers.authorization)
+    apiCaller.callApi(`permissions_plan/query`, 'post', {plan_id: req.user.plan.plan_id._id}, req.headers.authorization)
       .then(plan => {
         plan = plan[0]
-        console.log(`featureUsage plan: ${JSON.stringify(plan)}`)
         if (!plan) {
           return res.status(500)
             .json({
@@ -125,10 +122,8 @@ function doesPlanPermitsThisAction (action) {
             })
         }
         if (req.user && req.user.plan && plan[action]) {
-          console.log(`plan permits ${action}`)
           next()
         } else {
-          console.log(`plan does not permit ${action}`)
           res.status(403)
             .json({
               status: 'failed',
