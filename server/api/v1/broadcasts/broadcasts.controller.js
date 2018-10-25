@@ -24,6 +24,8 @@ exports.index = function (req, res) {
       console.log('companyUser fetched from accounts', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
       BroadcastDataLayer.aggregateForBroadcasts(criteria.countCriteria)
+      console.log('in allbroadcasts', JSON.stringify(criteria.countCriteria))
+      console.log('in allbroadcasts', JSON.stringify(criteria.finalCriteria))
         .then(broadcastsCount => {
           BroadcastDataLayer.aggregateForBroadcasts(criteria.finalCriteria)
             .then(broadcasts => {
