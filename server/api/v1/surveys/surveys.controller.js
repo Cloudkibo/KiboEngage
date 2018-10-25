@@ -16,7 +16,7 @@ const TAG = 'api/surveys/surveys.controller.js'
 const mongoose = require('mongoose')
 const listsDataLayer = require('../lists/list.datalayer')
 const DataLayerwebhooks = require('./../webhooks/webhooks.datalayer')
-const webhookUtility = require('./../webhooks/webhooks.utility')
+const webhookUtility = require('./../notifications/notifications.utility')
 const surveyDataLayer = require('./surveys.datalayer')
 const surveyLogicLayer = require('./surveys.logiclayer')
 const surveyResponseDataLayer = require('./surveyresponse.datalayer')
@@ -29,7 +29,7 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 
 exports.allSurveys = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -352,9 +352,9 @@ exports.send = function (req, res) {
             })
           }
 
-          utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+          callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
           .then(userPage => {
-            utility.callApi(`user/query`, 'post', {_id: userPage.userId})
+            callApi.callApi(`user/query`, 'post', {_id: userPage.userId})
             .then(connectedUser => {
               var currentUser
               if (req.user.facebookInfo) {
@@ -389,7 +389,7 @@ exports.send = function (req, res) {
                     })
                   }
                   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                  utility.callApi(`pages/query`, 'post', {pagesFindCriteria})
+                  callApi.callApi(`pages/query`, 'post', {pagesFindCriteria})
                   .then(pages => {
                     for (let z = 0; z < pages.length && !abort; z++) {
                       if (req.body.isList === true) {
@@ -424,8 +424,8 @@ exports.send = function (req, res) {
                               }
                             })
                           }
-                          utility.callApi(`subscribers/query`, 'post', { subsFindCriteria })
-                          .then(subscribers => {                         
+                          callApi.callApi(`subscribers/query`, 'post', { subsFindCriteria })
+                          .then(subscribers => {
                             needle.get(
                             `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
                             .then(resp => {
@@ -434,7 +434,7 @@ exports.send = function (req, res) {
                                 utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                   subscribers = repliedSubscribers
                                   for (let j = 0; j < subscribers.length && !abort; j++) {
-                                    utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                    callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
                                     .then(updated => {
                                       callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
                                       .then(companyUsage => {
@@ -491,7 +491,7 @@ exports.send = function (req, res) {
                                                       company_id: companyUser.companyId
                                                     }
                                                   }
-                                                })    
+                                                })
                                               })
                                                 .catch(error => {
                                                   return res.status(500).json({status: 'failed', description: error})
@@ -564,7 +564,7 @@ exports.send = function (req, res) {
                             })
                           }
                         }
-                        utility.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                        callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
                         .then(subscribers => {
                           needle.get(
                           `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
@@ -574,9 +574,9 @@ exports.send = function (req, res) {
                               utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                 subscribers = repliedSubscribers
                                 for (let j = 0; j < subscribers.length && !abort; j++) {
-                                  utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                  callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
                                   .then(updated => {
-                                    utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                    callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
                                       .then(companyUsage => {
                                         if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                           abort = true
@@ -633,7 +633,7 @@ exports.send = function (req, res) {
                                                       }
                                                     }
                                                   })
-                                                  
+
                                                 // not using now
                                                 // Sessions.findOne({
                                                 //   subscriber_id: subscribers[j]._id,
@@ -688,7 +688,7 @@ exports.send = function (req, res) {
                                               type: 'survey',
                                               scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
                                             }
-                                        
+
                                             AutomationQueueDataLayer.createAutomationQueueObject(payload)
                                               .then(success => {
                                               })
@@ -818,9 +818,9 @@ exports.sendSurvey = function (req, res) {
                 }
               }
             })
-            utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+            callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
             .then(userPage => {
-              utility.callApi(`user/query`, 'post', {_id: userPage.userId})
+              callApi.callApi(`user/query`, 'post', {_id: userPage.userId})
               .then(connectedUser => {
                 var currentUser
                 if (req.user.facebookInfo) {
@@ -862,7 +862,7 @@ exports.sendSurvey = function (req, res) {
                       }
 
                       let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                      utility.callApi(`pages/query`, 'post', {pagesFindCriteria})
+                      callApi.callApi(`pages/query`, 'post', {pagesFindCriteria})
                       .then(pages => {
                         for (let z = 0; z < pages.length && !abort; z++) {
                           DataLayerwebhooks.findOnePage(pages[z])
@@ -929,7 +929,7 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
 
-                              utility.callApi(`subscribers/query`, 'post', { subsFindCriteria })
+                              callApi.callApi(`subscribers/query`, 'post', { subsFindCriteria })
                           .then(subscribers => {
                             needle.get(
                               `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
@@ -939,7 +939,7 @@ exports.sendSurvey = function (req, res) {
                                   utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                     subscribers = repliedSubscribers
                                     for (let j = 0; j < subscribers.length && !abort; j++) {
-                                      utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                      callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
                                       .then(updated => {
                                         callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
                                         .then(companyUsage => {
@@ -987,7 +987,7 @@ exports.sendSurvey = function (req, res) {
 
                                                       SurveyPageDataLayer.savePage(surveyPage)
                                                       .then(success => {
-                                                        
+
                                                       })
                                                       .catch(error => {
                                                         return res.status(500).json({status: 'failed', description: error})
@@ -1009,7 +1009,7 @@ exports.sendSurvey = function (req, res) {
 
                                               AutomationQueueDataLayer.createAutomationQueueObject(automatedQueueMessage)
                                               .then(success => {
-                                                
+
                                               })
                                               .catch(error => {
                                                 return res.status(500).json({status: 'failed', description: error})
@@ -1058,7 +1058,7 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
                             }
-                            utility.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                            callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
                             .then(subscribers => {
                               needle.get(
                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
@@ -1068,9 +1068,9 @@ exports.sendSurvey = function (req, res) {
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                       subscribers = repliedSubscribers
                                       for (let j = 0; j < subscribers.length && !abort; j++) {
-                                        utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
-                                        .then(updated => {                        
-                                          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                        callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                        .then(updated => {
+                                          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
                                         .then(companyUsage => {
                                           if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                             abort = true
@@ -1231,7 +1231,7 @@ exports.deleteSurvey = function (req, res) {
           .then(surveyresponses => {
             surveyresponses.forEach(surveyresponse => {
               surveyResponseDataLayer.removeResponse(surveyresponse)
-              .then(success => {              
+              .then(success => {
               })
               .catch(error => {
                 return res.status(500).json({status: 'failed', description: error})
@@ -1241,7 +1241,7 @@ exports.deleteSurvey = function (req, res) {
             .then(surveyquestions => {
               surveyquestions.forEach(surveyquestion => {
                 surveyQuestionsDataLayer.removeQuestion(surveyquestions)
-                .then(success => {                   
+                .then(success => {
                 })
                 .catch(error => {
                   return res.status(500).json({status: 'failed', description: error})
@@ -1250,7 +1250,7 @@ exports.deleteSurvey = function (req, res) {
 
               return res.status(200).json({status: 'success'})
             })
-  
+
             .catch(error => {
               return res.status(500).json({status: 'failed', description: error})
             })

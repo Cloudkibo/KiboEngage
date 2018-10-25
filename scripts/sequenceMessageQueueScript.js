@@ -5,7 +5,6 @@ const config = require('../server/config/environment')
 const SequenceMessagesQueueDataLayer = require('../server/api/v1/sequenceMessageQueue/sequenceMessageQueue.datalayer')
 const SequenceDataLayer = require('../server/api/v1/sequenceMessaging/sequence.datalayer')
 const BroadcastUtility = require('../server/api/v1/broadcasts/broadcasts.utility')
-const TagsDataLayer = require('../server/api/v1/tags/tags.datalayer')
 const LogicLayer = require('./logiclayer')
 const TAG = 'scripts/SequenceMessageQueueScript.js'
 
@@ -81,7 +80,7 @@ function sendSequenceMessage (message) {
                       SequenceDataLayer.genericFindForSequenceSubscribers({'subscriberId': subscriber._id, 'sequenceId': sequence.id})
                         .then(seqSub => {
                           seqSub = seqSub[0]
-                          TagsDataLayer.genericFind({'companyId': companyUser.companyId})
+                          utility.callApi(`tags/query`, 'post', {'companyId': companyUser.companyId})
                             .then(tags => {
                               let newPayload = sequenceMessage.payload
                               let sequenceSubMessagePayload = {

@@ -5,7 +5,6 @@ const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/broadcast/broadcasts.controller.js'
-const utility = require('../utility')
 const needle = require('needle')
 const path = require('path')
 const fs = require('fs')
@@ -16,10 +15,13 @@ const mongoose = require('mongoose')
 let request = require('request')
 const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
+const utility = require('../utility')
 
 exports.index = function (req, res) {
+  console.log('inside broadcasts')
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
+      console.log('companyUser fetched from accounts', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
       BroadcastDataLayer.aggregateForBroadcasts(criteria.countCriteria)
         .then(broadcastsCount => {

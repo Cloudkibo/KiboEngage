@@ -17,7 +17,7 @@ const mongoose = require('mongoose')
 const sortBy = require('sort-array')
 const needle = require('needle')
 
-const callApi = require('../../../utility/api.caller.service')
+const callApi = require('../utility')
 
 let _ = require('lodash')
 
