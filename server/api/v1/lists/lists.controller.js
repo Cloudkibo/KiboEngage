@@ -5,6 +5,34 @@ const SurveyDataLayer = require('../surveys/surveys.datalayer')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 
+exports.allLists = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      utility.callApi(`lists/query`, 'post', { companyId: companyUser.companyId })
+        .then(lists => {
+          return res.status(201).json({status: 'success', payload: lists})
+        })
+        .catch(error => {
+          return res.status(500).json({
+            status: 'failed',
+            payload: `Failed to fetch lists ${JSON.stringify(error)}`
+          })
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to fetch company user ${JSON.stringify(error)}`
+      })
+    })
+}
+
 exports.getAll = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyuser => {

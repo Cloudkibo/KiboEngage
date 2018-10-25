@@ -10,7 +10,7 @@ const Tags = require('./tags.model')
 const TagsSubscribersDataLayer = require('./../tags_subscribers/tags_subscribers.datalayer')
 const TagsSubscribers = require('./../tags_subscribers/tags_subscribers.model')
 
-const callApi = require('../../../utility/api.caller.service')
+const callApi = require('../utility')
 
 exports.index = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
