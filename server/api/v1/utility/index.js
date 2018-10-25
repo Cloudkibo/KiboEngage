@@ -25,6 +25,7 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
   logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
   return requestPromise(options).then(response => {
     logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
+    console.log(TAG, `response from accounts ${JSON.stringify(response)}`)
     return new Promise((resolve, reject) => {
       if (response.status === 'success') {
         resolve(response.payload)
@@ -33,4 +34,7 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
       }
     })
   })
+    .catch((err) => {
+      console.log('inside catch of callapi', err)
+    })
 }
