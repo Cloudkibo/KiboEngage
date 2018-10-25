@@ -309,6 +309,7 @@ exports.sendConversation = function (req, res) {
               }
             }, 3000)
           } else {
+            console.log('braodcastutility', broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
               .then(broadcast => {
                 require('./../../../config/socketio').sendMessageToClient({
