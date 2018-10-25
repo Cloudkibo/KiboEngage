@@ -5,6 +5,7 @@ const TAG = 'api/v1/utility/index.js'
 const logger = require('../../../components/logger')
 
 exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => {
+  console.log('in callapi', config.ACCOUNTS_URL)
   let headers = {
     'content-type': 'application/json',
     'Authorization': token
@@ -20,7 +21,8 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     body,
     json: true
   }
-  logger.serverLog(TAG, `requestPromise body ${util.inspect(headers)}`)
+  console.log('in callapi', options)
+  logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
   return requestPromise(options).then(response => {
     logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
     return new Promise((resolve, reject) => {

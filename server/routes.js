@@ -18,7 +18,7 @@ module.exports = function (app) {
   app.use('/api/growthtools', require('./api/v1/phoneNumber'))
   app.use('/api/polls', require('./api/v1/polls'))
   // app.use('/api/tags', require('./api/v1/tags'))
-  // app.use('/api/subscribers', require('./api/v1/subscribers'))
+  app.use('/api/subscribers', require('./api/v1/subscribers'))
   app.use('/api/users', require('./api/v1/user'))
   app.use('/api/teams', require('./api/v1/teams'))
   app.use('/api/pages', require('./api/v1/pages'))
