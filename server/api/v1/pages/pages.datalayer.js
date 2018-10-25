@@ -6,6 +6,6 @@ exports.findPages = function (pagesFindCriteria) {
 }
 
 exports.findPagesByCompanyId = function (companyUser) {
-  return Pages.findOne({companyId: companyUser.companyId, connected: true}
+  return Pages.findOne({companyId: companyUser.companyId, connected: true})
   .exec()
 }
