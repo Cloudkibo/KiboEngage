@@ -26,17 +26,11 @@ module.exports = function (app) {
   app.use('/api/dashboard', require('./api/v1/dashboard'))
   app.use('/api/pageadminsubscriptions', require('./api/v1/pageadminsubscriptions'))
   app.use('/api/surveys', require('./api/v1/surveys'))
-<<<<<<< HEAD
   app.use('/api/adminsubscriptions', require('./api/v1/pageadminsubscriptions'))
   app.use('/api/sequenceMessaging', require('./api/v1/sequenceMessaging'))
   app.use('/api/surveys', require('./api/v1/surveys'))
   app.use('/api/URL', require('./api/v1/URLForClickedCount'))
-=======
   app.use('/api/tags', require('./api/v1/tags'))
-  //  app.use('/api/sequenceMessaging', require('./api/v1/sequenceMessaging'))
-  //  app.use('/api/surveys', require('./api/v1/surveys'))
-  //  app.use('/api/URL', require('./api/v1/URLForClickedCount'))
->>>>>>> fcd5f7047a11035630a1d4e77f86c01cac72d3db
 
   // auth middleware go here if you authenticate on same server
   // app.use('/auth', require('./auth'))
