@@ -433,7 +433,7 @@ exports.stats = function (req, res) {
                         .catch(err => {
                           if (err) {
                             return res.status(500).json({
-                              status: 'failed',
+                              status: 'failed to retrieve connected user',
                               description: `Internal Server Error ${JSON.stringify(err)}`
                             })
                           }
@@ -474,7 +474,7 @@ exports.stats = function (req, res) {
                                         .catch(err => {
                                           if (err) {
                                             return res.status(500).json({
-                                              status: 'failed',
+                                              status: 'failed to retrieve unreadCount',
                                               description: JSON.stringify(err)
                                             })
                                           }
@@ -483,7 +483,7 @@ exports.stats = function (req, res) {
                                     .catch(err => {
                                       if (err) {
                                         return res.status(500).json({
-                                          status: 'failed',
+                                          status: 'failed to retrieve surveysCount',
                                           description: JSON.stringify(err)
                                         })
                                       }
@@ -492,7 +492,7 @@ exports.stats = function (req, res) {
                                 .catch(err => {
                                   if (err) {
                                     return res.status(500).json({
-                                      status: 'failed',
+                                      status: 'failed to retrieve pollsCount',
                                       description: JSON.stringify(err)
                                     })
                                   }
@@ -501,7 +501,7 @@ exports.stats = function (req, res) {
                             .catch(err => {
                               if (err) {
                                 return res.status(500).json({
-                                  status: 'failed',
+                                  status: 'failed to retrieve broadcastCount',
                                   description: JSON.stringify(err)
                                 })
                               }
@@ -510,7 +510,7 @@ exports.stats = function (req, res) {
                         .catch(err => {
                           if (err) {
                             return res.status(500).json({
-                              status: 'failed',
+                              status: 'failed to retrieve recentBroadcast',
                               description: JSON.stringify(err)
                             })
                           }
@@ -519,35 +519,35 @@ exports.stats = function (req, res) {
                     .catch(err => {
                       if (err) {
                         return res.status(500).json(
-                          {status: 'failed', description: JSON.stringify(err)})
+                          {status: 'failed to retrieve subscribers', description: JSON.stringify(err)})
                       }
                     })
                 })
                 .catch(err => {
                   if (err) {
                     return res.status(500)
-                      .json({status: 'failed', description: JSON.stringify(err)})
+                      .json({status: 'failed to retrieve userPages', description: JSON.stringify(err)})
                   }
                 })
             })
             .catch(err => {
               if (err) {
                 return res.status(500)
-                  .json({status: 'failed', description: JSON.stringify(err)})
+                  .json({status: 'failed to retrieve userPages', description: JSON.stringify(err)})
               }
             })
         })
         .catch(err => {
           if (err) {
             return res.status(500)
-              .json({status: 'failed', description: JSON.stringify(err)})
+              .json({status: 'failed to retrieve pages', description: JSON.stringify(err)})
           }
         })
     })
     .catch(err => {
       if (err) {
         return res.status(500).json({
-          status: 'failed',
+          status: 'failed to retrieve companyUser',
           description: `Internal Server Error ${JSON.stringify(err)}`
         })
       }
@@ -752,8 +752,7 @@ exports.toppages = function (req, res) {
               if (err) {
                 return res.status(404).json({
                   status: 'failed',
-                  description: `Error in getting pages subscriber count ${JSON.stringify(
-                    err)}`
+                  description: `Error in getting pages subscriber count ${err}`
                 })
               }
             })
@@ -762,7 +761,7 @@ exports.toppages = function (req, res) {
           if (err) {
             return res.status(404).json({
               status: 'failed',
-              description: `Error in getting pages ${JSON.stringify(err)}`
+              description: `Error in getting pages ${err}`
             })
           }
         })
@@ -811,7 +810,7 @@ exports.getAllSubscribers = function (req, res) {
       .catch(err => {
         if (err) {
           return res.status(404)
-            .json({status: 'failed', description: 'Ssubscribers not found'})
+            .json({status: 'failed', description: 'Subscribers not found'})
         }
       })
   } else if (req.body.first_page === 'next') {
