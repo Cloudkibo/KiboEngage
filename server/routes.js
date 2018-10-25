@@ -24,6 +24,7 @@ module.exports = function (app) {
   app.use('/api/pages', require('./api/v1/pages'))
   app.use('/api/company', require('./api/v1/companyprofile'))
   app.use('/api/dashboard', require('./api/v1/dashboard'))
+  app.use('/api/surveys', require('./api/v1/surveys'))
   //  app.use('/api/sequenceMessaging', require('./api/v1/sequenceMessaging'))
   //  app.use('/api/surveys', require('./api/v1/surveys'))
   //  app.use('/api/URL', require('./api/v1/URLForClickedCount'))
