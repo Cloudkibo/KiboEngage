@@ -18,7 +18,7 @@ const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
       BroadcastDataLayer.aggregateForBroadcasts(criteria.countCriteria)
@@ -292,9 +292,9 @@ exports.sendConversation = function (req, res) {
     return res.status(400)
       .json({status: 'failed', description: 'Please select only one page'})
   }
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
+      utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true, _id: req.body.segmentationPageIds[0]}, req.headers.authorization)
         .then(page => {
           page = page[0]
           let payloadData = req.body.payload
@@ -323,7 +323,7 @@ exports.sendConversation = function (req, res) {
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
                 broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
                 if (req.body.isList === true) {
-                  utility.callApi(`lists/query`, 'post', BroadcastDataLayer.ListFindCriteria(req.body))
+                  utility.callApi(`lists/query`, 'post', BroadcastDataLayer.ListFindCriteria(req.body), req.headers.authorization)
                     .then(lists => {
                       let subsFindCriteria = BroadcastDataLayer.subsFindCriteriaForList(lists, page)
                       let interval = setInterval(() => {
@@ -360,7 +360,7 @@ exports.sendConversation = function (req, res) {
     })
 }
 const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
-  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
+  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
     .then(subscribers => {
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
