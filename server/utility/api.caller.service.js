@@ -20,6 +20,7 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     body,
     json: true
   }
+  console.log('requestbody', JSON.stringify(options))
   logger.serverLog(TAG, `requestPromise body ${util.inspect(headers)}`)
   return requestPromise(options).then(response => {
     logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
@@ -31,4 +32,7 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
       }
     })
   })
+    .catch((err) => {
+      logger.serverLog(TAG, `error in apicall ${err}`)
+    })
 }

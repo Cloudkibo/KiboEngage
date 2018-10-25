@@ -35,7 +35,6 @@ function isAuthenticated () {
           'Authorization': req.headers.authorization
         }
         let path = config.ACCOUNTS_URL.slice(0, config.ACCOUNTS_URL.length - 7)
-        console.log('path in auth.service', path)
         let options = {
           method: 'GET',
           uri: `${path}/auth/verify`,
