@@ -18,6 +18,7 @@ const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
 
 exports.index = function (req, res) {
+  console.log('inside broadcasts')
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
