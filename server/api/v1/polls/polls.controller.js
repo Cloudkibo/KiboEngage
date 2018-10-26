@@ -50,8 +50,10 @@ exports.allPolls = function (req, res) {
       let criterias = PollLogicLayer.getCriterias(req.body, companyUser)
       PollDataLayer.aggregateForPolls(criterias.countCriteria)
         .then(pollsCount => {
+          console.log('pollsCount', pollsCount)
           PollDataLayer.aggregateForPolls(criterias.fetchCriteria)
             .then(polls => {
+              console.log('pollsFinal', polls)
               PollPageDataLayer.genericFind({companyId: companyUser.companyId})
                 .then(pollpages => {
                   PollResponseDataLayer.aggregateForPollResponse([{$group: {
@@ -59,6 +61,7 @@ exports.allPolls = function (req, res) {
                     count: {$sum: 1}
                   }}])
                     .then(responsesCount1 => {
+                      console.log('responsesCount', responsesCount1)
                       let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
                       res.status(200).json({
                         status: 'success',
@@ -103,7 +106,7 @@ exports.create = function (req, res) {
                     })
                   }
                   let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
-                  let pagesFindCriteria = PollDataLayer.pagesFindCriteria(companyUser, req.body)
+                  let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
                   utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                     .then(pages => {
                       pages.forEach((page) => {
