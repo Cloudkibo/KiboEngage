@@ -154,18 +154,18 @@ exports.create = function (req, res) {
                     })
                   PollDataLayer.createForPoll(pollPayload)
                     .then(pollCreated => {
-                      require('./../../../config/socketio').sendMessageToClient({
-                        room_id: companyUser.companyId,
-                        body: {
-                          action: 'poll_created',
-                          payload: {
-                            poll_id: pollCreated._id,
-                            user_id: req.user._id,
-                            user_name: req.user.name,
-                            company_id: companyUser.companyId
-                          }
-                        }
-                      })
+                      // require('./../../../config/socketio').sendMessageToClient({
+                      //   room_id: companyUser.companyId,
+                      //   body: {
+                      //     action: 'poll_created',
+                      //     payload: {
+                      //       poll_id: pollCreated._id,
+                      //       user_id: req.user._id,
+                      //       user_name: req.user.name,
+                      //       company_id: companyUser.companyId
+                      //     }
+                      //   }
+                      // })
                       res.status(201).json({status: 'success', payload: pollCreated})
                     })
                     .catch(error => {
@@ -284,17 +284,17 @@ exports.send = function (req, res) {
                                                                   let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                                   PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                     .then(pollCreated => {
-                                                                      require('./../../../config/socketio').sendMessageToClient({
-                                                                        room_id: companyUser.companyId,
-                                                                        body: {
-                                                                          action: 'poll_send',
-                                                                          poll_id: pollCreated._id,
-                                                                          user_id: req.user._id,
-                                                                          user_name: req.user.name,
-                                                                          company_id: companyUser.companyId
-
-                                                                        }
-                                                                      })
+                                                                      // require('./../../../config/socketio').sendMessageToClient({
+                                                                      //   room_id: companyUser.companyId,
+                                                                      //   body: {
+                                                                      //     action: 'poll_send',
+                                                                      //     poll_id: pollCreated._id,
+                                                                      //     user_id: req.user._id,
+                                                                      //     user_name: req.user.name,
+                                                                      //     company_id: companyUser.companyId
+                                                                      //
+                                                                      //   }
+                                                                      // })
                                                                     })
                                                                     .catch(error => {
                                                                       return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
@@ -388,16 +388,16 @@ exports.send = function (req, res) {
                                                                 let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                                 PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                   .then(pollCreated => {
-                                                                    require('./../../../config/socketio').sendMessageToClient({
-                                                                      room_id: companyUser.companyId,
-                                                                      body: {
-                                                                        action: 'poll_send',
-                                                                        poll_id: pollCreated._id,
-                                                                        user_id: req.user._id,
-                                                                        user_name: req.user.name,
-                                                                        company_id: companyUser.companyId
-                                                                      }
-                                                                    })
+                                                                    // require('./../../../config/socketio').sendMessageToClient({
+                                                                    //   room_id: companyUser.companyId,
+                                                                    //   body: {
+                                                                    //     action: 'poll_send',
+                                                                    //     poll_id: pollCreated._id,
+                                                                    //     user_id: req.user._id,
+                                                                    //     user_name: req.user.name,
+                                                                    //     company_id: companyUser.companyId
+                                                                    //   }
+                                                                    // })
                                                                   })
                                                                   .catch(error => {
                                                                     return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
@@ -491,18 +491,18 @@ exports.sendPoll = function (req, res) {
                   let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
                   PollDataLayer.createForPoll(pollPayload)
                     .then(pollCreated => {
-                      require('./../../../config/socketio').sendMessageToClient({
-                        room_id: companyUser.companyId,
-                        body: {
-                          action: 'poll_created',
-                          payload: {
-                            poll_id: pollCreated._id,
-                            user_id: req.user._id,
-                            user_name: req.user.name,
-                            company_id: companyUser.companyId
-                          }
-                        }
-                      })
+                      // require('./../../../config/socketio').sendMessageToClient({
+                      //   room_id: companyUser.companyId,
+                      //   body: {
+                      //     action: 'poll_created',
+                      //     payload: {
+                      //       poll_id: pollCreated._id,
+                      //       user_id: req.user._id,
+                      //       user_name: req.user.name,
+                      //       company_id: companyUser.companyId
+                      //     }
+                      //   }
+                      // })
                       utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
@@ -597,17 +597,17 @@ exports.sendPoll = function (req, res) {
                                                                       let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
                                                                       PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                         .then(pollCreated => {
-                                                                          require('./../../../config/socketio').sendMessageToClient({
-                                                                            room_id: companyUser.companyId,
-                                                                            body: {
-                                                                              action: 'poll_send',
-                                                                              poll_id: pollCreated._id,
-                                                                              user_id: req.user._id,
-                                                                              user_name: req.user.name,
-                                                                              company_id: companyUser.companyId
-
-                                                                            }
-                                                                          })
+                                                                          // require('./../../../config/socketio').sendMessageToClient({
+                                                                          //   room_id: companyUser.companyId,
+                                                                          //   body: {
+                                                                          //     action: 'poll_send',
+                                                                          //     poll_id: pollCreated._id,
+                                                                          //     user_id: req.user._id,
+                                                                          //     user_name: req.user.name,
+                                                                          //     company_id: companyUser.companyId
+                                                                          //
+                                                                          //   }
+                                                                          // })
                                                                         })
                                                                         .catch(error => {
                                                                           return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
@@ -701,16 +701,16 @@ exports.sendPoll = function (req, res) {
                                                                     let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
                                                                     PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                       .then(pollCreated => {
-                                                                        require('./../../../config/socketio').sendMessageToClient({
-                                                                          room_id: companyUser.companyId,
-                                                                          body: {
-                                                                            action: 'poll_send',
-                                                                            poll_id: pollCreated._id,
-                                                                            user_id: req.user._id,
-                                                                            user_name: req.user.name,
-                                                                            company_id: companyUser.companyId
-                                                                          }
-                                                                        })
+                                                                        // require('./../../../config/socketio').sendMessageToClient({
+                                                                        //   room_id: companyUser.companyId,
+                                                                        //   body: {
+                                                                        //     action: 'poll_send',
+                                                                        //     poll_id: pollCreated._id,
+                                                                        //     user_id: req.user._id,
+                                                                        //     user_name: req.user.name,
+                                                                        //     company_id: companyUser.companyId
+                                                                        //   }
+                                                                        // })
                                                                       })
                                                                       .catch(error => {
                                                                         return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
