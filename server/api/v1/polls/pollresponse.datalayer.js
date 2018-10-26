@@ -1,7 +1,7 @@
 const PollResponse = require('./pollresponse.model')
 
 exports.genericFindForPollResponse = (query) => {
-  return PollResponse.find(query).populate('pollId subscriberId')
+  return PollResponse.find(query)
     .exec()
 }
 exports.aggregateForPollResponse = (query) => {
