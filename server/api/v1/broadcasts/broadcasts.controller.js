@@ -377,7 +377,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
           // update broadcast sent field
-          BroadcastPageDataLayer.createForBroadcast({
+          BroadcastPageDataLayer.createForBroadcastPage({
             pageId: page.pageId,
             userId: req.user._id,
             subscriberId: subscriber.senderId,
