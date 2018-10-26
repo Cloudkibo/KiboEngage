@@ -201,11 +201,13 @@ exports.create = function (req, res) {
     })
 }
 exports.send = function (req, res) {
+  console.log('in send')
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
+          console.log('companyProfile fetched', companyProfile)
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
               console.log('planUsage fetched', planUsage)
@@ -266,7 +268,7 @@ exports.send = function (req, res) {
                                                             messaging_type: 'UPDATE',
                                                             recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                             message: messageData,
-                                                            tag: req.body.fbMessageTag
+                                                            tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
                                                           }
                                                           // this calls the needle when the last message was older than 30 minutes
                                                           // checks the age of function using callback
@@ -371,7 +373,7 @@ exports.send = function (req, res) {
                                                           messaging_type: 'UPDATE',
                                                           recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                           message: messageData,
-                                                          tag: req.body.fbMessageTag
+                                                          tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
                                                         // checks the age of function using callback
@@ -585,7 +587,7 @@ exports.sendPoll = function (req, res) {
                                                                 messaging_type: 'UPDATE',
                                                                 recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                                 message: messageData,
-                                                                tag: req.body.fbMessageTag
+                                                                tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
                                                               }
                                                               // this calls the needle when the last message was older than 30 minutes
                                                               // checks the age of function using callback
@@ -688,7 +690,7 @@ exports.sendPoll = function (req, res) {
                                                               messaging_type: 'UPDATE',
                                                               recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                               message: messageData,
-                                                              tag: req.body.fbMessageTag
+                                                              tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
                                                             }
                                                             // this calls the needle when the last message was older than 30 minutes
                                                             // checks the age of function using callback
