@@ -208,6 +208,7 @@ exports.send = function (req, res) {
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
+              console.log('planUsage fetched', planUsage)
               planUsage = planUsage[0]
               utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
@@ -257,6 +258,7 @@ exports.send = function (req, res) {
                                                     .then(updated => {
                                                       utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                         .then(companyUsage => {
+                                                          companyUsage = companyUsage[0]
                                                           if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                             abort = true
                                                           }
@@ -351,6 +353,7 @@ exports.send = function (req, res) {
                                               subscribers = taggedSubscribers
                                               broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                 subscribers = repliedSubscribers
+                                                console.log('subscribers.length', subscribers.length)
                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
                                                   utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                     query: {companyId: companyUser.companyId},
@@ -359,6 +362,8 @@ exports.send = function (req, res) {
                                                   }, req.headers.authorization).then(updated => {
                                                     utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                       .then(companyUsage => {
+                                                        console.log('companyUsage fetched', companyUsage)
+                                                        companyUsage = companyUsage[0]
                                                         if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                           abort = true
                                                         }
@@ -375,6 +380,7 @@ exports.send = function (req, res) {
                                                             logger.serverLog(TAG, 'inside error')
                                                             return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                                           }
+                                                          console.log('isLastMessage', isLastMessage)
                                                           if (isLastMessage) {
                                                             logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
                                                             needle.post(
@@ -571,6 +577,7 @@ exports.sendPoll = function (req, res) {
                                                         .then(updated => {
                                                           utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                             .then(companyUsage => {
+                                                              companyUsage = companyUsage[0]
                                                               if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                                 abort = true
                                                               }
@@ -673,6 +680,7 @@ exports.sendPoll = function (req, res) {
                                                       }, req.headers.authorization).then(updated => {
                                                         utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                           .then(companyUsage => {
+                                                            companyUsage = companyUsage[0]
                                                             if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                               abort = true
                                                             }
