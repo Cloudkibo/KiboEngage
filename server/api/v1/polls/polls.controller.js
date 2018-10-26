@@ -348,7 +348,7 @@ exports.send = function (req, res) {
                                           if (subscribers.length > 0) {
                                             broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                               subscribers = taggedSubscribers
-                                              utility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+                                              broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                 subscribers = repliedSubscribers
                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
                                                   utility.callApi(`featureUsage/updateCompany`, 'put', {
@@ -661,7 +661,7 @@ exports.sendPoll = function (req, res) {
                                               if (subscribers.length > 0) {
                                                 broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                   subscribers = taggedSubscribers
-                                                  utility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+                                                  broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                     subscribers = repliedSubscribers
                                                     for (let j = 0; j < subscribers.length && !abort; j++) {
                                                       utility.callApi(`featureUsage/updateCompany`, 'put', {
