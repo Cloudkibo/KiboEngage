@@ -364,7 +364,7 @@ exports.send = function (req, res) {
                                                           abort = true
                                                         }
                                                         const data = {
-                                                          messaging_type: 'UPDATE',
+                                                          messaging_type: 'MESSAGE_TAG',
                                                           recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                           message: messageData,
                                                           tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
