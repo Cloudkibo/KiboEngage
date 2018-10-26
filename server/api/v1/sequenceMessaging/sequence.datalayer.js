@@ -4,7 +4,7 @@ const SequenceSubscribers = require('./sequenceSubscribers.model')
 const SequenceSubscribersMessages = require('./sequenceSubscribersMessages.model')
 
 exports.genericFindForSequence = (query) => {
-  return Sequence.find(query).populate('companyId userId')
+  return Sequence.find(query)
     .exec()
 }
 exports.findOneSequence = (objectId) => {

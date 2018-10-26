@@ -23,9 +23,9 @@ exports.index = function (req, res) {
     .then(companyUser => {
       console.log('companyUser fetched from accounts', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
-      BroadcastDataLayer.aggregateForBroadcasts(criteria.countCriteria)
       console.log('in allbroadcasts', JSON.stringify(criteria.countCriteria))
       console.log('in allbroadcasts', JSON.stringify(criteria.finalCriteria))
+      BroadcastDataLayer.aggregateForBroadcasts(criteria.countCriteria)
         .then(broadcastsCount => {
           console.log('broadcastsCount', broadcastsCount)
           BroadcastDataLayer.aggregateForBroadcasts(criteria.finalCriteria)
@@ -316,6 +316,7 @@ exports.sendConversation = function (req, res) {
             console.log('braodcastutility', broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
               .then(broadcast => {
+                console.log('inside create broadcasts')
                 require('./../../../config/socketio').sendMessageToClient({
                   room_id: companyUser.companyId,
                   body: {
@@ -344,6 +345,7 @@ exports.sendConversation = function (req, res) {
                       return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
                     })
                 } else {
+                  console.log('in subsFindCriteria')
                   let subscriberFindCriteria = BroadcastDataLayer.subsFindCriteria(req.body, page)
                   let interval = setInterval(() => {
                     if (payload) {
