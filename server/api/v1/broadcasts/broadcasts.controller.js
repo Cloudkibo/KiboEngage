@@ -328,8 +328,11 @@ exports.sendConversation = function (req, res) {
                     }
                   }
                 })
+                console.log('befor updatePayload')
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
+                console.log('before addModuleIdIfNecessary', payload)
                 broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
+                console.log('after addModuleIdIfNecessary')
                 if (req.body.isList === true) {
                   utility.callApi(`lists/query`, 'post', BroadcastDataLayer.ListFindCriteria(req.body), req.headers.authorization)
                     .then(lists => {
