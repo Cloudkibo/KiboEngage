@@ -317,17 +317,17 @@ exports.sendConversation = function (req, res) {
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
               .then(broadcast => {
                 console.log('inside create broadcasts')
-                require('./../../../config/socketio').sendMessageToClient({
-                  room_id: companyUser.companyId,
-                  body: {
-                    action: 'new_broadcast',
-                    payload: {
-                      broadcast_id: broadcast._id,
-                      user_id: req.user._id,
-                      user_name: req.user.name
-                    }
-                  }
-                })
+                // require('./../../../config/socketio').sendMessageToClient({
+                //   room_id: companyUser.companyId,
+                //   body: {
+                //     action: 'new_broadcast',
+                //     payload: {
+                //       broadcast_id: broadcast._id,
+                //       user_id: req.user._id,
+                //       user_name: req.user.name
+                //     }
+                //   }
+                // })
                 console.log('befor updatePayload')
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
                 console.log('before addModuleIdIfNecessary', payload)
