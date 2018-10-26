@@ -346,7 +346,7 @@ exports.send = function (req, res) {
                                               `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                           }
                                           if (subscribers.length > 0) {
-                                            utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                            broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                               subscribers = taggedSubscribers
                                               utility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                 subscribers = repliedSubscribers
@@ -659,7 +659,7 @@ exports.sendPoll = function (req, res) {
                                                   `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                               }
                                               if (subscribers.length > 0) {
-                                                utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                                broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                   subscribers = taggedSubscribers
                                                   utility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                     subscribers = repliedSubscribers
