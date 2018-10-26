@@ -50,10 +50,8 @@ exports.allPolls = function (req, res) {
       let criterias = PollLogicLayer.getCriterias(req.body, companyUser)
       PollDataLayer.aggregateForPolls(criterias.countCriteria)
         .then(pollsCount => {
-          console.log('pollsCount', pollsCount)
           PollDataLayer.aggregateForPolls(criterias.fetchCriteria)
             .then(polls => {
-              console.log('pollsFinal', polls)
               PollPageDataLayer.genericFind({companyId: companyUser.companyId})
                 .then(pollpages => {
                   PollResponseDataLayer.aggregateForPollResponse([{$group: {
@@ -61,7 +59,6 @@ exports.allPolls = function (req, res) {
                     count: {$sum: 1}
                   }}])
                     .then(responsesCount1 => {
-                      console.log('responsesCount', responsesCount1)
                       let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
                       res.status(200).json({
                         status: 'success',
@@ -201,16 +198,13 @@ exports.create = function (req, res) {
     })
 }
 exports.send = function (req, res) {
-  console.log('in send')
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
-          console.log('companyProfile fetched', companyProfile)
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              console.log('planUsage fetched', planUsage)
               planUsage = planUsage[0]
               utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
@@ -385,6 +379,7 @@ exports.send = function (req, res) {
                                                           console.log('isLastMessage', isLastMessage)
                                                           if (isLastMessage) {
                                                             logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
+                                                            console.log('inside poll send,', JSON.stringify(data), resp.body.access_token)
                                                             needle.post(
                                                               `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
                                                               data, (err, resp) => {
@@ -394,6 +389,7 @@ exports.send = function (req, res) {
                                                                     `Error occured at subscriber :${JSON.stringify(
                                                                       subscribers[j])}`)
                                                                 }
+                                                                console.log('sent poll response', resp.body)
                                                                 let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                                 PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                   .then(pollCreated => {
