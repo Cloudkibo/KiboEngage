@@ -4,8 +4,7 @@
 
 const logger = require('../../../components/logger')
 const TAG = 'api/tags/tags.controller.js'
-
-const callApi = require('../../../utility/api.caller.service')
+const callApi = require('../utility')
 
 exports.index = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
