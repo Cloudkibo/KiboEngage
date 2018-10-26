@@ -27,8 +27,10 @@ exports.index = function (req, res) {
       console.log('in allbroadcasts', JSON.stringify(criteria.countCriteria))
       console.log('in allbroadcasts', JSON.stringify(criteria.finalCriteria))
         .then(broadcastsCount => {
+          console.log('broadcastsCount', broadcastsCount)
           BroadcastDataLayer.aggregateForBroadcasts(criteria.finalCriteria)
             .then(broadcasts => {
+              console.log('broadcastsfinal', broadcasts)
               BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
                 .then(broadcastpages => {
                   res.status(200).json({
