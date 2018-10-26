@@ -61,7 +61,7 @@ exports.create = function (req, res) {
                   }
                   let tagPayload = {
                     tag: req.body.tag,
-                    userId: '5bbdf574dc4a1d3dfe796c6d',
+                    userId: req.user._id,
                     companyId: companyUser.companyId
                   }
                   console.log('Tag Payload', tagPayload)

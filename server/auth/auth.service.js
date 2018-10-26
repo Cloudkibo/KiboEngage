@@ -178,9 +178,11 @@ function validateApiKeys (req, res, next) {
     }, req.headers.authorization)
       .then(setting => {
         if (setting) {
+          console.log('Setting', setting.company_id)
           // todo this is for now buyer user id but it should be company id as thought
           apiCaller.callApi(`user/query`, 'post', {_id: setting.company_id, role: 'buyer'}, req.headers.authorization)
             .then(user => {
+              console.log('Logged In User', user._id)
               req.user = {_id: user._id}
               next()
             })

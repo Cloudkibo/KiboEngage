@@ -21,10 +21,9 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     json: true
   }
   console.log('in callapi', JSON.stringify(options))
-  logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
+  // logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
   return requestPromise(options).then(response => {
-    logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
-    console.log(TAG, `response from accounts ${JSON.stringify(response)}`)
+    // logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
     return new Promise((resolve, reject) => {
       if (response.status === 'success') {
         resolve(response.payload)

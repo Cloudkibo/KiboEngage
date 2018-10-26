@@ -13,13 +13,12 @@ router.get('/',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('autoposting'),
   auth.doesRolePermitsThisAction('autopostingPermission'),
-  validate({body: validationSchema.createPayload}),
   controller.index)
 
 router.post('/create',
   auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('autoposting'),
-  auth.doesRolePermitsThisAction('autopostingPermission'),
+  // auth.doesPlanPermitsThisAction('autoposting'),
+  // auth.doesRolePermitsThisAction('autopostingPermission'),
   validate({body: validationSchema.createPayload}),
   controller.create)
 
