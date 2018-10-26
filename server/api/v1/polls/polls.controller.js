@@ -268,7 +268,7 @@ exports.send = function (req, res) {
                                                           }
                                                           // this calls the needle when the last message was older than 30 minutes
                                                           // checks the age of function using callback
-                                                          compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                          compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                             if (err) {
                                                               logger.serverLog(TAG, 'inside error')
                                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -345,6 +345,7 @@ exports.send = function (req, res) {
                                             logger.serverLog(TAG,
                                               `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                           }
+                                          console.log('Page accesstoken', resp.body)
                                           if (subscribers.length > 0) {
                                             broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                               subscribers = taggedSubscribers
@@ -369,7 +370,7 @@ exports.send = function (req, res) {
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
                                                         // checks the age of function using callback
-                                                        compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                        compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                           if (err) {
                                                             logger.serverLog(TAG, 'inside error')
                                                             return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -581,7 +582,7 @@ exports.sendPoll = function (req, res) {
                                                               }
                                                               // this calls the needle when the last message was older than 30 minutes
                                                               // checks the age of function using callback
-                                                              compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                              compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                                 if (err) {
                                                                   logger.serverLog(TAG, 'inside error')
                                                                   return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -682,7 +683,7 @@ exports.sendPoll = function (req, res) {
                                                             }
                                                             // this calls the needle when the last message was older than 30 minutes
                                                             // checks the age of function using callback
-                                                            compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                            compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                               if (err) {
                                                                 logger.serverLog(TAG, 'inside error')
                                                                 return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
