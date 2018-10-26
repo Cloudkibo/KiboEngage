@@ -46,8 +46,10 @@ exports.assignPayload = {
       required: true
     },
     subscribers: {
-      type: 'string',
-      required: true
+      type: 'array',
+      items: {
+        type: 'string'
+      }
     }
   }
 }

@@ -20,7 +20,7 @@ router.get('/',
 
 router.post('/',
   auth.isAuthenticated(),
-  validate({body: validationSchema.findPayload}),
+  validate({body: validationSchema.createPayload}),
   controller.create)
 
 router.post('/rename',
@@ -47,10 +47,5 @@ router.post('/subscribertags',
   auth.isAuthenticated(),
   validate({body: validationSchema.subscriberTagsPayload}),
   controller.subscribertags)
-
-router.post('/query',
-  auth.isAuthenticated(),
-  validate({body: validationSchema.queryPayload}),
-  controller.query)
 
 module.exports = router
