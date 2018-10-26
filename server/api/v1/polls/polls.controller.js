@@ -664,6 +664,7 @@ exports.sendPoll = function (req, res) {
                                                   subscribers = taggedSubscribers
                                                   broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                     subscribers = repliedSubscribers
+                                                    console.log('subscribers.length', subscribers.length)
                                                     for (let j = 0; j < subscribers.length && !abort; j++) {
                                                       utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                         query: {companyId: companyUser.companyId},
@@ -688,6 +689,7 @@ exports.sendPoll = function (req, res) {
                                                                 logger.serverLog(TAG, 'inside error')
                                                                 return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                                               }
+                                                              console.log('after compUtility', isLastMessage)
                                                               if (isLastMessage) {
                                                                 logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
                                                                 needle.post(
