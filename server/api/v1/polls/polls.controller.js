@@ -262,7 +262,7 @@ exports.send = function (req, res) {
                                                             messaging_type: 'UPDATE',
                                                             recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                             message: messageData,
-                                                            tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
+                                                            tag: req.body.fbMessageTag
                                                           }
                                                           // this calls the needle when the last message was older than 30 minutes
                                                           // checks the age of function using callback
@@ -364,10 +364,10 @@ exports.send = function (req, res) {
                                                           abort = true
                                                         }
                                                         const data = {
-                                                          messaging_type: 'MESSAGE_TAG',
+                                                          messaging_type: 'UPDATE',
                                                           recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                           message: messageData,
-                                                          tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
+                                                          tag: req.body.fbMessageTag
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
                                                         // checks the age of function using callback
@@ -583,7 +583,7 @@ exports.sendPoll = function (req, res) {
                                                                 messaging_type: 'UPDATE',
                                                                 recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                                 message: messageData,
-                                                                tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
+                                                                //  tag: req.body.fbMessageTag
                                                               }
                                                               // this calls the needle when the last message was older than 30 minutes
                                                               // checks the age of function using callback
@@ -685,8 +685,8 @@ exports.sendPoll = function (req, res) {
                                                             const data = {
                                                               messaging_type: 'UPDATE',
                                                               recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                              message: messageData,
-                                                              tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
+                                                              message: messageData
+                                                              // tag: req.body.fbMessageTag
                                                             }
                                                             // this calls the needle when the last message was older than 30 minutes
                                                             // checks the age of function using callback
