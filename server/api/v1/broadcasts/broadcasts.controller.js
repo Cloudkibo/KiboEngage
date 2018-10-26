@@ -18,19 +18,13 @@ const broadcastUtility = require('./broadcasts.utility')
 const utility = require('../utility')
 
 exports.index = function (req, res) {
-  console.log('inside broadcasts')
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser fetched from accounts', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
-      console.log('in allbroadcasts', JSON.stringify(criteria.countCriteria))
-      console.log('in allbroadcasts', JSON.stringify(criteria.finalCriteria))
       BroadcastDataLayer.aggregateForBroadcasts(criteria.countCriteria)
         .then(broadcastsCount => {
-          console.log('broadcastsCount', broadcastsCount)
           BroadcastDataLayer.aggregateForBroadcasts(criteria.finalCriteria)
             .then(broadcasts => {
-              console.log('broadcastsfinal', broadcasts)
               BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
                 .then(broadcastpages => {
                   res.status(200).json({
@@ -313,10 +307,8 @@ exports.sendConversation = function (req, res) {
               }
             }, 3000)
           } else {
-            console.log('braodcastutility', broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
               .then(broadcast => {
-                console.log('inside create broadcasts')
                 // require('./../../../config/socketio').sendMessageToClient({
                 //   room_id: companyUser.companyId,
                 //   body: {
@@ -328,11 +320,8 @@ exports.sendConversation = function (req, res) {
                 //     }
                 //   }
                 // })
-                console.log('befor updatePayload')
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
-                console.log('before addModuleIdIfNecessary', payload)
                 broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
-                console.log('after addModuleIdIfNecessary')
                 if (req.body.isList === true) {
                   utility.callApi(`lists/query`, 'post', BroadcastDataLayer.ListFindCriteria(req.body), req.headers.authorization)
                     .then(lists => {
@@ -348,7 +337,6 @@ exports.sendConversation = function (req, res) {
                       return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
                     })
                 } else {
-                  console.log('in subsFindCriteria')
                   let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
                   let interval = setInterval(() => {
                     if (payload) {
