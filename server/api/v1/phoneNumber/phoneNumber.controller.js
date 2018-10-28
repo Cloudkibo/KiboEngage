@@ -16,15 +16,15 @@ exports.upload = function (req, res) {
       description: 'No file submitted'
     })
   }
-  utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
+  utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
     .then(companyProfile => {
-      utility.callApi(`usage/planGeneric`, 'post', {planId: companyProfile.planId})
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
         .then(planUsage => {
           planUsage = planUsage[0]
-          utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyProfile._id})
+          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
             .then(companyUsage => {
               companyUsage = companyUsage[0]
-              utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+              utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
                 .then(companyUser => {
                   if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                     return res.status(500).json({
@@ -40,7 +40,7 @@ exports.upload = function (req, res) {
                     conditions: 'initial_list',
                     initialList: true
                   }
-                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
+                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                     .then(savedList => {
                       fs.rename(req.files.file.path, directory.dir + '/userfiles' + directory.serverPath, err => {
                         if (err) {
@@ -58,7 +58,7 @@ exports.upload = function (req, res) {
                             if (data[`${phoneColumn}`] && data[`${nameColumn}`]) {
                               var result = data[`${phoneColumn}`].replace(/[- )(]+_/g, '')
                               utility.callApi(`phone/query`, 'post', {
-                                number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id})
+                                number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}, req.headers.authorization)
                                 .then(phone => {
                                   if (phone.length === 0) {
                                     if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
@@ -74,13 +74,13 @@ exports.upload = function (req, res) {
                                         companyId: companyUser.companyId,
                                         pageId: req.body._id,
                                         fileName: newFileName,
-                                        hasSubscribed: false })
+                                        hasSubscribed: false }, req.headers.authorization)
                                         .then(saved => {
-                                          utility.callApi(`updateCompany/`, 'put', {
+                                          utility.callApi(`featureUsage/updateCompany`, 'put', {
                                             query: {companyId: companyUser.companyId},
                                             newPayload: { $inc: { phone_invitation: 1 } },
                                             options: {}
-                                          })
+                                          }, req.headers.authorization)
                                             .then(updated => {})
                                             .catch(error => {
                                               return res.status(500).json({
@@ -106,18 +106,18 @@ exports.upload = function (req, res) {
                                       pageId: req.body._id,
                                       fileName: filename
                                     }
-                                    utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
+                                    utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                       .then(phonenumbersaved => {
-                                        utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: newFileName})
+                                        utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: newFileName}, req.headers.authorization)
                                           .then(number => {
                                             if (number.length > 0) {
                                               let subscriberFindCriteria = logicLayer.subscriberFindCriteria(number, companyUser)
-                                              utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
+                                              utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                                 .then(subscribers => {
                                                   let content = logicLayer.getContent(subscribers)
                                                   let query = {listName: newFileName, userId: req.user._id, companyId: companyUser.companyId}
                                                   let update = { content: content }
-                                                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}})
+                                                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}}, req.headers.authorization)
                                                     .then(savedList => {
                                                     })
                                                     .catch(error => {
@@ -156,7 +156,7 @@ exports.upload = function (req, res) {
                                     payload: `Failed to update number ${JSON.stringify(error)}`
                                   })
                                 })
-                              utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId})
+                              utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId}, req.headers.authorization)
                                 .then(pages => {
                                   pages.forEach(page => {
                                     let messageData = {
@@ -247,12 +247,12 @@ exports.upload = function (req, res) {
 }
 exports.sendNumbers = function (req, res) {
   let abort = false
-  utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
+  utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
     .then(companyProfile => {
-      utility.callApi(`usage/planGeneric`, 'post', {planId: companyProfile.planId})
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
         .then(planUsage => {
           planUsage = planUsage[0]
-          utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyProfile._id})
+          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
             .then(companyUsage => {
               companyUsage = companyUsage[0]
               if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
@@ -261,7 +261,7 @@ exports.sendNumbers = function (req, res) {
                   description: `Your phone invitations limit has reached. Please upgrade your plan to premium in order to send more invitations.`
                 })
               }
-              utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+              utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
                 .then(companyUser => {
                   let query = {initialList: true, userId: req.user._id, companyId: companyUser.companyId, listName: 'Other'}
                   let update = { listName: 'Other',
@@ -270,7 +270,7 @@ exports.sendNumbers = function (req, res) {
                     conditions: 'initial_list',
                     initialList: true
                   }
-                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
+                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                     .then(savedList => {
                     })
                     .catch(error => {
@@ -281,9 +281,9 @@ exports.sendNumbers = function (req, res) {
                     })
                   for (let i = 0; i < req.body.numbers.length && !abort; i++) {
                     let result = req.body.numbers[i].replace(/[- )(]+_/g, '')
-                    utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId})
+                    utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId}, req.headers.authorization)
                       .then(pages => {
-                        utility.callApi(`phone/query`, 'post', {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id})
+                        utility.callApi(`phone/query`, 'post', {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}, req.headers.authorization)
                           .then(found => {
                             if (found.length === 0) {
                               if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
@@ -296,13 +296,13 @@ exports.sendNumbers = function (req, res) {
                                   companyId: companyUser.companyId,
                                   pageId: req.body._id,
                                   fileName: 'Other',
-                                  hasSubscribed: false })
+                                  hasSubscribed: false }, req.headers.authorization)
                                   .then(saved => {
-                                    utility.callApi(`updateCompany/`, 'put', {
+                                    utility.callApi(`featureUsage/updateCompany`, 'put', {
                                       query: {companyId: req.body.companyId},
                                       newPayload: { $inc: { phone_invitation: 1 } },
                                       options: {}
-                                    })
+                                    }, req.headers.authorization)
                                       .then(updated => {
                                       })
                                       .catch(error => {
@@ -329,18 +329,18 @@ exports.sendNumbers = function (req, res) {
                                 pageId: req.body._id,
                                 fileName: filename
                               }
-                              utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}})
+                              utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                 .then(phonenumbersaved => {
-                                  utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: 'Other'})
+                                  utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: 'Other'}, req.headers.authorization)
                                     .then(number => {
                                       if (number.length > 0) {
                                         let subscriberFindCriteria = logicLayer.subscriberFindCriteria(number, companyUser)
-                                        utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
+                                        utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                           .then(subscribers => {
                                             let content = logicLayer.getContent(subscribers)
                                             let query = {listName: 'Other', userId: req.user._id, companyId: companyUser.companyId}
                                             let update = { content: content }
-                                            utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}})
+                                            utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}}, req.headers.authorization)
                                               .then(savedList => {})
                                               .catch(error => {
                                                 return res.status(500).json({
@@ -448,10 +448,10 @@ exports.sendNumbers = function (req, res) {
 }
 
 exports.pendingSubscription = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`phone/query`, 'post', {
-        companyId: companyUser.companyId, hasSubscribed: false, fileName: req.params.name})
+        companyId: companyUser.companyId, hasSubscribed: false, fileName: req.params.name}, req.headers.authorization)
         .then(phonenumbers => {
           return res.status(200)
             .json({status: 'success', payload: phonenumbers})
