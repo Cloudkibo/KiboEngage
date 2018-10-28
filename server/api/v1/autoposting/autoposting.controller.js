@@ -1,9 +1,10 @@
 const AutopostingDataLayer = require('./autoposting.datalayer')
 const AutoPostingLogicLayer = require('./autoposting.logiclayer')
 const utility = require('../utility')
+const logger = require('../../../components/logger')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -11,7 +12,7 @@ exports.index = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId})
+      AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId}, req.headers.authorization)
         .then(autoposting => {
           return res.status(200).json({
             status: 'success',
@@ -34,7 +35,7 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -42,15 +43,16 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id})
+      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
           // calling accounts feature usage for this
-          utility.callApi(`featureUsage/planUsage/query`, 'post', {planId: companyProfile.planId})
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              utility.callApi('featureUsage/companyUsage/query', 'post', {companyId: companyProfile._id})
+              utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
                   AutopostingDataLayer.countAutopostingDocuments({companyId: companyUser.companyId, subscriptionType: req.body.subscriptionType})
                     .then(gotCount => {
+                      console.log('Got count', gotCount)
                       if (gotCount > 0 && !companyUser.enableMoreAutoPostingIntegration) {
                         return res.status(403).json({
                           status: 'Failed',
@@ -59,6 +61,7 @@ exports.create = function (req, res) {
                       }
                       AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId, subscriptionUrl: req.body.subscriptionUrl})
                         .then(data => {
+                          console.log('data', data)
                           if (data.length > 0) {
                             return res.status(403).json({
                               status: 'Failed',
@@ -66,7 +69,9 @@ exports.create = function (req, res) {
                             })
                           }
                           let autoPostingPayload = AutoPostingLogicLayer.prepareAutopostingPayload(req, companyUser)
-                          let hasLimit = AutoPostingLogicLayer.checkPlanLimit(req.body.subscriptionType)
+                          console.log('AutoPosting Payload', autoPostingPayload)
+                          let hasLimit = AutoPostingLogicLayer.checkPlanLimit(req.body.subscriptionType, planUsage, companyUsage)
+                          console.log('AutoPosting Limit', hasLimit)
                           if (!hasLimit) {
                             return res.status(500).json({
                               status: 'failed',
@@ -74,44 +79,68 @@ exports.create = function (req, res) {
                             })
                           }
                           if (req.body.subscriptionType === 'twitter') {
-                            let autopostingPayload = AutoPostingLogicLayer.handleTwitterAutoposts(req.body.subscriptionUrl, autoPostingPayload)
-                            AutopostingDataLayer.createAutopostingObject(autopostingPayload)
-                              .then(result => {
-                                utility.callApi('featureUsage/companyUsage/update', 'post', {query: {companyId: companyProfile._id}, update: {$inc: { twitter_autoposting: 1 }}})
+                            let url = req.body.subscriptionUrl
+                            let urlAfterDot = url.substring(url.indexOf('.') + 1)
+                            let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
+                            if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
+                            AutoPostingLogicLayer.findUser(screenName, (err, data) => {
+                              console.log('Find User', err, data)
+                              if (err) {
+                                logger.serverLog(`Twitter URL parse Error ${err}`)
+                              }
+                              let payload
+                              if (data && !data.errors) {
+                                autoPostingPayload.accountUniqueName = data.screen_name
+                                payload = {
+                                  id: data.id,
+                                  name: data.name,
+                                  screen_name: data.screen_name,
+                                  profile_image_url: data.profile_image_url_https
+                                }
+                                autoPostingPayload.payload = payload
+                                AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                                   .then(result => {
-                                    utility.callApi('twitter/restart')
-                                    require('./../../../config/socketio').sendMessageToClient({
-                                      room_id: companyUser.companyId,
-                                      body: {
-                                        action: 'autoposting_created',
-                                        payload: {
-                                          autoposting_id: result._id,
-                                          user_id: req.user._id,
-                                          user_name: req.user.name,
-                                          payload: result
-                                        }
-                                      }
-                                    })
+                                    utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}}, req.headers.authorization)
+                                      .then(result => {
+                                        logger.serverLog('Company Usage updated')
+                                      })
+                                      .catch(err => {
+                                        return res.status(500).json({
+                                          status: 'failed',
+                                          description: `Internal server error in updating plan usage ${err}`
+                                        })
+                                      })
+                                      // utility.callApi('twitter/restart', 'get', {}, req.headers.authorization)
                                     return res.status(201)
                                       .json({status: 'success', payload: result})
+                                      /* require('./../../../config/socketio').sendMessageToClient({
+                                        room_id: companyUser.companyId,
+                                        body: {
+                                          action: 'autoposting_created',
+                                          payload: {
+                                            autoposting_id: result._id,
+                                            user_id: req.user._id,
+                                            user_name: req.user.name,
+                                            payload: result
+                                          }
+                                        }
+                                      }) */
                                   })
                                   .catch(err => {
                                     return res.status(500).json({
                                       status: 'failed',
-                                      description: `Internal server error in updating plan usage ${err}`
+                                      description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
                                     })
                                   })
-                              })
-                              .catch(err => {
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
-                                })
-                              })
+                              } else {
+                                return logger.serverLog('Data Errors from Find User - Twitter')
+                              }
+                            })
                           }
                           if (req.body.subscriptionType === 'facebook') {
                             let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
-                            utility.callApi(`page/query`, 'post', {userId: req.user._id, $or: [{pageId: screenName}, {pageUserName: screenName}]})
+                            console.log('autoPostingPayload', autoPostingPayload)
+                            utility.callApi(`pages/query`, 'post', {userId: req.user._id, $or: [{pageId: screenName}, {pageUserName: screenName}]}, req.headers.authorization)
                               .then(pageInfo => {
                                 if (!pageInfo) {
                                   return res.status(404).json({
@@ -120,25 +149,11 @@ exports.create = function (req, res) {
                                   })
                                 }
                                 autoPostingPayload.accountUniqueName = pageInfo.pageId
-                                let autopostingPayload = AutoPostingLogicLayer.handleTwitterAutoposts(req.body.subscriptionUrl, autoPostingPayload)
-                                AutopostingDataLayer.createAutopostingObject(autopostingPayload)
+                                AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                                   .then(result => {
-                                    utility.callApi('featureUsage/companyUsage/update', 'post', {query: {companyId: companyProfile._id}, update: {$inc: {facebook_autoposting: 1}}})
+                                    utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { facebook_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                       .then(result => {
-                                        require('./../../../config/socketio').sendMessageToClient({
-                                          room_id: companyUser.companyId,
-                                          body: {
-                                            action: 'autoposting_created',
-                                            payload: {
-                                              autoposting_id: result._id,
-                                              user_id: req.user._id,
-                                              user_name: req.user.name,
-                                              payload: result
-                                            }
-                                          }
-                                        })
-                                        return res.status(201)
-                                          .json({status: 'success', payload: result})
+                                        logger.serverLog('Company Usage Updated')
                                       })
                                       .catch(err => {
                                         return res.status(500).json({
@@ -146,6 +161,20 @@ exports.create = function (req, res) {
                                           description: `Internal server error in updating plan usage ${err}`
                                         })
                                       })
+                                      /* require('./../../../config/socketio').sendMessageToClient({
+                                        room_id: companyUser.companyId,
+                                        body: {
+                                          action: 'autoposting_created',
+                                          payload: {
+                                            autoposting_id: result._id,
+                                            user_id: req.user._id,
+                                            user_name: req.user.name,
+                                            payload: result
+                                          }
+                                        }
+                                      }) */
+                                    return res.status(201)
+                                      .json({status: 'success', payload: result})
                                   })
                                   .catch(err => {
                                     return res.status(500).json({
@@ -184,9 +213,9 @@ exports.create = function (req, res) {
                             autoPostingPayload.accountUniqueName = wordpressUniqueId
                             AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                               .then(result => {
-                                utility.callApi('featureUsage/companyUsage/update', 'post', {query: {companyId: companyProfile._id}, update: {$inc: {wordpress_autoposting: 1}}})
+                                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { wordpress_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                   .then(result => {
-                                    require('./../../../config/socketio').sendMessageToClient({
+                                    /* require('./../../../config/socketio').sendMessageToClient({
                                       room_id: companyUser.companyId,
                                       body: {
                                         action: 'autoposting_created',
@@ -197,7 +226,7 @@ exports.create = function (req, res) {
                                           payload: result
                                         }
                                       }
-                                    })
+                                    }) */
                                     return res.status(201)
                                       .json({status: 'success', payload: result})
                                   })
@@ -253,7 +282,7 @@ exports.create = function (req, res) {
     })
 }
 exports.edit = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -268,7 +297,7 @@ exports.edit = function (req, res) {
             return res.status(404)
               .json({status: 'failed', description: 'Record not found'})
           }
-          require('./../../../config/socketio').sendMessageToClient({
+          /* require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
               action: 'autoposting_updated',
@@ -279,7 +308,7 @@ exports.edit = function (req, res) {
                 payload: autoposting
               }
             }
-          })
+          }) */
           return res.status(200).json({
             status: 'success',
             payload: autopostingUpdated
@@ -309,8 +338,8 @@ exports.destroy = function (req, res) {
       }
       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
         .then(result => {
-          utility.callApi('twitter/restart')
-          require('./../../../config/socketio').sendMessageToClient({
+          // utility.callApi('twitter/restart')
+          /* require('./../../../config/socketio').sendMessageToClient({
             room_id: autoposting.companyId,
             body: {
               action: 'autoposting_removed',
@@ -320,8 +349,11 @@ exports.destroy = function (req, res) {
                 user_name: req.user.name
               }
             }
+          }) */
+          return res.status(200).json({
+            status: 'success',
+            okfdescription: 'AutoPosting Deleted'
           })
-          return res.status(204).end()
         })
         .catch(err => {
           return res.status(500)
