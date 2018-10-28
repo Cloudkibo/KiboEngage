@@ -31,20 +31,20 @@ exports.createPayload = {
       required: true
     },
     content: {
-      type: 'object',
+      type: 'array',
       required: true
     },
     conditions: {
-      type: 'object',
+      type: 'array',
       required: true
     },
     parentListId: {
       type: 'string',
-      required: true
+      required: false
     },
     parentListName: {
       type: 'string',
-      required: true
+      required: false
     }
   }
 }
