@@ -224,7 +224,7 @@ exports.viewList = function (req, res) {
                 })
               })
           } else {
-            utility.callApi(`subscribers/find`, 'post', {
+            utility.callApi(`subscribers/query`, 'post', {
               isSubscribed: true, _id: {$in: list[0].content}}, req.headers.authorization)
               .then(subscribers => {
                 return res.status(201)
@@ -255,7 +255,7 @@ exports.viewList = function (req, res) {
 exports.deleteList = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`lists/${req.params.id}`, 'delete', req.headers.authorization)
+      utility.callApi(`lists/${req.params.id}`, 'delete', {}, req.headers.authorization)
         .then(result => {
           utility.callApi(`featureUsage/updateCompany`, 'put', {
             query: {companyId: companyUser.companyId},

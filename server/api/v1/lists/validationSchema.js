@@ -56,11 +56,11 @@ exports.editPayload = {
       required: true
     },
     content: {
-      type: 'object',
+      type: 'array',
       required: true
     },
     conditions: {
-      type: 'object',
+      type: 'array',
       required: true
     },
     _id: {
