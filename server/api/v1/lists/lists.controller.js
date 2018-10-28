@@ -179,11 +179,12 @@ exports.viewList = function (req, res) {
     .then(companyUser => {
       utility.callApi(`lists/${req.params.id}`, 'get', {}, req.headers.authorization)
         .then(list => {
+          console.log('list fetched in viewList', list)
           if (list.initialList === true) {
             utility.callApi(`phone/query`, 'post', {
               companyId: companyUser.companyId,
               hasSubscribed: true,
-              fileName: list[0].listName
+              fileName: list.listName
             }, req.headers.authorization)
               .then(number => {
                 if (number.length > 0) {
@@ -225,7 +226,7 @@ exports.viewList = function (req, res) {
               })
           } else {
             utility.callApi(`subscribers/query`, 'post', {
-              isSubscribed: true, _id: {$in: list[0].content}}, req.headers.authorization)
+              isSubscribed: true, _id: {$in: list.content}}, req.headers.authorization)
               .then(subscribers => {
                 return res.status(201)
                   .json({status: 'success', payload: subscribers})
