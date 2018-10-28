@@ -5,7 +5,7 @@ exports.genericUpdateForResponse = (query, updated, options) => {
     .exec()
 }
 exports.genericFind = (query) => {
-  return SurveyResponse.find(query).populate('surveyId questionId subscriberId')
+  return SurveyResponse.find(query).populate('surveyId questionId')
     .exec()
 }
 
@@ -19,13 +19,13 @@ exports.findSurveyResponseById = (req) => {
   .exec()
 }
 exports.removeResponse = (Response) => {
- 
+
   return Response.remove()
   .exec()
 }
 
 exports.saveResponse = (Response) => {
- 
+
   return Response.save()
   .exec()
 }

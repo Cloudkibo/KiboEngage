@@ -284,12 +284,15 @@ exports.repliedPollSubscribers = function (req, res) {
     .then(companyUser => {
       PollDataLayer.genericFindForPolls({companyId: companyUser.companyId})
         .then(polls => {
+          console.log('polls fetched', polls)
           let criteria = logicLayer.pollResponseCriteria(polls)
           PollResponseDataLayer.genericFindForPollResponse(criteria)
             .then(responses => {
+              console.log('polls responses fetched', responses)
               let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
               utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
                 .then(subscribers => {
+                  console.log('subscribers fetched in polls', subscribers)
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
                   return res.status(200).json({status: 'success', payload: subscribersPayload})
                 })
@@ -326,12 +329,15 @@ exports.repliedSurveySubscribers = function (req, res) {
     .then(companyUser => {
       SurveyDataLayer.genericFind({companyId: companyUser.companyId})
         .then(surveys => {
+          console.log('suveys fetched', surveys)
           let criteria = logicLayer.pollResponseCriteria(surveys)
           SurveyResponseDataLayer.genericFind(criteria)
             .then(responses => {
+              console.log('survey responses fetched', responses)
               let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
-              utility.callApi(`subscribers/find`, 'post', subscriberCriteria, req.headers.authorization)
+              utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
                 .then(subscribers => {
+                  console.log('subscribers fetched in survey', subscribers)
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
                   return res.status(200).json({status: 'success', payload: subscribersPayload})
                 })
