@@ -78,11 +78,14 @@ exports.getAll = function (req, res) {
 exports.createList = function (req, res) {
   utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
     .then(companyProfile => {
+      console.log('fetched companyProfile', companyProfile)
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
         .then(planUsage => {
+          console.log('fetched planUsage', planUsage)
           planUsage = planUsage[0]
           utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
             .then(companyUsage => {
+              console.log('fetched companyUsage', companyUsage)
               companyUsage = companyUsage[0]
               if (planUsage.segmentation_lists !== -1 && companyUsage.segmentation_lists >= planUsage.segmentation_lists) {
                 return res.status(500).json({
@@ -92,6 +95,7 @@ exports.createList = function (req, res) {
               }
               utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
                 .then(companyUser => {
+                  console.log('fetched companyUser', companyUser)
                   utility.callApi(`lists`, 'post', {
                     companyId: companyUser.companyId,
                     userId: req.user._id,
@@ -102,12 +106,14 @@ exports.createList = function (req, res) {
                     parentListName: req.body.parentListName
                   }, req.headers.authorization)
                     .then(listCreated => {
+                      console.log('list Created', listCreated)
                       utility.callApi(`featureUsage/updateCompany`, 'put', {
                         query: {companyId: req.body.companyId},
                         newPayload: { $inc: { segmentation_lists: 1 } },
                         options: {}
                       }, req.headers.authorization)
                         .then(updated => {
+                          console.log('companyUsage updated', updated)
                         })
                         .catch(error => {
                           return res.status(500).json({
