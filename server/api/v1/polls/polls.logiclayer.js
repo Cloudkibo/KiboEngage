@@ -25,7 +25,7 @@ exports.getCriterias = function (body, companyUser) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let findCriteria = {
-    companyId: companyUser.companyId,
+    companyId: mongoose.Types.ObjectId(companyUser.companyId),
     'datetime': body.days !== '0' ? {
       $gte: startDate
     } : {$exists: true}

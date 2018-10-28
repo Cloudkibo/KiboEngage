@@ -12,7 +12,7 @@ const compUtility = require('../../../components/utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       PollDataLayer.genericFindForPolls({companyId: companyUser.companyId})
         .then(polls => {
@@ -45,7 +45,7 @@ exports.index = function (req, res) {
     })
 }
 exports.allPolls = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       let criterias = PollLogicLayer.getCriterias(req.body, companyUser)
       PollDataLayer.aggregateForPolls(criterias.countCriteria)
@@ -86,14 +86,14 @@ exports.allPolls = function (req, res) {
     })
 }
 exports.create = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
+      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
-          utility.callApi(`usage/planGeneric`, 'post', {planId: companyProfile.planId})
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
               planUsage = planUsage[0]
-              utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyProfile._id})
+              utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
                   companyUsage = companyUsage[0]
                   if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
@@ -103,11 +103,11 @@ exports.create = function (req, res) {
                     })
                   }
                   let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
-                  let pagesFindCriteria = PollDataLayer.pagesFindCriteria(companyUser, req.body)
-                  utility.callApi(`pages/query`, 'post', pagesFindCriteria)
+                  let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
+                  utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                     .then(pages => {
                       pages.forEach((page) => {
-                        utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId})
+                        utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
                             webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
@@ -151,18 +151,18 @@ exports.create = function (req, res) {
                     })
                   PollDataLayer.createForPoll(pollPayload)
                     .then(pollCreated => {
-                      require('./../../../config/socketio').sendMessageToClient({
-                        room_id: companyUser.companyId,
-                        body: {
-                          action: 'poll_created',
-                          payload: {
-                            poll_id: pollCreated._id,
-                            user_id: req.user._id,
-                            user_name: req.user.name,
-                            company_id: companyUser.companyId
-                          }
-                        }
-                      })
+                      // require('./../../../config/socketio').sendMessageToClient({
+                      //   room_id: companyUser.companyId,
+                      //   body: {
+                      //     action: 'poll_created',
+                      //     payload: {
+                      //       poll_id: pollCreated._id,
+                      //       user_id: req.user._id,
+                      //       user_name: req.user.name,
+                      //       company_id: companyUser.companyId
+                      //     }
+                      //   }
+                      // })
                       res.status(201).json({status: 'success', payload: pollCreated})
                     })
                     .catch(error => {
@@ -199,14 +199,14 @@ exports.create = function (req, res) {
 }
 exports.send = function (req, res) {
   let abort = false
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
+      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
-          utility.callApi(`usage/planGeneric`, 'post', {planId: companyProfile.planId})
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
               planUsage = planUsage[0]
-              utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyProfile._id})
+              utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
                   companyUsage = companyUsage[0]
                   if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
@@ -215,10 +215,10 @@ exports.send = function (req, res) {
                       description: `Your polls limit has reached. Please upgrade your plan to premium in order to send more polls`
                     })
                   }
-                  utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+                  utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      utility.callApi(`user/${userPage.userId}`)
+                      utility.callApi(`user/${userPage.userId}`, req.headers.authorization)
                         .then(connectedUser => {
                           var currentUser
                           if (req.user.facebookInfo) {
@@ -228,15 +228,15 @@ exports.send = function (req, res) {
                           }
                           const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
                           let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
-                          utility.callApi(`pages/query`, 'post', pagesFindCriteria)
+                          utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                             .then(pages => {
                               for (let z = 0; z < pages.length && !abort; z++) {
                                 if (req.body.isList === true) {
                                   let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
-                                  utility.callApi(`pages/query`, 'post', ListFindCriteria)
+                                  utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                     .then(lists => {
                                       let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
-                                      utility.callApi(`subscribers/query`, 'post', subsFindCriteria)
+                                      utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                         .then(subscribers => {
                                           needle.get(
                                             `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`, (err, resp) => {
@@ -246,14 +246,15 @@ exports.send = function (req, res) {
                                               broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                 subscribers = taggedSubscribers
                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                  utility.callApi(`usage/updateCompany`, 'put', {
+                                                  utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                     query: {companyId: companyUser.companyId},
                                                     newPayload: { $inc: { polls: 1 } },
                                                     options: {}
-                                                  })
+                                                  }, req.headers.authorization)
                                                     .then(updated => {
-                                                      utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyUser.companyId})
+                                                      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                         .then(companyUsage => {
+                                                          companyUsage = companyUsage[0]
                                                           if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                             abort = true
                                                           }
@@ -265,7 +266,7 @@ exports.send = function (req, res) {
                                                           }
                                                           // this calls the needle when the last message was older than 30 minutes
                                                           // checks the age of function using callback
-                                                          compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                          compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                             if (err) {
                                                               logger.serverLog(TAG, 'inside error')
                                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -281,17 +282,17 @@ exports.send = function (req, res) {
                                                                   let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                                   PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                     .then(pollCreated => {
-                                                                      require('./../../../config/socketio').sendMessageToClient({
-                                                                        room_id: companyUser.companyId,
-                                                                        body: {
-                                                                          action: 'poll_send',
-                                                                          poll_id: pollCreated._id,
-                                                                          user_id: req.user._id,
-                                                                          user_name: req.user.name,
-                                                                          company_id: companyUser.companyId
-
-                                                                        }
-                                                                      })
+                                                                      // require('./../../../config/socketio').sendMessageToClient({
+                                                                      //   room_id: companyUser.companyId,
+                                                                      //   body: {
+                                                                      //     action: 'poll_send',
+                                                                      //     poll_id: pollCreated._id,
+                                                                      //     user_id: req.user._id,
+                                                                      //     user_name: req.user.name,
+                                                                      //     company_id: companyUser.companyId
+                                                                      //
+                                                                      //   }
+                                                                      // })
                                                                     })
                                                                     .catch(error => {
                                                                       return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
@@ -333,7 +334,7 @@ exports.send = function (req, res) {
                                     })
                                 } else {
                                   let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
-                                  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
+                                  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                     .then(subscribers => {
                                       needle.get(
                                         `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
@@ -342,19 +343,23 @@ exports.send = function (req, res) {
                                             logger.serverLog(TAG,
                                               `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                           }
+                                          console.log('Page accesstoken', resp.body)
                                           if (subscribers.length > 0) {
-                                            utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                            broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                               subscribers = taggedSubscribers
-                                              utility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+                                              broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                 subscribers = repliedSubscribers
+                                                console.log('subscribers.length', subscribers.length)
                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                  utility.callApi(`usage/updateCompany`, 'put', {
+                                                  utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                     query: {companyId: companyUser.companyId},
                                                     newPayload: { $inc: { polls: 1 } },
                                                     options: {}
-                                                  }).then(updated => {
-                                                    utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyUser.companyId})
+                                                  }, req.headers.authorization).then(updated => {
+                                                    utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                       .then(companyUsage => {
+                                                        console.log('companyUsage fetched', companyUsage)
+                                                        companyUsage = companyUsage[0]
                                                         if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                           abort = true
                                                         }
@@ -366,13 +371,15 @@ exports.send = function (req, res) {
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
                                                         // checks the age of function using callback
-                                                        compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                        compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                           if (err) {
                                                             logger.serverLog(TAG, 'inside error')
                                                             return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                                           }
+                                                          console.log('isLastMessage', isLastMessage)
                                                           if (isLastMessage) {
                                                             logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
+                                                            console.log('inside poll send,', JSON.stringify(data), resp.body.access_token)
                                                             needle.post(
                                                               `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
                                                               data, (err, resp) => {
@@ -382,19 +389,20 @@ exports.send = function (req, res) {
                                                                     `Error occured at subscriber :${JSON.stringify(
                                                                       subscribers[j])}`)
                                                                 }
+                                                                console.log('sent poll response', resp.body)
                                                                 let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                                 PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                   .then(pollCreated => {
-                                                                    require('./../../../config/socketio').sendMessageToClient({
-                                                                      room_id: companyUser.companyId,
-                                                                      body: {
-                                                                        action: 'poll_send',
-                                                                        poll_id: pollCreated._id,
-                                                                        user_id: req.user._id,
-                                                                        user_name: req.user.name,
-                                                                        company_id: companyUser.companyId
-                                                                      }
-                                                                    })
+                                                                    // require('./../../../config/socketio').sendMessageToClient({
+                                                                    //   room_id: companyUser.companyId,
+                                                                    //   body: {
+                                                                    //     action: 'poll_send',
+                                                                    //     poll_id: pollCreated._id,
+                                                                    //     user_id: req.user._id,
+                                                                    //     user_name: req.user.name,
+                                                                    //     company_id: companyUser.companyId
+                                                                    //   }
+                                                                    // })
                                                                   })
                                                                   .catch(error => {
                                                                     return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
@@ -469,14 +477,14 @@ exports.send = function (req, res) {
 }
 exports.sendPoll = function (req, res) {
   let abort = false
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
+      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
-          utility.callApi(`usage/planGeneric`, 'post', {planId: companyProfile.planId})
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
               planUsage = planUsage[0]
-              utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyProfile._id})
+              utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
                   companyUsage = companyUsage[0]
                   if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
@@ -488,22 +496,22 @@ exports.sendPoll = function (req, res) {
                   let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
                   PollDataLayer.createForPoll(pollPayload)
                     .then(pollCreated => {
-                      require('./../../../config/socketio').sendMessageToClient({
-                        room_id: companyUser.companyId,
-                        body: {
-                          action: 'poll_created',
-                          payload: {
-                            poll_id: pollCreated._id,
-                            user_id: req.user._id,
-                            user_name: req.user.name,
-                            company_id: companyUser.companyId
-                          }
-                        }
-                      })
-                      utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+                      // require('./../../../config/socketio').sendMessageToClient({
+                      //   room_id: companyUser.companyId,
+                      //   body: {
+                      //     action: 'poll_created',
+                      //     payload: {
+                      //       poll_id: pollCreated._id,
+                      //       user_id: req.user._id,
+                      //       user_name: req.user.name,
+                      //       company_id: companyUser.companyId
+                      //     }
+                      //   }
+                      // })
+                      utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          utility.callApi(`user/${userPage.userId}`)
+                          utility.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
                             .then(connectedUser => {
                               var currentUser
                               if (req.user.facebookInfo) {
@@ -513,10 +521,10 @@ exports.sendPoll = function (req, res) {
                               }
                               const messageData = PollLogicLayer.prepareMessageData(req.body, pollCreated._id)
                               let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
-                              utility.callApi(`pages/query`, 'post', pagesFindCriteria)
+                              utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                                 .then(pages => {
                                   for (let z = 0; z < pages.length && !abort; z++) {
-                                    utility.callApi(`webhooks/query`, 'post', {pageId: pages[z].pageId})
+                                    utility.callApi(`webhooks/query`, 'post', {pageId: pages[z].pageId}, req.headers.authorization)
                                       .then(webhook => {
                                         webhook = webhook[0]
                                         if (webhook && webhook.isEnabled) {
@@ -546,10 +554,10 @@ exports.sendPoll = function (req, res) {
                                       })
                                     if (req.body.isList === true) {
                                       let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
-                                      utility.callApi(`pages/query`, 'post', ListFindCriteria)
+                                      utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
                                         .then(lists => {
                                           let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
-                                          utility.callApi(`subscribers/query`, 'post', subsFindCriteria)
+                                          utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                             .then(subscribers => {
                                               needle.get(
                                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`, (err, resp) => {
@@ -559,14 +567,15 @@ exports.sendPoll = function (req, res) {
                                                   broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                     subscribers = taggedSubscribers
                                                     for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                      utility.callApi(`usage/updateCompany`, 'put', {
+                                                      utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                         query: {companyId: companyUser.companyId},
                                                         newPayload: { $inc: { polls: 1 } },
                                                         options: {}
-                                                      })
+                                                      }, req.headers.authorization)
                                                         .then(updated => {
-                                                          utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyUser.companyId})
+                                                          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                             .then(companyUsage => {
+                                                              companyUsage = companyUsage[0]
                                                               if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                                 abort = true
                                                               }
@@ -574,11 +583,11 @@ exports.sendPoll = function (req, res) {
                                                                 messaging_type: 'UPDATE',
                                                                 recipient: {id: subscribers[j].senderId}, // this is the subscriber id
                                                                 message: messageData,
-                                                                tag: req.body.fbMessageTag
+                                                                //  tag: req.body.fbMessageTag
                                                               }
                                                               // this calls the needle when the last message was older than 30 minutes
                                                               // checks the age of function using callback
-                                                              compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                              compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                                 if (err) {
                                                                   logger.serverLog(TAG, 'inside error')
                                                                   return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -594,17 +603,17 @@ exports.sendPoll = function (req, res) {
                                                                       let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
                                                                       PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                         .then(pollCreated => {
-                                                                          require('./../../../config/socketio').sendMessageToClient({
-                                                                            room_id: companyUser.companyId,
-                                                                            body: {
-                                                                              action: 'poll_send',
-                                                                              poll_id: pollCreated._id,
-                                                                              user_id: req.user._id,
-                                                                              user_name: req.user.name,
-                                                                              company_id: companyUser.companyId
-
-                                                                            }
-                                                                          })
+                                                                          // require('./../../../config/socketio').sendMessageToClient({
+                                                                          //   room_id: companyUser.companyId,
+                                                                          //   body: {
+                                                                          //     action: 'poll_send',
+                                                                          //     poll_id: pollCreated._id,
+                                                                          //     user_id: req.user._id,
+                                                                          //     user_name: req.user.name,
+                                                                          //     company_id: companyUser.companyId
+                                                                          //
+                                                                          //   }
+                                                                          // })
                                                                         })
                                                                         .catch(error => {
                                                                           return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
@@ -646,7 +655,7 @@ exports.sendPoll = function (req, res) {
                                         })
                                     } else {
                                       let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
-                                      utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
+                                      utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                         .then(subscribers => {
                                           needle.get(
                                             `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
@@ -656,34 +665,37 @@ exports.sendPoll = function (req, res) {
                                                   `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                               }
                                               if (subscribers.length > 0) {
-                                                utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                                broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                   subscribers = taggedSubscribers
-                                                  utility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+                                                  broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                     subscribers = repliedSubscribers
+                                                    console.log('subscribers.length', subscribers.length)
                                                     for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                      utility.callApi(`usage/updateCompany`, 'put', {
+                                                      utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                         query: {companyId: companyUser.companyId},
                                                         newPayload: { $inc: { polls: 1 } },
                                                         options: {}
-                                                      }).then(updated => {
-                                                        utility.callApi(`usage/companyGeneric`, 'post', {companyId: companyUser.companyId})
+                                                      }, req.headers.authorization).then(updated => {
+                                                        utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                           .then(companyUsage => {
+                                                            companyUsage = companyUsage[0]
                                                             if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                               abort = true
                                                             }
                                                             const data = {
                                                               messaging_type: 'UPDATE',
                                                               recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                              message: messageData,
-                                                              tag: req.body.fbMessageTag
+                                                              message: messageData
+                                                              // tag: req.body.fbMessageTag
                                                             }
                                                             // this calls the needle when the last message was older than 30 minutes
                                                             // checks the age of function using callback
-                                                            compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                            compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                                               if (err) {
                                                                 logger.serverLog(TAG, 'inside error')
                                                                 return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                                               }
+                                                              console.log('after compUtility', isLastMessage)
                                                               if (isLastMessage) {
                                                                 logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
                                                                 needle.post(
@@ -698,16 +710,16 @@ exports.sendPoll = function (req, res) {
                                                                     let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
                                                                     PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                       .then(pollCreated => {
-                                                                        require('./../../../config/socketio').sendMessageToClient({
-                                                                          room_id: companyUser.companyId,
-                                                                          body: {
-                                                                            action: 'poll_send',
-                                                                            poll_id: pollCreated._id,
-                                                                            user_id: req.user._id,
-                                                                            user_name: req.user.name,
-                                                                            company_id: companyUser.companyId
-                                                                          }
-                                                                        })
+                                                                        // require('./../../../config/socketio').sendMessageToClient({
+                                                                        //   room_id: companyUser.companyId,
+                                                                        //   body: {
+                                                                        //     action: 'poll_send',
+                                                                        //     poll_id: pollCreated._id,
+                                                                        //     user_id: req.user._id,
+                                                                        //     user_name: req.user.name,
+                                                                        //     company_id: companyUser.companyId
+                                                                        //   }
+                                                                        // })
                                                                       })
                                                                       .catch(error => {
                                                                         return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})

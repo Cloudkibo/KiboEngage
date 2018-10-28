@@ -33,6 +33,6 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     })
   })
     .catch((err) => {
-      console.log('inside catch of callapi', err)
+      logger.serverLog(TAG, `error in callAPI ${util.inspect(err)}`)
     })
 }
