@@ -36,10 +36,10 @@ exports.editPayload = {
       type: 'string'
     },
     isActive: {
-      type: 'boolean'
+      type: 'string'
     },
     isSegmented: {
-      type: 'boolean'
+      type: 'string'
     },
     segmentationPageIds: {
       type: 'array',
