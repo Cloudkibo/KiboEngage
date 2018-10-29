@@ -31,6 +31,8 @@ module.exports = function (app) {
   app.use('/api/surveys', require('./api/v1/surveys'))
   app.use('/api/URL', require('./api/v1/URLForClickedCount'))
   app.use('/api/tags', require('./api/v1/tags'))
+  app.use('/api/commentCapture', require('./api/v1/commentCapture'))
+
 
   // auth middleware go here if you authenticate on same server
   // app.use('/auth', require('./auth'))
