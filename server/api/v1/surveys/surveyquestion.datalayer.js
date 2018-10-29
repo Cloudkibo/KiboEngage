@@ -15,7 +15,7 @@ exports.findSurveyWithId = (survey) => {
   .exec()
 }
 
-exports.saveQuestion = (surveyQuestion) => { 
+exports.saveQuestion = (surveyQuestion) => {
   return surveyQuestion.save()
   .exec()
 
