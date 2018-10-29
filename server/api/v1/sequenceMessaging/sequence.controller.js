@@ -94,7 +94,7 @@ exports.subscriberSequences = function (req, res) {
 }
 
 exports.deleteMessage = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -102,11 +102,11 @@ exports.deleteMessage = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      SequenceMessages.deleteSequenceMessage(req.params.id)
+      SequenceDatalayer.deleteSequenceMessage(req.params.id)
         .then(result => {
           SequenceMessageQueueDatalayer.deleteMany({ sequenceMessageId: req.params.id })
             .then(result => {
-              require('./../../../config/socketio').sendMessageToClient({
+              /* require('./../../../config/socketio').sendMessageToClient({
                 room_id: companyUser.companyId,
                 body: {
                   action: 'sequence_delete',
@@ -114,7 +114,7 @@ exports.deleteMessage = function (req, res) {
                     sequence_id: req.params.id
                   }
                 }
-              })
+              }) */
               return res.status(201).json({ status: 'success', payload: result })
             })
             .catch(err => {
@@ -134,7 +134,7 @@ exports.deleteMessage = function (req, res) {
     .catch(err => {
       return res.status(500).json({
         status: 'failed',
-        description: `Internal Server Error in fetching subscriber sequences ${JSON.stringify(err)}`
+        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
       })
     })
 }
@@ -156,7 +156,7 @@ exports.deleteSequence = function (req, res) {
                 .then(result => {
                   SequenceDatalayer.deleteManySequenceMessages({sequenceId: req.params.id})
                     .then(result => {
-                      require('./../../../config/socketio').sendMessageToClient({
+                      /* require('./../../../config/socketio').sendMessageToClient({
                         room_id: companyUser.companyId,
                         body: {
                           action: 'sequence_delete',
@@ -164,7 +164,7 @@ exports.deleteSequence = function (req, res) {
                             sequence_id: req.params.id
                           }
                         }
-                      })
+                      }) */
                       res.status(201).json({ status: 'success', payload: result })
                     })
                     .catch(err => {
@@ -204,7 +204,7 @@ exports.deleteSequence = function (req, res) {
 }
 
 exports.createSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -212,12 +212,12 @@ exports.createSequence = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id})
+      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
           // calling accounts feature usage for this
-          utility.callApi(`featureUsage/planUsage/query`, 'post', {planId: companyProfile.planId})
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              utility.callApi('featureUsage/companyUsage/query', 'post', {companyId: companyProfile._id})
+              utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
                   if (planUsage.broadcast_sequences !== -1 && companyUsage.broadcast_sequences >= planUsage.broadcast_sequences) {
                     return res.status(500).json({
@@ -232,9 +232,9 @@ exports.createSequence = function (req, res) {
                   }
                   SequenceDatalayer.createSequence(sequencePayload)
                     .then(result => {
-                      utility.callApi(`featureUsage/companyUsage/${companyUser.companyId}`, 'put', {$inc: { broadcast_sequences: 1 }})
+                      utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}}, req.headers.authorization)
                         .then(sequenceCreated => {
-                          require('./../../../config/socketio').sendMessageToClient({
+                          /* require('./../../../config/socketio').sendMessageToClient({
                             room_id: companyUser.companyId,
                             body: {
                               action: 'sequence_create',
@@ -242,7 +242,7 @@ exports.createSequence = function (req, res) {
                                 sequence_id: sequenceCreated._id
                               }
                             }
-                          })
+                          }) */
                           return res.status(201).json({status: 'success', payload: sequenceCreated})
                         })
                         .catch(err => {
@@ -289,7 +289,7 @@ exports.createSequence = function (req, res) {
 }
 
 exports.editSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -297,9 +297,9 @@ exports.editSequence = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      SequenceDatalayer.genericFindByIdAndUpdateSequence({_id: req.body.sequenceId}, req.body.name)
+      SequenceDatalayer.genericFindByIdAndUpdateSequence({_id: req.body.sequenceId}, {name: req.body.name}, req.headers.authorization)
         .then(newSequence => {
-          require('./../../../config/socketio').sendMessageToClient({
+          /* require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
               action: 'sequence_update',
@@ -307,7 +307,7 @@ exports.editSequence = function (req, res) {
                 sequence_id: req.body.sequenceId
               }
             }
-          })
+          }) */
           res.status(201).json({ status: 'success', payload: newSequence })
         })
         .catch(err => {
@@ -326,7 +326,7 @@ exports.editSequence = function (req, res) {
 }
 
 exports.createMessage = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -334,12 +334,12 @@ exports.createMessage = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id})
+      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
           // calling accounts feature usage for this
-          utility.callApi(`featureUsage/planUsage/query`, 'post', {planId: companyProfile.planId})
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              utility.callApi('featureUsage/companyUsage/query', 'post', {companyId: companyProfile._id})
+              utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
                   if (planUsage.messages_per_sequence !== -1 && companyUsage.messages_per_sequence >= planUsage.messages_per_sequence) {
                     return res.status(500).json({
@@ -354,16 +354,17 @@ exports.createMessage = function (req, res) {
                     title: req.body.title
                   }
                   SequenceDatalayer.createMessage(messagePayload)
-                    .then(result => {
-                      utility.callApi(`featureUsage/companyUsage/${companyUser.companyId}`, 'put', {$inc: { messages_per_sequence: 1 }})
-                        .then(messageCreated => {
+                    .then(messageCreated => {
+                      utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}}, req.headers.authorization)
+                        .then(result => {
+                          logger.serverLog('Message Created:', messageCreated)
                           if (messageCreated.trigger.event === 'none') {
                             let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
                             SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, messageCreated._id)
                           } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
                             SequenceUtility.checkParentMessageTrigger(messageCreated)
                           }
-                          require('./../../../config/socketio').sendMessageToClient({
+                          /* require('./../../../config/socketio').sendMessageToClient({
                             room_id: companyUser.companyId,
                             body: {
                               action: 'sequence_update',
@@ -371,7 +372,7 @@ exports.createMessage = function (req, res) {
                                 sequence_id: req.body.sequenceId
                               }
                             }
-                          })
+                          }) */
                           return res.status(201).json({status: 'success', payload: messageCreated})
                         })
                         .catch(err => {
@@ -418,7 +419,7 @@ exports.createMessage = function (req, res) {
 }
 
 exports.editMessage = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -426,9 +427,9 @@ exports.editMessage = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      SequenceDatalayer.genericFindByIdAndUpdateMessage({_id: req.body._id}, {title: req.body.title, payload: req.body.payload})
+      SequenceDatalayer.genericFindByIdAndUpdateMessage({_id: req.body._id}, {title: req.body.title, payload: req.body.payload}, req.headers.authorization)
         .then(newMessage => {
-          require('./../../../config/socketio').sendMessageToClient({
+          /* require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
               action: 'sequence_update',
@@ -436,7 +437,7 @@ exports.editMessage = function (req, res) {
                 sequence_id: newMessage.sequenceId
               }
             }
-          })
+          }) */
           return res.status(201).json({ status: 'success', payload: newMessage })
         })
         .catch(err => {
@@ -455,7 +456,7 @@ exports.editMessage = function (req, res) {
 }
 
 exports.setSchedule = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -470,7 +471,7 @@ exports.setSchedule = function (req, res) {
           }
           SequenceMessageQueueDatalayer.genericUpdate({ sequenceMessageId: message._id }, { queueScheduledTime: req.body.date }, { multi: true })
             .then(result => {
-              require('./../../../config/socketio').sendMessageToClient({
+              /* require('./../../../config/socketio').sendMessageToClient({
                 room_id: companyUser.companyId,
                 body: {
                   action: 'sequence_update',
@@ -478,7 +479,7 @@ exports.setSchedule = function (req, res) {
                     sequence_id: message.sequenceId
                   }
                 }
-              })
+              }) */
               return res.status(201).json({ status: 'success', payload: message })
             })
             .catch(err => {
@@ -580,7 +581,7 @@ exports.getAll = function (req, res) {
 }
 
 exports.subscribeToSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -604,7 +605,7 @@ exports.subscribeToSequence = function (req, res) {
                   SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, message._id)
                 })
                 if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
-                  require('./../../../config/socketio').sendMessageToClient({
+                  /* require('./../../../config/socketio').sendMessageToClient({
                     room_id: companyUser.companyId,
                     body: {
                       action: 'sequence_update',
@@ -612,7 +613,7 @@ exports.subscribeToSequence = function (req, res) {
                         sequence_id: req.body.sequenceId
                       }
                     }
-                  })
+                  }) */
                   res.status(201).json({ status: 'success', description: 'Subscribers subscribed successfully' })
                 }
               })
@@ -640,7 +641,7 @@ exports.subscribeToSequence = function (req, res) {
 }
 
 exports.unsubscribeToSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -651,16 +652,16 @@ exports.unsubscribeToSequence = function (req, res) {
       req.body.subscriberIds.forEach(subscriberId => {
         SequenceDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
           .then(result => {
-            SequenceMessageQueueDatalayer.createForSequenceSubcriber(req.body.sequenceId, subscriberId)
+            SequenceMessageQueueDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
               .then(result => {
-                utility.callApi(`subscribers/${subscriberId}`)
+                utility.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
                   .then(subscriber => {
                     if (subscriber) {
                       logger.serverLog(TAG, `Unsubscribes ${JSON.stringify(subscriber)}`)
-                      utility.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'unsubscribes_from_other_sequence', value: req.body.sequenceId })
+                      SequenceUtility.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'unsubscribes_from_other_sequence', value: req.body.sequenceId })
                     }
                     if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
-                      require('./../../../config/socketio').sendMessageToClient({
+                      /* require('./../../../config/socketio').sendMessageToClient({
                         room_id: companyUser.companyId,
                         body: {
                           action: 'sequence_update',
@@ -668,7 +669,7 @@ exports.unsubscribeToSequence = function (req, res) {
                             sequence_id: req.body.sequenceId
                           }
                         }
-                      })
+                      }) */
                       return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
                     }
                   })
@@ -748,7 +749,7 @@ exports.updateTrigger = function (req, res) {
       .then(message => {
         SequenceMessageQueueDatalayer.deleteMany({sequenceMessageId: message._id})
           .then(result => {
-            let utcDate = utility.setScheduleDate(message.schedule)
+            let utcDate = SequenceUtility.setScheduleDate(message.schedule)
             SequenceUtility.addToMessageQueue(message.sequenceId, utcDate, message._id)
           })
           .catch(err => {
@@ -784,6 +785,7 @@ exports.updateTrigger = function (req, res) {
                 seqMessage.payLoad = tempPayloadArray
                 SequenceDatalayer.createMessage(tempPayloadArray)
                   .then(savedMessage => {
+                    logger.serverLog('Saved Message:', savedMessage)
                     return res.status(200).json({ status: 'success', payload: savedMessage })
                   })
                   .catch(err => {
