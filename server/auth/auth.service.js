@@ -170,6 +170,7 @@ function doesRolePermitsThisAction (action) {
 }
 
 function validateApiKeys (req, res, next) {
+  console.log('APP ID', req.headers['app_id'], req.headers['app_secret'])
   if (req.headers.hasOwnProperty('app_secret')) {
     apiCaller.callApi(`api_settings/query`, 'post', {
       app_id: req.headers['app_id'],
@@ -178,10 +179,12 @@ function validateApiKeys (req, res, next) {
     }, req.headers.authorization)
       .then(setting => {
         if (setting) {
+          console.log('Setting', setting.company_id)
           // todo this is for now buyer user id but it should be company id as thought
           apiCaller.callApi(`user/query`, 'post', {_id: setting.company_id, role: 'buyer'}, req.headers.authorization)
-            .then(user => {
-              req.user = {_id: user._id}
+            .then(users => {
+              console.log('Logged In User', users[0]._id)
+              req.user = users[0]
               next()
             })
             .catch(err => {

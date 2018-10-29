@@ -53,27 +53,6 @@ const checkPlanLimit = (subscriptionType, planUsage, companyUsage) => {
   return true
 }
 
-const handleTwitterAutoposts = (subscriptionUrl, autoPostingPayload) => {
-  let url = subscriptionUrl
-  let urlAfterDot = url.substring(url.indexOf('.') + 1)
-  let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
-  if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
-  findUser(screenName, (err, data) => {
-    if (err) {
-      logger.serverLog(TAG, `Twitter URL parse Error ${err}`)
-    }
-    autoPostingPayload.accountUniqueName = data.screen_name
-    let payload = {
-      id: data.id,
-      name: data.name,
-      screen_name: data.screen_name,
-      profile_image_url: data.profile_image_url_https
-    }
-    autoPostingPayload.payload = payload
-    return autoPostingPayload
-  })
-}
-
 const getFacebookScreenName = (subscriptionUrl) => {
   let url = subscriptionUrl
   let urlAfterDot = url.substring(url.indexOf('.') + 1)
@@ -103,9 +82,10 @@ const prepareEditPayload = (req) => {
   return autoposting
 }
 
-function findUser (screenName, fn) {
+const findUser = (screenName, fn) => {
   twitterClient.get('users/show', {screen_name: screenName},
     (err, data, response) => {
+      console.log('Inside Find User')
       if (err) {
         fn(err)
       }
@@ -120,7 +100,6 @@ function findUser (screenName, fn) {
 
 exports.prepareAutopostingPayload = prepareAutopostingPayload
 exports.checkPlanLimit = checkPlanLimit
-exports.handleTwitterAutoposts = handleTwitterAutoposts
 exports.getFacebookScreenName = getFacebookScreenName
 exports.getChannelName = getChannelName
 exports.prepareEditPayload = prepareEditPayload
