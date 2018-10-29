@@ -52,23 +52,23 @@ exports.allSurveys = function (req, res) {
                       })
                     })
                     .catch(error => {
-                      return res.status(500).json({status: 'failed', payload: error})
+                      return res.status(500).json({status: 'failed due to count', payload: error})
                     })
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', payload: error})
+                  return res.status(500).json({status: 'failed due to survey pages', payload: error})
                 })
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: error})
+              return res.status(500).json({status: 'failed due to survey', payload: error})
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: error})
+          return res.status(500).json({status: 'failed due to survey count', payload: error})
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: error})
+      return res.status(500).json({status: 'failed due to company user', payload: error})
     })
 }
 
