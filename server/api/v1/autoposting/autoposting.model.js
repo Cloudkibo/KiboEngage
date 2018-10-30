@@ -3,8 +3,8 @@ let mongoose = require('mongoose')
 let Schema = mongoose.Schema
 
 let autoPostingSchema = new Schema({
-  userId: { type: Schema.ObjectId, ref: 'users' },
-  companyId: { type: Schema.ObjectId, ref: 'companyprofile' },
+  userId: { type: Schema.ObjectId },
+  companyId: { type: Schema.ObjectId },
   accountTitle: String,
   subscriptionUrl: String,
   // TODO make it enum, possible values: facebook, youtube, twitter etc
