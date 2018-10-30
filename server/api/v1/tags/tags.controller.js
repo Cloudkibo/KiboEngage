@@ -182,7 +182,7 @@ exports.delete = function (req, res) {
         .then(result => {
           callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
             .then(tagPayload => {
-              require('./../../../config/socketio').sendMessageToClient({
+              /* require('./../../../config/socketio').sendMessageToClient({
                 room_id: tagPayload.companyId,
                 body: {
                   action: 'tag_remove',
@@ -190,7 +190,7 @@ exports.delete = function (req, res) {
                     tag_id: req.body.tagId
                   }
                 }
-              })
+              }) */
               res.status(200)
                 .json({status: 'success', description: 'Tag removed successfully'})
             })
