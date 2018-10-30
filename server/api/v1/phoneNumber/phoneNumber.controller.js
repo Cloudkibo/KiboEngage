@@ -40,7 +40,7 @@ exports.upload = function (req, res) {
                     conditions: 'initial_list',
                     initialList: true
                   }
-                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
+                  utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                     .then(savedList => {
                       fs.rename(req.files.file.path, directory.dir + '/userfiles' + directory.serverPath, err => {
                         if (err) {
@@ -106,7 +106,7 @@ exports.upload = function (req, res) {
                                       pageId: req.body._id,
                                       fileName: filename
                                     }
-                                    utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
+                                    utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                       .then(phonenumbersaved => {
                                         utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: newFileName}, req.headers.authorization)
                                           .then(number => {
@@ -117,7 +117,7 @@ exports.upload = function (req, res) {
                                                   let content = logicLayer.getContent(subscribers)
                                                   let query = {listName: newFileName, userId: req.user._id, companyId: companyUser.companyId}
                                                   let update = { content: content }
-                                                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}}, req.headers.authorization)
+                                                  utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {}}, req.headers.authorization)
                                                     .then(savedList => {
                                                     })
                                                     .catch(error => {
@@ -270,7 +270,7 @@ exports.sendNumbers = function (req, res) {
                     conditions: 'initial_list',
                     initialList: true
                   }
-                  utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
+                  utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                     .then(savedList => {
                     })
                     .catch(error => {
@@ -329,7 +329,7 @@ exports.sendNumbers = function (req, res) {
                                 pageId: req.body._id,
                                 fileName: filename
                               }
-                              utility.callApi(`phone/update`, 'put', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
+                              utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                 .then(phonenumbersaved => {
                                   utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: 'Other'}, req.headers.authorization)
                                     .then(number => {
@@ -340,7 +340,7 @@ exports.sendNumbers = function (req, res) {
                                             let content = logicLayer.getContent(subscribers)
                                             let query = {listName: 'Other', userId: req.user._id, companyId: companyUser.companyId}
                                             let update = { content: content }
-                                            utility.callApi(`lists/update`, 'put', {query: query, newPayload: update, options: {}}, req.headers.authorization)
+                                            utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {}}, req.headers.authorization)
                                               .then(savedList => {})
                                               .catch(error => {
                                                 return res.status(500).json({
