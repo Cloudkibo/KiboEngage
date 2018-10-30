@@ -74,7 +74,7 @@ exports.allSurveys = function (req, res) {
 
 exports.create = function (req, res) {
   console.log('req.headers', req.body)
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -82,16 +82,18 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
+              planUsage = planUsage[0]
+              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
-                  if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
+                  companyUsage = companyUsage[0]
+                  if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                     return res.status(500).json({
                       status: 'failed',
-                      description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
+                      description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
                     })
                   }
                   let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
@@ -1221,10 +1223,9 @@ exports.deleteSurvey = function (req, res) {
           surveypages.forEach(surveypage => {
             SurveyPageDataLayer.removeSurvey(survey)
             .then(success => {
-
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', description: error})
+              return res.status(500).json({status: 'failed', description:  `failed due to survey page  ${JSON.stringify(error)}`})
             })
           })
 
@@ -1235,7 +1236,7 @@ exports.deleteSurvey = function (req, res) {
               .then(success => {
               })
               .catch(error => {
-                return res.status(500).json({status: 'failed', description: error})
+                return res.status(500).json({status: 'failed', description: `failed to survey response  ${JSON.stringify(error)}`})
               })
             })
             surveyQuestionsDataLayer.findSurveyQuestionById(req)
@@ -1245,7 +1246,7 @@ exports.deleteSurvey = function (req, res) {
                 .then(success => {
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', description: error})
+                  return res.status(500).json({status: 'failed', description:  `failed to survey question  ${JSON.stringify(error)}`})
                 })
               })
 
@@ -1253,23 +1254,23 @@ exports.deleteSurvey = function (req, res) {
             })
 
             .catch(error => {
-              return res.status(500).json({status: 'failed', description: error})
+              return res.status(500).json({status: 'failed', description: `failed to survey questions  ${JSON.stringify(error)}`})
             })
           })
 
           .catch(error => {
-            return res.status(500).json({status: 'failed', description: error})
+            return res.status(500).json({status: 'failed', description: `failed to survey responses  ${JSON.stringify(error)}`})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', description: error})
+          return res.status(500).json({status: 'failed', description: `failed due to survey pages  ${JSON.stringify(error)}`})
         })
       })
       .catch(error => {
-        return res.status(500).json({status: 'failed', description: error})
+        return res.status(500).json({status: 'failed', description: `failed due to survey remove  ${JSON.stringify(error)}`})
       })
      })
      .catch(error => {
-       return res.status(500).json({status: 'failed', description: error})
+       return res.status(500).json({status: 'failed', description: `failed due to surveyFindbyId  ${JSON.stringify(error)}`})
      })
 }

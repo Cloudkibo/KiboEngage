@@ -21,7 +21,7 @@ exports.genericUpdate = (query, updated, options) => {
     .exec()
 }
 exports.removeForSequenceSubscribers = (sequenceId, subscriberId) => {
-  return SequenceMessageQueue.remove(sequenceId).where('subscriberId').equals(subscriberId)
+  return SequenceMessageQueue.remove({sequenceId: sequenceId}).where('subscriberId').equals(subscriberId)
     .exec()
 }
 exports.genericFind = (query) => {
