@@ -28,7 +28,7 @@ exports.surveyFind = () => {
 }
 
 exports.findServeyById = (req) => {
-  return Surveys.findById(req.body.survey._id)
+  return Surveys.findById(req.params.id)
   .exec()
 }
 
