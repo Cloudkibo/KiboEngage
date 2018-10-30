@@ -20,7 +20,7 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     body,
     json: true
   }
-  // console.log('in callapi', JSON.stringify(options))
+  console.log('in callapi', JSON.stringify(body))
   // logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
   return requestPromise(options).then(response => {
     // logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
