@@ -33,9 +33,8 @@ module.exports = function (app) {
   app.use('/api/tags', require('./api/v1/tags'))
   app.use('/api/commentCapture', require('./api/v1/commentCapture'))
 
-
   // auth middleware go here if you authenticate on same server
-  // app.use('/auth', require('./auth'))
+  app.use('/auth', require('./auth'))
 
   app.get('/', (req, res) => {
     res.cookie('environment', config.env,
