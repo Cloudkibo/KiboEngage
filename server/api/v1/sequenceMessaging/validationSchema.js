@@ -17,7 +17,7 @@ exports.createSequencePayload = {
 exports.editSequencePayload = {
   type: 'object',
   properties: {
-    _id: {
+    sequenceId: {
       type: 'string',
       required: true
     },
@@ -32,7 +32,7 @@ exports.createMessagePayload = {
   type: 'object',
   properties: {
     schedule: {
-      type: 'string',
+      type: 'object',
       required: true
     },
     sequenceId: {
@@ -40,8 +40,10 @@ exports.createMessagePayload = {
       required: true
     },
     payload: {
-      type: 'object',
-      require: true
+      type: 'array',
+      items: {
+        type: 'object'
+      }
     },
     title: {
       type: 'string',
@@ -62,13 +64,15 @@ exports.editMessagePayload = {
       required: true
     },
     payload: {
-      type: 'object',
-      require: true
+      type: 'array',
+      items: {
+        type: 'object'
+      }
     }
   }
 }
 
-exports.setSchedule = {
+exports.setSchedulePayload = {
   type: 'object',
   properties: {
     messageId: {
@@ -80,17 +84,17 @@ exports.setSchedule = {
       required: true
     },
     days: {
-      type: 'object',
+      type: 'string',
       require: true
     },
     date: {
-      type: 'object',
+      type: 'string',
       require: true
     }
   }
 }
 
-exports.getAll = {
+exports.getAllPayload = {
   type: 'object',
   properties: {
     first_page: {
@@ -150,7 +154,7 @@ exports.testSchedulerPayload = {
   }
 }
 
-exports.updateSegmentation = {
+exports.updateSegmentationPayload = {
   type: 'object',
   properties: {
     sequenceId: {
@@ -166,23 +170,15 @@ exports.updateSegmentation = {
       required: true
     },
     segmentation: {
-      type: 'object',
-      properties: {
-        'condition': {
-          'type': 'string'
-        },
-        'criteria': {
-          'type': 'string'
-        },
-        'value': {
-          'type': 'string'
-        }
+      type: 'array',
+      items: {
+        'type': 'object'
       }
     }
   }
 }
 
-exports.updateTrigger = {
+exports.updateTriggerPayload = {
   type: 'object',
   properties: {
     sequenceId: {
@@ -192,10 +188,6 @@ exports.updateTrigger = {
       type: 'string'
     },
     type: {
-      type: 'string',
-      required: true
-    },
-    trigger: {
       type: 'string',
       required: true
     }

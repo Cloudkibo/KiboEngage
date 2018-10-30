@@ -56,7 +56,10 @@
     "needle": "^2.2.4",
     "open-graph": "^0.2.3",
     "passport": "^0.4.0",
+    "passport-facebook": "^2.1.1",
+    "passport-facebook-extension": "0.0.7",
     "passport-local": "^1.0.0",
+    "pug": "^2.0.3",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
     "serve-favicon": "^2.5.0",
@@ -65,7 +68,8 @@
     "socketio-jwt": "^4.5.0",
     "sort-array": "^2.0.0",
     "twit": "^2.2.11",
-    "uniqid": "^5.0.3"
+    "uniqid": "^5.0.3",
+    "util": "^0.11.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",

@@ -7,7 +7,7 @@ exports.findOneSurvey = (id) => {
 }
 
 exports.genericFind = (query) => {
-  return Surveys.find(query).populate('userId companyId')
+  return Surveys.find(query)
     .exec()
 }
 
@@ -28,7 +28,7 @@ exports.surveyFind = () => {
 }
 
 exports.findServeyById = (req) => {
-  return Surveys.findById(req.body.survey._id)
+  return Surveys.findById(req.params.id)
   .exec()
 }
 

@@ -5,7 +5,6 @@ const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/broadcast/broadcasts.controller.js'
-const utility = require('../utility')
 const needle = require('needle')
 const path = require('path')
 const fs = require('fs')
@@ -16,6 +15,7 @@ const mongoose = require('mongoose')
 let request = require('request')
 const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
+const utility = require('../utility')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -309,17 +309,17 @@ exports.sendConversation = function (req, res) {
           } else {
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
               .then(broadcast => {
-                require('./../../../config/socketio').sendMessageToClient({
-                  room_id: companyUser.companyId,
-                  body: {
-                    action: 'new_broadcast',
-                    payload: {
-                      broadcast_id: broadcast._id,
-                      user_id: req.user._id,
-                      user_name: req.user.name
-                    }
-                  }
-                })
+                // require('./../../../config/socketio').sendMessageToClient({
+                //   room_id: companyUser.companyId,
+                //   body: {
+                //     action: 'new_broadcast',
+                //     payload: {
+                //       broadcast_id: broadcast._id,
+                //       user_id: req.user._id,
+                //       user_name: req.user.name
+                //     }
+                //   }
+                // })
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
                 broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
                 if (req.body.isList === true) {
@@ -337,7 +337,7 @@ exports.sendConversation = function (req, res) {
                       return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
                     })
                 } else {
-                  let subscriberFindCriteria = BroadcastDataLayer.subsFindCriteria(req.body, page)
+                  let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
                   let interval = setInterval(() => {
                     if (payload) {
                       clearInterval(interval)
@@ -365,7 +365,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
           // update broadcast sent field
-          BroadcastPageDataLayer.createForBroadcast({
+          BroadcastPageDataLayer.createForBroadcastPage({
             pageId: page.pageId,
             userId: req.user._id,
             subscriberId: subscriber.senderId,

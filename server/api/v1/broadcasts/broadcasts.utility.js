@@ -7,6 +7,7 @@ const _ = require('lodash')
 const logger = require('../../../components/logger')
 const TAG = 'api/broadcast/broadcasts.utility.js'
 const utility = require('../../../components/utility')
+const callApi = require('../utility')
 const SurveyResponsesDataLayer = require('./../surveys/surveyresponse.datalayer')
 const PollResponsesDataLayer = require('./../polls/pollresponse.datalayer')
 const request = require('request')
@@ -353,7 +354,7 @@ function parseUrl (text) {
 
 function applyTagFilterIfNecessary (req, subscribers, fn) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
-    utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
+    callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tagSubscribers => {
         let subscribersPayload = []
         for (let i = 0; i < subscribers.length; i++) {

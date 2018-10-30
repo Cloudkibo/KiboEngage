@@ -6,7 +6,7 @@ exports.genericUpdate = (query, updated, options) => {
 }
 
 exports.genericFind = (query) => {
-  return PageSurvey.find(query).populate('companyId userId SurveyId')
+  return PageSurvey.find(query)
     .exec()
 }
 

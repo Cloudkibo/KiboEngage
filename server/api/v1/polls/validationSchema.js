@@ -107,7 +107,6 @@ exports.createPayload = {
     'segmentationTags',
     'segmentationPoll',
     'isList',
-    'segmentationList',
-    'fbMessageTag'
+    'segmentationList'
   ]
 }

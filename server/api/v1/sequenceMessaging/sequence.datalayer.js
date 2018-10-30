@@ -4,11 +4,11 @@ const SequenceSubscribers = require('./sequenceSubscribers.model')
 const SequenceSubscribersMessages = require('./sequenceSubscribersMessages.model')
 
 exports.genericFindForSequence = (query) => {
-  return Sequence.find(query).populate('companyId userId')
+  return Sequence.find(query)
     .exec()
 }
 exports.findOneSequence = (objectId) => {
-  return Sequence.findOne({_id: objectId}).populate('companyId userId')
+  return Sequence.findOne({_id: objectId})
     .exec()
 }
 exports.findSequenceUsingAggregate = (aggregateObject) => {
@@ -32,7 +32,7 @@ exports.genericFindForSequenceMessages = (query) => {
     .exec()
 }
 exports.genericFindForSequenceSubscribers = (query) => {
-  return SequenceSubscribers.find(query).populate('subscriberId sequenceId companyId')
+  return SequenceSubscribers.find(query).populate('sequenceId')
     .exec()
 }
 exports.genericUpdateForSequenceMessages = (query, updated, options) => {
@@ -44,7 +44,7 @@ exports.genericUpdateForSubscriberMessages = (query, updated, options) => {
     .exec()
 }
 exports.genericFindForSubscriberMessages = (query, updated, options) => {
-  return SequenceSubscribersMessages.find(query).populate('subscriberId messageId companyId')
+  return SequenceSubscribersMessages.find(query).populate('messageId')
     .exec()
 }
 exports.genericUpdateForSequenceSubscribers = (query, updated, options) => {
@@ -52,7 +52,7 @@ exports.genericUpdateForSequenceSubscribers = (query, updated, options) => {
     .exec()
 }
 exports.removeForSequenceSubscribers = (sequenceId, subscriberId) => {
-  return SequenceSubscribers.remove(sequenceId).where('subscriberId').equals(subscriberId)
+  return SequenceSubscribers.remove({sequenceId: sequenceId}).where('subscriberId').equals(subscriberId)
     .exec()
 }
 exports.createForSequenceSubcriber = (payload) => {

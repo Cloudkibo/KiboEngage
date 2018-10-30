@@ -16,7 +16,7 @@ const TAG = 'api/surveys/surveys.controller.js'
 const mongoose = require('mongoose')
 const listsDataLayer = require('../lists/list.datalayer')
 const DataLayerwebhooks = require('./../webhooks/webhooks.datalayer')
-const webhookUtility = require('./../webhooks/webhooks.utility')
+const webhookUtility = require('./../notifications/notifications.utility')
 const surveyDataLayer = require('./surveys.datalayer')
 const surveyLogicLayer = require('./surveys.logiclayer')
 const surveyResponseDataLayer = require('./surveyresponse.datalayer')
@@ -29,7 +29,7 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 
 exports.allSurveys = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -39,148 +39,149 @@ exports.allSurveys = function (req, res) {
       }
       let criterias = surveyLogicLayer.getCriterias(req.body, companyUser)
       surveyDataLayer.aggregateForSurveys(criterias.countCriteria)
-    .then(surveysCount => {
-      surveyDataLayer.aggregateForPolls(criterias.fetchCriteria)
-      .then(surveys => {
-        SurveyPageDataLayer.genericFind({companyId: companyUser.companyId})
-        .then(surveypages => {
-          surveyDataLayer.surveyFind()
-          .then(responsesCount => {
-            res.status(200).json({
-              status: 'success',
-              payload: {surveys: req.body.first_page === 'previous' ? surveys.reverse() : surveys, surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
+        .then(surveysCount => {
+          surveyDataLayer.aggregateForSurveys(criterias.fetchCriteria)
+            .then(surveys => {
+              SurveyPageDataLayer.genericFind({companyId: companyUser.companyId})
+                .then(surveypages => {
+                  surveyDataLayer.surveyFind()
+                    .then(responsesCount => {
+                      res.status(200).json({
+                        status: 'success',
+                        payload: {surveys: req.body.first_page === 'previous' ? surveys.reverse() : surveys, surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
+                      })
+                    })
+                    .catch(error => {
+                      return res.status(500).json({status: 'failed', payload: `Failed to response count ${JSON.stringify(error)}`})
+                    })
+                })
+                .catch(error => {
+                  return res.status(500).json({status: 'failed', payload: `Failed due to survey pages ${JSON.stringify(error)}`})
+                })
             })
-          })
-          .catch(error => {
-            return res.status(500).json({status: 'failed', payload: error})
-          })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: `Failed due to survey ${JSON.stringify(error)}`})
+            })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: error})
+          return res.status(500).json({status: 'failed', payload: `Failed due to survey count ${JSON.stringify(error)}`})
         })
-      })
-      .catch(error => {
-        return res.status(500).json({status: 'failed', payload: error})
-      })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: error})
-    })
-    })
-    .catch(error => {
-      return res.status(500).json({status: 'failed', payload: error})
+      return res.status(500).json({status: 'failed', payload: `Failed due to company user ${JSON.stringify(error)}`})
     })
 }
 
 exports.create = function (req, res) {
+  console.log('req.headers', req.body)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
-  .then(companyUser => {
-    if (!companyUser) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'The user account does not belong to any company. Please contact support'
-      })
-    }
-    callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
-    .then(companyProfile => {
-      callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
-      .then(planUsage => {
-        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
-        .then(companyUsage => {
-          if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
-            })
-          }
-          let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
-          let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-          dataLayerPages.findPages(pagesFindCriteria)
-          .then(pages => {
-            pages.forEach((page) => {
-              DataLayerwebhooks.findOnePage(page)
-              .then(webhook => {
-                if (webhook && webhook.isEnabled) {
-                  needle.get(webhook.webhook_url)
-                  .then(response => {
-                    if (response.statusCode === 200) {
-                      if (webhook && webhook.optIn.SURVEY_CREATED) {
-                        var data = {
-                          subscription_type: 'SURVEY_CREATED',
-                          payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
-                        }
-                        needle.post(webhook.webhook_url, data)
-                        .then(success => {
-                        })
-                        .catch(error => {
-                          return res.status(500).json({status: 'failed', payload: error})
-                        })
-                      }
-                    } else {
-                      webhookUtility.saveNotification(webhook)
-                    }
-                  })
-                  .catch(error => {
-                    return res.status(500).json({status: 'failed', payload: error})
-                  })
-                }
-              })
-            })
-              .catch(error => {
-                return res.status(500).json({status: 'failed', payload: error})
-              })
-          })
-          const survey = new Surveys(surveyPayload)
-          surveyDataLayer.createSurvey(survey)
-          .then(success => {
-            for (let question in req.body.questions) {
-              let options = []
-              options = req.body.questions[question].options
-              const surveyQuestion = new SurveyQuestions({
-                statement: req.body.questions[question].statement, // question statement
-                options, // array of question options
-                type: 'multichoice', // type can be text/multichoice
-                surveyId: survey._id
-              })
-              surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
-              .then(success => {
-                require('./../../../config/socketio').sendMessageToClient({
-                  room_id: companyUser.companyId,
-                  body: {
-                    action: 'survey_created',
-                    payload: {
-                      survey_id: survey._id,
-                      user_id: req.user._id,
-                      user_name: req.user.name,
-                      company_id: companyUser.companyId
-                    }
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
+        .then(companyProfile => {
+          callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
+            .then(planUsage => {
+              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
+                .then(companyUsage => {
+                  if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
+                    })
                   }
+                  let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
+                  let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
+                  dataLayerPages.findPages(pagesFindCriteria)
+                    .then(pages => {
+                      pages.forEach((page) => {
+                        DataLayerwebhooks.findOnePage(page)
+                          .then(webhook => {
+                            if (webhook && webhook.isEnabled) {
+                              needle.get(webhook.webhook_url)
+                                .then(response => {
+                                  if (response.statusCode === 200) {
+                                    if (webhook && webhook.optIn.SURVEY_CREATED) {
+                                      var data = {
+                                        subscription_type: 'SURVEY_CREATED',
+                                        payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
+                                      }
+                                      needle.post(webhook.webhook_url, data)
+                                        .then(success => {
+                                        })
+                                        .catch(error => {
+                                          return res.status(500).json({status: 'failed to needle', payload: error})
+                                        })
+                                    }
+                                  } else {
+                                    webhookUtility.saveNotification(webhook)
+                                  }
+                                })
+                                .catch(error => {
+                                  return res.status(500).json({status: 'failed to webhook', payload: error})
+                                })
+                            }
+                          })
+                      })
+                        .catch(error => {
+                          return res.status(500).json({status: 'failed to page', payload: error})
+                        })
+                    })
+                  const survey = new Surveys(surveyPayload)
+                  surveyDataLayer.createSurvey(survey)
+                    .then(success => {
+                      for (let question in req.body.questions) {
+                        let options = []
+                        options = req.body.questions[question].options
+                        const surveyQuestion = new SurveyQuestions({
+                          statement: req.body.questions[question].statement, // question statement
+                          options, // array of question options
+                          type: 'multichoice', // type can be text/multichoice
+                          surveyId: survey._id
+                        })
+                        surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
+                          .then(success => {
+                            require('./../../../config/socketio').sendMessageToClient({
+                              room_id: companyUser.companyId,
+                              body: {
+                                action: 'survey_created',
+                                payload: {
+                                  survey_id: survey._id,
+                                  user_id: req.user._id,
+                                  user_name: req.user.name,
+                                  company_id: companyUser.companyId
+                                }
+                              }
+                            })
+                            return res.status(201).json({status: 'success', payload: survey})
+                          })
+                          .catch(error => {
+                            return res.status(500).json({status: 'failed to save question', payload: error})
+                          })
+                      }
+                    })
+                    .catch(error => {
+                      return res.status(500).json({status: 'failed to create survey', payload: error})
+                    })
                 })
-                return res.status(201).json({status: 'success', payload: survey})
-              })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', payload: error})
+                  return res.status(500).json({status: 'failed to companuUsage', payload: error})
                 })
-            }
-          })
+            })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: error})
+              return res.status(500).json({status: 'failed to plan usage', payload: error})
             })
         })
-          .catch(error => {
-            return res.status(500).json({status: 'failed', payload: error})
-          })
-      })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: error})
+          return res.status(500).json({status: 'failed to company profile', payload: error})
         })
     })
-      .catch(error => {
-        return res.status(500).json({status: 'failed', payload: error})
-      })
-  })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: error})
+      return res.status(500).json({status: 'failed to companyUser', payload: error})
     })
 }
 
@@ -352,9 +353,9 @@ exports.send = function (req, res) {
             })
           }
 
-          utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+          callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
           .then(userPage => {
-            utility.callApi(`user/query`, 'post', {_id: userPage.userId})
+            callApi.callApi(`user/query`, 'post', {_id: userPage.userId})
             .then(connectedUser => {
               var currentUser
               if (req.user.facebookInfo) {
@@ -389,7 +390,7 @@ exports.send = function (req, res) {
                     })
                   }
                   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                  utility.callApi(`pages/query`, 'post', {pagesFindCriteria})
+                  callApi.callApi(`pages/query`, 'post', {pagesFindCriteria})
                   .then(pages => {
                     for (let z = 0; z < pages.length && !abort; z++) {
                       if (req.body.isList === true) {
@@ -424,8 +425,8 @@ exports.send = function (req, res) {
                               }
                             })
                           }
-                          utility.callApi(`subscribers/query`, 'post', { subsFindCriteria })
-                          .then(subscribers => {                         
+                          callApi.callApi(`subscribers/query`, 'post', { subsFindCriteria })
+                          .then(subscribers => {
                             needle.get(
                             `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
                             .then(resp => {
@@ -434,7 +435,7 @@ exports.send = function (req, res) {
                                 utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                   subscribers = repliedSubscribers
                                   for (let j = 0; j < subscribers.length && !abort; j++) {
-                                    utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                    callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
                                     .then(updated => {
                                       callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
                                       .then(companyUsage => {
@@ -491,7 +492,7 @@ exports.send = function (req, res) {
                                                       company_id: companyUser.companyId
                                                     }
                                                   }
-                                                })    
+                                                })
                                               })
                                                 .catch(error => {
                                                   return res.status(500).json({status: 'failed', description: error})
@@ -564,7 +565,7 @@ exports.send = function (req, res) {
                             })
                           }
                         }
-                        utility.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                        callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
                         .then(subscribers => {
                           needle.get(
                           `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
@@ -574,9 +575,9 @@ exports.send = function (req, res) {
                               utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                 subscribers = repliedSubscribers
                                 for (let j = 0; j < subscribers.length && !abort; j++) {
-                                  utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                  callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
                                   .then(updated => {
-                                    utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                    callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
                                       .then(companyUsage => {
                                         if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                           abort = true
@@ -633,7 +634,7 @@ exports.send = function (req, res) {
                                                       }
                                                     }
                                                   })
-                                                  
+
                                                 // not using now
                                                 // Sessions.findOne({
                                                 //   subscriber_id: subscribers[j]._id,
@@ -688,7 +689,7 @@ exports.send = function (req, res) {
                                               type: 'survey',
                                               scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
                                             }
-                                        
+
                                             AutomationQueueDataLayer.createAutomationQueueObject(payload)
                                               .then(success => {
                                               })
@@ -818,9 +819,9 @@ exports.sendSurvey = function (req, res) {
                 }
               }
             })
-            utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+            callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
             .then(userPage => {
-              utility.callApi(`user/query`, 'post', {_id: userPage.userId})
+              callApi.callApi(`user/query`, 'post', {_id: userPage.userId})
               .then(connectedUser => {
                 var currentUser
                 if (req.user.facebookInfo) {
@@ -862,7 +863,7 @@ exports.sendSurvey = function (req, res) {
                       }
 
                       let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                      utility.callApi(`pages/query`, 'post', {pagesFindCriteria})
+                      callApi.callApi(`pages/query`, 'post', {pagesFindCriteria})
                       .then(pages => {
                         for (let z = 0; z < pages.length && !abort; z++) {
                           DataLayerwebhooks.findOnePage(pages[z])
@@ -929,7 +930,7 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
 
-                              utility.callApi(`subscribers/query`, 'post', { subsFindCriteria })
+                              callApi.callApi(`subscribers/query`, 'post', { subsFindCriteria })
                           .then(subscribers => {
                             needle.get(
                               `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
@@ -939,7 +940,7 @@ exports.sendSurvey = function (req, res) {
                                   utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                     subscribers = repliedSubscribers
                                     for (let j = 0; j < subscribers.length && !abort; j++) {
-                                      utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                      callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
                                       .then(updated => {
                                         callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
                                         .then(companyUsage => {
@@ -987,7 +988,7 @@ exports.sendSurvey = function (req, res) {
 
                                                       SurveyPageDataLayer.savePage(surveyPage)
                                                       .then(success => {
-                                                        
+
                                                       })
                                                       .catch(error => {
                                                         return res.status(500).json({status: 'failed', description: error})
@@ -1009,7 +1010,7 @@ exports.sendSurvey = function (req, res) {
 
                                               AutomationQueueDataLayer.createAutomationQueueObject(automatedQueueMessage)
                                               .then(success => {
-                                                
+
                                               })
                                               .catch(error => {
                                                 return res.status(500).json({status: 'failed', description: error})
@@ -1058,7 +1059,7 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
                             }
-                            utility.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                            callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
                             .then(subscribers => {
                               needle.get(
                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
@@ -1068,9 +1069,9 @@ exports.sendSurvey = function (req, res) {
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                       subscribers = repliedSubscribers
                                       for (let j = 0; j < subscribers.length && !abort; j++) {
-                                        utility.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
-                                        .then(updated => {                        
-                                          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                        callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                        .then(updated => {
+                                          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
                                         .then(companyUsage => {
                                           if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                             abort = true
@@ -1223,7 +1224,7 @@ exports.deleteSurvey = function (req, res) {
 
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', description: error})
+              return res.status(500).json({status: 'failed', description:  `failed due to survey page  ${JSON.stringify(error)}`})
             })
           })
 
@@ -1231,44 +1232,44 @@ exports.deleteSurvey = function (req, res) {
           .then(surveyresponses => {
             surveyresponses.forEach(surveyresponse => {
               surveyResponseDataLayer.removeResponse(surveyresponse)
-              .then(success => {              
+              .then(success => {
               })
               .catch(error => {
-                return res.status(500).json({status: 'failed', description: error})
+                return res.status(500).json({status: 'failed', description: `failed to survey response  ${JSON.stringify(error)}`})
               })
             })
             surveyQuestionsDataLayer.findSurveyQuestionById(req)
             .then(surveyquestions => {
               surveyquestions.forEach(surveyquestion => {
                 surveyQuestionsDataLayer.removeQuestion(surveyquestions)
-                .then(success => {                   
+                .then(success => {
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', description: error})
+                  return res.status(500).json({status: 'failed', description:  `failed to survey question  ${JSON.stringify(error)}`})
                 })
               })
 
               return res.status(200).json({status: 'success'})
             })
-  
+
             .catch(error => {
-              return res.status(500).json({status: 'failed', description: error})
+              return res.status(500).json({status: 'failed', description: `failed to survey questions  ${JSON.stringify(error)}`})
             })
           })
 
           .catch(error => {
-            return res.status(500).json({status: 'failed', description: error})
+            return res.status(500).json({status: 'failed', description: `failed to survey responses  ${JSON.stringify(error)}`})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', description: error})
+          return res.status(500).json({status: 'failed', description: `failed due to survey pages  ${JSON.stringify(error)}`})
         })
       })
       .catch(error => {
-        return res.status(500).json({status: 'failed', description: error})
+        return res.status(500).json({status: 'failed', description: `failed due to survey remove  ${JSON.stringify(error)}`})
       })
      })
      .catch(error => {
-       return res.status(500).json({status: 'failed', description: error})
+       return res.status(500).json({status: 'failed', description: `failed due to surveyFindbyId  ${JSON.stringify(error)}`})
      })
 }
