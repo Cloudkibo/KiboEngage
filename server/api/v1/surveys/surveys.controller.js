@@ -1221,7 +1221,6 @@ exports.deleteSurvey = function (req, res) {
           surveypages.forEach(surveypage => {
             SurveyPageDataLayer.removeSurvey(survey)
             .then(success => {
-
             })
             .catch(error => {
               return res.status(500).json({status: 'failed', description:  `failed due to survey page  ${JSON.stringify(error)}`})
