@@ -9,6 +9,7 @@ exports.serverLog = function (label, data) {
     // logger.info(`${namespace} - ${data}`)
   }
   debug(data)
+  console.log(data)
 }
 
 exports.clientLog = function (label, data) {
