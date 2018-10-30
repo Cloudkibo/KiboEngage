@@ -42,7 +42,7 @@ exports.upload = function (req, res) {
                   }
                   utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                     .then(savedList => {
-                      fs.rename(req.files.file.path, directory.dir + '/userfiles' + directory.serverPath, err => {
+                      fs.rename(req.files.file.path, directory.dir + '/userfiles/' + directory.serverPath, err => {
                         if (err) {
                           return res.status(500).json({
                             status: 'failed',
@@ -52,7 +52,7 @@ exports.upload = function (req, res) {
                         let respSent = false
                         let phoneColumn = req.body.phoneColumn
                         let nameColumn = req.body.nameColumn
-                        fs.createReadStream(directory.dir + '/userfiles' + directory.serverPath)
+                        fs.createReadStream(directory.dir + '/userfiles/' + directory.serverPath)
                           .pipe(csv())
                           .on('data', function (data) {
                             if (data[`${phoneColumn}`] && data[`${nameColumn}`]) {
@@ -206,7 +206,7 @@ exports.upload = function (req, res) {
                             }
                           })
                           .on('end', function () {
-                            fs.unlinkSync(directory.dir + '/userfiles' + directory.serverPath)
+                            fs.unlinkSync(directory.dir + '/userfiles/' + directory.serverPath)
                           })
                       })
                     })
