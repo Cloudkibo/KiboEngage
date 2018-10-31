@@ -89,7 +89,6 @@ exports.create = function (req, res) {
               planUsage = planUsage[0]
               callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
-                  console.log('companyUsage', companyUsage)
                   companyUsage = companyUsage[0]
                   if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                     return res.status(500).json({
@@ -97,21 +96,15 @@ exports.create = function (req, res) {
                       description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
                     })
                   }
-                  console.log('companyUsage.survey', planUsage.surveys)
-                  console.log('companyUsage.survey', planUsage.surveys)
                   let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
                   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
                   callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                     .then(pages => {
-                      console.log('pages', pages)
                       pages.forEach((page) => {
                         callApi.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
-                            console.log('webhook check', webhook)
                             webhook = webhook[0]
-                            console.log('webhook checked', webhook)
                             if (webhook && webhook.isEnabled) {
-                              console.log('start webhook')
                               needle.get(webhook.webhook_url, (err, r) => {
                                 if (err) {
                                   return res.status(500).json({
@@ -137,8 +130,7 @@ exports.create = function (req, res) {
                                 } else {
                                   webhookUtility.saveNotification(webhook)
                                 }
-                              })
-                              console.log('end webhook')                               
+                              })                              
                             }
                           })
                           .catch(error => {
@@ -149,12 +141,9 @@ exports.create = function (req, res) {
                     .catch(error => {
                       return res.status(500).json({status: 'failed to page', payload: error})
                     })
-                  console.log('create survey payload', surveyPayload)
                   const survey = new Surveys(surveyPayload)
-                  console.log('Done survey payload', survey)
                   surveyDataLayer.createSurvey(survey)
                     .then(success => {
-                      console.log('createSurvey')
                       for (let question in req.body.questions) {
                         let options = []
                         options = req.body.questions[question].options
@@ -164,10 +153,8 @@ exports.create = function (req, res) {
                           type: 'multichoice', // type can be text/multichoice
                           surveyId: survey._id
                         })
-                        console.log('SUCCESSFULLY SAVE survey payload')
                         surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                           .then(success => {
-                            console.log('save question')
                             require('./../../../config/socketio').sendMessageToClient({
                               room_id: companyUser.companyId,
                               body: {
@@ -180,7 +167,6 @@ exports.create = function (req, res) {
                                 }
                               }
                             })
-                            console.log('sending reposnse positive')
                             return res.status(201).json({status: 'success', payload: survey})
                           })
                           .catch(error => {
@@ -223,46 +209,46 @@ exports.edit = function (req, res) {
    },...]
    } */
   surveyDataLayer.findServeyById(req)
-   .then(survey => {
-     survey.title = req.body.survey.title
-     survey.description = req.body.survey.description
-     survey.image = req.body.survey.image
-     surveyDataLayer.save(survey)
-   .then(success => {
-     surveyQuestionsDataLayer.removeSurvey(survey)
-    .then(success => {
-      for (let question in req.body.questions) {
-        let options = []
-        options = req.body.questions[question].options
-        const surveyQuestion = new SurveyQuestions({
-          statement: req.body.questions[question].statement, // question statement
-          options, // array of question options
-          type: 'multichoice', // type can be text/multichoice
-          surveyId: survey._id
-
-        })
-
-        surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
+    .then(survey => {
+      survey.title = req.body.survey.title
+      survey.description = req.body.survey.description
+      survey.image = req.body.survey.image
+      surveyDataLayer.save(survey)
         .then(success => {
+          surveyQuestionsDataLayer.removeSurvey(survey)
+            .then(success => {
+              for (let question in req.body.questions) {
+                let options = []
+                options = req.body.questions[question].options
+                const surveyQuestion = new SurveyQuestions({
+                  statement: req.body.questions[question].statement, // question statement
+                  options, // array of question options
+                  type: 'multichoice', // type can be text/multichoice
+                  surveyId: survey._id
+
+                })
+
+                surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
+                  .then(success => {
+                  })
+                  .catch(error => {
+                    return res.status(500).json({status: `failed ${error}`, payload: error})
+                  })
+              }
+              return res.status(200)
+                .json({status: 'success', payload: req.body.survey})
+            })
+            .catch(error => {
+              return res.status(500).json({status: `failed ${error}`, payload: error})
+            })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: error})
+          return res.status(500).json({status: `failed ${error}`, payload: error})
         })
-      }
-      return res.status(200)
-          .json({status: 'success', payload: req.body.survey})
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: error})
+      return res.status(500).json({status: `failed ${error}`, payload: error})
     })
-   })
-   .catch(error => {
-     return res.status(500).json({status: 'failed', payload: error})
-   })
-   })
-   .catch(error => {
-     return res.status(500).json({status: 'failed', payload: error})
-   })
 }
 
 // Get a single survey

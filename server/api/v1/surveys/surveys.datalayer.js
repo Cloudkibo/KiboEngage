@@ -28,13 +28,12 @@ exports.surveyFind = () => {
 }
 
 exports.findServeyById = (req) => {
-  return Surveys.findById(req.params.id)
+  return Surveys.findById(req.body.survey._id)
   .exec()
 }
 
 exports.save = (survey) => {
   return survey.save()
-  .exec()
 }
 
 exports.findByIdPopulate = (req) => {
