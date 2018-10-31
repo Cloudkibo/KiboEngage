@@ -97,13 +97,15 @@ exports.create = function (req, res) {
                       description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
                     })
                   }
+                  console.log('companyUsage.survey', planUsage.surveys)
+                  console.log('companyUsage.survey', planUsage.surveys)
                   let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
                   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                  utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+                  callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                     .then(pages => {
                       console.log('pages', pages)
                       pages.forEach((page) => {
-                        utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
+                        callApi.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
                             console.log('webhook', webhook)
                             webhook = webhook[0]
