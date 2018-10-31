@@ -7,6 +7,7 @@ let Menu = require('./menu.model')
 const needle = require('needle')
 const _ = require('lodash')
 const MenuDataLayer = require('./menu.datalayer')
+const callApi = require('../utility')
 
 // Get list of menu items
 exports.index = function (req, res) {
