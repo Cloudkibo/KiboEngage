@@ -280,7 +280,7 @@ exports.show = function (req, res) {
 exports.showQuestions = function (req, res) {
   surveyDataLayer.findByIdPopulate(req)
     .then(survey => {
-      surveyQuestionsDataLayer.findSurveyWithId(req)
+      surveyQuestionsDataLayer.findSurveyWithId(survey)
         .then(questions => {
           return res.status(200)
             .json({status: 'success', payload: {survey, questions}})
