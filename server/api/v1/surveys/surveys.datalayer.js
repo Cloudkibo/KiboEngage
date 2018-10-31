@@ -75,5 +75,4 @@ exports.countSurveys = (query) => {
 
 exports.createSurvey = (survey) => {
   return Surveys.create(survey)
-  .exec()
 } 
