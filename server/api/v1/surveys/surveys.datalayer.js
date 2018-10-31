@@ -37,7 +37,7 @@ exports.save = (survey) => {
 }
 
 exports.findByIdPopulate = (req) => {
-  return Surveys.findById(req.params.id).populate('userId')
+  return Surveys.findById(req.params.id)
   .exec()
 }
 

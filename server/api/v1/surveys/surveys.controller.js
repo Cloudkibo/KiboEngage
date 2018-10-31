@@ -279,19 +279,19 @@ exports.show = function (req, res) {
 // Get a single survey
 exports.showQuestions = function (req, res) {
   surveyDataLayer.findByIdPopulate(req)
-  .then(survey => {
-    surveyQuestionsDataLayer.findSurveyWithId(req)
-  .then(questions => {
-    return res.status(200)
-    .json({status: 'success', payload: {survey, questions}})
-  })
-  .catch(error => {
-    return res.status(500).json({status: 'failed', payload: error})
-  })
-  })
-  .catch(error => {
-    return res.status(500).json({status: 'failed', payload: error})
-  })
+    .then(survey => {
+      surveyQuestionsDataLayer.findSurveyWithId(req)
+        .then(questions => {
+          return res.status(200)
+            .json({status: 'success', payload: {survey, questions}})
+        })
+        .catch(error => {
+          return res.status(500).json({status: `failed ${error}`, payload: error})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: `failed ${error}`, payload: error})
+    })
 }
 
 // Submit response of survey
