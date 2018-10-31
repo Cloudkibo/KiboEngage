@@ -107,9 +107,11 @@ exports.create = function (req, res) {
                       pages.forEach((page) => {
                         callApi.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
-                            console.log('webhook', webhook)
+                            console.log('webhook check', webhook)
                             webhook = webhook[0]
+                            console.log('webhook checked', webhook)
                             if (webhook && webhook.isEnabled) {
+                              console.log('start webhook')
                               needle.get(webhook.webhook_url, (err, r) => {
                                 if (err) {
                                   return res.status(500).json({
@@ -135,7 +137,8 @@ exports.create = function (req, res) {
                                 } else {
                                   webhookUtility.saveNotification(webhook)
                                 }
-                              })                               
+                              })
+                              console.log('end webhook')                               
                             }
                           })
                           .catch(error => {
