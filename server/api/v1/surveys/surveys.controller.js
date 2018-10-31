@@ -110,36 +110,43 @@ exports.create = function (req, res) {
                             console.log('webhook', webhook)
                             webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
-                              needle.get(webhook.webhook_url)
-                                .then(response => {
-                                  if (response.statusCode === 200) {
-                                    if (webhook && webhook.optIn.SURVEY_CREATED) {
-                                      var data = {
-                                        subscription_type: 'SURVEY_CREATED',
-                                        payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
-                                      }
-                                      needle.post(webhook.webhook_url, data)
-                                        .then(success => {
-                                        })
-                                        .catch(error => {
-                                          return res.status(500).json({status: 'failed to needle', payload: error})
-                                        })
+                              needle.get(webhook.webhook_url, (err, r) => {
+                                if (err) {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Internal Server Error ${JSON.stringify(err)}`
+                                  })
+                                } else if (r.statusCode === 200) {
+                                  if (webhook && webhook.optIn.SURVEY_CREATED) {
+                                    var data = {
+                                      subscription_type: 'SURVEY_CREATED',
+                                      payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
                                     }
-                                  } else {
-                                    webhookUtility.saveNotification(webhook)
+                                    needle.post(webhook.webhook_url, data,
+                                      (error, response) => {
+                                        if (error) {
+                                          // return res.status(500).json({
+                                          //   status: 'failed',
+                                          //   description: `Internal Server Error ${JSON.stringify(err)}`
+                                          // })
+                                        }
+                                      })
                                   }
-                                })
-                                .catch(error => {
-                                  return res.status(500).json({status: 'failed to webhook', payload: error})
-                                })
+                                } else {
+                                  webhookUtility.saveNotification(webhook)
+                                }
+                              })                               
                             }
                           })
+                          .catch(error => {
+                            return res.status(500).json({status: 'failed to webhook', payload: error})
+                          })
                       })
-                        .catch(error => {
-                          return res.status(500).json({status: 'failed to page', payload: error})
-                        })
                     })
-                    console.log('create survey question')
+                    .catch(error => {
+                      return res.status(500).json({status: 'failed to page', payload: error})
+                    })
+                  console.log('create survey question')
                   const survey = new Surveys(surveyPayload)
                   surveyDataLayer.createSurvey(survey)
                     .then(success => {
