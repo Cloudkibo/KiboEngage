@@ -264,15 +264,15 @@ exports.show = function (req, res) {
               .json({status: 'success', payload: {survey, questions, responses}})
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: error})
+              return res.status(500).json({status: `failed ${error}`, payload: error})
             })
           })
           .catch(error => {
-            return res.status(500).json({status: 'failed', payload: error})
+            return res.status(500).json({status: `failed ${error}`, payload: error})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: error})
+          return res.status(500).json({status: `failed ${error}`, payload: error})
         })
 }
 
