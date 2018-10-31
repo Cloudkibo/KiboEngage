@@ -103,6 +103,7 @@ exports.create = function (req, res) {
                       pages.forEach((page) => {
                         utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
+                            webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
                               needle.get(webhook.webhook_url)
                                 .then(response => {
