@@ -675,12 +675,12 @@ function addModuleIdIfNecessary (payload, broadcastId) {
               URLObject.module = module
               console.log('URLObject', URLObject)
               URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
-              .then(savedurl => {
-                console.log('savedurl', savedurl)
-              })
-              .catch(err => {
-                logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
-              })
+                .then(savedurl => {
+                  console.log('savedurl', savedurl)
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                })
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
