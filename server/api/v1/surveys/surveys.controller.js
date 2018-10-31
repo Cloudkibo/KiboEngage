@@ -189,11 +189,11 @@ exports.create = function (req, res) {
                       }
                     })
                     .catch(error => {
-                      return res.status(500).json({status: 'failed to create survey', payload: error})
+                      return res.status(500).json({status: `failed to create survey ${error}`, payload: error})
                     })
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed to companuUsage', payload: error})
+                  return res.status(500).json({status: `failed to companyUsage ${error}`, payload: error})
                 })
             })
             .catch(error => {
