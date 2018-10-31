@@ -7,6 +7,7 @@ module.exports = function (app) {
   app.use('/api/messengerEvents', require('./api/v1/messengerEvents'))
   app.use('/api/automationQueue', require('./api/v1/automationQueue'))
   app.use('/api/autoposting', require('./api/v1/autoposting'))
+  app.use('/api/autoposting_messages', require('./api/v1/autopostingMessages'))
   app.use('/api/broadcasts', require('./api/v1/broadcasts'))
   app.use('/api/facebookEvents', require('./api/v1/facebookEvents'))
   app.use('/api/invitations', require('./api/v1/invitations'))
@@ -31,7 +32,7 @@ module.exports = function (app) {
   app.use('/api/surveys', require('./api/v1/surveys'))
   app.use('/api/URL', require('./api/v1/URLForClickedCount'))
   app.use('/api/tags', require('./api/v1/tags'))
-  app.use('/api/commentCapture', require('./api/v1/commentCapture'))
+  app.use('/api/post', require('./api/v1/commentCapture'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))

@@ -106,7 +106,7 @@ exports.deleteMessage = function (req, res) {
         .then(result => {
           SequenceMessageQueueDatalayer.deleteMany({ sequenceMessageId: req.params.id })
             .then(result => {
-              /* require('./../../../config/socketio').sendMessageToClient({
+              require('./../../../config/socketio').sendMessageToClient({
                 room_id: companyUser.companyId,
                 body: {
                   action: 'sequence_delete',
@@ -114,7 +114,7 @@ exports.deleteMessage = function (req, res) {
                     sequence_id: req.params.id
                   }
                 }
-              }) */
+              })
               return res.status(201).json({ status: 'success', payload: result })
             })
             .catch(err => {
@@ -156,7 +156,7 @@ exports.deleteSequence = function (req, res) {
                 .then(result => {
                   SequenceDatalayer.deleteManySequenceMessages({sequenceId: req.params.id})
                     .then(result => {
-                      /* require('./../../../config/socketio').sendMessageToClient({
+                      require('./../../../config/socketio').sendMessageToClient({
                         room_id: companyUser.companyId,
                         body: {
                           action: 'sequence_delete',
@@ -164,7 +164,7 @@ exports.deleteSequence = function (req, res) {
                             sequence_id: req.params.id
                           }
                         }
-                      }) */
+                      })
                       res.status(201).json({ status: 'success', payload: result })
                     })
                     .catch(err => {
@@ -231,10 +231,10 @@ exports.createSequence = function (req, res) {
                     userId: req.user._id
                   }
                   SequenceDatalayer.createSequence(sequencePayload)
-                    .then(result => {
+                    .then(sequenceCreated => {
                       utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}}, req.headers.authorization)
-                        .then(sequenceCreated => {
-                          /* require('./../../../config/socketio').sendMessageToClient({
+                        .then(result => {
+                          require('./../../../config/socketio').sendMessageToClient({
                             room_id: companyUser.companyId,
                             body: {
                               action: 'sequence_create',
@@ -242,7 +242,7 @@ exports.createSequence = function (req, res) {
                                 sequence_id: sequenceCreated._id
                               }
                             }
-                          }) */
+                          })
                           return res.status(201).json({status: 'success', payload: sequenceCreated})
                         })
                         .catch(err => {
@@ -299,7 +299,7 @@ exports.editSequence = function (req, res) {
       }
       SequenceDatalayer.genericFindByIdAndUpdateSequence({_id: req.body.sequenceId}, {name: req.body.name}, req.headers.authorization)
         .then(newSequence => {
-          /* require('./../../../config/socketio').sendMessageToClient({
+          require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
               action: 'sequence_update',
@@ -307,7 +307,7 @@ exports.editSequence = function (req, res) {
                 sequence_id: req.body.sequenceId
               }
             }
-          }) */
+          })
           res.status(201).json({ status: 'success', payload: newSequence })
         })
         .catch(err => {
@@ -364,7 +364,7 @@ exports.createMessage = function (req, res) {
                           } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
                             SequenceUtility.checkParentMessageTrigger(messageCreated)
                           }
-                          /* require('./../../../config/socketio').sendMessageToClient({
+                          require('./../../../config/socketio').sendMessageToClient({
                             room_id: companyUser.companyId,
                             body: {
                               action: 'sequence_update',
@@ -372,7 +372,7 @@ exports.createMessage = function (req, res) {
                                 sequence_id: req.body.sequenceId
                               }
                             }
-                          }) */
+                          })
                           return res.status(201).json({status: 'success', payload: messageCreated})
                         })
                         .catch(err => {
@@ -429,7 +429,7 @@ exports.editMessage = function (req, res) {
       }
       SequenceDatalayer.genericFindByIdAndUpdateMessage({_id: req.body._id}, {title: req.body.title, payload: req.body.payload}, req.headers.authorization)
         .then(newMessage => {
-          /* require('./../../../config/socketio').sendMessageToClient({
+          require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
               action: 'sequence_update',
@@ -437,7 +437,7 @@ exports.editMessage = function (req, res) {
                 sequence_id: newMessage.sequenceId
               }
             }
-          }) */
+          })
           return res.status(201).json({ status: 'success', payload: newMessage })
         })
         .catch(err => {
@@ -471,7 +471,7 @@ exports.setSchedule = function (req, res) {
           }
           SequenceMessageQueueDatalayer.genericUpdate({ sequenceMessageId: message._id }, { queueScheduledTime: req.body.date }, { multi: true })
             .then(result => {
-              /* require('./../../../config/socketio').sendMessageToClient({
+              require('./../../../config/socketio').sendMessageToClient({
                 room_id: companyUser.companyId,
                 body: {
                   action: 'sequence_update',
@@ -479,7 +479,7 @@ exports.setSchedule = function (req, res) {
                     sequence_id: message.sequenceId
                   }
                 }
-              }) */
+              })
               return res.status(201).json({ status: 'success', payload: message })
             })
             .catch(err => {
@@ -605,7 +605,7 @@ exports.subscribeToSequence = function (req, res) {
                   SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, message._id)
                 })
                 if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
-                  /* require('./../../../config/socketio').sendMessageToClient({
+                  require('./../../../config/socketio').sendMessageToClient({
                     room_id: companyUser.companyId,
                     body: {
                       action: 'sequence_update',
@@ -613,7 +613,7 @@ exports.subscribeToSequence = function (req, res) {
                         sequence_id: req.body.sequenceId
                       }
                     }
-                  }) */
+                  })
                   res.status(201).json({ status: 'success', description: 'Subscribers subscribed successfully' })
                 }
               })
@@ -661,7 +661,7 @@ exports.unsubscribeToSequence = function (req, res) {
                       SequenceUtility.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'unsubscribes_from_other_sequence', value: req.body.sequenceId })
                     }
                     if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
-                      /* require('./../../../config/socketio').sendMessageToClient({
+                      require('./../../../config/socketio').sendMessageToClient({
                         room_id: companyUser.companyId,
                         body: {
                           action: 'sequence_update',
@@ -669,7 +669,7 @@ exports.unsubscribeToSequence = function (req, res) {
                             sequence_id: req.body.sequenceId
                           }
                         }
-                      }) */
+                      })
                       return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
                     }
                   })

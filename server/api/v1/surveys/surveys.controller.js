@@ -98,11 +98,12 @@ exports.create = function (req, res) {
                   }
                   let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
                   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                  dataLayerPages.findPages(pagesFindCriteria)
+                  utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                     .then(pages => {
                       pages.forEach((page) => {
-                        DataLayerwebhooks.findOnePage(page)
+                        utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
+                            webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
                               needle.get(webhook.webhook_url)
                                 .then(response => {
