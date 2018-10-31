@@ -12,6 +12,7 @@ const SurveyResponsesDataLayer = require('./../surveys/surveyresponse.datalayer'
 const PollResponsesDataLayer = require('./../polls/pollresponse.datalayer')
 const request = require('request')
 const mongoose = require('mongoose')
+const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 
 function validateInput (body) {
   if (!_.has(body, 'platform')) return false
@@ -667,21 +668,23 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         if (button.url) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
-          URL.findOne({_id: mongoose.Types.ObjectId(urlId)}, (err, URLObject) => {
-            if (err) {
-              logger.serverLog(TAG, `Line# 676: update module id failed for url: ${JSON.stringify(err)}`)
-            }
-            let module = URLObject.module
-            module.id = broadcastId
-            URLObject.module = module
-            console.log(URLObject)
-            URLObject.save((err2, savedurl) => {
-              if (err) {
-                logger.serverLog(TAG, `Line# 681: save url failed.: ${JSON.stringify(err)}`)
-              }
-              console.log(savedurl)
+          URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+            .then(URLObject => {
+              let module = URLObject.module
+              module.id = broadcastId
+              URLObject.module = module
+              console.log('URLObject', URLObject)
+              URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
+              .then(savedurl => {
+                console.log('savedurl', savedurl)
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+              })
             })
-          })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+            })
         }
       })
     } else if (payload[i].componentType === 'gallery') {
