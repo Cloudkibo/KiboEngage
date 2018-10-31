@@ -256,7 +256,7 @@ exports.show = function (req, res) {
 
   surveyDataLayer.findByIdPopulate(req)
         .then(survey => {
-          surveyQuestionsDataLayer.findSurveyWithId()
+          surveyQuestionsDataLayer.findSurveyWithId(survey)
           .then(questions => {
             surveyResponseDataLayer.genericFind(survey)
             .then(responses => {
@@ -264,15 +264,15 @@ exports.show = function (req, res) {
               .json({status: 'success', payload: {survey, questions, responses}})
             })
             .catch(error => {
-              return res.status(500).json({status: `failed ${error}`, payload: error})
+              return res.status(500).json({status: `failed du to survey ${error}`, payload: error})
             })
           })
           .catch(error => {
-            return res.status(500).json({status: `failed ${error}`, payload: error})
+            return res.status(500).json({status: `failed due to questions ${error}`, payload: error})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: `failed ${error}`, payload: error})
+          return res.status(500).json({status: `failed due to response ${error}`, payload: error})
         })
 }
 
