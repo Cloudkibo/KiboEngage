@@ -1,9 +1,9 @@
 const AutopostingMessages = require('./autopostingMessages.datalayer')
-const utility = require('../utiity')
+const utility = require('../utility')
 const mongoose = require('mongoose')
 
 exports.getMessages = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({

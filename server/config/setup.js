@@ -43,10 +43,10 @@ module.exports = function (app, httpapp, config) {
   })
 
   // TODO: we will enable this while doing socket io
-  // const socket = require('socket.io').listen(server)
+  const socket = require('socket.io').listen(server)
 
   // TODO: Only enable if need to use socket
-  // require('./socketio').setup(socket)
+  require('./socketio').setup(socket)
 
   if (config.env === 'production') {
     console.log('KiboEngage server STARTED on %s in %s mode', config.port, config.env)

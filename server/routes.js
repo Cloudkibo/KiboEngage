@@ -7,6 +7,7 @@ module.exports = function (app) {
   app.use('/api/messengerEvents', require('./api/v1/messengerEvents'))
   app.use('/api/automationQueue', require('./api/v1/automationQueue'))
   app.use('/api/autoposting', require('./api/v1/autoposting'))
+  app.use('/api/autoposting_messages', require('./api/v1/autopostingMessages'))
   app.use('/api/broadcasts', require('./api/v1/broadcasts'))
   app.use('/api/facebookEvents', require('./api/v1/facebookEvents'))
   app.use('/api/invitations', require('./api/v1/invitations'))
