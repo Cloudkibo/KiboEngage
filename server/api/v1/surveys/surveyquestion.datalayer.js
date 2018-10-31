@@ -28,7 +28,6 @@ exports.findSurveyQuestionById = (req)  => {
 
 exports.removeQuestion = (surveyquestion) => {
   return surveyquestion.remove()
-  .exec()
 }
 
 exports.findQuestionSurveyById = (req) => {
