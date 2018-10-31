@@ -89,6 +89,7 @@ exports.create = function (req, res) {
               planUsage = planUsage[0]
               callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
+                  console.log('companyUsage', companyUsage)
                   companyUsage = companyUsage[0]
                   if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                     return res.status(500).json({
@@ -100,9 +101,11 @@ exports.create = function (req, res) {
                   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
                   utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                     .then(pages => {
+                      console.log('pages', pages)
                       pages.forEach((page) => {
                         utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
+                            console.log('webhook', webhook)
                             webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
                               needle.get(webhook.webhook_url)
@@ -134,6 +137,7 @@ exports.create = function (req, res) {
                           return res.status(500).json({status: 'failed to page', payload: error})
                         })
                     })
+                    console.log('create survey question')
                   const survey = new Surveys(surveyPayload)
                   surveyDataLayer.createSurvey(survey)
                     .then(success => {
