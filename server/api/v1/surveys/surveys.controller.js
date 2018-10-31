@@ -149,9 +149,9 @@ exports.create = function (req, res) {
                     .catch(error => {
                       return res.status(500).json({status: 'failed to page', payload: error})
                     })
-                  console.log('create survey payload')
+                  console.log('create survey payload', surveyPayload)
                   const survey = new Surveys(surveyPayload)
-                  console.log('Done survey payload')
+                  console.log('Done survey payload', survey)
                   surveyDataLayer.createSurvey(survey)
                     .then(success => {
                       console.log('createSurvey')
