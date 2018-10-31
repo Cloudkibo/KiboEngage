@@ -309,17 +309,17 @@ exports.sendConversation = function (req, res) {
           } else {
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
               .then(broadcast => {
-                // require('./../../../config/socketio').sendMessageToClient({
-                //   room_id: companyUser.companyId,
-                //   body: {
-                //     action: 'new_broadcast',
-                //     payload: {
-                //       broadcast_id: broadcast._id,
-                //       user_id: req.user._id,
-                //       user_name: req.user.name
-                //     }
-                //   }
-                // })
+                require('./../../../config/socketio').sendMessageToClient({
+                  room_id: companyUser.companyId,
+                  body: {
+                    action: 'new_broadcast',
+                    payload: {
+                      broadcast_id: broadcast._id,
+                      user_id: req.user._id,
+                      user_name: req.user.name
+                    }
+                  }
+                })
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
                 broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
                 if (req.body.isList === true) {
