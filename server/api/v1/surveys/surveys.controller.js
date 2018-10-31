@@ -146,10 +146,12 @@ exports.create = function (req, res) {
                     .catch(error => {
                       return res.status(500).json({status: 'failed to page', payload: error})
                     })
-                  console.log('create survey question')
+                  console.log('create survey payload')
                   const survey = new Surveys(surveyPayload)
+                  console.log('Done survey payload')
                   surveyDataLayer.createSurvey(survey)
                     .then(success => {
+                      console.log('createSurvey')
                       for (let question in req.body.questions) {
                         let options = []
                         options = req.body.questions[question].options
@@ -159,8 +161,10 @@ exports.create = function (req, res) {
                           type: 'multichoice', // type can be text/multichoice
                           surveyId: survey._id
                         })
+                        console.log('SUCCESSFULLY SAVE survey payload')
                         surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                           .then(success => {
+                            console.log('save question')
                             require('./../../../config/socketio').sendMessageToClient({
                               room_id: companyUser.companyId,
                               body: {
@@ -173,6 +177,7 @@ exports.create = function (req, res) {
                                 }
                               }
                             })
+                            console.log('sending reposnse positive')
                             return res.status(201).json({status: 'success', payload: survey})
                           })
                           .catch(error => {
