@@ -17,7 +17,6 @@ exports.findSurveyPagesById = (req) => {
 
 exports.removeSurvey = (surveypage) => {
   return surveypage.remove()
-  .exec()
 }
 
 exports.savePage= (surveypage) => {

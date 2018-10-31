@@ -11,7 +11,7 @@ exports.directory = function (req) {
     today.getSeconds()
   let fext = req.files.file.name.split('.')
   serverPath += '.' + fext[fext.length - 1]
-  let dir = path.resolve(__dirname, '../../../broadcastFiles/')
+  let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
   return {
     serverPath: serverPath, dir: dir
   }

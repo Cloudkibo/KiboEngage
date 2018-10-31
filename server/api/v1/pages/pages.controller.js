@@ -229,18 +229,18 @@ exports.enable = function (req, res) {
                               payload: JSON.stringify(error)
                             })
                           }
-                          require('./../../../config/socketio').sendMessageToClient({
-                            room_id: req.body.companyId,
-                            body: {
-                              action: 'page_connect',
-                              payload: {
-                                page_id: page.pageId,
-                                user_id: req.user._id,
-                                user_name: req.user.name,
-                                company_id: req.body.companyId
-                              }
-                            }
-                          })
+                          // require('./../../../config/socketio').sendMessageToClient({
+                          //   room_id: req.body.companyId,
+                          //   body: {
+                          //     action: 'page_connect',
+                          //     payload: {
+                          //       page_id: page.pageId,
+                          //       user_id: req.user._id,
+                          //       user_name: req.user.name,
+                          //       company_id: req.body.companyId
+                          //     }
+                          //   }
+                          // })
                           return res.status(200).json({
                             status: 'success',
                             payload: 'Page connected successfully!'
@@ -337,18 +337,18 @@ exports.disable = function (req, res) {
             payload: JSON.stringify(error)
           })
         }
-        require('./../../../config/socketio').sendMessageToClient({
-          room_id: req.body.companyId,
-          body: {
-            action: 'page_disconnect',
-            payload: {
-              page_id: req.body.pageId,
-              user_id: req.user._id,
-              user_name: req.user.name,
-              company_id: req.body.companyId
-            }
-          }
-        })
+        // require('./../../../config/socketio').sendMessageToClient({
+        //   room_id: req.body.companyId,
+        //   body: {
+        //     action: 'page_disconnect',
+        //     payload: {
+        //       page_id: req.body.pageId,
+        //       user_id: req.user._id,
+        //       user_name: req.user.name,
+        //       company_id: req.body.companyId
+        //     }
+        //   }
+        // })
         return res.status(200).json({
           status: 'success',
           payload: 'Page disconnected successfully!'

@@ -74,7 +74,7 @@ exports.allSurveys = function (req, res) {
 
 exports.create = function (req, res) {
   console.log('req.headers', req.body)
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -82,54 +82,64 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
+              planUsage = planUsage[0]
+              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
-                  if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
+                  companyUsage = companyUsage[0]
+                  if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                     return res.status(500).json({
                       status: 'failed',
-                      description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
+                      description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
                     })
                   }
                   let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
                   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                  dataLayerPages.findPages(pagesFindCriteria)
+                  callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                     .then(pages => {
                       pages.forEach((page) => {
-                        DataLayerwebhooks.findOnePage(page)
+                        callApi.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
                           .then(webhook => {
+                            webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
-                              needle.get(webhook.webhook_url)
-                                .then(response => {
-                                  if (response.statusCode === 200) {
-                                    if (webhook && webhook.optIn.SURVEY_CREATED) {
-                                      var data = {
-                                        subscription_type: 'SURVEY_CREATED',
-                                        payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
-                                      }
-                                      needle.post(webhook.webhook_url, data)
-                                        .then(success => {
-                                        })
-                                        .catch(error => {
-                                          return res.status(500).json({status: 'failed to needle', payload: error})
-                                        })
+                              needle.get(webhook.webhook_url, (err, r) => {
+                                if (err) {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Internal Server Error ${JSON.stringify(err)}`
+                                  })
+                                } else if (r.statusCode === 200) {
+                                  if (webhook && webhook.optIn.SURVEY_CREATED) {
+                                    var data = {
+                                      subscription_type: 'SURVEY_CREATED',
+                                      payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
                                     }
-                                  } else {
-                                    webhookUtility.saveNotification(webhook)
+                                    needle.post(webhook.webhook_url, data,
+                                      (error, response) => {
+                                        if (error) {
+                                          // return res.status(500).json({
+                                          //   status: 'failed',
+                                          //   description: `Internal Server Error ${JSON.stringify(err)}`
+                                          // })
+                                        }
+                                      })
                                   }
-                                })
-                                .catch(error => {
-                                  return res.status(500).json({status: 'failed to webhook', payload: error})
-                                })
+                                } else {
+                                  webhookUtility.saveNotification(webhook)
+                                }
+                              })                              
                             }
                           })
+                          .catch(error => {
+                            return res.status(500).json({status: 'failed to webhook', payload: error})
+                          })
                       })
-                        .catch(error => {
-                          return res.status(500).json({status: 'failed to page', payload: error})
-                        })
+                    })
+                    .catch(error => {
+                      return res.status(500).json({status: 'failed to page', payload: error})
                     })
                   const survey = new Surveys(surveyPayload)
                   surveyDataLayer.createSurvey(survey)
@@ -165,11 +175,11 @@ exports.create = function (req, res) {
                       }
                     })
                     .catch(error => {
-                      return res.status(500).json({status: 'failed to create survey', payload: error})
+                      return res.status(500).json({status: `failed to create survey ${error}`, payload: error})
                     })
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed to companuUsage', payload: error})
+                  return res.status(500).json({status: `failed to companyUsage ${error}`, payload: error})
                 })
             })
             .catch(error => {
@@ -199,46 +209,46 @@ exports.edit = function (req, res) {
    },...]
    } */
   surveyDataLayer.findServeyById(req)
-   .then(survey => {
-     survey.title = req.body.survey.title
-     survey.description = req.body.survey.description
-     survey.image = req.body.survey.image
-     surveyDataLayer.save(survey)
-   .then(success => {
-     surveyQuestionsDataLayer.removeSurvey(survey)
-    .then(success => {
-      for (let question in req.body.questions) {
-        let options = []
-        options = req.body.questions[question].options
-        const surveyQuestion = new SurveyQuestions({
-          statement: req.body.questions[question].statement, // question statement
-          options, // array of question options
-          type: 'multichoice', // type can be text/multichoice
-          surveyId: survey._id
-
-        })
-
-        surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
+    .then(survey => {
+      survey.title = req.body.survey.title
+      survey.description = req.body.survey.description
+      survey.image = req.body.survey.image
+      surveyDataLayer.save(survey)
         .then(success => {
+          surveyQuestionsDataLayer.removeSurvey(survey)
+            .then(success => {
+              for (let question in req.body.questions) {
+                let options = []
+                options = req.body.questions[question].options
+                const surveyQuestion = new SurveyQuestions({
+                  statement: req.body.questions[question].statement, // question statement
+                  options, // array of question options
+                  type: 'multichoice', // type can be text/multichoice
+                  surveyId: survey._id
+
+                })
+
+                surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
+                  .then(success => {
+                  })
+                  .catch(error => {
+                    return res.status(500).json({status: `failed ${error}`, payload: error})
+                  })
+              }
+              return res.status(200)
+                .json({status: 'success', payload: req.body.survey})
+            })
+            .catch(error => {
+              return res.status(500).json({status: `failed ${error}`, payload: error})
+            })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: error})
+          return res.status(500).json({status: `failed ${error}`, payload: error})
         })
-      }
-      return res.status(200)
-          .json({status: 'success', payload: req.body.survey})
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: error})
+      return res.status(500).json({status: `failed ${error}`, payload: error})
     })
-   })
-   .catch(error => {
-     return res.status(500).json({status: 'failed', payload: error})
-   })
-   })
-   .catch(error => {
-     return res.status(500).json({status: 'failed', payload: error})
-   })
 }
 
 // Get a single survey
@@ -246,7 +256,7 @@ exports.show = function (req, res) {
 
   surveyDataLayer.findByIdPopulate(req)
         .then(survey => {
-          surveyQuestionsDataLayer.findSurveyWithId()
+          surveyQuestionsDataLayer.findSurveyWithId(survey)
           .then(questions => {
             surveyResponseDataLayer.genericFind(survey)
             .then(responses => {
@@ -254,34 +264,34 @@ exports.show = function (req, res) {
               .json({status: 'success', payload: {survey, questions, responses}})
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: error})
+              return res.status(500).json({status: `failed du to survey ${error}`, payload: error})
             })
           })
           .catch(error => {
-            return res.status(500).json({status: 'failed', payload: error})
+            return res.status(500).json({status: `failed due to questions ${error}`, payload: error})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: error})
+          return res.status(500).json({status: `failed due to response ${error}`, payload: error})
         })
 }
 
 // Get a single survey
 exports.showQuestions = function (req, res) {
   surveyDataLayer.findByIdPopulate(req)
-  .then(survey => {
-    surveyQuestionsDataLayer.findSurveyWithId(req)
-  .then(questions => {
-    return res.status(200)
-    .json({status: 'success', payload: {survey, questions}})
-  })
-  .catch(error => {
-    return res.status(500).json({status: 'failed', payload: error})
-  })
-  })
-  .catch(error => {
-    return res.status(500).json({status: 'failed', payload: error})
-  })
+    .then(survey => {
+      surveyQuestionsDataLayer.findSurveyWithId(survey)
+        .then(questions => {
+          return res.status(200)
+            .json({status: 'success', payload: {survey, questions}})
+        })
+        .catch(error => {
+          return res.status(500).json({status: `failed ${error}`, payload: error})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: `failed ${error}`, payload: error})
+    })
 }
 
 // Submit response of survey
@@ -1221,10 +1231,9 @@ exports.deleteSurvey = function (req, res) {
           surveypages.forEach(surveypage => {
             SurveyPageDataLayer.removeSurvey(survey)
             .then(success => {
-
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', description:  `failed due to survey page  ${JSON.stringify(error)}`})
+              return res.status(500).json({status: `failed ${error}`, description:  `failed due to survey page  ${JSON.stringify(error)}`})
             })
           })
 
@@ -1235,7 +1244,7 @@ exports.deleteSurvey = function (req, res) {
               .then(success => {
               })
               .catch(error => {
-                return res.status(500).json({status: 'failed', description: `failed to survey response  ${JSON.stringify(error)}`})
+                return res.status(500).json({status: `failed ${error}`, description: `failed to survey response  ${JSON.stringify(error)}`})
               })
             })
             surveyQuestionsDataLayer.findSurveyQuestionById(req)
@@ -1245,7 +1254,7 @@ exports.deleteSurvey = function (req, res) {
                 .then(success => {
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', description:  `failed to survey question  ${JSON.stringify(error)}`})
+                  return res.status(500).json({status: `failed ${error}`, description:  `failed to survey question  ${JSON.stringify(error)}`})
                 })
               })
 
@@ -1253,23 +1262,23 @@ exports.deleteSurvey = function (req, res) {
             })
 
             .catch(error => {
-              return res.status(500).json({status: 'failed', description: `failed to survey questions  ${JSON.stringify(error)}`})
+              return res.status(500).json({status: `failed ${error}`, description: `failed to survey questions  ${JSON.stringify(error)}`})
             })
           })
 
           .catch(error => {
-            return res.status(500).json({status: 'failed', description: `failed to survey responses  ${JSON.stringify(error)}`})
+            return res.status(500).json({status: `failed ${error}`, description: `failed to survey responses  ${JSON.stringify(error)}`})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', description: `failed due to survey pages  ${JSON.stringify(error)}`})
+          return res.status(500).json({status: `failed ${error}`, description: `failed due to survey pages  ${JSON.stringify(error)}`})
         })
       })
       .catch(error => {
-        return res.status(500).json({status: 'failed', description: `failed due to survey remove  ${JSON.stringify(error)}`})
+        return res.status(500).json({status: `failed ${error}`, description: `failed due to survey remove  ${JSON.stringify(error)}`})
       })
      })
      .catch(error => {
-       return res.status(500).json({status: 'failed', description: `failed due to surveyFindbyId  ${JSON.stringify(error)}`})
+       return res.status(500).json({status: `failed ${error}`, description: `failed due to surveyFindbyId  ${JSON.stringify(error)}`})
      })
 }

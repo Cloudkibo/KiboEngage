@@ -111,20 +111,19 @@ exports.create = function (req, res) {
                                         })
                                       })
                                       // utility.callApi('twitter/restart', 'get', {}, req.headers.authorization)
-                                    return res.status(201)
-                                      .json({status: 'success', payload: result})
-                                      /* require('./../../../config/socketio').sendMessageToClient({
-                                        room_id: companyUser.companyId,
-                                        body: {
-                                          action: 'autoposting_created',
-                                          payload: {
-                                            autoposting_id: result._id,
-                                            user_id: req.user._id,
-                                            user_name: req.user.name,
-                                            payload: result
-                                          }
+                                    require('./../../../config/socketio').sendMessageToClient({
+                                      room_id: companyUser.companyId,
+                                      body: {
+                                        action: 'autoposting_created',
+                                        payload: {
+                                          autoposting_id: result._id,
+                                          user_id: req.user._id,
+                                          user_name: req.user.name,
+                                          payload: result
                                         }
-                                      }) */
+                                      }
+                                    })
+                                    return res.status(201).json({status: 'success', payload: result})
                                   })
                                   .catch(err => {
                                     return res.status(500).json({
@@ -161,18 +160,18 @@ exports.create = function (req, res) {
                                           description: `Internal server error in updating plan usage ${err}`
                                         })
                                       })
-                                      /* require('./../../../config/socketio').sendMessageToClient({
-                                        room_id: companyUser.companyId,
-                                        body: {
-                                          action: 'autoposting_created',
-                                          payload: {
-                                            autoposting_id: result._id,
-                                            user_id: req.user._id,
-                                            user_name: req.user.name,
-                                            payload: result
-                                          }
+                                    require('./../../../config/socketio').sendMessageToClient({
+                                      room_id: companyUser.companyId,
+                                      body: {
+                                        action: 'autoposting_created',
+                                        payload: {
+                                          autoposting_id: result._id,
+                                          user_id: req.user._id,
+                                          user_name: req.user.name,
+                                          payload: result
                                         }
-                                      }) */
+                                      }
+                                    })
                                     return res.status(201)
                                       .json({status: 'success', payload: result})
                                   })
@@ -215,7 +214,7 @@ exports.create = function (req, res) {
                               .then(result => {
                                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { wordpress_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                   .then(result => {
-                                    /* require('./../../../config/socketio').sendMessageToClient({
+                                    require('./../../../config/socketio').sendMessageToClient({
                                       room_id: companyUser.companyId,
                                       body: {
                                         action: 'autoposting_created',
@@ -226,7 +225,7 @@ exports.create = function (req, res) {
                                           payload: result
                                         }
                                       }
-                                    }) */
+                                    })
                                     return res.status(201)
                                       .json({status: 'success', payload: result})
                                   })
@@ -297,7 +296,7 @@ exports.edit = function (req, res) {
             return res.status(404)
               .json({status: 'failed', description: 'Record not found'})
           }
-          /* require('./../../../config/socketio').sendMessageToClient({
+          require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
               action: 'autoposting_updated',
@@ -308,7 +307,7 @@ exports.edit = function (req, res) {
                 payload: autoposting
               }
             }
-          }) */
+          })
           return res.status(200).json({
             status: 'success',
             payload: autopostingUpdated
@@ -339,7 +338,7 @@ exports.destroy = function (req, res) {
       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
         .then(result => {
           // utility.callApi('twitter/restart')
-          /* require('./../../../config/socketio').sendMessageToClient({
+          require('./../../../config/socketio').sendMessageToClient({
             room_id: autoposting.companyId,
             body: {
               action: 'autoposting_removed',
@@ -349,7 +348,7 @@ exports.destroy = function (req, res) {
                 user_name: req.user.name
               }
             }
-          }) */
+          })
           return res.status(200).json({
             status: 'success',
             okfdescription: 'AutoPosting Deleted'
