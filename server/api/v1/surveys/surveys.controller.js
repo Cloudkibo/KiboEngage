@@ -1247,7 +1247,7 @@ exports.deleteSurvey = function (req, res) {
             .then(success => {
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', description:  `failed due to survey page  ${JSON.stringify(error)}`})
+              return res.status(500).json({status: `failed ${error}`, description:  `failed due to survey page  ${JSON.stringify(error)}`})
             })
           })
 
@@ -1258,7 +1258,7 @@ exports.deleteSurvey = function (req, res) {
               .then(success => {
               })
               .catch(error => {
-                return res.status(500).json({status: 'failed', description: `failed to survey response  ${JSON.stringify(error)}`})
+                return res.status(500).json({status: `failed ${error}`, description: `failed to survey response  ${JSON.stringify(error)}`})
               })
             })
             surveyQuestionsDataLayer.findSurveyQuestionById(req)
@@ -1268,7 +1268,7 @@ exports.deleteSurvey = function (req, res) {
                 .then(success => {
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', description:  `failed to survey question  ${JSON.stringify(error)}`})
+                  return res.status(500).json({status: `failed ${error}`, description:  `failed to survey question  ${JSON.stringify(error)}`})
                 })
               })
 
@@ -1276,23 +1276,23 @@ exports.deleteSurvey = function (req, res) {
             })
 
             .catch(error => {
-              return res.status(500).json({status: 'failed', description: `failed to survey questions  ${JSON.stringify(error)}`})
+              return res.status(500).json({status: `failed ${error}`, description: `failed to survey questions  ${JSON.stringify(error)}`})
             })
           })
 
           .catch(error => {
-            return res.status(500).json({status: 'failed', description: `failed to survey responses  ${JSON.stringify(error)}`})
+            return res.status(500).json({status: `failed ${error}`, description: `failed to survey responses  ${JSON.stringify(error)}`})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', description: `failed due to survey pages  ${JSON.stringify(error)}`})
+          return res.status(500).json({status: `failed ${error}`, description: `failed due to survey pages  ${JSON.stringify(error)}`})
         })
       })
       .catch(error => {
-        return res.status(500).json({status: 'failed', description: `failed due to survey remove  ${JSON.stringify(error)}`})
+        return res.status(500).json({status: `failed ${error}`, description: `failed due to survey remove  ${JSON.stringify(error)}`})
       })
      })
      .catch(error => {
-       return res.status(500).json({status: 'failed', description: `failed due to surveyFindbyId  ${JSON.stringify(error)}`})
+       return res.status(500).json({status: `failed ${error}`, description: `failed due to surveyFindbyId  ${JSON.stringify(error)}`})
      })
 }
