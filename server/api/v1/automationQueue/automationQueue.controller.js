@@ -24,17 +24,17 @@ exports.index = function (req, res) {
 
 exports.create = function (req, res) {
   AutomationQueue.createAutomationQueueObject(req.body.payload)
-    .then(automationQueueObject => {
-      console.log('Automation Queue Object Create', automationQueueObject)
+    .then(result => {
+      console.log('Automation Queue Object Create', result)
       res.status(200).json({
-        status: 'Automation queue object saved',
-        payload: automationQueueObject
+        status: 'success',
+        payload: result
       })
     })
     .catch(err => {
       res.status(500).json({
         status: 'failed',
-        description: `Internal Server Error in saving automation queue object ${JSON.stringify(err)}`
+        payload: err
       })
     })
 }
