@@ -24,10 +24,11 @@ exports.index = function (req, res) {
 
 exports.create = function (req, res) {
   AutomationQueue.createAutomationQueueObject(req.body.payload)
-    .then(result => {
+    .then(automationQueueObject => {
+      console.log('Automation Queue Object Create', automationQueueObject)
       return res.status(200).json({
         status: 'Automation queue object saved',
-        payload: result
+        payload: automationQueueObject
       })
     })
     .catch(err => {
