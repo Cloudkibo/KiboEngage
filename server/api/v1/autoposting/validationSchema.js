@@ -20,7 +20,7 @@ exports.createPayload = {
       required: true
     },
     isSegmented: {
-      type: 'string'
+      type: 'boolean'
     }
   }
 }
