@@ -20,14 +20,18 @@ exports.allPolls = function (req, res) {
 
 exports.getAllPolls = function (req, res) {
   if (req.body.first_page === 'first') {
+    console.log('req.body',req.body)
     let findCriteria = logicLayer.getCriterias(req)
+    console.log('findCriteria',findCriteria)
     dataLayer.pollTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
     ])
     .then(pollsCount => {
+      console.log('pollsCount',pollsCount)
       dataLayer.pollTemplateaggregateLimit({findCriteria, req})
       .then(polls => {
+        console.log('polls',polls)
         res.status(200).json({
           status: 'success',
           payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
