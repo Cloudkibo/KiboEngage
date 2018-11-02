@@ -141,7 +141,6 @@ exports.pollFindById = (req) => {
 }
 exports.removePoll = (poll) => {
   return poll.remove()
-  .exec()
 }
 
 exports.pollCategoryById = (req) => {
