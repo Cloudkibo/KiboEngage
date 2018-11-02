@@ -30,10 +30,10 @@ const all = {
     }
   },
   twitter: {
-    consumer_key: process.env.TWITTER_CONSUMER_KEY || 'f83b0cd6ccb20142185616dsf54dsf4',
-    consumer_secret: process.env.TWITTER_CONSUMER_SECRET || 'f83b0cd6ccb20142185616dsf54dsf4',
-    consumer_token: process.env.TWITTER_TOKEN || 'f83b0cd6ccb20142185616dsf54dsf4',
-    consumer_token_secret: process.env.TWITTER_TOKEN_SECRET || 'f83b0cd6ccb20142185616dsf54dsf4',
+    consumer_key: process.env.TWITTER_CONSUMER_KEY || 'SPyt40d2i8IfIFoYtW5LtYnG8',
+    consumer_secret: process.env.TWITTER_CONSUMER_SECRET || 'L00OE6SIGOMjI0ZDe5n3ncnFdaxHaAco6wzkR2jdzLXJnXYoID',
+    consumer_token: process.env.TWITTER_TOKEN || '2616186000-dAaH7yuQsBGNcbvnCiHweB8rFm54pF2YOC0hOtP',
+    consumer_token_secret: process.env.TWITTER_TOKEN_SECRET || '6hWNxP6qwjPEjEfLwT8uK9JpPVFzwA3BxBeCSU7J6rylT',
     callbackUrl: `${process.env.DOMAIN || 'https://staging.kibopush.com'}/api/autoposting/twitter`
   },
   webhook_ip: process.env.WEBHOOK_IP_ADDRESS || 'localhost',
@@ -42,7 +42,9 @@ const all = {
 
   ACCOUNTS_URL: process.env.NODE_ENV === 'production' ? 'https://accounts.cloudkibo.com/api/v1' : process.env.NODE_ENV === 'staging' ? 'https://saccounts.cloudkibo.com/api/v1' : 'http://localhost:3001/api/v1',
 
-  CHAT_URL: process.env.NODE_ENV === 'production' ? 'https://kibochat.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://skibochat.cloudkibo.com/api' : 'http://localhost:3000/api'
+  CHAT_URL: process.env.NODE_ENV === 'production' ? 'https://kibochat.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://skibochat.cloudkibo.com/api' : 'http://localhost:3000/api',
+
+  WEBHOOKS_URL: process.env.NODE_ENV === 'production' ? 'https://webhook.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://swebhook.cloudkibo.com/api' : 'http://localhost:3002/api'
 }
 
 module.exports = _.merge(

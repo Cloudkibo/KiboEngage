@@ -83,6 +83,7 @@ const prepareEditPayload = (req) => {
 }
 
 const findUser = (screenName, fn) => {
+  console.log('Twitter Config', config.twitter)
   twitterClient.get('users/show', {screen_name: screenName},
     (err, data, response) => {
       console.log('Inside Find User')
