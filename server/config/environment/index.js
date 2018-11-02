@@ -34,7 +34,7 @@ const all = {
     consumer_secret: process.env.TWITTER_CONSUMER_SECRET || 'L00OE6SIGOMjI0ZDe5n3ncnFdaxHaAco6wzkR2jdzLXJnXYoID',
     consumer_token: process.env.TWITTER_TOKEN || '2616186000-dAaH7yuQsBGNcbvnCiHweB8rFm54pF2YOC0hOtP',
     consumer_token_secret: process.env.TWITTER_TOKEN_SECRET || '6hWNxP6qwjPEjEfLwT8uK9JpPVFzwA3BxBeCSU7J6rylT',
-    callbackUrl: `${process.env.DOMAIN || 'https://staging.kibopush.com'}/api/autoposting/twitter`
+    callbackUrl: 'https://swebhooks.cloudkibo.com/api/twitter'
   },
   webhook_ip: process.env.WEBHOOK_IP_ADDRESS || 'localhost',
 
