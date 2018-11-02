@@ -7,7 +7,7 @@ const router = express.Router()
 const controller = require('./templates.controller')
 const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
-
+const validate = require('express-jsonschema').validate
 
 router.get('/allPolls', auth.isAuthenticated(), controller.allPolls)
 router.post('/getAllPolls', auth.isAuthenticated(), validate({body: validationSchema.getAllPolls}), controller.getAllPolls) // pagination
