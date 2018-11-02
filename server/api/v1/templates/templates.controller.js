@@ -445,10 +445,14 @@ exports.deleteCategory = function (req, res) {
   .then(success => {
     return res.status(500).json({status: 'success'})
   })
-  })
-  .catch(err => {
+  .catch(error => {
     return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
+        .json({status: `failed ${error}` , description: "error in remove category"})
+  })
+  })
+  .catch(error => {
+    return res.status(500)
+        .json({status: `failed ${error}` , description: "error in pollCategoryById"})
   })
 }
 

@@ -152,7 +152,7 @@ exports.pollCategoryById = (req) => {
 
 exports.removeCategory = (category) => {
   return category.remove()
-  .exec()
+  
 }
 
 exports.surveyFindById = (req) => {
