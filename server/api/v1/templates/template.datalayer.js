@@ -79,7 +79,6 @@ exports.findOneCompanyUsersbyCompId = (companyUser) => {
 exports.savePolls = (poll) => {
   
  return  poll.save()
- .exec()
 
 }
 

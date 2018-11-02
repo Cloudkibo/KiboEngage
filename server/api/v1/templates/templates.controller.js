@@ -202,28 +202,28 @@ exports.createPoll = function (req, res) {
                   res.status(201).json({status: 'success', payload: pollCreated})
                 })
                 .catch(err => {
-                  return res.status(500).json({status: 'failed', payload: err})
+                  return res.status(500).json({status: `failed ${err}`, payload: 'failed to update company'})
                 })
               }
             })
             .catch(err => {
-              return res.status(500).json({status: 'failed', description: 'Failed to insert record'})
+              return res.status(500).json({status: `failed ${err}`, payload: 'failed to  created polls'})
             })
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            return res.status(500).json({status: `failed ${err}`,payload: 'failed to company usage'})
           })
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          return res.status(500).json({status: `failed ${err}`, payload: 'failed to plan usage'})
         })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${err}`, payload: 'failed to company profile'})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload:  'failed to company user'})
     })
 }
 exports.createSurvey = function (req, res) {
