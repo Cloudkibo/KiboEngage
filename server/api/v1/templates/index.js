@@ -19,7 +19,7 @@ router.post('/createCategory', auth.isAuthenticated(), controller.createCategory
 router.get('/allCategories', auth.isAuthenticated(), controller.allCategories)
 router.get('/surveyDetails/:surveyid', auth.isAuthenticated(), controller.surveyDetails)
 router.get('/pollDetails/:pollid', auth.isAuthenticated(), controller.pollDetails)
-router.delete('/deletePoll/:id', auth.isAuthorizedSuperUser(),  controller.deletePoll)
+router.delete('/deletePoll/:id', auth.isAuthenticated(),  controller.deletePoll)
 router.delete('/deleteSurvey/:id', auth.isAuthorizedSuperUser(), controller.deleteSurvey)
 router.delete('/deleteCategory/:id', auth.isAuthenticated(), controller.deleteCategory)
 router.post('/editCategory', auth.isAuthenticated(),validate({body: validationSchema.editCategory}), controller.editCategory)
