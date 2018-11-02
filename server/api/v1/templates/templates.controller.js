@@ -34,11 +34,11 @@ exports.getAllPolls = function (req, res) {
         })
       })
       .catch(err => {
-        return res.status(500).json({status: `failed ${error}` , payload: err})
+        return res.status(500).json({status: `failed ${error}` , payload: ` ${JSON.stringify(error)}`})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${error}`, payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
     })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
@@ -56,11 +56,11 @@ exports.getAllPolls = function (req, res) {
         })
       })
       .catch(err => {
-        return res.status(500).json({status: `failed ${error}`, payload: err})
+        return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${error}`, payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
     })
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
@@ -78,11 +78,11 @@ exports.getAllPolls = function (req, res) {
         })
       })
       .catch(err => {
-        return res.status(500).json({status: `failed ${error}`, payload: err})
+        return res.status(500).json({status: `failed ${error}`,payload: ` ${JSON.stringify(error)}`})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${error}`, payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
     })
   }
 }
