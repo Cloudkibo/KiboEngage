@@ -6,7 +6,7 @@ let Twit = require('twit')
 let twitterClient = new Twit({
   consumer_key: config.twitter.consumer_key,
   consumer_secret: config.twitter.consumer_secret,
-  access_token_key: config.twitter.consumer_token,
+  access_token: config.twitter.consumer_token,
   access_token_secret: config.twitter.consumer_token_secret
 })
 
