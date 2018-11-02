@@ -1,11 +1,11 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/twitterEvents/twitter.controller.js'
 let AutoPosting = require('../autoposting/autoposting.logiclayer')
-const utility = '../utility'
+const utility = require('../utility')
 let broadcastUtility = require('../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
-const AutoPostingMessage = require()
+const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
 let request = require('request')
 let _ = require('lodash')
 const config = require('../../../config/environment/index')
@@ -234,7 +234,7 @@ exports.twitterwebhook = function (req, res) {
                               autoposting_messages_id: savedMsg._id,
                               subscriberId: subscriber.senderId
                             }
-                            AutoPostingMessage.createAutopostingMessageObject(newAutoPostingSubscriberMsg)
+                            AutoPostingMessage.createAutopostingMessage(newAutoPostingSubscriberMsg)
                               .then(result => {
                                 logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                               })
