@@ -12,7 +12,7 @@ const validate = require('express-jsonschema').validate
 router.get('/allPolls', auth.isAuthenticated(), controller.allPolls)
 router.post('/getAllPolls', auth.isAuthenticated(), controller.getAllPolls) // pagination
 router.post('/createPoll', auth.isAuthorizedSuperUser(), validate({body: validationSchema.createPoll}), controller.createPoll)
-router.post('/createSurvey', auth.isAuthorizedSuperUser(), validate({body: validationSchema.createSurvey}),controller.createSurvey)
+router.post('/createSurvey', auth.isAuthorizedSuperUser(),controller.createSurvey)
 router.get('/allSurveys', auth.isAuthenticated(), controller.allSurveys)
 router.post('/getAllSurveys', auth.isAuthenticated(), controller.getAllSurveys) // pagination
 router.post('/createCategory', auth.isAuthenticated(), validate({body: validationSchema.createCategory}), controller.createCategory)
