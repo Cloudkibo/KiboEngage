@@ -14,31 +14,35 @@ exports.allPolls = function (req, res) {
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: err})
     })
 }
 
 exports.getAllPolls = function (req, res) {
   if (req.body.first_page === 'first') {
+    console.log('req.body',req.body)
     let findCriteria = logicLayer.getCriterias(req)
+    console.log('findCriteria',findCriteria)
     dataLayer.pollTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
     ])
     .then(pollsCount => {
+      console.log('pollsCount',pollsCount)
       dataLayer.pollTemplateaggregateLimit({findCriteria, req})
       .then(polls => {
+        console.log('polls',polls)
         res.status(200).json({
           status: 'success',
           payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
         })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${error}` , payload: ` ${JSON.stringify(error)}`})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
     })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
@@ -56,11 +60,11 @@ exports.getAllPolls = function (req, res) {
         })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
     })
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
@@ -78,11 +82,11 @@ exports.getAllPolls = function (req, res) {
         })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${error}`,payload: ` ${JSON.stringify(error)}`})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
     })
   }
 }
@@ -178,10 +182,14 @@ exports.createPoll = function (req, res) {
       }
       callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
       .then(companyProfile => {
-        callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
+        callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
         .then(planUsage => {
-          callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
-          .then(companyUsage => {
+          planUsage = planUsage[0]
+          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
+            .then(companyUsage => {
+              companyUsage = companyUsage[0]  
+             console.log('planUsage',planUsage)
+            console.log('companyUsage',companyUsage)
             if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
               return res.status(500).json({
                 status: 'failed',
@@ -198,28 +206,28 @@ exports.createPoll = function (req, res) {
                   res.status(201).json({status: 'success', payload: pollCreated})
                 })
                 .catch(err => {
-                  return res.status(500).json({status: 'failed', payload: err})
+                  return res.status(500).json({status: `failed ${err}`, payload: 'failed to update company'})
                 })
               }
             })
             .catch(err => {
-              return res.status(500).json({status: 'failed', description: 'Failed to insert record'})
+              return res.status(500).json({status: `failed ${err}`, payload: 'failed to  created polls'})
             })
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            return res.status(500).json({status: `failed ${err}`,payload: 'failed to company usage'})
           })
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          return res.status(500).json({status: `failed ${err}`, payload: 'failed to plan usage'})
         })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${err}`, payload: 'failed to company profile'})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload:  'failed to company user'})
     })
 }
 exports.createSurvey = function (req, res) {
@@ -343,11 +351,11 @@ exports.createCategory = function (req, res) {
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status:  `failed ${err}`, payload: 'failed due to save category'})
     })
   })
   .catch(err => {
-    return res.status(500).json({status: 'failed', payload: err})
+    return res.status(500).json({status:  `failed ${err}`, payload: 'failed due to fetch user'})
   })
 }
 
@@ -367,11 +375,11 @@ exports.editCategory = function (req, res) {
         })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${err}`, payload: err})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: err})
     })
 }
 
@@ -389,11 +397,11 @@ exports.surveyDetails = function (req, res) {
       return res.status(200).json({status: 'success', payload: {survey, questions}})
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: err})
     })
    })
    .catch(err => {
-     return res.status(500).json({status: 'failed', payload: err})
+     return res.status(500).json({status: `failed ${error}`, payload: err})
    })
 }
 exports.pollDetails = function (req, res) {
@@ -423,10 +431,14 @@ exports.deletePoll = function (req, res) {
     .then(success => {
       return res.status(500).json({status: 'success'})
     })
+    .catch(err => {
+      return res.status(500)
+          .json({status: `failed ${err}`, description: 'Internal Server Error'})
+    })
   })
   .catch(err => {
     return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
+        .json({status: `failed ${err}`, description: 'Internal Server Error'})
   })
 }
 
@@ -441,10 +453,14 @@ exports.deleteCategory = function (req, res) {
   .then(success => {
     return res.status(500).json({status: 'success'})
   })
-  })
-  .catch(err => {
+  .catch(error => {
     return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
+        .json({status: `failed ${error}` , description: "error in remove category"})
+  })
+  })
+  .catch(error => {
+    return res.status(500)
+        .json({status: `failed ${error}` , description: "error in pollCategoryById"})
   })
 }
 
@@ -726,7 +742,7 @@ exports.getAllBroadcasts = function (req, res) {
       .then(broadcasts => {
         res.status(200).json({
           status: 'success',
-          payload: {polls: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
+          payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
         })
       })
       .catch(err => {
@@ -797,10 +813,14 @@ exports.deleteBroadcast = function (req, res) {
   .then(success => {
     return res.status(500).json({status: 'success'})
   })
+  .catch(err => {
+    return res.status(500)
+        .json({status: `failed ${error}`, description: 'Internal Server Error'})
+  })
   })
   .catch(err => {
     return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
+        .json({status: `failed ${error}`, description: 'Internal Server Error'})
   })
 }
 

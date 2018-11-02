@@ -12,6 +12,8 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
   let apiUrl = config.ACCOUNTS_URL
   if (type === 'chat') {
     apiUrl = config.CHAT_URL
+  } else if (type === 'webhook') {
+    apiUrl = config.WEBHOOKS_URL
   }
   let options = {
     method: method.toUpperCase(),

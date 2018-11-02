@@ -21,7 +21,6 @@ exports.findSurveyResponseById = (req) => {
 exports.removeResponse = (Response) => {
 
   return Response.remove()
-  .exec()
 }
 
 exports.saveResponse = (Response) => {

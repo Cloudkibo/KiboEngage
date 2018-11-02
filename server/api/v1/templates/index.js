@@ -7,20 +7,20 @@ const router = express.Router()
 const controller = require('./templates.controller')
 const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
-
+const validate = require('express-jsonschema').validate
 
 router.get('/allPolls', auth.isAuthenticated(), controller.allPolls)
-router.post('/getAllPolls', auth.isAuthenticated(), validate({body: validationSchema.getAllPolls}), controller.getAllPolls) // pagination
-router.post('/createPoll', auth.isAuthorizedSuperUser(), validate({body: validationSchema.createPoll}), controller.createPoll)
-router.post('/createSurvey', auth.isAuthorizedSuperUser(), validate({body: validationSchema.createSurvey}),controller.createSurvey)
+router.post('/getAllPolls', auth.isAuthenticated(), controller.getAllPolls) // pagination
+router.post('/createPoll', auth.isAuthenticated(), controller.createPoll)
+router.post('/createSurvey', auth.isAuthorizedSuperUser(),controller.createSurvey)
 router.get('/allSurveys', auth.isAuthenticated(), controller.allSurveys)
-router.post('/getAllSurveys', auth.isAuthenticated(), validate({body: validationSchema.getAllSurveys}), controller.getAllSurveys) // pagination
-router.post('/createCategory', auth.isAuthenticated(), validate({body: validationSchema.createCategory}), controller.createCategory)
+router.post('/getAllSurveys', auth.isAuthenticated(), controller.getAllSurveys) // pagination
+router.post('/createCategory', auth.isAuthenticated(), controller.createCategory)
 router.get('/allCategories', auth.isAuthenticated(), controller.allCategories)
 router.get('/surveyDetails/:surveyid', auth.isAuthenticated(), controller.surveyDetails)
 router.get('/pollDetails/:pollid', auth.isAuthenticated(), controller.pollDetails)
-router.delete('/deletePoll/:id', auth.isAuthorizedSuperUser(),  controller.deletePoll)
-router.delete('/deleteSurvey/:id', auth.isAuthorizedSuperUser(), controller.deleteSurvey)
+router.delete('/deletePoll/:id', auth.isAuthenticated(),  controller.deletePoll)
+router.delete('/deleteSurvey/:id', auth.isAuthenticated(), controller.deleteSurvey)
 router.delete('/deleteCategory/:id', auth.isAuthenticated(), controller.deleteCategory)
 router.post('/editCategory', auth.isAuthenticated(),validate({body: validationSchema.editCategory}), controller.editCategory)
 router.post('/editPoll', auth.isAuthorizedSuperUser(),validate({body: validationSchema.editPoll}), controller.editPoll)
@@ -28,7 +28,7 @@ router.post('/editSurvey', auth.isAuthorizedSuperUser(),validate({body: validati
 
 router.post('/createBroadcast', auth.isAuthenticated(), validate({body: validationSchema.createBroadcast}), controller.createBroadcast)
 router.get('/allBroadcasts', auth.isAuthenticated(), controller.allBroadcasts)
-router.post('/getAllBroadcasts', auth.isAuthenticated(), validate({body: validationSchema.getAllBroadcasts}), controller.getAllBroadcasts) // pagination
+router.post('/getAllBroadcasts', auth.isAuthenticated(), controller.getAllBroadcasts) // pagination
 router.post('/editBroadcast', auth.isAuthenticated(),validate({body: validationSchema.editBroadcast}), controller.editBroadcast)
 router.delete('/deleteBroadcast/:id', auth.isAuthenticated(), controller.deleteBroadcast)
 router.get('/broadcastDetails/:broadcastid', auth.isAuthenticated(), controller.broadcastDetails)

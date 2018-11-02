@@ -10,6 +10,7 @@ module.exports = function (app) {
   app.use('/api/autoposting_messages', require('./api/v1/autopostingMessages'))
   app.use('/api/broadcasts', require('./api/v1/broadcasts'))
   app.use('/api/facebookEvents', require('./api/v1/facebookEvents'))
+  app.use('/api/twitterEvents', require('./api/v1/twitterEvents'))
   app.use('/api/invitations', require('./api/v1/invitations'))
   app.use('/api/invite_verification', require('./api/v1/inviteagenttoken'))
   app.use('/api/ip2country', require('./api/v1/ipcountry'))
@@ -33,6 +34,7 @@ module.exports = function (app) {
   app.use('/api/URL', require('./api/v1/URLForClickedCount'))
   app.use('/api/tags', require('./api/v1/tags'))
   app.use('/api/post', require('./api/v1/commentCapture'))
+  app.use('/api/templates', require('./api/v1/templates'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))

@@ -1,11 +1,11 @@
 const TemplatePolls = require('./pollTemplate.model')
 const TemplateSurveys = require('./surveyTemplate.model')
 const Category = require('./category.model')
-const CompanyUsers = require('./../companyuser/companyuser.model')
+const CompanyUsers = require('./pollTemplate.model')
 const mongoose = require('mongoose')
-const CompanyUsage = require('./../featureUsage/companyUsage.model')
-const PlanUsage = require('./../featureUsage/planUsage.model')
-const CompanyProfile = require('./../companyprofile/companyprofile.model')
+const CompanyUsage = require('./pollTemplate.model')
+const PlanUsage = require('./pollTemplate.model')
+const CompanyProfile = require('./pollTemplate.model')
 const SurveyQuestions = require('./surveyQuestion.model')
 const TemplateBroadcasts = require('./broadcastTemplate.model')
 const TemplateBots = require('./bots_template.model')
@@ -79,7 +79,6 @@ exports.findOneCompanyUsersbyCompId = (companyUser) => {
 exports.savePolls = (poll) => {
   
  return  poll.save()
- .exec()
 
 }
 
@@ -111,7 +110,7 @@ exports.CategoryFind = (companyUser) => {
 exports.CategorySave = (category) => {
 
   return category.save()
-  .exec()
+  
 }
 
 exports.findCategroryById = (req) => {
@@ -141,7 +140,6 @@ exports.pollFindById = (req) => {
 }
 exports.removePoll = (poll) => {
   return poll.remove()
-  .exec()
 }
 
 exports.pollCategoryById = (req) => {
@@ -152,7 +150,7 @@ exports.pollCategoryById = (req) => {
 
 exports.removeCategory = (category) => {
   return category.remove()
-  .exec()
+  
 }
 
 exports.surveyFindById = (req) => {
@@ -162,7 +160,7 @@ exports.surveyFindById = (req) => {
 }
 exports.removeSurvey = (survey) => {
   return survey.remove()
-  .exec()
+  
 }
 
 
@@ -173,7 +171,7 @@ exports.BroadcastFindById = (req) => {
 
 exports.removeBroadcast = (broadcast) => {
   return broadcast.remove()
-  .exec()
+  
 }
 
 exports.saveBroadcast = (broadcast) => {
