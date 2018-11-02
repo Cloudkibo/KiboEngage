@@ -347,11 +347,11 @@ exports.createCategory = function (req, res) {
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status:  `failed ${err}`, payload: 'failed due to save category'})
     })
   })
   .catch(err => {
-    return res.status(500).json({status: 'failed', payload: err})
+    return res.status(500).json({status:  `failed ${err}`, payload: 'failed due to fetch user'})
   })
 }
 
