@@ -809,10 +809,14 @@ exports.deleteBroadcast = function (req, res) {
   .then(success => {
     return res.status(500).json({status: 'success'})
   })
+  .catch(err => {
+    return res.status(500)
+        .json({status: `failed ${error}`, description: 'Internal Server Error'})
+  })
   })
   .catch(err => {
     return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
+        .json({status: `failed ${error}`, description: 'Internal Server Error'})
   })
 }
 

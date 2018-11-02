@@ -172,7 +172,7 @@ exports.BroadcastFindById = (req) => {
 
 exports.removeBroadcast = (broadcast) => {
   return broadcast.remove()
-  .exec()
+  
 }
 
 exports.saveBroadcast = (broadcast) => {
