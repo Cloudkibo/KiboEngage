@@ -388,7 +388,7 @@ exports.surveyDetails = function (req, res) {
          description: `survey not found.`
        })
      }
-     dataLayer.findQuestionById(req)
+     dataLayer.findQuestionById(survey)
     .then(questions => {
       return res.status(200).json({status: 'success', payload: {survey, questions}})
     })
