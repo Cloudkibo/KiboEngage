@@ -28,7 +28,7 @@ exports.genericFindByIdAndUpdateMessage = (query, updated) => {
     .exec()
 }
 exports.genericFindForSequenceMessages = (query) => {
-  return Message.find(query).populate('sequenceId')
+  return Message.find(query)
     .exec()
 }
 exports.genericFindForSequenceSubscribers = (query) => {

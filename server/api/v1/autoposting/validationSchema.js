@@ -20,7 +20,7 @@ exports.createPayload = {
       required: true
     },
     isSegmented: {
-      type: 'string'
+      type: 'boolean'
     }
   }
 }
@@ -36,10 +36,10 @@ exports.editPayload = {
       type: 'string'
     },
     isActive: {
-      type: 'string'
+      type: 'boolean'
     },
     isSegmented: {
-      type: 'string'
+      type: 'boolean'
     },
     segmentationPageIds: {
       type: 'array',
