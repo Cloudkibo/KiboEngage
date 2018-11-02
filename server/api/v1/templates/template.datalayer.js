@@ -161,7 +161,7 @@ exports.surveyFindById = (req) => {
 }
 exports.removeSurvey = (survey) => {
   return survey.remove()
-  .exec()
+  
 }
 
 
