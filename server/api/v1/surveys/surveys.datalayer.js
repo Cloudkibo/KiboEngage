@@ -28,17 +28,16 @@ exports.surveyFind = () => {
 }
 
 exports.findServeyById = (req) => {
-  return Surveys.findById(req.params.id)
+  return Surveys.findById(req.body.survey._id)
   .exec()
 }
 
 exports.save = (survey) => {
   return survey.save()
-  .exec()
 }
 
 exports.findByIdPopulate = (req) => {
-  return Surveys.findById(req.params.id).populate('userId')
+  return Surveys.findById(req.params.id)
   .exec()
 }
 
@@ -49,7 +48,6 @@ exports.surveyFindById = () => {
 
 exports.removeSurvey = (survey) => {
   return survey.remove()
- .exec()
 }
 
 exports.findQuestionSurveyById = (survey) => {
@@ -72,3 +70,7 @@ exports.countSurveys = (query) => {
   return Surveys.count(query)
     .exec()
 }
+
+exports.createSurvey = (survey) => {
+  return Surveys.create(survey)
+} 

@@ -7,7 +7,6 @@ exports.genericfindForSurveyQuestions = (query) => {
 
 exports.removeSurvey = (survey) => {
   return SurveyQuestions.remove({surveyId: survey._id})
-  .exec()
 }
 
 exports.findSurveyWithId = (survey) => {
@@ -17,7 +16,6 @@ exports.findSurveyWithId = (survey) => {
 
 exports.saveQuestion = (surveyQuestion) => {
   return surveyQuestion.save()
-  .exec()
 
 }
 
@@ -29,7 +27,6 @@ exports.findSurveyQuestionById = (req)  => {
 
 exports.removeQuestion = (surveyquestion) => {
   return surveyquestion.remove()
-  .exec()
 }
 
 exports.findQuestionSurveyById = (req) => {

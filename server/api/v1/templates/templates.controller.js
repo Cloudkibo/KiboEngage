@@ -14,7 +14,7 @@ exports.allPolls = function (req, res) {
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: err})
     })
 }
 
