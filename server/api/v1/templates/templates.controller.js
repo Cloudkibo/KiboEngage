@@ -388,16 +388,16 @@ exports.surveyDetails = function (req, res) {
          description: `survey not found.`
        })
      }
-     dataLayer.findQuestionById(survey)
+     dataLayer.findQuestionById(req)
     .then(questions => {
       return res.status(200).json({status: 'success', payload: {survey, questions}})
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: err})
     })
    })
    .catch(err => {
-     return res.status(500).json({status: 'failed', payload: err})
+     return res.status(500).json({status: `failed ${error}`, payload: err})
    })
 }
 exports.pollDetails = function (req, res) {
