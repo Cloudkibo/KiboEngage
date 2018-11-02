@@ -520,7 +520,7 @@ exports.stats = function (req, res) {
                     .catch(err => {
                       if (err) {
                         return res.status(500).json(
-                          {status: 'failed to retrieve subscribers', description: err})
+                          {status: `failed to retrieve subscribers ${err}`, description: err})
                       }
                     })
                 })
@@ -719,6 +719,8 @@ exports.toppages = function (req, res) {
               }
             }])
             .then(gotSubscribersCount => {
+              logger.serverLog(TAG, `pages: ${pages}`)
+              logger.serverLog(TAG, `gotSubscribersCount ${gotSubscribersCount}`)
               let pagesPayload = []
               for (let i = 0; i < pages.length; i++) {
                 pagesPayload.push({
@@ -733,6 +735,7 @@ exports.toppages = function (req, res) {
                   subscribers: 0
                 })
               }
+              logger.serverLog(TAG, `pagesPayload: ${pagesPayload}`)
               for (let i = 0; i < pagesPayload.length; i++) {
                 for (let j = 0; j < gotSubscribersCount.length; j++) {
                   if (pagesPayload[i]._id.toString() ===
