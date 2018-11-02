@@ -1,6 +1,6 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/twitterEvents/twitter.controller.js'
-let AutoPosting = require('../autoposting/autoposting.logiclayer')
+let AutoPosting = require('../autoposting/autoposting.datalayer')
 const utility = require('../utility')
 let broadcastUtility = require('../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
