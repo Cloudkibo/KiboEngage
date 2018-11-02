@@ -371,11 +371,11 @@ exports.editCategory = function (req, res) {
         })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${err}`, payload: err})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: err})
     })
 }
 
@@ -388,16 +388,16 @@ exports.surveyDetails = function (req, res) {
          description: `survey not found.`
        })
      }
-     dataLayer.findQuestionById(survey)
+     dataLayer.findQuestionById(req)
     .then(questions => {
       return res.status(200).json({status: 'success', payload: {survey, questions}})
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${error}`, payload: err})
     })
    })
    .catch(err => {
-     return res.status(500).json({status: 'failed', payload: err})
+     return res.status(500).json({status: `failed ${error}`, payload: err})
    })
 }
 exports.pollDetails = function (req, res) {
@@ -445,10 +445,14 @@ exports.deleteCategory = function (req, res) {
   .then(success => {
     return res.status(500).json({status: 'success'})
   })
-  })
-  .catch(err => {
+  .catch(error => {
     return res.status(500)
-        .json({status: 'failed', description: 'Internal Server Error'})
+        .json({status: `failed ${error}` , description: "error in remove category"})
+  })
+  })
+  .catch(error => {
+    return res.status(500)
+        .json({status: `failed ${error}` , description: "error in pollCategoryById"})
   })
 }
 

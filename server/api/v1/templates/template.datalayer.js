@@ -111,7 +111,7 @@ exports.CategoryFind = (companyUser) => {
 exports.CategorySave = (category) => {
 
   return category.save()
-  .exec()
+  
 }
 
 exports.findCategroryById = (req) => {
@@ -152,7 +152,7 @@ exports.pollCategoryById = (req) => {
 
 exports.removeCategory = (category) => {
   return category.remove()
-  .exec()
+  
 }
 
 exports.surveyFindById = (req) => {
