@@ -182,10 +182,10 @@ exports.createPoll = function (req, res) {
       }
       callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
       .then(companyProfile => {
-        utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
+        callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
         .then(planUsage => {
           planUsage = planUsage[0]
-          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
+          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
             .then(companyUsage => {
               companyUsage = companyUsage[0]  
              console.log('planUsage',planUsage)
