@@ -35,6 +35,7 @@ exports.getCriterias = function (body, companyUser) {
   ]
   return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
 }
+
 exports.getSubscriberCriteria = function (number, companyUser) {
   let findNumber = []
   let findPage = []
