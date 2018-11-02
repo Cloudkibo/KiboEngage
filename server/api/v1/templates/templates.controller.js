@@ -186,7 +186,7 @@ exports.createPoll = function (req, res) {
         .then(planUsage => {
           callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
           .then(companyUsage => {
-            if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
+            if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
               return res.status(500).json({
                 status: 'failed',
                 description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
