@@ -111,7 +111,7 @@ exports.CategoryFind = (companyUser) => {
 exports.CategorySave = (category) => {
 
   return category.save()
-  .exec()
+  
 }
 
 exports.findCategroryById = (req) => {
