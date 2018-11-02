@@ -110,7 +110,7 @@ exports.create = function (req, res) {
                                           description: `Internal server error in updating plan usage ${err}`
                                         })
                                       })
-                                      // utility.callApi('twitter/restart', 'get', {}, req.headers.authorization)
+                                    utility.callApi('twitter/restart', 'get', {}, req.headers.authorization, 'webhook')
                                     require('./../../../config/socketio').sendMessageToClient({
                                       room_id: companyUser.companyId,
                                       body: {
@@ -337,7 +337,7 @@ exports.destroy = function (req, res) {
       }
       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
         .then(result => {
-          // utility.callApi('twitter/restart')
+          utility.callApi('twitter/restart', 'get', {}, req.headers.authorization, 'webhook')
           require('./../../../config/socketio').sendMessageToClient({
             room_id: autoposting.companyId,
             body: {
