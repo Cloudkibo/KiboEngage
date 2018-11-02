@@ -730,7 +730,7 @@ exports.getAllBroadcasts = function (req, res) {
       .then(broadcasts => {
         res.status(200).json({
           status: 'success',
-          payload: {polls: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
+          payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
         })
       })
       .catch(err => {

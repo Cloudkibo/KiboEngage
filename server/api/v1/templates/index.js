@@ -14,7 +14,7 @@ router.post('/getAllPolls', auth.isAuthenticated(), controller.getAllPolls) // p
 router.post('/createPoll', auth.isAuthorizedSuperUser(), validate({body: validationSchema.createPoll}), controller.createPoll)
 router.post('/createSurvey', auth.isAuthorizedSuperUser(), validate({body: validationSchema.createSurvey}),controller.createSurvey)
 router.get('/allSurveys', auth.isAuthenticated(), controller.allSurveys)
-router.post('/getAllSurveys', auth.isAuthenticated(), validate({body: validationSchema.getAllSurveys}), controller.getAllSurveys) // pagination
+router.post('/getAllSurveys', auth.isAuthenticated(), controller.getAllSurveys) // pagination
 router.post('/createCategory', auth.isAuthenticated(), validate({body: validationSchema.createCategory}), controller.createCategory)
 router.get('/allCategories', auth.isAuthenticated(), controller.allCategories)
 router.get('/surveyDetails/:surveyid', auth.isAuthenticated(), controller.surveyDetails)
@@ -28,7 +28,7 @@ router.post('/editSurvey', auth.isAuthorizedSuperUser(),validate({body: validati
 
 router.post('/createBroadcast', auth.isAuthenticated(), validate({body: validationSchema.createBroadcast}), controller.createBroadcast)
 router.get('/allBroadcasts', auth.isAuthenticated(), controller.allBroadcasts)
-router.post('/getAllBroadcasts', auth.isAuthenticated(), validate({body: validationSchema.getAllBroadcasts}), controller.getAllBroadcasts) // pagination
+router.post('/getAllBroadcasts', auth.isAuthenticated(), controller.getAllBroadcasts) // pagination
 router.post('/editBroadcast', auth.isAuthenticated(),validate({body: validationSchema.editBroadcast}), controller.editBroadcast)
 router.delete('/deleteBroadcast/:id', auth.isAuthenticated(), controller.deleteBroadcast)
 router.get('/broadcastDetails/:broadcastid', auth.isAuthenticated(), controller.broadcastDetails)
