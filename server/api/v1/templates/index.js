@@ -15,7 +15,7 @@ router.post('/createPoll', auth.isAuthorizedSuperUser(), validate({body: validat
 router.post('/createSurvey', auth.isAuthorizedSuperUser(),controller.createSurvey)
 router.get('/allSurveys', auth.isAuthenticated(), controller.allSurveys)
 router.post('/getAllSurveys', auth.isAuthenticated(), controller.getAllSurveys) // pagination
-router.post('/createCategory', auth.isAuthenticated(), validate({body: validationSchema.createCategory}), controller.createCategory)
+router.post('/createCategory', auth.isAuthenticated(), controller.createCategory)
 router.get('/allCategories', auth.isAuthenticated(), controller.allCategories)
 router.get('/surveyDetails/:surveyid', auth.isAuthenticated(), controller.surveyDetails)
 router.get('/pollDetails/:pollid', auth.isAuthenticated(), controller.pollDetails)
