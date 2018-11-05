@@ -497,7 +497,7 @@ exports.createBroadcast = function (req, res) {
                     description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
                   })
                 }
-            let broadcastPayload = logicLayer.createDataBroadcast(req)
+            let broadcastPayload = logicLayer.createDataBroadcast(req,companyUser)
             if (req.user.isSuperUser) {
               broadcastPayload.createdBySuperUser = true
             }
