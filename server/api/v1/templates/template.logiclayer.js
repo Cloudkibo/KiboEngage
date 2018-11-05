@@ -63,6 +63,8 @@ exports.createDataPolls = function (req) {
   return pollPayload
 }
 exports.createDataSurvey = function (req) {
+  console.log('req', req)
+  console.log('description', req.body.survey.description)
   let surveyPayload = {
     title: req.body.survey.title,
     description: req.body.survey.description,
