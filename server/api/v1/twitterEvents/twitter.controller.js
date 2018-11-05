@@ -49,7 +49,7 @@ exports.twitterwebhook = function (req, res) {
             })
           }
         }
-        utility.callApi('pages/query', 'post', pagesFindCriteria)
+        utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
             pages.forEach(page => {
               let subscriberFindCriteria = {
@@ -75,7 +75,7 @@ exports.twitterwebhook = function (req, res) {
                     })
                 }
               }
-              utility.callApi('subscribers/query', 'post', subscriberFindCriteria)
+              utility.callApi('subscribers/query', 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
                   if (subscribers.length > 0) {
                     let newMsg = {

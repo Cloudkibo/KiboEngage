@@ -3,6 +3,7 @@ const TemplateBroadcasts = require('./broadcastTemplate.model')
 const SurveyQuestions = require('./surveyQuestion.model')
 const Category = require('./category.model')
 const dataLayer = require('./template.datalayer')
+const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
 const callApi = require('../utility/index')
 exports.allPolls = function (req, res) {
@@ -14,7 +15,7 @@ exports.allPolls = function (req, res) {
       })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${error}`, payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: err})
     })
 }
 
@@ -188,8 +189,8 @@ exports.createPoll = function (req, res) {
           callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
             .then(companyUsage => {
               companyUsage = companyUsage[0]  
-             console.log('planUsage',planUsage)
-            console.log('companyUsage',companyUsage)
+             console.log('planUsage', planUsage)
+            console.log('companyUsage', companyUsage)
             if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
               return res.status(500).json({
                 status: 'failed',
@@ -241,20 +242,26 @@ exports.createSurvey = function (req, res) {
       }
       callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
         .then(companyProfile => {
-          callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
+          callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+              planUsage = planUsage[0]
+              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
+                  companyUsage = companyUsage[0]  
+                  console.log('planUsage', planUsage)
+                  console.log('companyUsage', companyUsage)
                   if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
                     return res.status(500).json({
                       status: 'failed',
                       description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
                     })
                   }
+                  console.log('survey created start')
                   let surveyPayload = logicLayer.createDataSurvey(req)
                   const survey = new TemplatePolls(surveyPayload)
                   dataLayer.createSurveys(survey)
                     .then(surveyCreated => {
+                      console.log('survey created end')
                       if (!req.user.isSuperUser) {
                         callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},
                           { $inc: { polls_templates: 1 } })
@@ -264,7 +271,7 @@ exports.createSurvey = function (req, res) {
                             return res.status(500).json({status: 'failed', payload: err})
                           })
                       }
-
+                      console.log('questions created start')
                       for (let question in req.body.questions) {
                         let options = []
                         options = req.body.questions[question].options
@@ -273,33 +280,34 @@ exports.createSurvey = function (req, res) {
                           options, // array of question options
                           surveyId: survey._id
                         })
-                        dataLayer.saveSurveys(surveyQuestion)
+                        QuestionsurveydataLayer.createQuestionSurveys(surveyQuestion)
                           .then(survey => {
                           })
                           .catch(err => {
-                            return res.status(500).json({status: `failed ${err}`, payload: err})
+                            return res.status(500).json({status: `failed ${err}`, payload: 'failed due to save survey question'})
                           })
-                      }        
+                      }                      
+                      console.log('questions created end')
                       return res.status(201).json({status: 'success', payload: survey})                 
                     })
                     .catch(err => {
-                        return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
-                  })
-                      })
-            .catch(err => {
-              return res.status(500).json({status: `failed ${err}`, payload: err})
+                      return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
+                    })
+                })
+                .catch(err => {
+                  return res.status(500).json({status: `failed ${err}`, payload: 'failed due to companyQuery'})
+                })
             })
-          })
-          .catch(err => {
-            return res.status(500).json({status: `failed ${err}`, payload: err})
-          })
+            .catch(err => {
+              return res.status(500).json({status: `failed ${err}`, payload: 'failed due to planQuery'})
+            })
         })
         .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: err})
+          return res.status(500).json({status: `failed ${err}`, payload: 'failed due to companyprofile'})
         })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: 'failed due to user'})
     })
 }
 
