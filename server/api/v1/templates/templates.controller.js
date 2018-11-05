@@ -244,12 +244,10 @@ exports.createSurvey = function (req, res) {
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
             .then(planUsage => {
-              planUsage = planUsage[0]
               callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id})
                 .then(companyUsage => {
-                  companyUsage = companyUsage[0]  
                   console.log('planUsage', planUsage)
-                 console.log('companyUsage', companyUsage)
+                  console.log('companyUsage', companyUsage)
                   if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
                     return res.status(500).json({
                       status: 'failed',
@@ -286,22 +284,21 @@ exports.createSurvey = function (req, res) {
                           .catch(err => {
                             return res.status(500).json({status: `failed ${err}`, payload: 'failed due to save survey question'})
                           })
-                      }
-                      
+                      }                      
                       console.log('questions created end')
                       return res.status(201).json({status: 'success', payload: survey})                 
                     })
                     .catch(err => {
-                        return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
-                  })
-                      })
-            .catch(err => {
-              return res.status(500).json({status: `failed ${err}`, payload: 'failed due to companyQuery'})
+                      return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
+                    })
+                })
+                .catch(err => {
+                  return res.status(500).json({status: `failed ${err}`, payload: 'failed due to companyQuery'})
+                })
             })
-          })
-          .catch(err => {
-            return res.status(500).json({status: `failed ${err}`, payload: 'failed due to planQuery'})
-          })
+            .catch(err => {
+              return res.status(500).json({status: `failed ${err}`, payload: 'failed due to planQuery'})
+            })
         })
         .catch(err => {
           return res.status(500).json({status: `failed ${err}`, payload: 'failed due to companyprofile'})
