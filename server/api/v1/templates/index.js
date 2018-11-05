@@ -26,7 +26,7 @@ router.post('/editCategory', auth.isAuthenticated(),validate({body: validationSc
 router.post('/editPoll', auth.isAuthorizedSuperUser(),validate({body: validationSchema.editPoll}), controller.editPoll)
 router.post('/editSurvey', auth.isAuthorizedSuperUser(),validate({body: validationSchema.editSurvey}), controller.editSurvey)
 
-router.post('/createBroadcast', auth.isAuthenticated(), validate({body: validationSchema.createBroadcast}), controller.createBroadcast)
+router.post('/createBroadcast', auth.isAuthenticated(), controller.createBroadcast)
 router.get('/allBroadcasts', auth.isAuthenticated(), controller.allBroadcasts)
 router.post('/getAllBroadcasts', auth.isAuthenticated(), controller.getAllBroadcasts) // pagination
 router.post('/editBroadcast', auth.isAuthenticated(),validate({body: validationSchema.editBroadcast}), controller.editBroadcast)

@@ -176,7 +176,7 @@ exports.removeBroadcast = (broadcast) => {
 exports.saveBroadcast = (broadcast) => {
 
   return broadcast.save()
-  .exec()
+  
 }
 
 exports.findBroadcastById = (req) => {
