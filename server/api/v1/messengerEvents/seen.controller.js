@@ -24,23 +24,6 @@ function updateBroadcastSeen (req) {
   BroadcastPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false }, { seen: true }, { multi: true })
     .then(updated => {
       logger.serverLog(TAG, `Broadcast seen updated successfully`)
-      BroadcastPageDataLayer.genericFindOne({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false })
-        .then(record => {
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: record.company_id,
-            body: {
-              action: 'broacast_seen',
-              payload: {
-                broadcast_id: record.broadcastId,
-                user_id: req.user._id,
-                user_name: req.user.name
-              }
-            }
-          })
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `ERROR at finding broadcast seen ${JSON.stringify(err)}`)
-        })
     })
     .catch(err => {
       logger.serverLog(TAG, `ERROR at updating broadcast seen ${JSON.stringify(err)}`)
