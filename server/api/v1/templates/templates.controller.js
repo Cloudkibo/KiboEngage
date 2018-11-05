@@ -260,7 +260,7 @@ exports.createSurvey = function (req, res) {
                   let surveyPayload = logicLayer.createDataSurvey(req)
                   const survey = new TemplatePolls(surveyPayload)
                   dataLayer.createSurveys(survey)
-                    .then(surveyCreated => {
+                    .then(survey => {
                       console.log('survey created end')
                       if (!req.user.isSuperUser) {
                         callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},
@@ -281,7 +281,7 @@ exports.createSurvey = function (req, res) {
                           surveyId: survey._id
                         })
                         QuestionsurveydataLayer.createQuestionSurveys(surveyQuestion)
-                          .then(survey => {
+                          .then(question1 => {
                           })
                           .catch(err => {
                             return res.status(500).json({status: `failed ${err}`, payload: 'failed due to save survey question'})
