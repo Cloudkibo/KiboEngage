@@ -304,17 +304,19 @@ exports.editCategory = function (req, res) {
 }
 
 exports.surveyDetails = function (req, res) {
-  console.log('surveyDetails')
   dataLayer.findSurveyById(req)
    .then(survey => {
+     console.log('survey')
      if (!survey) {
        return res.status(404).json({
          status: 'failed',
          description: `survey not found.`
        })
      }
+     console.log('end survey')
      dataLayer.findQuestionById(req)
     .then(questions => {
+      console.log('questions')
       return res.status(200).json({status: 'success', payload: {survey, questions}})
     })
     .catch(err => {
