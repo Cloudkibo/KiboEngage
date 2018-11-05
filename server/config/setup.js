@@ -43,7 +43,7 @@ module.exports = function (app, httpapp, config) {
   })
 
   // TODO: we will enable this while doing socket io
-  const socket = require('socket.io').listen(server)
+  const socket = require('socket.io').listen((config.env === 'production' || config.env === 'staging') ? httpsServer : server)
 
   // TODO: Only enable if need to use socket
   require('./socketio').setup(socket)
