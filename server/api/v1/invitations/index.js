@@ -24,7 +24,7 @@ router.post('/cancel',
 
 router.post('/invite',
   auth.isAuthenticated(),
-  validate({body: validationSchema.postUpdatePayload}),
+  validate({body: validationSchema.invitePayload}),
   controller.invite)
 
 module.exports = router
