@@ -505,7 +505,7 @@ exports.createBroadcast = function (req, res) {
             dataLayer.saveBroadcast(broadcast)
             .then(broadcastCreated => {
               if (!req.user.isSuperUser) {
-                callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},{ $inc: { broadcast_templates: 1 } })
+                callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},{ $inc: { broadcast_templates: 1 } }, req.headers.authorization)
                 .then(update => {
                   res.status(201).json({status: 'success', payload: broadcastCreated})
                 })
