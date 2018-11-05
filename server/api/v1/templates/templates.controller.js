@@ -501,12 +501,15 @@ exports.createBroadcast = function (req, res) {
             if (req.user.isSuperUser) {
               broadcastPayload.createdBySuperUser = true
             }
+            console.log('broadcastPayload',broadcastPayload)
             const broadcast = new TemplateBroadcasts(broadcastPayload)
             dataLayer.saveBroadcast(broadcast)
             .then(broadcastCreated => {
+              console.log('broadcastCreated')
               if (!req.user.isSuperUser) {
                 callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},{ $inc: { broadcast_templates: 1 } }, req.headers.authorization)
                 .then(update => {
+                  console.log('update company')
                   res.status(201).json({status: 'success', payload: broadcastCreated})
                 })
                 .catch(err => {
