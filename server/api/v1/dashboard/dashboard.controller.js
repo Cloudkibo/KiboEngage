@@ -717,7 +717,7 @@ exports.toppages = function (req, res) {
                 _id: {pageId: '$pageId'},
                 count: {$sum: 1}
               }
-            }])
+            }], req.headers.authorization)
             .then(gotSubscribersCount => {
               logger.serverLog(TAG, `pages: ${pages}`)
               logger.serverLog(TAG, `gotSubscribersCount ${gotSubscribersCount}`)
