@@ -318,11 +318,11 @@ exports.surveyDetails = function (req, res) {
       return res.status(200).json({status: 'success', payload: {survey, questions}})
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${error}`, payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: err})
     })
    })
    .catch(err => {
-     return res.status(500).json({status: `failed ${error}`, payload: err})
+     return res.status(500).json({status: `failed ${err}`, payload: err})
    })
 }
 exports.pollDetails = function (req, res) {
