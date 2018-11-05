@@ -304,6 +304,7 @@ exports.editCategory = function (req, res) {
 }
 
 exports.surveyDetails = function (req, res) {
+  console.log('surveyDetails')
   dataLayer.findSurveyById(req)
    .then(survey => {
      if (!survey) {
