@@ -188,8 +188,8 @@ exports.createPoll = function (req, res) {
           callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
             .then(companyUsage => {
               companyUsage = companyUsage[0]  
-             console.log('planUsage',planUsage)
-            console.log('companyUsage',companyUsage)
+             console.log('planUsage', planUsage)
+            console.log('companyUsage', companyUsage)
             if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
               return res.status(500).json({
                 status: 'failed',
@@ -243,8 +243,12 @@ exports.createSurvey = function (req, res) {
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
             .then(planUsage => {
-              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+              planUsage = planUsage[0]
+              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id})
                 .then(companyUsage => {
+                  companyUsage = companyUsage[0]  
+                  console.log('planUsage', planUsage)
+                 console.log('companyUsage', companyUsage)
                   if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
                     return res.status(500).json({
                       status: 'failed',
