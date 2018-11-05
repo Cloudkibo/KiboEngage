@@ -240,67 +240,66 @@ exports.createSurvey = function (req, res) {
         })
       }
       callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
-      .then(companyProfile => {
-        callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
-        .then(planUsage => {
-          callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
-          .then(companyUsage => {
+        .then(companyProfile => {
+          callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
+            .then(planUsage => {
+              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+                .then(companyUsage => {
+                  if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
+                    })
+                  }
+                  let surveyPayload = logicLayer.createDataSurvey(req)
+                  const survey = new TemplatePolls(surveyPayload)
+                  dataLayer.createSurveys(survey)
+                    .then(surveyCreated => {
+                      if (!req.user.isSuperUser) {
+                        callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},
+                          { $inc: { polls_templates: 1 } })
+                          .then(update => {                 
+                          })
+                          .catch(err => {
+                            return res.status(500).json({status: 'failed', payload: err})
+                          })
+                      }
 
-            if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
-              })
-            }
-            let surveyPayload = logicLayer.createDataSurvey(req)
-            const survey = new TemplatePolls(surveyPayload)
-            dataLayer.createSurveys(survey)
-            .then(surveyCreated => {
-              if (!req.user.isSuperUser) {
-                callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},
-                { $inc: { polls_templates: 1 } })
-                .then(update => {                 
-                })
-                .catch(err => {
-                  return res.status(500).json({status: 'failed', payload: err})
-                })
-              }
-
-              for (let question in req.body.questions) {
-                let options = []
-                options = req.body.questions[question].options
-                const surveyQuestion = new SurveyQuestions({
-                  statement: req.body.questions[question].statement, // question statement
-                  options, // array of question options
-                  surveyId: survey._id
-                })
-                dataLayer.saveSurveys(surveyQuestion)
-                .then(survey => {
-                })
-                .catch(err => {
-                  return res.status(500).json({status: 'failed', payload: err})
-                })
-              }        
-              return res.status(201).json({status: 'success', payload: survey})                 
-            })
+                      for (let question in req.body.questions) {
+                        let options = []
+                        options = req.body.questions[question].options
+                        const surveyQuestion = new SurveyQuestions({
+                          statement: req.body.questions[question].statement, // question statement
+                          options, // array of question options
+                          surveyId: survey._id
+                        })
+                        dataLayer.saveSurveys(surveyQuestion)
+                          .then(survey => {
+                          })
+                          .catch(err => {
+                            return res.status(500).json({status: `failed ${err}`, payload: err})
+                          })
+                      }        
+                      return res.status(201).json({status: 'success', payload: survey})                 
+                    })
+                    .catch(err => {
+                        return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
+                  })
+                      })
             .catch(err => {
-              return res.status(500).json({status: 'failed', description: 'Failed to insert record'})
+              return res.status(500).json({status: `failed ${err}`, payload: err})
             })
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            return res.status(500).json({status: `failed ${err}`, payload: err})
           })
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          return res.status(500).json({status: `failed ${err}`, payload: err})
         })
-      })
-      .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
-      })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: err})
     })
 }
 

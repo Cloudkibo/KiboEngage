@@ -85,14 +85,13 @@ exports.savePolls = (poll) => {
 exports.saveSurveys = (survey) => {
   
   return  survey.save()
-  .exec()
+  
  
  }
 
  exports.createSurveys = (survey) => {
 
    return TemplateSurveys.create(survey)
-   .exec()
  }
 
 exports.companyUsageUpdate=(companyUser) => {
