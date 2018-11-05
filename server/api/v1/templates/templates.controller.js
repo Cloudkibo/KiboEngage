@@ -296,19 +296,19 @@ exports.createSurvey = function (req, res) {
                   })
                       })
             .catch(err => {
-              return res.status(500).json({status: `failed ${err}`, payload: err})
+              return res.status(500).json({status: `failed ${err}`, payload: 'failed due to companyQuery'})
             })
           })
           .catch(err => {
-            return res.status(500).json({status: `failed ${err}`, payload: err})
+            return res.status(500).json({status: `failed ${err}`, payload: 'failed due to planQuery'})
           })
         })
         .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: err})
+          return res.status(500).json({status: `failed ${err}`, payload: 'failed due to companyprofile'})
         })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: 'failed due to user'})
     })
 }
 
