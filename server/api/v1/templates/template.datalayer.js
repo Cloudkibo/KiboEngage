@@ -123,7 +123,7 @@ exports.findSurveyById = (req) => {
 }
 
 exports.findQuestionById = (req) => {
-  SurveyQuestions.find({surveyId: req.params.surveyid}).populate('surveyId')  
+  return SurveyQuestions.find({surveyId: req.params.surveyid}).populate('surveyId')  
  .exec()
 }
 
