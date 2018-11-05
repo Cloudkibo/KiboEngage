@@ -480,6 +480,7 @@ exports.editPoll = function (req, res) {
 exports.createBroadcast = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
   .then(companyUser => {
+    console.log('companyUser',companyUser)
     callApi.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
       .then(companyProfile => {
         callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
@@ -509,7 +510,7 @@ exports.createBroadcast = function (req, res) {
                   res.status(201).json({status: 'success', payload: broadcastCreated})
                 })
                 .catch(err => {
-                  return res.status(500).json({status: `failed ${err}`, payload: err})
+                  return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
                 })
               }
             })
