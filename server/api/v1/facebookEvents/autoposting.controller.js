@@ -33,27 +33,27 @@ exports.autoposting = function (req, res) {
           if (meta && meta.image && meta.image.url) {
             event.value.image = meta.image.url
           }
-          handleThePagePostsForAutoPosting(event)
+          handleThePagePostsForAutoPosting(req, event)
         })
       } else if (event.value.item === 'video' && event.value.message) {
-        handleThePagePostsForAutoPosting(event, 'status')
-        handleThePagePostsForAutoPosting(event)
+        handleThePagePostsForAutoPosting(req, event, 'status')
+        handleThePagePostsForAutoPosting(req, event)
       } else {
-        handleThePagePostsForAutoPosting(event)
+        handleThePagePostsForAutoPosting(req, event)
       }
     }
   }
 }
-function handleThePagePostsForAutoPosting (event, status) {
+function handleThePagePostsForAutoPosting (req, event, status) {
   AutoPostingDataLayer.findAllAutopostingObjectsUsingQuery({ accountUniqueName: event.value.sender_id, isActive: true })
     .then(autopostings => {
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = autopostingLogicLayer.pagesFindCriteria(postingItem)
-        utility.callApi(`pages/query`, 'post', pagesFindCriteria)
+        utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
             pages.forEach(page => {
               let subscriberFindCriteria = autopostingLogicLayer.subscriberFindCriteria(postingItem, page)
-              utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
+              utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
                   logger.serverLog(TAG,
                     `Total Subscribers of page ${page.pageName} are ${subscribers.length}`)
