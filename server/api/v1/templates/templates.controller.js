@@ -174,63 +174,23 @@ exports.allSurveys = function (req, res) {
 }
 
 exports.createPoll = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
-    .then(companyUser => {
-      if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
-      }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
-      .then(companyProfile => {
-        callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
-        .then(planUsage => {
-          planUsage = planUsage[0]
-          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
-            .then(companyUsage => {
-              companyUsage = companyUsage[0]  
-             console.log('planUsage', planUsage)
-            console.log('companyUsage', companyUsage)
-            if (planUsage.polls_templates !== -1 && companyUsage.polls_templates >= planUsage.polls_templates) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
-              })
-            }
-            let pollPayload = logicLayer.createDataPolls(req)
-            const poll = new TemplatePolls(pollPayload)
-            dataLayer.savePolls(poll)
-            .then(pollCreated => {
-              if (!req.user.isSuperUser) {
-                callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId})
-                .then(update => {
-                  res.status(201).json({status: 'success', payload: pollCreated})
-                })
-                .catch(err => {
-                  return res.status(500).json({status: `failed ${err}`, payload: 'failed to update company'})
-                })
-              }
-            })
-            .catch(err => {
-              return res.status(500).json({status: `failed ${err}`, payload: 'failed to  created polls'})
-            })
-          })
-          .catch(err => {
-            return res.status(500).json({status: `failed ${err}`,payload: 'failed to company usage'})
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: 'failed to plan usage'})
-        })
-      })
-      .catch(err => {
-        return res.status(500).json({status: `failed ${err}`, payload: 'failed to company profile'})
-      })
-    })
-    .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload:  'failed to company user'})
-    })
+  let pollPayload = {
+    title: req.body.title,
+    statement: req.body.statement,
+    options: req.body.options,
+    category: req.body.category
+  }
+  const poll = new TemplatePolls(pollPayload)
+
+  // save model to MongoDB
+  dataLayer.savePolls(poll)
+  .then(pollCreated => {
+      res.status(201).json({status: 'success', payload: pollCreated})
+    }
+  )
+  .catch(err => {
+    return res.status(500).json({status: `failed ${err}`, payload:  'failed to saved polls'})
+  })
 }
 exports.createSurvey = function (req, res) {
   let surveyPayload = {
