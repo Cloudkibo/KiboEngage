@@ -25,14 +25,14 @@ exports.getAutomatedOptions = function (req, res) {
 exports.invite = function (req, res) {
   utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
+      logger.serverLog(TAG, 'Result from invite endpoint accounts')
       logger.serverLog(TAG, result)
-      res.status(200).json(result)
+      res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
+      logger.serverLog(TAG, 'Error from invite endpoint accounts')
       logger.serverLog(TAG, err)
-      res.status(500).json(err)
+      res.status(500).json({status: 'success', payload: err})
     })
 }
 
