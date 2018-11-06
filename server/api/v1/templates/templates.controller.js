@@ -344,7 +344,7 @@ exports.pollDetails = function (req, res) {
 }
 
 exports.deletePoll = function (req, res) {
-  dataLayer.pollFindById(req)
+  dataLayer.FindByIdPoll(req)
     .then(poll => {
       if (!poll) {
         return res.status(404)

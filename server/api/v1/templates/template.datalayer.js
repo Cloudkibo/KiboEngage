@@ -247,3 +247,7 @@ exports.surveyFindId = (req) => {
   return TemplateSurveys.findById(req.params.id)
   .exec()
 }
+exports.FindByIdPoll = (req) => {
+  return TemplatePolls.findById(req.params.id)
+  .exec()
+}
