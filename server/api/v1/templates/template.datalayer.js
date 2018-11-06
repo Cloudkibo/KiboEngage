@@ -133,7 +133,7 @@ exports.findPollById = (req) => {
 }
 
 exports.pollFindById = (req) => {
-  return TemplatePolls.findById(req.params.id)
+  return TemplatePolls.findById(req.body._id)
   .exec()
 
 }
@@ -153,7 +153,7 @@ exports.removeCategory = (category) => {
 }
 
 exports.surveyFindById = (req) => {
-  return TemplateSurveys.findById(req.params.id)
+  return TemplateSurveys.findById(req.body._id)
   .exec()
 
 }
