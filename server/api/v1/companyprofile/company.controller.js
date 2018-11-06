@@ -27,7 +27,7 @@ exports.invite = function (req, res) {
     .then((result) => {
       logger.serverLog(TAG, 'result from invite endpoint accounts')
       logger.serverLog(TAG, result)
-      res.status(200).json(result)
+      res.status(200).json({})
     })
     .catch((err) => {
       logger.serverLog(TAG, 'result from invite endpoint accounts')
