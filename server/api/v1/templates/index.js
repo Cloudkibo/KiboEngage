@@ -23,7 +23,7 @@ router.delete('/deletePoll/:id', auth.isAuthenticated(),  controller.deletePoll)
 router.delete('/deleteSurvey/:id', auth.isAuthenticated(), controller.deleteSurvey)
 router.delete('/deleteCategory/:id', auth.isAuthenticated(), controller.deleteCategory)
 router.post('/editCategory', auth.isAuthenticated(),validate({body: validationSchema.editCategory}), controller.editCategory)
-router.post('/editPoll', auth.isAuthorizedSuperUser(),validate({body: validationSchema.editPoll}), controller.editPoll)
+router.post('/editPoll', auth.isAuthenticated(), controller.editPoll)
 router.post('/editSurvey', auth.isAuthorizedSuperUser(),validate({body: validationSchema.editSurvey}), controller.editSurvey)
 
 router.post('/createBroadcast', auth.isAuthenticated(), controller.createBroadcast)
