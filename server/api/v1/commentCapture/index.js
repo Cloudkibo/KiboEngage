@@ -14,7 +14,7 @@ router.get('/:id',
   controller.viewPost)
 
 router.post('/create',
-  validate({body: validationSchema.postPayload}),
+  auth.isAuthenticated(),
   controller.create)
 
 router.post('/edit',

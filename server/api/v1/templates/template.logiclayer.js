@@ -94,13 +94,14 @@ exports.createDataBots = function (req) {
   return botTemplatePayload
 }
 
-exports.createDataBroadcast = function (req) {
+exports.createDataBroadcast = function (req,companyUser) {
+  console.log()
   let broadcastPayload = {
     title: req.body.title,
     category: req.body.category,
     payload: req.body.payload,
     userId: req.user._id,
-    companyId: req.companyUser.companyId
+    companyId: companyUser.companyId
   }
   return broadcastPayload
 }
