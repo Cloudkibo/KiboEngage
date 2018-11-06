@@ -519,12 +519,13 @@ exports.createBroadcast = function (req, res) {
                         callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
                           .then(update => {
                             console.log('update company')
-                            res.status(201).json({status: 'success', payload: broadcastCreated})
+                            
                           })
                           .catch(err => {
                             return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
                           })
                       }
+                      res.status(201).json({status: 'success', payload: broadcastCreated})
                     })
                     .catch(err => {
                       return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
