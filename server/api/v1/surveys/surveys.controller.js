@@ -774,26 +774,28 @@ exports.send = function (req, res) {
 }
 exports.sendSurvey = function (req, res) {
   let abort = false
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
-  .then(companyUser => {
-    if (!companyUser) {
-      return res.status(404).json({
-        status: 'failed',
-        description: 'The user account does not belong to any company. Please contact support'
-      })
-    }
-    callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
-    .then(companyProfile => {
-      callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
-      .then(planUsage => {
-        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id})
-        .then(companyUsage => {
-          if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Your templates limit has reached. Please upgrade your plan to premium in order to create more templates`
-            })
-          }
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+        .then(companyProfile => {
+          callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
+            .then(planUsage => {
+              planUsage = planUsage[0]
+              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
+                .then(companyUsage => {
+                  companyUsage = companyUsage[0]
+                  if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
+                    })
+                  }
           let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
           const survey = new Surveys(surveyPayload)
 
