@@ -424,7 +424,7 @@ exports.editSurvey = function (req, res) {
           dataLayer.removeQuestion(questions[i])
            .then(success => {})
            .catch(err => {
-             return res.status(500).json({status: 'failed', payload: err})
+             return res.status(500).json({status: `failed ${err}`, payload: 'remove question'})
            })
         }
         for (let question in req.body.questions) {
@@ -439,17 +439,20 @@ exports.editSurvey = function (req, res) {
           .then(survey => {
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            return res.status(500).json({status: `failed ${err}`, payload: 'save question'})
           })
         }
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        return res.status(500).json({status: `failed ${err}`, payload: 'find question'})
       })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      return res.status(500).json({status: `failed ${err}`, payload: err})
     })
+  })
+  .catch(err => {
+    return res.status(500).json({status: `failed ${err}`, payload: err})
   })
 }
 
