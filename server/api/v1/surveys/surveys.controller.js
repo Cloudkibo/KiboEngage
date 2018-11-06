@@ -786,7 +786,7 @@ exports.sendSurvey = function (req, res) {
     .then(companyProfile => {
       callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
       .then(planUsage => {
-        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id})
         .then(companyUsage => {
           if (planUsage.survey_templates !== -1 && companyUsage.survey_templates >= planUsage.survey_templates) {
             return res.status(500).json({
@@ -814,7 +814,7 @@ exports.sendSurvey = function (req, res) {
               .then(success => {
               })
               .catch(error => {
-                return res.status(500).json({status: 'failed', description: error})
+                return res.status(500).json({status: `failed ${error}`, description: error})
               })
             }
             require('./../../../config/socketio').sendMessageToClient({
@@ -891,7 +891,7 @@ exports.sendSurvey = function (req, res) {
                                     .then(success => {
                                     })
                                     .catch(error => {
-                                      return res.status(500).json({status: 'failed', payload: error})
+                                      return res.status(500).json({status: `failed ${error}`, payload: error})
                                     })
                                   }
                                 } else {
@@ -899,12 +899,12 @@ exports.sendSurvey = function (req, res) {
                                 }
                               })
                               .catch(error => {
-                                return res.status(500).json({status: 'failed', payload: error})
+                                return res.status(500).json({status: `failed ${error}`, payload: error})
                               })
                             }
                           })
                           .catch(error => {
-                            return res.status(500).json({status: 'failed', payload: error})
+                            return res.status(500).json({status: `failed ${error}`, payload: error})
                           })
                           if (req.body.isList === true) {
                             let ListFindCriteria = {}
@@ -1001,11 +1001,11 @@ exports.sendSurvey = function (req, res) {
 
                                                       })
                                                       .catch(error => {
-                                                        return res.status(500).json({status: 'failed', description: error})
+                                                        return res.status(500).json({status: `failed ${error}`, description: error})
                                                       })
                                                     })
                                                     .catch(error => {
-                                                      return res.status(500).json({status: 'failed', description: error})
+                                                      return res.status(500).json({status: `failed ${error}`, description: error})
                                                     })
                                             } else {
                                               logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
@@ -1023,28 +1023,28 @@ exports.sendSurvey = function (req, res) {
 
                                               })
                                               .catch(error => {
-                                                return res.status(500).json({status: 'failed', description: error})
+                                                return res.status(500).json({status: `failed ${error}`, description: error})
                                               })
                                             }
                                           })
                                         })
                                             .catch(error => {
-                                              return res.status(500).json({status: 'failed', description: error})
+                                              return res.status(500).json({status: `failed ${error}`, description: error})
                                             })
                                       })
                                           .catch(error => {
-                                            return res.status(500).json({status: 'failed', description: error})
+                                            return res.status(500).json({status: `failed ${error}`, description: error})
                                           })
                                     }
                                   })
                                 })
                               })
                                 .catch(error => {
-                                  return res.status(500).json({status: 'failed', description: error})
+                                  return res.status(500).json({status: `failed ${error}`, description: error})
                                 })
                           })
                               .catch(error => {
-                                return res.status(500).json({status: 'failed', description: error})
+                                return res.status(500).json({status: `failed ${error}`, description: error})
                               })
                             })
                           } else {
@@ -1079,7 +1079,7 @@ exports.sendSurvey = function (req, res) {
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                       subscribers = repliedSubscribers
                                       for (let j = 0; j < subscribers.length && !abort; j++) {
-                                        callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                        callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                         .then(updated => {
                                           callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
                                         .then(companyUsage => {
@@ -1129,11 +1129,11 @@ exports.sendSurvey = function (req, res) {
                                                   .then(updated => {
                                                   })
                                                   .catch(error => {
-                                                    return res.status(500).json({status: 'failed', description: error})
+                                                    return res.status(500).json({status: `failed ${error}`, description: error})
                                                   })
                                                 })
                                                   .catch(error => {
-                                                    return res.status(500).json({status: 'failed', description: error})
+                                                    return res.status(500).json({status: `failed ${error}`, description: error})
                                                   })
                                             } else {
                                               logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
@@ -1153,22 +1153,22 @@ exports.sendSurvey = function (req, res) {
                                           })
                                         })
                                           .catch(error => {
-                                            return res.status(500).json({status: 'failed', description: error})
+                                            return res.status(500).json({status: `failed ${error}`, description: error})
                                           })
                                         })
                                         .catch(error => {
-                                          return res.status(500).json({status: 'failed', description: error})
+                                          return res.status(500).json({status: `failed ${error}`, description: error})
                                         })
                                     }
                                   })
                                 })
                               })
                               .catch(error => {
-                                return res.status(500).json({status: 'failed', description: error})
+                                return res.status(500).json({status: `failed ${error}`, description: error})
                               })
                             })
                             .catch(error => {
-                              return res.status(500).json({status: 'failed', description: error})
+                              return res.status(500).json({status: `failed ${error}`, description: error})
                             })
                           }
                         }
@@ -1181,39 +1181,39 @@ exports.sendSurvey = function (req, res) {
                     }
                   })
                   .catch(error => {
-                    return res.status(500).json({status: 'failed', description: error})
+                    return res.status(500).json({status: `failed ${error}`, description: error})
                   })
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', description: error})
+                  return res.status(500).json({status: `failed ${error}`, description: error})
                 })
               })
               .catch(error => {
-                return res.status(500).json({status: 'failed', description: error})
+                return res.status(500).json({status: `failed ${error}`, description: error})
               })
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', description: error})
+              return res.status(500).json({status: `failed ${error}`, description: error})
             })
           })
           .catch(error => {
-            return res.status(500).json({status: 'failed', description: error})
+            return res.status(500).json({status: `failed ${error}`, description: error})
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', description: error})
+          return res.status(500).json({status: `failed ${error}`, description: error})
         })
       })
       .catch(error => {
-        return res.status(500).json({status: 'failed', description: error})
+        return res.status(500).json({status: `failed ${error}`, description: error})
       })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', description: error})
+      return res.status(500).json({status: `failed ${error}`, description: error})
     })
   })
   .catch(error => {
-    return res.status(500).json({status: 'failed', description: error})
+    return res.status(500).json({status: `failed ${error}`, description: error})
   })
 }
 
