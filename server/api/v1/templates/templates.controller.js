@@ -444,6 +444,7 @@ exports.editSurvey = function (req, res) {
             return res.status(500).json({status: `failed ${err}`, payload: 'save question'})
           })
         }
+        return res.status(201).json({status: 'success', payload: survey})
       })
       .catch(err => {
         return res.status(500).json({status: `failed ${err}`, payload: 'find question'})
