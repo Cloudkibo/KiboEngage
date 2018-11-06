@@ -11,7 +11,7 @@ const callApi = require('../utility')
 
 // Get list of menu items
 exports.index = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -19,7 +19,7 @@ exports.index = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      MenuDataLayer.findOneMenuObjectUsingQuery({companyId: companyUser.companyId})
+      MenuDataLayer.findOneMenuObjectUsingQuery({companyId: companyUser.companyId}, req.headers.authorization)
         .then(menus => {
           return res.status(200).json({
             status: 'success',
@@ -41,7 +41,7 @@ exports.index = function (req, res) {
 }
 
 exports.indexByPage = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -75,7 +75,7 @@ exports.indexByPage = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -83,7 +83,7 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId})
+      callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId}, req.headers.authorization)
         .then(page => {
           if (!page) {
             return res.status(404).json({
