@@ -233,3 +233,7 @@ exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   return TemplateBroadcasts.aggregate([{$match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]}}, {$sort: {datetime: -1}}]).skip(aggregateObject.recordsToSkip).limit(aggregateObject.req.body.number_of_records)
    .exec()
 }
+
+exports.removeQuestion = (question) => {
+  return question.remove()
+}

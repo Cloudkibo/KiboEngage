@@ -435,7 +435,7 @@ exports.editSurvey = function (req, res) {
             options, // array of question options
             surveyId: survey._id
           })
-          dataLayer.saveSurveys(surveyQuestion)
+          QuestionsurveydataLayer.createQuestionSurveys(surveyQuestion)
           .then(survey => {
           })
           .catch(err => {
