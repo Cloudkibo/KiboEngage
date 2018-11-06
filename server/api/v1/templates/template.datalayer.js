@@ -242,3 +242,8 @@ exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
 exports.removeQuestion = (question) => {
   return question.remove()
 }
+
+exports.surveyFindId = (req) => {
+  return TemplateSurveys.findById(req.params.id)
+  .exec()
+}

@@ -388,7 +388,7 @@ exports.deleteCategory = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
-  dataLayer.surveyFindById(req)
+  dataLayer.surveyFindId(req)
     .then(survey => {
       if (!survey) {
         return res.status(404)
