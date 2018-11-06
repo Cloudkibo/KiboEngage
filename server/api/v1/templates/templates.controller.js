@@ -756,7 +756,7 @@ exports.deleteBroadcast = function (req, res) {
 }
 
 exports.editBroadcast = function (req, res) {
-  dataLayer.BroadcastFindById(req)
+  dataLayer.broadcastFindbyId(req)
   .then(broadcast => {
     if (!broadcast) {
       return res.status(404)

@@ -168,6 +168,11 @@ exports.BroadcastFindById = (req) => {
   .exec()
 }
 
+exports.broadcastFindbyId = (req) => {
+  return  TemplateBroadcasts.findById(req.body._id)
+  .exec()
+}
+
 exports.removeBroadcast = (broadcast) => {
   return broadcast.remove()
   
