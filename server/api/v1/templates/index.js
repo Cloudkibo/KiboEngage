@@ -24,7 +24,7 @@ router.delete('/deleteSurvey/:id', auth.isAuthenticated(), controller.deleteSurv
 router.delete('/deleteCategory/:id', auth.isAuthenticated(), controller.deleteCategory)
 router.post('/editCategory', auth.isAuthenticated(),validate({body: validationSchema.editCategory}), controller.editCategory)
 router.post('/editPoll', auth.isAuthenticated(), controller.editPoll)
-router.post('/editSurvey',auth.isAuthenticated(), controller.editSurvey)
+router.post('/editSurvey',auth.isAuthorizedSuperUser(), controller.editSurvey)
 
 router.post('/createBroadcast', auth.isAuthenticated(), controller.createBroadcast)
 router.get('/allBroadcasts', auth.isAuthenticated(), controller.allBroadcasts)

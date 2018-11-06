@@ -406,6 +406,7 @@ exports.deleteSurvey = function (req, res) {
 }
 
 exports.editSurvey = function (req, res) {
+  console.log('editSurvey')
   dataLayer.surveyId(req)
   .then(survey => {
     if (!survey) {
@@ -415,11 +416,12 @@ exports.editSurvey = function (req, res) {
     survey.title = req.body.survey.title
     survey.description = req.body.survey.description
     survey.category = req.body.survey.category
-
+    console.log('saveSurvey')
     dataLayer.saveSurveys(survey)
     .then(success => {
       dataLayer.findQuestionSurveyById(req)
       .then(questions => {
+        console.log('questions')
         for (let i = 0; i < questions.length; i++) {
           dataLayer.removeQuestion(questions[i])
            .then(success => {})
