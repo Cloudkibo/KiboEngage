@@ -516,7 +516,7 @@ exports.createBroadcast = function (req, res) {
             .then(broadcastCreated => {
               console.log('broadcastCreated')
               if (!req.user.isSuperUser) {
-                callApi.callApi('featureUsage/updateCompany', 'post', {companyId: companyUser.companyId},{ $inc: { broadcast_templates: 1 } }, req.headers.authorization)
+                callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
                 .then(update => {
                   console.log('update company')
                   res.status(201).json({status: 'success', payload: broadcastCreated})
