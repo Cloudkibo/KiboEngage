@@ -78,6 +78,7 @@ exports.create = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
+        logger.serverLog(TAG, 'The user account does not belong to any company.')
         return res.status(404).json({
           status: 'failed',
           description: 'The user account does not belong to any company. Please contact support'
@@ -86,6 +87,7 @@ exports.create = function (req, res) {
       callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId}, req.headers.authorization)
         .then(page => {
           if (!page) {
+            logger.serverLog(TAG, 'Page not found')
             return res.status(404).json({
               status: 'failed',
               description: 'Page not found'
@@ -171,6 +173,7 @@ exports.create = function (req, res) {
                             `Internal Server Error ${JSON.stringify(err)}`)
                         }
                         if (JSON.stringify(resp.body.error)) {
+                          logger.serverLog(TAG, `Error from facebook graph api: ${resp.body.error}`)
                           return res.status(404).json({
                             status: 'error',
                             description: JSON.stringify(resp.body.error)
