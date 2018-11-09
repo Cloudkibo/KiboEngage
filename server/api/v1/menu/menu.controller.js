@@ -163,7 +163,7 @@ exports.create = function (req, res) {
                         }
                       }
                     })
-
+                    logger.serverLog(TAG, `req.body.payload passed to graph api ${JSON.stringify(req.body.payload)}`)
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (!err) {
