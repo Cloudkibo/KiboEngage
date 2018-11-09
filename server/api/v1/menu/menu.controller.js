@@ -93,6 +93,7 @@ exports.create = function (req, res) {
               description: 'Page not found'
             })
           }
+          logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`)
           MenuDataLayer.findOneMenuObjectUsingQuery({pageId: req.body.pageId})
             .then(info => {
               if (!info) {
