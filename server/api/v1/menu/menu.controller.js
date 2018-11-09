@@ -126,7 +126,7 @@ exports.create = function (req, res) {
                       }
                     })
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-
+                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (err) {
@@ -150,7 +150,7 @@ exports.create = function (req, res) {
                 MenuDataLayer.updateOneMenuObjectUsingQuery({pageId: req.body.pageId}, {jsonStructure: req.body.jsonStructure})
                   .then(updated => {
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-
+                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: companyUser.companyId,
                       body: {
