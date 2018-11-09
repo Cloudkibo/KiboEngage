@@ -173,7 +173,7 @@ exports.create = function (req, res) {
                             `Internal Server Error ${JSON.stringify(err)}`)
                         }
                         if (JSON.stringify(resp.body.error)) {
-                          logger.serverLog(TAG, `Error from facebook graph api: ${resp.body.error}`)
+                          logger.serverLog(TAG, `Error from facebook graph api: ${JSON.stringify(resp.body.error)}`)
                           return res.status(404).json({
                             status: 'error',
                             description: JSON.stringify(resp.body.error)
