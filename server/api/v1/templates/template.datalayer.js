@@ -85,14 +85,13 @@ exports.savePolls = (poll) => {
 exports.saveSurveys = (survey) => {
   
   return  survey.save()
-  .exec()
+  
  
  }
 
  exports.createSurveys = (survey) => {
 
    return TemplateSurveys.create(survey)
-   .exec()
  }
 
 exports.companyUsageUpdate=(companyUser) => {
@@ -124,7 +123,7 @@ exports.findSurveyById = (req) => {
 }
 
 exports.findQuestionById = (req) => {
-  SurveyQuestions.find({surveyId: req.params.surveyid}).populate('surveyId')  
+  return SurveyQuestions.find({surveyId: req.params.surveyid}).populate('surveyId')  
  .exec()
 }
 
@@ -134,7 +133,7 @@ exports.findPollById = (req) => {
 }
 
 exports.pollFindById = (req) => {
-  return TemplatePolls.findById(req.params.id)
+  return TemplatePolls.findById(req.body._id)
   .exec()
 
 }
@@ -154,7 +153,7 @@ exports.removeCategory = (category) => {
 }
 
 exports.surveyFindById = (req) => {
-  return TemplateSurveys.findById(req.params.id)
+  return TemplateSurveys.findById(req.body._id)
   .exec()
 
 }
@@ -169,6 +168,11 @@ exports.BroadcastFindById = (req) => {
   .exec()
 }
 
+exports.broadcastFindbyId = (req) => {
+  return  TemplateBroadcasts.findById(req.body._id)
+  .exec()
+}
+
 exports.removeBroadcast = (broadcast) => {
   return broadcast.remove()
   
@@ -177,7 +181,7 @@ exports.removeBroadcast = (broadcast) => {
 exports.saveBroadcast = (broadcast) => {
 
   return broadcast.save()
-  .exec()
+  
 }
 
 exports.findBroadcastById = (req) => {
@@ -233,4 +237,17 @@ exports.broadcastTemplateaggregateLimit = (aggregateObject) => {
 exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   return TemplateBroadcasts.aggregate([{$match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]}}, {$sort: {datetime: -1}}]).skip(aggregateObject.recordsToSkip).limit(aggregateObject.req.body.number_of_records)
    .exec()
+}
+
+exports.removeQuestion = (question) => {
+  return question.remove()
+}
+
+exports.surveyFindId = (req) => {
+  return TemplateSurveys.findById(req.params.id)
+  .exec()
+}
+exports.FindByIdPoll = (req) => {
+  return TemplatePolls.findById(req.params.id)
+  .exec()
 }

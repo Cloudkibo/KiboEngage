@@ -11,7 +11,7 @@ const validate = require('express-jsonschema').validate
 
 router.get('/allPolls', auth.isAuthenticated(), controller.allPolls)
 router.post('/getAllPolls', auth.isAuthenticated(), controller.getAllPolls) // pagination
-router.post('/createPoll', auth.isAuthenticated(), controller.createPoll)
+router.post('/createPoll', auth.isAuthorizedSuperUser(), controller.createPoll)
 router.post('/createSurvey', auth.isAuthorizedSuperUser(),controller.createSurvey)
 router.get('/allSurveys', auth.isAuthenticated(), controller.allSurveys)
 router.post('/getAllSurveys', auth.isAuthenticated(), controller.getAllSurveys) // pagination
@@ -23,13 +23,13 @@ router.delete('/deletePoll/:id', auth.isAuthenticated(),  controller.deletePoll)
 router.delete('/deleteSurvey/:id', auth.isAuthenticated(), controller.deleteSurvey)
 router.delete('/deleteCategory/:id', auth.isAuthenticated(), controller.deleteCategory)
 router.post('/editCategory', auth.isAuthenticated(),validate({body: validationSchema.editCategory}), controller.editCategory)
-router.post('/editPoll', auth.isAuthorizedSuperUser(),validate({body: validationSchema.editPoll}), controller.editPoll)
-router.post('/editSurvey', auth.isAuthorizedSuperUser(),validate({body: validationSchema.editSurvey}), controller.editSurvey)
+router.post('/editPoll', auth.isAuthenticated(), controller.editPoll)
+router.post('/editSurvey',auth.isAuthorizedSuperUser(), controller.editSurvey)
 
-router.post('/createBroadcast', auth.isAuthenticated(), validate({body: validationSchema.createBroadcast}), controller.createBroadcast)
+router.post('/createBroadcast', auth.isAuthenticated(), controller.createBroadcast)
 router.get('/allBroadcasts', auth.isAuthenticated(), controller.allBroadcasts)
 router.post('/getAllBroadcasts', auth.isAuthenticated(), controller.getAllBroadcasts) // pagination
-router.post('/editBroadcast', auth.isAuthenticated(),validate({body: validationSchema.editBroadcast}), controller.editBroadcast)
+router.post('/editBroadcast', auth.isAuthenticated(), controller.editBroadcast)
 router.delete('/deleteBroadcast/:id', auth.isAuthenticated(), controller.deleteBroadcast)
 router.get('/broadcastDetails/:broadcastid', auth.isAuthenticated(), controller.broadcastDetails)
 

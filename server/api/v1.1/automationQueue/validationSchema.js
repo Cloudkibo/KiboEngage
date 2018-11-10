@@ -4,18 +4,20 @@ By separating it from controller, we are cleaning the code.
 Now the middleware will automatically send error response if the payload fails
 */
 
-exports.findPayload = {
+exports.createPayload = {
   type: 'object',
   properties: {
-    page_id: {
-      type: 'string',
+    payload: {
+      type: 'object',
       required: true
-    },
-    user_id: {
-      type: 'string',
-      required: true
-    },
-    jsonStructure: {
+    }
+  }
+}
+
+exports.indexPayload = {
+  type: 'object',
+  properties: {
+    companyId: {
       type: 'string',
       required: true
     }
