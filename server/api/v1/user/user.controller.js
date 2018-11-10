@@ -68,8 +68,9 @@ exports.updateMode = function (req, res) {
 }
 
 exports.fbAppId = function (req, res) {
-  utility.callApi(`user/fbAppId`, 'get', req.headers.authorization)
+  utility.callApi(`user/fbAppId`, 'get', {}, req.headers.authorization)
   .then(facebookClientId => {
+    console.log('facebookClientId', facebookClientId)
     return res.status(200).json({
       status: 'success',
       payload: facebookClientId
