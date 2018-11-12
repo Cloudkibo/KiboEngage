@@ -1081,7 +1081,7 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
                             }
-                            callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                            callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria}, req.headers.authorization)
                             .then(subscribers => {
                               needle.get(
                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
