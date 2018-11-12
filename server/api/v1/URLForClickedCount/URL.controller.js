@@ -72,7 +72,7 @@ exports.sequence = function (req, res) {
                   // get sequenceId of the message
                   let sequenceId = seqMessage.sequenceId
                   // find the all the messages of this sequence
-                  SequenceMessages.find({sequenceId: sequenceId}, (err, seqMessages) => {
+                  SequenceMessagesDataLayer.genericFindForSequenceMessages({sequenceId: sequenceId}, (err, seqMessages) => {
                     if (err) {
                       return res.status(500).json({
                         status: 'failed',
@@ -80,7 +80,7 @@ exports.sequence = function (req, res) {
                       })
                     }
                     if (seqMessages && seqMessages.length > 0) {
-                       // iterate through all the messages of this sequence.
+                      // iterate through all the messages of this sequence.
                       for (let message of seqMessages) {
                       // check if this message is in the trigger of any message of this sequence then add it to queue.
                         if (message.trigger.value !== '') {

@@ -1,12 +1,12 @@
 const requestPromise = require('request-promise')
 const config = require('../../../config/environment/index')
-const util = require('util')
-const TAG = 'api/v1/utility/index.js'
-const logger = require('../../../components/logger')
+// const logger = require('../../../components/logger')
+// const TAG = 'api/v1/utility/index.js'
+// const util = require('util')
 
 exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => {
   let headers
-  if (token) {
+  if (token && token !== '') {
     headers = {
       'content-type': 'application/json',
       'Authorization': token
@@ -18,19 +18,22 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     }
   }
   let apiUrl = config.ACCOUNTS_URL
-  if (type === 'chat') {
+  if (type === 'kiboengage') {
+    apiUrl = config.DBLAYER_URL_KIBOENGAGE
+  } else if (type === 'kibochat') {
+    apiUrl = config.DBLAYER_URL_KIBOCHAT
+  } else if (type === 'chat') {
     apiUrl = config.CHAT_URL
   } else if (type === 'webhook') {
     apiUrl = config.WEBHOOKS_URL
   }
   let options = {
     method: method.toUpperCase(),
-    uri: `${apiUrl}/${endpoint}`,
+    uri: `${apiUrl}${endpoint}`,
     headers,
     body,
     json: true
   }
-  console.log('in callapi', JSON.stringify(body))
   // logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
   return requestPromise(options).then(response => {
     // logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
@@ -42,7 +45,4 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
       }
     })
   })
-    .catch((err) => {
-      logger.serverLog(TAG, `error in callAPI ${util.inspect(err.body)}`)
-    })
 }
