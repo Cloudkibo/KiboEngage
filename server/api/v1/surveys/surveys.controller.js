@@ -352,9 +352,9 @@ exports.send = function (req, res) {
     }
     callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
     .then(companyProfile => {
-      callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
+      callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
       .then(planUsage => {
-        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
         .then(companyUsage => {
           if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
             return res.status(500).json({
@@ -363,9 +363,9 @@ exports.send = function (req, res) {
             })
           }
 
-          callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+          callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
           .then(userPage => {
-            callApi.callApi(`user/query`, 'post', {_id: userPage.userId})
+            callApi.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
             .then(connectedUser => {
               var currentUser
               if (req.user.facebookInfo) {
@@ -375,7 +375,7 @@ exports.send = function (req, res) {
               }
               surveyQuestionsDataLayer.findQuestionSurveyById(req)
               .then(questions => {
-                surveyDataLayer.findQuestionSurveyById(req)
+                surveyDataLayer.QuestionfindSurveyById(req)
               .then(survey => {
                 if (questions.length > 0) {
                   let first_question = questions[0]
@@ -729,6 +729,8 @@ exports.send = function (req, res) {
                         })
                       }
                     }
+                    return res.status(200)
+                    .json({status: 'success', payload: 'Survey sent successfully.'})
                   })
                 .catch(error => {
                   return res.status(500).json({status: 'failed', description: error})
