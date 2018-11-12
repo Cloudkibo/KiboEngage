@@ -784,6 +784,20 @@ exports.sendSurvey = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
+      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+      .then(companyProfile => {
+        callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
+          .then(planUsage => {
+            planUsage = planUsage[0]
+            callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
+              .then(companyUsage => {
+                companyUsage = companyUsage[0]
+                if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
+                  })
+                }
           let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
           const survey = new Surveys(surveyPayload)
 
@@ -866,30 +880,35 @@ exports.sendSurvey = function (req, res) {
                       callApi.callApi(`pages/query`, 'post', {pagesFindCriteria}, req.headers.authorization)
                       .then(pages => {
                         for (let z = 0; z < pages.length && !abort; z++) {
-                          DataLayerwebhooks.findOnePage(pages[z])
+                        callApi.callApi(`webhooks/query`, 'post', {pageId: pages[z].pageId}, req.headers.authorization)
                           .then(webhook => {
+                            webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
-                              needle.get(webhook.webhook_url)
-                              .then(response => {
-                                if (response.statusCode === 200) {
+                              needle.get(webhook.webhook_url, (err, r) => {
+                                if (err) {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Internal Server Error ${JSON.stringify(err)}`
+                                  })
+                                } else if (r.statusCode === 200) {
                                   if (webhook && webhook.optIn.SURVEY_CREATED) {
                                     var data = {
                                       subscription_type: 'SURVEY_CREATED',
                                       payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
                                     }
-                                    needle.post(webhook.webhook_url, data)
-                                    .then(success => {
-                                    })
-                                    .catch(error => {
-                                      return res.status(500).json({status: `failed ${error}`, payload: error})
-                                    })
+                                    needle.post(webhook.webhook_url, data,
+                                      (error, response) => {
+                                        if (error) {
+                                          // return res.status(500).json({
+                                          //   status: 'failed',
+                                          //   description: `Internal Server Error ${JSON.stringify(err)}`
+                                          // })
+                                        }
+                                      })
                                   }
                                 } else {
                                   webhookUtility.saveNotification(webhook)
                                 }
-                              })
-                              .catch(error => {
-                                return res.status(500).json({status: `failed ${error}`, payload: error})
                               })
                             }
                           })
@@ -940,6 +959,14 @@ exports.sendSurvey = function (req, res) {
                                   utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                     subscribers = repliedSubscribers
                                     for (let j = 0; j < subscribers.length && !abort; j++) {
+                                      callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
+                                      .then(updated => {
+                                        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
+                                        .then(companyUsage => {
+                                          companyUsage = companyUsage[0]
+                                        if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                                          abort = true
+                                        }
                                           const messageData = {
                                             attachment: {
                                               type: 'template',
@@ -1010,6 +1037,14 @@ exports.sendSurvey = function (req, res) {
                                               })
                                             }
                                           })
+                                        })
+                                        .catch(error => {
+                                          return res.status(500).json({status: `failed ${error}`, description: error})
+                                        })
+                                      })
+                                      .catch(error => {
+                                        return res.status(500).json({status: `failed ${error}`, description: error})
+                                      })
  
                                  
                                     }
@@ -1056,6 +1091,14 @@ exports.sendSurvey = function (req, res) {
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                       subscribers = repliedSubscribers
                                       for (let j = 0; j < subscribers.length && !abort; j++) {
+                                        callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
+                                      .then(updated => {
+                                        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
+                                        .then(companyUsage => {
+                                          companyUsage = companyUsage[0]
+                                        if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                                          abort = true
+                                        }
                                           const messageData = {
                                             attachment: {
                                               type: 'template',
@@ -1067,9 +1110,10 @@ exports.sendSurvey = function (req, res) {
                                             }
                                           }
                                           const data = {
-                                            messaging_type: 'UPDATE',
+                                            messaging_type: 'MESSAGE_TAG',
                                             recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                            message: messageData
+                                            message: messageData,
+                                            tag: req.body.fbMessageTag
                                           }
                                           // this calls the needle when the last message was older than 30 minutes
                                           // checks the age of function using callback
@@ -1120,6 +1164,14 @@ exports.sendSurvey = function (req, res) {
                                               })
                                             }
                                           })
+                                        })
+                                        .catch(error => {
+                                          return res.status(500).json({status: `failed ${error}`, description: error})
+                                        })
+                                      })
+                                      .catch(error => {
+                                        return res.status(500).json({status: `failed ${error}`, description: error})
+                                      })
                                     }
                                   })
                                 })
@@ -1160,8 +1212,19 @@ exports.sendSurvey = function (req, res) {
           .catch(error => {
             return res.status(500).json({status: `failed ${error}`, description: error})
           })
-
-
+        })
+        .catch(error => {
+          return res.status(500).json({status: `failed ${error}`, description: error})
+        })
+      })
+      .catch(error => {
+        return res.status(500).json({status: `failed ${error}`, description: error})
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({status: `failed ${error}`, description: error})
+    })
+   
   })
   .catch(error => {
     return res.status(500).json({status: `failed ${error}`, description: error})
