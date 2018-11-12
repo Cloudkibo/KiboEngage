@@ -1179,7 +1179,7 @@ exports.sendSurvey = function (req, res) {
                       })
                     } else {
                       return res.status(404)
-                      .json({status: 'failed', description: 'Survey Questions not found'})
+                      .json({status: `failed ${error}`, description: 'Survey Questions not found'})
                     }
                   })
                   .catch(error => {
