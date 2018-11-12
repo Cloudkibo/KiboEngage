@@ -18,7 +18,7 @@ SequenceMessagesQueueDataLayer.findAll()
       for (let i = 0; i < data.length; i++) {
         let message = data[i]
         if (message.queueScheduledTime.getTime() < new Date().getTime()) {
-          console.log('in message.queueScheduledTime.getTime()')
+          console.log('in message.queueScheduledTime.getTime()', message)
           if (message.trigger.event === 'does_not_see') {
             console.log('message', message)
             SequenceDataLayer.genericFindForSubscriberMessages({messageId: message.trigger.value, subscriberId: message.subscriberId})
@@ -37,6 +37,7 @@ SequenceMessagesQueueDataLayer.findAll()
                 logger.serverLog(TAG, `Failed to fetch subscriber messages ${JSON.stringify(err)}`)
               })
           } else {
+            console.log('in else')
             sendSequenceMessage(message)
           }
         }
