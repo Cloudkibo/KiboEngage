@@ -847,9 +847,9 @@ exports.sendSurvey = function (req, res) {
                 */
                 // we will send only first question to fb subsribers
                 // find questions
-                surveyQuestionsDataLayer.findQuestionSurveyById(req)
+                surveyQuestionsDataLayer.QuestionFindSurveyById(survey)
                 .then(questions => {
-                  surveyDataLayer.findQuestionSurveyById(req)
+                  surveyDataLayer.findQuestionSurveyById(survey)
                   .then(survey => {
                     if (questions.length > 0) {
                       let first_question = questions[0]
@@ -1179,7 +1179,7 @@ exports.sendSurvey = function (req, res) {
                       })
                     } else {
                       return res.status(404)
-                      .json({status: 'failed', description: 'Survey Questions not found'})
+                      .json({status: `failed ${error}`, description: 'Survey Questions not found'})
                     }
                   })
                   .catch(error => {
