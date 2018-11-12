@@ -5,9 +5,17 @@ const TAG = 'api/v1/utility/index.js'
 const logger = require('../../../components/logger')
 
 exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => {
-  let headers = {
-    'content-type': 'application/json',
-    'Authorization': token
+  let headers
+  if (token) {
+    headers = {
+      'content-type': 'application/json',
+      'Authorization': token
+    }
+  } else {
+    headers = {
+      'content-type': 'application/json',
+      'is_kibo_product': true
+    }
   }
   let apiUrl = config.ACCOUNTS_URL
   if (type === 'chat') {
