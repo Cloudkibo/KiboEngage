@@ -48,31 +48,37 @@ exports.sentVsSeen = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
+      // We should call the count function when we switch to v1.1
       PageBroadcastDataLayer.aggregate([
         {$match: {companyId: companyUser.companyId, pageId: pageId}},
         {$group: {_id: null, count: {$sum: 1}}}
       ])
         .then(broadcastSentCount => {
+          // We should call the count function when we switch to v1.1
           PageBroadcastDataLayer.aggregate([
             {$match: {seen: true, companyId: companyUser.companyId, pagedId: pageId}},
             {$group: {_id: null, count: {$sum: 1}}}
           ])
             .then(broadcastSeenCount => {
+              // call the count function in v1.1
               PageSurveyDataLayer.aggregate([
                 {$match: {companyId: companyUser.companyId, pagedId: pageId}},
                 {$group: {_id: null, count: {$sum: 1}}}
               ])
                 .then(surveySentCount => {
+                  // call the count function in v1.1
                   PageSurveyDataLayer.aggregate([
                     {$match: {seen: true, companyId: companyUser.companyId, pageId: pageId}},
                     {$group: {_id: null, count: {$sum: 1}}}
                   ])
                     .then(surveySeenCount => {
+                      // we should call the v1.1 count function because we are counting here.
                       PagePollDataLayer.aggregate([
                         {$match: {companyId: companyUser.companyId, pageId: pageId}},
                         {$group: {_id: null, count: {$sum: 1}}}
                       ])
                         .then(pollSentCount => {
+                          // we should call the v1.1 count function because we are counting here.
                           PagePollDataLayer.aggregate([
                             {$match: {seen: true, companyId: companyUser.companyId, pageId: pageId}},
                             {$group: {_id: null, count: {$sum: 1}}}
