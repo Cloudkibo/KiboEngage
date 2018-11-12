@@ -75,6 +75,6 @@ exports.createSurvey = (survey) => {
   return Surveys.create(survey)
 } 
 exports.QuestionfindSurveyById = (req) => {
-  return   Surveys.findOne({_id: req.body._id}
+  return   Surveys.findOne({_id: req.body._id})
   .exec()
 }
