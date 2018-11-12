@@ -48,11 +48,13 @@ exports.sentVsSeen = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
+      // We should call the count function when we switch to v1.1
       PageBroadcastDataLayer.aggregate([
         {$match: {companyId: companyUser.companyId, pageId: pageId}},
         {$group: {_id: null, count: {$sum: 1}}}
       ])
         .then(broadcastSentCount => {
+          // We should call the count function when we switch to v1.1
           PageBroadcastDataLayer.aggregate([
             {$match: {seen: true, companyId: companyUser.companyId, pagedId: pageId}},
             {$group: {_id: null, count: {$sum: 1}}}
