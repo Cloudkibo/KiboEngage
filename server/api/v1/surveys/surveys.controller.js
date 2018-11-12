@@ -130,7 +130,7 @@ exports.create = function (req, res) {
                                 } else {
                                   webhookUtility.saveNotification(webhook)
                                 }
-                              })                              
+                              })
                             }
                           })
                           .catch(error => {
@@ -480,6 +480,7 @@ exports.send = function (req, res) {
                                             needle.post(
                                             `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
                                             .then(resp => {
+                                              // Please call create method of v1.1 instead of savePage method
                                               let surveyPage = new SurveyPage({
                                                 pageId: pages[z].pageId,
                                                 userId: req.user._id,
@@ -621,6 +622,7 @@ exports.send = function (req, res) {
                                             needle.post(
                                               `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
                                               .then(resp => {
+                                                // Please call create method of v1.1 instead of savePage method
                                                 let surveyPage = new SurveyPage({
                                                   pageId: pages[z].pageId,
                                                   userId: req.user._id,
@@ -989,6 +991,7 @@ exports.sendSurvey = function (req, res) {
                                               needle.post(
                                                     `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
                                                     .then(resp => {
+                                                      // Please call create method of v1.1 instead of savePage method
                                                       let surveyPage = new SurveyPage({
                                                         pageId: pages[z].pageId,
                                                         userId: req.user._id,
@@ -1118,6 +1121,7 @@ exports.sendSurvey = function (req, res) {
                                               needle.post(
                                                 `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
                                                 .then(resp => {
+                                                  // Please call create method of v1.1 instead of savePage method
                                                   let surveyPage = new SurveyPage({
                                                     pageId: pages[z].pageId,
                                                     userId: req.user._id,
@@ -1231,6 +1235,7 @@ exports.deleteSurvey = function (req, res) {
         SurveyPageDataLayer.findSurveyPagesById(req)
         .then(surveypages => {
           surveypages.forEach(surveypage => {
+            // Change this to use deleteMethod of account. And Pass surveyPage instead
             SurveyPageDataLayer.removeSurvey(survey)
             .then(success => {
             })

@@ -60,11 +60,13 @@ exports.sentVsSeen = function (req, res) {
             {$group: {_id: null, count: {$sum: 1}}}
           ])
             .then(broadcastSeenCount => {
+              // call the count function in v1.1
               PageSurveyDataLayer.aggregate([
                 {$match: {companyId: companyUser.companyId, pagedId: pageId}},
                 {$group: {_id: null, count: {$sum: 1}}}
               ])
                 .then(surveySentCount => {
+                  // call the count function in v1.1
                   PageSurveyDataLayer.aggregate([
                     {$match: {seen: true, companyId: companyUser.companyId, pageId: pageId}},
                     {$group: {_id: null, count: {$sum: 1}}}
