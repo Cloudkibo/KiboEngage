@@ -71,10 +71,12 @@ function closeDB () {
 }
 
 function sendSequenceMessage (message) {
-  SequenceDataLayer.genericFindForSequence({ '_id': message.sequenceId })
+  console.log('in sendSequenceMessage', message)
+  SequenceDataLayer.genericFindForSequence({ _id: message.sequenceId })
     .then(sequence => {
+      console.log('sequence', sequence)
       sequence = sequence[0]
-      SequenceDataLayer.genericFindForSequenceMessages({ '_id': message.sequenceMessageId })
+      SequenceDataLayer.genericFindForSequenceMessages({ _id: message.sequenceMessageId })
         .then(sequenceMessage => {
           sequenceMessage = sequenceMessage[0]
           utility.callApi(`subscribers/${message.subscriberId}`)
@@ -83,10 +85,10 @@ function sendSequenceMessage (message) {
                 .then(companyUser => {
                   utility.callApi(`pages/${subscriber.pageId}`)
                     .then(page => {
-                      SequenceDataLayer.genericFindForSequenceSubscribers({'subscriberId': subscriber._id, 'sequenceId': sequence.id})
+                      SequenceDataLayer.genericFindForSequenceSubscribers({subscriberId: subscriber._id, sequenceId: sequence.id})
                         .then(seqSub => {
                           seqSub = seqSub[0]
-                          utility.callApi(`tags/query`, 'post', {'companyId': companyUser.companyId})
+                          utility.callApi(`tags/query`, 'post', {companyId: companyUser.companyId})
                             .then(tags => {
                               let newPayload = sequenceMessage.payload
                               let sequenceSubMessagePayload = {
