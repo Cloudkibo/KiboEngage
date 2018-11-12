@@ -34,3 +34,9 @@ exports.findQuestionSurveyById = (req) => {
   .populate('surveyId')
   .exec()
 }
+
+exports.QuestionFindSurveyById = (survey) => {
+  return SurveyQuestions.find({surveyId: survey._id})
+  .populate('surveyId')
+  .exec()
+}
