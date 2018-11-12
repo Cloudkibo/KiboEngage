@@ -9,6 +9,7 @@
     "start:abandoned-script": "cross-env DEBUG=kibopush:* NODE_ENV=development DOMAIN=https://kibopush-dayem.ngrok.io node scripts/abandonedScript.js",
     "start:profile-script": "cross-env DEBUG=kibopush:* DOMAIN=https://kibopush-asad.ngrok.io node scripts/update_profile_pic_script.js",
     "start:cron_script": "sh cronjob_script",
+    "start:sequence-script-staging": "cross-env DEBUG=kibopush:* NODE_ENV=staging node scripts/sequenceMessageQueueScript.js",
     "start": "cross-env DEBUG=KiboEngage:* NODE_ENV=development nodemon --trace-warnings server/app.js",
     "debug": "cross-env DEBUG=express:router:route,express:application,KiboEngage:* NODE_ENV=development nodemon --trace-sync-io server/app.js",
     "lint": "echo 'Pre-commit checks...' && standard --fix && echo \"No code style errors found.\"",

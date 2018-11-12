@@ -9,7 +9,7 @@ exports.create = (payload) => {
   return obj.save()
 }
 exports.findAll = () => {
-  return SequenceMessageQueue.find({}).populate('sequenceId subscriberId companyId sequenceMessageId')
+  return SequenceMessageQueue.find({}).populate('sequenceId sequenceMessageId')
     .exec()
 }
 exports.deleteOneObject = (id) => {

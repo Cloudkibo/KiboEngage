@@ -7,18 +7,20 @@ const SequenceDataLayer = require('../server/api/v1/sequenceMessaging/sequence.d
 const BroadcastUtility = require('../server/api/v1/broadcasts/broadcasts.utility')
 const LogicLayer = require('./logiclayer')
 const TAG = 'scripts/SequenceMessageQueueScript.js'
+const util = require('util')
 
 const request = require('request')
-
 mongoose = mongoose.connect(config.mongo.uri)
-
+console.log('mongoose', util.inspect(config.mongo.uri))
 SequenceMessagesQueueDataLayer.findAll()
   .then(data => {
     if (data) {
       for (let i = 0; i < data.length; i++) {
         let message = data[i]
         if (message.queueScheduledTime.getTime() < new Date().getTime()) {
+          console.log('in message.queueScheduledTime.getTime()', message)
           if (message.trigger.event === 'does_not_see') {
+            console.log('message', message)
             SequenceDataLayer.genericFindForSubscriberMessages({messageId: message.trigger.value, subscriberId: message.subscriberId})
               .then(sequenceSubscriberMessage => {
                 if (sequenceSubscriberMessage.seen) {
@@ -35,6 +37,7 @@ SequenceMessagesQueueDataLayer.findAll()
                 logger.serverLog(TAG, `Failed to fetch subscriber messages ${JSON.stringify(err)}`)
               })
           } else {
+            console.log('in else')
             sendSequenceMessage(message)
           }
         }
@@ -45,30 +48,36 @@ SequenceMessagesQueueDataLayer.findAll()
       } // For loop ends here
       if (data.length === 0) {
         // Do work to reschedule the message
+        console.log('data is empty.')
         setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
       }
     } // If data clause check
     if (data.length === 0) {
       // Do work to reschedule the message
+      console.log('data is empty outside')
       setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
     }
   }) // Quence find ends here
   .catch(err => {
     logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`)
+    console.log(`Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`)
   })
 
 function closeDB () {
-  mongoose.disconnect(function (err) {
-    if (err) throw err
-    process.exit()
-  })
+  // mongoose.disconnect(function (err) {
+  //   if (err) throw err
+  //   console.log('exiting')
+  //   process.exit()
+  // })
 }
 
 function sendSequenceMessage (message) {
-  SequenceDataLayer.genericFindForSequence({ '_id': message.sequenceId })
+  console.log('in sendSequenceMessage', message)
+  SequenceDataLayer.genericFindForSequence({ _id: message.sequenceId })
     .then(sequence => {
+      console.log('sequence', sequence)
       sequence = sequence[0]
-      SequenceDataLayer.genericFindForSequenceMessages({ '_id': message.sequenceMessageId })
+      SequenceDataLayer.genericFindForSequenceMessages({ _id: message.sequenceMessageId })
         .then(sequenceMessage => {
           sequenceMessage = sequenceMessage[0]
           utility.callApi(`subscribers/${message.subscriberId}`)
@@ -77,10 +86,10 @@ function sendSequenceMessage (message) {
                 .then(companyUser => {
                   utility.callApi(`pages/${subscriber.pageId}`)
                     .then(page => {
-                      SequenceDataLayer.genericFindForSequenceSubscribers({'subscriberId': subscriber._id, 'sequenceId': sequence.id})
+                      SequenceDataLayer.genericFindForSequenceSubscribers({subscriberId: subscriber._id, sequenceId: sequence.id})
                         .then(seqSub => {
                           seqSub = seqSub[0]
-                          utility.callApi(`tags/query`, 'post', {'companyId': companyUser.companyId})
+                          utility.callApi(`tags/query`, 'post', {companyId: companyUser.companyId})
                             .then(tags => {
                               let newPayload = sequenceMessage.payload
                               let sequenceSubMessagePayload = {
