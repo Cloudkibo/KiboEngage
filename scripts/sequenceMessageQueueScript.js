@@ -18,7 +18,9 @@ SequenceMessagesQueueDataLayer.findAll()
       for (let i = 0; i < data.length; i++) {
         let message = data[i]
         if (message.queueScheduledTime.getTime() < new Date().getTime()) {
+          console.log('in message.queueScheduledTime.getTime()')
           if (message.trigger.event === 'does_not_see') {
+            console.log('message', message)
             SequenceDataLayer.genericFindForSubscriberMessages({messageId: message.trigger.value, subscriberId: message.subscriberId})
               .then(sequenceSubscriberMessage => {
                 if (sequenceSubscriberMessage.seen) {
