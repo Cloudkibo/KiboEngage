@@ -1248,7 +1248,7 @@ exports.sendSurvey = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
-  surveyDataLayer.findServeyById(req)
+  surveyDataLayer.findServeyId(req)
      .then(survey => {
        if (!survey) {
          return res.status(404)

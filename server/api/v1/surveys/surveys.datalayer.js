@@ -78,3 +78,7 @@ exports.QuestionfindSurveyById = (req) => {
   return   Surveys.findOne({_id: req.body._id})
   .exec()
 }
+exports.findServeyId = (req) => {
+   return Surveys.findById(req.params.id)
+  .exec()
+}
