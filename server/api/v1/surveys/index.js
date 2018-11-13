@@ -41,7 +41,6 @@ router.post('/sendSurveyDirectly',
     auth.isAuthenticated(),
     auth.doesPlanPermitsThisAction('surveys'),
     auth.doesRolePermitsThisAction('surveyPermission'),
-    validate({body: validationSchema.createPayload}),
     controller.sendSurvey)
 
 //  router.post('/submitresponse', controller.submitresponse)
