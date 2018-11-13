@@ -406,9 +406,12 @@ exports.send = function (req, res) {
                                       })
                                     }
                                     let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
+                                    console.log('pagesFindCriteria', pagesFindCriteria)
                                     callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                                       .then(pages => {
+                                        console.log('pages', pages)
                                         for (let z = 0; z < pages.length && !abort; z++) {
+                                           console.log('req.body.isList', req.body.isList)
                                           if (req.body.isList === true) {
                                             let ListFindCriteria = {}
                                             ListFindCriteria = _.merge(ListFindCriteria,
