@@ -834,6 +834,8 @@ exports.sendSurvey = function (req, res) {
                 }
               }
             })
+            console.log('survey created successfully')
+
             callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
             .then(userPage => {
               userPage = userPage[0]
@@ -855,6 +857,7 @@ exports.sendSurvey = function (req, res) {
                 .then(questions => {
                   surveyDataLayer.findQuestionSurveyById(survey)
                   .then(survey => {
+                    console.log('questions', questions)
                     if (questions.length > 0) {
                       let first_question = questions[0]
                       // create buttons
@@ -917,6 +920,7 @@ exports.sendSurvey = function (req, res) {
                           .catch(error => {
                             return res.status(500).json({status: `failed ${error}`, payload: error})
                           })
+                          console.log('req.body.isList', req.body.isList)
                           if (req.body.isList === true) {
                             let ListFindCriteria = {}
                             ListFindCriteria = _.merge(ListFindCriteria,
@@ -953,6 +957,7 @@ exports.sendSurvey = function (req, res) {
 
                               callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                           .then(subscribers => {
+                            console.log('subscribers', subscribers)
                               needle.get(
                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                 (err, resp) => {
@@ -993,12 +998,13 @@ exports.sendSurvey = function (req, res) {
                                           // this calls the needle when the last message was older than 30 minutes
                                           // checks the age of function using callback
                                           logger.serverLog(TAG, 'just before sending')
+                                          console.log( 'just before sending')
                                           compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
                                             if (err) {
                                               logger.serverLog(TAG, 'inside error')
                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                             }
-
+                                            console.log( 'isLastMessage',isLastMessage)
                                             if (isLastMessage) {
                                               logger.serverLog(TAG, 'inside direct survey send' + JSON.stringify(data))
                                               needle.post(
@@ -1010,6 +1016,7 @@ exports.sendSurvey = function (req, res) {
                                                       description: JSON.stringify(err)
                                                     })
                                                   }
+                                                  console.log( 'response from survey',resp)
                                                       let surveyPage = new SurveyPage({
                                                         pageId: pages[z].pageId,
                                                         userId: req.user._id,
@@ -1095,6 +1102,7 @@ exports.sendSurvey = function (req, res) {
                             }
                             callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                             .then(subscribers => {
+                              console.log('subscribers in else condition',subscribers)
                               needle.get(
                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                 (err, resp) => {
@@ -1103,6 +1111,7 @@ exports.sendSurvey = function (req, res) {
                                     `Page access token from graph api error ${JSON.stringify(
                                     err)}`)
                                   }
+                                  console.log('response from facebook',resp)
                                   utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                     subscribers = taggedSubscribers
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
@@ -1140,7 +1149,7 @@ exports.sendSurvey = function (req, res) {
                                               logger.serverLog(TAG, 'inside error')
                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                             }
-
+                                            console.log('isLastMessage', isLastMessage)
                                             if (isLastMessage) {
                                               logger.serverLog(TAG, 'inside direct survey sendd' + JSON.stringify(data))
                                               needle.post(
@@ -1152,6 +1161,7 @@ exports.sendSurvey = function (req, res) {
                                                       description: JSON.stringify(err)
                                                     })
                                                   }
+                                                  console.log('response from facebook',resp)
                                                   let surveyPage = new SurveyPage({
                                                     pageId: pages[z].pageId,
                                                     userId: req.user._id,
