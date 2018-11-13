@@ -341,6 +341,7 @@ function exists (list, content) {
   return false
 }
 exports.send = function (req, res) {
+  console.log('send function')
   let abort = false
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
   .then(companyUser => {
@@ -367,6 +368,7 @@ exports.send = function (req, res) {
               callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
               .then(userPage => {
                 userPage = userPage[0]
+                console.log('userPage', userPage)
                 callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
                   .then(connectedUser => {
                           var currentUser
@@ -377,8 +379,10 @@ exports.send = function (req, res) {
                           }
                           surveyQuestionsDataLayer.findQuestionSurveyById(req)
                             .then(questions => {
+                              console.log('questions', questions)
                               surveyDataLayer.QuestionfindSurveyById(req)
                                 .then(survey => {
+                                  console.log('survey', survey)
                                   if (questions.length > 0) {
                                     let first_question = questions[0]
                                     // create buttons
