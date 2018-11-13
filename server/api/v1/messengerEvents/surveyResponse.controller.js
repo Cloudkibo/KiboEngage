@@ -40,7 +40,7 @@ function savesurvey (req) {
   callApi(`subscribers/query`, 'post', { senderId: req.sender.id })
     .then(subscribers => {
       let subscriber = subscribers[0]
-
+      console.log('inside savesurvey', subscriber)
       // eslint-disable-next-line no-unused-vars
       const surveybody = {
         response: resp.option, // response submitted by subscriber
@@ -50,6 +50,7 @@ function savesurvey (req) {
       }
       callApi(`webhooks/query`, 'post', { pageId: req.recipient.id })
         .then(webhook => {
+          webhook = webhook[0]
           if (webhook && webhook.isEnabled) {
             needle.get(webhook.webhook_url, (err, r) => {
               if (err) {
@@ -74,7 +75,7 @@ function savesurvey (req) {
         .catch(err => {
           logger.serverLog(TAG, err)
         })
-      SurveyResponseDataLayer.genericUpdateForResponse.update({
+      SurveyResponseDataLayer.genericUpdateForResponse({
         surveyId: resp.survey_id,
         questionId: resp.question_id,
         subscriberId: subscriber._id
@@ -83,6 +84,7 @@ function savesurvey (req) {
           logger.serverLog(TAG,
             `Raw${JSON.stringify(surveyresponse)}`)
           // send the next question
+          console.log('send next question')
           SurveyQuestionDataLayer.genericfindForSurveyQuestions({surveyId: resp.survey_id, _id: { $gt: resp.question_id }})
             .then(questions => {
               if (questions.length > 0) {
@@ -134,6 +136,7 @@ function savesurvey (req) {
                       })
                   })
               } else { // else send thank you message
+                console.log('send thankyou message')
                 SurveysDataLayer.genericUpdateForSurvey({ _id: mongoose.Types.ObjectId(resp.survey_id) },
                   { $inc: { isresponded: 1 - surveyresponse.nModified } }, {})
                   .then(updated => {
