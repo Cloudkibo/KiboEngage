@@ -1144,7 +1144,8 @@ exports.sendSurvey = function (req, res) {
                                           // this calls the needle when the last message was older than 30 minutes
                                           // checks the age of function using callback
                                           logger.serverLog(TAG, 'just before sending')
-                                          compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                          console.log('just before sending')
+                                          compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                             if (err) {
                                               logger.serverLog(TAG, 'inside error')
                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
