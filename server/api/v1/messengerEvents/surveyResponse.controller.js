@@ -40,7 +40,6 @@ function savesurvey (req) {
   callApi(`subscribers/query`, 'post', { senderId: req.sender.id })
     .then(subscribers => {
       let subscriber = subscribers[0]
-      console.log('inside savesurvey', subscriber)
       // eslint-disable-next-line no-unused-vars
       const surveybody = {
         response: resp.option, // response submitted by subscriber
@@ -84,10 +83,8 @@ function savesurvey (req) {
           logger.serverLog(TAG,
             `Raw${JSON.stringify(surveyresponse)}`)
           // send the next question
-          console.log('send next question')
           SurveyQuestionDataLayer.genericfindForSurveyQuestions({surveyId: resp.survey_id, _id: { $gt: resp.question_id }})
             .then(questions => {
-              console.log('questions found', questions)
               if (questions.length > 0) {
                 let firstQuestion = questions[0]
                 // create buttons
@@ -131,15 +128,12 @@ function savesurvey (req) {
                       recipient: JSON.stringify({ id: req.sender.id }), // this is the subscriber id
                       message: JSON.stringify(messageData)
                     }
-                    console.log('datatosend', data)
                     needle.post(
                       `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
                       data, (err4, respp) => {
-                        console.log('response body', respp.body)
                       })
                   })
               } else { // else send thank you message
-                console.log('send thankyou message')
                 SurveysDataLayer.genericUpdateForSurvey({ _id: mongoose.Types.ObjectId(resp.survey_id) },
                   { $inc: { isresponded: 1 - surveyresponse.nModified } }, {})
                   .then(updated => {
