@@ -775,6 +775,7 @@ exports.send = function (req, res) {
 })
 }
 exports.sendSurvey = function (req, res) {
+  console.log('In send survey Function')
   let abort = false
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
@@ -952,9 +953,14 @@ exports.sendSurvey = function (req, res) {
 
                               callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                           .then(subscribers => {
-                            needle.get(
-                              `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                              .then(resp => {
+                              needle.get(
+                                `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                (err, resp) => {
+                                  if (err) {
+                                    logger.serverLog(TAG,
+                                    `Page access token from graph api error ${JSON.stringify(
+                                    err)}`)
+                                  }
                                 utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                   subscribers = taggedSubscribers
                                   utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
@@ -996,8 +1002,14 @@ exports.sendSurvey = function (req, res) {
                                             if (isLastMessage) {
                                               logger.serverLog(TAG, 'inside direct survey send' + JSON.stringify(data))
                                               needle.post(
-                                                    `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
-                                                    .then(resp => {
+                                                `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                data, (err, resp) => {
+                                                  if (err) {
+                                                    return res.status(500).json({
+                                                      status: 'failed',
+                                                      description: JSON.stringify(err)
+                                                    })
+                                                  }
                                                       let surveyPage = new SurveyPage({
                                                         pageId: pages[z].pageId,
                                                         userId: req.user._id,
@@ -1015,9 +1027,7 @@ exports.sendSurvey = function (req, res) {
                                                         return res.status(500).json({status: `failed ${error}`, description: error})
                                                       })
                                                     })
-                                                    .catch(error => {
-                                                      return res.status(500).json({status: `failed ${error}`, description: error})
-                                                    })
+                                                   
                                             } else {
                                               logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                               let timeNow = new Date()
@@ -1052,9 +1062,7 @@ exports.sendSurvey = function (req, res) {
                                   })
                                 })
                               })
-                                .catch(error => {
-                                  return res.status(500).json({status: `failed ${error}`, description: error})
-                                })
+                               
                           })
                               .catch(error => {
                                 return res.status(500).json({status: `failed ${error}`, description: error})
@@ -1088,8 +1096,13 @@ exports.sendSurvey = function (req, res) {
                             callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                             .then(subscribers => {
                               needle.get(
-                                `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                                .then(resp => {
+                                `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                (err, resp) => {
+                                  if (err) {
+                                    logger.serverLog(TAG,
+                                    `Page access token from graph api error ${JSON.stringify(
+                                    err)}`)
+                                  }
                                   utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                     subscribers = taggedSubscribers
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
@@ -1131,8 +1144,14 @@ exports.sendSurvey = function (req, res) {
                                             if (isLastMessage) {
                                               logger.serverLog(TAG, 'inside direct survey sendd' + JSON.stringify(data))
                                               needle.post(
-                                                `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
-                                                .then(resp => {
+                                                `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                data, (err, resp) => {
+                                                  if (err) {
+                                                    return res.status(500).json({
+                                                      status: 'failed',
+                                                      description: JSON.stringify(err)
+                                                    })
+                                                  }
                                                   let surveyPage = new SurveyPage({
                                                     pageId: pages[z].pageId,
                                                     userId: req.user._id,
@@ -1149,9 +1168,7 @@ exports.sendSurvey = function (req, res) {
                                                     return res.status(500).json({status: `failed ${error}`, description: error})
                                                   })
                                                 })
-                                                  .catch(error => {
-                                                    return res.status(500).json({status: `failed ${error}`, description: error})
-                                                  })
+  
                                             } else {
                                               logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                               let timeNow = new Date()
@@ -1179,9 +1196,6 @@ exports.sendSurvey = function (req, res) {
                                     }
                                   })
                                 })
-                              })
-                              .catch(error => {
-                                return res.status(500).json({status: `failed ${error}`, description: error})
                               })
                             })
                             .catch(error => {
