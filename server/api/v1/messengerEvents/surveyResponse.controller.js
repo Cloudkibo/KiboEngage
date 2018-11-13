@@ -128,8 +128,8 @@ function savesurvey (req) {
                     }
                     const data = {
                       messaging_type: 'RESPONSE',
-                      recipient: { id: req.sender.id }, // this is the subscriber id
-                      message: messageData
+                      recipient: JSON.stringify({ id: req.sender.id }), // this is the subscriber id
+                      message: JSON.stringify(messageData)
                     }
                     console.log('datatosend', data)
                     needle.post(
