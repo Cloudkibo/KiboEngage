@@ -586,8 +586,11 @@ exports.send = function (req, res) {
                             })
                           }
                         }
+                        console.log('else condition')
+
                         callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                         .then(subscribers => {
+                          console.log('subscribers', subscribers)
                           needle.get(
                           `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
                           .then(resp => {
