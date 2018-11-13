@@ -577,6 +577,7 @@ exports.graphData = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
+      // We need to use aggregate of v1.1
       BroadcastsDataLayer.aggregateForBroadcasts([
         {
           $match: { companyId: companyUser.companyId,
