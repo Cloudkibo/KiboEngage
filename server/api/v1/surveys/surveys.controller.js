@@ -7,7 +7,7 @@ const logger = require('../../../components/logger')
 const Surveys = require('./surveys.model')
 const SurveyQuestions = require('./surveyquestions.model')
 const surveyQuestionsDataLayer = require('./surveyquestion.datalayer')
-
+const Lists = require('../lists/lists.model')
 const SurveyResponses = require('./surveyresponse.model')
 const SurveyPage = require('../page_survey/page_survey.model')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
@@ -833,10 +833,10 @@ exports.sendSurvey = function (req, res) {
                 }
               }
             })
-            utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
+            callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
             .then(userPage => {
               userPage = userPage[0]
-              utility.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+              callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
                 .then(connectedUser => {
                 var currentUser
                 if (req.user.facebookInfo) {
@@ -878,7 +878,7 @@ exports.sendSurvey = function (req, res) {
                       }
 
                       let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                      callApi.callApi(`pages/query`, 'post', {pagesFindCriteria}, req.headers.authorization)
+                      callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                       .then(pages => {
                         for (let z = 0; z < pages.length && !abort; z++) {
                         callApi.callApi(`webhooks/query`, 'post', {pageId: pages[z].pageId}, req.headers.authorization)
@@ -925,8 +925,8 @@ exports.sendSurvey = function (req, res) {
                                 }
                               })
 
-                            listsDataLayer.listFind(ListFindCriteria)
-                            .then(lists => {
+                              utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
+                              .then(lists => {
                               let subsFindCriteria = {pageId: pages[z]._id}
                               let listData = []
                               if (lists.length > 1) {
@@ -950,7 +950,7 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
 
-                              callApi.callApi(`subscribers/query`, 'post', { subsFindCriteria }, req.headers.authorization)
+                              callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                           .then(subscribers => {
                             needle.get(
                               `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
@@ -1060,6 +1060,9 @@ exports.sendSurvey = function (req, res) {
                                 return res.status(500).json({status: `failed ${error}`, description: error})
                               })
                             })
+                            .catch(error => {
+                              return res.status(500).json({status: `failed ${error}`, description: error})
+                            })
                           } else {
                             let subscriberFindCriteria = {
                               pageId: pages[z]._id,
@@ -1082,7 +1085,7 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
                             }
-                            callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria}, req.headers.authorization)
+                            callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                             .then(subscribers => {
                               needle.get(
                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
