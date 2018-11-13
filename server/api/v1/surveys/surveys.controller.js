@@ -592,8 +592,13 @@ exports.send = function (req, res) {
                         .then(subscribers => {
                           console.log('subscribers', subscribers)
                           needle.get(
-                          `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                          .then(resp => {
+                            `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                            (err, resp) => {
+                              if (err) {
+                                logger.serverLog(TAG,
+                                `Page access token from graph api error ${JSON.stringify(
+                                err)}`)
+                              }
                             utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                               subscribers = taggedSubscribers
                               utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
@@ -607,6 +612,7 @@ exports.send = function (req, res) {
                                         if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                           abort = true
                                         }
+                                        console.log('companyUsage', companyUsage)
                                         const messageData = {
                                           attachment: {
                                             type: 'template',
@@ -630,11 +636,19 @@ exports.send = function (req, res) {
                                             logger.serverLog(TAG, 'inside error')
                                             return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                           }
+                                          console.log('isLastMessage', isLastMessage)
+
                                           if (isLastMessage) {
                                             logger.serverLog(TAG, 'inside send survey' + JSON.stringify(data))
                                             needle.post(
-                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
-                                              .then(resp => {
+                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                              data, (err, resp) => {
+                                                if (err) {
+                                                  return res.status(500).json({
+                                                    status: 'failed',
+                                                    description: JSON.stringify(err)
+                                                  })
+                                                }
                                                 let surveyPage = new SurveyPage({
                                                   pageId: pages[z].pageId,
                                                   userId: req.user._id,
@@ -700,9 +714,7 @@ exports.send = function (req, res) {
                                                   return res.status(500).json({status: 'failed', description: error})
                                                 })
                                               })
-                                              .catch(error => {
-                                                return res.status(500).json({status: 'failed', description: error})
-                                              })
+            
                                           } else {
                                             logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                             let timeNow = new Date()
@@ -733,10 +745,7 @@ exports.send = function (req, res) {
                                 }
                               })
                             })
-                          })
-                          .catch(error => {
-                            return res.status(500).json({status: 'failed', description: error})
-                          })
+                          })  
                         })
                         .catch(error => {
                           return res.status(500).json({status: 'failed', description: error})
