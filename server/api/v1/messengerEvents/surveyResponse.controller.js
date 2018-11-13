@@ -87,6 +87,7 @@ function savesurvey (req) {
           console.log('send next question')
           SurveyQuestionDataLayer.genericfindForSurveyQuestions({surveyId: resp.survey_id, _id: { $gt: resp.question_id }})
             .then(questions => {
+              console.log('questions found', questions)
               if (questions.length > 0) {
                 let firstQuestion = questions[0]
                 // create buttons
@@ -130,9 +131,11 @@ function savesurvey (req) {
                       recipient: { id: req.sender.id }, // this is the subscriber id
                       message: messageData
                     }
+                    console.log('datatosend', data)
                     needle.post(
                       `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
                       data, (err4, respp) => {
+                        console.log('response body', respp.body)
                       })
                   })
               } else { // else send thank you message
