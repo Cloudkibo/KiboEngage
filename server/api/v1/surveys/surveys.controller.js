@@ -1280,7 +1280,7 @@ exports.deleteSurvey = function (req, res) {
             surveyQuestionsDataLayer.findSurveyQuestionById(req)
             .then(surveyquestions => {
               surveyquestions.forEach(surveyquestion => {
-                surveyQuestionsDataLayer.removeQuestion(surveyquestions)
+                surveyQuestionsDataLayer.removeQuestion(surveyquestion)
                 .then(success => {
                 })
                 .catch(error => {
