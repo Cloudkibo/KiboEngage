@@ -1111,7 +1111,7 @@ exports.sendSurvey = function (req, res) {
                                     `Page access token from graph api error ${JSON.stringify(
                                     err)}`)
                                   }
-                                  console.log('response from facebook',resp)
+                                  console.log('response from facebook',resp.body)
                                   utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                     subscribers = taggedSubscribers
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
@@ -1137,8 +1137,8 @@ exports.sendSurvey = function (req, res) {
                                           }
                                           const data = {
                                             messaging_type: 'MESSAGE_TAG',
-                                            recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                            message: messageData,
+                                            recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                            message: JSON.stringify(messageData),
                                             tag: req.body.fbMessageTag
                                           }
                                           // this calls the needle when the last message was older than 30 minutes
@@ -1162,7 +1162,7 @@ exports.sendSurvey = function (req, res) {
                                                       description: JSON.stringify(err)
                                                     })
                                                   }
-                                                  console.log('response from facebook',resp)
+                                                  console.log('response from facebook',resp.body)
                                                   let surveyPage = new SurveyPage({
                                                     pageId: pages[z].pageId,
                                                     userId: req.user._id,
