@@ -833,10 +833,11 @@ exports.sendSurvey = function (req, res) {
                 }
               }
             })
-            callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
+            utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
             .then(userPage => {
-              callApi.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
-              .then(connectedUser => {
+              userPage = userPage[0]
+              utility.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                .then(connectedUser => {
                 var currentUser
                 if (req.user.facebookInfo) {
                   currentUser = req.user
