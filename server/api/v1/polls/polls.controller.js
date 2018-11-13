@@ -365,7 +365,7 @@ exports.send = function (req, res) {
                                                         const data = {
                                                           messaging_type: 'UPDATE',
                                                           recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
-                                                          message: messageData,
+                                                          message: JSON.stringify(messageData),
                                                           tag: req.body.fbMessageTag
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
@@ -381,7 +381,7 @@ exports.send = function (req, res) {
                                                             console.log('inside poll send,', JSON.stringify(data), resp.body.access_token)
                                                             needle.post(
                                                               `https://graph.facebook.com/v2.10/me/messages?access_token=${resp.body.access_token}`,
-                                                              JSON.stringify(data), (err, resp) => {
+                                                              data, (err, resp) => {
                                                                 if (err) {
                                                                   logger.serverLog(TAG, err)
                                                                   logger.serverLog(TAG,
