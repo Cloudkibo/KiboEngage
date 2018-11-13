@@ -90,6 +90,7 @@ exports.sentVsSeen = function (req, res) {
                                     .then(polls => {
                                       PagePollDataLayer.find({companyId: companyUser.companyId})
                                         .then(pollPages => {
+                                          // we should call the pollresponse datalayer method in v1.1
                                           PollsDataLayer.aggregatePollResponse([
                                             {
                                               $group: {
@@ -576,6 +577,7 @@ exports.graphData = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
+      // We need to use aggregate of v1.1
       BroadcastsDataLayer.aggregateForBroadcasts([
         {
           $match: { companyId: companyUser.companyId,
@@ -593,6 +595,7 @@ exports.graphData = function (req, res) {
             count: {$sum: 1}}
         }])
         .then(broadcastsgraphdata => {
+          // We should call the aggregate of polls layer
           PollsDataLayer.aggregateForPolls([
             {
               $match: { companyId: companyUser.companyId,
