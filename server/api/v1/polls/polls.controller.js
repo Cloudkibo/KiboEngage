@@ -380,7 +380,7 @@ exports.send = function (req, res) {
                                                             logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
                                                             console.log('inside poll send,', JSON.stringify(data), resp.body.access_token)
                                                             needle.post(
-                                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                              `https://graph.facebook.com/v2.10/me/messages?access_token=${resp.body.access_token}`,
                                                               data, (err, resp) => {
                                                                 if (err) {
                                                                   logger.serverLog(TAG, err)
