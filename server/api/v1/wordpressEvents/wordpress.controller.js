@@ -6,15 +6,12 @@ let broadcastUtility = require('../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
 const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
+const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
 let request = require('request')
 let _ = require('lodash')
 const config = require('../../../config/environment/index')
 
 exports.postPublish = function (req, res) {
-  res.status(200).json({
-    status: 'success',
-    description: `received the payload`
-  })
   logger.serverLog(TAG, `Wordpress post received : ${JSON.stringify(req.body)}`)
   let wpUrl = req.body.guid
   let wordpressUniqueId = wpUrl.split('/')[0] + wpUrl.split('/')[1] + '//' + wpUrl.split('/')[2]
@@ -74,8 +71,10 @@ exports.postPublish = function (req, res) {
                       seen: 0,
                       clicked: 0
                     }
-                    AutoPosting.createAutopostingObject(newMsg)
+                    console.log('subscribers', subscribers, newMsg)
+                    AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
+                        console.log('Autposting New Message')
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
@@ -160,9 +159,13 @@ exports.postPublish = function (req, res) {
                                   autoposting_messages_id: savedMsg._id,
                                   subscriberId: subscriber.senderId
                                 }
-                                AutoPostingMessage.createAutopostingMessageObject(newSubscriberMsg)
+                                AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newSubscriberMsg)
                                   .then(result => {
                                     logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                    return res.status(200).json({
+                                      status: 'success',
+                                      description: `Wordpress Broadcast Message Sent`
+                                    })
                                   })
                                   .catch(err => {
                                     if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
