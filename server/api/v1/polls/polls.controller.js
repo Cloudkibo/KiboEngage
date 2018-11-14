@@ -260,8 +260,8 @@ exports.send = function (req, res) {
                                                           }
                                                           const data = {
                                                             messaging_type: 'UPDATE',
-                                                            recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                            message: messageData,
+                                                            recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                            message: JSON.stringify(messageData),
                                                             tag: req.body.fbMessageTag
                                                           }
                                                           // this calls the needle when the last message was older than 30 minutes
@@ -342,13 +342,11 @@ exports.send = function (req, res) {
                                             logger.serverLog(TAG,
                                               `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                           }
-                                          console.log('Page accesstoken', resp.body)
                                           if (subscribers.length > 0) {
                                             broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                               subscribers = taggedSubscribers
                                               broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                 subscribers = repliedSubscribers
-                                                console.log('subscribers.length', subscribers.length)
                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
                                                   utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                     query: {companyId: companyUser.companyId},
@@ -357,15 +355,14 @@ exports.send = function (req, res) {
                                                   }, req.headers.authorization).then(updated => {
                                                     utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                       .then(companyUsage => {
-                                                        console.log('companyUsage fetched', companyUsage)
                                                         companyUsage = companyUsage[0]
                                                         if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                                                           abort = true
                                                         }
                                                         const data = {
                                                           messaging_type: 'UPDATE',
-                                                          recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                          message: messageData,
+                                                          recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                          message: JSON.stringify(messageData),
                                                           tag: req.body.fbMessageTag
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
@@ -375,12 +372,10 @@ exports.send = function (req, res) {
                                                             logger.serverLog(TAG, 'inside error')
                                                             return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                                           }
-                                                          console.log('isLastMessage', isLastMessage)
                                                           if (isLastMessage) {
                                                             logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
-                                                            console.log('inside poll send,', JSON.stringify(data), resp.body.access_token)
                                                             needle.post(
-                                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                              `https://graph.facebook.com/v2.10/me/messages?access_token=${resp.body.access_token}`,
                                                               data, (err, resp) => {
                                                                 if (err) {
                                                                   logger.serverLog(TAG, err)
@@ -388,7 +383,6 @@ exports.send = function (req, res) {
                                                                     `Error occured at subscriber :${JSON.stringify(
                                                                       subscribers[j])}`)
                                                                 }
-                                                                console.log('sent poll response', resp.body)
                                                                 let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                                 PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                   .then(pollCreated => {
@@ -580,8 +574,8 @@ exports.sendPoll = function (req, res) {
                                                               }
                                                               const data = {
                                                                 messaging_type: 'UPDATE',
-                                                                recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                                message: messageData
+                                                                recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                                message: JSON.stringify(messageData)
                                                                 //  tag: req.body.fbMessageTag
                                                               }
                                                               // this calls the needle when the last message was older than 30 minutes
@@ -667,7 +661,6 @@ exports.sendPoll = function (req, res) {
                                                   subscribers = taggedSubscribers
                                                   broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                     subscribers = repliedSubscribers
-                                                    console.log('subscribers.length', subscribers.length)
                                                     for (let j = 0; j < subscribers.length && !abort; j++) {
                                                       utility.callApi(`featureUsage/updateCompany`, 'put', {
                                                         query: {companyId: companyUser.companyId},
@@ -682,8 +675,8 @@ exports.sendPoll = function (req, res) {
                                                             }
                                                             const data = {
                                                               messaging_type: 'UPDATE',
-                                                              recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                              message: messageData
+                                                              recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                              message: JSON.stringify(messageData)
                                                               // tag: req.body.fbMessageTag
                                                             }
                                                             // this calls the needle when the last message was older than 30 minutes
@@ -693,7 +686,6 @@ exports.sendPoll = function (req, res) {
                                                                 logger.serverLog(TAG, 'inside error')
                                                                 return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                                               }
-                                                              console.log('after compUtility', isLastMessage)
                                                               if (isLastMessage) {
                                                                 logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
                                                                 needle.post(

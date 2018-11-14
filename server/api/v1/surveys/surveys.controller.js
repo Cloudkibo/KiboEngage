@@ -7,15 +7,12 @@ const logger = require('../../../components/logger')
 const Surveys = require('./surveys.model')
 const SurveyQuestions = require('./surveyquestions.model')
 const surveyQuestionsDataLayer = require('./surveyquestion.datalayer')
-
 const SurveyResponses = require('./surveyresponse.model')
 const SurveyPage = require('../page_survey/page_survey.model')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const AutomationQueueDataLayer = require('./../automationQueue/automationQueue.datalayer')
 const TAG = 'api/surveys/surveys.controller.js'
 const mongoose = require('mongoose')
-const listsDataLayer = require('../lists/list.datalayer')
-const DataLayerwebhooks = require('./../webhooks/webhooks.datalayer')
 const webhookUtility = require('./../notifications/notifications.utility')
 const surveyDataLayer = require('./surveys.datalayer')
 const surveyLogicLayer = require('./surveys.logiclayer')
@@ -24,7 +21,6 @@ const callApi = require('../utility/index')
 let _ = require('lodash')
 
 const needle = require('needle')
-const dataLayerPages = require('../pages/pages.datalayer')
 const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 
@@ -73,7 +69,6 @@ exports.allSurveys = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  console.log('req.headers', req.body)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
@@ -253,7 +248,6 @@ exports.edit = function (req, res) {
 
 // Get a single survey
 exports.show = function (req, res) {
-
   surveyDataLayer.findByIdPopulate(req)
         .then(survey => {
           surveyQuestionsDataLayer.findSurveyWithId(survey)
@@ -320,7 +314,7 @@ exports.submitresponse = function (req, res) {
 
      .catch(error => {
        return res.status(500).json({status: 'failed', description: error})
-})
+     })
   }
 
   surveyDataLayer.genericUpdateForSurvey({_id: mongoose.Types.ObjectId(req.body.surveyId)}, {$inc: {isresponded: 1}})
@@ -330,7 +324,7 @@ exports.submitresponse = function (req, res) {
   //  Surveys.update({ _id: mongoose.Types.ObjectId(req.body.surveyId) }, { $set: { isresponded: true } })
   .catch(error => {
     return res.status(500).json({status: 'failed', description: error})
-})
+  })
 }
 function exists (list, content) {
   for (let i = 0; i < list.length; i++) {
@@ -342,7 +336,7 @@ function exists (list, content) {
 }
 exports.send = function (req, res) {
   let abort = false
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
   .then(companyUser => {
     if (!companyUser) {
       return res.status(404).json({
@@ -350,177 +344,183 @@ exports.send = function (req, res) {
         description: 'The user account does not belong to any company. Please contact support'
       })
     }
-    callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id})
+    callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
     .then(companyProfile => {
-      callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId})
-      .then(planUsage => {
-        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
-        .then(companyUsage => {
-          if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Your survey limit has reached. Please upgrade your plan to premium in order to send more surveys`
-            })
-          }
-
-          callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
-          .then(userPage => {
-            callApi.callApi(`user/query`, 'post', {_id: userPage.userId})
-            .then(connectedUser => {
-              var currentUser
-              if (req.user.facebookInfo) {
-                currentUser = req.user
-              } else {
-                currentUser = connectedUser
+      callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
+        .then(planUsage => {
+          planUsage = planUsage[0]
+          callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
+            .then(companyUsage => {
+              companyUsage = companyUsage[0]
+              if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
+                })
               }
-              surveyQuestionsDataLayer.findQuestionSurveyById(req)
-              .then(questions => {
-                surveyDataLayer.findQuestionSurveyById(req)
-              .then(survey => {
-                if (questions.length > 0) {
-                  let first_question = questions[0]
-                  // create buttons
-                  const buttons = []
-                  let next_question_id = 'nil'
-                  if (questions.length > 1) {
-                    next_question_id = questions[1]._id
-                  }
-
-                  for (let x = 0; x < first_question.options.length; x++) {
-                    buttons.push({
-                      type: 'postback',
-                      title: first_question.options[x],
-                      payload: JSON.stringify({
-                        survey_id: req.body._id,
-                        option: first_question.options[x],
-                        question_id: first_question._id,
-                        next_question_id,
-                        userToken: currentUser.facebookInfo.fbToken
-                      })
-                    })
-                  }
-                  let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                  callApi.callApi(`pages/query`, 'post', {pagesFindCriteria})
-                  .then(pages => {
-                    for (let z = 0; z < pages.length && !abort; z++) {
-                      if (req.body.isList === true) {
-                        let ListFindCriteria = {}
-                        ListFindCriteria = _.merge(ListFindCriteria,
-                          {
-                            _id: {
-                              $in: req.body.segmentationList
-                            }
-                          })
-                        listsDataLayer.listFind(ListFindCriteria)
-                        .then(lists => {
-                          let subsFindCriteria = {pageId: pages[z]._id}
-                          let listData = []
-                          if (lists.length > 1) {
-                            for (let i = 0; i < lists.length; i++) {
-                              for (let j = 0; j < lists[i].content.length; j++) {
-                                if (exists(listData, lists[i].content[j]) === false) {
-                                  listData.push(lists[i].content[j])
-                                }
-                              }
-                            }
-                            subsFindCriteria = _.merge(subsFindCriteria, {
-                              _id: {
-                                $in: listData
-                              }
-                            })
+              callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
+              .then(userPage => {
+                userPage = userPage[0]
+                callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                  .then(connectedUser => {
+                          var currentUser
+                          if (req.user.facebookInfo) {
+                            currentUser = req.user
                           } else {
-                            subsFindCriteria = _.merge(subsFindCriteria, {
-                              _id: {
-                                $in: lists[0].content
-                              }
-                            })
+                            currentUser = connectedUser
                           }
-                          callApi.callApi(`subscribers/query`, 'post', { subsFindCriteria })
-                          .then(subscribers => {
-                            needle.get(
-                            `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                            .then(resp => {
-                              utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
-                                subscribers = taggedSubscribers
-                                utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
-                                  subscribers = repliedSubscribers
-                                  for (let j = 0; j < subscribers.length && !abort; j++) {
-                                    callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
-                                    .then(updated => {
-                                      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
-                                      .then(companyUsage => {
-                                        if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
-                                          abort = true
-                                        }
-                                        const messageData = {
-                                          attachment: {
-                                            type: 'template',
-                                            payload: {
-                                              template_type: 'button',
-                                              text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
-                                              buttons
-                                            }
-                                          }
-                                        }
-                                        const data = {
-                                          messaging_type: 'MESSAGE_TAG',
-                                          recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                          message: messageData,
-                                          tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
-                                        }
+                          surveyQuestionsDataLayer.findQuestionSurveyById(req)
+                            .then(questions => {
+                              surveyDataLayer.QuestionfindSurveyById(req)
+                                .then(survey => {
+                                  if (questions.length > 0) {
+                                    let first_question = questions[0]
+                                    // create buttons
+                                    const buttons = []
+                                    let next_question_id = 'nil'
+                                    if (questions.length > 1) {
+                                      next_question_id = questions[1]._id
+                                    }
 
-                                          // checks the age of function using callback
-                                        compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
-                                          if (err) {
-                                            logger.serverLog(TAG, 'inside error')
-                                            return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
-                                          }
-                                          if (isLastMessage) {
-                                            logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data))
-                                            needle.post(
-                                            `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
-                                            .then(resp => {
-                                              let surveyPage = new SurveyPage({
-                                                pageId: pages[z].pageId,
-                                                userId: req.user._id,
-                                                subscriberId: subscribers[j].senderId,
-                                                surveyId: req.body._id,
-                                                seen: false,
-                                                companyId: companyUser.companyId
+                                    for (let x = 0; x < first_question.options.length; x++) {
+                                      buttons.push({
+                                        type: 'postback',
+                                        title: first_question.options[x],
+                                        payload: JSON.stringify({
+                                          survey_id: req.body._id,
+                                          option: first_question.options[x],
+                                          question_id: first_question._id,
+                                          next_question_id,
+                                          userToken: currentUser.facebookInfo.fbToken
+                                        })
+                                      })
+                                    }
+                                    let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
+                                    callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+                                      .then(pages => {
+                                        for (let z = 0; z < pages.length && !abort; z++) {
+                                          if (req.body.isList === true) {
+                                            let ListFindCriteria = {}
+                                            ListFindCriteria = _.merge(ListFindCriteria,
+                                              {
+                                                _id: {
+                                                  $in: req.body.segmentationList
+                                                }
                                               })
-
-                                              SurveyPageDataLayer.savePage(surveyPage)
-                                              .then(success => {
-                                                require('./../../../config/socketio').sendMessageToClient({
-                                                  room_id: companyUser.companyId,
-                                                  body: {
-                                                    action: 'survey_send',
-                                                    payload: {
-                                                      survey_id: survey._id,
-                                                      user_id: req.user._id,
-                                                      user_name: req.user.name,
-                                                      company_id: companyUser.companyId
+                                              callApi.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                              .then(lists => {
+                                                let subsFindCriteria = {pageId: pages[z]._id}
+                                                let listData = []
+                                                if (lists.length > 1) {
+                                                  for (let i = 0; i < lists.length; i++) {
+                                                    for (let j = 0; j < lists[i].content.length; j++) {
+                                                      if (exists(listData, lists[i].content[j]) === false) {
+                                                        listData.push(lists[i].content[j])
+                                                      }
                                                     }
                                                   }
-                                                })
-                                              })
-                                                .catch(error => {
-                                                  return res.status(500).json({status: 'failed', description: error})
-                                                })
-                                              })
-                                              .catch(error => {
-                                                return res.status(500).json({status: 'failed', description: error})
-                                              })
-                                          } else {
-                                            logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
-                                            let timeNow = new Date()
-                                            let automatedQueueMessage = {
-                                              automatedMessageId: req.body._id,
-                                              subscriberId: subscribers[j]._id,
-                                              companyId: companyUser.companyId,
-                                              type: 'survey',
-                                              scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
-                                            }
+                                                  subsFindCriteria = _.merge(subsFindCriteria, {
+                                                    _id: {
+                                                      $in: listData
+                                                    }
+                                                  })
+                                                } else {
+                                                  subsFindCriteria = _.merge(subsFindCriteria, {
+                                                    _id: {
+                                                      $in: lists[0].content
+                                                    }
+                                                  })
+                                                }
+                                                callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
+                                                  .then(subscribers => {
+                                                    needle.get(
+                                                      `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
+                                                      .then(resp => {
+                                                        utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                                          subscribers = taggedSubscribers
+                                                          utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+                                                            subscribers = repliedSubscribers
+                                                            for (let j = 0; j < subscribers.length && !abort; j++) {
+                                                              callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                                                .then(updated => {
+                                                                  callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+                                                                    .then(companyUsage => {
+                                                                      companyUsage = companyUsage[0]
+                                                                      if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                                                                        abort = true
+                                                                      }
+                                                                      const messageData = {
+                                                                        attachment: {
+                                                                          type: 'template',
+                                                                          payload: {
+                                                                            template_type: 'button',
+                                                                            text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                            buttons
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                      const data = {
+                                                                        messaging_type: 'MESSAGE_TAG',
+                                                                        recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                                        message: JSON.stringify(messageData),
+                                                                        tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
+                                                                      }
+
+                                                                        // checks the age of function using callback
+                                                                        compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {                                                                        if (err) {
+                                                                          logger.serverLog(TAG, 'inside error')
+                                                                          return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                                                        }
+                                                                        if (isLastMessage) {
+                                                                          logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data))
+                                                                          needle.post(
+                                                                            `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                                            data, (err, resp) => {
+                                                                              if (err) {
+                                                                                return res.status(500).json({
+                                                                                  status: 'failed',
+                                                                                  description: JSON.stringify(err)
+                                                                                })
+                                                                              }
+                                                                              let surveyPage = new SurveyPage({
+                                                                                pageId: pages[z].pageId,
+                                                                                userId: req.user._id,
+                                                                                subscriberId: subscribers[j].senderId,
+                                                                                surveyId: req.body._id,
+                                                                                seen: false,
+                                                                                companyId: companyUser.companyId
+                                                                              })
+
+                                                                              SurveyPageDataLayer.savePage(surveyPage)
+                                                                                .then(success => {
+                                                                                  require('./../../../config/socketio').sendMessageToClient({
+                                                                                    room_id: companyUser.companyId,
+                                                                                    body: {
+                                                                                      action: 'survey_send',
+                                                                                      payload: {
+                                                                                        survey_id: survey._id,
+                                                                                        user_id: req.user._id,
+                                                                                        user_name: req.user.name,
+                                                                                        company_id: companyUser.companyId
+                                                                                      }
+                                                                                    }
+                                                                                  })
+                                                                                })
+                                                                                .catch(error => {
+                                                                                  return res.status(500).json({status: 'failed', description: error})
+                                                                                })
+                                                                                })
+                                                                            
+                                                                          } else {
+                                                                                  logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                                                                  let timeNow = new Date()
+                                                                                  let automatedQueueMessage = {
+                                                                                    automatedMessageId: req.body._id,
+                                                                                    subscriberId: subscribers[j]._id,
+                                                                                    companyId: companyUser.companyId,
+                                                                                    type: 'survey',
+                                                                                    scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                                                                  }
 
                                             AutomationQueueDataLayer.createAutomationQueueObject(automatedQueueMessage)
                                             .then(success => {
@@ -541,9 +541,6 @@ exports.send = function (req, res) {
                                   }
                                 })
                               })
-                            })
-                            .catch(error => {
-                              return res.status(500).json({status: 'failed', description: error})
                             })
                           })
                           .catch(error => {
@@ -575,20 +572,26 @@ exports.send = function (req, res) {
                             })
                           }
                         }
-                        callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                        callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                         .then(subscribers => {
                           needle.get(
-                          `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                          .then(resp => {
+                            `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                            (err, resp) => {
+                              if (err) {
+                                logger.serverLog(TAG,
+                                `Page access token from graph api error ${JSON.stringify(
+                                err)}`)
+                              }
                             utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                               subscribers = taggedSubscribers
                               utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                 subscribers = repliedSubscribers
                                 for (let j = 0; j < subscribers.length && !abort; j++) {
-                                  callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                  callApi.callApi(`featureUsage/updateCompany`, 'put', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
                                   .then(updated => {
                                     callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
                                       .then(companyUsage => {
+                                        companyUsage = companyUsage[0]
                                         if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                                           abort = true
                                         }
@@ -604,23 +607,28 @@ exports.send = function (req, res) {
                                         }
                                         const data = {
                                           messaging_type: 'MESSAGE_TAG',
-                                          recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                          message: messageData,
+                                          recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                          message: JSON.stringify(messageData),
                                           tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
                                         }
 
                                         // this calls the needle when the last message was older than 30 minutes
                                         // checks the age of function using callback
-                                        compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
-                                          if (err) {
+                                        compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {                                          if (err) {
                                             logger.serverLog(TAG, 'inside error')
                                             return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                           }
                                           if (isLastMessage) {
                                             logger.serverLog(TAG, 'inside send survey' + JSON.stringify(data))
                                             needle.post(
-                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
-                                              .then(resp => {
+                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                              data, (err, resp) => {
+                                                if (err) {
+                                                  return res.status(500).json({
+                                                    status: 'failed',
+                                                    description: JSON.stringify(err)
+                                                  })
+                                                }
                                                 let surveyPage = new SurveyPage({
                                                   pageId: pages[z].pageId,
                                                   userId: req.user._id,
@@ -686,9 +694,7 @@ exports.send = function (req, res) {
                                                   return res.status(500).json({status: 'failed', description: error})
                                                 })
                                               })
-                                              .catch(error => {
-                                                return res.status(500).json({status: 'failed', description: error})
-                                              })
+            
                                           } else {
                                             logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                             let timeNow = new Date()
@@ -719,16 +725,15 @@ exports.send = function (req, res) {
                                 }
                               })
                             })
-                          })
-                          .catch(error => {
-                            return res.status(500).json({status: 'failed', description: error})
-                          })
+                          })  
                         })
                         .catch(error => {
                           return res.status(500).json({status: 'failed', description: error})
                         })
                       }
                     }
+                    return res.status(200)
+                    .json({status: 'success', payload: 'Survey sent successfully.'})
                   })
                 .catch(error => {
                   return res.status(500).json({status: 'failed', description: error})
@@ -783,19 +788,19 @@ exports.sendSurvey = function (req, res) {
         })
       }
       callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
-        .then(companyProfile => {
-          callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
-            .then(planUsage => {
-              planUsage = planUsage[0]
-              callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
-                .then(companyUsage => {
-                  companyUsage = companyUsage[0]
-                  if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
-                    })
-                  }
+      .then(companyProfile => {
+        callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
+          .then(planUsage => {
+            planUsage = planUsage[0]
+            callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
+              .then(companyUsage => {
+                companyUsage = companyUsage[0]
+                if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Your survey limit has reached. Please upgrade your plan to premium in order to create more surveys`
+                  })
+                }
           let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
           const survey = new Surveys(surveyPayload)
 
@@ -831,10 +836,11 @@ exports.sendSurvey = function (req, res) {
                 }
               }
             })
-            callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+            callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
             .then(userPage => {
-              callApi.callApi(`user/query`, 'post', {_id: userPage.userId})
-              .then(connectedUser => {
+              userPage = userPage[0]
+              callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                .then(connectedUser => {
                 var currentUser
                 if (req.user.facebookInfo) {
                   currentUser = req.user
@@ -847,9 +853,9 @@ exports.sendSurvey = function (req, res) {
                 */
                 // we will send only first question to fb subsribers
                 // find questions
-                surveyQuestionsDataLayer.findQuestionSurveyById(req)
+                surveyQuestionsDataLayer.QuestionFindSurveyById(survey)
                 .then(questions => {
-                  surveyDataLayer.findQuestionSurveyById(req)
+                  surveyDataLayer.findQuestionSurveyById(survey)
                   .then(survey => {
                     if (questions.length > 0) {
                       let first_question = questions[0]
@@ -875,33 +881,38 @@ exports.sendSurvey = function (req, res) {
                       }
 
                       let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req, companyUser)
-                      callApi.callApi(`pages/query`, 'post', {pagesFindCriteria})
+                      callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                       .then(pages => {
                         for (let z = 0; z < pages.length && !abort; z++) {
-                          DataLayerwebhooks.findOnePage(pages[z])
+                        callApi.callApi(`webhooks/query`, 'post', {pageId: pages[z].pageId}, req.headers.authorization)
                           .then(webhook => {
+                            webhook = webhook[0]
                             if (webhook && webhook.isEnabled) {
-                              needle.get(webhook.webhook_url)
-                              .then(response => {
-                                if (response.statusCode === 200) {
+                              needle.get(webhook.webhook_url, (err, r) => {
+                                if (err) {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Internal Server Error ${JSON.stringify(err)}`
+                                  })
+                                } else if (r.statusCode === 200) {
                                   if (webhook && webhook.optIn.SURVEY_CREATED) {
                                     var data = {
                                       subscription_type: 'SURVEY_CREATED',
                                       payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId, title: req.body.survey.title, description: req.body.survey.description, questions: req.body.questions})
                                     }
-                                    needle.post(webhook.webhook_url, data)
-                                    .then(success => {
-                                    })
-                                    .catch(error => {
-                                      return res.status(500).json({status: `failed ${error}`, payload: error})
-                                    })
+                                    needle.post(webhook.webhook_url, data,
+                                      (error, response) => {
+                                        if (error) {
+                                          // return res.status(500).json({
+                                          //   status: 'failed',
+                                          //   description: `Internal Server Error ${JSON.stringify(err)}`
+                                          // })
+                                        }
+                                      })
                                   }
                                 } else {
                                   webhookUtility.saveNotification(webhook)
                                 }
-                              })
-                              .catch(error => {
-                                return res.status(500).json({status: `failed ${error}`, payload: error})
                               })
                             }
                           })
@@ -917,8 +928,8 @@ exports.sendSurvey = function (req, res) {
                                 }
                               })
 
-                            listsDataLayer.listFind(ListFindCriteria)
-                            .then(lists => {
+                              utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
+                              .then(lists => {
                               let subsFindCriteria = {pageId: pages[z]._id}
                               let listData = []
                               if (lists.length > 1) {
@@ -942,23 +953,29 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
 
-                              callApi.callApi(`subscribers/query`, 'post', { subsFindCriteria })
+                              callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                           .then(subscribers => {
-                            needle.get(
-                              `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                              .then(resp => {
+                              needle.get(
+                                `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                (err, resp) => {
+                                  if (err) {
+                                    logger.serverLog(TAG,
+                                    `Page access token from graph api error ${JSON.stringify(
+                                    err)}`)
+                                  }
                                 utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                   subscribers = taggedSubscribers
                                   utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                     subscribers = repliedSubscribers
                                     for (let j = 0; j < subscribers.length && !abort; j++) {
-                                      callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId},{ $inc: { surveys: 1 } })
+                                      callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                       .then(updated => {
-                                        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+                                        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                                         .then(companyUsage => {
-                                          if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
-                                            abort = true
-                                          }
+                                          companyUsage = companyUsage[0]
+                                        if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                                          abort = true
+                                        }
                                           const messageData = {
                                             attachment: {
                                               type: 'template',
@@ -971,8 +988,8 @@ exports.sendSurvey = function (req, res) {
                                           }
                                           const data = {
                                             messaging_type: 'MESSAGE_TAG',
-                                            recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                            message: messageData,
+                                            recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                            message: JSON.stringify(messageData),
                                             tag: req.body.fbMessageTag
                                           }
                                           // this calls the needle when the last message was older than 30 minutes
@@ -983,12 +1000,17 @@ exports.sendSurvey = function (req, res) {
                                               logger.serverLog(TAG, 'inside error')
                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                             }
-
                                             if (isLastMessage) {
                                               logger.serverLog(TAG, 'inside direct survey send' + JSON.stringify(data))
                                               needle.post(
-                                                    `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
-                                                    .then(resp => {
+                                                `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                data, (err, resp) => {
+                                                  if (err) {
+                                                    return res.status(500).json({
+                                                      status: 'failed',
+                                                      description: JSON.stringify(err)
+                                                    })
+                                                  }
                                                       let surveyPage = new SurveyPage({
                                                         pageId: pages[z].pageId,
                                                         userId: req.user._id,
@@ -1006,9 +1028,7 @@ exports.sendSurvey = function (req, res) {
                                                         return res.status(500).json({status: `failed ${error}`, description: error})
                                                       })
                                                     })
-                                                    .catch(error => {
-                                                      return res.status(500).json({status: `failed ${error}`, description: error})
-                                                    })
+                                                   
                                             } else {
                                               logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                               let timeNow = new Date()
@@ -1030,24 +1050,25 @@ exports.sendSurvey = function (req, res) {
                                             }
                                           })
                                         })
-                                            .catch(error => {
-                                              return res.status(500).json({status: `failed ${error}`, description: error})
-                                            })
+                                        .catch(error => {
+                                          return res.status(500).json({status: `failed ${error}`, description: error})
+                                        })
                                       })
-                                          .catch(error => {
-                                            return res.status(500).json({status: `failed ${error}`, description: error})
-                                          })
+                                      .catch(error => {
+                                        return res.status(500).json({status: `failed ${error}`, description: error})
+                                      })                              
                                     }
                                   })
                                 })
                               })
-                                .catch(error => {
-                                  return res.status(500).json({status: `failed ${error}`, description: error})
-                                })
+                               
                           })
                               .catch(error => {
                                 return res.status(500).json({status: `failed ${error}`, description: error})
                               })
+                            })
+                            .catch(error => {
+                              return res.status(500).json({status: `failed ${error}`, description: error})
                             })
                           } else {
                             let subscriberFindCriteria = {
@@ -1071,23 +1092,29 @@ exports.sendSurvey = function (req, res) {
                                 })
                               }
                             }
-                            callApi.callApi(`subscribers/query`, 'post', {subscriberFindCriteria})
+                            callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                             .then(subscribers => {
                               needle.get(
-                                `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                                .then(resp => {
+                                `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                (err, resp) => {
+                                  if (err) {
+                                    logger.serverLog(TAG,
+                                    `Page access token from graph api error ${JSON.stringify(
+                                    err)}`)
+                                  }
                                   utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                     subscribers = taggedSubscribers
                                     utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                       subscribers = repliedSubscribers
                                       for (let j = 0; j < subscribers.length && !abort; j++) {
                                         callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
-                                        .then(updated => {
-                                          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                      .then(updated => {
+                                        callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
                                         .then(companyUsage => {
-                                          if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
-                                            abort = true
-                                          }
+                                          companyUsage = companyUsage[0]
+                                        if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
+                                          abort = true
+                                        }
                                           const messageData = {
                                             attachment: {
                                               type: 'template',
@@ -1100,24 +1127,29 @@ exports.sendSurvey = function (req, res) {
                                           }
                                           const data = {
                                             messaging_type: 'MESSAGE_TAG',
-                                            recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                            message: messageData,
+                                            recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                            message: JSON.stringify(messageData),
                                             tag: req.body.fbMessageTag
                                           }
                                           // this calls the needle when the last message was older than 30 minutes
                                           // checks the age of function using callback
                                           logger.serverLog(TAG, 'just before sending')
-                                          compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                          compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                                             if (err) {
                                               logger.serverLog(TAG, 'inside error')
                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                             }
-
                                             if (isLastMessage) {
                                               logger.serverLog(TAG, 'inside direct survey sendd' + JSON.stringify(data))
                                               needle.post(
-                                                `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,data)
-                                                .then(resp => {
+                                                `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                data, (err, resp) => {
+                                                  if (err) {
+                                                    return res.status(500).json({
+                                                      status: 'failed',
+                                                      description: JSON.stringify(err)
+                                                    })
+                                                  }
                                                   let surveyPage = new SurveyPage({
                                                     pageId: pages[z].pageId,
                                                     userId: req.user._id,
@@ -1134,9 +1166,7 @@ exports.sendSurvey = function (req, res) {
                                                     return res.status(500).json({status: `failed ${error}`, description: error})
                                                   })
                                                 })
-                                                  .catch(error => {
-                                                    return res.status(500).json({status: `failed ${error}`, description: error})
-                                                  })
+  
                                             } else {
                                               logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                               let timeNow = new Date()
@@ -1154,19 +1184,16 @@ exports.sendSurvey = function (req, res) {
                                             }
                                           })
                                         })
-                                          .catch(error => {
-                                            return res.status(500).json({status: `failed ${error}`, description: error})
-                                          })
-                                        })
                                         .catch(error => {
                                           return res.status(500).json({status: `failed ${error}`, description: error})
                                         })
+                                      })
+                                      .catch(error => {
+                                        return res.status(500).json({status: `failed ${error}`, description: error})
+                                      })
                                     }
                                   })
                                 })
-                              })
-                              .catch(error => {
-                                return res.status(500).json({status: `failed ${error}`, description: error})
                               })
                             })
                             .catch(error => {
@@ -1179,7 +1206,7 @@ exports.sendSurvey = function (req, res) {
                       })
                     } else {
                       return res.status(404)
-                      .json({status: 'failed', description: 'Survey Questions not found'})
+                      .json({status: `failed `, description: 'Survey Questions not found'})
                     }
                   })
                   .catch(error => {
@@ -1213,6 +1240,7 @@ exports.sendSurvey = function (req, res) {
     .catch(error => {
       return res.status(500).json({status: `failed ${error}`, description: error})
     })
+   
   })
   .catch(error => {
     return res.status(500).json({status: `failed ${error}`, description: error})
@@ -1220,7 +1248,7 @@ exports.sendSurvey = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
-  surveyDataLayer.findServeyById(req)
+  surveyDataLayer.findServeyId(req)
      .then(survey => {
        if (!survey) {
          return res.status(404)
@@ -1252,7 +1280,7 @@ exports.deleteSurvey = function (req, res) {
             surveyQuestionsDataLayer.findSurveyQuestionById(req)
             .then(surveyquestions => {
               surveyquestions.forEach(surveyquestion => {
-                surveyQuestionsDataLayer.removeQuestion(surveyquestions)
+                surveyQuestionsDataLayer.removeQuestion(surveyquestion)
                 .then(success => {
                 })
                 .catch(error => {

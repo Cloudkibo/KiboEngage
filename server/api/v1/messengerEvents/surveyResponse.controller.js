@@ -40,7 +40,6 @@ function savesurvey (req) {
   callApi(`subscribers/query`, 'post', { senderId: req.sender.id })
     .then(subscribers => {
       let subscriber = subscribers[0]
-
       // eslint-disable-next-line no-unused-vars
       const surveybody = {
         response: resp.option, // response submitted by subscriber
@@ -50,6 +49,7 @@ function savesurvey (req) {
       }
       callApi(`webhooks/query`, 'post', { pageId: req.recipient.id })
         .then(webhook => {
+          webhook = webhook[0]
           if (webhook && webhook.isEnabled) {
             needle.get(webhook.webhook_url, (err, r) => {
               if (err) {
@@ -74,7 +74,7 @@ function savesurvey (req) {
         .catch(err => {
           logger.serverLog(TAG, err)
         })
-      SurveyResponseDataLayer.genericUpdateForResponse.update({
+      SurveyResponseDataLayer.genericUpdateForResponse({
         surveyId: resp.survey_id,
         questionId: resp.question_id,
         subscriberId: subscriber._id
@@ -125,8 +125,8 @@ function savesurvey (req) {
                     }
                     const data = {
                       messaging_type: 'RESPONSE',
-                      recipient: { id: req.sender.id }, // this is the subscriber id
-                      message: messageData
+                      recipient: JSON.stringify({ id: req.sender.id }), // this is the subscriber id
+                      message: JSON.stringify(messageData)
                     }
                     needle.post(
                       `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,

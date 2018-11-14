@@ -78,6 +78,7 @@ exports.create = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
+        logger.serverLog(TAG, 'The user account does not belong to any company.')
         return res.status(404).json({
           status: 'failed',
           description: 'The user account does not belong to any company. Please contact support'
@@ -86,11 +87,13 @@ exports.create = function (req, res) {
       callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId}, req.headers.authorization)
         .then(page => {
           if (!page) {
+            logger.serverLog(TAG, 'Page not found')
             return res.status(404).json({
               status: 'failed',
               description: 'Page not found'
             })
           }
+          logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`)
           MenuDataLayer.findOneMenuObjectUsingQuery({pageId: req.body.pageId})
             .then(info => {
               if (!info) {
@@ -123,8 +126,8 @@ exports.create = function (req, res) {
                         }
                       }
                     })
-                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-
+                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page[0].accessToken}`
+                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (err) {
@@ -147,8 +150,8 @@ exports.create = function (req, res) {
               } else {
                 MenuDataLayer.updateOneMenuObjectUsingQuery({pageId: req.body.pageId}, {jsonStructure: req.body.jsonStructure})
                   .then(updated => {
-                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-
+                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page[0].accessToken}`
+                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: companyUser.companyId,
                       body: {
@@ -161,7 +164,7 @@ exports.create = function (req, res) {
                         }
                       }
                     })
-
+                    logger.serverLog(TAG, `req.body.payload passed to graph api ${JSON.stringify(req.body.payload)}`)
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (!err) {
@@ -171,6 +174,7 @@ exports.create = function (req, res) {
                             `Internal Server Error ${JSON.stringify(err)}`)
                         }
                         if (JSON.stringify(resp.body.error)) {
+                          logger.serverLog(TAG, `Error from facebook graph api: ${JSON.stringify(resp.body.error)}`)
                           return res.status(404).json({
                             status: 'error',
                             description: JSON.stringify(resp.body.error)
