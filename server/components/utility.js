@@ -21,13 +21,15 @@ function checkLastMessageAge (subscriberId, req, callback) {
       utility.callApi(`sessions/query`, 'post', { subscriber_id: subscriber._id }, req.headers.authorization, 'chat')
         .then(session => {
           console.log('sessionsFound', session)
-          session = session[0]
-          if (session && session.agent_activity_time) {
-            let lastActivity = new Date(session.agent_activity_time)
-            let inMiliSeconds = Date.now() - lastActivity
-            let inMinutes = Math.floor((inMiliSeconds / 1000) / 60)
+          if (session) {
+            session = session[0]
+            if (session.agent_activity_time) {
+              let lastActivity = new Date(session.agent_activity_time)
+              let inMiliSeconds = Date.now() - lastActivity
+              let inMinutes = Math.floor((inMiliSeconds / 1000) / 60)
 
-            callback(null, (inMinutes > 30))
+              callback(null, (inMinutes > 30))
+            }
           }
         })
         .catch(error => {
