@@ -7,6 +7,7 @@ const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
 const validate = require('express-jsonschema').validate
 
-router.post('/wordpress', auth.isItWebhookServer(), validate({body: validationSchema.wordpressPayload}), controller.postPublish)
+//, auth.isItWebhookServer()
+router.post('/wordpress', validate({body: validationSchema.wordpressPayload}), controller.postPublish)
 
 module.exports = router
