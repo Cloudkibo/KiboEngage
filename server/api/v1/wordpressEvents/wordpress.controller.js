@@ -7,6 +7,7 @@ const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
 const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
+const URLObject = require('../URLForClickedCount/URL.datalayer')
 let request = require('request')
 let _ = require('lodash')
 const config = require('../../../config/environment/index')
@@ -78,7 +79,7 @@ exports.postPublish = function (req, res) {
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
-                            let URLObject = {
+                            let urlObject = {
                               originalURL: req.body.guid,
                               subscriberId: subscriber._id,
                               module: {
@@ -86,7 +87,7 @@ exports.postPublish = function (req, res) {
                                 type: 'autoposting'
                               }
                             }
-                            URLObject.createURLObject(URLObject)
+                            URLObject.createURLObject(urlObject)
                               .then(savedurl => {
                                 console.log('Saved Url', savedurl)
                                 let newURL = config.domain + '/api/URL/' + savedurl._id
