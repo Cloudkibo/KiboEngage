@@ -119,7 +119,7 @@ exports.postPublish = function (req, res) {
                                     }
                                   })
                                 }
-                                compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                                compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                   if (err) {
                                     logger.serverLog(TAG, 'inside error')
                                     return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
