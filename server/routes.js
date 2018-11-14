@@ -35,6 +35,7 @@ module.exports = function (app) {
   app.use('/api/tags', require('./api/v1/tags'))
   app.use('/api/post', require('./api/v1/commentCapture'))
   app.use('/api/templates', require('./api/v1/templates'))
+  app.use('/api/wordpressEvents', require('./api/v1/wordpresEvents'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
