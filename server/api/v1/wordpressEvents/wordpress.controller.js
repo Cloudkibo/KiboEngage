@@ -74,7 +74,7 @@ exports.postPublish = function (req, res) {
                     console.log('subscribers', subscribers, newMsg)
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
-                        console.log('Autposting New Message')
+                        console.log('Autposting New Message', savedMsg)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
@@ -88,6 +88,7 @@ exports.postPublish = function (req, res) {
                             }
                             URLObject.createURLObject(URLObject)
                               .then(savedurl => {
+                                console.log('Saved Url', savedurl)
                                 let newURL = config.domain + '/api/URL/' + savedurl._id
                                 messageData = {
                                   'messaging_type': 'UPDATE',
@@ -125,7 +126,26 @@ exports.postPublish = function (req, res) {
 
                                   if (isLastMessage) {
                                     logger.serverLog(TAG, 'inside autoposting wordpress send')
+                                    console.log('Inside Autoposting wordpress send')
                                     sendAutopostingMessage(messageData, page, savedMsg)
+                                    let newSubscriberMsg = {
+                                      pageId: page.pageId,
+                                      companyId: postingItem.companyId,
+                                      autopostingId: postingItem._id,
+                                      autoposting_messages_id: savedMsg._id,
+                                      subscriberId: subscriber.senderId
+                                    }
+                                    AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newSubscriberMsg)
+                                      .then(result => {
+                                        logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                        return res.status(200).json({
+                                          status: 'success',
+                                          description: `Wordpress Broadcast Message Sent`
+                                        })
+                                      })
+                                      .catch(err => {
+                                        if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                      })
                                   } else {
                                     // Logic to add into queue will go here
                                     logger.serverLog(TAG, 'inside adding to autoposting queue')
@@ -143,6 +163,24 @@ exports.postPublish = function (req, res) {
                                           status: 'status',
                                           description: 'Automation queue object saved'
                                         })
+                                        let newSubscriberMsg = {
+                                          pageId: page.pageId,
+                                          companyId: postingItem.companyId,
+                                          autopostingId: postingItem._id,
+                                          autoposting_messages_id: savedMsg._id,
+                                          subscriberId: subscriber.senderId
+                                        }
+                                        AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newSubscriberMsg)
+                                          .then(result => {
+                                            logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                            return res.status(200).json({
+                                              status: 'success',
+                                              description: `Wordpress Broadcast Message Sent`
+                                            })
+                                          })
+                                          .catch(err => {
+                                            if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                          })
                                       })
                                       .catch(err => {
                                         return res.status(500).json({
@@ -152,24 +190,6 @@ exports.postPublish = function (req, res) {
                                       })
                                   }
                                 })
-                                let newSubscriberMsg = {
-                                  pageId: page.pageId,
-                                  companyId: postingItem.companyId,
-                                  autopostingId: postingItem._id,
-                                  autoposting_messages_id: savedMsg._id,
-                                  subscriberId: subscriber.senderId
-                                }
-                                AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newSubscriberMsg)
-                                  .then(result => {
-                                    logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                    return res.status(200).json({
-                                      status: 'success',
-                                      description: `Wordpress Broadcast Message Sent`
-                                    })
-                                  })
-                                  .catch(err => {
-                                    if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
-                                  })
                               })
                               .catch(err => {
                                 return res.status(500).json({
@@ -222,6 +242,7 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
+      console.log('Facebook Response', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send wordpress broadcast ${JSON.stringify(
