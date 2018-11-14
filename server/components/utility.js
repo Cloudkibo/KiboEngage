@@ -29,9 +29,9 @@ function checkLastMessageAge (subscriberId, req, callback) {
               let inMinutes = Math.floor((inMiliSeconds / 1000) / 60)
 
               callback(null, (inMinutes > 30))
-            } else {
-              callback(null, true)
             }
+          } else {
+            callback(null, true)
           }
         })
         .catch(error => {
