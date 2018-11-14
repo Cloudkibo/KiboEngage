@@ -1,7 +1,6 @@
 const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
 const SequenceDatalayer = require('./sequence.datalayer')
 const SequenceUtility = require('./utility')
-const SequenceMessages = require('./message.model')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/sequenceMessaging/sequence.controller.js'
@@ -518,10 +517,7 @@ exports.getAll = function (req, res) {
         companyId: companyUser.companyId,
         name: req.body.filter_criteria.search_value !== '' ? { $regex: search } : { $exists: true }
       }
-      SequenceDatalayer.findSequenceUsingAggregate([
-        { $match: findCriteria },
-        { $group: { _id: null, count: { $sum: 1 } } }
-      ])
+      SequenceDatalayer.countSequences(findCriteria)
         .then(sequenceCount => {
           SequenceDatalayer.genericFindSequenceWithLimit(findCriteria, req.body.number_of_records)
             .then(sequences => {
