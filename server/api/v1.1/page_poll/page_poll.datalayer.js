@@ -22,6 +22,15 @@ exports.aggregate = (query) => {
   return new Promise(() => {})
 }
 
+exports.countDocuments = (filter) => {
+  let query = {
+    purpose: 'aggregate',
+    match: filter,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+  return callApi(`page_poll/query`, 'post', query, '', 'kiboengage')
+}
+
 exports.find = (queryObject) => {
   let query = {
     purpose: 'findAll',
