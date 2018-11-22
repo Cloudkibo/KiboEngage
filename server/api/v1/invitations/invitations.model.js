@@ -7,7 +7,7 @@ let Schema = mongoose.Schema
 let InvitationsSchema = new Schema({
   name: String,
   email: String,
-  companyId: {type: Schema.ObjectId, ref: 'companyprofile'},
+  companyId: {type: Schema.ObjectId},
   createdAt: {type: Date, required: true, default: Date.now}
 })
 
