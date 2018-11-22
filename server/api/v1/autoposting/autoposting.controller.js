@@ -351,7 +351,7 @@ exports.destroy = function (req, res) {
           })
           return res.status(200).json({
             status: 'success',
-            okfdescription: 'AutoPosting Deleted'
+            description: 'AutoPosting Deleted'
           })
         })
         .catch(err => {

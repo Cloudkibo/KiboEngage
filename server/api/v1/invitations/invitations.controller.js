@@ -6,27 +6,13 @@ const InviteAgentTokenDataLayer = require('../inviteagenttoken/inviteagenttoken.
 const callApi = require('../utility')
 
 exports.index = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
-    .then(companyUser => {
-      if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
-      }
-      InvitationsDataLayer.findOneInvitationObjectUsingQuery({companyId: companyUser.companyId})
-        .then(invitations => {
-          res.status(200).json({
-            status: 'success',
-            payload: invitations
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err)}`
-          })
-        })
+  callApi.callApi('invitations', 'get', {}, req.headers.authorization)
+    .then(invitations => {
+      console.log('Invitations', invitations)
+      res.status(200).json({
+        status: 'success',
+        payload: invitations
+      })
     })
     .catch(err => {
       return res.status(500).json({
