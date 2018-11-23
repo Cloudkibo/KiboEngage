@@ -272,6 +272,7 @@ exports.sendNumbers = function (req, res) {
                   }
                   utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                     .then(savedList => {
+                      logger.serverLog('List - Other Saved', savedList)
                     })
                     .catch(error => {
                       return res.status(500).json({
@@ -451,8 +452,9 @@ exports.pendingSubscription = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`phone/query`, 'post', {
-        companyId: companyUser.companyId, hasSubscribed: false, fileName: req.params.name}, req.headers.authorization)
+        companyId: companyUser.companyId, hasSubscribed: false, fileName: req.params.name, pageId: { $exists: true, $ne: null }}, req.headers.authorization)
         .then(phonenumbers => {
+          console.log('Phone numbers', phonenumbers)
           return res.status(200)
             .json({status: 'success', payload: phonenumbers})
         })
