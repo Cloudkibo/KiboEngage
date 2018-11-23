@@ -176,7 +176,8 @@ exports.viewList = function (req, res) {
             utility.callApi(`phone/query`, 'post', {
               companyId: companyUser.companyId,
               hasSubscribed: true,
-              fileName: list.listName
+              fileName: list.listName,
+              pageId: { $exists: true, $ne: null }
             }, req.headers.authorization)
               .then(number => {
                 if (number.length > 0) {
