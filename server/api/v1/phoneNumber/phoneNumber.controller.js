@@ -286,6 +286,7 @@ exports.sendNumbers = function (req, res) {
                       .then(pages => {
                         utility.callApi(`phone/query`, 'post', {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}, req.headers.authorization)
                           .then(found => {
+                            console.log('Found', found)
                             if (found.length === 0) {
                               if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                                 abort = true
@@ -296,7 +297,7 @@ exports.sendNumbers = function (req, res) {
                                   userId: req.user._id,
                                   companyId: companyUser.companyId,
                                   pageId: req.body._id,
-                                  fileName: 'Other',
+                                  fileName: ['Other'],
                                   hasSubscribed: false }, req.headers.authorization)
                                   .then(saved => {
                                     utility.callApi(`featureUsage/updateCompany`, 'put', {
@@ -330,8 +331,10 @@ exports.sendNumbers = function (req, res) {
                                 pageId: req.body._id,
                                 fileName: filename
                               }
+                              console.log('update', update)
                               utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                 .then(phonenumbersaved => {
+                                  console.log('phonenumbersaved', phonenumbersaved)
                                   utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: 'Other'}, req.headers.authorization)
                                     .then(number => {
                                       if (number.length > 0) {
