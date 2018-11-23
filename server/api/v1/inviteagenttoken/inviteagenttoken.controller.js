@@ -1,7 +1,5 @@
 'use strict'
 
-let Inviteagenttoken = require('./inviteagenttoken.model')
-let Invitations = require('./../invitations/invitations.model')
 let config = require('./../../../config/environment/index')
 let path = require('path')
 
