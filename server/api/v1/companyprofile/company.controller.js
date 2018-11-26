@@ -23,22 +23,24 @@ exports.getAutomatedOptions = function (req, res) {
 }
 
 exports.invite = function (req, res) {
-  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
+  console.log('email', req.body.email)
+  console.log('name', req.body.name)
+    utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'Result from invite endpoint accounts')
+      console.log('result', result)
+      logger.serverLog(TAG, 'result from invite endpoint accounts')
       logger.serverLog(TAG, result)
-      if (result) {
-        res.status(200).json({status: 'success', payload: result})
-      } else {
-        res.status(400).json({status: 'failed'})
-      }
+      res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'Error from invite endpoint accounts')
+      logger.serverLog(TAG, 'result from invite endpoint accounts')
       logger.serverLog(TAG, err)
-      res.status(500).json({status: 'failed', payload: err})
+      console.log('err.status', err.error.status)
+      console.log('err.payload', err.error.payload)
+      res.status(200).json({status: 'failed', payload: err.error.payload})
     })
-}
+  }
+
 
 exports.updateAutomatedOptions = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
