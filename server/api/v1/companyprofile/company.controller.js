@@ -23,17 +23,6 @@ exports.getAutomatedOptions = function (req, res) {
 }
 
 exports.invite = function (req, res) {
- 
-    let parametersMissing = false
-  
-    if (!_.has(req.body, 'email')) parametersMissing = true
-    if (!_.has(req.body, 'name')) parametersMissing = true
-  
-    if (parametersMissing) {
-      return res.status(400)
-        .json({status: 'failed', description: 'Parameters are missing'})
-    }
-  
     utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
     .then((result) => {
       console.log('result', result)
