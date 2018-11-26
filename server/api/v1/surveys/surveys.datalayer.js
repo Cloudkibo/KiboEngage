@@ -72,8 +72,9 @@ exports.countSurveys = (query) => {
 }
 
 exports.createSurvey = (survey) => {
-  return Surveys.create(survey)
-} 
+  let obj = new Surveys(survey)
+  return obj.save()
+}
 exports.QuestionfindSurveyById = (req) => {
   return   Surveys.findOne({_id: req.body._id})
   .exec()

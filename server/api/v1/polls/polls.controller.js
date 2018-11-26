@@ -88,7 +88,7 @@ exports.allPolls = function (req, res) {
 exports.create = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -201,7 +201,7 @@ exports.send = function (req, res) {
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -472,7 +472,7 @@ exports.sendPoll = function (req, res) {
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
