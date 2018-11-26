@@ -104,7 +104,7 @@ exports.upload = function (req, res) {
                                       userId: req.user._id,
                                       companyId: companyUser.companyId,
                                       pageId: req.body._id,
-                                      fileName: filename
+                                      fileName: [filename]
                                     }
                                     utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                       .then(phonenumbersaved => {
