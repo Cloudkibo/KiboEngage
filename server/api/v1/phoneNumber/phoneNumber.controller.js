@@ -60,6 +60,7 @@ exports.upload = function (req, res) {
                               utility.callApi(`phone/query`, 'post', {
                                 number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}, req.headers.authorization)
                                 .then(phone => {
+                                  console.log('Phone', phone)
                                   if (phone.length === 0) {
                                     if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                                       if (!abort) {
