@@ -23,6 +23,8 @@ exports.getAutomatedOptions = function (req, res) {
 }
 
 exports.invite = function (req, res) {
+  console.log('email', req.body.email)
+  console.log('name', req.body.name)
     utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
     .then((result) => {
       console.log('result', result)
