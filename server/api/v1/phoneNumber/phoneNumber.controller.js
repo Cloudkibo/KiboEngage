@@ -455,7 +455,7 @@ exports.pendingSubscription = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`phone/query`, 'post', {
-        companyId: companyUser.companyId, hasSubscribed: false, fileName: req.params.name, pageId: { $exists: true, $ne: null }}, req.headers.authorization)
+        companyId: companyUser.companyId, hasSubscribed: false, fileName: { $all: [req.params.name] }, pageId: { $exists: true, $ne: null }}, req.headers.authorization)
         .then(phonenumbers => {
           console.log('Phone numbers', phonenumbers)
           return res.status(200)
