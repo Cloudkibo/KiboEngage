@@ -23,17 +23,32 @@ exports.getAutomatedOptions = function (req, res) {
 }
 
 exports.invite = function (req, res) {
-  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
+  exports.invite = function (req, res) {
+    let parametersMissing = false
+  
+    if (!_.has(req.body, 'email')) parametersMissing = true
+    if (!_.has(req.body, 'name')) parametersMissing = true
+  
+    if (parametersMissing) {
+      return res.status(400)
+        .json({status: 'failed', description: 'Parameters are missing'})
+    }
+  
+    utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'Result from invite endpoint accounts')
+      console.log('result', result)
+      logger.serverLog(TAG, 'result from invite endpoint accounts')
       logger.serverLog(TAG, result)
       res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'Error from invite endpoint accounts')
+      logger.serverLog(TAG, 'result from invite endpoint accounts')
       logger.serverLog(TAG, err)
+      console.log('err.status', err.error.status)
+      console.log('err.payload', err.error.payload)
       res.status(200).json({status: 'failed', payload: err.error.payload})
     })
+  }
 }
 
 exports.updateAutomatedOptions = function (req, res) {
