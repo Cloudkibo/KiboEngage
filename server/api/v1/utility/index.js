@@ -32,9 +32,9 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
   }
   console.log('in callapi', JSON.stringify(body))
   // logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
+  logger.serverLog(TAG, `requestPromise body ${util.inspect(body)}`)
   return requestPromise(options).then(response => {
-    //logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
-    console.log(`response from accounts ${util.inspect(response)}`)
+    logger.serverLog(TAG, `response from accounts ${util.inspect(response)}`)
     return new Promise((resolve, reject) => {
       if (response.status === 'success') {
         resolve(response.payload)
@@ -43,7 +43,4 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
       }
     })
   })
-    .catch((err) => {
-      logger.serverLog(TAG, `error in callAPI ${util.inspect(err.body)}`)
-    })
 }
