@@ -104,11 +104,11 @@ exports.upload = function (req, res) {
                                       userId: req.user._id,
                                       companyId: companyUser.companyId,
                                       pageId: req.body._id,
-                                      fileName: [filename]
+                                      fileName: filename
                                     }
                                     utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                       .then(phonenumbersaved => {
-                                        utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: newFileName}, req.headers.authorization)
+                                        utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: { $all: [newFileName] }}, req.headers.authorization)
                                           .then(number => {
                                             if (number.length > 0) {
                                               let subscriberFindCriteria = logicLayer.subscriberFindCriteria(number, companyUser)
@@ -335,7 +335,7 @@ exports.sendNumbers = function (req, res) {
                               utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                 .then(phonenumbersaved => {
                                   console.log('phonenumbersaved', phonenumbersaved)
-                                  utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: 'Other'}, req.headers.authorization)
+                                  utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: { $all: ['Other'] }}, req.headers.authorization)
                                     .then(number => {
                                       if (number.length > 0) {
                                         let subscriberFindCriteria = logicLayer.subscriberFindCriteria(number, companyUser)
