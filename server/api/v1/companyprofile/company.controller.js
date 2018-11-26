@@ -27,16 +27,12 @@ exports.invite = function (req, res) {
     .then((result) => {
       logger.serverLog(TAG, 'Result from invite endpoint accounts')
       logger.serverLog(TAG, result)
-      if (result) {
-        res.status(200).json({status: 'success', payload: result})
-      } else {
-        res.status(400).json({status: 'failed'})
-      }
+      res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
       logger.serverLog(TAG, 'Error from invite endpoint accounts')
       logger.serverLog(TAG, err)
-      res.status(500).json({status: 'failed', payload: err})
+      res.status(200).json({status: 'failed', payload: err.error.payload})
     })
 }
 
