@@ -176,14 +176,16 @@ exports.viewList = function (req, res) {
             utility.callApi(`phone/query`, 'post', {
               companyId: companyUser.companyId,
               hasSubscribed: true,
-              fileName: list.listName,
+              fileName: { $all: [list.listName] },
               pageId: { $exists: true, $ne: null }
             }, req.headers.authorization)
               .then(number => {
                 if (number.length > 0) {
                   let criterias = logicLayer.getSubscriberCriteria(number, companyUser)
+                  console.log('Criterias', criterias)
                   utility.callApi(`subscribers/query`, 'post', criterias, req.headers.authorization)
                     .then(subscribers => {
+                      console.log('Subscribers', subscribers)
                       let content = logicLayer.getContent(subscribers)
                       utility.callApi(`lists/${req.params.id}`, 'put', {
                         content: content
