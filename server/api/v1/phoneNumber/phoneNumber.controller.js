@@ -98,6 +98,7 @@ exports.upload = function (req, res) {
                                     }
                                   } else {
                                     let filename = logicLayer.getFiles(phone, req, newFileName)
+                                    console.log('Files', filename)
                                     let query = {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}
                                     let update = { name: data[`${nameColumn}`],
                                       number: result,
