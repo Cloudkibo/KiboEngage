@@ -73,7 +73,7 @@ exports.upload = function (req, res) {
                                         userId: req.user._id,
                                         companyId: companyUser.companyId,
                                         pageId: req.body._id,
-                                        fileName: newFileName,
+                                        fileName: [newFileName],
                                         hasSubscribed: false }, req.headers.authorization)
                                         .then(saved => {
                                           utility.callApi(`featureUsage/updateCompany`, 'put', {
