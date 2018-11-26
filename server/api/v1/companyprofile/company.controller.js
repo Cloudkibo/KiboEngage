@@ -23,7 +23,7 @@ exports.getAutomatedOptions = function (req, res) {
 }
 
 exports.invite = function (req, res) {
-  exports.invite = function (req, res) {
+ 
     let parametersMissing = false
   
     if (!_.has(req.body, 'email')) parametersMissing = true
@@ -49,7 +49,7 @@ exports.invite = function (req, res) {
       res.status(200).json({status: 'failed', payload: err.error.payload})
     })
   }
-}
+
 
 exports.updateAutomatedOptions = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
