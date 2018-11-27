@@ -16,16 +16,16 @@ exports.upload = function (req, res) {
       description: 'No file submitted'
     })
   }
-  utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
-    .then(companyProfile => {
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
-        .then(planUsage => {
-          planUsage = planUsage[0]
-          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
-            .then(companyUsage => {
-              companyUsage = companyUsage[0]
-              utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
-                .then(companyUser => {
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+    .then(companyUser => {
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
+        .then(companyProfile => {
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
+            .then(planUsage => {
+              planUsage = planUsage[0]
+              utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
+                .then(companyUsage => {
+                  companyUsage = companyUsage[0]
                   if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                     return res.status(500).json({
                       status: 'failed',
@@ -198,49 +198,50 @@ exports.upload = function (req, res) {
                 .catch(error => {
                   return res.status(500).json({
                     status: 'failed',
-                    payload: `Failed to company user ${JSON.stringify(error)}`
+                    payload: `Failed to fetch company usage ${JSON.stringify(error)}`
                   })
                 })
             })
             .catch(error => {
               return res.status(500).json({
                 status: 'failed',
-                payload: `Failed to fetch company usage ${JSON.stringify(error)}`
+                payload: `Failed to fetch plan usage ${JSON.stringify(error)}`
               })
             })
         })
         .catch(error => {
           return res.status(500).json({
             status: 'failed',
-            payload: `Failed to fetch plan usage ${JSON.stringify(error)}`
+            payload: `Failed to fetch company profile ${JSON.stringify(error)}`
           })
         })
     })
     .catch(error => {
       return res.status(500).json({
         status: 'failed',
-        payload: `Failed to fetch company profile ${JSON.stringify(error)}`
+        payload: `Failed to fetch company user ${JSON.stringify(error)}`
       })
     })
 }
 exports.sendNumbers = function (req, res) {
   let abort = false
-  utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
-    .then(companyProfile => {
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
-        .then(planUsage => {
-          planUsage = planUsage[0]
-          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
-            .then(companyUsage => {
-              companyUsage = companyUsage[0]
-              if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Your phone invitations limit has reached. Please upgrade your plan to premium in order to send more invitations.`
-                })
-              }
-              utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
-                .then(companyUser => {
+
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+    .then(companyUser => {
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
+        .then(companyProfile => {
+          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
+            .then(planUsage => {
+              planUsage = planUsage[0]
+              utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
+                .then(companyUsage => {
+                  companyUsage = companyUsage[0]
+                  if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Your phone invitations limit has reached. Please upgrade your plan to premium in order to send more invitations.`
+                    })
+                  }
                   let query = {initialList: true, userId: req.user._id, companyId: companyUser.companyId, listName: 'Other'}
                   let update = { listName: 'Other',
                     userId: req.user._id,
@@ -403,29 +404,29 @@ exports.sendNumbers = function (req, res) {
                 .catch(error => {
                   return res.status(500).json({
                     status: 'failed',
-                    payload: `Failed to fetch company user ${JSON.stringify(error)}`
+                    payload: `Failed to fetch company usage ${JSON.stringify(error)}`
                   })
                 })
             })
             .catch(error => {
               return res.status(500).json({
                 status: 'failed',
-                payload: `Failed to fetch company usage ${JSON.stringify(error)}`
+                payload: `Failed to fetch plan usage ${JSON.stringify(error)}`
               })
             })
         })
         .catch(error => {
           return res.status(500).json({
             status: 'failed',
-            payload: `Failed to fetch plan usage ${JSON.stringify(error)}`
+            payload: `Failed to fetch company profile ${JSON.stringify(error)}`
           })
         })
-    })
-    .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company profile ${JSON.stringify(error)}`
-      })
+        .catch(error => {
+          return res.status(500).json({
+            status: 'failed',
+            payload: `Failed to fetch company user ${JSON.stringify(error)}`
+          })
+        })
     })
 }
 
