@@ -84,21 +84,15 @@ exports.upload = function (req, res) {
                                           }, req.headers.authorization)
                                             .then(updated => {})
                                             .catch(error => {
-                                              return res.status(500).json({
-                                                status: 'failed',
-                                                payload: `Failed to update company usage ${JSON.stringify(error)}`
-                                              })
+                                              logger.serverLog(TAG, `Failed to update company usage ${JSON.stringify(error)}`)
                                             })
                                         })
                                         .catch(error => {
-                                          return res.status(500).json({
-                                            status: 'failed',
-                                            payload: `Failed to save phone number ${JSON.stringify(error)}`
-                                          })
+                                          logger.serverLog(TAG, `Failed to save phone number ${JSON.stringify(error)}`)
                                         })
                                     }
                                   } else {
-                                    let filename = logicLayer.getFiles(phone, req, newFileName)
+                                    let filename = logicLayer.getFiles(phone[0], req, newFileName)
                                     console.log('Files', filename)
                                     let query = {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}
                                     let update = { name: data[`${nameColumn}`],
@@ -123,40 +117,25 @@ exports.upload = function (req, res) {
                                                     .then(savedList => {
                                                     })
                                                     .catch(error => {
-                                                      return res.status(500).json({
-                                                        status: 'failed',
-                                                        payload: `Failed to update list ${JSON.stringify(error)}`
-                                                      })
+                                                      logger.serverLog(TAG, `Failed to update list ${JSON.stringify(error)}`)
                                                     })
                                                 })
                                                 .catch(error => {
-                                                  return res.status(500).json({
-                                                    status: 'failed',
-                                                    payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-                                                  })
+                                                  logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                                                 })
                                             }
                                           })
                                           .catch(error => {
-                                            return res.status(500).json({
-                                              status: 'failed',
-                                              payload: `Failed to update number ${JSON.stringify(error)}`
-                                            })
+                                            logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`)
                                           })
                                       })
                                       .catch(error => {
-                                        return res.status(500).json({
-                                          status: 'failed',
-                                          payload: `Failed to update number ${JSON.stringify(error)}`
-                                        })
+                                        logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`)
                                       })
                                   }
                                 })
                                 .catch(error => {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    payload: `Failed to update number ${JSON.stringify(error)}`
-                                  })
+                                  logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`)
                                 })
                               utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId}, req.headers.authorization)
                                 .then(pages => {
@@ -189,10 +168,7 @@ exports.upload = function (req, res) {
                                   })
                                 })
                                 .catch(error => {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    payload: `Failed to fetch pages ${JSON.stringify(error)}`
-                                  })
+                                  logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(error)}`)
                                 })
                               if (respSent === false) {
                                 respSent = true
