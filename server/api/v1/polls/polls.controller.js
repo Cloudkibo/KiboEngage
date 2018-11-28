@@ -220,10 +220,11 @@ exports.send = function (req, res) {
                   }
                   utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
-                      console.log('userPage found', userPage)
+                      console.log('userPage found', userPage[0].userId._id)
                       userPage = userPage[0]
                       utility.callApi(`user/${userPage.userId._id}`, req.headers.authorization)
                         .then(connectedUser => {
+                          console.log('connectedUser found', connectedUser)
                           var currentUser
                           if (req.user.facebookInfo) {
                             currentUser = req.user
