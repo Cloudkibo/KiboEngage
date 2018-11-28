@@ -204,6 +204,7 @@ exports.send = function (req, res) {
     .then(companyUser => {
       utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
+          console.log('companyprofile found', companyProfile)
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
               planUsage = planUsage[0]
@@ -218,6 +219,7 @@ exports.send = function (req, res) {
                   }
                   utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
+                      console.log('userPage found', userPage)
                       userPage = userPage[0]
                       utility.callApi(`user/${userPage.userId}`, req.headers.authorization)
                         .then(connectedUser => {
