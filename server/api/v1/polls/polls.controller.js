@@ -227,6 +227,7 @@ exports.send = function (req, res) {
                       let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
                       utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                         .then(pages => {
+                          console.log('pages found', pages)
                           for (let z = 0; z < pages.length && !abort; z++) {
                             if (req.body.isList === true) {
                               let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
@@ -332,6 +333,7 @@ exports.send = function (req, res) {
                               let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
                               utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                 .then(subscribers => {
+                                  console.log('subscribers found', subscribers)
                                   needle.get(
                                     `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                     (err, resp) => {
