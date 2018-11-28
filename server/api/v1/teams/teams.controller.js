@@ -59,6 +59,7 @@ exports.index = function (req, res) {
 }
 
 exports.createTeam = function (req, res) {
+  console.log('createTeam', req.boy)
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
   .then(companyuser => {
     let teamPayload = logicLayer.getTeamPayload(req, companyuser)
