@@ -222,7 +222,7 @@ exports.send = function (req, res) {
                     .then(userPage => {
                       console.log('userPage found', userPage[0].userId._id)
                       userPage = userPage[0]
-                      utility.callApi(`user/${userPage.userId._id}`, 'get', {}, req.headers.authorization)
+                      utility.callApi(`user`, 'get', {}, req.headers.authorization)
                         .then(connectedUser => {
                           console.log('connectedUser found', connectedUser)
                           var currentUser
