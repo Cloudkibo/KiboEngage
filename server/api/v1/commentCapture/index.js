@@ -7,6 +7,7 @@ const validationSchema = require('./validationSchema')
 const controller = require('./commentCapture.controller')
 
 router.get('/',
+  auth.isAuthenticated(),
   controller.index)
 
 router.get('/:id',
@@ -23,7 +24,7 @@ router.post('/edit',
   controller.edit)
 
 router.delete('/delete/:id',
-    auth.isAuthenticated(),
-    controller.delete)
+  auth.isAuthenticated(),
+  controller.delete)
 
 module.exports = router
