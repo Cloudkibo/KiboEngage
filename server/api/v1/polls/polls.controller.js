@@ -198,6 +198,7 @@ exports.create = function (req, res) {
     })
 }
 exports.send = function (req, res) {
+  console.log('req.headers.authorization', req.headers.authorization)
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
