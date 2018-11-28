@@ -361,7 +361,6 @@ exports.send = function (req, res) {
                       userPage = userPage[0]
                       callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                         .then(connectedUser => {
-                          console.log('connectedUser found', connectedUser)
                           var currentUser
                           if (req.user.facebookInfo) {
                             currentUser = req.user
@@ -802,7 +801,6 @@ exports.sendSurvey = function (req, res) {
                 userPage = userPage[0]
                 callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                   .then(connectedUser => {
-                    console.log('connectedUser', connectedUser)
                   var currentUser
                   if (req.user.facebookInfo) {
                     currentUser = req.user
