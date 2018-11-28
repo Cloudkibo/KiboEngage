@@ -159,6 +159,7 @@ exports.upload = function (req, res) {
                                         page.accessToken
                                       },
                                       function (err, res) {
+                                        console.log('Response from facebook', res)
                                         if (err) {
                                           return logger.serverLog(TAG,
                                             `At invite to messenger using phone ${JSON.stringify(
@@ -301,7 +302,7 @@ exports.sendNumbers = function (req, res) {
                                   })
                               }
                             } else {
-                              let filename = logicLayer.getFilesManual(found)
+                              let filename = logicLayer.getFilesManual(found[0])
                               let query = {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}
                               let update = { name: '',
                                 number: result,
@@ -316,6 +317,7 @@ exports.sendNumbers = function (req, res) {
                                   console.log('phonenumbersaved', phonenumbersaved)
                                   utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: { $all: ['Other'] }}, req.headers.authorization)
                                     .then(number => {
+                                      console.log('number', number)
                                       if (number.length > 0) {
                                         let subscriberFindCriteria = logicLayer.subscriberFindCriteria(number, companyUser)
                                         utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
@@ -381,6 +383,7 @@ exports.sendNumbers = function (req, res) {
                               page.accessToken
                             },
                             function (err, res) {
+                              console.log('Response from facebook', res.body)
                               if (err) {
                                 return logger.serverLog(TAG,
                                   `Error At invite to messenger using phone ${JSON.stringify(
