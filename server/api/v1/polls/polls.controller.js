@@ -198,16 +198,13 @@ exports.create = function (req, res) {
     })
 }
 exports.send = function (req, res) {
-  console.log('req.headers.authorization', req.headers.authorization)
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
-          console.log('companyprofile found', companyProfile)
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
-              console.log('planUsage found', planUsage)
               planUsage = planUsage[0]
               utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
@@ -220,7 +217,6 @@ exports.send = function (req, res) {
                   }
                   utility.callApi(`user`, 'get', {}, req.headers.authorization)
                     .then(connectedUser => {
-                      console.log('connectedUser found', connectedUser)
                       var currentUser
                       if (req.user.facebookInfo) {
                         currentUser = req.user
