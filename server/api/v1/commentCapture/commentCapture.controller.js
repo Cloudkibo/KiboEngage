@@ -85,6 +85,7 @@ exports.create = function (req, res) {
             logger.serverLog(TAG,
             `Page accesstoken from graph api Error${JSON.stringify(err)}`)
           }
+          console.log('response from pageaccesstoken', resp.body)
           let messageData = logicLayer.setMessage(req.body.payload)
           if (messageData.image) {
             needle.post(
@@ -131,6 +132,7 @@ exports.create = function (req, res) {
                 if (err) {
                   logger.serverLog(TAG, err)
                 }
+                console.log('response from post', resp.body)
                 let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
                 utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}}, req.headers.authorization)
                 .then(result => {
