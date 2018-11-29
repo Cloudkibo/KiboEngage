@@ -33,8 +33,7 @@ function checkLastMessageAge (subscriberId, req, callback) {
         })
         .catch(error => {
           logger.serverLog(TAG, `failed to fetch session ${JSON.stringify(error)}`)
-          // return callback(error)
-          return callback(null, true)
+          return callback(error)
         })
     })
     .catch(error => {
