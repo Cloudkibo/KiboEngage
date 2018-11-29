@@ -38,6 +38,7 @@ module.exports = function (app) {
   app.use('/api/templates', require('./api/v1/templates'))
   app.use('/api/wordpressEvents', require('./api/v1/wordpressEvents'))
   app.use('/api/reset_password', require('./api/v1/passwordresettoken'))
+  app.use('/api/messenger_code', require('./api/v1/messenger_code'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
