@@ -19,7 +19,7 @@ function checkLastMessageAge (subscriberId, req, callback) {
     .then(subscribers => {
       console.log('Subscribers', subscribers)
       var subscriber = subscribers[0]
-      utility.callApi(`sessions/query`, 'post', { subscriber_id: subscriber._id }, req.headers.authorization, 'chat')
+      utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
         .then(session => {
           console.log('sessionsFound', session)
           if (session && session.agent_activity_time) {
@@ -33,7 +33,8 @@ function checkLastMessageAge (subscriberId, req, callback) {
         })
         .catch(error => {
           logger.serverLog(TAG, `failed to fetch session ${JSON.stringify(error)}`)
-          return callback(error)
+          // return callback(error)
+          return callback(null, true)
         })
     })
     .catch(error => {
