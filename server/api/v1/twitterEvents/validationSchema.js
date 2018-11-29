@@ -9,15 +9,15 @@ exports.twitterwebhookPayload = {
   properties: {
     user: {
       type: 'object',
-      required: true
+      required: false
     },
     id: {
-      type: 'string',
-      required: true
+      type: 'integer',
+      required: false
     },
     text: {
       type: 'string',
-      required: true
+      required: false
     },
     entities: {
       type: 'object',
