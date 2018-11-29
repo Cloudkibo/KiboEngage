@@ -107,7 +107,7 @@ exports.twitterwebhook = function (req, res) {
                               }
                               console.log('Message Data', messageData)
                               // Logic to control the autoposting when last activity is less than 30 minutes
-                              compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                              compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                 if (err) {
                                   logger.serverLog(TAG, 'inside error')
                                   return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -222,7 +222,7 @@ exports.twitterwebhook = function (req, res) {
                                       }
                                     })
                                   }
-                                  compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                                  compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                     if (err) {
                                       logger.serverLog(TAG, 'inside error')
                                       return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
