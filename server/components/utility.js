@@ -16,8 +16,8 @@ function validateUrl (str) {
 
 function checkLastMessageAge (subscriberId, req, callback) {
   utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId }, req.headers.authorization)
-    .then(subscriber => {
-      subscriber = subscriber[0]
+    .then(subscribers => {
+      var subscriber = subscribers[0]
       utility.callApi(`sessions/query`, 'post', { subscriber_id: subscriber._id }, req.headers.authorization, 'chat')
         .then(session => {
           console.log('sessionsFound', session)
