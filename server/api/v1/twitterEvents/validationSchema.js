@@ -21,7 +21,7 @@ exports.twitterwebhookPayload = {
     },
     entities: {
       type: 'object',
-      required: true
+      required: false
     }
   }
 }
