@@ -1,252 +1,342 @@
-const TemplatePolls = require('./pollTemplate.model')
-const TemplateSurveys = require('./surveyTemplate.model')
-const Category = require('./category.model')
-const CompanyUsers = require('./pollTemplate.model')
 const mongoose = require('mongoose')
-const CompanyUsage = require('./pollTemplate.model')
-const PlanUsage = require('./pollTemplate.model')
-const CompanyProfile = require('./pollTemplate.model')
-const SurveyQuestions = require('./surveyQuestion.model')
-const TemplateBroadcasts = require('./broadcastTemplate.model')
-const TemplateBots = require('./bots_template.model')
 const { callApi } = require('../utility')
 
 exports.allPolls = () => {
   return callApi(`templates/poll`, 'get', {}, '', 'kiboengage')
 }
 
-exports.pollTemplateaggregateCount = (aggregateObject) => {
-  return callApi(`templates/poll/query`, 'post', aggregateObject, '', 'kiboengage')
+exports.pollTemplateaggregateCount = (filter) => {
+  let query = {
+    purpose: 'aggregate',
+    match: filter,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 exports.pollTemplateaggregateLimit = (aggregateObject) => {
-  return TemplatePolls.aggregate([{$match: aggregateObject.findCriteria}, {$sort: {datetime: -1}}]).limit(aggregateObject.req.body.number_of_records)
-    .exec()
+  let query = {
+    purpose: 'aggregate',
+    match: aggregateObject.findCriteria,
+    sort: {datetime: -1},
+    limit: aggregateObject.req.body.number_of_records
+  }
+  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
 }
 exports.pollTemplateaggregateLimitNextPrevious = (aggregateObject) => {
-  return TemplatePolls.aggregate([{$match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]}}, {$sort: {datetime: -1}}]).skip(aggregateObject.recordsToSkip).limit(aggregateObject.req.body.number_of_records)
-    .exec()
+  let query = {
+    purpose: 'aggregate',
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    sort: {datetime: -1},
+    skip: aggregateObject.recordsToSkip,
+    limit: aggregateObject.req.body.number_of_records
+  }
+  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.allSurvey = () => {
-  return TemplateSurveys.find({})
-        .exec()
+  return callApi(`templates/survey`, 'get', {}, '', 'kiboengage')
 }
 
-exports.surveyTemplateaggregateCount = (aggregateObject) => {
-  return TemplateSurveys.aggregate(aggregateObject)
-      .exec()
+exports.surveyTemplateaggregateCount = (filter) => {
+  let query = {
+    purpose: 'aggregate',
+    match: filter,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.surveyTemplateaggregateLimit = (aggregateObject) => {
-  return TemplateSurveys.aggregate([{$match: aggregateObject.findCriteria}, {$sort: {datetime: -1}}]).limit(aggregateObject.req.body.number_of_records)
-        .exec()
+  let query = {
+    purpose: 'aggregate',
+    match: aggregateObject.findCriteria,
+    sort: {datetime: -1},
+    limit: aggregateObject.req.body.number_of_records
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 exports.surveyTemplateaggregateLimitNextPrevious = (aggregateObject) => {
-  return TemplateSurveys.aggregate([{$match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]}}, {$sort: {datetime: -1}}]).skip(aggregateObject.recordsToSkip).limit(aggregateObject.req.body.number_of_records)
-    .exec()
+  let query = {
+    purpose: 'aggregate',
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    sort: {datetime: -1},
+    skip: aggregateObject.recordsToSkip,
+    limit: aggregateObject.req.body.number_of_records
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+}
+exports.createPoll = (payload) => {
+  return callApi(`templates/poll`, 'post', payload, '', 'kiboengage')
 }
 
-exports.findOneCompanyUsersbyEmail = (req) => {
-
-   return CompanyUsers.findOne({domain_email: req.user.domain_email})
-   .exec()
-}
-exports.findOneCompanyProfiles = (req) => {
-
-  return CompanyProfile.findOne({ownerId: req.user._id})
-  .exec()
+exports.editPoll = (queryObject, updated) => {
+  let query = {
+    purpose: 'updateOne',
+    match: queryObject,
+    updated: updated
+  }
+  return callApi(`templates/poll`, 'put', query, '', 'kiboengage')
 }
 
-exports.findOneCompanyUsage = (companyUser) => {
-
-  return CompanyUsage.findOne({companyId: companyUser.companyId})
-  .exec()
+exports.editSurveys = (queryObject, updated) => {
+  let query = {
+    purpose: 'updateOne',
+    match: queryObject,
+    updated: updated
+  }
+  return callApi(`templates/survey`, 'put', query, '', 'kiboengage')
 }
 
-exports.findOnePlanUsage = (companyProfile) => {
-
-  return PlanUsage.findOne({planId: companyProfile.planId})
-  .exec()
-}
-
-exports.findOneCompanyUsersbyCompId = (companyUser) => {
-
-  return CompanyUsers.findOne({companyId: companyUser.companyId})
-  .exec()
-}
-
-exports.savePolls = (poll) => {
-
- return  poll.save()
-
-}
-
-exports.saveSurveys = (survey) => {
-
-  return  survey.save()
-
-
- }
-
- exports.createSurveys = (survey) => {
-
-   return TemplateSurveys.create(survey)
- }
-
-exports.companyUsageUpdate=(companyUser) => {
-
-   return  CompanyUsage.update({companyId: companyUser.companyId},
-    { $inc: { polls_templates: 1 } })
-    .exec()
+exports.createSurveys = (payload) => {
+  return callApi(`templates/survey`, 'post', payload, '', 'kiboengage')
 }
 
 exports.CategoryFind = (companyUser) => {
-
-  return Category.find({'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]})
-  .exec()
+  let query = {
+    purpose: 'findAll',
+    match: {'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]}
+  }
+  return callApi(`templates/category/query`, 'post', query, '', 'kiboengage')
 }
-exports.CategorySave = (category) => {
-
-  return category.save()
-
+exports.createCategory = (payload) => {
+  return callApi(`templates/category`, 'post', payload, '', 'kiboengage')
+}
+exports.editCategory = (queryObject, updated) => {
+  let query = {
+    purpose: 'updateOne',
+    match: queryObject,
+    updated: updated
+  }
+  return callApi(`templates/category`, 'put', query, '', 'kiboengage')
 }
 
 exports.findCategroryById = (req) => {
-  return Category.findById(req.body._id)
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.body._id}
+  }
+  return callApi(`templates/category/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.findSurveyById = (req) => {
-  return TemplateSurveys.find({_id: req.params.surveyid})
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.params.surveyid}
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.findQuestionById = (req) => {
-  return SurveyQuestions.find({surveyId: req.params.surveyid}).populate('surveyId')
- .exec()
+  let query = {
+    purpose: 'findAll',
+    match: {surveyId: req.params.surveyid}
+  }
+  return callApi(`templates/survey/question/query`, 'post', query, '', 'kiboengage')
 }
 
-exports.findPollById = (req) => {
-  return TemplatePolls.findOne({_id: req.params.pollid})
-  .exec()
+exports.findPollById = (id) => {
+  let query = {
+    purpose: 'findOne',
+    match: {_id: id}
+  }
+  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
 }
 
-exports.pollFindById = (req) => {
-  return TemplatePolls.findById(req.body._id)
-  .exec()
-
-}
-exports.removePoll = (poll) => {
-  return poll.remove()
+exports.removePoll = (id) => {
+  let query = {
+    purpose: 'deleteOne',
+    match: {_id: id}
+  }
+  return callApi(`templates/poll`, 'delete', query, '', 'kiboengage')
 }
 
 exports.pollCategoryById = (req) => {
-  return Category.findById(req.params.id)
-  .exec()
-
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.params.id}
+  }
+  return callApi(`templates/category/query`, 'post', query, '', 'kiboengage')
 }
 
-exports.removeCategory = (category) => {
-  return category.remove()
-
+exports.removeCategory = (id) => {
+  let query = {
+    purpose: 'deleteOne',
+    match: {_id: id}
+  }
+  return callApi(`templates/category`, 'delete', query, '', 'kiboengage')
 }
 
 exports.surveyFindById = (req) => {
-  return TemplateSurveys.findById(req.body._id)
-  .exec()
-
-}
-exports.removeSurvey = (survey) => {
-  return survey.remove()
-
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.body._id}
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 
+exports.removeSurvey = (id) => {
+  let query = {
+    purpose: 'deleteOne',
+    match: {_id: id}
+  }
+  return callApi(`templates/survey`, 'delete', query, '', 'kiboengage')
+}
 
 exports.BroadcastFindById = (req) => {
-  return TemplateBroadcasts.findById(req.params.id)
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.params.id}
+  }
+  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.broadcastFindbyId = (req) => {
-  return  TemplateBroadcasts.findById(req.body._id)
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.body._id}
+  }
+  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 
-exports.removeBroadcast = (broadcast) => {
-  return broadcast.remove()
-
+exports.removeBroadcast = (id) => {
+  let query = {
+    purpose: 'deleteOne',
+    match: {_id: id}
+  }
+  return callApi(`templates/broadcast`, 'delete', query, '', 'kiboengage')
 }
 
-exports.saveBroadcast = (broadcast) => {
+exports.createBroadcast = (payload) => {
+  return callApi(`templates/broadcast`, 'post', payload, '', 'kiboengage')
+}
 
-  return broadcast.save()
-
+exports.saveBroadcast = (queryObject, updated) => {
+  let query = {
+    purpose: 'updateOne',
+    match: queryObject,
+    updated: updated
+  }
+  return callApi(`templates/broadcast`, 'put', query, '', 'kiboengage')
 }
 
 exports.findBroadcastById = (req) => {
-  return TemplateBroadcasts.findOne({_id: req.params.broadcastid})
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.params.broadcastid}
+  }
+  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.findBotById = (req) => {
-  return TemplateBots.findOne({_id: req.params.botid})
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.params.botid}
+  }
+  return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }
 exports.BotFindById = (req) => {
-  return TemplateBots.findById(req.body._id)
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.body._id}
+  }
+  return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }
-exports.botSave = (bot) => {
-
-  return bot.save()
-  .exec()
+exports.createBot = (payload) => {
+  return callApi(`templates/bot`, 'post', payload, '', 'kiboengage')
 }
-exports.removeBot = (bot) => {
-  return bot.remove()
-  .exec()
+exports.botSave = (queryObject, updated) => {
+  let query = {
+    purpose: 'updateOne',
+    match: queryObject,
+    updated: updated
+  }
+  return callApi(`templates/bot`, 'put', query, '', 'kiboengage')
+}
+exports.removeBot = (id) => {
+  let query = {
+    purpose: 'deleteOne',
+    match: {_id: id}
+  }
+  return callApi(`templates/bot`, 'delete', query, '', 'kiboengage')
 }
 exports.botFind = (companyUser) => {
-
-  return TemplateBots.find({'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]})
-  .exec()
+  let query = {
+    purpose: 'findAll',
+    match: {'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]}
+  }
+  return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }
 exports.broadcastFind = (companyUser) => {
-
-  return TemplateBroadcasts.find({'$or': [{ companyId: companyUser.companyId}, {createdBySuperUser: true}]})
-  .exec()
+  let query = {
+    purpose: 'findAll',
+    match: {'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]}
+  }
+  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.surveyId = (req) => {
-  return TemplateSurveys.findById(req.body.survey._id)
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.body.survey._id}
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.findQuestionSurveyById = (req) => {
-  return SurveyQuestions.find({surveyId: req.body.survey._id})
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {surveyId: req.body.survey._id}
+  }
+  return callApi(`templates/survey/question/query`, 'post', query, '', 'kiboengage')
 }
 
-exports.broadcastTemplateaggregateCount = (aggregateObject) => {
-  return TemplateBroadcasts.aggregate(aggregateObject)
+exports.broadcastTemplateaggregateCount = (filter) => {
+  let query = {
+    purpose: 'aggregate',
+    match: filter,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 exports.broadcastTemplateaggregateLimit = (aggregateObject) => {
-  return TemplateBroadcasts.aggregate([{$match: aggregateObject.findCriteria}, {$sort: {datetime: -1}}]).limit(aggregateObject.req.body.number_of_records)
-  .exec()
+  let query = {
+    purpose: 'aggregate',
+    match: aggregateObject.findCriteria,
+    sort: {datetime: -1},
+    limit: aggregateObject.req.body.number_of_records
+  }
+  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
-  return TemplateBroadcasts.aggregate([{$match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]}}, {$sort: {datetime: -1}}]).skip(aggregateObject.recordsToSkip).limit(aggregateObject.req.body.number_of_records)
-   .exec()
+  let query = {
+    purpose: 'aggregate',
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    sort: {datetime: -1},
+    skip: aggregateObject.recordsToSkip,
+    limit: aggregateObject.req.body.number_of_records
+  }
+  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 
-exports.removeQuestion = (question) => {
-  return question.remove()
+exports.removeQuestion = (id) => {
+  let query = {
+    purpose: 'deleteOne',
+    match: {_id: id}
+  }
+  return callApi(`templates/survey/question`, 'delete', query, '', 'kiboengage')
 }
 
 exports.surveyFindId = (req) => {
-  return TemplateSurveys.findById(req.params.id)
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.params.id}
+  }
+  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 exports.FindByIdPoll = (req) => {
-  return TemplatePolls.findById(req.params.id)
-  .exec()
+  let query = {
+    purpose: 'findOne',
+    match: {_id: req.params.id}
+  }
+  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
 }

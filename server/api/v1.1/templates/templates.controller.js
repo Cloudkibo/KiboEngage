@@ -1,8 +1,5 @@
-const TemplatePolls = require('./pollTemplate.model')
-const TemplateBroadcasts = require('./broadcastTemplate.model')
 const SurveyQuestions = require('./surveyQuestion.model')
 const TemplateSurveys = require('./surveyTemplate.model')
-const Category = require('./category.model')
 const dataLayer = require('./template.datalayer')
 const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
@@ -25,11 +22,7 @@ exports.getAllPolls = function (req, res) {
     console.log('req.body', req.body)
     let findCriteria = logicLayer.getCriterias(req)
     console.log('findCriteria', findCriteria)
-    dataLayer.pollTemplateaggregateCount({
-      purpose: 'aggregate',
-      match: findCriteria,
-      group: { _id: null, count: { $sum: 1 } }
-    })
+    dataLayer.pollTemplateaggregateCount(findCriteria)
       .then(pollsCount => {
         console.log('pollsCount', pollsCount)
         dataLayer.pollTemplateaggregateLimit({findCriteria, req})
@@ -50,11 +43,7 @@ exports.getAllPolls = function (req, res) {
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount({
-      purpose: 'aggregate',
-      match: findCriteria,
-      group: { _id: null, count: { $sum: 1 } }
-    })
+    dataLayer.pollTemplateaggregateCount(findCriteria)
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(polls => {
@@ -73,11 +62,7 @@ exports.getAllPolls = function (req, res) {
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount({
-      purpose: 'aggregate',
-      match: findCriteria,
-      group: { _id: null, count: { $sum: 1 } }
-    })
+    dataLayer.pollTemplateaggregateCount(findCriteria)
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(polls => {
@@ -99,10 +84,7 @@ exports.getAllPolls = function (req, res) {
 exports.getAllSurveys = function (req, res) {
   if (req.body.first_page === 'first') {
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.surveyTemplateaggregateCount([
-      { $match: findCriteria },
-      { $group: { _id: null, count: { $sum: 1 } } }
-    ])
+    dataLayer.surveyTemplateaggregateCount(findCriteria)
       .then(surveysCount => {
         dataLayer.surveyTemplateaggregateLimit({findCriteria, req})
           .then(surveys => {
@@ -121,10 +103,7 @@ exports.getAllSurveys = function (req, res) {
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.surveyTemplateaggregateCount([
-      { $match: findCriteria },
-      { $group: { _id: null, count: { $sum: 1 } } }
-    ])
+    dataLayer.surveyTemplateaggregateCount(findCriteria)
       .then(surveysCount => {
         dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(surveys => {
@@ -142,10 +121,7 @@ exports.getAllSurveys = function (req, res) {
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.surveyTemplateaggregateCount([
-      { $match: findCriteria },
-      { $group: { _id: null, count: { $sum: 1 } } }
-    ])
+    dataLayer.surveyTemplateaggregateCount(findCriteria)
       .then(surveysCount => {
         dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(surveys => {
@@ -183,16 +159,13 @@ exports.createPoll = function (req, res) {
     options: req.body.options,
     category: req.body.category
   }
-  const poll = new TemplatePolls(pollPayload)
-
   // save model to MongoDB
-  dataLayer.savePolls(poll)
+  dataLayer.createPoll(pollPayload)
     .then(pollCreated => {
       res.status(201).json({status: 'success', payload: pollCreated})
-    }
-    )
+    })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload:  'failed to saved polls'})
+      return res.status(500).json({status: `failed ${err}`, payload: 'failed to saved polls'})
     })
 }
 exports.createSurvey = function (req, res) {
@@ -265,8 +238,7 @@ exports.createCategory = function (req, res) {
       if (req.user.isSuperUser) {
         categoryPayload.createdBySuperUser = true
       }
-      const category = new Category(categoryPayload)
-      dataLayer.CategorySave(category)
+      dataLayer.createCategory(categoryPayload)
         .then(categoryCreated => {
           res.status(201).json({
             status: 'success',
@@ -283,23 +255,15 @@ exports.createCategory = function (req, res) {
 }
 
 exports.editCategory = function (req, res) {
-  dataLayer.findCategroryById(req)
-    .then(category => {
-      if (!category) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
-      }
-      category.name = req.body.name
-      dataLayer.CategorySave(category)
-        .then(categoryCreated => {
-          res.status(201).json({
-            status: 'success',
-            payload: categoryCreated
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: err})
-        })
+  let payload = {
+    name: req.body.name
+  }
+  dataLayer.editCategory({_id: req.body._id}, payload)
+    .then(categoryCreated => {
+      res.status(201).json({
+        status: 'success',
+        payload: categoryCreated
+      })
     })
     .catch(err => {
       return res.status(500).json({status: `failed ${err}`, payload: err})
@@ -331,7 +295,7 @@ exports.surveyDetails = function (req, res) {
     })
 }
 exports.pollDetails = function (req, res) {
-  dataLayer.findPollById(req)
+  dataLayer.findPollById(req.params.pollid)
     .then(poll => {
       if (!poll) {
         return res.status(404).json({
@@ -353,7 +317,7 @@ exports.deletePoll = function (req, res) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      dataLayer.removePoll(poll)
+      dataLayer.removePoll(req.params.id)
         .then(success => {
           return res.status(500).json({status: 'success'})
         })
@@ -375,7 +339,7 @@ exports.deleteCategory = function (req, res) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      dataLayer.removeCategory(category)
+      dataLayer.removeCategory(req.params.id)
         .then(success => {
           return res.status(500).json({status: 'success'})
         })
@@ -397,7 +361,7 @@ exports.deleteSurvey = function (req, res) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      dataLayer.removeSurvey(survey)
+      dataLayer.removeSurvey(req.params.id)
         .then(success => {
           return res.status(500).json({status: 'success'})
         })
@@ -416,17 +380,18 @@ exports.editSurvey = function (req, res) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      survey.title = req.body.survey.title
-      survey.description = req.body.survey.description
-      survey.category = req.body.survey.category
-      console.log('saveSurvey')
-      dataLayer.saveSurveys(survey)
+      let payload = {
+        title: req.body.survey.title,
+        description: req.body.survey.description,
+        category: req.body.survey.category
+      }
+      dataLayer.editSurvey({_id: req.body.survey._id}, payload)
         .then(success => {
           dataLayer.findQuestionSurveyById(req)
             .then(questions => {
               console.log('questions')
               for (let i = 0; i < questions.length; i++) {
-                dataLayer.removeQuestion(questions[i])
+                dataLayer.removeQuestion(questions[i]._id)
                   .then(success => {})
                   .catch(err => {
                     return res.status(500).json({status: `failed ${err}`, payload: 'remove question'})
@@ -463,17 +428,19 @@ exports.editSurvey = function (req, res) {
 }
 
 exports.editPoll = function (req, res) {
-  dataLayer.pollFindById(req)
+  dataLayer.findPollById(req.body._id)
     .then(poll => {
       if (!poll) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      poll.title = req.body.title
-      poll.statement = req.body.statement
-      poll.options = req.body.options
-      poll.category = req.body.category
-      dataLayer.savePolls(poll)
+      let payload = {
+        title: req.body.title,
+        statement: req.body.statement,
+        options: req.body.options,
+        category: req.body.category
+      }
+      dataLayer.editPoll({id: req.body._id}, payload)
         .then(success => {
           res.status(201).json({
             status: 'success',
@@ -514,8 +481,7 @@ exports.createBroadcast = function (req, res) {
                     broadcastPayload.createdBySuperUser = true
                   }
                   console.log('broadcastPayload',broadcastPayload)
-                  const broadcast = new TemplateBroadcasts(broadcastPayload)
-                  dataLayer.saveBroadcast(broadcast)
+                  dataLayer.createBroadcast(broadcastPayload)
                     .then(broadcastCreated => {
                       console.log('broadcastCreated')
                       if (!req.user.isSuperUser) {
@@ -579,11 +545,7 @@ exports.allBroadcasts = function (req, res) {
 exports.getAllPolls = function (req, res) {
   if (req.body.first_page === 'first') {
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount({
-      purpose: 'aggregate',
-      match: findCriteria,
-      group: { _id: null, count: { $sum: 1 } }
-    })
+    dataLayer.pollTemplateaggregateCount(findCriteria)
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimit({findCriteria, req})
           .then(polls => {
@@ -602,11 +564,7 @@ exports.getAllPolls = function (req, res) {
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount({
-      purpose: 'aggregate',
-      match: findCriteria,
-      group: { _id: null, count: { $sum: 1 } }
-    })
+    dataLayer.pollTemplateaggregateCount(findCriteria)
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(polls => {
@@ -625,11 +583,7 @@ exports.getAllPolls = function (req, res) {
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount({
-      purpose: 'aggregate',
-      match: findCriteria,
-      group: { _id: null, count: { $sum: 1 } }
-    })
+    dataLayer.pollTemplateaggregateCount(findCriteria)
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(polls => {
@@ -671,10 +625,7 @@ exports.getAllBroadcasts = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
-        dataLayer.broadcastTemplateaggregateCount([
-          { $match: findCriteria },
-          { $group: { _id: null, count: { $sum: 1 } } }
-        ])
+        dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
               .then(broadcasts => {
@@ -694,10 +645,7 @@ exports.getAllBroadcasts = function (req, res) {
       } else if (req.body.first_page === 'next') {
         let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
         let findCriteria = logicLayer.getCriteriasBroadcast(req)
-        dataLayer.broadcastTemplateaggregateCount([
-          { $match: findCriteria },
-          { $group: { _id: null, count: { $sum: 1 } } }
-        ])
+        dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
               .then(broadcasts => {
@@ -716,10 +664,7 @@ exports.getAllBroadcasts = function (req, res) {
       } else if (req.body.first_page === 'previous') {
         let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
         let findCriteria = logicLayer.getCriteriasBroadcast(req)
-        dataLayer.broadcastTemplateaggregateCount([
-          { $match: findCriteria },
-          { $group: { _id: null, count: { $sum: 1 } } }
-        ])
+        dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
               .then(broadcasts => {
@@ -769,10 +714,12 @@ exports.editBroadcast = function (req, res) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      broadcast.title = req.body.title
-      broadcast.payload = req.body.payload
-      broadcast.category = req.body.category
-      dataLayer.saveBroadcast(broadcast)
+      let payload = {
+        title: req.body.title,
+        payload: req.body.payload,
+        category: req.body.category
+      }
+      dataLayer.saveBroadcast({_id: req.body._id}, payload)
         .then(success => {
           res.status(201).json({status: 'success', payload: broadcast})
         })
@@ -812,7 +759,7 @@ exports.createBotTemplate = function (req, res) {
       if (req.user.isSuperUser) {
         botTemplatePayload.createdBySuperUser = true
       }
-      dataLayer.botSave(botTemplatePayload)
+      dataLayer.createBot(botTemplatePayload)
         .then(botTemplateCreated => {
           res.status(200).json({
             status: 'success',
@@ -860,7 +807,7 @@ exports.deleteBot = function (req, res) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      dataLayer.removeBot(botFound)
+      dataLayer.removeBot(req.body._id)
         .then(success => {
           return res.status(500).json({status: 'success'})
         })
@@ -878,10 +825,12 @@ exports.editBot = function (req, res) {
         return res.status(404)
           .json({status: 'failed', description: 'Record not found'})
       }
-      botTemplateFound.title = req.body.title
-      botTemplateFound.payload = req.body.payload
-      botTemplateFound.category = req.body.category
-      dataLayer.botSave(botTemplateFound)
+      let payload = {
+        title: req.body.title,
+        payload: req.body.payload,
+        category: req.body.category
+      }
+      dataLayer.botSave({_id: req.body._id}, payload)
         .then(success => {
           res.status(201).json({
             status: 'success',
