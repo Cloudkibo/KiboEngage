@@ -1,6 +1,5 @@
 const Surveys = require('./surveys.model')
 
-
 exports.findOneSurvey = (id) => {
   return Surveys.find({_id: id}).populate('userId companyId')
     .exec()
@@ -16,7 +15,6 @@ exports.genericUpdateForSurvey = (query, updated, options) => {
     .exec()
 }
 
-
 exports.aggregateForSurveys = (query) => {
   return Surveys.aggregate(query)
     .exec()
@@ -29,7 +27,7 @@ exports.surveyFind = () => {
 
 exports.findServeyById = (req) => {
   return Surveys.findById(req.body.survey._id)
-  .exec()
+    .exec()
 }
 
 exports.save = (survey) => {
@@ -38,7 +36,7 @@ exports.save = (survey) => {
 
 exports.findByIdPopulate = (req) => {
   return Surveys.findById(req.params.id)
-  .exec()
+    .exec()
 }
 
 exports.surveyFindById = () => {
@@ -51,10 +49,9 @@ exports.removeSurvey = (survey) => {
 }
 
 exports.findQuestionSurveyById = (survey) => {
-  return  Surveys.findOne({_id: survey._id})
-  .exec()
+  return Surveys.findOne({_id: survey._id})
+    .exec()
 }
-
 
 exports.genericFindForSurvey = (query) => {
   return Surveys.find(query)
@@ -76,10 +73,10 @@ exports.createSurvey = (survey) => {
   return obj.save()
 }
 exports.QuestionfindSurveyById = (req) => {
-  return   Surveys.findOne({_id: req.body._id})
-  .exec()
+  return Surveys.findOne({_id: req.body._id})
+    .exec()
 }
 exports.findServeyId = (req) => {
-   return Surveys.findById(req.params.id)
-  .exec()
+  return Surveys.findById(req.params.id)
+    .exec()
 }

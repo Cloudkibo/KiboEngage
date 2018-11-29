@@ -19,6 +19,9 @@ const all = {
 
   ip: process.env.IP || undefined,
 
+   // List of user roles, NOTE: don't change the order
+  userRoles: ['buyer', 'admin', 'supervisor', 'agent'],
+
   domain: `${process.env.DOMAIN || 'project domain'}`,
 
   // Mongo Options

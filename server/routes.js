@@ -4,6 +4,7 @@ module.exports = function (app) {
   const env = app.get('env')
   // API middlewares go here
   app.use('/api/v1/test', require('./api/v1/test'))
+  app.use('/api/api_settings', require('./api/v1/api_settings'))
   app.use('/api/messengerEvents', require('./api/v1/messengerEvents'))
   app.use('/api/automationQueue', require('./api/v1/automationQueue'))
   app.use('/api/autoposting', require('./api/v1/autoposting'))
@@ -36,6 +37,7 @@ module.exports = function (app) {
   app.use('/api/post', require('./api/v1/commentCapture'))
   app.use('/api/templates', require('./api/v1/templates'))
   app.use('/api/wordpressEvents', require('./api/v1/wordpressEvents'))
+  app.use('/api/reset_password', require('./api/v1/passwordresettoken'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))

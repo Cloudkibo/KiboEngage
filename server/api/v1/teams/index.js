@@ -10,7 +10,7 @@ router.get('/',
   auth.isAuthenticated(),
   controller.index)
 
-router.get('/create',
+router.post('/create',
   auth.isAuthenticated(),
   validate({body: validationSchema.teamPayload}),
   controller.createTeam)
