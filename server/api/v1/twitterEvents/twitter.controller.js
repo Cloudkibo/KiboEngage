@@ -5,7 +5,7 @@ const utility = require('../utility')
 let broadcastUtility = require('../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
-const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
+const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
 let request = require('request')
 let _ = require('lodash')
 const config = require('../../../config/environment/index')
@@ -116,6 +116,24 @@ exports.twitterwebhook = function (req, res) {
                                 if (isLastMessage) {
                                   logger.serverLog(TAG, 'inside autoposting send')
                                   sendAutopostingMessage(messageData, page, savedMsg)
+                                  let newAutoPostingSubscriberMsg = {
+                                    pageId: page.pageId,
+                                    companyId: postingItem.companyId,
+                                    autopostingId: postingItem._id,
+                                    autoposting_messages_id: savedMsg._id,
+                                    subscriberId: subscriber.senderId
+                                  }
+                                  AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                    .then(result => {
+                                      logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                      return res.status(200).json({
+                                        status: 'success',
+                                        description: `Twitter Broadcast Message Sent`
+                                      })
+                                    })
+                                    .catch(err => {
+                                      if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                    })
                                 } else {
                                   // Logic to add into queue will go here
                                   logger.serverLog(TAG, 'inside adding autoposting-twitter to autoposting queue')
@@ -134,6 +152,24 @@ exports.twitterwebhook = function (req, res) {
                                         status: 'success',
                                         description: 'Automation Queue autoposting-twitter Message created'
                                       })
+                                      let newAutoPostingSubscriberMsg = {
+                                        pageId: page.pageId,
+                                        companyId: postingItem.companyId,
+                                        autopostingId: postingItem._id,
+                                        autoposting_messages_id: savedMsg._id,
+                                        subscriberId: subscriber.senderId
+                                      }
+                                      AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                        .then(result => {
+                                          logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                          return res.status(200).json({
+                                            status: 'success',
+                                            description: `Twitter Broadcast Message Sent`
+                                          })
+                                        })
+                                        .catch(err => {
+                                          if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                        })
                                     })
                                     .catch(error => {
                                       if (error) {
@@ -195,6 +231,24 @@ exports.twitterwebhook = function (req, res) {
                                     if (isLastMessage) {
                                       logger.serverLog(TAG, 'inside autoposting autoposting twitter send')
                                       sendAutopostingMessage(messageData, page, savedMsg)
+                                      let newAutoPostingSubscriberMsg = {
+                                        pageId: page.pageId,
+                                        companyId: postingItem.companyId,
+                                        autopostingId: postingItem._id,
+                                        autoposting_messages_id: savedMsg._id,
+                                        subscriberId: subscriber.senderId
+                                      }
+                                      AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                        .then(result => {
+                                          logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                          return res.status(200).json({
+                                            status: 'success',
+                                            description: `Twitter Broadcast Message Sent`
+                                          })
+                                        })
+                                        .catch(err => {
+                                          if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                        })
                                     } else {
                                       // Logic to add into queue will go here
                                       logger.serverLog(TAG, 'inside adding to autoposting queue')
@@ -212,6 +266,24 @@ exports.twitterwebhook = function (req, res) {
                                             status: 'status',
                                             description: 'Automation queue object saved'
                                           })
+                                          let newAutoPostingSubscriberMsg = {
+                                            pageId: page.pageId,
+                                            companyId: postingItem.companyId,
+                                            autopostingId: postingItem._id,
+                                            autoposting_messages_id: savedMsg._id,
+                                            subscriberId: subscriber.senderId
+                                          }
+                                          AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                            .then(result => {
+                                              logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                              return res.status(200).json({
+                                                status: 'success',
+                                                description: `Twitter Broadcast Message Sent`
+                                              })
+                                            })
+                                            .catch(err => {
+                                              if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                            })
                                         })
                                         .catch(err => {
                                           return res.status(500).json({
@@ -229,20 +301,6 @@ exports.twitterwebhook = function (req, res) {
                                   })
                                 })
                             }
-                            let newAutoPostingSubscriberMsg = {
-                              pageId: page.pageId,
-                              companyId: postingItem.companyId,
-                              autopostingId: postingItem._id,
-                              autoposting_messages_id: savedMsg._id,
-                              subscriberId: subscriber.senderId
-                            }
-                            AutoPostingMessage.createAutopostingMessage(newAutoPostingSubscriberMsg)
-                              .then(result => {
-                                logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                              })
-                              .catch(err => {
-                                if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
-                              })
                           })
                         })
                       })
