@@ -28,13 +28,10 @@ exports.findAutoposting = function (req, res) {
 }
 
 exports.twitterwebhook = function (req, res) {
-  res.status(200).json({
-    status: 'success',
-    description: `received the payload`
-  })
-  logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
+  // logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
+      console.log('AutoPostings', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
           companyId: postingItem.companyId._id,
@@ -51,6 +48,7 @@ exports.twitterwebhook = function (req, res) {
         }
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
+            console.log('Pages', pages)
             pages.forEach(page => {
               let subscriberFindCriteria = {
                 pageId: page._id,
@@ -77,6 +75,7 @@ exports.twitterwebhook = function (req, res) {
               }
               utility.callApi('subscribers/query', 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
+                  console.log('Subscribers', subscribers)
                   if (subscribers.length > 0) {
                     let newMsg = {
                       pageId: page._id,
@@ -90,6 +89,7 @@ exports.twitterwebhook = function (req, res) {
                     }
                     AutoPosting.createAutopostingObject(newMsg)
                       .then(savedMsg => {
+                        console.log('Saved Message', savedMsg)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
@@ -286,6 +286,7 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
+      console.log('Response from facebook', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send tweet broadcast ${JSON.stringify(
