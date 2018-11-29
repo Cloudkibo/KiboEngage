@@ -29,6 +29,7 @@ exports.findAutoposting = function (req, res) {
 
 exports.twitterwebhook = function (req, res) {
   // logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
+  console.log('Request Headers', req.headers.authorization)
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
       console.log('AutoPostings', autopostings)
