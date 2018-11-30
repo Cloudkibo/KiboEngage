@@ -205,7 +205,8 @@ exports.preparePollPagePayload = function (page, user, companyUser, body, subscr
     companyId: companyUser.companyId,
     subscriberId: subscriber.senderId,
     pollId: id,
-    seen: false
+    seen: false,
+    sent: false
   }
   return pollBroadcast
 }

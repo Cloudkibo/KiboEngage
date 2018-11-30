@@ -40,7 +40,7 @@ exports.getAllPolls = function (req, res) {
             })
           })
           .catch(err => {
-            return res.status(500).json({status: `failed ${err}` , payload: ` ${JSON.stringify(error)}`})
+            return res.status(500).json({status: `failed ${err}`, payload: ` ${JSON.stringify(error)}`})
           })
       })
       .catch(err => {
@@ -84,7 +84,7 @@ exports.getAllPolls = function (req, res) {
             })
           })
           .catch(error => {
-            return res.status(500).json({status: `failed ${error}`,payload: ` ${JSON.stringify(error)}`})
+            return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
           })
       })
       .catch(error => {
@@ -189,7 +189,7 @@ exports.createPoll = function (req, res) {
     }
     )
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload:  'failed to saved polls'})
+      return res.status(500).json({status: `failed ${err}`, payload: 'failed to saved polls'})
     })
 }
 exports.createSurvey = function (req, res) {
@@ -211,8 +211,8 @@ exports.createSurvey = function (req, res) {
           surveyId: survey._id
         })
         QuestionsurveydataLayer.createQuestionSurveys(surveyQuestion)
-          .then(question1=> {
-          }) 
+          .then(question1 => {
+          })
           .catch(err => {
             return res.status(500).json({status: `failed ${err}`, payload: err})
           })
@@ -271,11 +271,11 @@ exports.createCategory = function (req, res) {
           })
         })
         .catch(err => {
-          return res.status(500).json({status:  `failed ${err}`, payload: 'failed due to save category'})
+          return res.status(500).json({status: `failed ${err}`, payload: 'failed due to save category'})
         })
     })
     .catch(err => {
-      return res.status(500).json({status:  `failed ${err}`, payload: 'failed due to fetch user'})
+      return res.status(500).json({status: `failed ${err}`, payload: 'failed due to fetch user'})
     })
 }
 
@@ -335,7 +335,7 @@ exports.pollDetails = function (req, res) {
           status: 'failed',
           description: `survey not found.`
         })
-      }  
+      }
       return res.status(200).json({status: 'success', payload: poll})
     })
     .catch(err => {
@@ -378,12 +378,12 @@ exports.deleteCategory = function (req, res) {
         })
         .catch(error => {
           return res.status(500)
-            .json({status: `failed ${error}` , description: 'error in remove category'})
+            .json({status: `failed ${error}`, description: 'error in remove category'})
         })
     })
     .catch(error => {
       return res.status(500)
-        .json({status: `failed ${error}` , description: 'error in pollCategoryById'})
+        .json({status: `failed ${error}`, description: 'error in pollCategoryById'})
     })
 }
 
@@ -489,7 +489,7 @@ exports.editPoll = function (req, res) {
 exports.createBroadcast = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser',companyUser)
+      console.log('companyUser', companyUser)
       callApi.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
@@ -497,8 +497,8 @@ exports.createBroadcast = function (req, res) {
               planUsage = planUsage[0]
               callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
-                  console.log('planUsage',planUsage)
-                  console.log('companyUsage',companyUsage)
+                  console.log('planUsage', planUsage)
+                  console.log('companyUsage', companyUsage)
                   companyUsage = companyUsage[0]
                   if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                     return res.status(500).json({
@@ -506,11 +506,11 @@ exports.createBroadcast = function (req, res) {
                       description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
                     })
                   }
-                  let broadcastPayload = logicLayer.createDataBroadcast(req,companyUser)
+                  let broadcastPayload = logicLayer.createDataBroadcast(req, companyUser)
                   if (req.user.isSuperUser) {
                     broadcastPayload.createdBySuperUser = true
                   }
-                  console.log('broadcastPayload',broadcastPayload)
+                  console.log('broadcastPayload', broadcastPayload)
                   const broadcast = new TemplateBroadcasts(broadcastPayload)
                   dataLayer.saveBroadcast(broadcast)
                     .then(broadcastCreated => {
@@ -519,7 +519,6 @@ exports.createBroadcast = function (req, res) {
                         callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
                           .then(update => {
                             console.log('update company')
-                            
                           })
                           .catch(err => {
                             return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
@@ -680,7 +679,6 @@ exports.getAllBroadcasts = function (req, res) {
               .catch(err => {
                 return res.status(500).json({status: 'failed', payload: err})
               })
-         
           })
           .catch(err => {
             return res.status(500).json({status: 'failed', payload: err})
@@ -729,7 +727,6 @@ exports.getAllBroadcasts = function (req, res) {
           .catch(err => {
             return res.status(500).json({status: 'failed', payload: err})
           })
-
       }
     })
 }

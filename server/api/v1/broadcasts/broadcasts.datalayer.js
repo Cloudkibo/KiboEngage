@@ -14,18 +14,18 @@ exports.createForBroadcast = (payload) => {
 }
 
 exports.countBroadcasts = (query) => {
-    return Broadcasts.count(query)
-        .exec()
+  return Broadcasts.count(query)
+    .exec()
 }
 
 exports.updateBroadcast = (query) => {
-    return Broadcasts.update(query)
-        .exec()
+  return Broadcasts.update(query)
+    .exec()
 }
 
 exports.findBroadcastsWithSortLimit = (query, sort, limit) => {
-    return Broadcasts.find(query)
-        .sort(sort)
-        .limit(limit)
-        .exec()
+  return Broadcasts.find(query)
+    .sort(sort)
+    .limit(limit)
+    .exec()
 }

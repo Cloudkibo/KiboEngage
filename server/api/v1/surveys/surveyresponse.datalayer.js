@@ -16,15 +16,13 @@ exports.aggregateForSurveyResponse = (query) => {
 
 exports.findSurveyResponseById = (req) => {
   return SurveyResponse.find({surveyId: req.params.id})
-  .exec()
+    .exec()
 }
 exports.removeResponse = (Response) => {
-
   return Response.remove()
 }
 
 exports.saveResponse = (Response) => {
-
   return Response.save()
-  .exec()
+    .exec()
 }
