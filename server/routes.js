@@ -39,6 +39,8 @@ module.exports = function (app) {
   app.use('/api/wordpressEvents', require('./api/v1/wordpressEvents'))
   app.use('/api/reset_password', require('./api/v1/passwordresettoken'))
   app.use('/api/messenger_code', require('./api/v1/messenger_code'))
+  app.use('/api/scripts', require('./api/scripts'))
+  app.use('/api/api_ngp', require('./api/v1/api_ngp'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))

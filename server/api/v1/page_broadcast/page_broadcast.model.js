@@ -14,6 +14,7 @@ const broadcastSchema = new Schema({
   broadcastId: { type: Schema.ObjectId, ref: 'broadcasts' },
   datetime: { type: Date, default: Date.now },
   seen: {type: Boolean},
+  sent: {type: Boolean},
   clicked: {type: Boolean}
 })
 
