@@ -5,6 +5,7 @@ const utility = require('../utility')
 let broadcastUtility = require('../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
+const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
 let request = require('request')
 let _ = require('lodash')
@@ -29,10 +30,8 @@ exports.findAutoposting = function (req, res) {
 
 exports.twitterwebhook = function (req, res) {
   // logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
-  console.log('Request Headers', req.headers.authorization)
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
-      console.log('AutoPostings', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
           companyId: postingItem.companyId._id,
@@ -49,7 +48,6 @@ exports.twitterwebhook = function (req, res) {
         }
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
-            console.log('Pages', pages)
             pages.forEach(page => {
               let subscriberFindCriteria = {
                 pageId: page._id,
@@ -76,7 +74,6 @@ exports.twitterwebhook = function (req, res) {
               }
               utility.callApi('subscribers/query', 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
-                  console.log('Subscribers', subscribers)
                   if (subscribers.length > 0) {
                     let newMsg = {
                       pageId: page._id,
@@ -88,12 +85,10 @@ exports.twitterwebhook = function (req, res) {
                       seen: 0,
                       clicked: 0
                     }
-                    AutoPosting.createAutopostingObject(newMsg)
+                    AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
-                        console.log('Saved Message', savedMsg)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
                           taggedSubscribers.forEach(subscriber => {
-                            console.log('Tagged Subscriber', subscriber)
                             let messageData = {}
                             if (!req.body.entities.media) { // (tweet.entities.urls.length === 0 && !tweet.entities.media) {
                               messageData = {
@@ -106,14 +101,12 @@ exports.twitterwebhook = function (req, res) {
                                   'metadata': 'This is a meta data for tweet'
                                 })
                               }
-                              console.log('Message Data', messageData)
                               // Logic to control the autoposting when last activity is less than 30 minutes
                               compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                 if (err) {
                                   logger.serverLog(TAG, 'inside error')
                                   return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                 }
-                                console.log('Is Last Message', isLastMessage)
                                 if (isLastMessage) {
                                   logger.serverLog(TAG, 'inside autoposting send')
                                   sendAutopostingMessage(messageData, page, savedMsg)

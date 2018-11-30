@@ -15,14 +15,12 @@ function validateUrl (str) {
 }
 
 function checkLastMessageAge (subscriberId, req, callback) {
-  console.log('Token', req.headers.authorization)
   utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId }, req.headers.authorization)
     .then(subscribers => {
-      console.log('Subscribers', subscribers)
       var subscriber = subscribers[0]
       utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
-        .then(session => {
-          console.log('sessionsFound', session)
+        .then(sessions => {
+          var session = sessions[0]
           if (session && session.agent_activity_time) {
             let lastActivity = new Date(session.agent_activity_time)
             let inMiliSeconds = Date.now() - lastActivity

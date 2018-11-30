@@ -75,7 +75,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                             if (event.value.item === 'status' || status) {
                               messageData = autopostingLogicLayer(subscriber, event)
                               // Logic to control the autoposting when last activity is less than 30 minutes
-                              compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                              compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                 if (err) {
                                   logger.serverLog(TAG, 'inside error')
                                   return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -107,7 +107,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                                   let newURL = config.domain + '/api/URL/' + savedurl._id
                                   messageData = autopostingLogicLayer.prepareMessageDataForShare(subscriber, event, newURL)
                                   // Logic to control the autoposting when last activity is less than 30 minutes
-                                  compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                                  compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                     if (err) {
                                       logger.serverLog(TAG, 'inside error')
                                       return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -142,7 +142,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                                   let newURL = config.domain + '/api/URL/' + savedurl._id
                                   messageData = AutoPostingDataLayer.prepareMessageDataForImage(subscriber, event, newURL)
                                   // Logic to control the autoposting when last activity is less than 30 minutes
-                                  compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                                  compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                     if (err) {
                                       logger.serverLog(TAG, 'inside error')
                                       return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -168,7 +168,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                             } else if (event.value.item === 'video') {
                               messageData = autopostingLogicLayer.prepareMessageDataForVideo(subscriber, event)
                               // Logic to control the autoposting when last activity is less than 30 minutes
-                              compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                              compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                 if (err) {
                                   logger.serverLog(TAG, 'inside error')
                                   return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
