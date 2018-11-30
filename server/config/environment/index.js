@@ -19,7 +19,7 @@ const all = {
 
   ip: process.env.IP || undefined,
 
-   // List of user roles, NOTE: don't change the order
+  // List of user roles, NOTE: don't change the order
   userRoles: ['buyer', 'admin', 'supervisor', 'agent'],
 
   domain: `${process.env.DOMAIN || 'project domain'}`,
@@ -49,7 +49,7 @@ const all = {
 
   WEBHOOKS_URL: process.env.NODE_ENV === 'production' ? 'https://webhook.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://swebhook.cloudkibo.com/api' : 'http://localhost:3002/api',
   DBLAYER_URL_KIBOCHAT: process.env.NODE_ENV === 'production' ? 'https://dblayer-kibochat.cloudkibo.com/api/v1/' : process.env.NODE_ENV === 'staging' ? 'https://dblayer-skibochat.cloudkibo.com/api/v1/' : 'http://localhost:3000/api/v1/',
-  DBLAYER_URL_KIBOENGAGE: process.env.NODE_ENV === 'production' ? 'https://dblayer-kiboengage.cloudkibo.com/api/v1/' : process.env.NODE_ENV === 'staging' ? 'https://dblayer-skiboengage.cloudkibo.com/api/v1/' : 'http://localhost:3000/api/v1/',
+  DBLAYER_URL_KIBOENGAGE: process.env.NODE_ENV === 'production' ? 'https://dblayer-kiboengage.cloudkibo.com/api/v1/' : process.env.NODE_ENV === 'staging' ? 'https://dblayer-skiboengage.cloudkibo.com/api/v1/' : 'http://localhost:3000/api/v1/'
 }
 
 module.exports = _.merge(

@@ -43,7 +43,7 @@ exports.getCriterias = function (body, companyUser) {
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
   return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
-  }
+}
 
 exports.createSurveyPayload = function (req, companyUser) {
   let surveyPayload = {
@@ -78,10 +78,9 @@ exports.createSurveyPayload = function (req, companyUser) {
       : null
   }
   return surveyPayload
-  }
+}
 
 exports.pageFindCriteria = function (req, companyUser) {
-
   let pagesFindCriteria = {companyId: companyUser.companyId, connected: true}
   if (req.body.isSegmented) {
     if (req.body.segmentationPageIds.length > 0) {
@@ -93,4 +92,4 @@ exports.pageFindCriteria = function (req, companyUser) {
     }
   }
   return pagesFindCriteria
-  }
+}

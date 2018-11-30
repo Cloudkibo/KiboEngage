@@ -19,9 +19,8 @@ exports.removeSurvey = (surveypage) => {
   return surveypage.remove()
 }
 
-exports.savePage= (surveypage) => {
+exports.savePage = (surveypage) => {
   return surveypage.save()
-  
 }
 
 exports.createForSurveyPage = (payload) => {

@@ -11,18 +11,16 @@ exports.removeSurvey = (survey) => {
 
 exports.findSurveyWithId = (survey) => {
   return SurveyQuestions.find({surveyId: survey._id}).populate('surveyId')
-  .exec()
+    .exec()
 }
 
 exports.saveQuestion = (surveyQuestion) => {
   return surveyQuestion.save()
-
 }
 
-exports.findSurveyQuestionById = (req)  => {
+exports.findSurveyQuestionById = (req) => {
   return SurveyQuestions.find({surveyId: req.params.id})
-  .exec()
-
+    .exec()
 }
 
 exports.removeQuestion = (surveyquestion) => {
@@ -31,12 +29,12 @@ exports.removeQuestion = (surveyquestion) => {
 
 exports.findQuestionSurveyById = (req) => {
   return SurveyQuestions.find({surveyId: req.body._id})
-  .populate('surveyId')
-  .exec()
+    .populate('surveyId')
+    .exec()
 }
 
 exports.QuestionFindSurveyById = (survey) => {
   return SurveyQuestions.find({surveyId: survey._id})
-  .populate('surveyId')
-  .exec()
+    .populate('surveyId')
+    .exec()
 }

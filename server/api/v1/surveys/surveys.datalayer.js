@@ -41,7 +41,7 @@ exports.findByIdPopulate = (req) => {
 
 exports.surveyFindById = () => {
   return Surveys.findById(req.params.id)
-  .exec()
+    .exec()
 }
 
 exports.removeSurvey = (survey) => {

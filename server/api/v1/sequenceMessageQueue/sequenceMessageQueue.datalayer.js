@@ -14,7 +14,7 @@ exports.findAll = () => {
 }
 exports.deleteOneObject = (id) => {
   return SequenceMessageQueue.delete({_id: id})
-  .exec()
+    .exec()
 }
 exports.genericUpdate = (query, updated, options) => {
   return SequenceMessageQueue.update(query, updated, options)
