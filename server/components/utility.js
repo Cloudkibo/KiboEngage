@@ -21,8 +21,9 @@ function checkLastMessageAge (subscriberId, req, callback) {
       console.log('Subscribers', subscribers)
       var subscriber = subscribers[0]
       utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
-        .then(session => {
-          console.log('sessionsFound', session)
+        .then(sessions => {
+          console.log('sessionsFound', sessions)
+          var session = sessions[0]
           if (session && session.agent_activity_time) {
             let lastActivity = new Date(session.agent_activity_time)
             let inMiliSeconds = Date.now() - lastActivity

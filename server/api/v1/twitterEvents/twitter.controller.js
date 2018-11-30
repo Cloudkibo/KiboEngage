@@ -5,6 +5,7 @@ const utility = require('../utility')
 let broadcastUtility = require('../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
+const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
 let request = require('request')
 let _ = require('lodash')
@@ -88,7 +89,7 @@ exports.twitterwebhook = function (req, res) {
                       seen: 0,
                       clicked: 0
                     }
-                    AutoPosting.createAutopostingObject(newMsg)
+                    AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
                         console.log('Saved Message', savedMsg)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
