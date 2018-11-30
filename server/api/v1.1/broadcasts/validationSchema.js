@@ -66,7 +66,7 @@ exports.editButtonPayload = {
       'type': 'string'
     },
     'id': {
-      'type': 'string'
+      'type': 'integer'
     }
   },
   'required': [
