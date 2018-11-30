@@ -15,7 +15,7 @@ router.post('/create',
   validate({body: validationSchema.teamPayload}),
   controller.createTeam)
 
-router.get('/update',
+router.post('/update',
   auth.isAuthenticated(),
   validate({body: validationSchema.teamUpdatePayload}),
   controller.updateTeam)
@@ -24,12 +24,12 @@ router.delete('/delete/:id',
   auth.isAuthenticated(),
   controller.deleteTeam)
 
-router.get('/addAgent',
+router.post('/addAgent',
   auth.isAuthenticated(),
   validate({body: validationSchema.agentPayload}),
   controller.addAgent)
 
-router.get('/addPage',
+router.post('/addPage',
   auth.isAuthenticated(),
   validate({body: validationSchema.pagePayload}),
   controller.addPage)
