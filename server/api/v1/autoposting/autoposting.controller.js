@@ -2,6 +2,11 @@ const AutopostingDataLayer = require('./autoposting.datalayer')
 const AutoPostingLogicLayer = require('./autoposting.logiclayer')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
+const config = require('./../../../config/environment')
+
+const fs = require('fs')
+
+const TAG = 'server/api/v1/autoposting/autoposting.controller.js'
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -32,6 +37,29 @@ exports.index = function (req, res) {
         description: `Internal Server Error ${JSON.stringify(err)}`
       })
     })
+}
+
+exports.getPlugin = function (req, res) {
+  logger.serverLog(TAG, 'Hit the getPlugin Endpoint')
+
+  let plguinPath = `${config.root}/plugins/HookPress.zip`
+  logger.serverLog(TAG, `${plguinPath} is the path`)
+
+  fs.stat(plguinPath, (err, stat) => {
+    if (err === null) {
+      // File exists
+      logger.serverLog(TAG, `Plugin Found and being sent`)
+      return res.sendFile(plguinPath)
+    } else if (err.code === 'ENOENT') {
+      // File does not exists
+      logger.serverLog(TAG, `Plugin File not found`)
+      return res.status(404).json({status: 'failed', payload: 'Plugin Not Found'})
+    } else {
+      // There is some other FS error
+      logger.serverLog(TAG, 'There is some error ')
+      return res.status(500).json({status: 'failed', payload: err.code})
+    }
+  })
 }
 
 exports.create = function (req, res) {
