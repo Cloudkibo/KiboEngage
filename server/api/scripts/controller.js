@@ -4,7 +4,7 @@ const PollPageDataLayer = require('../v1/page_poll/page_poll.datalayer')
 const SurveyPageDataLayer = require('../v1/page_survey/page_survey.datalayer')
 
 exports.normalizeDataForDelivery = function (req, res) {
-  BroadcastPageDataLayer.updateBroadcast({sent: null}, {sent: true}, {multi: true})
+  BroadcastPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
     .then(result => {
       console.log(TAG, 'Broadcast sent normalized successfully!')
     })
