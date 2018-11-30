@@ -25,5 +25,5 @@ exports.normalizeDataForDelivery = function (req, res) {
     .catch(err => {
       console.log(TAG, `Survey sent normalized failed ${err}`)
     })
-  res.status(200).json({status: 'success', payload: 'Data has been normalized successfully!'})
+  return res.status(200).json({status: 'success', payload: 'Data has been normalized successfully!'})
 }
