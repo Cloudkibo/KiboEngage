@@ -104,7 +104,7 @@ exports.postPublish = function (req, res) {
                                         'elements': [
                                           {
                                             'title': req.body.post_title,
-                                            'image_url': config.domain + '/img/wordpress.png',
+                                            'image_url': 'https://cdn.cloudkibo.com/public/img/wordpress.png',
                                             'subtitle': 'sent using kibopush.com',
                                             'buttons': [
                                               {
