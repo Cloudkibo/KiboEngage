@@ -29,8 +29,8 @@ exports.getCriterias = function (body, companyUser) {
   let finalCriteria = {}
   let recordsToSkip = 0
   if (body.filter) {
-    search = new RegExp('.*' + body.filter_criteria.search_value + '.*', 'i')
-    findCriteria = Object.assign(findCriteria, {pageName: body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true}})
+    search = '.*' + body.filter_criteria.search_value + '.*'
+    findCriteria = Object.assign(findCriteria, {pageName: body.filter_criteria.search_value !== '' ? {$regex: search, $options: 'i'} : {$exists: true}})
   }
   if (body.first_page === 'first') {
     finalCriteria = [
