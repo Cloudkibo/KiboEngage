@@ -99,8 +99,8 @@ function validateInput (body) {
         for (let m = 0; m < body.payload[i].buttons.length; m++) {
           if (body.payload[i].buttons[m].type === undefined ||
           body.payload[i].buttons[m].type === '') return false
-          if (body.payload[i].buttons[m].title === undefined ||
-          body.payload[i].buttons[m].title === '') return false
+          if (body.payload[i].buttons[m].type !== 'element_share' && (body.payload[i].buttons[m].title === undefined ||
+          body.payload[i].buttons[m].title === '')) return false
           if (body.payload[i].buttons[m].type === 'web_url') {
             if (!utility.validateUrl(
               body.payload[i].buttons[m].url)) return false
