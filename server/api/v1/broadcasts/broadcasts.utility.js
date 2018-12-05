@@ -121,10 +121,10 @@ function validateInput (body) {
             body.payload[i].listItems[j].image_url)) return false
           if (body.payload[i].listItems[j].buttons) {
             for (let k = 0; k < body.payload[i].listItems[j].buttons.length; k++) {
-              if (body.payload[i].listItems[j].buttons[k].title === undefined ||
-              body.payload[i].listItems[j].buttons[k].title === '') return false
-              if (body.payload[i].listItems[j].buttons[k].type !== 'element_share' && (body.payload[i].listItems[j].buttons[k].type === undefined ||
-              body.payload[i].listItems[j].buttons[k].type === '')) return false
+              if (body.payload[i].listItems[j].buttons[k].type !== 'element_share' && (body.payload[i].listItems[j].buttons[k].title === undefined ||
+              body.payload[i].listItems[j].buttons[k].title === '')) return false
+              if (body.payload[i].listItems[j].buttons[k].type === undefined ||
+              body.payload[i].listItems[j].buttons[k].type === '') return false
               if (body.payload[i].listItems[j].buttons[k].type === 'web_url') {
                 if (!utility.validateUrl(
                   body.payload[i].listItems[j].buttons[k].url)) return false
