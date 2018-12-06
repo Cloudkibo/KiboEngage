@@ -6,6 +6,6 @@ exports.findOneMenuObjectUsingQuery = (query) => {
 }
 
 exports.updateOneMenuObjectUsingQuery = (query, updatedObject) => {
-    return MenuModel.update(query, updatedObject)
-      .exec()
-  }
+  return MenuModel.update(query, updatedObject)
+    .exec()
+}

@@ -11,29 +11,31 @@ const validate = require('express-jsonschema').validate
 
 router.get('/',
   auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('autoposting'),
-  auth.doesRolePermitsThisAction('autopostingPermission'),
-  validate({body: validationSchema.createPayload}),
+  // auth.doesPlanPermitsThisAction('autoposting'),
+  // auth.doesRolePermitsThisAction('autopostingPermission'),
   controller.index)
+
+router.get('/plugin',
+  controller.getPlugin)
 
 router.post('/create',
   auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('autoposting'),
-  auth.doesRolePermitsThisAction('autopostingPermission'),
+  // auth.doesPlanPermitsThisAction('autoposting'),
+  // auth.doesRolePermitsThisAction('autopostingPermission'),
   validate({body: validationSchema.createPayload}),
   controller.create)
 
 router.post('/edit',
   auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('autoposting'),
-  auth.doesRolePermitsThisAction('autopostingPermission'),
+  // auth.doesPlanPermitsThisAction('autoposting'),
+  // auth.doesRolePermitsThisAction('autopostingPermission'),
   validate({body: validationSchema.editPayload}),
   controller.edit)
 
 router.delete('/:id',
   auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('autoposting'),
-  auth.doesRolePermitsThisAction('autopostingPermission'),
+  // auth.doesPlanPermitsThisAction('autoposting'),
+  // auth.doesRolePermitsThisAction('autopostingPermission'),
   controller.destroy)
 
 module.exports = router

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+let _ = require('lodash')
 
 exports.prepareResponsesPayload = function (polls, responsesCount1) {
   let responsesCount = []
@@ -24,7 +25,7 @@ exports.getCriterias = function (body, companyUser) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let findCriteria = {
-    companyId: companyUser.companyId,
+    companyId: mongoose.Types.ObjectId(companyUser.companyId),
     'datetime': body.days !== '0' ? {
       $gte: startDate
     } : {$exists: true}
@@ -60,4 +61,152 @@ exports.getCriterias = function (body, companyUser) {
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
   return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
+}
+exports.preparePollsPayload = function (user, companyUser, body) {
+  let pollPayload = {
+    platform: 'facebook',
+    statement: body.statement,
+    options: body.options,
+    companyId: companyUser.companyId,
+    userId: user._id
+  }
+  if (body.isSegmented) {
+    pollPayload.isSegmented = true
+    pollPayload.segmentationPageIds = (body.segmentationPageIds)
+      ? body.segmentationPageIds
+      : null
+    pollPayload.segmentationGender = (body.segmentationGender)
+      ? body.segmentationGender
+      : null
+    pollPayload.segmentationLocale = (body.segmentationLocale)
+      ? body.segmentationLocale
+      : null
+    pollPayload.segmentationTags = (body.segmentationTags)
+      ? body.segmentationTags
+      : null
+    pollPayload.segmentationPoll = (body.segmentationPoll)
+      ? body.segmentationPoll
+      : null
+  }
+  if (body.isList) {
+    pollPayload.isList = true
+    pollPayload.segmentationList = (body.segmentationList)
+      ? body.segmentationList
+      : null
+  }
+  return pollPayload
+}
+exports.pagesFindCriteria = function (companyUser, body) {
+  let pagesFindCriteria = {companyId: companyUser.companyId, connected: true}
+  if (body.isSegmented) {
+    if (body.segmentationPageIds.length > 0) {
+      pagesFindCriteria = _.merge(pagesFindCriteria, {
+        pageId: {
+          $in: body.segmentationPageIds
+        }
+      })
+    }
+  }
+  return pagesFindCriteria
+}
+exports.ListFindCriteria = function (body) {
+  let ListFindCriteria = {}
+  ListFindCriteria = _.merge(ListFindCriteria,
+    {
+      _id: {
+        $in: body.segmentationList
+      }
+    })
+  return ListFindCriteria
+}
+exports.subsFindCriteria = function (lists, page) {
+  let subsFindCriteria = {pageId: page._id}
+  let listData = []
+  if (lists.length > 1) {
+    for (let i = 0; i < lists.length; i++) {
+      for (let j = 0; j < lists[i].content.length; j++) {
+        if (exists(listData, lists[i].content[j]) === false) {
+          listData.push(lists[i].content[j])
+        }
+      }
+    }
+    subsFindCriteria = _.merge(subsFindCriteria, {
+      _id: {
+        $in: listData
+      }
+    })
+  } else {
+    subsFindCriteria = _.merge(subsFindCriteria, {
+      _id: {
+        $in: lists[0].content
+      }
+    })
+  }
+  return subsFindCriteria
+}
+exports.subscriberFindCriteria = function (page, body) {
+  let subscriberFindCriteria = {pageId: page._id, isSubscribed: true}
+  if (body.isSegmented) {
+    if (body.segmentationGender.length > 0) {
+      subscriberFindCriteria = _.merge(subscriberFindCriteria, {
+        gender: {
+          $in: body.segmentationGender
+        }
+      })
+    }
+    if (body.segmentationLocale.length > 0) {
+      subscriberFindCriteria = _.merge(subscriberFindCriteria, {
+        locale: {
+          $in: body.segmentationLocale
+        }
+      })
+    }
+  }
+  return subscriberFindCriteria
+}
+exports.prepareMessageData = function (body, id) {
+  let messageData = {
+    text: body.statement,
+    quick_replies: [
+      {
+        'content_type': 'text',
+        'title': body.options[0],
+        'payload': JSON.stringify(
+          {poll_id: id, option: body.options[0]})
+      },
+      {
+        'content_type': 'text',
+        'title': body.options[1],
+        'payload': JSON.stringify(
+          {poll_id: id, option: body.options[1]})
+      },
+      {
+        'content_type': 'text',
+        'title': body.options[2],
+        'payload': JSON.stringify(
+          {poll_id: id, option: body.options[2]})
+      }
+    ]
+  }
+  return messageData
+}
+function exists (list, content) {
+  for (let i = 0; i < list.length; i++) {
+    if (JSON.stringify(list[i]) === JSON.stringify(content)) {
+      return true
+    }
+  }
+  return false
+}
+exports.preparePollPagePayload = function (page, user, companyUser, body, subscriber, id) {
+  let pollBroadcast = {
+    pageId: page.pageId,
+    userId: user._id,
+    companyId: companyUser.companyId,
+    subscriberId: subscriber.senderId,
+    pollId: id,
+    seen: false,
+    sent: false
+  }
+  return pollBroadcast
 }

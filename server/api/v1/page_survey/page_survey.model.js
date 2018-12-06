@@ -9,7 +9,8 @@ const surveySchema = new Schema({
   surveyId: { type: Schema.ObjectId, ref: 'surveys' },
   subscriberId: String,
   datetime: { type: Date, default: Date.now },
-  seen: {type: Boolean}
+  seen: {type: Boolean},
+  sent: {type: Boolean}
 })
 
 module.exports = mongoose.model('page_surveys', surveySchema)

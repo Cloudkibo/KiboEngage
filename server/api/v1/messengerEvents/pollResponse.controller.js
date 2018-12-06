@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const needle = require('needle')
 const sequenceController = require('../sequenceMessaging/sequence.controller')
+const notificationsUtility = require('../notifications/notifications.utility')
 const {callApi} = require('../utility')
 
 var array = []
@@ -76,7 +77,7 @@ function savepoll (req, resp) {
                     })
                 }
               } else {
-              //  webhookUtility.saveNotification(webhook)
+                notificationsUtility.saveNotification(webhook)
               }
             })
           }
