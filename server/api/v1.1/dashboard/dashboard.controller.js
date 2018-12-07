@@ -145,7 +145,7 @@ exports.sentVsSeen = function (req, res) {
                                             })
                                             .catch(err => {
                                               if (err) {
-                                                return res.status(404).json({
+                                                return res.status(500).json({
                                                   status: 'failed',
                                                   description: `Error in getting poll response count ${JSON.stringify(
                                                     err)}`
@@ -155,7 +155,7 @@ exports.sentVsSeen = function (req, res) {
                                         })
                                         .catch(err => {
                                           if (err) {
-                                            return res.status(404).json({
+                                            return res.status(500).json({
                                               status: 'failed',
                                               description: 'Polls not found'
                                             })
@@ -175,7 +175,7 @@ exports.sentVsSeen = function (req, res) {
                                 })
                                 .catch(err => {
                                   if (err) {
-                                    return res.status(404).json({
+                                    return res.status(500).json({
                                       status: 'failed',
                                       description: 'responses count not found'
                                     })
@@ -184,7 +184,7 @@ exports.sentVsSeen = function (req, res) {
                             })
                             .catch(err => {
                               if (err) {
-                                return res.status(404).json({
+                                return res.status(500).json({
                                   status: 'failed',
                                   description: `Error in getting pollSeenCount count ${JSON.stringify(
                                     err)}`
@@ -194,7 +194,7 @@ exports.sentVsSeen = function (req, res) {
                         })
                         .catch(err => {
                           if (err) {
-                            return res.status(404).json({
+                            return res.status(500).json({
                               status: 'failed',
                               description: `Error in getting pollSentCount count ${JSON.stringify(
                                 err)}`
@@ -204,7 +204,7 @@ exports.sentVsSeen = function (req, res) {
                     })
                     .catch(err => {
                       if (err) {
-                        return res.status(404).json({
+                        return res.status(500).json({
                           status: 'failed',
                           description: `Error in getting surveytSeenCount count ${JSON.stringify(
                             err)}`
@@ -214,7 +214,7 @@ exports.sentVsSeen = function (req, res) {
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(404).json({
+                    return res.status(500).json({
                       status: 'failed',
                       description: `Error in getting surveySentCount count ${JSON.stringify(
                         err)}`
@@ -224,7 +224,7 @@ exports.sentVsSeen = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                return res.status(404).json({
+                return res.status(500).json({
                   status: 'failed',
                   description: `Error in getting broadcastSeenCount count ${JSON.stringify(
                     err)}`
@@ -234,7 +234,7 @@ exports.sentVsSeen = function (req, res) {
         })
         .catch(err => {
           if (err) {
-            return res.status(404).json({
+            return res.status(500).json({
               status: 'failed',
               description: `Error in getting broadcastSentCount count ${JSON.stringify(
                 err)}`
