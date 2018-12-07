@@ -451,7 +451,7 @@ exports.send = function (req, res) {
                                                                           type: 'template',
                                                                           payload: {
                                                                             template_type: 'button',
-                                                                            text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                            text: `${survey.description}\n${first_question.statement}`,
                                                                             buttons
                                                                           }
                                                                         }
@@ -597,7 +597,7 @@ exports.send = function (req, res) {
                                                                       type: 'template',
                                                                       payload: {
                                                                         template_type: 'button',
-                                                                        text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                        text: `${survey.description}\n${first_question.statement}`,
                                                                         buttons
                                                                       }
                                                                     }
@@ -974,7 +974,7 @@ exports.sendSurvey = function (req, res) {
                                                                               type: 'template',
                                                                               payload: {
                                                                                 template_type: 'button',
-                                                                                text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                                text: `${survey.description}\n${first_question.statement}`,
                                                                                 buttons
                                                                               }
                                                                             }
@@ -1111,7 +1111,7 @@ exports.sendSurvey = function (req, res) {
                                                                           type: 'template',
                                                                           payload: {
                                                                             template_type: 'button',
-                                                                            text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                            text: `${survey.description}\n${first_question.statement}`,
                                                                             buttons
                                                                           }
                                                                         }
