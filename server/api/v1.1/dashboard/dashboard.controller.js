@@ -639,7 +639,7 @@ exports.graphData = function (req, res) {
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(404).json({
+                    return res.status(500).json({
                       status: 'failed',
                       description: `Error in getting surveys count ${JSON.stringify(err)}`
                     })
@@ -647,7 +647,7 @@ exports.graphData = function (req, res) {
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(404).json({
+                    return res.status(500).json({
                       status: 'failed',
                       description: `Error in getting surveys count ${JSON.stringify(err)}`
                     })
@@ -656,7 +656,7 @@ exports.graphData = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                return res.status(404).json({
+                return res.status(500).json({
                   status: 'failed',
                   description: `Error in getting surveys count ${JSON.stringify(err)}`
                 })
@@ -664,7 +664,7 @@ exports.graphData = function (req, res) {
             })
         })
         .catch(err => {
-          return res.status(404).json({
+          return res.status(500).json({
             status: 'failed',
             description: `Error in getting surveys count ${JSON.stringify(err)}`
           })

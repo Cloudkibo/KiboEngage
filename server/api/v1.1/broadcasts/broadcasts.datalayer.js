@@ -5,7 +5,7 @@ Thus we can use it from other non express callers like cron etc
 */
 const { callApi } = require('../utility')
 
-exports.aggregateForBroadcasts = (match, group = null, lookup = null, limit = null, sort = null, skip = null) => {
+exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   let query = {
     purpose: 'aggregate',
     match: match
