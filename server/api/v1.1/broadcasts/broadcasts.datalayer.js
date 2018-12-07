@@ -15,7 +15,7 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
-
+  console.log('query', query)
   return callApi(`broadcasts/query`, 'post', query, '', 'kiboengage')
 }
 exports.deleteForBroadcasts = (id) => {

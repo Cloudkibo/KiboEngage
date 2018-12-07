@@ -573,6 +573,7 @@ exports.graphData = function (req, res) {
 
       BroadcastsDataLayer.aggregateForBroadcasts(matchBroadcastAggregate, groupBroadcastAggregate)
         .then(broadcastsgraphdata => {
+          console.log('broadcastsgraphdata', broadcastsgraphdata)
           // We should call the aggregate of polls layer
           let matchPollAggregate = { companyId: companyUser.companyId,
             'datetime': {
