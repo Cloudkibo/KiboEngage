@@ -489,7 +489,7 @@ exports.send = function (req, res) {
                                                                                 companyId: companyUser.companyId
                                                                               }
 
-                                                                              SurveyPageDataLayer.savePage(surveyPage)
+                                                                              SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                 .then(success => {
                                                                                   require('./../../../config/socketio').sendMessageToClient({
                                                                                     room_id: companyUser.companyId,
@@ -636,7 +636,7 @@ exports.send = function (req, res) {
                                                                             companyId: companyUser.companyId
                                                                           }
 
-                                                                          SurveyPageDataLayer.savePage(surveyPage)
+                                                                          SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                             .then(updated => {
                                                                               require('./../../../config/socketio').sendMessageToClient({
                                                                                 room_id: companyUser.companyId,
@@ -1013,7 +1013,7 @@ exports.sendSurvey = function (req, res) {
                                                                                     companyId: companyUser.companyId
                                                                                   }
 
-                                                                                  SurveyPageDataLayer.savePage(surveyPage)
+                                                                                  SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                     .then(success => {
 
                                                                                     })
@@ -1150,7 +1150,7 @@ exports.sendSurvey = function (req, res) {
                                                                                 companyId: companyUser.companyId
                                                                               }
 
-                                                                              SurveyPageDataLayer.savePage(surveyPage)
+                                                                              SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                 .then(updated => {
                                                                                 })
                                                                                 .catch(error => {
