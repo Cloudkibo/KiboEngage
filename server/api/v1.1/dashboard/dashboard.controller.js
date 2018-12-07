@@ -3,6 +3,7 @@ const logger = require('../../../components/logger')
 const Pages = require('../pages/Pages.model')
 const BroadcastsDataLayer = require('../broadcasts/broadcasts.datalayer')
 const PollsDataLayer = require('../polls/polls.datalayer')
+const PollResponsesDataLayer = require('../polls/pollresponse.datalayer')
 const SurveysDataLayer = require('../surveys/surveys.datalayer')
 const PageBroadcastDataLayer = require('../page_broadcast/page_broadcast.datalayer')
 const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
@@ -73,7 +74,7 @@ exports.sentVsSeen = function (req, res) {
                                             _id: '$pollId',
                                             count: {$sum: 1}
                                           }
-                                          PollsDataLayer.aggregatePollResponse({}, groupPollAggregate)
+                                          PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
                                             .then(pollResponseCount => {
                                               let responsesCount = []
                                               logger.serverLog(TAG,
