@@ -600,7 +600,7 @@ exports.graphData = function (req, res) {
               let groupSurveyAggregate = {
                 _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
                 count: {$sum: 1}}
-              SurveysDataLayer.aggregateSurvey(matchSurveyAggregate, groupSurveyAggregate)
+              SurveysDataLayer.aggregateForSurveys(matchSurveyAggregate, groupSurveyAggregate)
                 .then(surveysgraphdata => {
                   console.log('surveysgraphdata', surveysgraphdata)
                   return res.status(200)
