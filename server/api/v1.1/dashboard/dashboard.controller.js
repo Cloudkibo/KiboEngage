@@ -588,6 +588,7 @@ exports.graphData = function (req, res) {
             count: {$sum: 1}}
           PollsDataLayer.aggregateForPolls(matchPollAggregate, groupPollAggregate)
             .then(pollsgraphdata => {
+              console.log('pollsgraphdata', pollsgraphdata)
               let matchSurveyAggregate = { companyId: companyUser.companyId,
                 'datetime': {
                   $gte: new Date(
@@ -601,6 +602,7 @@ exports.graphData = function (req, res) {
                 count: {$sum: 1}}
               SurveysDataLayer.aggregateSurvey(matchSurveyAggregate, groupSurveyAggregate)
                 .then(surveysgraphdata => {
+                  console.log('surveysgraphdata', surveysgraphdata)
                   return res.status(200)
                     .json({status: 'success', payload: {broadcastsgraphdata: broadcastsgraphdata, pollsgraphdata: pollsgraphdata, surveysgraphdata: surveysgraphdata}})
                   // SessionsDataLayer.aggregateSession([
