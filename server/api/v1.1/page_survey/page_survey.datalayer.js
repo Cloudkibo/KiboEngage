@@ -38,7 +38,7 @@ exports.removeSurvey = (surveypage) => {
 }
 
 exports.createForSurveyPage = (payload) => {
-  return callApi(`page_poll`, 'post', payload, '', 'kiboengage')
+  return callApi(`page_survey`, 'post', payload, '', 'kiboengage')
 }
 
 exports.aggregate = (query) => {

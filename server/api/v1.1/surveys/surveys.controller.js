@@ -21,7 +21,7 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 
 exports.allSurveys = function (req, res) {
-  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -36,7 +36,7 @@ exports.allSurveys = function (req, res) {
           let aggregateSort = criterias.fetchCriteria[1].$sort
           let aggregateSkip = criterias.fetchCriteria[2].$skip
           let aggregateLimit = criterias.fetchCriteria[3].$limit
-          surveyDataLayer.aggregateForSurveys(aggregateMatch, null, null, aggregateLimit, aggregateSort, aggregateSkip)
+          surveyDataLayer.aggregateForSurveys(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(surveys => {
               SurveyPageDataLayer.genericFind({companyId: companyUser.companyId})
                 .then(surveypages => {
@@ -358,7 +358,7 @@ exports.send = function (req, res) {
                   callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                      callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                         .then(connectedUser => {
                           var currentUser
                           if (req.user.facebookInfo) {
@@ -438,9 +438,9 @@ exports.send = function (req, res) {
                                                           utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                             subscribers = repliedSubscribers
                                                             for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                              callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                                              callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                                                 .then(updated => {
-                                                                  callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+                                                                  callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                                     .then(companyUsage => {
                                                                       companyUsage = companyUsage[0]
                                                                       if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
@@ -489,7 +489,7 @@ exports.send = function (req, res) {
                                                                                 companyId: companyUser.companyId
                                                                               }
 
-                                                                              SurveyPageDataLayer.savePage(surveyPage)
+                                                                              SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                 .then(success => {
                                                                                   require('./../../../config/socketio').sendMessageToClient({
                                                                                     room_id: companyUser.companyId,
@@ -584,9 +584,9 @@ exports.send = function (req, res) {
                                                       utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                         subscribers = repliedSubscribers
                                                         for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                          callApi.callApi(`featureUsage/updateCompany`, 'put', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                                          callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                                             .then(updated => {
-                                                              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                                              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                                 .then(companyUsage => {
                                                                   companyUsage = companyUsage[0]
                                                                   if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
@@ -636,7 +636,7 @@ exports.send = function (req, res) {
                                                                             companyId: companyUser.companyId
                                                                           }
 
-                                                                          SurveyPageDataLayer.savePage(surveyPage)
+                                                                          SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                             .then(updated => {
                                                                               require('./../../../config/socketio').sendMessageToClient({
                                                                                 room_id: companyUser.companyId,
@@ -832,7 +832,7 @@ exports.sendSurvey = function (req, res) {
                       callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                          callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                             .then(connectedUser => {
                               var currentUser
                               if (req.user.facebookInfo) {
@@ -1013,7 +1013,7 @@ exports.sendSurvey = function (req, res) {
                                                                                     companyId: companyUser.companyId
                                                                                   }
 
-                                                                                  SurveyPageDataLayer.savePage(surveyPage)
+                                                                                  SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                     .then(success => {
 
                                                                                     })
@@ -1150,7 +1150,7 @@ exports.sendSurvey = function (req, res) {
                                                                                 companyId: companyUser.companyId
                                                                               }
 
-                                                                              SurveyPageDataLayer.savePage(surveyPage)
+                                                                              SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                 .then(updated => {
                                                                                 })
                                                                                 .catch(error => {
