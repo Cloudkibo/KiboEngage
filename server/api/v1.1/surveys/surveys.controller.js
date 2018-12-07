@@ -21,7 +21,7 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 
 exports.allSurveys = function (req, res) {
-  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -438,9 +438,9 @@ exports.send = function (req, res) {
                                                           utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                             subscribers = repliedSubscribers
                                                             for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                              callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                                              callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                                                 .then(updated => {
-                                                                  callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+                                                                  callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                                     .then(companyUsage => {
                                                                       companyUsage = companyUsage[0]
                                                                       if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
@@ -584,9 +584,9 @@ exports.send = function (req, res) {
                                                       utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                         subscribers = repliedSubscribers
                                                         for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                          callApi.callApi(`featureUsage/updateCompany`, 'put', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                                          callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                                             .then(updated => {
-                                                              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                                              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                                 .then(companyUsage => {
                                                                   companyUsage = companyUsage[0]
                                                                   if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
