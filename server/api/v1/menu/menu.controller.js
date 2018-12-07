@@ -49,7 +49,7 @@ exports.indexByPage = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      MenuDataLayer.findOneMenuObjectUsingQuery({companyId: companyUser.companyId, pageId: req.body.pageId})
+      MenuDataLayer.findMenuObjectUsingQuery({companyId: companyUser.companyId, pageId: req.body.pageId})
         .then(menus => {
           return res.status(200).json({
             status: 'success',
