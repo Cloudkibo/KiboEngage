@@ -36,7 +36,7 @@ exports.allSurveys = function (req, res) {
           let aggregateSort = criterias.fetchCriteria[1].$sort
           let aggregateSkip = criterias.fetchCriteria[2].$skip
           let aggregateLimit = criterias.fetchCriteria[3].$limit
-          surveyDataLayer.aggregateForSurveys(aggregateMatch, null, null, aggregateLimit, aggregateSort, aggregateSkip)
+          surveyDataLayer.aggregateForSurveys(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(surveys => {
               SurveyPageDataLayer.genericFind({companyId: companyUser.companyId})
                 .then(surveypages => {
@@ -358,7 +358,7 @@ exports.send = function (req, res) {
                   callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                      callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                         .then(connectedUser => {
                           var currentUser
                           if (req.user.facebookInfo) {
@@ -832,7 +832,7 @@ exports.sendSurvey = function (req, res) {
                       callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                          callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                             .then(connectedUser => {
                               var currentUser
                               if (req.user.facebookInfo) {
