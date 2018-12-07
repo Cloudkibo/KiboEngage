@@ -221,7 +221,7 @@ exports.send = function (req, res) {
                   utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      utility.callApi(`user/${userPage.userId}`, req.headers.authorization)
+                      utility.callApi(`user`, 'get', {}, req.headers.authorization)
                         .then(connectedUser => {
                           var currentUser
                           if (req.user.facebookInfo) {
@@ -513,7 +513,7 @@ exports.sendPoll = function (req, res) {
                       utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          utility.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                          utility.callApi(`user`, 'get', {}, req.headers.authorization)
                             .then(connectedUser => {
                               var currentUser
                               if (req.user.facebookInfo) {
