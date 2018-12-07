@@ -263,8 +263,8 @@ exports.send = function (req, res) {
                                                           }
                                                           const data = {
                                                             messaging_type: 'UPDATE',
-                                                            recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                            message: messageData,
+                                                            recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                            message: JSON.stringify(messageData),
                                                             tag: req.body.fbMessageTag
                                                           }
                                                           // this calls the needle when the last message was older than 30 minutes
@@ -367,8 +367,8 @@ exports.send = function (req, res) {
                                                         }
                                                         const data = {
                                                           messaging_type: 'UPDATE',
-                                                          recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                          message: messageData,
+                                                          recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                          message: JSON.stringify(messageData),
                                                           tag: req.body.fbMessageTag
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
@@ -583,8 +583,8 @@ exports.sendPoll = function (req, res) {
                                                               }
                                                               const data = {
                                                                 messaging_type: 'UPDATE',
-                                                                recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                                message: messageData
+                                                                recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                                message: JSON.stringify(messageData)
                                                                 //  tag: req.body.fbMessageTag
                                                               }
                                                               // this calls the needle when the last message was older than 30 minutes
@@ -685,8 +685,8 @@ exports.sendPoll = function (req, res) {
                                                             }
                                                             const data = {
                                                               messaging_type: 'UPDATE',
-                                                              recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                              message: messageData
+                                                              recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                              message: JSON.stringify(messageData)
                                                               // tag: req.body.fbMessageTag
                                                             }
                                                             // this calls the needle when the last message was older than 30 minutes
