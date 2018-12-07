@@ -429,7 +429,7 @@ exports.stats = function (req, res) {
                       let subscribersCount = subscribers.length
 
                       payload.subscribers = subscribersCount
-                      BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, 'datetime', 10)
+                      BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
                         .then(recentBroadcasts => {
                           payload.recentBroadcasts = recentBroadcasts
                           BroadcastsDataLayer.countBroadcasts({companyId: companyUser.companyId})
