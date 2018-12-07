@@ -12,7 +12,7 @@ exports.genericFindForPollResponse = (queryObject) => {
   }
   return callApi(`polls/response/query`, 'post', query, '', 'kiboengage')
 }
-exports.aggregateForPollResponse = (match, group = null, lookup = null, limit = null, sort = null, skip = null) => {
+exports.aggregateForPollResponse = (match, group, lookup, limit, sort, skip) => {
   let query = {
     purpose: 'aggregate',
     match: match
