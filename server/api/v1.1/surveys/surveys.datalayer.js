@@ -45,7 +45,7 @@ exports.genericUpdateOneSurvey = (queryObject, updated, options) => {
   return callApi(`surveys`, 'put', query, '', 'kiboengage')
 }
 
-exports.aggregateForSurveys = (match, group = null, lookup = null, limit = null, sort = null, skip = null) => {
+exports.aggregateForSurveys = (match, group, lookup, limit, sort, skip) => {
   let query = {
     purpose: 'aggregate',
     match: match

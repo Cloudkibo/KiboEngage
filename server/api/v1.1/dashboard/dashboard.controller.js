@@ -1,13 +1,14 @@
 const logger = require('../../../components/logger')
-const SessionsDataLayer = require('../sessions/sessions.datalayer')
+// const SessionsDataLayer = require('../sessions/sessions.datalayer')
 const Pages = require('../pages/Pages.model')
 const BroadcastsDataLayer = require('../broadcasts/broadcasts.datalayer')
 const PollsDataLayer = require('../polls/polls.datalayer')
+const PollResponsesDataLayer = require('../polls/pollresponse.datalayer')
 const SurveysDataLayer = require('../surveys/surveys.datalayer')
 const PageBroadcastDataLayer = require('../page_broadcast/page_broadcast.datalayer')
 const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
 const PagePollDataLayer = require('../page_poll/page_poll.datalayer')
-const LiveChatDataLayer = require('../livechat/livechat.datalayer')
+// const LiveChatDataLayer = require('../livechat/livechat.datalayer')
 const TAG = 'api/pages/dashboard.controller.js'
 const mongoose = require('mongoose')
 const sortBy = require('sort-array')
@@ -73,7 +74,7 @@ exports.sentVsSeen = function (req, res) {
                                             _id: '$pollId',
                                             count: {$sum: 1}
                                           }
-                                          PollsDataLayer.aggregatePollResponse({}, groupPollAggregate)
+                                          PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
                                             .then(pollResponseCount => {
                                               let responsesCount = []
                                               logger.serverLog(TAG,
@@ -145,7 +146,7 @@ exports.sentVsSeen = function (req, res) {
                                             })
                                             .catch(err => {
                                               if (err) {
-                                                return res.status(404).json({
+                                                return res.status(500).json({
                                                   status: 'failed',
                                                   description: `Error in getting poll response count ${JSON.stringify(
                                                     err)}`
@@ -155,7 +156,7 @@ exports.sentVsSeen = function (req, res) {
                                         })
                                         .catch(err => {
                                           if (err) {
-                                            return res.status(404).json({
+                                            return res.status(500).json({
                                               status: 'failed',
                                               description: 'Polls not found'
                                             })
@@ -175,7 +176,7 @@ exports.sentVsSeen = function (req, res) {
                                 })
                                 .catch(err => {
                                   if (err) {
-                                    return res.status(404).json({
+                                    return res.status(500).json({
                                       status: 'failed',
                                       description: 'responses count not found'
                                     })
@@ -184,7 +185,7 @@ exports.sentVsSeen = function (req, res) {
                             })
                             .catch(err => {
                               if (err) {
-                                return res.status(404).json({
+                                return res.status(500).json({
                                   status: 'failed',
                                   description: `Error in getting pollSeenCount count ${JSON.stringify(
                                     err)}`
@@ -194,7 +195,7 @@ exports.sentVsSeen = function (req, res) {
                         })
                         .catch(err => {
                           if (err) {
-                            return res.status(404).json({
+                            return res.status(500).json({
                               status: 'failed',
                               description: `Error in getting pollSentCount count ${JSON.stringify(
                                 err)}`
@@ -204,7 +205,7 @@ exports.sentVsSeen = function (req, res) {
                     })
                     .catch(err => {
                       if (err) {
-                        return res.status(404).json({
+                        return res.status(500).json({
                           status: 'failed',
                           description: `Error in getting surveytSeenCount count ${JSON.stringify(
                             err)}`
@@ -214,7 +215,7 @@ exports.sentVsSeen = function (req, res) {
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(404).json({
+                    return res.status(500).json({
                       status: 'failed',
                       description: `Error in getting surveySentCount count ${JSON.stringify(
                         err)}`
@@ -224,7 +225,7 @@ exports.sentVsSeen = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                return res.status(404).json({
+                return res.status(500).json({
                   status: 'failed',
                   description: `Error in getting broadcastSeenCount count ${JSON.stringify(
                     err)}`
@@ -234,7 +235,7 @@ exports.sentVsSeen = function (req, res) {
         })
         .catch(err => {
           if (err) {
-            return res.status(404).json({
+            return res.status(500).json({
               status: 'failed',
               description: `Error in getting broadcastSentCount count ${JSON.stringify(
                 err)}`
@@ -429,7 +430,7 @@ exports.stats = function (req, res) {
                       let subscribersCount = subscribers.length
 
                       payload.subscribers = subscribersCount
-                      BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, 'datetime', 10)
+                      BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
                         .then(recentBroadcasts => {
                           payload.recentBroadcasts = recentBroadcasts
                           BroadcastsDataLayer.countBroadcasts({companyId: companyUser.companyId})
@@ -441,28 +442,33 @@ exports.stats = function (req, res) {
                                       payload.activityChart = {
                                         messages: broadcastCount,
                                         polls: pollsCount,
-                                        surveys: surveysCount
+                                        surveys: surveysCount,
+                                        unreadCount: 0
                                       }
-                                      LiveChatDataLayer.countLiveChat({
-                                        company_id: companyUser.companyId,
-                                        status: 'unseen',
-                                        format: 'facebook'
+                                      res.status(200).json({
+                                        status: 'success',
+                                        payload
                                       })
-                                        .then(unreadCount => {
-                                          payload.unreadCount = unreadCount
-                                          res.status(200).json({
-                                            status: 'success',
-                                            payload
-                                          })
-                                        })
-                                        .catch(err => {
-                                          if (err) {
-                                            return res.status(500).json({
-                                              status: 'failed to retrieve unreadCount',
-                                              description: JSON.stringify(err)
-                                            })
-                                          }
-                                        })
+                                      // LiveChatDataLayer.countLiveChat({
+                                      //   company_id: companyUser.companyId,
+                                      //   status: 'unseen',
+                                      //   format: 'facebook'
+                                      // })
+                                      //   .then(unreadCount => {
+                                      //     payload.unreadCount = unreadCount
+                                      //     res.status(200).json({
+                                      //       status: 'success',
+                                      //       payload
+                                      //     })
+                                      //   })
+                                      //   .catch(err => {
+                                      //     if (err) {
+                                      //       return res.status(500).json({
+                                      //         status: 'failed to retrieve unreadCount',
+                                      //         description: JSON.stringify(err)
+                                      //       })
+                                      //     }
+                                      //   })
                                     })
                                     .catch(err => {
                                       if (err) {
@@ -568,6 +574,7 @@ exports.graphData = function (req, res) {
 
       BroadcastsDataLayer.aggregateForBroadcasts(matchBroadcastAggregate, groupBroadcastAggregate)
         .then(broadcastsgraphdata => {
+          console.log('broadcastsgraphdata', broadcastsgraphdata)
           // We should call the aggregate of polls layer
           let matchPollAggregate = { companyId: companyUser.companyId,
             'datetime': {
@@ -582,6 +589,7 @@ exports.graphData = function (req, res) {
             count: {$sum: 1}}
           PollsDataLayer.aggregateForPolls(matchPollAggregate, groupPollAggregate)
             .then(pollsgraphdata => {
+              console.log('pollsgraphdata', pollsgraphdata)
               let matchSurveyAggregate = { companyId: companyUser.companyId,
                 'datetime': {
                   $gte: new Date(
@@ -593,46 +601,49 @@ exports.graphData = function (req, res) {
               let groupSurveyAggregate = {
                 _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
                 count: {$sum: 1}}
-              SurveysDataLayer.aggregateSurvey(matchSurveyAggregate, groupSurveyAggregate)
+              SurveysDataLayer.aggregateForSurveys(matchSurveyAggregate, groupSurveyAggregate)
                 .then(surveysgraphdata => {
-                  SessionsDataLayer.aggregateSession([
-                    {
-                      $match: {
-                        'request_time': {
-                          $gte: new Date(
-                            (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                          $lt: new Date(
-                            (new Date().getTime()))
-                        }
-                      }
-                    },
-                    {
-                      $group: {
-                        _id: {'year': {$year: '$request_time'}, 'month': {$month: '$request_time'}, 'day': {$dayOfMonth: '$request_time'}, 'company': '$company_id'},
-                        count: {$sum: 1}}
-                    }])
-                    .then(sessionsgraphdata => {
-                      let temp2 = []
-                      for (let i = 0; i < sessionsgraphdata.length; i++) {
-                        if (JSON.stringify(sessionsgraphdata[i]._id.company) === JSON.stringify(companyUser.companyId)) {
-                          temp2.push(sessionsgraphdata[i])
-                        }
-                      }
-                      return res.status(200)
-                        .json({status: 'success', payload: {broadcastsgraphdata: broadcastsgraphdata, pollsgraphdata: pollsgraphdata, surveysgraphdata: surveysgraphdata, sessionsgraphdata: temp2}})
-                    })
-                    .catch(err => {
-                      if (err) {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Internal Server Error ${JSON.stringify(err)}`
-                        })
-                      }
-                    })
+                  console.log('surveysgraphdata', surveysgraphdata)
+                  return res.status(200)
+                    .json({status: 'success', payload: {broadcastsgraphdata: broadcastsgraphdata, pollsgraphdata: pollsgraphdata, surveysgraphdata: surveysgraphdata}})
+                  // SessionsDataLayer.aggregateSession([
+                  //   {
+                  //     $match: {
+                  //       'request_time': {
+                  //         $gte: new Date(
+                  //           (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+                  //         $lt: new Date(
+                  //           (new Date().getTime()))
+                  //       }
+                  //     }
+                  //   },
+                  //   {
+                  //     $group: {
+                  //       _id: {'year': {$year: '$request_time'}, 'month': {$month: '$request_time'}, 'day': {$dayOfMonth: '$request_time'}, 'company': '$company_id'},
+                  //       count: {$sum: 1}}
+                  //   }])
+                  //   .then(sessionsgraphdata => {
+                  //     let temp2 = []
+                  //     for (let i = 0; i < sessionsgraphdata.length; i++) {
+                  //       if (JSON.stringify(sessionsgraphdata[i]._id.company) === JSON.stringify(companyUser.companyId)) {
+                  //         temp2.push(sessionsgraphdata[i])
+                  //       }
+                  //     }
+                  //     return res.status(200)
+                  //       .json({status: 'success', payload: {broadcastsgraphdata: broadcastsgraphdata, pollsgraphdata: pollsgraphdata, surveysgraphdata: surveysgraphdata, sessionsgraphdata: temp2}})
+                  //   })
+                  //   .catch(err => {
+                  //     if (err) {
+                  //       return res.status(500).json({
+                  //         status: 'failed',
+                  //         description: `Internal Server Error ${JSON.stringify(err)}`
+                  //       })
+                  //     }
+                  //   })
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(404).json({
+                    return res.status(500).json({
                       status: 'failed',
                       description: `Error in getting surveys count ${JSON.stringify(err)}`
                     })
@@ -640,7 +651,7 @@ exports.graphData = function (req, res) {
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(404).json({
+                    return res.status(500).json({
                       status: 'failed',
                       description: `Error in getting surveys count ${JSON.stringify(err)}`
                     })
@@ -649,7 +660,7 @@ exports.graphData = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                return res.status(404).json({
+                return res.status(500).json({
                   status: 'failed',
                   description: `Error in getting surveys count ${JSON.stringify(err)}`
                 })
@@ -657,7 +668,7 @@ exports.graphData = function (req, res) {
             })
         })
         .catch(err => {
-          return res.status(404).json({
+          return res.status(500).json({
             status: 'failed',
             description: `Error in getting surveys count ${JSON.stringify(err)}`
           })

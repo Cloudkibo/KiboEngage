@@ -23,11 +23,11 @@ exports.index = function (req, res) {
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
       BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
         .then(broadcastsCount => {
-          let aggregateMatch = criteria.fetchCriteria[0].$match
-          let aggregateSort = criteria.fetchCriteria[1].$sort
-          let aggregateSkip = criteria.fetchCriteria[2].$skip
-          let aggregateLimit = criteria.fetchCriteria[3].$limit
-          BroadcastDataLayer.aggregateForBroadcasts(aggregateMatch, null, null, aggregateLimit, aggregateSort, aggregateSkip)
+          let aggregateMatch = criteria.finalCriteria[0].$match
+          let aggregateSort = criteria.finalCriteria[1].$sort
+          let aggregateSkip = criteria.finalCriteria[2].$skip
+          let aggregateLimit = criteria.finalCriteria[3].$limit
+          BroadcastDataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(broadcasts => {
               BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
                 .then(broadcastpages => {

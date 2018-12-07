@@ -4,11 +4,7 @@
  */
 
 const logger = require('../../../components/logger')
-const Surveys = require('./surveys.model')
-const SurveyQuestions = require('./surveyquestions.model')
 const surveyQuestionsDataLayer = require('./surveyquestion.datalayer')
-const SurveyResponses = require('./surveyresponse.model')
-const SurveyPage = require('../page_survey/page_survey.model')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const AutomationQueueDataLayer = require('./../automationQueue/automationQueue.datalayer')
 const TAG = 'api/surveys/surveys.controller.js'
@@ -140,18 +136,17 @@ exports.create = function (req, res) {
                     .catch(error => {
                       return res.status(500).json({status: 'failed to page', payload: error})
                     })
-                  const survey = new Surveys(surveyPayload)
-                  surveyDataLayer.createSurvey(survey)
-                    .then(success => {
+                  surveyDataLayer.createSurvey(surveyPayload)
+                    .then(survey => {
                       for (let question in req.body.questions) {
                         let options = []
                         options = req.body.questions[question].options
-                        const surveyQuestion = new SurveyQuestions({
+                        const surveyQuestion = {
                           statement: req.body.questions[question].statement, // question statement
                           options, // array of question options
                           type: 'multichoice', // type can be text/multichoice
                           surveyId: survey._id
-                        })
+                        }
                         surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                           .then(success => {
                             require('./../../../config/socketio').sendMessageToClient({
@@ -219,13 +214,12 @@ exports.edit = function (req, res) {
               for (let question in req.body.questions) {
                 let options = []
                 options = req.body.questions[question].options
-                const surveyQuestion = new SurveyQuestions({
+                const surveyQuestion = {
                   statement: req.body.questions[question].statement, // question statement
                   options, // array of question options
                   type: 'multichoice', // type can be text/multichoice
                   surveyId: survey._id
-
-                })
+                }
 
                 surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                   .then(success => {
@@ -304,13 +298,12 @@ exports.submitresponse = function (req, res) {
    }
    */
   for (const resp in req.body.responses) {
-    const surveyResponse = new SurveyResponses({
+    const surveyResponse = {
       response: req.body.responses[resp].response, // response submitted by subscriber
       surveyId: req.body.surveyId,
       questionId: req.body.responses[resp].qid,
       subscriberId: req.body.subscriberId
-
-    })
+    }
 
     surveyResponseDataLayer.saveResponse(surveyResponse)
       .then(success => {
@@ -487,14 +480,14 @@ exports.send = function (req, res) {
                                                                                   description: JSON.stringify(err)
                                                                                 })
                                                                               }
-                                                                              let surveyPage = new SurveyPage({
+                                                                              let surveyPage = {
                                                                                 pageId: pages[z].pageId,
                                                                                 userId: req.user._id,
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: req.body._id,
                                                                                 seen: false,
                                                                                 companyId: companyUser.companyId
-                                                                              })
+                                                                              }
 
                                                                               SurveyPageDataLayer.savePage(surveyPage)
                                                                                 .then(success => {
@@ -634,14 +627,14 @@ exports.send = function (req, res) {
                                                                               description: JSON.stringify(err)
                                                                             })
                                                                           }
-                                                                          let surveyPage = new SurveyPage({
+                                                                          let surveyPage = {
                                                                             pageId: pages[z].pageId,
                                                                             userId: req.user._id,
                                                                             subscriberId: subscribers[j].senderId,
                                                                             surveyId: req.body._id,
                                                                             seen: false,
                                                                             companyId: companyUser.companyId
-                                                                          })
+                                                                          }
 
                                                                           SurveyPageDataLayer.savePage(surveyPage)
                                                                             .then(updated => {
@@ -804,20 +797,18 @@ exports.sendSurvey = function (req, res) {
                     })
                   }
                   let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
-                  const survey = new Surveys(surveyPayload)
-
-                  surveyDataLayer.createSurvey(survey)
+                  surveyDataLayer.createSurvey(surveyPayload)
                     .then(survey => {
                       // after survey is created, create survey questions
                       for (let question in req.body.questions) {
                         let options = []
                         options = req.body.questions[question].options
-                        const surveyQuestion = new SurveyQuestions({
+                        const surveyQuestion = {
                           statement: req.body.questions[question].statement, // question statement
                           options, // array of question options
                           type: 'multichoice', // type can be text/multichoice
                           surveyId: survey._id
-                        })
+                        }
 
                         surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                           .then(success => {
@@ -1013,14 +1004,14 @@ exports.sendSurvey = function (req, res) {
                                                                                       description: JSON.stringify(err)
                                                                                     })
                                                                                   }
-                                                                                  let surveyPage = new SurveyPage({
+                                                                                  let surveyPage = {
                                                                                     pageId: pages[z].pageId,
                                                                                     userId: req.user._id,
                                                                                     subscriberId: subscribers[j].senderId,
                                                                                     surveyId: survey._id,
                                                                                     seen: false,
                                                                                     companyId: companyUser.companyId
-                                                                                  })
+                                                                                  }
 
                                                                                   SurveyPageDataLayer.savePage(surveyPage)
                                                                                     .then(success => {
@@ -1150,14 +1141,14 @@ exports.sendSurvey = function (req, res) {
                                                                                   description: JSON.stringify(err)
                                                                                 })
                                                                               }
-                                                                              let surveyPage = new SurveyPage({
+                                                                              let surveyPage = {
                                                                                 pageId: pages[z].pageId,
                                                                                 userId: req.user._id,
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: survey._id,
                                                                                 seen: false,
                                                                                 companyId: companyUser.companyId
-                                                                              })
+                                                                              }
 
                                                                               SurveyPageDataLayer.savePage(surveyPage)
                                                                                 .then(updated => {

@@ -24,7 +24,7 @@ exports.createForPoll = (payload) => {
   return callApi(`polls`, 'post', payload, '', 'kiboengage')
 }
 
-exports.aggregateForPolls = (match, group = null, lookup = null, limit = null, sort = null, skip = null) => {
+exports.aggregateForPolls = (match, group, lookup, limit, sort, skip) => {
   let query = {
     purpose: 'aggregate',
     match: match

@@ -60,5 +60,5 @@ exports.countDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`page_poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_survey/query`, 'post', query, '', 'kiboengage')
 }
