@@ -222,7 +222,7 @@ exports.upload = function (req, res) {
           id: serverPath,
           url: `${config.domain}/api/broadcasts/download/${serverPath}`
         })}`)
-      if (req.body.pages && req.body.pages.length > 0) {
+      if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
         console.log('req.body in upload', req.body)
         let pages = JSON.parse(req.body.pages)
         logger.serverLog(TAG, `Pages in upload file ${pages}`)
