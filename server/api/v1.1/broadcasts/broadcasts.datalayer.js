@@ -40,7 +40,7 @@ exports.countBroadcasts = (filter) => {
 
 exports.updateBroadcast = (queryObject, updated) => {
   let query = {
-    purpose: 'updateMany',
+    purpose: 'updateAll',
     match: queryObject,
     updated: updated
   }
