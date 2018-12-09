@@ -189,7 +189,7 @@ exports.createSurvey = function (req, res) {
           .then(question1 => {
           })
           .catch(err => {
-            return res.status(500).json({status: `failed ${err}`, payload: err})
+            console.log('error in creating question', err)
           })
       }
       return res.status(201).json({status: 'success', payload: survey})
