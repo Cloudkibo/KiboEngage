@@ -296,6 +296,7 @@ exports.broadcastTemplateaggregateCount = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
+  console.log('broadcastTemplateaggregateCount', query)
   return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
 }
 exports.broadcastTemplateaggregateLimit = (aggregateObject) => {
