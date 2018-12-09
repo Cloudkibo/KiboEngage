@@ -123,6 +123,7 @@ exports.findSurveyById = (req) => {
     purpose: 'findOne',
     match: {_id: req.params.surveyid}
   }
+  console.log('query in findSurveyById', query)
   return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
 }
 
