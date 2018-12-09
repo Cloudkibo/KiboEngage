@@ -174,18 +174,17 @@ exports.createSurvey = function (req, res) {
     description: req.body.survey.description,
     category: req.body.survey.category
   }
-  const survey = new TemplateSurveys(surveyPayload)
-  dataLayer.createSurveys(survey)
+  dataLayer.createSurveys(surveyPayload)
     .then(survey => {
       // after survey is created, create survey questions
       for (let question in req.body.questions) {
         let options = []
         options = req.body.questions[question].options
-        const surveyQuestion = new SurveyQuestions({
+        const surveyQuestion = {
           statement: req.body.questions[question].statement, // question statement
           options, // array of question options
           surveyId: survey._id
-        })
+        }
         QuestionsurveydataLayer.createQuestionSurveys(surveyQuestion)
           .then(question1 => {
           })
