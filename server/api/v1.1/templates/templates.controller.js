@@ -273,7 +273,7 @@ exports.editCategory = function (req, res) {
 exports.surveyDetails = function (req, res) {
   dataLayer.findSurveyById(req)
     .then(survey => {
-      console.log('survey')
+      console.log('survey', survey)
       if (!survey) {
         return res.status(404).json({
           status: 'failed',
@@ -283,7 +283,7 @@ exports.surveyDetails = function (req, res) {
       console.log('end survey')
       dataLayer.findQuestionById(req)
         .then(questions => {
-          console.log('questions')
+          console.log('questions', questions)
           return res.status(200).json({status: 'success', payload: {survey, questions}})
         })
         .catch(err => {
