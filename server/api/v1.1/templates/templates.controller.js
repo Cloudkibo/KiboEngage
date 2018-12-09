@@ -624,6 +624,7 @@ exports.getAllBroadcasts = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+        console.log('findCriteria for broadcasts', findCriteria)
         dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
