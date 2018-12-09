@@ -1,5 +1,4 @@
 const SurveyQuestions = require('./surveyQuestion.model')
-const TemplateSurveys = require('./surveyTemplate.model')
 const dataLayer = require('./template.datalayer')
 const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
