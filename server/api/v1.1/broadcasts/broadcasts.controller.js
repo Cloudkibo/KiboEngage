@@ -176,6 +176,19 @@ exports.deleteButton = function (req, res) {
       return res.status(500).json({status: 'failed', payload: `Failed to delete url ${JSON.stringify(error)}`})
     })
 }
+
+exports.download = function (req, res) {
+  let dir = path.resolve(__dirname, '../../../../../broadcastFiles/userfiles')
+  try {
+    res.sendfile(req.params.id, {root: dir})
+  } catch (err) {
+    logger.serverLog(TAG,
+      `Inside Download file, err = ${JSON.stringify(err)}`)
+    res.status(404)
+      .json({status: 'success', payload: 'Not Found ' + JSON.stringify(err)})
+  }
+}
+
 exports.upload = function (req, res) {
   var today = new Date()
   var uid = crypto.randomBytes(5).toString('hex')
