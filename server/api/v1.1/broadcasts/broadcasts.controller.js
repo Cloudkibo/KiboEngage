@@ -102,6 +102,11 @@ exports.addButton = function (req, res) {
       .catch(error => {
         return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
       })
+  } else if (req.body.type === 'element_share') {
+    return res.status(200).json({
+      status: 'success',
+      payload: {type: req.body.type}
+    })
   } else {
     if (req.body.module.type === 'sequenceMessaging') {
       let buttonId = uniqid()
