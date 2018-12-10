@@ -8,7 +8,7 @@ const mongoose = require('mongoose')
 exports.getSubscriberIds = function (subscribers) {
   let subscriberIds = []
   for (let i = 0; i < subscribers.length; i++) {
-    subscriberIds.push(subscribers[i]._id)
+    subscriberIds.push(mongoose.Types.ObjectId(subscribers[i]._id))
   }
   return subscriberIds
 }
