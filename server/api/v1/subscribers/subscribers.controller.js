@@ -113,7 +113,11 @@ exports.getAll = function (req, res) {
             .then(subscribers => {
               let subscriberIds = logicLayer.getSubscriberIds(subscribers)
               logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
-              utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
+              let tagFindCriteria = {
+                subscriberId: {$in: subscriberIds},
+                tagId: req.body.filter_criteria.tag_value !== '' ? req.body.filter_criteria.tag_value : {$exists: true}
+              }
+              utility.callApi(`tags_subscriber/query`, 'post', tagFindCriteria, req.headers.authorization)
                 .then(tags => {
                   logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
                   let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
