@@ -4,6 +4,7 @@ const dataLayer = require('./subscribers.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
 const util = require('util')
+const mongoose = require('mongoose')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
@@ -115,7 +116,7 @@ exports.getAll = function (req, res) {
               logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
               let tagFindCriteria = {
                 subscriberId: {$in: subscriberIds},
-                tagId: req.body.filter_criteria.tag_value !== '' ? req.body.filter_criteria.tag_value : {$exists: true}
+                tagId: req.body.filter_criteria.tag_value !== '' ? mongoose.Types.ObjectId(req.body.filter_criteria.tag_value) : {$exists: true}
               }
               utility.callApi(`tags_subscriber/query`, 'post', tagFindCriteria, req.headers.authorization)
                 .then(tags => {
