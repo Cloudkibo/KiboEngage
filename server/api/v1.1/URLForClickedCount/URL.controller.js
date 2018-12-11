@@ -24,8 +24,9 @@ exports.index = function (req, res) {
 }
 
 exports.broadcast = function (req, res) {
-  URLDataLayer.findOneURL({_id: req.params.id})
+  URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
+      console.log('URLObject', URLObject)
       if (URLObject) {
         BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
           .then(updatedData => {
@@ -59,7 +60,7 @@ exports.broadcast = function (req, res) {
 
 exports.sequence = function (req, res) {
   logger.serverLog(`Sequence Click Count ${JSON.stringify(req.params.id)}`)
-  URLDataLayer.findOneURL({_id: req.params.id})
+  URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
       if (URLObject) {
         logger.serverLog(`Sequence Click Count ${JSON.stringify(URLObject)}`)

@@ -48,8 +48,8 @@ const all = {
   CHAT_URL: process.env.NODE_ENV === 'production' ? 'https://kibochat.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://skibochat.cloudkibo.com/api' : 'http://localhost:3000/api',
 
   WEBHOOKS_URL: process.env.NODE_ENV === 'production' ? 'https://webhook.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://swebhook.cloudkibo.com/api' : 'http://localhost:3002/api',
-  DBLAYER_URL_KIBOCHAT: process.env.NODE_ENV === 'production' ? 'https://dblayer-kibochat.cloudkibo.com/api/v1/' : process.env.NODE_ENV === 'staging' ? 'https://dblayer-skibochat.cloudkibo.com/api/v1/' : 'http://localhost:3000/api/v1/',
-  DBLAYER_URL_KIBOENGAGE: process.env.NODE_ENV === 'production' ? 'https://dblayer-kiboengage.cloudkibo.com/api/v1/' : process.env.NODE_ENV === 'staging' ? 'https://dblayer-skiboengage.cloudkibo.com/api/v1/' : 'http://localhost:3000/api/v1/'
+  DBLAYER_URL_KIBOCHAT: process.env.DB_LAYER_IP_KIBOCHAT,
+  DBLAYER_URL_KIBOENGAGE: process.env.DB_LAYER_IP_KIBOENGAGE
 }
 
 module.exports = _.merge(

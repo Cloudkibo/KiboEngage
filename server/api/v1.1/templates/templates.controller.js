@@ -1,5 +1,4 @@
 const SurveyQuestions = require('./surveyQuestion.model')
-const TemplateSurveys = require('./surveyTemplate.model')
 const dataLayer = require('./template.datalayer')
 const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
@@ -34,11 +33,11 @@ exports.getAllPolls = function (req, res) {
             })
           })
           .catch(err => {
-            return res.status(500).json({status: `failed ${err}`, payload: ` ${JSON.stringify(error)}`})
+            return res.status(500).json({status: `failed ${err}`, payload: ` ${JSON.stringify(err)}`})
           })
       })
       .catch(err => {
-        return res.status(500).json({status: `failed ${err}`, payload: ` ${JSON.stringify(error)}`})
+        return res.status(500).json({status: `failed ${err}`, payload: ` ${JSON.stringify(err)}`})
       })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
@@ -174,23 +173,22 @@ exports.createSurvey = function (req, res) {
     description: req.body.survey.description,
     category: req.body.survey.category
   }
-  const survey = new TemplateSurveys(surveyPayload)
-  dataLayer.createSurveys(survey)
+  dataLayer.createSurveys(surveyPayload)
     .then(survey => {
       // after survey is created, create survey questions
       for (let question in req.body.questions) {
         let options = []
         options = req.body.questions[question].options
-        const surveyQuestion = new SurveyQuestions({
+        const surveyQuestion = {
           statement: req.body.questions[question].statement, // question statement
           options, // array of question options
           surveyId: survey._id
-        })
+        }
         QuestionsurveydataLayer.createQuestionSurveys(surveyQuestion)
           .then(question1 => {
           })
           .catch(err => {
-            return res.status(500).json({status: `failed ${err}`, payload: err})
+            console.log('error in creating question', err)
           })
       }
       return res.status(201).json({status: 'success', payload: survey})
@@ -273,7 +271,7 @@ exports.editCategory = function (req, res) {
 exports.surveyDetails = function (req, res) {
   dataLayer.findSurveyById(req)
     .then(survey => {
-      console.log('survey')
+      console.log('survey', survey)
       if (!survey) {
         return res.status(404).json({
           status: 'failed',
@@ -283,7 +281,7 @@ exports.surveyDetails = function (req, res) {
       console.log('end survey')
       dataLayer.findQuestionById(req)
         .then(questions => {
-          console.log('questions')
+          console.log('questions', questions)
           return res.status(200).json({status: 'success', payload: {survey, questions}})
         })
         .catch(err => {
@@ -624,6 +622,7 @@ exports.getAllBroadcasts = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+        console.log('findCriteria for broadcasts', findCriteria)
         dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})

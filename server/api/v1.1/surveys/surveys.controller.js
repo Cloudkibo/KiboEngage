@@ -4,11 +4,7 @@
  */
 
 const logger = require('../../../components/logger')
-const Surveys = require('./surveys.model')
-const SurveyQuestions = require('./surveyquestions.model')
 const surveyQuestionsDataLayer = require('./surveyquestion.datalayer')
-const SurveyResponses = require('./surveyresponse.model')
-const SurveyPage = require('../page_survey/page_survey.model')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const AutomationQueueDataLayer = require('./../automationQueue/automationQueue.datalayer')
 const TAG = 'api/surveys/surveys.controller.js'
@@ -25,7 +21,7 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 
 exports.allSurveys = function (req, res) {
-  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -40,7 +36,7 @@ exports.allSurveys = function (req, res) {
           let aggregateSort = criterias.fetchCriteria[1].$sort
           let aggregateSkip = criterias.fetchCriteria[2].$skip
           let aggregateLimit = criterias.fetchCriteria[3].$limit
-          surveyDataLayer.aggregateForSurveys(aggregateMatch, null, null, aggregateLimit, aggregateSort, aggregateSkip)
+          surveyDataLayer.aggregateForSurveys(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(surveys => {
               SurveyPageDataLayer.genericFind({companyId: companyUser.companyId})
                 .then(surveypages => {
@@ -140,18 +136,17 @@ exports.create = function (req, res) {
                     .catch(error => {
                       return res.status(500).json({status: 'failed to page', payload: error})
                     })
-                  const survey = new Surveys(surveyPayload)
-                  surveyDataLayer.createSurvey(survey)
-                    .then(success => {
+                  surveyDataLayer.createSurvey(surveyPayload)
+                    .then(survey => {
                       for (let question in req.body.questions) {
                         let options = []
                         options = req.body.questions[question].options
-                        const surveyQuestion = new SurveyQuestions({
+                        const surveyQuestion = {
                           statement: req.body.questions[question].statement, // question statement
                           options, // array of question options
                           type: 'multichoice', // type can be text/multichoice
                           surveyId: survey._id
-                        })
+                        }
                         surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                           .then(success => {
                             require('./../../../config/socketio').sendMessageToClient({
@@ -219,13 +214,12 @@ exports.edit = function (req, res) {
               for (let question in req.body.questions) {
                 let options = []
                 options = req.body.questions[question].options
-                const surveyQuestion = new SurveyQuestions({
+                const surveyQuestion = {
                   statement: req.body.questions[question].statement, // question statement
                   options, // array of question options
                   type: 'multichoice', // type can be text/multichoice
                   surveyId: survey._id
-
-                })
+                }
 
                 surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                   .then(success => {
@@ -304,13 +298,12 @@ exports.submitresponse = function (req, res) {
    }
    */
   for (const resp in req.body.responses) {
-    const surveyResponse = new SurveyResponses({
+    const surveyResponse = {
       response: req.body.responses[resp].response, // response submitted by subscriber
       surveyId: req.body.surveyId,
       questionId: req.body.responses[resp].qid,
       subscriberId: req.body.subscriberId
-
-    })
+    }
 
     surveyResponseDataLayer.saveResponse(surveyResponse)
       .then(success => {
@@ -365,7 +358,7 @@ exports.send = function (req, res) {
                   callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                      callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                         .then(connectedUser => {
                           var currentUser
                           if (req.user.facebookInfo) {
@@ -445,9 +438,9 @@ exports.send = function (req, res) {
                                                           utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                             subscribers = repliedSubscribers
                                                             for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                              callApi.callApi(`featureUsage/updateCompany`, 'post', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                                              callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                                                 .then(updated => {
-                                                                  callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId})
+                                                                  callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                                     .then(companyUsage => {
                                                                       companyUsage = companyUsage[0]
                                                                       if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
@@ -458,7 +451,7 @@ exports.send = function (req, res) {
                                                                           type: 'template',
                                                                           payload: {
                                                                             template_type: 'button',
-                                                                            text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                            text: `${survey.description}\n${first_question.statement}`,
                                                                             buttons
                                                                           }
                                                                         }
@@ -487,16 +480,16 @@ exports.send = function (req, res) {
                                                                                   description: JSON.stringify(err)
                                                                                 })
                                                                               }
-                                                                              let surveyPage = new SurveyPage({
+                                                                              let surveyPage = {
                                                                                 pageId: pages[z].pageId,
                                                                                 userId: req.user._id,
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: req.body._id,
                                                                                 seen: false,
                                                                                 companyId: companyUser.companyId
-                                                                              })
+                                                                              }
 
-                                                                              SurveyPageDataLayer.savePage(surveyPage)
+                                                                              SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                 .then(success => {
                                                                                   require('./../../../config/socketio').sendMessageToClient({
                                                                                     room_id: companyUser.companyId,
@@ -591,9 +584,9 @@ exports.send = function (req, res) {
                                                       utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                         subscribers = repliedSubscribers
                                                         for (let j = 0; j < subscribers.length && !abort; j++) {
-                                                          callApi.callApi(`featureUsage/updateCompany`, 'put', {companyId: companyUser.companyId}, { $inc: { surveys: 1 } })
+                                                          callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
                                                             .then(updated => {
-                                                              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId})
+                                                              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
                                                                 .then(companyUsage => {
                                                                   companyUsage = companyUsage[0]
                                                                   if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
@@ -604,7 +597,7 @@ exports.send = function (req, res) {
                                                                       type: 'template',
                                                                       payload: {
                                                                         template_type: 'button',
-                                                                        text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                        text: `${survey.description}\n${first_question.statement}`,
                                                                         buttons
                                                                       }
                                                                     }
@@ -634,16 +627,16 @@ exports.send = function (req, res) {
                                                                               description: JSON.stringify(err)
                                                                             })
                                                                           }
-                                                                          let surveyPage = new SurveyPage({
+                                                                          let surveyPage = {
                                                                             pageId: pages[z].pageId,
                                                                             userId: req.user._id,
                                                                             subscriberId: subscribers[j].senderId,
                                                                             surveyId: req.body._id,
                                                                             seen: false,
                                                                             companyId: companyUser.companyId
-                                                                          })
+                                                                          }
 
-                                                                          SurveyPageDataLayer.savePage(surveyPage)
+                                                                          SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                             .then(updated => {
                                                                               require('./../../../config/socketio').sendMessageToClient({
                                                                                 room_id: companyUser.companyId,
@@ -804,20 +797,18 @@ exports.sendSurvey = function (req, res) {
                     })
                   }
                   let surveyPayload = surveyLogicLayer.createSurveyPayload(req, companyUser)
-                  const survey = new Surveys(surveyPayload)
-
-                  surveyDataLayer.createSurvey(survey)
+                  surveyDataLayer.createSurvey(surveyPayload)
                     .then(survey => {
                       // after survey is created, create survey questions
                       for (let question in req.body.questions) {
                         let options = []
                         options = req.body.questions[question].options
-                        const surveyQuestion = new SurveyQuestions({
+                        const surveyQuestion = {
                           statement: req.body.questions[question].statement, // question statement
                           options, // array of question options
                           type: 'multichoice', // type can be text/multichoice
                           surveyId: survey._id
-                        })
+                        }
 
                         surveyQuestionsDataLayer.saveQuestion(surveyQuestion)
                           .then(success => {
@@ -841,7 +832,7 @@ exports.sendSurvey = function (req, res) {
                       callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          callApi.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                          callApi.callApi(`user`, 'get', {}, req.headers.authorization)
                             .then(connectedUser => {
                               var currentUser
                               if (req.user.facebookInfo) {
@@ -983,7 +974,7 @@ exports.sendSurvey = function (req, res) {
                                                                               type: 'template',
                                                                               payload: {
                                                                                 template_type: 'button',
-                                                                                text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                                text: `${survey.description}\n${first_question.statement}`,
                                                                                 buttons
                                                                               }
                                                                             }
@@ -1013,16 +1004,16 @@ exports.sendSurvey = function (req, res) {
                                                                                       description: JSON.stringify(err)
                                                                                     })
                                                                                   }
-                                                                                  let surveyPage = new SurveyPage({
+                                                                                  let surveyPage = {
                                                                                     pageId: pages[z].pageId,
                                                                                     userId: req.user._id,
                                                                                     subscriberId: subscribers[j].senderId,
                                                                                     surveyId: survey._id,
                                                                                     seen: false,
                                                                                     companyId: companyUser.companyId
-                                                                                  })
+                                                                                  }
 
-                                                                                  SurveyPageDataLayer.savePage(surveyPage)
+                                                                                  SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                     .then(success => {
 
                                                                                     })
@@ -1120,7 +1111,7 @@ exports.sendSurvey = function (req, res) {
                                                                           type: 'template',
                                                                           payload: {
                                                                             template_type: 'button',
-                                                                            text: `${survey.description}\nPlease respond to these questions. \n${first_question.statement}`,
+                                                                            text: `${survey.description}\n${first_question.statement}`,
                                                                             buttons
                                                                           }
                                                                         }
@@ -1150,16 +1141,16 @@ exports.sendSurvey = function (req, res) {
                                                                                   description: JSON.stringify(err)
                                                                                 })
                                                                               }
-                                                                              let surveyPage = new SurveyPage({
+                                                                              let surveyPage = {
                                                                                 pageId: pages[z].pageId,
                                                                                 userId: req.user._id,
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: survey._id,
                                                                                 seen: false,
                                                                                 companyId: companyUser.companyId
-                                                                              })
+                                                                              }
 
-                                                                              SurveyPageDataLayer.savePage(surveyPage)
+                                                                              SurveyPageDataLayer.createForSurveyPage(surveyPage)
                                                                                 .then(updated => {
                                                                                 })
                                                                                 .catch(error => {

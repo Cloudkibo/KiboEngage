@@ -4,6 +4,7 @@ const dataLayer = require('./subscribers.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
 const util = require('util')
+const mongoose = require('mongoose')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
@@ -116,7 +117,7 @@ exports.getAll = function (req, res) {
               utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
                 .then(tags => {
                   logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
-                  let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
+                  let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags, req.body.filter_criteria.tag_value)
                   logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`)
                   return res.status(200).json({
                     status: 'success',

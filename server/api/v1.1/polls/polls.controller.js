@@ -221,7 +221,7 @@ exports.send = function (req, res) {
                   utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      utility.callApi(`user/${userPage.userId}`, req.headers.authorization)
+                      utility.callApi(`user`, 'get', {}, req.headers.authorization)
                         .then(connectedUser => {
                           var currentUser
                           if (req.user.facebookInfo) {
@@ -263,8 +263,8 @@ exports.send = function (req, res) {
                                                           }
                                                           const data = {
                                                             messaging_type: 'UPDATE',
-                                                            recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                            message: messageData,
+                                                            recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                            message: JSON.stringify(messageData),
                                                             tag: req.body.fbMessageTag
                                                           }
                                                           // this calls the needle when the last message was older than 30 minutes
@@ -367,8 +367,8 @@ exports.send = function (req, res) {
                                                         }
                                                         const data = {
                                                           messaging_type: 'UPDATE',
-                                                          recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                          message: messageData,
+                                                          recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                          message: JSON.stringify(messageData),
                                                           tag: req.body.fbMessageTag
                                                         }
                                                         // this calls the needle when the last message was older than 30 minutes
@@ -513,7 +513,7 @@ exports.sendPoll = function (req, res) {
                       utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          utility.callApi(`user/${userPage.userId}`, 'get', {}, req.headers.authorization)
+                          utility.callApi(`user`, 'get', {}, req.headers.authorization)
                             .then(connectedUser => {
                               var currentUser
                               if (req.user.facebookInfo) {
@@ -583,8 +583,8 @@ exports.sendPoll = function (req, res) {
                                                               }
                                                               const data = {
                                                                 messaging_type: 'UPDATE',
-                                                                recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                                message: messageData
+                                                                recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                                message: JSON.stringify(messageData)
                                                                 //  tag: req.body.fbMessageTag
                                                               }
                                                               // this calls the needle when the last message was older than 30 minutes
@@ -685,8 +685,8 @@ exports.sendPoll = function (req, res) {
                                                             }
                                                             const data = {
                                                               messaging_type: 'UPDATE',
-                                                              recipient: {id: subscribers[j].senderId}, // this is the subscriber id
-                                                              message: messageData
+                                                              recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                              message: JSON.stringify(messageData)
                                                               // tag: req.body.fbMessageTag
                                                             }
                                                             // this calls the needle when the last message was older than 30 minutes

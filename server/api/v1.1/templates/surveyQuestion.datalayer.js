@@ -1,4 +1,6 @@
-const SurveyQuestions = require('./surveyQuestion.model')
+const { callApi } = require('../utility')
+
 exports.createQuestionSurveys = (surveyQuestion) => {
-  return surveyQuestion.save()
+  console.log('surveyQuestion', surveyQuestion)
+  return callApi(`templates/survey/question`, 'post', surveyQuestion, '', 'kiboengage')
 }

@@ -58,4 +58,6 @@ router.delete('/deleteButton/:id',
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.deleteButton)
 
+router.get('/download/:id', controller.download)
+
 module.exports = router

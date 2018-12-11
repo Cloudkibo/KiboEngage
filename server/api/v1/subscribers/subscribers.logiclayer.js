@@ -13,15 +13,26 @@ exports.getSubscriberIds = function (subscribers) {
   return subscriberIds
 }
 
-exports.getSusbscribersPayload = function (subscribers, tags) {
+exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
   let subscribersPayload = subscribers
+  let filteredTagSubscribers = []
   for (let i = 0; i < subscribers.length; i++) {
     subscribersPayload[i].tags = []
+    var isTaggedSubscriber = false
     for (let j = 0; j < tags.length; j++) {
       if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
+        if (tagValue === tags[j].tagId._id.toString()) {
+          isTaggedSubscriber = true
+        }
         subscribersPayload[i].tags.push(tags[j].tagId.tag)
       }
     }
+    if (isTaggedSubscriber) {
+      filteredTagSubscribers.push(subscribersPayload[i])
+    }
+  }
+  if (tagValue !== '') {
+    return filteredTagSubscribers
   }
   return subscribersPayload
 }
