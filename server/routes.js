@@ -40,6 +40,7 @@ module.exports = function (app) {
   app.use('/api/messenger_code', require('./api/v1/messenger_code'))
   app.use('/api/scripts', require('./api/scripts'))
   app.use('/api/api_ngp', require('./api/v1/api_ngp'))
+  app.use('/api/landingPage', require('./api/v1/landingPage'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
