@@ -51,7 +51,9 @@ module.exports = function (app) {
     // res.sendFile(path.join(config.root, 'client/index.html'))
     res.render('main', { environment: env })
   })
-
+  app.get('/landingPage/:pageId', (req, res) => {
+    res.render('landingPage', { landingpage: 'page' })
+  })
   app.get('/', (req, res) => {
     res.sendFile('./../client/build/index.html')
   })

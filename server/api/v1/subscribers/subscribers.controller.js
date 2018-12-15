@@ -15,6 +15,7 @@ exports.index = function (req, res) {
           utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
+              console.log('Subscribers Payload', subscribersPayload)
               return res.status(200).json({
                 status: 'success',
                 payload: subscribersPayload
