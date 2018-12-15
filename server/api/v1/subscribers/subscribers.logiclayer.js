@@ -31,7 +31,7 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
       filteredTagSubscribers.push(subscribersPayload[i])
     }
   }
-  if (tagValue !== '') {
+  if (tagValue && tagValue !== '') {
     return filteredTagSubscribers
   }
   return subscribersPayload
