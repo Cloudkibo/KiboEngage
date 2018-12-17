@@ -282,6 +282,7 @@ exports.send = function (req, res) {
                                                                     logger.serverLog(TAG, err)
                                                                     logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
                                                                   }
+                                                                  console.log('sent poll response', resp.body)
                                                                   let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                                   PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                     .then(pollCreated => {
@@ -602,6 +603,7 @@ exports.sendPoll = function (req, res) {
                                                                         logger.serverLog(TAG, err)
                                                                         logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
                                                                       }
+                                                                      console.log('sent poll response', resp.body)
                                                                       let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
                                                                       PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                         .then(pollCreated => {
@@ -708,6 +710,7 @@ exports.sendPoll = function (req, res) {
                                                                         `Error occured at subscriber :${JSON.stringify(
                                                                           subscribers[j])}`)
                                                                     }
+                                                                    console.log('sent poll response', resp.body)
                                                                     let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
                                                                     PollPageDataLayer.createForPollPage(pollBroadcast)
                                                                       .then(pollCreated => {
