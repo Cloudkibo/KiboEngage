@@ -17,19 +17,10 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
       'is_kibo_product': true
     }
   }
-  let apiUrl = config.ACCOUNTS_URL
-  if (type === 'kiboengage') {
-    apiUrl = config.DBLAYER_URL_KIBOENGAGE
-  } else if (type === 'kibochat') {
-    apiUrl = config.DBLAYER_URL_KIBOCHAT
-  } else if (type === 'chat') {
-    apiUrl = config.CHAT_URL
-  } else if (type === 'webhook') {
-    apiUrl = config.WEBHOOKS_URL
-  }
+  let apiUrl = config.api_urls[type]
   let options = {
     method: method.toUpperCase(),
-    uri: `/${apiUrl}/${endpoint}`,
+    uri: `${apiUrl}/${endpoint}`,
     headers,
     body,
     json: true
