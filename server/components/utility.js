@@ -2,7 +2,7 @@ const logger = require('./logger')
 const TAG = 'components/utility.js'
 const config = require('./../config/environment')
 const axios = require('axios')
-const utility = require('../api/v1/utility')
+const utility = require('../api/v1.1/utility')
 logger.serverLog(TAG, 'Server UtilityJS Called: ')
 
 function validateUrl (str) {
