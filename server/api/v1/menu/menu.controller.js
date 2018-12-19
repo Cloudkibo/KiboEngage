@@ -128,7 +128,7 @@ exports.create = function (req, res) {
                       }
                     })
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page[0].accessToken}`
-                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
+                    logger.serverLog(TAG, `requestUrl for menu creation ${req.body.payload}`)
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (err) {
