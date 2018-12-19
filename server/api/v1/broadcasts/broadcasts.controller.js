@@ -94,7 +94,8 @@ exports.addButton = function (req, res) {
               if (err) {
                 console.log('error in getting whitelisted_domains', err)
               }
-              if (resp.data[0].whitelisted_domains.includes(req.body.url)) {
+              console.log('reponse from whitelisted_domains', resp.body)
+              if (resp.body.data && resp.body.data[0].whitelisted_domains.includes(req.body.url)) {
                 return res.status(200).json({
                   status: 'success',
                   payload: {type: req.body.type, url: req.body.url, title: req.body.title}
@@ -193,7 +194,8 @@ exports.editButton = function (req, res) {
             if (err) {
               console.log('error in getting whitelisted_domains', err)
             }
-            if (resp.data[0].whitelisted_domains.includes(req.body.url)) {
+            console.log('reponse from whitelisted_domains', resp.body)
+            if (resp.body.data && resp.body.data[0].whitelisted_domains.includes(req.body.url)) {
               return res.status(200).json({
                 status: 'success',
                 payload: {type: req.body.type, url: req.body.url, title: req.body.title}
