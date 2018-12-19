@@ -80,31 +80,18 @@ exports.addButton = function (req, res) {
     type: req.body.type
   }
   if (req.body.type === 'web_url') {
-    if (req.body.messenger_extensions && req.body.webview_height_ratio) {
-      if (!req.body.pageId) {
-        return res.status(500).json({status: 'failed', payload: `PageId is required for webview`})
+    if (req.body.messenger_extensions || req.body.webview_height_ratio) {
+      if (!broadcastUtility.isWebView()) {
+        return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
-      needle.get(`https://graph.facebook.com/v2.10/${req.body.pageId}?fields=access_token&access_token=${req.user.facebookInfo.fbToken}`,
-        (err, resp) => {
-          if (err) {
-            console.log('error in getting page access token', err)
-          }
-          needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
-            (err, resp) => {
-              if (err) {
-                console.log('error in getting whitelisted_domains', err)
-              }
-              console.log('reponse from whitelisted_domains', resp.body)
-              if (resp.body.data && resp.body.data[0].whitelisted_domains.includes(req.body.url)) {
-                return res.status(200).json({
-                  status: 'success',
-                  payload: {type: req.body.type, url: req.body.url, title: req.body.title}
-                })
-              } else {
-                return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
-              }
-            })
+      if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
+        return res.status(200).json({
+          status: 'success',
+          payload: {type: req.body.type, url: req.body.url, title: req.body.title}
         })
+      } else {
+        return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+      }
     } else {
       URLDataLayer.createURLObject({
         originalURL: req.body.url,
@@ -180,31 +167,18 @@ exports.editButton = function (req, res) {
       .catch(error => {
         return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
       })
-  } else if (req.body.type === 'web_url' && req.body.messenger_extensions && req.body.webview_height_ratio) {
-    if (!req.body.pageId) {
-      return res.status(500).json({status: 'failed', payload: `PageId is required for webview`})
+  } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
+    if (!broadcastUtility.isWebView()) {
+      return res.status(500).json({status: 'failed', payload: `parameters are missing`})
     }
-    needle.get(`https://graph.facebook.com/v2.10/${req.body.pageId}?fields=access_token&access_token=${req.user.facebookInfo.fbToken}`,
-      (err, resp) => {
-        if (err) {
-          console.log('error in getting page access token', err)
-        }
-        needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
-          (err, resp) => {
-            if (err) {
-              console.log('error in getting whitelisted_domains', err)
-            }
-            console.log('reponse from whitelisted_domains', resp.body)
-            if (resp.body.data && resp.body.data[0].whitelisted_domains.includes(req.body.url)) {
-              return res.status(200).json({
-                status: 'success',
-                payload: {type: req.body.type, url: req.body.url, title: req.body.title}
-              })
-            } else {
-              return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
-            }
-          })
+    if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
+      return res.status(200).json({
+        status: 'success',
+        payload: {type: req.body.type, url: req.body.url, title: req.body.title}
       })
+    } else {
+      return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+    }
   } else {
     buttonPayload.payload = JSON.stringify({
       sequenceId: req.body.sequenceId,

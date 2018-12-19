@@ -15,6 +15,7 @@ const mongoose = require('mongoose')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const youtubedl = require('youtube-dl')
 const util = require('util')
+const needle = require('needle')
 
 function validateInput (body) {
   if (!_.has(body, 'platform')) return false
@@ -794,7 +795,35 @@ const deleteVideo = () => {
     })
   })
 }
-
+function isWhiteListedDomain (domain, pageId, user) {
+  needle.get(`https://graph.facebook.com/v2.10/${pageId}?fields=access_token&access_token=${user.facebookInfo.fbToken}`,
+    (err, resp) => {
+      if (err) {
+        console.log('error in getting page access token', err)
+      }
+      needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
+        (err, resp) => {
+          if (err) {
+            console.log('error in getting whitelisted_domains', err)
+          }
+          console.log('reponse from whitelisted_domains', resp.body)
+          if (resp.body.data && resp.body.data[0].whitelisted_domains.includes(domain)) {
+            return true
+          } else {
+            return false
+          }
+        })
+    })
+}
+function isWebView (body) {
+  if ((body.messenger_extensions && !(_.has(body, 'webview_height_ratio'))) ||
+    (body.webview_height_ratio && !(_.has(body, 'messenger_extensions'))) ||
+  ((body.webview_height_ratio || body.messenger_extensions) && !(_.has(body, 'pageId')))) {
+    return false
+  } else {
+    return true
+  }
+}
 exports.prepareSendAPIPayload = prepareSendAPIPayload
 exports.prepareBroadCastPayload = prepareBroadCastPayload
 exports.parseUrl = parseUrl
@@ -808,3 +837,5 @@ exports.uploadOnFacebook = uploadOnFacebook
 exports.addModuleIdIfNecessary = addModuleIdIfNecessary
 exports.downloadVideo = downloadVideo
 exports.deleteVideo = deleteVideo
+exports.isWhiteListedDomain = isWhiteListedDomain
+exports.isWebView = isWebView
