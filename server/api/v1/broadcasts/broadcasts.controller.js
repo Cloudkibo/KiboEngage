@@ -80,8 +80,10 @@ exports.addButton = function (req, res) {
     type: req.body.type
   }
   if (req.body.type === 'web_url') {
+    console.log('inisde web_url')
     if (req.body.messenger_extensions || req.body.webview_height_ratio) {
-      if (!broadcastUtility.isWebView()) {
+      console.log('inisde webview')
+      if (!broadcastUtility.isWebView(broadcastUtility.isWebView)) {
         return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
       if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
@@ -168,7 +170,7 @@ exports.editButton = function (req, res) {
         return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
       })
   } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
-    if (!broadcastUtility.isWebView()) {
+    if (!broadcastUtility.isWebView(req.body)) {
       return res.status(500).json({status: 'failed', payload: `parameters are missing`})
     }
     if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
