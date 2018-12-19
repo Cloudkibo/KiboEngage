@@ -468,7 +468,24 @@ exports.saveGreetingText = function (req, res) {
       })
     })
 }
+exports.whitelistDomain = function (req, res) {
+  const pageId = req.body.pageId
+  const whitelistDomains = req.body.whitelistDomains
 
+  utility.callApi(`pages/whitelistDomain`, 'post', {whitelistDomains: whitelistDomains, page_id: pageId}, req.headers.authorization)
+    .then(updatedPages => {
+      return res.status(200).json({
+        status: 'success',
+        payload: updatedPages
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to update whitelist domains ${JSON.stringify(error)}`
+      })
+    })
+}
 exports.addPages = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
