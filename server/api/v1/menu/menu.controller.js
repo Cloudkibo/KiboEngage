@@ -5,7 +5,6 @@ const logger = require('../../../components/logger')
 const TAG = 'api/menu/menu.controller.js'
 let Menu = require('./menu.model')
 const needle = require('needle')
-const _ = require('lodash')
 const MenuDataLayer = require('./menu.datalayer')
 const callApi = require('../utility')
 
@@ -75,6 +74,7 @@ exports.indexByPage = function (req, res) {
 }
 
 exports.create = function (req, res) {
+  console.log('in create', req.body)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
