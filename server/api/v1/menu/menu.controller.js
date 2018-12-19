@@ -75,6 +75,7 @@ exports.indexByPage = function (req, res) {
 
 exports.create = function (req, res) {
   console.log('in create', req.body)
+  logger.serverLog(TAG, `in create: ${JSON.stringify(req.body.payload)}`)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
