@@ -5,6 +5,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/menu/menu.controller.js'
 let Menu = require('./menu.model')
 const needle = require('needle')
+const _ = require('lodash')
 const MenuDataLayer = require('./menu.datalayer')
 const callApi = require('../utility')
 
@@ -74,8 +75,6 @@ exports.indexByPage = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  console.log('in create', req.body)
-  logger.serverLog(TAG, `in create: ${JSON.stringify(req.body.payload)}`)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
@@ -128,7 +127,7 @@ exports.create = function (req, res) {
                       }
                     })
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page[0].accessToken}`
-                    logger.serverLog(TAG, `requestUrl for menu creation ${req.body.payload}`)
+                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (err) {
