@@ -5,9 +5,9 @@ const logger = require('../../../components/logger')
 const TAG = 'api/menu/menu.controller.js'
 let Menu = require('./menu.model')
 const needle = require('needle')
-const _ = require('lodash')
 const MenuDataLayer = require('./menu.datalayer')
 const callApi = require('../utility')
+const broadcastUtility = require('../broadcasts/broadcasts.utility')
 
 // Get list of menu items
 exports.index = function (req, res) {
@@ -233,4 +233,14 @@ exports.create = function (req, res) {
         })
       }
     })
+}
+exports.addWebview = function (req, res) {
+  if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
+    return res.status(200).json({
+      status: 'success',
+      payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+    })
+  } else {
+    return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+  }
 }
