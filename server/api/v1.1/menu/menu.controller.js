@@ -235,6 +235,7 @@ exports.create = function (req, res) {
     })
 }
 exports.addWebview = function (req, res) {
+  console.log('isWhiteListedDomain', broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user))
   if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
     return res.status(200).json({
       status: 'success',
