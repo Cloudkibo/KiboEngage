@@ -91,9 +91,16 @@ exports.addButton = function (req, res) {
       broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
         .then(result => {
           if (result.returnValue) {
+            var webViewPayload = {
+              type: req.body.type,
+              url: req.body.url, // User defined link,
+              title: req.body.title, // User defined label
+              messenger_extensions: req.body.messenger_extensions,
+              webview_height_ratio: req.body.webview_height_ratio
+            }
             return res.status(200).json({
               status: 'success',
-              payload: req.body
+              payload: webViewPayload
             })
           } else {
             return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
