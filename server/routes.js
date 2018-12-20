@@ -50,13 +50,12 @@ module.exports = function (app) {
     // res.sendFile(path.join(config.root, 'client/index.html'))
     res.render('main', { environment: env })
   })
-
-  app.get('/', (req, res) => {
-    res.sendFile('./../client/build/index.html')
-  })
   
   app.get('/demoSSA', (req, res) => {
-    res.sendFile('./../client/build/index.html')
+    res.cookie('environment', config.env,
+      {expires: new Date(Date.now() + 900000)})
+    // res.sendFile(path.join(config.root, 'client/index.html'))
+    res.render('main', { environment: env })
   })
 
   app.route('/:url(api|auth)/*').get((req, res) => {
