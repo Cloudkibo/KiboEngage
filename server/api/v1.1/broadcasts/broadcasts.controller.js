@@ -93,7 +93,7 @@ exports.addButton = function (req, res) {
           if (result.returnValue) {
             return res.status(200).json({
               status: 'success',
-              payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+              payload: req.body
             })
           } else {
             return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
@@ -183,7 +183,7 @@ exports.editButton = function (req, res) {
         if (result.returnValue) {
           return res.status(200).json({
             status: 'success',
-            payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+            payload: req.body
           })
         } else {
           return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
