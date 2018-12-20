@@ -85,7 +85,6 @@ exports.addButton = function (req, res) {
   }
   if (req.body.type === 'web_url') {
     if (req.body.messenger_extensions || req.body.webview_height_ratio) {
-      console.log('inisde webview', !broadcastUtility.isWebView(broadcastUtility.isWebView))
       if (!broadcastUtility.isWebView(req.body)) {
         return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
@@ -274,7 +273,6 @@ exports.upload = function (req, res) {
           url: `${config.domain}/api/broadcasts/download/${serverPath}`
         })}`)
       if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
-        console.log('req.body in upload', req.body)
         let pages = JSON.parse(req.body.pages)
         logger.serverLog(TAG, `Pages in upload file ${pages}`)
         utility.callApi(`pages/${mongoose.Types.ObjectId(pages[0])}`)

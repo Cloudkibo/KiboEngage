@@ -750,7 +750,7 @@ function isWhiteListedDomain (domain, pageId, user) {
             console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
             if (resp.body.data && resp.body.data[0].whitelisted_domains) {
               for (let i = 0; i < resp.body.data[0].whitelisted_domains.length; i++) {
-                if (resp.body.data[0].whitelisted_domains[i].includes(domain)) {
+                if (getHostName(resp.body.data[0].whitelisted_domains[i]) === getHostName(domain)) {
                   returnValue = true
                 }
                 if (i === resp.body.data[0].whitelisted_domains.length - 1) {
@@ -770,6 +770,14 @@ function isWebView (body) {
     return false
   } else {
     return true
+  }
+}
+function getHostName (url) {
+  var match = url.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/i)
+  if (match != null && match.length > 2 && typeof match[2] === 'string' && match[2].length > 0) {
+    return match[2]
+  } else {
+    return null
   }
 }
 exports.prepareSendAPIPayload = prepareSendAPIPayload
