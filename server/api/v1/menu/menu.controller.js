@@ -95,14 +95,6 @@ exports.create = function (req, res) {
             })
           }
           logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`)
-          if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
-            if (!broadcastUtility.isWebView(req.body)) {
-              return res.status(500).json({status: 'failed', payload: `parameters are missing`})
-            }
-            if (!broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
-              return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
-            }
-          }
           MenuDataLayer.findOneMenuObjectUsingQuery({pageId: req.body.pageId})
             .then(info => {
               if (!info) {
@@ -242,4 +234,14 @@ exports.create = function (req, res) {
         })
       }
     })
+}
+exports.addWebview = function (req, res) {
+  if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
+    return res.status(200).json({
+      status: 'success',
+      payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+    })
+  } else {
+    return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+  }
 }
