@@ -5,9 +5,9 @@ const logger = require('../../../components/logger')
 const TAG = 'api/menu/menu.controller.js'
 let Menu = require('./menu.model')
 const needle = require('needle')
-const _ = require('lodash')
 const MenuDataLayer = require('./menu.datalayer')
 const callApi = require('../utility')
+const broadcastUtility = require('../broadcasts/broadcasts.utility')
 
 // Get list of menu items
 exports.index = function (req, res) {
@@ -75,6 +75,7 @@ exports.indexByPage = function (req, res) {
 }
 
 exports.create = function (req, res) {
+  console.log('in create', req.body)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
@@ -94,6 +95,14 @@ exports.create = function (req, res) {
             })
           }
           logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`)
+          if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
+            if (!broadcastUtility.isWebView(req.body)) {
+              return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+            }
+            if (!broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
+              return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+            }
+          }
           MenuDataLayer.findOneMenuObjectUsingQuery({pageId: req.body.pageId})
             .then(info => {
               if (!info) {
