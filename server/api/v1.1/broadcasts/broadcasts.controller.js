@@ -84,24 +84,39 @@ exports.addButton = function (req, res) {
     type: req.body.type
   }
   if (req.body.type === 'web_url') {
-    URLDataLayer.createURLObject({
-      originalURL: req.body.url,
-      module: {
-        type: 'broadcast'
+    if (req.body.messenger_extensions || req.body.webview_height_ratio) {
+      console.log('inisde webview')
+      if (!broadcastUtility.isWebView(broadcastUtility.isWebView)) {
+        return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
-    })
-      .then(savedurl => {
-        let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-        buttonPayload.newUrl = newURL
-        buttonPayload.url = req.body.url
+      if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
         return res.status(200).json({
           status: 'success',
-          payload: buttonPayload
+          payload: {type: req.body.type, url: req.body.url, title: req.body.title}
         })
+      } else {
+        return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+      }
+    } else {
+      URLDataLayer.createURLObject({
+        originalURL: req.body.url,
+        module: {
+          type: 'broadcast'
+        }
       })
-      .catch(error => {
-        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
-      })
+        .then(savedurl => {
+          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+          buttonPayload.newUrl = newURL
+          buttonPayload.url = req.body.url
+          return res.status(200).json({
+            status: 'success',
+            payload: buttonPayload
+          })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        })
+    }
   } else if (req.body.type === 'element_share') {
     return res.status(200).json({
       status: 'success',
@@ -157,6 +172,18 @@ exports.editButton = function (req, res) {
       .catch(error => {
         return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
       })
+  } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
+    if (!broadcastUtility.isWebView(req.body)) {
+      return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+    }
+    if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
+      return res.status(200).json({
+        status: 'success',
+        payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+      })
+    } else {
+      return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+    }
   } else {
     buttonPayload.payload = JSON.stringify({
       sequenceId: req.body.sequenceId,
