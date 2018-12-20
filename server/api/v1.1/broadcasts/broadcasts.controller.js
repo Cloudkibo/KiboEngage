@@ -85,8 +85,8 @@ exports.addButton = function (req, res) {
   }
   if (req.body.type === 'web_url') {
     if (req.body.messenger_extensions || req.body.webview_height_ratio) {
-      console.log('inisde webview', broadcastUtility.isWebView(broadcastUtility.isWebView))
-      if (broadcastUtility.isWebView(broadcastUtility.isWebView)) {
+      console.log('inisde webview', !broadcastUtility.isWebView(broadcastUtility.isWebView))
+      if (!broadcastUtility.isWebView(req.body)) {
         return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
       broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
