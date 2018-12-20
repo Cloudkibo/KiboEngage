@@ -745,7 +745,6 @@ function isWhiteListedDomain (domain, pageId, user) {
           if (err) {
             console.log('error in getting whitelisted_domains', err)
           }
-          console.log('reponse from whitelisted_domains', JSON.stringify(resp.body))
           console.log('domain', domain)
           console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
           if (resp.body.data && resp.body.data[0].whitelisted_domains) {
@@ -753,8 +752,11 @@ function isWhiteListedDomain (domain, pageId, user) {
               if (resp.body.data[0].whitelisted_domains[i].includes(domain)) {
                 returnValue = true
               }
+              if (i === resp.body.data[0].whitelisted_domains.length - 1) {
+                console.log('returnValue', returnValue)
+                return returnValue
+              }
             }
-            return returnValue
           }
         })
     })
