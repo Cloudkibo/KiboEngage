@@ -54,6 +54,10 @@ module.exports = function (app) {
   app.get('/', (req, res) => {
     res.sendFile('./../client/build/index.html')
   })
+  
+  app.get('/demoSSA', (req, res) => {
+    res.sendFile('./../client/build/index.html')
+  })
 
   app.route('/:url(api|auth)/*').get((req, res) => {
     res.status(404).send({url: `${req.originalUrl} not found`})
