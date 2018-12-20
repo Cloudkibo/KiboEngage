@@ -666,7 +666,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
-        if (button.url) {
+        if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
           URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
