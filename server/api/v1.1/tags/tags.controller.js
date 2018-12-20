@@ -179,8 +179,9 @@ exports.delete = function (req, res) {
   callApi.callApi(`tags_subscriber/query`, 'post', {tagId: req.body.tagId}, req.headers.authorization)
     .then(tagsSubscriber => {
       console.log('tagsSubscriber', tagsSubscriber)
+      console.log('tagsSubscriber[0]', tagsSubscriber[0])
       console.log('req.body.tagId', req.body.tagId)
-      callApi.callApi(`tags_subscriber/${tagsSubscriber._id}`, 'delete', {}, req.headers.authorization)
+      callApi.callApi(`tags_subscriber/${tagsSubscriber[0]._id}`, 'delete', {}, req.headers.authorization)
         .then(result => {
           callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
             .then(tagPayload => {
