@@ -89,14 +89,17 @@ exports.addButton = function (req, res) {
       if (!broadcastUtility.isWebView(broadcastUtility.isWebView)) {
         return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
-      if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
-        return res.status(200).json({
-          status: 'success',
-          payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+      broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+        .then(result => {
+          if (result.returnValue) {
+            return res.status(200).json({
+              status: 'success',
+              payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+            })
+          } else {
+            return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+          }
         })
-      } else {
-        return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
-      }
     } else {
       URLDataLayer.createURLObject({
         originalURL: req.body.url,
@@ -176,14 +179,17 @@ exports.editButton = function (req, res) {
     if (!broadcastUtility.isWebView(req.body)) {
       return res.status(500).json({status: 'failed', payload: `parameters are missing`})
     }
-    if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
-      return res.status(200).json({
-        status: 'success',
-        payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+    broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+      .then(result => {
+        if (result.returnValue) {
+          return res.status(200).json({
+            status: 'success',
+            payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+          })
+        } else {
+          return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+        }
       })
-    } else {
-      return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
-    }
   } else {
     buttonPayload.payload = JSON.stringify({
       sequenceId: req.body.sequenceId,
