@@ -235,13 +235,18 @@ exports.create = function (req, res) {
     })
 }
 exports.addWebview = function (req, res) {
-  console.log('isWhiteListedDomain', broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user))
-  if (broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)) {
-    return res.status(200).json({
-      status: 'success',
-      payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+  broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+    .then(result => {
+      if (result.returnValue) {
+        return res.status(200).json({
+          status: 'success',
+          payload: {type: req.body.type, url: req.body.url, title: req.body.title}
+        })
+      } else {
+        return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+      }
     })
-  } else {
-    return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
-  }
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to find whitelisted_domains ${JSON.stringify(error)}`})
+    })
 }
