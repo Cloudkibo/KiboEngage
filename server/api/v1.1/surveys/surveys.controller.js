@@ -1237,12 +1237,16 @@ exports.sendSurvey = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
+  console.log('delete survey function')
   surveyDataLayer.deleteForSurveys(req.params.id)
     .then(survey => {
+      console.log('delete survey Page')
       SurveyPageDataLayer.deleteSurveyPage({surveyId: req.params.id})
         .then(surveypages => {
+          console.log('delete removeAllSurveyResponse')
           surveyResponseDataLayer.removeAllSurveyResponse(req.params.id)
             .then(surveyresponses => {
+              console.log('delete removeAllSurveyQuestionsQuery')
               surveyQuestionsDataLayer.removeAllSurveyQuestionsQuery(req.params.id)
                 .then(success => {
                   return res.status(200).json({status: 'success'})
