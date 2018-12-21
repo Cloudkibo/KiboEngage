@@ -39,6 +39,7 @@ exports.index = function (req, res) {
                     status: 'success',
                     payload: { broadcasts: req.body.first_page === 'previous' ? broadcasts.reverse() : broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
                   })
+                  console.log('sent successfully')
                 })
                 .catch(error => {
                   return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts pages ${JSON.stringify(error)}`})
