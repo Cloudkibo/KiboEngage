@@ -476,7 +476,7 @@ exports.graphData = function (req, res) {
         })
       }
       // We need to use aggregate of v1.1
-      let matchBroadcastAggregate = { companyId: companyUser.companyId,
+      let matchBroadcastAggregate = { companyId: companyUser.companyId.toString(),
         'datetime': {
           $gte: new Date(
             (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
@@ -492,7 +492,7 @@ exports.graphData = function (req, res) {
         .then(broadcastsgraphdata => {
           console.log('broadcastsgraphdata', broadcastsgraphdata)
           // We should call the aggregate of polls layer
-          let matchPollAggregate = { companyId: companyUser.companyId,
+          let matchPollAggregate = { companyId: companyUser.companyId.toString(),
             'datetime': {
               $gte: new Date(
                 (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
@@ -506,7 +506,7 @@ exports.graphData = function (req, res) {
           PollsDataLayer.aggregateForPolls(matchPollAggregate, groupPollAggregate)
             .then(pollsgraphdata => {
               console.log('pollsgraphdata', pollsgraphdata)
-              let matchSurveyAggregate = { companyId: companyUser.companyId,
+              let matchSurveyAggregate = { companyId: companyUser.companyId.toString(),
                 'datetime': {
                   $gte: new Date(
                     (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
