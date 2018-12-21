@@ -1239,17 +1239,8 @@ exports.sendSurvey = function (req, res) {
 exports.deleteSurvey = function (req, res) {
   surveyDataLayer.deleteForSurveys(req.params.id)
     .then(survey => {
-      SurveyPageDataLayer.findSurveyPagesById(req)
+      SurveyPageDataLayer.deleteSurveyPage({surveyId: req.params.id})
         .then(surveypages => {
-          surveypages.forEach(surveypage => {
-            SurveyPageDataLayer.removeSurvey(survey)
-              .then(success => {
-              })
-              .catch(error => {
-                return res.status(500).json({status: `failed ${error}`, description: `failed due to survey page  ${JSON.stringify(error)}`})
-              })
-          })
-
           surveyResponseDataLayer.removeAllSurveyResponse(req.params.id)
             .then(surveyresponses => {
               surveyQuestionsDataLayer.removeAllSurveyQuestionsQuery(req.params.id)
