@@ -22,6 +22,7 @@ exports.index = function (req, res) {
     .then(companyUser => {
       console.log('companyUser', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
+      console.log('criteria', criteria)
       BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
         .then(broadcastsCount => {
           console.log('broadcastsCount', broadcastsCount)
@@ -50,7 +51,7 @@ exports.index = function (req, res) {
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
+          return res.status(500).json({status: `failed ${error}`, payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
         })
     })
     .catch(error => {
