@@ -20,15 +20,18 @@ const utility = require('../utility')
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
+      console.log('companyUser', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
       BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
         .then(broadcastsCount => {
+          console.log('broadcastsCount', broadcastsCount)
           let aggregateMatch = criteria.finalCriteria[0].$match
           let aggregateSort = criteria.finalCriteria[1].$sort
           let aggregateSkip = criteria.finalCriteria[2].$skip
           let aggregateLimit = criteria.finalCriteria[3].$limit
           BroadcastDataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(broadcasts => {
+              console.log('broadcasts', broadcasts)
               BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
                 .then(broadcastpages => {
                   res.status(200).json({
