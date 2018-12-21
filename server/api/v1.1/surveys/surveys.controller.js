@@ -1256,6 +1256,9 @@ exports.deleteSurvey = function (req, res) {
                   return res.status(500).json({status: `failed ${error}`, description: `failed to survey responses  ${JSON.stringify(error)}`})
                 })
             })
+            .catch(error => {
+              return res.status(500).json({status: `failed ${error}`, description: `failed due to survey remove  ${JSON.stringify(error)}`})
+            })
         })
         .catch(error => {
           return res.status(500).json({status: `failed ${error}`, description: `failed due to survey remove  ${JSON.stringify(error)}`})
