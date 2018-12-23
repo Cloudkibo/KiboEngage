@@ -7,7 +7,7 @@ exports.createPayload = {
     },
     title: {
       type: 'string',
-      required: true
+      required: false
     },
     initialState: {
       type: 'object',
