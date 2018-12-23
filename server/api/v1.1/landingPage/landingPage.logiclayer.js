@@ -3,14 +3,26 @@ exports.preparePayload = function (body, landingPageState, companyUser, landingP
     companyId: companyUser.companyId,
     pageId: body.pageId,
     initialState: landingPageState._id,
-    submittedState: body.submittedState,
+    submittedState: {},
     optInMessage: body.optInMessage,
     title: body.title
   }
   if (landingPageSubmittedState) {
     payload.submittedState = {
       actionType: body.submittedState.actionType,
-      state: landingPageSubmittedState._id
+      state: landingPageSubmittedState._id,
+      title: body.submittedState.title,
+      description: body.submittedState.description,
+      buttonText: body.submittedState.buttonText
+    }
+  } else {
+    payload.submittedState = {
+      actionType: body.submittedState.actionType,
+      url: body.submittedState.url,
+      tab: body.submittedState.tab,
+      title: body.submittedState.title,
+      description: body.submittedState.description,
+      buttonText: body.submittedState.buttonText
     }
   }
   return payload
