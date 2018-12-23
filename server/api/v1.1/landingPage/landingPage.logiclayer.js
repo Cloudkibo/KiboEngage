@@ -16,20 +16,22 @@ exports.preparePayload = function (body, landingPageState, companyUser, landingP
   return payload
 }
 exports.prepareUpdatePayload = function (body) {
-  let paylaod = {
-    optInMessage: body.optInMessage,
-    isActive: body.isActive,
-    title: body.title
-  }
+  let paylaod = body
   if (body.submittedState.state) {
     paylaod.submittedState = {
-      actionType: body.submittedState.actionType
+      actionType: body.submittedState.actionType,
+      title: body.submittedState.title,
+      description: body.submittedState.description,
+      buttonText: body.submittedState.buttonText
     }
   } else {
     paylaod.submittedState = {
       actionType: body.submittedState.actionType,
       url: body.submittedState.url,
-      tab: body.submittedState.tab
+      tab: body.submittedState.tab,
+      title: body.submittedState.title,
+      description: body.submittedState.description,
+      buttonText: body.submittedState.buttonText
     }
   }
   return paylaod
