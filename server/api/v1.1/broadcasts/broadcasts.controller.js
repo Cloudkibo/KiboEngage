@@ -22,8 +22,8 @@ exports.index = function (req, res) {
     .then(companyUser => {
       console.log('companyUser', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
-      console.log('criteria', criteria)
-      BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
+      console.log('criteria.countCriteria', criteria.countCriteria)
+      BroadcastDataLayer.countBroadcasts(criteria.countCriteria)
         .then(broadcastsCount => {
           console.log('broadcastsCount', broadcastsCount)
           let aggregateMatch = criteria.finalCriteria[0].$match
