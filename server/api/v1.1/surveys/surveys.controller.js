@@ -486,6 +486,7 @@ exports.send = function (req, res) {
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: req.body._id,
                                                                                 seen: false,
+                                                                                sent: false,
                                                                                 companyId: companyUser.companyId
                                                                               }
 
@@ -633,6 +634,7 @@ exports.send = function (req, res) {
                                                                             subscriberId: subscribers[j].senderId,
                                                                             surveyId: req.body._id,
                                                                             seen: false,
+                                                                            sent: false,
                                                                             companyId: companyUser.companyId
                                                                           }
 
@@ -1010,6 +1012,7 @@ exports.sendSurvey = function (req, res) {
                                                                                     subscriberId: subscribers[j].senderId,
                                                                                     surveyId: survey._id,
                                                                                     seen: false,
+                                                                                    sent: false,
                                                                                     companyId: companyUser.companyId
                                                                                   }
 
@@ -1147,6 +1150,7 @@ exports.sendSurvey = function (req, res) {
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: survey._id,
                                                                                 seen: false,
+                                                                                sent: false,
                                                                                 companyId: companyUser.companyId
                                                                               }
 
