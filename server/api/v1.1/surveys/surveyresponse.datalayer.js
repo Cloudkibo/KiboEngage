@@ -39,7 +39,7 @@ exports.findSurveyResponseById = (surveyId) => {
 
 exports.removeAllSurveyResponse = (surveyId) => {
   let query = {
-    purpose: 'deleteAll',
+    purpose: 'deleteMany',
     match: {surveyId: surveyId}
   }
   return callApi(`surveys/response`, 'delete', query, '', 'kiboengage')

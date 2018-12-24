@@ -1,5 +1,5 @@
 let mongoose = require('mongoose')
-const utility = require('../server/api/v1/utility')
+const utility = require('../server/api/v1.1/utility')
 const logger = require('../server/components/logger')
 const config = require('../server/config/environment')
 const needle = require('needle')

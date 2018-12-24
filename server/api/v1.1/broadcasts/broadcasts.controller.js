@@ -20,21 +20,27 @@ const utility = require('../utility')
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
+      console.log('companyUser', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
+      console.log('criteria', criteria)
       BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
         .then(broadcastsCount => {
+          console.log('broadcastsCount', broadcastsCount)
           let aggregateMatch = criteria.finalCriteria[0].$match
           let aggregateSort = criteria.finalCriteria[1].$sort
           let aggregateSkip = criteria.finalCriteria[2].$skip
           let aggregateLimit = criteria.finalCriteria[3].$limit
           BroadcastDataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(broadcasts => {
+              console.log('broadcasts', broadcasts)
               BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
                 .then(broadcastpages => {
+                  console.log('broadcastpages', broadcastpages)
                   res.status(200).json({
                     status: 'success',
                     payload: { broadcasts: req.body.first_page === 'previous' ? broadcasts.reverse() : broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
                   })
+                  console.log('sent successfully')
                 })
                 .catch(error => {
                   return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts pages ${JSON.stringify(error)}`})
@@ -45,7 +51,7 @@ exports.index = function (req, res) {
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
+          return res.status(500).json({status: `failed ${error}`, payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
         })
     })
     .catch(error => {
@@ -84,24 +90,48 @@ exports.addButton = function (req, res) {
     type: req.body.type
   }
   if (req.body.type === 'web_url') {
-    URLDataLayer.createURLObject({
-      originalURL: req.body.url,
-      module: {
-        type: 'broadcast'
+    if (req.body.messenger_extensions || req.body.webview_height_ratio) {
+      if (!broadcastUtility.isWebView(req.body)) {
+        return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
-    })
-      .then(savedurl => {
-        let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-        buttonPayload.newUrl = newURL
-        buttonPayload.url = req.body.url
-        return res.status(200).json({
-          status: 'success',
-          payload: buttonPayload
+      broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+        .then(result => {
+          if (result.returnValue) {
+            var webViewPayload = {
+              type: req.body.type,
+              url: req.body.url, // User defined link,
+              title: req.body.title, // User defined label
+              messenger_extensions: req.body.messenger_extensions,
+              webview_height_ratio: req.body.webview_height_ratio
+            }
+            return res.status(200).json({
+              status: 'success',
+              payload: webViewPayload
+            })
+          } else {
+            return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+          }
         })
+    } else {
+      URLDataLayer.createURLObject({
+        originalURL: req.body.url,
+        module: {
+          type: 'broadcast'
+        }
       })
-      .catch(error => {
-        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
-      })
+        .then(savedurl => {
+          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+          buttonPayload.newUrl = newURL
+          buttonPayload.url = req.body.url
+          return res.status(200).json({
+            status: 'success',
+            payload: buttonPayload
+          })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        })
+    }
   } else if (req.body.type === 'element_share') {
     return res.status(200).json({
       status: 'success',
@@ -156,6 +186,21 @@ exports.editButton = function (req, res) {
       })
       .catch(error => {
         return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+      })
+  } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
+    if (!broadcastUtility.isWebView(req.body)) {
+      return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+    }
+    broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+      .then(result => {
+        if (result.returnValue) {
+          return res.status(200).json({
+            status: 'success',
+            payload: req.body
+          })
+        } else {
+          return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+        }
       })
   } else {
     buttonPayload.payload = JSON.stringify({
@@ -241,7 +286,6 @@ exports.upload = function (req, res) {
           url: `${config.domain}/api/broadcasts/download/${serverPath}`
         })}`)
       if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
-        console.log('req.body in upload', req.body)
         let pages = JSON.parse(req.body.pages)
         logger.serverLog(TAG, `Pages in upload file ${pages}`)
         utility.callApi(`pages/${mongoose.Types.ObjectId(pages[0])}`)
@@ -405,6 +449,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
             subscriberId: subscriber.senderId,
             broadcastId: broadcast._id,
             seen: false,
+            sent: false,
             companyId: companyUser.companyId
           })
             .then(savedpagebroadcast => {
@@ -422,6 +467,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
 }
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
+    console.log('Send Response Broadcast', body)
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
       return res.status(500).json({

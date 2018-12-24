@@ -5,7 +5,7 @@
 
 const config = require('../config/environment')
 const compose = require('composable-middleware')
-const apiCaller = require('../api/v1/utility')
+const apiCaller = require('../api/v1.1/utility')
 const needle = require('needle')
 const _ = require('lodash')
 const util = require('util')
@@ -34,7 +34,7 @@ function isAuthenticated () {
           'content-type': 'application/json',
           'Authorization': req.headers.authorization
         }
-        let path = config.ACCOUNTS_URL.slice(0, config.ACCOUNTS_URL.length - 7)
+        let path = config.api_urls['accounts'].slice(0, config.api_urls['accounts'].length - 7)
         let options = {
           method: 'GET',
           uri: `${path}/auth/verify`,

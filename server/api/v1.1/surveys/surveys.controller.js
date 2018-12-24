@@ -486,6 +486,7 @@ exports.send = function (req, res) {
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: req.body._id,
                                                                                 seen: false,
+                                                                                sent: false,
                                                                                 companyId: companyUser.companyId
                                                                               }
 
@@ -633,6 +634,7 @@ exports.send = function (req, res) {
                                                                             subscriberId: subscribers[j].senderId,
                                                                             surveyId: req.body._id,
                                                                             seen: false,
+                                                                            sent: false,
                                                                             companyId: companyUser.companyId
                                                                           }
 
@@ -1010,6 +1012,7 @@ exports.sendSurvey = function (req, res) {
                                                                                     subscriberId: subscribers[j].senderId,
                                                                                     surveyId: survey._id,
                                                                                     seen: false,
+                                                                                    sent: false,
                                                                                     companyId: companyUser.companyId
                                                                                   }
 
@@ -1147,6 +1150,7 @@ exports.sendSurvey = function (req, res) {
                                                                                 subscriberId: subscribers[j].senderId,
                                                                                 surveyId: survey._id,
                                                                                 seen: false,
+                                                                                sent: false,
                                                                                 companyId: companyUser.companyId
                                                                               }
 
@@ -1237,21 +1241,16 @@ exports.sendSurvey = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
+  console.log('delete survey function')
   surveyDataLayer.deleteForSurveys(req.params.id)
     .then(survey => {
-      SurveyPageDataLayer.findSurveyPagesById(req)
+      console.log('delete survey Page')
+      SurveyPageDataLayer.deleteSurveyPage({surveyId: req.params.id})
         .then(surveypages => {
-          surveypages.forEach(surveypage => {
-            SurveyPageDataLayer.removeSurvey(survey)
-              .then(success => {
-              })
-              .catch(error => {
-                return res.status(500).json({status: `failed ${error}`, description: `failed due to survey page  ${JSON.stringify(error)}`})
-              })
-          })
-
+          console.log('delete removeAllSurveyResponse')
           surveyResponseDataLayer.removeAllSurveyResponse(req.params.id)
             .then(surveyresponses => {
+              console.log('delete removeAllSurveyQuestionsQuery')
               surveyQuestionsDataLayer.removeAllSurveyQuestionsQuery(req.params.id)
                 .then(success => {
                   return res.status(200).json({status: 'success'})
@@ -1260,6 +1259,9 @@ exports.deleteSurvey = function (req, res) {
                 .catch(error => {
                   return res.status(500).json({status: `failed ${error}`, description: `failed to survey responses  ${JSON.stringify(error)}`})
                 })
+            })
+            .catch(error => {
+              return res.status(500).json({status: `failed ${error}`, description: `failed due to survey remove  ${JSON.stringify(error)}`})
             })
         })
         .catch(error => {

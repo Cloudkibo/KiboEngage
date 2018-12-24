@@ -29,6 +29,10 @@ router.get('/stats',
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.stats)
 
+router.get('/updateSubscriptionPermission',
+  auth.isAuthenticated(),
+  controller.updateSubscriptionPermission)
+
 router.get('/toppages',
   auth.isAuthenticated(),
   // auth.doesPlanPermitsThisAction('dashboard'),
