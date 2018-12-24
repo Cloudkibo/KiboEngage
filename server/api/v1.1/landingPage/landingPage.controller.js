@@ -106,7 +106,7 @@ exports.delete = function (req, res) {
     .then(landingPages => {
       let landingPage = landingPages[0]
       console.log('landingPage', landingPage)
-      utility.callApi(`landingPage/landingPageState/${landingPage.initialState}`, 'delete', {}, req.headers.authorization)
+      utility.callApi(`landingPage/landingPageState/${landingPage.initialState._id}`, 'delete', {}, req.headers.authorization)
         .then(result => {
           if (landingPage.submittedState && landingPage.submittedState.state) {
             utility.callApi(`landingPage/landingPageState/${landingPage.submittedState.state}`, 'delete', {}, req.headers.authorization)
