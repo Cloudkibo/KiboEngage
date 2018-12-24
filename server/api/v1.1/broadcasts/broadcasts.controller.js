@@ -449,7 +449,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
             subscriberId: subscriber.senderId,
             broadcastId: broadcast._id,
             seen: false,
-            sent: false
+            sent: false,
             companyId: companyUser.companyId
           })
             .then(savedpagebroadcast => {
