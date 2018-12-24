@@ -743,7 +743,7 @@ exports.getAllSubscribers = function (req, res) {
   }
 }
 exports.updateSubscriptionPermission = function (req, res) {
-  callApi('pages/query', 'post', {userId: req.user._id})
+  callApi.callApi('pages/query', 'post', {userId: req.user._id})
     .then(userPages => {
       userPages.forEach((page) => {
         needle.get(
@@ -768,7 +768,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                     for (let a = 0; a < respp.body.data.length; a++) {
                       if (respp.body.data[a].feature === 'subscription_messaging' && respp.body.data[a].status === 'approved') {
                         console.log('inside if')
-                        callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}, req.headers.authorization) // disconnect page
+                        callApi.callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}, req.headers.authorization) // disconnect page
                           .then(updated => {
                             console.log('updated', updated)
                           })
