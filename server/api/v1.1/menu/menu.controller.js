@@ -53,6 +53,7 @@ exports.indexByPage = function (req, res) {
           page = page[0]
           callApi.callApi('menu/query', 'post', {companyId: companyUser.companyId, pageId: page._id}, req.headers.authorization)
             .then(menus => {
+              console.log('in menus', menus)
               return res.status(200).json({
                 status: 'success',
                 payload: menus
