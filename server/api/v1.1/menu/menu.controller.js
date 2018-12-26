@@ -39,6 +39,7 @@ exports.index = function (req, res) {
 }
 
 exports.indexByPage = function (req, res) {
+  console.log('req.body in indexByPage', req.body)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
