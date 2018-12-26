@@ -194,6 +194,7 @@ exports.create = function (req, res) {
                         } else {
                           callApi.callApi('menu/query', 'post', {pageId: page._id}, req.headers.authorization)
                             .then(info1 => {
+                              console.log('info1', info1)
                               res.status(201).json({status: 'success', payload: info1})
                             })
                             .catch(err => {
