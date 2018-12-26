@@ -9,6 +9,7 @@ const broadcastUtility = require('../broadcasts/broadcasts.utility')
 
 // Get list of menu items
 exports.index = function (req, res) {
+  console.log('in index')
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
@@ -195,6 +196,7 @@ exports.create = function (req, res) {
                         } else {
                           callApi.callApi('menu/query', 'post', {pageId: page._id}, req.headers.authorization)
                             .then(info1 => {
+                              info1 = info1[0]
                               console.log('info1', info1)
                               res.status(201).json({status: 'success', payload: info1})
                             })
