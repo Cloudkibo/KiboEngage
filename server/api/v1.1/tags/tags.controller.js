@@ -181,7 +181,8 @@ exports.delete = function (req, res) {
       console.log('tagsSubscriber', tagsSubscriber)
       console.log('tagsSubscriber[0]', tagsSubscriber[0])
       console.log('req.body.tagId', req.body.tagId)
-      if (tagsSubscriber) {
+      if (tagsSubscriber[0]) {
+        console.log('if function')
       callApi.callApi(`tags_subscriber/${tagsSubscriber[0]._id}`, 'delete', {}, req.headers.authorization)
         .then(result => {
           callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
@@ -213,6 +214,7 @@ exports.delete = function (req, res) {
         })
       }
       else {
+        console.log('else function')
         callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
         .then(tagPayload => {
           require('./../../../config/socketio').sendMessageToClient({
