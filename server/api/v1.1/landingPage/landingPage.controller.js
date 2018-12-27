@@ -12,7 +12,6 @@ exports.index = function (req, res) {
       }
       utility.callApi(`landingPage/query`, 'post', {companyId: companyUser.companyId}, req.headers.authorization)
         .then(landingPages => {
-          console.log('fetched landingPages', landingPages)
           return res.status(200).json({status: 'success', payload: landingPages})
         })
         .catch(error => {
