@@ -1,5 +1,10 @@
 const Broadcasts = require('./broadcasts.model')
 
+exports.findOneBroadcast = (id) => {
+  return Broadcasts.find({_id: id})
+    .exec()
+}
+
 exports.aggregateForBroadcasts = (aggregateObject) => {
   return Broadcasts.aggregate(aggregateObject)
     .exec()
