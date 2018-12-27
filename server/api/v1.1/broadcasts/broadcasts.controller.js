@@ -416,6 +416,7 @@ exports.sendConversation = function (req, res) {
                     })
                 } else {
                   let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
+                  console.log('subsFindCriteria', subscriberFindCriteria)
                   let interval = setInterval(() => {
                     if (payload) {
                       clearInterval(interval)

@@ -47,12 +47,23 @@ exports.indexByPage = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('menu/query', 'post', {companyId: companyUser.companyId, pageId: req.body.pageId}, req.headers.authorization)
-        .then(menus => {
-          return res.status(200).json({
-            status: 'success',
-            payload: menus
-          })
+      callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId, connected: true}, req.headers.authorization)
+        .then(page => {
+          page = page[0]
+          callApi.callApi('menu/query', 'post', {companyId: companyUser.companyId, pageId: page._id}, req.headers.authorization)
+            .then(menus => {
+              return res.status(200).json({
+                status: 'success',
+                payload: menus
+              })
+            })
+            .catch(err => {
+              if (err) {
+                logger.serverLog(TAG, `Internal Server Error on fetch ${err}`)
+                return res.status(500)
+                  .json({status: 'failed', description: 'Internal Server Error'})
+              }
+            })
         })
         .catch(err => {
           if (err) {
@@ -73,7 +84,6 @@ exports.indexByPage = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  console.log('req.body in create', req.body)
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
@@ -83,8 +93,9 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId}, req.headers.authorization)
+      callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId, connected: true}, req.headers.authorization)
         .then(page => {
+          page = page[0]
           if (!page) {
             logger.serverLog(TAG, 'Page not found')
             return res.status(404).json({
@@ -93,12 +104,12 @@ exports.create = function (req, res) {
             })
           }
           logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`)
-          callApi.callApi('menu/query', 'post', {pageId: req.body.pageId}, req.headers.authorization)
+          callApi.callApi('menu/query', 'post', {pageId: page._id}, req.headers.authorization)
             .then(info => {
               info = info[0]
               if (!info) {
                 callApi.callApi('menu', 'post', {
-                  pageId: req.body.pageId,
+                  pageId: page._id,
                   userId: req.body.userId,
                   companyId: companyUser.companyId,
                   jsonStructure: req.body.jsonStructure
@@ -109,14 +120,14 @@ exports.create = function (req, res) {
                       body: {
                         action: 'menu_updated',
                         payload: {
-                          page_id: req.body.pageId,
+                          page_id: page._id,
                           user_id: req.user._id,
                           user_name: req.user.name,
                           payload: savedMenu
                         }
                       }
                     })
-                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page[0].accessToken}`
+                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
                     logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
@@ -144,19 +155,19 @@ exports.create = function (req, res) {
                   })
               } else {
                 callApi.callApi('menu/update', 'put', {
-                  query: {pageId: req.body.pageId},
+                  query: {pageId: page._id},
                   newPayload: {jsonStructure: req.body.jsonStructure},
                   options: {}
                 }, req.headers.authorization)
                   .then(updated => {
-                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page[0].accessToken}`
+                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
                     logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: companyUser.companyId,
                       body: {
                         action: 'menu_updated',
                         payload: {
-                          page_id: req.body.pageId,
+                          page_id: page._id,
                           user_id: req.user._id,
                           user_name: req.user.name,
                           payload: updated
@@ -179,8 +190,9 @@ exports.create = function (req, res) {
                             description: JSON.stringify(resp.body.error)
                           })
                         } else {
-                          callApi.callApi('menu/query', 'post', {pageId: req.body.pageId}, req.headers.authorization)
+                          callApi.callApi('menu/query', 'post', {pageId: page._id}, req.headers.authorization)
                             .then(info1 => {
+                              info1 = info1[0]
                               res.status(201).json({status: 'success', payload: info1})
                             })
                             .catch(err => {
