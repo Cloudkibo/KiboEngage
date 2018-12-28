@@ -1,13 +1,7 @@
-let mongoose = require('mongoose')
 const utility = require('../server/api/v1.1/utility')
 const logger = require('../server/components/logger')
-const config = require('../server/config/environment')
 const needle = require('needle')
 const TAG = 'scripts/update_profile_pic_script.js'
-
-mongoose = mongoose.connect(config.mongo.uri)
-
-console.log(mongoose)
 
 function updateSubcribersPic (pageTokens, companyId) {
   utility.callApi(`subscribers/query`, 'post', {companyId: companyId})
@@ -24,16 +18,12 @@ function updateSubcribersPic (pageTokens, companyId) {
             logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
             utility.callApi(`subscribers/${users[i]._id}`, 'put', {firstName: resp.body.first_name, lastName: resp.body.last_name, profilePic: resp.body.profile_pic, locale: resp.body.locale, timezone: resp.body.timezone, gender: resp.body.gender})
               .then(updated => {
-                if (!(i + 1 < users.length)) {
-                  setTimeout(function (mongoose) { closeDB(mongoose) }, 55000)
-                }
               })
               .catch(err => {
                 logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
               })
           })
       }
-      setTimeout(function (mongoose) { closeDB(mongoose) }, 55000)
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(err)}`)
@@ -57,7 +47,6 @@ function getPageAccessTokenAndUpdate (companyId) {
             }
           })
       }
-      setTimeout(function (mongoose) { closeDB(mongoose) }, 55000)
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(err)}`)
@@ -83,11 +72,7 @@ utility.callApi(`user/query`, 'post', {})
             }
           })
       }
-      if (!(index + 1 < users.length)) {
-        setTimeout(function (mongoose) { closeDB(mongoose) }, 55000)
-      }
     })
-    setTimeout(function (mongoose) { closeDB(mongoose) }, 55000)
   })
   .catch(err => {
     logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(err)}`)
@@ -102,17 +87,3 @@ utility.callApi(`companyUser/query`, 'post', {})
   .catch(err => {
     logger.serverLog(TAG, `Failed to fetch company users ${JSON.stringify(err)}`)
   })
-
-function closeDB () {
-  console.log('DB is about to be closed')
-  mongoose.disconnect(function (err) {
-    if (err) throw err
-    console.log('DB disconnected')
-    process.exit()
-  })
-}
-
-process.on('uncaughtException', (err) => {
-  logger.serverLog(TAG, `Found the exception: ${JSON.stringify(err)}`)
-  closeDB()
-})
