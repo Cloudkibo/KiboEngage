@@ -1,26 +1,23 @@
-let mongoose = require('mongoose')
 const logger = require('../server/components/logger')
 const config = require('../server/config/environment')
 const utility = require('../server/api/v1.1/utility')
-const AutomationQueueDataLayer = require('../server/api/v1/automationQueue/automationQueue.datalayer')
-const SurveyQuestionsDataLayer = require('../server/api/v1/surveys/surveyquestion.datalayer')
-const SurveysDataLayer = require('../server/api/v1/surveys/surveys.datalayer')
-const SurveyPageDataLayer = require('../server/api/v1/page_survey/page_survey.datalayer')
-const PollPageDataLayer = require('../server/api/v1/page_poll/page_poll.datalayer')
-const PollsDataLayer = require('../server/api/v1/polls/polls.datalayer')
-const AutoPostingMessagesDataLayer = require('../server/api/v1/autopostingMessages/autopostingMessages.datalayer')
-const AutopostingSubscriberMessagesDataLayer = require('../server/api/v1/autopostingMessages/autopostingSubscriberMessages.datalayer')
-const URLDataLayer = require('../server/api/v1/URLforClickedCount/URL.datalayer')
+const AutomationQueueDataLayer = require('../server/api/v1.1/automationQueue/automationQueue.datalayer')
+const SurveyQuestionsDataLayer = require('../server/api/v1.1/surveys/surveyquestion.datalayer')
+const SurveysDataLayer = require('../server/api/v1.1/surveys/surveys.datalayer')
+const SurveyPageDataLayer = require('../server/api/v1.1/page_survey/page_survey.datalayer')
+const PollPageDataLayer = require('../server/api/v1.1/page_poll/page_poll.datalayer')
+const PollsDataLayer = require('../server/api/v1.1/polls/polls.datalayer')
+const AutoPostingMessagesDataLayer = require('../server/api/v1.1/autopostingMessages/autopostingMessages.datalayer')
+const AutopostingSubscriberMessagesDataLayer = require('../server/api/v1.1/autopostingMessages/autopostingSubscriberMessages.datalayer')
+const URLDataLayer = require('../server/api/v1.1/URLforClickedCount/URL.datalayer')
 const LogicLayer = require('./logiclayer')
 const TAG = 'scripts/monodb_script.js'
-const BroadcastsDataLayer = require('../server/api/v1/broadcasts/broadcasts.datalayer')
-const BroadcastPageDataLayer = require('../server/api/v1/page_broadcast/page_broadcast.datalayer')
+const BroadcastsDataLayer = require('../server/api/v1.1/broadcasts/broadcasts.datalayer')
+const BroadcastPageDataLayer = require('../server/api/v1.1/page_broadcast/page_broadcast.datalayer')
 const request = require('request')
 let Twit = require('twit')
 const needle = require('needle')
 const compUtility = require('../server/components/utility')
-
-mongoose = mongoose.connect(config.mongo.uri)
 
 AutomationQueueDataLayer.findAllAutomationQueueObjects()
   .then(data => {
@@ -570,32 +567,13 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                 logger.serverLog(TAG, `Failed to fetch bot ${JSON.stringify(err)}`)
               })
           }
-          if (!(i + 1 < data.length)) {
-            setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
-          }
-        } else if (!(i + 1 < data.length)) {
-          // Do work to reschedule the message
-          setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
         }
       }
-      if (data.length === 0) {
-        setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
-      }
     }
-    // mongoose.disconnect()
   })
   .catch(err => {
     logger.serverLog(TAG, `Failed to fetch automation queues ${JSON.stringify(err)}`)
   })
-
-function closeDB () {
-  console.log('last index reached')
-  mongoose.disconnect(function (err) {
-    if (err) throw err
-    console.log('disconnected')
-    process.exit()
-  })
-}
 
 function sendAutopostingMessage (messageData, page, savedMsg) {
   request(
