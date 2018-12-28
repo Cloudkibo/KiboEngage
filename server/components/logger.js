@@ -27,7 +27,7 @@ exports.serverLog = function (label, data, hideFromProduction, type = 'info') {
   } else {
     if (!hideFromProduction) {
       if (type === 'error') logger.warn(`${namespace} - ${data}`)
-      else logger.info(`${namespace} - ${data}`)
+      else logger.error(`${namespace} - ${data}`)
     }
   }
 }
