@@ -5,38 +5,16 @@ const winston = require('winston')
 // eslint-disable-next-line no-unused-expressions
 require('winston-papertrail').Papertrail
 
-const winstonConfig = {
-  levels: {
-    error: 0,
-    debug: 1,
-    warn: 2,
-    data: 3,
-    info: 4,
-    verbose: 5,
-    silly: 6
-  },
-  colors: {
-    error: 'red',
-    debug: 'blue',
-    warn: 'yellow',
-    data: 'grey',
-    info: 'green',
-    verbose: 'cyan',
-    silly: 'magenta'
-  }
-}
-
 const logger = new winston.Logger({
   transports: [
     // new (winston.transports.Console)(),
     new winston.transports.Papertrail({
       host: 'logs3.papertrailapp.com',
       port: 45576,
-      colorize: true
+      colorize: true,
+      level: 'error'
     })
-  ],
-  levels: winstonConfig.levels,
-  colors: winstonConfig.colors
+  ]
 })
 
 exports.serverLog = function (label, data, hideFromProduction, type = 'info') {
