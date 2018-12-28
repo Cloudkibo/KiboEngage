@@ -26,8 +26,7 @@ exports.serverLog = function (label, data, hideFromProduction, type = 'info') {
     // logger.info(`${namespace} - ${data}`)
   } else {
     if (!hideFromProduction) {
-      if (type === 'error') logger.log(`${namespace} - ${data}`)
-      else logger.log('error', `${namespace} - ${data}`)
+      logger.log(type, `${namespace} - ${data}`)
     }
   }
 }
