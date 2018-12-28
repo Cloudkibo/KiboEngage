@@ -16,7 +16,7 @@ const logger = new winston.Logger({
   ]
 })
 
-exports.serverLog = function (label, data, hideFromProduction) {
+exports.serverLog = function (label, data, hideFromProduction, type = 'info') {
   const namespace = `KiboEngage:${label}`
   const debug = require('debug')(namespace)
 
@@ -26,7 +26,8 @@ exports.serverLog = function (label, data, hideFromProduction) {
     // logger.info(`${namespace} - ${data}`)
   } else {
     if (!hideFromProduction) {
-      logger.info(`${namespace} - ${data}`)
+      if (type === 'error') logger.error(`${namespace} - ${data}`)
+      else logger.info(`${namespace} - ${data}`)
     }
   }
 }

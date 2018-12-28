@@ -40,7 +40,7 @@ SequenceMessagesQueueDataLayer.findAll()
     } // If data clause check
   }) // Quence find ends here
   .catch(err => {
-    logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`)
+    logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`, 'error')
     console.log(`Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`)
   })
 
