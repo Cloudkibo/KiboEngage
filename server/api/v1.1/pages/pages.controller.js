@@ -519,21 +519,57 @@ exports.otherPages = function (req, res) {
       })
     })
 }
-exports.whitelistDomain = function (req, res) {
-  const pageId = req.body.pageId
-  const whitelistDomains = req.body.whitelistDomains
+exports.fetchWhitelistedDomains = function (req, res) {
+  const pageId = req.params._id
 
-  utility.callApi(`pages/whitelistDomain`, 'post', {whitelistDomains: whitelistDomains, page_id: pageId}, req.headers.authorization)
-    .then(updatedPages => {
+  utility.callApi(`pages/whitelistDomain/${pageId}`, 'get', {}, req.headers.authorization)
+    .then(whitelistDomains => {
       return res.status(200).json({
         status: 'success',
-        payload: updatedPages
+        payload: whitelistDomains
       })
     })
     .catch(error => {
       return res.status(500).json({
         status: 'failed',
-        description: `Failed to update whitelist domains ${JSON.stringify(error)}`
+        description: `Failed to fetch whitelist domains ${JSON.stringify(error)}`
+      })
+    })
+}
+exports.deleteWhitelistDomain = function (req, res) {
+  const pageId = req.body.page_id
+  const whitelistDomain = req.body.whitelistDomain
+
+  utility.callApi(`pages/deleteWhitelistDomain`, 'post', {page_id: pageId, whitelistDomain: whitelistDomain}, req.headers.authorization)
+    .then(whitelistDomains => {
+      return res.status(200).json({
+        status: 'success',
+        payload: whitelistDomains
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to delete whitelist domains ${JSON.stringify(error)}`
+      })
+    })
+}
+
+exports.whitelistDomain = function (req, res) {
+  const pageId = req.body.page_id
+  const whitelistDomains = req.body.whitelistDomains
+
+  utility.callApi(`pages/whitelistDomain`, 'post', {page_id: pageId, whitelistDomains: whitelistDomains}, req.headers.authorization)
+    .then(whitelistDomains => {
+      return res.status(200).json({
+        status: 'success',
+        payload: whitelistDomains
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to save whitelist domains ${JSON.stringify(error)}`
       })
     })
 }
