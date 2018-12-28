@@ -25,7 +25,7 @@ exports.getCriterias = function (body, companyUser) {
       findCriteria = {
         companyId: mongoose.Types.ObjectId(companyUser.companyId),
         'payload.1': { $exists: true },
-        title: body.filter_criteria.search_value !== '' ? { $regex: search } : { $exists: true },
+        title: body.filter_criteria.search_value !== '' ? { $regex: '' + search } : { $exists: true },
         'datetime': body.filter_criteria.days !== '0' ? {
           $gte: startDate
         } : { $exists: true }
@@ -34,7 +34,7 @@ exports.getCriterias = function (body, companyUser) {
       findCriteria = {
         companyId: mongoose.Types.ObjectId(companyUser.companyId),
         $and: [{'payload.0.componentType': body.filter_criteria.type_value !== '' ? body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
-        title: body.filter_criteria.search_value !== '' ? { $regex: search } : { $exists: true },
+        title: body.filter_criteria.search_value !== '' ? { $regex: '' + search } : { $exists: true },
         'datetime': body.filter_criteria.days !== '0' ? {
           $gte: startDate
         } : { $exists: true }
