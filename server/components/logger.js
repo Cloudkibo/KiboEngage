@@ -5,7 +5,7 @@ const winston = require('winston')
 // eslint-disable-next-line no-unused-expressions
 require('winston-papertrail').Papertrail
 
-const logger = new winston.Logger({
+const logger = winston.createLogger({
   transports: [
     // new (winston.transports.Console)(),
     new winston.transports.Papertrail({
