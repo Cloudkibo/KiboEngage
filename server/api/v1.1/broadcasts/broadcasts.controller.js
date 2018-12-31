@@ -498,7 +498,7 @@ const updatePayload = (self, payload, broadcast) => {
   for (let j = 0; j < payload.length; j++) {
     if (!self && payload[j].componentType === 'list') {
       payload[j].listItems.forEach((element, lindex) => {
-        if (element.default_action) {
+        if (element.default_action && !element.default_action.messenger_extensions) {
           URLDataLayer.createURLObject({
             originalURL: element.default_action.url,
             module: {
