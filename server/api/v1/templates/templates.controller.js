@@ -664,13 +664,16 @@ exports.getAllBroadcasts = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+        console.log('findCriteria', JSON.stringify(findCriteria))
         dataLayer.broadcastTemplateaggregateCount([
           { $match: findCriteria },
           { $group: { _id: null, count: { $sum: 1 } } }
         ])
           .then(broadcastsCount => {
+            console.log('broadcastsCount', JSON.stringify(broadcastsCount))
             dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
               .then(broadcasts => {
+                console.log('broadcasts', JSON.stringify(broadcasts))
                 res.status(200).json({
                   status: 'success',
                   payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
