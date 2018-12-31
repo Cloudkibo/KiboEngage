@@ -611,6 +611,7 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
   let tag = "tag=" + encodeURIComponent(fbMessageTag)
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
   let batch = []
+  console.log('Payload received to send', payload)
   logger.serverLog(TAG, `Payload received to send: ${JSON.stringify(payload)}`)
   payload.forEach((item, index) => {
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
