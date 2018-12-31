@@ -545,19 +545,39 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'card') {
-    payload = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'generic',
-          'elements': [
-            {
-              'title': body.title,
-              'image_url': body.image_url,
-              'subtitle': body.description,
-              'buttons': body.buttons
-            }
-          ]
+    if (body.default_action) {
+      payload = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'generic',
+            'elements': [
+              {
+                'title': body.title,
+                'image_url': body.image_url,
+                'subtitle': body.description,
+                'buttons': body.buttons,
+                'default_action': body.default_action
+              }
+            ]
+          }
+        }
+      }
+    } else {
+      payload = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'generic',
+            'elements': [
+              {
+                'title': body.title,
+                'image_url': body.image_url,
+                'subtitle': body.description,
+                'buttons': body.buttons
+              }
+            ]
+          }
         }
       }
     }
