@@ -70,7 +70,7 @@ exports.create = function (req, res) {
                 }
               })
           } else {
-            utility.callApi(`pageReferrals`, 'post', logicLayer.createPayload('companyUser', req.body), req.headers.authorization)
+            utility.callApi(`pageReferrals`, 'post', logicLayer.createPayload(companyUser, req.body), req.headers.authorization)
               .then(craetedPageReferral => {
                 return res.status(200).json({status: 'success', payload: craetedPageReferral})
               })
