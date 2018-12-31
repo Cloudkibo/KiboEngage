@@ -39,6 +39,7 @@ module.exports = function (app) {
   app.use('/api/scripts', require('./api/scripts'))
   app.use('/api/api_ngp', require('./api/v1.1/api_ngp'))
   app.use('/api/landingPage', require('./api/v1.1/landingPage'))
+  app.use('/api/pageReferrals', require('./api/v1.1/pageReferrals'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
