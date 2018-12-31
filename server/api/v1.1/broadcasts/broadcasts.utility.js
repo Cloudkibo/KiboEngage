@@ -620,6 +620,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   }
+  console.log('Return payload', payload)
   logger.serverLog(TAG,
     `Return Payload ${JSON.stringify(payload)}`)
   return payload
