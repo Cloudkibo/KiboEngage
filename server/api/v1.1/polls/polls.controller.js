@@ -221,7 +221,7 @@ exports.send = function (req, res) {
                   utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      utility.callApi(`user/query`, 'post', {_id: userPage[0].userId}, req.headers.authorization)
+                      utility.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
                         .then(connectedUser => {
                           connectedUser = connectedUser[0]
                           var currentUser
