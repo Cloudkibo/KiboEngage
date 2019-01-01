@@ -193,6 +193,7 @@ exports.addPage = function (req, res) {
 }
 
 exports.removeAgent = function (req, res) {
+  console.log('removeAgent funcion called')
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let agentPayload = logicLayer.getTeamAgentsPayload({_id: req.body.teamId}, companyuser, req.body.agentId)
