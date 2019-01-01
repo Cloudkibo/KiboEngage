@@ -86,6 +86,7 @@ exports.fbAppId = function (req, res) {
 }
 
 exports.authenticatePassword = function (req, res) {
+  console.log('in authenticatePassword', req.body)
   utility.callApi(`user/authenticatePassword`, 'post', req.body, req.headers.authorization)
     .then(status => {
       return res.status(200).json({
