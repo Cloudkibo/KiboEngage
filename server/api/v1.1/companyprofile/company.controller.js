@@ -43,9 +43,9 @@ exports.invite = function (req, res) {
 }
 
 exports.updateRole = function (req, res) {
-  console.log('req.user.role', req.user.role)
+  console.log('req.body.role', req.body.role)
   console.log('req.body.domain_email', req.body.domain_email)
-  utility.callApi('companyprofile/updateRole', 'post', {role: req.user.role, domain_email: req.body.domain_email}, req.headers.authorization)
+  utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email}, req.headers.authorization)
     .then((result) => {
       console.log('result', result)
       logger.serverLog(TAG, 'result from invite endpoint accounts')
