@@ -221,8 +221,9 @@ exports.send = function (req, res) {
                   utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      utility.callApi(`user`, 'get', {}, req.headers.authorization)
+                      utility.callApi(`user/query`, 'post', {_id: userPage[0].userId}, req.headers.authorization)
                         .then(connectedUser => {
+                          connectedUser = connectedUser[0]
                           var currentUser
                           if (req.user.facebookInfo) {
                             currentUser = req.user
@@ -343,6 +344,8 @@ exports.send = function (req, res) {
                                   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                     .then(subscribers => {
                                       console.log('subscribersfetched', subscribers.length)
+                                      console.log('pages[z]', pages[z].pageId)
+                                      console.log('currentUser.facebookInfo.fbToken', pages[z].pageId)
                                       needle.get(
                                         `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                         (err, resp) => {
