@@ -358,8 +358,9 @@ exports.send = function (req, res) {
                   callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      callApi.callApi(`user`, 'get', {}, req.headers.authorization)
+                      callApi.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
                         .then(connectedUser => {
+                          connectedUser = connectedUser[0]
                           var currentUser
                           if (req.user.facebookInfo) {
                             currentUser = req.user
@@ -834,8 +835,9 @@ exports.sendSurvey = function (req, res) {
                       callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          callApi.callApi(`user`, 'get', {}, req.headers.authorization)
+                          callApi.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
                             .then(connectedUser => {
+                              connectedUser = connectedUser[0]
                               var currentUser
                               if (req.user.facebookInfo) {
                                 currentUser = req.user
