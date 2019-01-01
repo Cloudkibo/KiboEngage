@@ -337,8 +337,10 @@ exports.send = function (req, res) {
                                     })
                                 } else {
                                   let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
+                                  console.log('subscriberFindCriteria', subscriberFindCriteria)
                                   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                     .then(subscribers => {
+                                      console.log('subscribersfetched', subscribers)
                                       needle.get(
                                         `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                         (err, resp) => {
@@ -441,7 +443,8 @@ exports.send = function (req, res) {
                                         })
                                     })
                                     .catch(error => {
-                                      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+                                      console.log('Error in fetching subscribers', JSON.stringify(error))
+                                      // return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
                                     })
                                 }
                               }
