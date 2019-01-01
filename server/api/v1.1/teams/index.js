@@ -36,12 +36,10 @@ router.post('/addPage',
 
 router.post('/removeAgent',
   auth.isAuthenticated(),
-  validate({body: validationSchema.agentPayload}),
   controller.removeAgent)
 
 router.post('/removePage',
   auth.isAuthenticated(),
-  validate({body: validationSchema.pagePayload}),
   controller.removePage)
 
 router.get('/fetchAgents/:id',
