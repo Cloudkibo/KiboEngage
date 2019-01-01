@@ -52,10 +52,7 @@ exports.updateRole = function (req, res) {
       res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
-      logger.serverLog(TAG, err)
-      console.log('err.status', err.error.status)
-      console.log('err.payload', err.error.payload)
+      console.log('err', err)
       res.status(200).json({status: 'failed', payload: err.error.payload})
     })
 
