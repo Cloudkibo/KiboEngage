@@ -41,7 +41,7 @@ exports.invite = function (req, res) {
     })
 }
 
-exports.invite = function (req, res) {
+exports.updateRole = function (req, res) {
   console.log('req.user.role', req.user.role)
   console.log('req.body.domain_email', req.body.domain_email)
   utility.callApi('companyprofile/updateRole', 'post', {role: req.user.role, domain_email: req.body.domain_email}, req.headers.authorization)
