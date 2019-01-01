@@ -342,7 +342,7 @@ exports.send = function (req, res) {
                                   console.log('subscriberFindCriteria', subscriberFindCriteria)
                                   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                     .then(subscribers => {
-                                      console.log('subscribersfetched', subscribers)
+                                      console.log('subscribersfetched', subscribers.length)
                                       needle.get(
                                         `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                         (err, resp) => {
