@@ -77,7 +77,7 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+      callApi.callApi('companyprofile/query', 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -341,7 +341,7 @@ exports.send = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+      callApi.callApi('companyprofile/query', 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -784,7 +784,7 @@ exports.sendSurvey = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+      callApi.callApi('companyprofile/query', 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
