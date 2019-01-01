@@ -13,6 +13,10 @@ exports.invitePayload = {
     email: {
       type: 'string',
       required: true
+    },
+    role: {
+      type: 'string',
+      required: true
     }
   }
 }
