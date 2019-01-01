@@ -24,6 +24,7 @@ exports.getCriterias = function (req) {
   }
 }
 exports.getCriteriasBroadcast = (object) => {
+  console.log('getCriteriasBroadcast object', JSON.stringify(object))
   if (object.req.body.first_page === 'first') {
     let search = new RegExp('.*' + object.req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
