@@ -233,6 +233,7 @@ exports.send = function (req, res) {
                           let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
                           utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                             .then(pages => {
+                              console.log('pagesFound', pages)
                               for (let z = 0; z < pages.length && !abort; z++) {
                                 if (req.body.isList === true) {
                                   let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
@@ -336,6 +337,7 @@ exports.send = function (req, res) {
                                       return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
                                     })
                                 } else {
+                                  console.log('in else')
                                   let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
                                   console.log('subscriberFindCriteria', subscriberFindCriteria)
                                   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
