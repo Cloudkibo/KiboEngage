@@ -125,7 +125,7 @@ exports.updateTeam = function (req, res) {
 }
 
 exports.deleteTeam = function (req, res) {
-  utility.callApi(`teams/${req.params.id}`, 'delete', {}, req.headers.authorization) // delete team
+  utility.callApi(`teams/delete/${req.params.id}`, 'delete', {}, req.headers.authorization) // delete team
     .then(deletedTeam => {
       return res.status(200).json({
         status: 'success',
