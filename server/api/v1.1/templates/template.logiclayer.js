@@ -1,23 +1,20 @@
 
 exports.getCriterias = function (req) {
   if (req.body.first_page === 'first') {
-    let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
-      title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
+      title: req.body.filter_criteria.search_value !== '' ? {$regex: req.body.filter_criteria.search_value} : {$exists: true},
       category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
   } else if (req.body.first_page === 'next') {
-    let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
-      title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
+      title: req.body.filter_criteria.search_value !== '' ? {$regex: req.body.filter_criteria.search_value} : {$exists: true},
       category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
   } else if (req.body.first_page === 'previous') {
-    let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
-      title: req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
+      title: req.body.filter_criteria.search_value !== '' ? {$regex: req.body.filter_criteria.search_value} : {$exists: true},
       category: req.body.filter_criteria.category_value !== '' ? req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
@@ -25,26 +22,23 @@ exports.getCriterias = function (req) {
 }
 exports.getCriteriasBroadcast = function (object) {
   if (object.req.body.first_page === 'first') {
-    let search = new RegExp('.*' + object.req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
       '$or': [{companyId: object.companyUser.companyId}, {createdBySuperUser: true}],
-      title: object.req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
+      title: object.req.body.filter_criteria.search_value !== '' ? {$regex: object.req.body.filter_criteria.search_value} : {$exists: true},
       category: object.req.body.filter_criteria.category_value !== '' ? object.req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
   } else if (object.req.body.first_page === 'next') {
-    let search = new RegExp('.*' + object.req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
       '$or': [{companyId: object.companyUser.companyId}, {createdBySuperUser: true}],
-      title: object.req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
+      title: object.req.body.filter_criteria.search_value !== '' ? {$regex: object.req.body.filter_criteria.search_value} : {$exists: true},
       category: object.req.body.filter_criteria.category_value !== '' ? object.req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
   } else if (object.req.body.first_page === 'previous') {
-    let search = new RegExp('.*' + object.req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
       '$or': [{companyId: object.companyUser.companyId}, {createdBySuperUser: true}],
-      title: object.req.body.filter_criteria.search_value !== '' ? {$regex: search} : {$exists: true},
+      title: object.req.body.filter_criteria.search_value !== '' ? {$regex: object.req.body.filter_criteria.search_value} : {$exists: true},
       category: object.req.body.filter_criteria.category_value !== '' ? object.req.body.filter_criteria.category_value : {$exists: true}
     }
     return findCriteria
