@@ -468,8 +468,8 @@ exports.setSchedule = function (req, res) {
           if (!message) {
             return res.status(404).json({ status: 'failed', description: 'Record not found' })
           }
-          SequenceMessageQueueDatalayer.genericUpdate({ sequenceMessageId: message._id }, { queueScheduledTime: req.body.date }, { multi: true })
-            .then(result => {
+          SequenceDatalayer.genericFindForSequenceSubscribers({sequenceId: req.body.sequenceId})
+            .then(subscribers => {
               require('./../../../config/socketio').sendMessageToClient({
                 room_id: companyUser.companyId,
                 body: {
@@ -479,12 +479,25 @@ exports.setSchedule = function (req, res) {
                   }
                 }
               })
-              return res.status(201).json({ status: 'success', payload: message })
+              if (subscribers.length > 0) {
+                SequenceMessageQueueDatalayer.genericUpdate({ sequenceMessageId: message._id }, { queueScheduledTime: req.body.date }, { multi: true })
+                  .then(result => {
+                    return res.status(201).json({ status: 'success', payload: message })
+                  })
+                  .catch(err => {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Internal Server Error in updating sequence message schedule ${JSON.stringify(err)}`
+                    })
+                  })
+              } else {
+                return res.status(201).json({ status: 'success', payload: message })
+              }
             })
             .catch(err => {
               return res.status(500).json({
                 status: 'failed',
-                description: `Internal Server Error in updatin0g sequence message schedule ${JSON.stringify(err)}`
+                description: `Internal Server Error in getting sequence subscribers ${JSON.stringify(err)}`
               })
             })
         })

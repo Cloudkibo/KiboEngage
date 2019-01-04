@@ -622,7 +622,6 @@ exports.getAllBroadcasts = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
-        console.log('findCriteria for broadcasts', findCriteria)
         dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
@@ -641,7 +640,7 @@ exports.getAllBroadcasts = function (req, res) {
           })
       } else if (req.body.first_page === 'next') {
         let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-        let findCriteria = logicLayer.getCriteriasBroadcast(req)
+        let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
         dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
@@ -660,7 +659,7 @@ exports.getAllBroadcasts = function (req, res) {
           })
       } else if (req.body.first_page === 'previous') {
         let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
-        let findCriteria = logicLayer.getCriteriasBroadcast(req)
+        let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
         dataLayer.broadcastTemplateaggregateCount(findCriteria)
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
