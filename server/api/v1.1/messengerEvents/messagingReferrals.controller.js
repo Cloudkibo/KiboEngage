@@ -1,4 +1,4 @@
-const logicLayer = require('.logicLayer')
+const logicLayer = require('./logicLayer')
 const {callApi} = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/messagingreferrals.controller.js'
