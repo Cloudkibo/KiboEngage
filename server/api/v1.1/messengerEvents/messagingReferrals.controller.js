@@ -20,8 +20,9 @@ exports.index = function (req, res) {
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
-          console.log('subscriber found', subscriber)
-          callApi(`pageReferrals/query`, 'post', { pageId: page._id, ref: event.referral.ref })
+          console.log('event.referral.ref', event.referral.ref)
+          console.log('page._id', page._id)
+          callApi(`pageReferrals/query`, 'post', { pageId: page._id, ref_parameter: event.referral.ref })
             .then(pageReferral => {
               pageReferral = pageReferral[0]
               console.log('page referral', pageReferral)
