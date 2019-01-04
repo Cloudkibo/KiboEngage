@@ -1,4 +1,4 @@
-const BroadcastUtility = require('../broadcasts/broadcasts.utility')
+const logicLayer = require('.logicLayer')
 const {callApi} = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/messagingreferrals.controller.js'
@@ -27,7 +27,7 @@ exports.index = function (req, res) {
               pageReferral = pageReferral[0]
               console.log('page referral', pageReferral)
               for (let i = 0; i < pageReferral.reply.length; i++) {
-                let messageData = BroadcastUtility.prepareSendAPIPayload(subscriber.senderId, pageReferral.reply[i], subscriber.firstName, subscriber.lastName, true)
+                let messageData = logicLayer.prepareSendAPIPayload(subscriber.senderId, pageReferral.reply[i], subscriber.firstName, subscriber.lastName, true)
                 console.log('messageData', messageData)
                 request(
                   {
