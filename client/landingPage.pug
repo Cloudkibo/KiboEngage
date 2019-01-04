@@ -7,7 +7,24 @@ html(lang="en")
     link(rel="shortcut icon" href="https://cdn.cloudkibo.com/public/assets/demo/default/media/img/logo/favicon.ico")
     link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
     include ./styles.pug
-    include ./scripts/sendToMessenger.pug
+    script.
+      console.log(landingPage)
+      window.fbAsyncInit = function() {
+      FB.init({
+      appId            : landingPage.facebookClientId,
+      autoLogAppEvents : true,
+      xfbml            : true,
+      version          : 'v3.2'
+      });
+      };
+      (function(d, s, id){
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) {return;}
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+
 
   if landingPage.initialState.pageTemplate === 'text'
     body(style={'background-color': landingPage.initialState.backgroundColor}).landing-page-body
