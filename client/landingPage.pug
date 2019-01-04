@@ -1,0 +1,35 @@
+// Created by Imran on 03/01/2018.
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    title= landingPage.pageId.pageName
+    link(rel="shortcut icon" href="https://cdn.cloudkibo.com/public/assets/demo/default/media/img/logo/favicon.ico")
+    link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
+    include ./styles.pug
+
+  if landingPage.initialState.pageTemplate === 'text'
+    body(style={'background-color': landingPage.initialState.backgroundColor}).landing-page-body
+      if landingPage.initialState.mediaPlacement === "aboveHeadline"
+        include ./components/landingPage/aboveHeadline.pug
+      else if landingPage.initialState.mediaPlacement === "aboveDescription"
+        include ./components/landingPage/aboveDescription.pug
+      else if landingPage.initialState.mediaPlacement === "belowDescription"
+        include ./components/landingPage/belowDescription.pug
+      else if landingPage.initialState.mediaPlacement === "contentLeftSide"
+        include ./components/landingPage/contentLeftSide.pug
+      else if landingPage.initialState.mediaPlacement === "contentRightSide"
+        include ./components/landingPage/contentRightSide.pug
+  else
+    body(style={'background-image': 'url('+landingPage.initialState.mediaLink+')'}).landing-page-body
+      div.landing-page-container
+        div.landing-page-inner-container
+          h2(style={color: landingPage.initialState.titleColor}).landing-page-title= landingPage.initialState.title
+          p(style={color: landingPage.initialState.descriptionColor})= landingPage.initialState.description
+          div(
+            messenger_app_id=landingPage.facebookClientId 
+            page_id=landingPage.pageId.pageId 
+            color="blue" 
+            size="standard"
+            ).fb-send-to-messenger
+</div>
