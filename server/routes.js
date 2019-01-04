@@ -55,7 +55,7 @@ module.exports = function (app) {
   })
 
   app.get('/landingPage/:id', (req, res) => {
-    callApi('landingPages/query', 'post', {_id: req.params.id}, '')
+    callApi('landingPage/query', 'post', {_id: req.params.id}, '')
       .then(landingPages => {
         let landingPage = landingPages[0]
         landingPage.facebookClientId = config.facebook.clientID
