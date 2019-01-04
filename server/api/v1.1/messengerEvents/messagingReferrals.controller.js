@@ -11,8 +11,8 @@ exports.index = function (req, res) {
     description: `received the payload`
   })
   const event = req.body.entry[0].messaging[0]
-  const sender = event.sender.id
-  const pageId = event.recipient.id
+  const sender = req.body.senderId
+  const pageId = req.body.pageId
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
