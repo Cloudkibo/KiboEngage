@@ -6,11 +6,13 @@ const seenController = require('./seen.controller')
 const deliveryController = require('./delivery.controller')
 const pollController = require('./pollResponse.controller')
 const surveyController = require('./surveyResponse.controller')
+const messagingReferrals = require('./messagingReferrals.controller')
 const auth = require('../../../auth/auth.service')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
 router.post('/pollResponse', auth.isItWebhookServer(), pollController.pollResponse)
 router.post('/surveyResponse', auth.isItWebhookServer(), surveyController.surveyResponse)
+router.post('/messagingReferrals', auth.isItWebhookServer(), messagingReferrals.index)
 
 module.exports = router
