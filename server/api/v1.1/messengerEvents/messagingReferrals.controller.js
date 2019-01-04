@@ -38,11 +38,12 @@ exports.index = function (req, res) {
                       subscriber.pageId.accessToken
                   },
                   (err, res) => {
-                    console.log('response from facebook', res.body)
                     if (err) {
+                      console.log(`At send message pageReferralt ${JSON.stringify(err)}`)
                       return logger.serverLog(TAG,
                         `At send message pageReferralt ${JSON.stringify(err)}`)
                     } else {
+                      console.log('res', res.body)
                       if (res.statusCode !== 200) {
                         logger.serverLog(TAG,
                           `At send message page referral ${JSON.stringify(
