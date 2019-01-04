@@ -16,15 +16,18 @@ exports.index = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
+      console.log('page Found', page)
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
+          console.log('subscriber found', subscriber)
           callApi(`pageReferrals/query`, 'post', { pageId: page._id, ref: event.referral.ref })
             .then(pageReferral => {
               pageReferral = pageReferral[0]
+              console.log('page referral', pageReferral)
               for (let i = 0; i < pageReferral.reply.length; i++) {
                 let messageData = BroadcastUtility.prepareSendAPIPayload(subscriber.senderId, pageReferral.reply[i], subscriber.firstName, subscriber.lastName, true)
-                console.log('messasgeData', messasgeData)
+                console.log('messageData', messageData)
                 request(
                   {
                     'method': 'POST',
