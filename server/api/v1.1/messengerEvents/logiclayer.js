@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-export function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
+function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
   let messageType = isResponse ? 'RESPONSE' : 'UPDATE'
   let payload = {}
   let text = body.text
@@ -160,3 +160,4 @@ export function prepareSendAPIPayload (subscriberId, body, fname, lname, isRespo
   }
   return payload
 }
+exports.prepareSendAPIPayload = prepareSendAPIPayload
