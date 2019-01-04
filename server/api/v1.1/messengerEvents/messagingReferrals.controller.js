@@ -10,7 +10,6 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  const event = req.body.entry[0].messaging[0]
   const sender = req.body.senderId
   const pageId = req.body.pageId
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
@@ -20,9 +19,8 @@ exports.index = function (req, res) {
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
-          console.log('event.referral.ref', event.referral.ref)
           console.log('page._id', page._id)
-          callApi(`pageReferrals/query`, 'post', { pageId: page._id, ref_parameter: event.referral.ref })
+          callApi(`pageReferrals/query`, 'post', { pageId: page._id, ref_parameter: req.body.referral.ref })
             .then(pageReferral => {
               pageReferral = pageReferral[0]
               console.log('page referral', pageReferral)
