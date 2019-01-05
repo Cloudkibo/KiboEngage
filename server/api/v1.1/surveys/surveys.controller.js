@@ -77,7 +77,7 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+      callApi.callApi('companyprofile/query', 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -341,7 +341,7 @@ exports.send = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+      callApi.callApi('companyprofile/query', 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -358,8 +358,9 @@ exports.send = function (req, res) {
                   callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      callApi.callApi(`user`, 'get', {}, req.headers.authorization)
+                      callApi.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
                         .then(connectedUser => {
+                          connectedUser = connectedUser[0]
                           var currentUser
                           if (req.user.facebookInfo) {
                             currentUser = req.user
@@ -784,7 +785,7 @@ exports.sendSurvey = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('companyprofile/query', 'post', {ownerId: req.user._id}, req.headers.authorization)
+      callApi.callApi('companyprofile/query', 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi('featureUsage/planQuery', 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -834,8 +835,9 @@ exports.sendSurvey = function (req, res) {
                       callApi.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          callApi.callApi(`user`, 'get', {}, req.headers.authorization)
+                          callApi.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
                             .then(connectedUser => {
+                              connectedUser = connectedUser[0]
                               var currentUser
                               if (req.user.facebookInfo) {
                                 currentUser = req.user

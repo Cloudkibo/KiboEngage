@@ -1,0 +1,15 @@
+div.landing-page-container
+  div.row
+    div.col-2
+    div.col-4.landing-page-text-left
+      h2(style={color: landingPage.initialState.titleColor}).landing-page-title= landingPage.initialState.title
+      p(style={color: landingPage.initialState.descriptionColor})= landingPage.initialState.description
+      div(
+        messenger_app_id=landingPage.facebookClientId 
+        page_id=landingPage.pageId.pageId 
+        color="blue" 
+        size="xlarge"
+        ).fb-send-to-messenger
+    div.col-4
+      img(style={'max-width': '350px'} src= landingPage.initialState.mediaLink)
+    div.col-2

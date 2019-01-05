@@ -52,4 +52,12 @@ router.post('/whitelistDomain',
   auth.isAuthenticated(),
   controller.whitelistDomain)
 
+router.post('/deleteWhitelistDomain',
+  auth.isAuthenticated(),
+  controller.deleteWhitelistDomain)
+
+router.get('/fetchWhitelistedDomains/:_id',
+  auth.isAuthenticated(),
+  controller.fetchWhitelistedDomains)
+
 module.exports = router

@@ -10,7 +10,7 @@ const {callApi} = require('../utility')
 var array = []
 
 exports.pollResponse = function (req, res) {
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     description: `received the payload`
   })

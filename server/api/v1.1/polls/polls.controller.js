@@ -91,7 +91,7 @@ exports.allPolls = function (req, res) {
 exports.create = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -204,7 +204,7 @@ exports.send = function (req, res) {
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -221,8 +221,9 @@ exports.send = function (req, res) {
                   utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                     .then(userPage => {
                       userPage = userPage[0]
-                      utility.callApi(`user`, 'get', {}, req.headers.authorization)
+                      utility.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
                         .then(connectedUser => {
+                          connectedUser = connectedUser[0]
                           var currentUser
                           if (req.user.facebookInfo) {
                             currentUser = req.user
@@ -233,6 +234,7 @@ exports.send = function (req, res) {
                           let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
                           utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                             .then(pages => {
+                              console.log('pagesFound', pages)
                               for (let z = 0; z < pages.length && !abort; z++) {
                                 if (req.body.isList === true) {
                                   let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
@@ -336,9 +338,14 @@ exports.send = function (req, res) {
                                       return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
                                     })
                                 } else {
+                                  console.log('in else')
                                   let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
+                                  console.log('subscriberFindCriteria', subscriberFindCriteria)
                                   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                     .then(subscribers => {
+                                      console.log('subscribersfetched', subscribers.length)
+                                      console.log('pages[z]', pages[z].pageId)
+                                      console.log('currentUser.facebookInfo.fbToken', pages[z].pageId)
                                       needle.get(
                                         `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                         (err, resp) => {
@@ -441,7 +448,8 @@ exports.send = function (req, res) {
                                         })
                                     })
                                     .catch(error => {
-                                      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+                                      console.log('Error in fetching subscribers', JSON.stringify(error))
+                                      // return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
                                     })
                                 }
                               }
@@ -482,7 +490,7 @@ exports.sendPoll = function (req, res) {
   let abort = false
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
+      utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
             .then(planUsage => {
@@ -514,8 +522,9 @@ exports.sendPoll = function (req, res) {
                       utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true}, req.headers.authorization)
                         .then(userPage => {
                           userPage = userPage[0]
-                          utility.callApi(`user`, 'get', {}, req.headers.authorization)
+                          utility.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
                             .then(connectedUser => {
+                              connectedUser = connectedUser[0]
                               var currentUser
                               if (req.user.facebookInfo) {
                                 currentUser = req.user

@@ -16,6 +16,9 @@ router.get('/getAutomatedOptions',
 
 router.post('/invite', auth.isAuthenticated(), controller.invite)
 
+router.post('/updateRole',
+  auth.isAuthenticated(),
+  controller.updateRole)
 router.post('/updateAutomatedOptions',
   auth.isAuthenticated(),
   auth.hasRole('buyer'),

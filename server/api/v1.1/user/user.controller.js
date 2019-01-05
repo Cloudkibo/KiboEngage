@@ -86,6 +86,7 @@ exports.fbAppId = function (req, res) {
 }
 
 exports.authenticatePassword = function (req, res) {
+  console.log('in authenticatePassword', req.body)
   utility.callApi(`user/authenticatePassword`, 'post', req.body, req.headers.authorization)
     .then(status => {
       return res.status(200).json({
@@ -118,7 +119,7 @@ exports.addAccountType = function (req, res) {
 }
 
 exports.enableDelete = function (req, res) {
-  utility.callApi(`user/enableDelete`, 'post', req.body, req.headers.authorization)
+  utility.callApi(`user/gdpr`, 'post', req.body, req.headers.authorization)
     .then(updatedUser => {
       return res.status(200).json({
         status: 'success',
@@ -134,7 +135,7 @@ exports.enableDelete = function (req, res) {
 }
 
 exports.cancelDeletion = function (req, res) {
-  utility.callApi(`user/cancelDeletion`, 'get', {}, req.headers.authorization)
+  utility.callApi(`user/gdpr`, 'get', {}, req.headers.authorization)
     .then(updatedUser => {
       return res.status(200).json({
         status: 'success',

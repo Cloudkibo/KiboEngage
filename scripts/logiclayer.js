@@ -71,6 +71,123 @@ exports.prepareDataForPoll = (poll, subscriber) => {
   }
   return data
 }
+
+exports.prepareDataForBroadcast = (broadcast, subscriber) => {
+  const messages = []
+
+  for (let i = 0; i < broadcast.payload.length; i++) {
+    const messageData = {
+      'messaging_type': 'UPDATE',
+      'recipient': JSON.stringify({
+        'id': subscriber.senderId
+      })
+    }
+    let payload = broadcast.payload[i]
+    if (payload.componentType === 'text') {
+      if (payload.buttons) {
+        messageData.message = {
+          'attachment': {
+            'type': 'image',
+            'payload': {
+              'template_type': 'button',
+              'text': payload.text,
+              'buttons': payload.buttons
+            }
+          }
+        }
+      } else {
+        messageData.message = {
+          'text': payload.text
+        }
+      }
+    } else if (payload.componentType === 'image') {
+      messageData.message = {
+        'attachment': {
+          'type': 'image',
+          'payload': {
+            'url': payload.fileurl.url,
+            'is_reusable': true
+          }
+        }
+      }
+    } else if (payload.componentType === 'audio') {
+      messageData.message = {
+        'attachment': {
+          'type': 'audio',
+          'payload': {
+            'url': payload.fileurl.url,
+            'is_reusable': true
+          }
+        }
+      }
+    } else if (payload.componentType === 'video') {
+      messageData.message = {
+        'attachment': {
+          'type': 'video',
+          'payload': {
+            'url': payload.fileurl.url,
+            'is_reusable': true
+          }
+        }
+      }
+    } else if (payload.componentType === 'file') {
+      messageData.message = {
+        'attachment': {
+          'type': 'file',
+          'payload': {
+            'url': payload.fileurl.url,
+            'is_reusable': true
+          }
+        }
+      }
+    } else if (payload.componentType === 'card') {
+      messageData.message = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'generic',
+            'elements': [
+              {
+                'title': payload.title,
+                'image_url': payload.fileurl.url,
+                'subtitle': payload.description,
+                'buttons': payload.buttons
+              }
+            ]
+          }
+        }
+      }
+    } else if (payload.componentType === 'list') {
+      messageData.message = {
+        'attachment': {
+          'type': 'list',
+          'payload': {
+            'template_type': 'generic',
+            'elements': payload.listItems
+          }
+        }
+      }
+    } else if (payload.componentType === 'media') {
+      messageData.message = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'media',
+            'elements': [
+              {
+                media_type: payload.media_type,
+                attachment_id: payload.fileurl.attachment_id
+              }
+            ]
+          }
+        }
+      }
+    }
+    messages.push(messageData)
+  }
+  return messages
+}
+
 exports.prepareDataForWordpress = (config, subscriber, newURL) => {
   const messageData = {
     'messaging_type': 'UPDATE',
@@ -146,6 +263,83 @@ exports.prepareMessageDataForTwitter = (tweet, subscriber, newURL) => {
   }
   return messageData
 }
+
+exports.prepareDataForFacebook = (post, subscriber, newURL) => {
+  const messageData = {
+    'messaging_type': 'UPDATE',
+    'recipient': JSON.stringify({
+      'id': subscriber.senderId
+    })
+  }
+  if (post.type === 'status') {
+    messageData.message = JSON.stringify({
+      'text': post.message,
+      'metadata': 'This is metadata'
+    })
+  } else if (post.type === 'share') {
+    messageData.message = JSON.stringify({
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'generic',
+          'elements': [
+            {
+              'title': post.message
+                ? post.message
+                : post.from.name,
+              'image_url': post.picture,
+              'subtitle': 'kibopush.com',
+              'buttons': [
+                {
+                  'type': 'web_url',
+                  'url': newURL,
+                  'title': 'View Link'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    })
+  } else if (post.type === 'photo') {
+    messageData.message = JSON.stringify({
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'generic',
+          'elements': [
+            {
+              'title': post.message
+                ? post.message
+                : post.from.name,
+              'image_url': post.picture,
+              'subtitle': 'kibopush.com',
+              'buttons': [
+                {
+                  'type': 'web_url',
+                  'url': newURL,
+                  'title': 'View Page'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    })
+  } else if (post.type === 'video') {
+    messageData.message = JSON.stringify({
+      'attachment': {
+        'type': 'video',
+        'payload': {
+          'url': post.link,
+          'is_reusable': false
+        }
+      }
+    })
+  }
+  return messageData
+}
+
 exports.getValue = (sequenceMessage, subscriber, tags, page, seqSub) => {
   let tempFlag = 0
   let tempSegment = sequenceMessage.segmentation

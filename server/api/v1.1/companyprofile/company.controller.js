@@ -25,7 +25,8 @@ exports.getAutomatedOptions = function (req, res) {
 exports.invite = function (req, res) {
   console.log('email', req.body.email)
   console.log('name', req.body.name)
-  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
+  console.log('role', req.body.role)
+  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, req.headers.authorization)
     .then((result) => {
       console.log('result', result)
       logger.serverLog(TAG, 'result from invite endpoint accounts')
@@ -39,6 +40,23 @@ exports.invite = function (req, res) {
       console.log('err.payload', err.error.payload)
       res.status(200).json({status: 'failed', payload: err.error.payload})
     })
+}
+
+exports.updateRole = function (req, res) {
+  console.log('req.body.role', req.body.role)
+  console.log('req.body.domain_email', req.body.domain_email)
+  utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email}, req.headers.authorization)
+    .then((result) => {
+      console.log('result', result)
+      logger.serverLog(TAG, 'result from invite endpoint accounts')
+      logger.serverLog(TAG, result)
+      res.status(200).json({status: 'success', payload: result})
+    })
+    .catch((err) => {
+      console.log('err', err)
+      res.status(200).json({status: 'failed', payload: err.error.payload})
+    })
+
 }
 
 exports.updateAutomatedOptions = function (req, res) {

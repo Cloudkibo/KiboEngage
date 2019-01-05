@@ -1,17 +1,12 @@
-let mongoose = require('mongoose')
 const utility = require('../server/api/v1.1/utility')
 const logger = require('../server/components/logger')
-const config = require('../server/config/environment')
-const SequenceMessagesQueueDataLayer = require('../server/api/v1/sequenceMessageQueue/sequenceMessageQueue.datalayer')
-const SequenceDataLayer = require('../server/api/v1/sequenceMessaging/sequence.datalayer')
-const BroadcastUtility = require('../server/api/v1/broadcasts/broadcasts.utility')
+const SequenceMessagesQueueDataLayer = require('../server/api/v1.1/sequenceMessageQueue/sequenceMessageQueue.datalayer')
+const SequenceDataLayer = require('../server/api/v1.1/sequenceMessaging/sequence.datalayer')
+const BroadcastUtility = require('../server/api/v1.1/broadcasts/broadcasts.utility')
 const LogicLayer = require('./logiclayer')
 const TAG = 'scripts/SequenceMessageQueueScript.js'
-const util = require('util')
-
 const request = require('request')
-mongoose = mongoose.connect(config.mongo.uri)
-console.log('mongoose', util.inspect(config.mongo.uri))
+
 SequenceMessagesQueueDataLayer.findAll()
   .then(data => {
     if (data) {
@@ -41,35 +36,13 @@ SequenceMessagesQueueDataLayer.findAll()
             sendSequenceMessage(message)
           }
         }
-        if (!(i + 1 < data.length)) {
-          // Do work to reschedule the message
-          setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
-        }
       } // For loop ends here
-      if (data.length === 0) {
-        // Do work to reschedule the message
-        console.log('data is empty.')
-        setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
-      }
     } // If data clause check
-    if (data.length === 0) {
-      // Do work to reschedule the message
-      console.log('data is empty outside')
-      setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
-    }
   }) // Quence find ends here
   .catch(err => {
-    logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`)
+    logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`, 'error')
     console.log(`Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`)
   })
-
-function closeDB () {
-  // mongoose.disconnect(function (err) {
-  //   if (err) throw err
-  //   console.log('exiting')
-  //   process.exit()
-  // })
-}
 
 function sendSequenceMessage (message) {
   console.log('in sendSequenceMessage', message)
@@ -177,10 +150,6 @@ function sendSequenceMessage (message) {
                                     logger.serverLog(TAG, `Failed to create SequenceSubscribersMessage ${JSON.stringify(err)}`)
                                   })
                               }
-                              // mongoose.disconnect((err) => {
-                              //   if (err) throw err
-                              //   process.exit()
-                              // })
                             }) // Tags find ends here
                             .catch(err => {
                               logger.serverLog(TAG, `Failed to fetch tags ${JSON.stringify(err)}`)

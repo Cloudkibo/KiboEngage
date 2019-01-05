@@ -1,25 +1,23 @@
-let mongoose = require('mongoose')
 const logger = require('../server/components/logger')
 const config = require('../server/config/environment')
 const utility = require('../server/api/v1.1/utility')
-const AutomationQueueDataLayer = require('../server/api/v1/automationQueue/automationQueue.datalayer')
-const SurveyQuestionsDataLayer = require('../server/api/v1/surveys/surveyquestion.datalayer')
-const SurveysDataLayer = require('../server/api/v1/surveys/surveys.datalayer')
-const SurveyPageDataLayer = require('../server/api/v1/page_survey/page_survey.datalayer')
-const PollPageDataLayer = require('../server/api/v1/page_poll/page_poll.datalayer')
-const PollsDataLayer = require('../server/api/v1/polls/polls.datalayer')
-const AutoPostingMessagesDataLayer = require('../server/api/v1/autopostingMessages/autopostingMessages.datalayer')
-const AutopostingSubscriberMessagesDataLayer = require('../server/api/v1/autopostingMessages/autopostingSubscriberMessages.datalayer')
-const URLDataLayer = require('../server/api/v1/URLforClickedCount/URL.datalayer')
+const AutomationQueueDataLayer = require('../server/api/v1.1/automationQueue/automationQueue.datalayer')
+const SurveyQuestionsDataLayer = require('../server/api/v1.1/surveys/surveyquestion.datalayer')
+const SurveysDataLayer = require('../server/api/v1.1/surveys/surveys.datalayer')
+const SurveyPageDataLayer = require('../server/api/v1.1/page_survey/page_survey.datalayer')
+const PollPageDataLayer = require('../server/api/v1.1/page_poll/page_poll.datalayer')
+const PollsDataLayer = require('../server/api/v1.1/polls/polls.datalayer')
+const AutoPostingMessagesDataLayer = require('../server/api/v1.1/autopostingMessages/autopostingMessages.datalayer')
+const AutopostingSubscriberMessagesDataLayer = require('../server/api/v1.1/autopostingMessages/autopostingSubscriberMessages.datalayer')
+const URLDataLayer = require('../server/api/v1.1/URLforClickedCount/URL.datalayer')
 const LogicLayer = require('./logiclayer')
 const TAG = 'scripts/monodb_script.js'
-
+const BroadcastsDataLayer = require('../server/api/v1.1/broadcasts/broadcasts.datalayer')
+const BroadcastPageDataLayer = require('../server/api/v1.1/page_broadcast/page_broadcast.datalayer')
 const request = require('request')
 let Twit = require('twit')
 const needle = require('needle')
 const compUtility = require('../server/components/utility')
-
-mongoose = mongoose.connect(config.mongo.uri)
 
 AutomationQueueDataLayer.findAllAutomationQueueObjects()
   .then(data => {
@@ -358,13 +356,190 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                 })
               })
           } else if (message.type === 'autoposting-fb') {
-          // whoever fixes autoposting fb will add following
+            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId)
+              .then(autopostingMessage => {
+                utility.callApi(`subscribers/${message.subscriberId}`)
+                  .then(subscriber => {
+                    utility.callApi(`pages/${subscriber.pageId}`)
+                      .then(page => {
+                        needle.post(
+                          `https://graph.facebook.com/v2.6/${message.automatedMessageId}?access_token=${page.accessToken}&fields=id,message,picture,type,attachments,link,from`,
+                          data, (err, post) => {
+                            if (err) {
+                              logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                            }
+                            if (post.type !== 'status') {
+                              URLDataLayer.createURLObject({
+                                originalURL: post.link,
+                                subscriberId: subscriber._id,
+                                module: {
+                                  id: autopostingMessage._id,
+                                  type: 'autoposting'
+                                }
+                              })
+                                .then(savedurl => {
+                                  let newURL = config.domain + '/api/URL/' + savedurl._id
+                                  let messageData = LogicLayer.prepareDataForFacebook(post, subscriber, newURL)
+                                  // Logic to control the autoposting when last activity is less than 30 minutes
+                                  compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                                    if (err) {
+                                      logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                    }
 
-          /*
-          message sequencing
-          autoposting-fb
-          broadcast
-          */
+                                    if (isLastMessage) {
+                                      logger.serverLog(TAG, 'inside autoposting facebook send')
+                                      sendAutopostingMessage(messageData, page, message)
+                                    } else {
+                                      // Logic to add into queue will go here
+                                      logger.serverLog(TAG, 'inside adding to autoposting queue')
+                                      let timeNow = new Date()
+                                      AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
+                                        .then(updated => {
+                                        })
+                                        .catch(err => {
+                                          logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                        })
+                                    }
+                                  })
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, `Failed to create url ovject ${JSON.stringify(err)}`)
+                                })
+                            } else {
+                              let messageData = LogicLayer.prepareDataForFacebook(post, subscriber)
+                              // Logic to control the autoposting when last activity is less than 30 minutes
+                              compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                                if (err) {
+                                  logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                }
+                                if (isLastMessage) {
+                                  logger.serverLog(TAG, 'inside autoposting facebook send')
+                                  sendAutopostingMessage(messageData, page, message)
+                                } else {
+                                  // Logic to add into queue will go here
+                                  logger.serverLog(TAG, 'inside adding to autoposting queue')
+                                  let timeNow = new Date()
+                                  AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
+                                    .then(updated => {
+                                    })
+                                    .catch(err => {
+                                      logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                    })
+                                }
+                              })
+                            }
+                          })
+                        AutopostingSubscriberMessagesDataLayer.createAutopostingSubscriberMessage({
+                          pageId: page.pageId,
+                          companyId: message.companyId,
+                          autopostingId: autopostingMessage.autopostingId,
+                          autoposting_messages_id: autopostingMessage._id,
+                          subscriberId: subscriber.senderId
+                        })
+                          .then(savedSubscriberMsg => {
+                            logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                          })
+                          .catch(err => {
+                            logger.serverLog(TAG, `Failed to create autoposting subscriber message ${JSON.stringify(err)}`)
+                          })
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                      })
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                  })
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
+              })
+          } else if (message.type === 'broadcast') {
+          /* Getting the company user who has connected the facebook account */
+            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId)
+              .then(autopostingMessage => {
+                utility.callApi(`subscribers/${message.subscriberId}`)
+                  .then(subscriber => {
+                    utility.callApi(`pages/${subscriber.pageId}`)
+                      .then(page => {
+                        utility.callApi(`user/${page.userId}`)
+                          .then(connectedUser => {
+                            BroadcastsDataLayer.findOneBroadcast(message.automatedMessageId)
+                              .then(broadcast => {
+                                let currentUser = connectedUser
+                                const broadcastMessages = LogicLayer.prepareDataForBroadcast(broadcast, subscriber)
+                                // this calls the needle when the last message was older than 30 minutes
+                                // checks the age of function using callback
+                                compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                                  if (err) {
+                                    logger.serverLog(TAG, 'inside error')
+                                    logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                  }
+                                  if (isLastMessage) {
+                                    for (let i = 0; i < broadcastMessages.length; i++) {
+                                      let data = broadcastMessages[i]
+                                      needle.post(
+                                        `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
+                                        data, (err, resp) => {
+                                          if (err) {
+                                            logger.serverLog(TAG, err)
+                                            logger.serverLog(TAG,
+                                              `Error occured at subscriber :${JSON.stringify(
+                                                subscriber)}`)
+                                          }
+                                          BroadcastPageDataLayer.createForBroadcastPage({
+                                            pageId: page.pageId,
+                                            userId: currentUser._id,
+                                            companyId: message.companyId,
+                                            subscriberId: subscriber.senderId,
+                                            broadcastId: broadcast._id,
+                                            seen: false
+                                          })
+                                            .then(saved => {
+                                              AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
+                                                .then(result => {
+                                                  logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
+                                                })
+                                                .catch(err => {
+                                                  logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+                                                })
+                                            })
+                                            .catch(err => {
+                                              logger.serverLog(TAG, `Failed to create page broadcast ${JSON.stringify(err)}`)
+                                            })
+                                        })
+                                    }
+                                  } else {
+                                    logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                    let timeNow = new Date()
+                                    AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
+                                      .then(updated => {
+                                      })
+                                      .catch(err => {
+                                        logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                      })
+                                  }
+                                })
+                              })
+                              .catch(err => {
+                                logger.serverLog(TAG, `Failed to fetch broadcast ${JSON.stringify(err)}`)
+                              })
+                          })
+                          .catch(err => {
+                            logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
+                          })
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                      })
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                  })
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
+              })
           } else if (message.type === 'bot') {
             utility.callApi(`bots/${message.automatedMessageId}`, 'get', {}, 'chat')
               .then(bot => {
@@ -392,32 +567,13 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                 logger.serverLog(TAG, `Failed to fetch bot ${JSON.stringify(err)}`)
               })
           }
-          if (!(i + 1 < data.length)) {
-            setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
-          }
-        } else if (!(i + 1 < data.length)) {
-          // Do work to reschedule the message
-          setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
         }
       }
-      if (data.length === 0) {
-        setTimeout(function (mongoose) { closeDB(mongoose) }, 20000)
-      }
     }
-    // mongoose.disconnect()
   })
   .catch(err => {
     logger.serverLog(TAG, `Failed to fetch automation queues ${JSON.stringify(err)}`)
   })
-
-function closeDB () {
-  console.log('last index reached')
-  mongoose.disconnect(function (err) {
-    if (err) throw err
-    console.log('disconnected')
-    process.exit()
-  })
-}
 
 function sendAutopostingMessage (messageData, page, savedMsg) {
   request(

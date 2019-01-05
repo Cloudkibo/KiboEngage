@@ -1,5 +1,0 @@
-# Don't you dare to change this.
-
-echo "$(echo '*/15 * * * * '$NODE_PATH $CRON_SCRIPT_PATH ; crontab -l)" | crontab -
-echo "$(echo '* * * * * '$NODE_PATH $CRON_SEQ_SCRIPT_PATH ; crontab -l)" | crontab -
-echo "$(echo '1 0 14 * * '$NODE_PATH $CRON_PICTURE_SCRIPT_PATH ; crontab -l)" | crontab -

@@ -416,6 +416,7 @@ exports.sendConversation = function (req, res) {
                     })
                 } else {
                   let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
+                  console.log('subsFindCriteria', subscriberFindCriteria)
                   let interval = setInterval(() => {
                     if (payload) {
                       clearInterval(interval)
@@ -497,7 +498,7 @@ const updatePayload = (self, payload, broadcast) => {
   for (let j = 0; j < payload.length; j++) {
     if (!self && payload[j].componentType === 'list') {
       payload[j].listItems.forEach((element, lindex) => {
-        if (element.default_action) {
+        if (element.default_action && !element.default_action.messenger_extensions) {
           URLDataLayer.createURLObject({
             originalURL: element.default_action.url,
             module: {
@@ -546,4 +547,117 @@ const operation = (index, length) => {
     return false
   }
 }
+
+exports.addCardAction = function (req, res) {
+  if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
+    return res.status(500).json({
+      status: 'failed',
+      description: 'Url is required for type web_url.'
+    })
+  }
+  let buttonPayload = {
+    type: req.body.type
+  }
+  if (req.body.messenger_extensions || req.body.webview_height_ratio) {
+    if (!broadcastUtility.isWebView(req.body)) {
+      return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+    }
+    broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+      .then(result => {
+        if (result.returnValue) {
+          var webViewPayload = {
+            type: req.body.type,
+            url: req.body.url, // User defined link,
+            messenger_extensions: req.body.messenger_extensions,
+            webview_height_ratio: req.body.webview_height_ratio
+          }
+          return res.status(200).json({
+            status: 'success',
+            payload: webViewPayload
+          })
+        } else {
+          return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+        }
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: `Error at checking whitelist domain ${err}`})
+      })
+  } else {
+    URLDataLayer.createURLObject({
+      originalURL: req.body.url,
+      module: {
+        type: 'broadcast'
+      }
+    })
+      .then(savedurl => {
+        let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+        buttonPayload.newUrl = newURL
+        buttonPayload.url = req.body.url
+        return res.status(200).json({
+          status: 'success',
+          payload: buttonPayload
+        })
+      })
+      .catch(error => {
+        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+      })
+  }
+}
+
+exports.addListAction = function (req, res) {
+  if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
+    return res.status(500).json({
+      status: 'failed',
+      description: 'Url is required for type web_url.'
+    })
+  }
+  let buttonPayload = {
+    type: req.body.type
+  }
+  if (req.body.messenger_extensions || req.body.webview_height_ratio) {
+    if (!broadcastUtility.isWebView(req.body)) {
+      return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+    }
+    broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+      .then(result => {
+        if (result.returnValue) {
+          var webViewPayload = {
+            type: req.body.type,
+            url: req.body.url, // User defined link,
+            messenger_extensions: req.body.messenger_extensions,
+            webview_height_ratio: req.body.webview_height_ratio
+          }
+          return res.status(200).json({
+            status: 'success',
+            payload: webViewPayload
+          })
+        } else {
+          return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+        }
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', payload: `Error at checking whitelist domain ${err}`})
+      })
+  } else {
+    URLDataLayer.createURLObject({
+      originalURL: req.body.url,
+      module: {
+        type: 'broadcast'
+      }
+    })
+      .then(savedurl => {
+        let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+        buttonPayload.newUrl = newURL
+        buttonPayload.url = req.body.url
+        return res.status(200).json({
+          status: 'success',
+          payload: buttonPayload
+        })
+      })
+      .catch(error => {
+        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+      })
+  }
+}
+
 exports.sendBroadcast = sendBroadcast

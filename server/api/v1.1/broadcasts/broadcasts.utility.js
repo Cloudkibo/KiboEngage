@@ -545,19 +545,39 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'card') {
-    payload = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'generic',
-          'elements': [
-            {
-              'title': body.title,
-              'image_url': body.image_url,
-              'subtitle': body.description,
-              'buttons': body.buttons
-            }
-          ]
+    if (body.default_action) {
+      payload = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'generic',
+            'elements': [
+              {
+                'title': body.title,
+                'image_url': body.image_url,
+                'subtitle': body.description,
+                'buttons': body.buttons,
+                'default_action': body.default_action
+              }
+            ]
+          }
+        }
+      }
+    } else {
+      payload = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'generic',
+            'elements': [
+              {
+                'title': body.title,
+                'image_url': body.image_url,
+                'subtitle': body.description,
+                'buttons': body.buttons
+              }
+            ]
+          }
         }
       }
     }
@@ -600,6 +620,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   }
+  console.log('Return payload', payload)
   logger.serverLog(TAG,
     `Return Payload ${JSON.stringify(payload)}`)
   return payload
@@ -611,6 +632,7 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
   let tag = "tag=" + encodeURIComponent(fbMessageTag)
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
   let batch = []
+  console.log('Payload received to send', payload)
   logger.serverLog(TAG, `Payload received to send: ${JSON.stringify(payload)}`)
   payload.forEach((item, index) => {
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
@@ -663,6 +685,8 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
 }
 
 function addModuleIdIfNecessary (payload, broadcastId) {
+  console.log('payload body', payload)
+  console.log('broadcastId', broadcastId)
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
@@ -694,17 +718,20 @@ function addModuleIdIfNecessary (payload, broadcastId) {
           if (button.url) {
             let temp = button.url.split('/')
             let urlId = temp[temp.length - 1]
-            URL.findOne({_id: urlId}, (err, URLObject) => {
-              if (err) {
-                logger.serverLog(TAG, `Line# 696: update module id failed for url: ${JSON.stringify(err)}`)
-              }
-              URLObject.module.id = broadcastId
-              URLObject.save((err2, savedurl) => {
-                if (err) {
-                  logger.serverLog(TAG, `Line# 701: save url failed.: ${JSON.stringify(err)}`)
-                }
+            URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+              .then(URLObject => {
+                URLObject.module.id = broadcastId
+                URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
+                  .then(savedurl => {
+                    console.log('savedurl', savedurl)
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                  })
               })
-            })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+              })
           }
         })
       })
@@ -715,17 +742,20 @@ function addModuleIdIfNecessary (payload, broadcastId) {
             if (button.url) {
               let temp = button.url.split('/')
               let urlId = temp[temp.length - 1]
-              URL.findOne({_id: urlId}, (err, URLObject) => {
-                if (err) {
-                  logger.serverLog(TAG, `Line# 717: update module id failed for url: ${JSON.stringify(err)}`)
-                }
-                URLObject.module.id = broadcastId
-                URLObject.save((err2, savedurl) => {
-                  if (err) {
-                    logger.serverLog(TAG, `Line# 722: save url failed.: ${JSON.stringify(err)}`)
-                  }
+              URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+                .then(URLObject => {
+                  URLObject.module.id = broadcastId
+                  URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
+                    .then(savedurl => {
+                      console.log('savedurl', savedurl)
+                    })
+                    .catch(err => {
+                      logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                    })
                 })
-              })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+                })
             }
           })
         }
