@@ -9,25 +9,33 @@ const {callApi} = require('../utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 
 exports.surveyResponse = function (req, res) {
-  res.status(200).json({
-    status: 'success',
-    description: `received the payload`
-  })
   logger.serverLog(TAG, `in surveyResponse ${JSON.stringify(req.body)}`)
   for (let i = 0; i < req.body.entry[0].messaging.length; i++) {
     const event = req.body.entry[0].messaging[i]
     let resp = JSON.parse(event.postback.payload)
     savesurvey(event)
-    callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id })
-      .then(subscribers => {
-        let subscriber = subscribers[0]
-        if (subscriber) {
-          logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`)
-          //  sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_survey', value: resp.poll_id })
-        }
+      .then(response => {
+        callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id })
+          .then(subscribers => {
+            let subscriber = subscribers[0]
+            if (subscriber) {
+              logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`)
+              //  sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_survey', value: resp.poll_id })
+              res.status(200).json({
+                status: 'success',
+                description: `received the payload`
+              })
+            } else {
+              return res.status(500).json({status: 'failed', description: `subscriber not found`})
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+            return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
+          })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+        return res.status(500).json({status: 'failed', description: `Failed to update survey ${err}`})
       })
   }
 }
@@ -37,7 +45,7 @@ function savesurvey (req) {
   // find subscriber from sender id
   var resp = JSON.parse(req.postback.payload)
 
-  callApi(`subscribers/query`, 'post', { senderId: req.sender.id })
+  return callApi(`subscribers/query`, 'post', { senderId: req.sender.id })
     .then(subscribers => {
       let subscriber = subscribers[0]
       // eslint-disable-next-line no-unused-vars
