@@ -11,7 +11,7 @@ exports.pollTemplateaggregateCount = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
 }
 exports.pollTemplateaggregateLimit = (aggregateObject) => {
   let query = {
