@@ -20,12 +20,12 @@ exports.pollResponse = function (req, res) {
           if (subscriber) {
             logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`)
             sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_poll', value: resp.poll_id })
-            res.status(200).json({
+            return res.status(200).json({
               status: 'success',
               description: `received the payload`
             })
           } else {
-            res.status(500).json({
+            return res.status(500).json({
               status: 'failed',
               description: `no subscriber found`
             })
@@ -33,11 +33,11 @@ exports.pollResponse = function (req, res) {
         })
         .catch(err => {
           logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
-          res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
+          return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
         })
     })
     .catch(err => {
-      res.status(500).json({status: 'failed', description: `Failed to update poll ${err}`})
+      return res.status(500).json({status: 'failed', description: `Failed to update poll ${err}`})
     })
 }
 function savepoll (req, resp) {
