@@ -19,7 +19,6 @@ exports.allPolls = function (req, res) {
 exports.getAllPolls = function (req, res) {
   console.log('getAllPolls req.body', req.body)
   if (req.body.first_page === 'first') {
-    console.log('req.body', req.body)
     let findCriteria = logicLayer.getCriterias(req)
     console.log('findCriteria', findCriteria)
     dataLayer.pollTemplateaggregateCount(findCriteria)
@@ -538,66 +537,6 @@ exports.allBroadcasts = function (req, res) {
     .catch(err => {
       return res.status(500).json({status: 'failed', payload: err})
     })
-}
-
-exports.getAllPolls = function (req, res) {
-  if (req.body.first_page === 'first') {
-    let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount(findCriteria)
-      .then(pollsCount => {
-        dataLayer.pollTemplateaggregateLimit({findCriteria, req})
-          .then(polls => {
-            res.status(200).json({
-              status: 'success',
-              payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
-            })
-          })
-          .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
-          })
-      })
-      .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
-      })
-  } else if (req.body.first_page === 'next') {
-    let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-    let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount(findCriteria)
-      .then(pollsCount => {
-        dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-          .then(polls => {
-            res.status(200).json({
-              status: 'success',
-              payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
-            })
-          })
-          .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
-          })
-      })
-      .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
-      })
-  } else if (req.body.first_page === 'previous') {
-    let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
-    let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount(findCriteria)
-      .then(pollsCount => {
-        dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-          .then(polls => {
-            res.status(200).json({
-              status: 'success',
-              payload: {polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : ''}
-            })
-          })
-          .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
-          })
-      })
-      .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
-      })
-  }
 }
 
 exports.getAllBroadcasts = function (req, res) {
