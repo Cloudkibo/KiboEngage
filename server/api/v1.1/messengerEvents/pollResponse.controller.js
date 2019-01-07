@@ -10,31 +10,41 @@ const {callApi} = require('../utility')
 var array = []
 
 exports.pollResponse = function (req, res) {
-  return res.status(200).json({
-    status: 'success',
-    description: `received the payload`
-  })
   logger.serverLog(TAG, `in pollResponse ${JSON.stringify(req.body)}`)
-  let resp = JSON.parse(
-    req.body.entry[0].messaging[0].message.quick_reply.payload)
+  let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
   savepoll(req.body.entry[0].messaging[0], resp)
-  callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id })
-    .then(subscribers => {
-      let subscriber = subscribers[0]
-      if (subscriber) {
-        logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`)
-        sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_poll', value: resp.poll_id })
-      }
+    .then(response => {
+      callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id })
+        .then(subscribers => {
+          let subscriber = subscribers[0]
+          if (subscriber) {
+            logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`)
+            sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_poll', value: resp.poll_id })
+            res.status(200).json({
+              status: 'success',
+              description: `received the payload`
+            })
+          } else {
+            res.status(500).json({
+              status: 'failed',
+              description: `no subscriber found`
+            })
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+          res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
+        })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+      res.status(500).json({status: 'failed', description: `Failed to update poll ${err}`})
     })
 }
 function savepoll (req, resp) {
   // find subscriber from sender id
   // var resp = JSON.parse(req.postback.payload)
   var temp = true
-  callApi(`subscribers/query`, 'post', { senderId: req.sender.id })
+  return callApi(`subscribers/query`, 'post', { senderId: req.sender.id })
     .then(subscribers => {
       let subscriber = subscribers[0]
       if (!subscriber || subscriber._id === null) {
