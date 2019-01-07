@@ -250,7 +250,7 @@ exports.show = function (req, res) {
     .then(survey => {
       surveyQuestionsDataLayer.findSurveyWithId(survey._id)
         .then(questions => {
-          surveyResponseDataLayer.genericFind(survey)
+          surveyResponseDataLayer.genericFind({'surveyId': survey._id})
             .then(responses => {
               return res.status(200)
                 .json({status: 'success', payload: {survey, questions, responses}})

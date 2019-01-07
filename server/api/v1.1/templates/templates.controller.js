@@ -17,6 +17,7 @@ exports.allPolls = function (req, res) {
 }
 
 exports.getAllPolls = function (req, res) {
+  console.log('getAllPolls req.body', req.body)
   if (req.body.first_page === 'first') {
     console.log('req.body', req.body)
     let findCriteria = logicLayer.getCriterias(req)
