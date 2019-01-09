@@ -31,8 +31,10 @@ exports.update = function (req, res) {
   utility.callApi(`landingPage/${req.params.id}`, 'put', updatedLandingPage, req.headers.authorization)
     .then(updatedLandingPage => {
       if (req.body.submittedState && req.body.submittedState.state) {
+        console.log('inside submittedState', req.body)
         utility.callApi(`landingPage/landingPageState/${req.body.submittedState.state._id}`, 'put', req.body.submittedState.state, req.headers.authorization)
           .then(landingPage => {
+            console.log('updatedLandingPage', landingPage)
           })
           .catch(error => {
             return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
