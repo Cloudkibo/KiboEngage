@@ -33,13 +33,11 @@ exports.normalizeDataForDelivery = function (req, res) {
 exports.addWhitelistDomain = function (req, res) {
   utility.callApi(`pages/query`, 'post', {connected: true}, req.headers.authorization) // fetch connected pages
     .then(pages => {
+      console.log('pages fetched in script', pages.length)
       for (let i = 0; i < pages.length; i++) {
         utility.callApi(`pages/whitelistDomain`, 'post', {page_id: pages[i].pageId, whitelistDomains: [`${config.domain}`]}, req.headers.authorization)
           .then(whitelistDomains => {
-            return res.status(200).json({
-              status: 'success',
-              payload: whitelistDomains
-            })
+            console.log('whitelistDomains', whitelistDomains)
           })
           .catch(error => {
             return res.status(500).json({
