@@ -40,18 +40,12 @@ exports.addWhitelistDomain = function (req, res) {
             console.log('whitelistDomains', whitelistDomains)
           })
           .catch(error => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to save whitelist domains ${JSON.stringify(error)}`
-            })
+            console.log('error in whitelisting domain', error)
           })
       }
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch connected pages ${JSON.stringify(error)}`
-      })
+      console.log('error in fetching pages', error)
     })
   return res.status(200).json({status: 'success', payload: 'Domain has been whitelisted'})
 }
