@@ -34,9 +34,9 @@ exports.normalizeDataForDelivery = function (req, res) {
 exports.addWhitelistDomain = function (req, res) {
   utility.callApi(`pages/query`, 'post', {connected: true}, req.headers.authorization) // fetch connected pages
     .then(pages => {
-      console.log('pages fetched in script', pages.length)
+      console.log('pages fetched in script', pages[0])
       for (let i = 0; i < pages.length; i++) {
-        utility.callApi(`user/query`, 'post', {_id: pages[i].userId}, req.headers.authorization)
+        utility.callApi(`user/query`, 'post', {_id: pages[i].userId._id}, req.headers.authorization)
           .then(connectedUser => {
             connectedUser = connectedUser[0]
             if (connectedUser.facebookInfo) {
