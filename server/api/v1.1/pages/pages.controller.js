@@ -204,7 +204,7 @@ exports.enable = function (req, res) {
                             utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId, connected: true}, req.headers.authorization)
                            // utility.callApi(`pages/${page._id}/connect`, 'get', {}, req.headers.authorization) // fetch connected page
                               .then(pageConnected => {
-                                console.log('pageConnected', pageConnected)
+                                console.log('pageConnected.userId.facebookInfo', pageConnected.userId.facebookInfo)
                                 if (pageConnected === {}) {
                                   let query = {
                                     connected: true,
