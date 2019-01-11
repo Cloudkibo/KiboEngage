@@ -204,7 +204,7 @@ exports.enable = function (req, res) {
                             utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId, connected: true}, req.headers.authorization)
                               .then(pageConnected => {
                                 console.log('pageConnected', pageConnected)
-                                if (pageConnected === {}) {
+                                if (pageConnected.length === 0) {
                                   let query = {
                                     connected: true,
                                     isWelcomeMessageEnabled: true,
