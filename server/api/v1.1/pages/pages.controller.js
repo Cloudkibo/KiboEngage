@@ -203,7 +203,7 @@ exports.enable = function (req, res) {
                           } else {
                             utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId, connected: true}, req.headers.authorization)
                               .then(pageConnected => {
-                                console.log('pageConnected.userId.facebookInfo', pageConnected.userId.facebookInfo)
+                                console.log('pageConnected', pageConnected)
                                 if (pageConnected === {}) {
                                   let query = {
                                     connected: true,
@@ -312,7 +312,7 @@ exports.enable = function (req, res) {
                               .catch(error => {
                                 return res.status(500).json({
                                   status: 'failed',
-                                  payload: `Failed to fetch connected page ${error}`
+                                  payload: `Failed to fetch connected page ${JSON.stringify(error)}`
                                 })
                               })
                           }
