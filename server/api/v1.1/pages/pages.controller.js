@@ -203,7 +203,8 @@ exports.enable = function (req, res) {
                           } else {
                             utility.callApi(`pages/${page._id}/connect`, 'get', {}, req.headers.authorization) // fetch connected page
                               .then(pageConnected => {
-                                if (pageConnected !== {}) {
+                                console.log('pageConnected', pageConnected)
+                                if (pageConnected === {}) {
                                   let query = {
                                     connected: true,
                                     isWelcomeMessageEnabled: true,
