@@ -11,7 +11,7 @@ router.post('/create',
   validate({body: validationSchema.create}),
   controller.create)
 
-router.put('/edit',
+router.post('/edit',
   auth.isAuthenticated(),
   validate({body: validationSchema.edit}),
   controller.edit)
