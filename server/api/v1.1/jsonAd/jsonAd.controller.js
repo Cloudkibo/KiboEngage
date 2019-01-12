@@ -16,7 +16,7 @@ exports.create = function (req, res) {
 
 exports.edit = function (req, res) {
   logger.serverLog(TAG, 'Hit the edit json ad endpoint')
-  callApi(`jsonAd/edit`, 'put', req.body, req.headers.authorization)
+  callApi(`jsonAd/edit`, 'post', req.body, req.headers.authorization)
     .then(jsonAd => {
       res.status(200).json({status: 'success', payload: jsonAd})
     })
