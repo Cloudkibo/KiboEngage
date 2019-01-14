@@ -612,3 +612,19 @@ exports.whitelistDomain = function (req, res) {
       })
     })
 }
+
+exports.isWhitelisted = function (req, res) {
+  utility.callApi(`pages/isWhitelisted`, 'post', {domain: req.body.domain}, req.headers.authorization)
+    .then(response => {
+      return res.status(200).json({
+        status: 'success',
+        payload: response
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to identify whitelist domain ${JSON.stringify(error)}`
+      })
+    })
+}
