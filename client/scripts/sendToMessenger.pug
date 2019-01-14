@@ -13,6 +13,12 @@ script.
   let serverRequest = new XMLHttpRequest();
   serverRequest.open("POST", `/landingPage/${landingPage._id}`, true);
   serverRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  serverRequest.onreadystatechange = function () {
+  if(this.readyState === 4 && this.status === 200) {
+    console.log('server response', this.responseText);
+    document.innerHTML = this.responseText;
+  }
+  };
   serverRequest.send(JSON.stringify(landingPage));
   };
   });
