@@ -1,21 +1,21 @@
-if landingPage.initialState.pageTemplate === 'text'
-  body(style={'background-color': landingPage.initialState.backgroundColor}).landing-page-body
-    if landingPage.initialState.mediaPlacement === "aboveHeadline"
+if landingPage.state.pageTemplate === 'text'
+  body(style={'background-color': landingPage.state.backgroundColor}).landing-page-body
+    if landingPage.state.mediaPlacement === "aboveHeadline"
       include ./components/landingPage/aboveHeadline.pug
-    else if landingPage.initialState.mediaPlacement === "aboveDescription"
+    else if landingPage.state.mediaPlacement === "aboveDescription"
       include ./components/landingPage/aboveDescription.pug
-    else if landingPage.initialState.mediaPlacement === "belowDescription"
+    else if landingPage.state.mediaPlacement === "belowDescription"
       include ./components/landingPage/belowDescription.pug
-    else if landingPage.initialState.mediaPlacement === "contentLeftSide"
+    else if landingPage.state.mediaPlacement === "contentLeftSide"
       include ./components/landingPage/contentLeftSide.pug
-    else if landingPage.initialState.mediaPlacement === "contentRightSide"
+    else if landingPage.state.mediaPlacement === "contentRightSide"
       include ./components/landingPage/contentRightSide.pug
 else
-  body(style={'background-image': 'url('+landingPage.initialState.mediaLink+')'}).landing-page-body
+  body(style={'background-image': 'url('+landingPage.state.mediaLink+')'}).landing-page-body
     div.landing-page-container
       div.landing-page-inner-container
-        h2(style={color: landingPage.initialState.titleColor}).landing-page-title= landingPage.initialState.title
-        p(style={color: landingPage.initialState.descriptionColor})= landingPage.initialState.description
+        h2(style={color: landingPage.state.titleColor}).landing-page-title= landingPage.state.title
+        p(style={color: landingPage.state.descriptionColor})= landingPage.state.description
         div(
           messenger_app_id=landingPage.facebookClientId 
           page_id=landingPage.pageId.pageId 
