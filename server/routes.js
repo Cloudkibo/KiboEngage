@@ -110,6 +110,7 @@ module.exports = function (app) {
   })
 
   app.post('/landingPage/:id', (req, res) => {
+    logger.serverLog(TAG, 'post request of landingPage is hit', JSON.stringify(req.body))
     const landingPage = req.body
     res.render('landingPage', { landingPage })
   })
