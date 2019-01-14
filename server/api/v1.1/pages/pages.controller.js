@@ -3,6 +3,7 @@ const utility = require('../utility')
 const needle = require('needle')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/pages/pages.controller.js'
+const broadcastUtility = require('../broadcasts/broadcasts.utility')
 let config = require('./../../../config/environment')
 
 // const util = require('util')
@@ -614,17 +615,15 @@ exports.whitelistDomain = function (req, res) {
 }
 
 exports.isWhitelisted = function (req, res) {
-  utility.callApi(`pages/isWhitelisted`, 'post', {page_id: req.body.pageId, domain: req.body.domain}, req.headers.authorization)
-    .then(response => {
-      return res.status(200).json({
-        status: 'success',
-        payload: response
-      })
-    })
-    .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to identify whitelist domain ${JSON.stringify(error)}`
-      })
+  broadcastUtility.isWhiteListedDomain(req.body.domain, req.body.pageId, req.user)
+    .then(result => {
+      if (result.returnValue) {
+        return res.status(200).json({
+          status: 'success',
+          payload: result.returnValue
+        })
+      } else {
+        return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+      }
     })
 }
