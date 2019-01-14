@@ -32,6 +32,12 @@ router.post('/upload',
   multipartyMiddleware,
   controller.upload)
 
+router.post('/uploadTemplate',
+  auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('broadcasts'),
+  auth.doesRolePermitsThisAction('broadcastPermission'),
+  controller.uploadForTemplate)
+
 router.get('/delete/:id',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('broadcasts'),
