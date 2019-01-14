@@ -60,4 +60,8 @@ router.get('/fetchWhitelistedDomains/:_id',
   auth.isAuthenticated(),
   controller.fetchWhitelistedDomains)
 
+router.get('isWhitelisted',
+  auth.isAuthenticated(),
+  controller.isWhitelisted)
+
 module.exports = router
