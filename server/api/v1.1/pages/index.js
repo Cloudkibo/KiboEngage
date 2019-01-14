@@ -60,7 +60,7 @@ router.get('/fetchWhitelistedDomains/:_id',
   auth.isAuthenticated(),
   controller.fetchWhitelistedDomains)
 
-router.post('isWhitelisted',
+router.post('/isWhitelisted',
   auth.isAuthenticated(),
   controller.isWhitelisted)
 
