@@ -360,7 +360,7 @@ exports.upload = function (req, res) {
 
 exports.uploadForTemplate = function (req, res) {
   console.log('req.body', req.body)
-  utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0]._id)}`)
+  utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0])}`)
     .then(page => {
       console.log('page fetched', page)
       needle.get(
