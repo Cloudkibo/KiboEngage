@@ -32,7 +32,7 @@ router.post('/upload',
   multipartyMiddleware,
   controller.upload)
 
-router.post('/upload',
+router.post('/uploadTemplate',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
