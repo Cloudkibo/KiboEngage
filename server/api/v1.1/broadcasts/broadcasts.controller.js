@@ -359,8 +359,7 @@ exports.upload = function (req, res) {
 }
 
 exports.uploadForTemplate = function (req, res) {
-  logger.serverLog(TAG,
-    `req.body.pages ${JSON.stringify(req.body)}`)
+  console.log('req.body', req.body)
   utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0]._id)}`)
     .then(page => {
       console.log('page fetched', page)
