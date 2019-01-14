@@ -359,10 +359,9 @@ exports.upload = function (req, res) {
 }
 
 exports.uploadForTemplate = function (req, res) {
-  let pages = JSON.parse(req.body.pages)
-  logger.serverLog(TAG, `Pages in upload file ${pages}`)
-  utility.callApi(`pages/${mongoose.Types.ObjectId(pages[0])}`)
+  utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0]._id)}`)
     .then(page => {
+      console.log('page fetched', page)
       needle.get(
         `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
         (err, resp2) => {
