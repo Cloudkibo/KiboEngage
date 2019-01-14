@@ -170,7 +170,7 @@ exports.create = function (req, res) {
     })
 }
 exports.edit = function (req, res) {
-  utility.callApi(`comment_capture/${req.body.postId}`, 'put', {includedKeywords: req.body.includedKeywords, excludedKeywords: req.body.excludedKeywords}, req.headers.authorization)
+  utility.callApi(`comment_capture/${req.body.postId}`, 'post', {includedKeywords: req.body.includedKeywords, excludedKeywords: req.body.excludedKeywords}, req.headers.authorization)
     .then(result => {
       res.status(201).json({status: 'success', payload: result})
     })
