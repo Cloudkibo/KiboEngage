@@ -359,9 +359,9 @@ exports.upload = function (req, res) {
 }
 
 exports.uploadForTemplate = function (req, res) {
-  logger.serverLog(TAG,
-    `req.body.pages ${JSON.stringify(req.body)}`)
-  utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0]._id)}`)
+  let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
+  console.log('req.body', req.body)
+  utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0])}`)
     .then(page => {
       console.log('page fetched', page)
       needle.get(
@@ -374,7 +374,7 @@ exports.uploadForTemplate = function (req, res) {
             })
           }
           let pageAccessToken = resp2.body.access_token
-          let fileReaderStream = fs.createReadStream(req.body.url)
+          let fileReaderStream = fs.createReadStream(dir + '/userfiles/' + req.body.name)
           const messageData = {
             'message': JSON.stringify({
               'attachment': {
@@ -386,6 +386,7 @@ exports.uploadForTemplate = function (req, res) {
             }),
             'filedata': fileReaderStream
           }
+          console.log('messageData', messageData)
           request(
             {
               'method': 'POST',
@@ -395,6 +396,7 @@ exports.uploadForTemplate = function (req, res) {
             },
             function (err, resp) {
               if (err) {
+                console.log('error in uploading', err)
                 return res.status(500).json({
                   status: 'failed',
                   description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
