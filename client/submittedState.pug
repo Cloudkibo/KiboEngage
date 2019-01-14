@@ -1,2 +1,12 @@
-body(style={'background-color': 'fff'}).landing-page-body
-  p Submitted State
+if landingPage.submittedState.actionType === 'SHOW_NEW_MESSAGE'
+  body(style={'background-color': landingPage.state.backgroundColor}).landing-page-body
+    if landingPage.state.mediaPlacement === "aboveHeadline"
+      include ./components/landingPage/aboveHeadline.pug
+    else if landingPage.state.mediaPlacement === "aboveDescription"
+      include ./components/landingPage/aboveDescription.pug
+    else if landingPage.state.mediaPlacement === "belowDescription"
+      include ./components/landingPage/belowDescription.pug
+    else if landingPage.state.mediaPlacement === "contentLeftSide"
+      include ./components/landingPage/contentLeftSide.pug
+    else if landingPage.state.mediaPlacement === "contentRightSide"
+      include ./components/landingPage/contentRightSide.pug

@@ -2,14 +2,17 @@ div.landing-page-container
   div.row
     div.col-2
     div.col-4
-      img(style={'max-width': '350px'} src= landingPage.initialState.mediaLink)
+      img(style={'max-width': '350px'} src= landingPage.state.mediaLink)
     div.col-4.landing-page-text-left
-      h2(style={color: landingPage.initialState.titleColor}).landing-page-title= landingPage.initialState.title
-      p(style={color: landingPage.initialState.descriptionColor})= landingPage.initialState.description
-      div(
-        messenger_app_id=landingPage.facebookClientId 
-        page_id=landingPage.pageId.pageId 
-        color="blue" 
-        size="xlarge"
-        ).fb-send-to-messenger
+      h2(style={color: landingPage.state.titleColor}).landing-page-title= landingPage.state.title
+      p(style={color: landingPage.state.descriptionColor})= landingPage.state.description
+      if landingPage.currentState === 'initial'
+        div(
+          messenger_app_id=landingPage.facebookClientId 
+          page_id=landingPage.pageId.pageId 
+          color="blue" 
+          size="xlarge"
+          ).fb-send-to-messenger
+      else
+        a(href=`m.me/${landingPage.pageId.pageId}`).btn.btn-primary= landingPage.state.buttonText
     div.col-2

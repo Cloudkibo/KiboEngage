@@ -59,6 +59,7 @@ module.exports = function (app) {
     callApi('landingPage/query', 'post', {_id: req.params.id}, '')
       .then(landingPages => {
         let landingPage = landingPages[0]
+        landingPage.state = landingPages[0].initialState
         landingPage.facebookClientId = config.facebook.clientID
         landingPage.currentState = 'initial'
         res.render('landingPage', { landingPage })
@@ -91,7 +92,7 @@ module.exports = function (app) {
     //     "__v" : 0
     //   },
     //   "submittedState" : {
-    //       "actionType" : "SHOW_NEW_MESSAGE",
+    //       "actionType" : "SHOW_NEW_MESSAGE", "REDIRECT_TO_URL"
     //       "state" : "5c35c01edf911d1da95206eb",
     //       "title" : "Thank You for Reading Our Thank You Message!",
     //       "description" : "Once a user opt-ins through your form, he sees this. Unless you change it, of course.",
@@ -111,7 +112,11 @@ module.exports = function (app) {
 
   app.post('/landingPage/:id', (req, res) => {
     logger.serverLog(TAG, 'post request of landingPage is hit')
-    const landingPage = req.body
+    let landingPage = req.body
+    landingPage.state = req.body.submittedState.state
+    landingPage.state.title = req.body.submittedState.title
+    landingPage.state.description = req.body.submittedState.description
+    landingPage.state.buttonText = req.body.submittedState.buttonText
     res.render('landingPage', { landingPage })
   })
 
