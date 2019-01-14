@@ -60,11 +60,58 @@ module.exports = function (app) {
       .then(landingPages => {
         let landingPage = landingPages[0]
         landingPage.facebookClientId = config.facebook.clientID
+        landingPage.currentState = 'initial'
         res.render('landingPage', { landingPage })
       })
       .catch(err => {
         logger.serverLog(TAG, `Error occured in landingPage ${req.params.id} ${err}`)
       })
+    // const landingPage = {
+    //   "_id" : "5c35c01edf911d1da95206ec",
+    //   "currentState": "initial",
+    //   "isActive" : true,
+    //   "companyId" : "5bf3bbcea130395422d6a2b6",
+    //   "pageId" : {
+    //     _id: "5bf3bdb3a130395422d6a2bc",
+    //     pageName: 'New Page',
+    //     pageId: "397022517417854"
+    //   },
+    //   "initialState" : {
+    //     "_id" : "5c35c01edf911d1da95206ea",
+    //     "title" : "Here is your widget headline. Click here to change it!",
+    //     "description" : "We also put default text here. Make sure to turn it into a unique and valuable message.",
+    //     "pageTemplate" : "text",
+    //     "backgroundColor" : "#fff",
+    //     "titleColor" : "#000",
+    //     "descriptionColor" : "#000",
+    //     "buttonText" : "Send To Messenger",
+    //     "mediaType" : "image",
+    //     "mediaLink" : "",
+    //     "mediaPlacement" : "aboveHeadline",
+    //     "__v" : 0
+    //   },
+    //   "submittedState" : {
+    //       "actionType" : "SHOW_NEW_MESSAGE",
+    //       "state" : "5c35c01edf911d1da95206eb",
+    //       "title" : "Thank You for Reading Our Thank You Message!",
+    //       "description" : "Once a user opt-ins through your form, he sees this. Unless you change it, of course.",
+    //       "buttonText" : "View it in Messenger"
+    //   },
+    //   "optInMessage" : [
+    //       {
+    //           "id" : 1547026445599.0,
+    //           "text" : "Welcome {{user_first_name}}! Thankyou for subscribing. The next post is coming soon, stay tuned!    P.S. If you ever want to unsubscribe just type \"stop\"",
+    //           "componentType" : "text"
+    //       }
+    //   ],
+    //   "__v" : 0
+    // }
+    // res.render('landingPage', { landingPage })
+  })
+
+  app.post('/landingPage/:id', (req, res) => {
+    const landingPage = req.body
+    res.render('landingPage', { landingPage })
   })
 
   app.get('/demoSSA', (req, res) => {
