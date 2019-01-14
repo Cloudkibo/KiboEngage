@@ -385,6 +385,7 @@ exports.uploadForTemplate = function (req, res) {
             }),
             'filedata': fileReaderStream
           }
+          console.log('messageData', messageData)
           request(
             {
               'method': 'POST',
@@ -394,6 +395,7 @@ exports.uploadForTemplate = function (req, res) {
             },
             function (err, resp) {
               if (err) {
+                console.log('error in uploading', err)
                 return res.status(500).json({
                   status: 'failed',
                   description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
