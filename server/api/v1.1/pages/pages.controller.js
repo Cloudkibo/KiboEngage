@@ -3,6 +3,9 @@ const utility = require('../utility')
 const needle = require('needle')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/pages/pages.controller.js'
+const broadcastUtility = require('../broadcasts/broadcasts.utility')
+let config = require('./../../../config/environment')
+
 // const util = require('util')
 
 exports.index = function (req, res) {
@@ -199,9 +202,10 @@ exports.enable = function (req, res) {
                               payload: 'Page is not published.'
                             })
                           } else {
-                            utility.callApi(`pages/${page._id}/connect`, 'get', {}, req.headers.authorization) // fetch connected page
+                            utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId, connected: true}, req.headers.authorization)
                               .then(pageConnected => {
-                                if (pageConnected !== {}) {
+                                console.log('pageConnected', pageConnected)
+                                if (pageConnected.length === 0) {
                                   let query = {
                                     connected: true,
                                     isWelcomeMessageEnabled: true,
@@ -214,6 +218,13 @@ exports.enable = function (req, res) {
                                   }
                                   utility.callApi(`pages/${req.body._id}`, 'put', query, req.headers.authorization) // connect page
                                     .then(connectPage => {
+                                      utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, req.headers.authorization)
+                                        .then(whitelistDomains => {
+                                        })
+                                        .catch(error => {
+                                          logger.serverLog(TAG,
+                                            `Failed to whitelist domain ${JSON.stringify(error)}`)
+                                        })
                                       utility.callApi(`featureUsage/updateCompany`, 'put', {
                                         query: {companyId: req.body.companyId},
                                         newPayload: { $inc: { facebook_pages: 1 } },
@@ -241,6 +252,26 @@ exports.enable = function (req, res) {
                                                 payload: JSON.stringify(error)
                                               })
                                             }
+                                            var valueForMenu = {
+                                              'get_started': {
+                                                'payload': '<GET_STARTED_PAYLOAD>'
+                                              },
+                                              'greeting': [
+                                                {
+                                                  'locale': 'default',
+                                                  'text': 'Hi {{user_full_name}}! Please tap on getting started to start the conversation.'
+                                                }]
+                                            }
+                                            const requesturl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
+                                            needle.request('post', requesturl, valueForMenu,
+                                              {json: true}, function (err, resp) {
+                                                if (err) {
+                                                  logger.serverLog(TAG,
+                                                    `Internal Server Error ${JSON.stringify(
+                                                      err)}`)
+                                                }
+                                                console.log('response from gettingStarted', resp.body)
+                                              })
                                             // require('./../../../config/socketio').sendMessageToClient({
                                             //   room_id: req.body.companyId,
                                             //   body: {
@@ -274,8 +305,8 @@ exports.enable = function (req, res) {
                                     })
                                 } else {
                                   res.status(400).json({
-                                    status: 'failed',
-                                    payload: `Page is already connected by ${pageConnected.userId.facebookInfo.name}. In order to manage this page please ask ${pageConnected.userId.facebookInfo.name} to create a team account and invite you.`
+                                    status: 'success',
+                                    payload: {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name}. In order to manage this page please ask ${pageConnected[0].userId.facebookInfo.name} to create a team account and invite you.`}
                                   })
                                 }
                               })
@@ -580,5 +611,19 @@ exports.whitelistDomain = function (req, res) {
         status: 'failed',
         description: `Failed to save whitelist domains ${JSON.stringify(error)}`
       })
+    })
+}
+
+exports.isWhitelisted = function (req, res) {
+  broadcastUtility.isWhiteListedDomain(req.body.domain, req.body.pageId, req.user)
+    .then(result => {
+      if (result.returnValue) {
+        return res.status(200).json({
+          status: 'success',
+          payload: result.returnValue
+        })
+      } else {
+        return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+      }
     })
 }

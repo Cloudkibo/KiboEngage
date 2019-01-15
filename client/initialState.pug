@@ -1,0 +1,24 @@
+if landingPage.state.pageTemplate === 'text'
+  body(style={'background-color': landingPage.state.backgroundColor}).landing-page-body
+    if landingPage.state.mediaPlacement === "aboveHeadline"
+      include ./components/landingPage/aboveHeadline.pug
+    else if landingPage.state.mediaPlacement === "aboveDescription"
+      include ./components/landingPage/aboveDescription.pug
+    else if landingPage.state.mediaPlacement === "belowDescription"
+      include ./components/landingPage/belowDescription.pug
+    else if landingPage.state.mediaPlacement === "contentLeftSide"
+      include ./components/landingPage/contentLeftSide.pug
+    else if landingPage.state.mediaPlacement === "contentRightSide"
+      include ./components/landingPage/contentRightSide.pug
+else
+  body(style={'background-image': 'url('+landingPage.state.mediaLink+')'}).landing-page-body
+    div.landing-page-container
+      div.landing-page-inner-container
+        h2(style={color: landingPage.state.titleColor}).landing-page-title= landingPage.state.title
+        p(style={color: landingPage.state.descriptionColor})= landingPage.state.description
+        div(
+          messenger_app_id=landingPage.facebookClientId 
+          page_id=landingPage.pageId.pageId 
+          color='blue'
+          size='xlarge'
+          ).fb-send-to-messenger
