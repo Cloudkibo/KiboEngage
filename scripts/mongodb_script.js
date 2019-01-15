@@ -14,6 +14,7 @@ const LogicLayer = require('./logiclayer')
 const TAG = 'scripts/monodb_script.js'
 const BroadcastsDataLayer = require('../server/api/v1.1/broadcasts/broadcasts.datalayer')
 const BroadcastPageDataLayer = require('../server/api/v1.1/page_broadcast/page_broadcast.datalayer')
+const SequenceMessagingDataLayer = require('../server/api/v1.1/sequenceMessaging/sequence.datalayer')
 const request = require('request')
 let Twit = require('twit')
 const needle = require('needle')
@@ -455,90 +456,163 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                 logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
               })
           } else if (message.type === 'broadcast') {
-          /* Getting the company user who has connected the facebook account */
-            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId)
-              .then(autopostingMessage => {
-                utility.callApi(`subscribers/${message.subscriberId}`)
-                  .then(subscriber => {
-                    utility.callApi(`pages/${subscriber.pageId}`)
-                      .then(page => {
-                        utility.callApi(`user/${page.userId}`)
-                          .then(connectedUser => {
-                            BroadcastsDataLayer.findOneBroadcast(message.automatedMessageId)
-                              .then(broadcast => {
-                                let currentUser = connectedUser
-                                const broadcastMessages = LogicLayer.prepareDataForBroadcast(broadcast, subscriber)
-                                // this calls the needle when the last message was older than 30 minutes
-                                // checks the age of function using callback
-                                compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
-                                  if (err) {
-                                    logger.serverLog(TAG, 'inside error')
-                                    logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
-                                  }
-                                  if (isLastMessage) {
-                                    for (let i = 0; i < broadcastMessages.length; i++) {
-                                      let data = broadcastMessages[i]
-                                      needle.post(
-                                        `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
-                                        data, (err, resp) => {
-                                          if (err) {
-                                            logger.serverLog(TAG, err)
-                                            logger.serverLog(TAG,
-                                              `Error occured at subscriber :${JSON.stringify(
-                                                subscriber)}`)
-                                          }
-                                          BroadcastPageDataLayer.createForBroadcastPage({
-                                            pageId: page.pageId,
-                                            userId: currentUser._id,
-                                            companyId: message.companyId,
-                                            subscriberId: subscriber.senderId,
-                                            broadcastId: broadcast._id,
-                                            seen: false
-                                          })
-                                            .then(saved => {
-                                              AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
-                                                .then(result => {
-                                                  logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
-                                                })
-                                                .catch(err => {
-                                                  logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
-                                                })
+            utility.callApi(`subscribers/${message.subscriberId}`)
+              .then(subscriber => {
+                utility.callApi(`pages/${subscriber.pageId}`)
+                  .then(page => {
+                    utility.callApi(`user/${page.userId}`)
+                      .then(connectedUser => {
+                        BroadcastsDataLayer.findOneBroadcast(message.automatedMessageId)
+                          .then(broadcast => {
+                            let currentUser = connectedUser
+                            const broadcastMessages = LogicLayer.prepareDataForBroadcast(broadcast, subscriber)
+                            // this calls the needle when the last message was older than 30 minutes
+                            // checks the age of function using callback
+                            compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                              if (err) {
+                                logger.serverLog(TAG, 'inside error')
+                                logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                              }
+                              if (isLastMessage) {
+                                for (let i = 0; i < broadcastMessages.length; i++) {
+                                  let data = broadcastMessages[i]
+                                  needle.post(
+                                    `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
+                                    data, (err, resp) => {
+                                      if (err) {
+                                        logger.serverLog(TAG, err)
+                                        logger.serverLog(TAG,
+                                          `Error occured at subscriber :${JSON.stringify(
+                                            subscriber)}`)
+                                      }
+                                      BroadcastPageDataLayer.createForBroadcastPage({
+                                        pageId: page.pageId,
+                                        userId: currentUser._id,
+                                        companyId: message.companyId,
+                                        subscriberId: subscriber.senderId,
+                                        broadcastId: broadcast._id,
+                                        seen: false
+                                      })
+                                        .then(saved => {
+                                          AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
+                                            .then(result => {
+                                              logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
                                             })
                                             .catch(err => {
-                                              logger.serverLog(TAG, `Failed to create page broadcast ${JSON.stringify(err)}`)
+                                              logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
                                             })
                                         })
-                                    }
-                                  } else {
-                                    logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
-                                    let timeNow = new Date()
-                                    AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
-                                      .then(updated => {
-                                      })
-                                      .catch(err => {
-                                        logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
-                                      })
-                                  }
-                                })
-                              })
-                              .catch(err => {
-                                logger.serverLog(TAG, `Failed to fetch broadcast ${JSON.stringify(err)}`)
-                              })
+                                        .catch(err => {
+                                          logger.serverLog(TAG, `Failed to create page broadcast ${JSON.stringify(err)}`)
+                                        })
+                                    })
+                                }
+                              } else {
+                                logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                let timeNow = new Date()
+                                AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
+                                  .then(updated => {
+                                  })
+                                  .catch(err => {
+                                    logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                  })
+                              }
+                            })
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
+                            logger.serverLog(TAG, `Failed to fetch broadcast ${JSON.stringify(err)}`)
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                        logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
                       })
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                    logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
+                logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+              })
+          } else if (message.type === 'message-sequencing') {
+            /* Getting the company user who has connected the facebook account */
+            utility.callApi(`subscribers/${message.subscriberId}`)
+              .then(subscriber => {
+                utility.callApi(`pages/${subscriber.pageId}`)
+                  .then(page => {
+                    utility.callApi(`user/${page.userId}`)
+                      .then(connectedUser => {
+                        SequenceMessagingDataLayer.findOneSequence(message.automatedMessageId)
+                          .then(sequence => {
+                            let currentUser = connectedUser
+                            const broadcastMessages = LogicLayer.prepareDataForBroadcast(sequence, subscriber)
+                            // this calls the needle when the last message was older than 30 minutes
+                            // checks the age of function using callback
+                            compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
+                              if (err) {
+                                logger.serverLog(TAG, 'inside error')
+                                logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                              }
+                              if (isLastMessage) {
+                                for (let i = 0; i < broadcastMessages.length; i++) {
+                                  let data = broadcastMessages[i]
+                                  needle.post(
+                                    `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
+                                    data, (err, resp) => {
+                                      if (err) {
+                                        logger.serverLog(TAG, err)
+                                        logger.serverLog(TAG,
+                                          `Error occured at subscriber :${JSON.stringify(
+                                            subscriber)}`)
+                                      }
+                                      SequenceMessagingDataLayer.createForSequenceSubscribersMessages({
+                                        pageId: page.pageId,
+                                        userId: currentUser._id,
+                                        companyId: message.companyId,
+                                        subscriberId: subscriber.senderId,
+                                        broadcastId: sequence._id,
+                                        seen: false
+                                      })
+                                        .then(saved => {
+                                          AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
+                                            .then(result => {
+                                              logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
+                                            })
+                                            .catch(err => {
+                                              logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+                                            })
+                                        })
+                                        .catch(err => {
+                                          logger.serverLog(TAG, `Failed to create page broadcast ${JSON.stringify(err)}`)
+                                        })
+                                    })
+                                }
+                              } else {
+                                logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                let timeNow = new Date()
+                                AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
+                                  .then(updated => {
+                                  })
+                                  .catch(err => {
+                                    logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                  })
+                              }
+                            })
+                          })
+                          .catch(err => {
+                            logger.serverLog(TAG, `Failed to fetch sequence message ${JSON.stringify(err)}`)
+                          })
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
+                      })
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                  })
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
               })
           } else if (message.type === 'bot') {
             utility.callApi(`bots/${message.automatedMessageId}`, 'get', {}, 'chat')
