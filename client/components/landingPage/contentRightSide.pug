@@ -12,7 +12,7 @@ div.landing-page-container
           size="xlarge"
           ).fb-send-to-messenger
       else
-        a(href=`m.me/${landingPage.pageId.pageId}`).btn.btn-primary= landingPage.state.buttonText
+        a(href=`https://m.me/${landingPage.pageId.pageId}`).btn.btn-primary= landingPage.state.buttonText
     div.col-4
       img(style={'max-width': '350px'} src= landingPage.state.mediaLink)
     div.col-2
