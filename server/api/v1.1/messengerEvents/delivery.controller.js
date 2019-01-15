@@ -9,7 +9,7 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  logger.serverLog(TAG, 'in delivery', JSON.stringify(req.body))
+  logger.serverLog(TAG, `in delivery' ${JSON.stringify(req.body)}`)
   updateBroadcastSent(req.body.entry[0].messaging[0])
   updatePollSent(req.body.entry[0].messaging[0])
   updateSurveySent(req.body.entry[0].messaging[0])
