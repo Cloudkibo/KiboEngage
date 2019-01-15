@@ -1,12 +1,15 @@
 div.landing-page-container
   div.landing-page-inner-container
-    h2(style={color: landingPage.initialState.titleColor}).landing-page-title= landingPage.initialState.title
+    h2(style={color: landingPage.state.titleColor}).landing-page-title= landingPage.state.title
     div.landing-page-image-container
-      img(style={'max-width': '350px'} src= landingPage.initialState.mediaLink)
-    p(style={color: landingPage.initialState.descriptionColor})= landingPage.initialState.description
-    div(
-      messenger_app_id=landingPage.facebookClientId 
-      page_id=landingPage.pageId.pageId 
-      color="blue" 
-      size="xlarge"
-      ).fb-send-to-messenger
+      img(style={'max-width': '350px'} src= landingPage.state.mediaLink)
+    p(style={color: landingPage.initialState.descriptionColor})= landingPage.state.description
+    if landingPage.currentState === 'initial'
+      div(
+        messenger_app_id=landingPage.facebookClientId 
+        page_id=landingPage.pageId.pageId 
+        color="blue" 
+        size="xlarge"
+        ).fb-send-to-messenger
+    else
+      a(href=`https://m.me/${landingPage.pageId.pageId}`).btn.btn-primary= landingPage.state.buttonText
