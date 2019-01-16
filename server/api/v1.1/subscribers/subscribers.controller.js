@@ -1,10 +1,8 @@
 const logicLayer = require('./subscribers.logiclayer')
 const utility = require('../utility')
-const dataLayer = require('./subscribers.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
 const util = require('util')
-const mongoose = require('mongoose')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
