@@ -18,5 +18,6 @@ router.post('/surveyResponse', auth.isItWebhookServer(), surveyController.survey
 router.post('/messagingReferrals', auth.isItWebhookServer(), messagingReferrals.index)
 router.post('/landingPage', auth.isItWebhookServer(), landingPage.index)
 router.post('/sequence', auth.isItWebhookServer(), sequenceController.index)
+router.post('/sequence/subscriberJoins', auth.isItWebhookServer(), sequenceController.subscriberJoins)
 
 module.exports = router
