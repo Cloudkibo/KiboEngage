@@ -1,6 +1,6 @@
 const { callApi } = require('../utility')
 const logger = require('../../../components/logger')
-const TAG = 'api/v1/messengerEvents/seen.controller'
+const TAG = 'api/v1/messengerEvents/sequence.controller'
 const SequenceUtility = require('../sequenceMessaging/utility')
 const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
 
