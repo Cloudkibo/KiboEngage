@@ -72,10 +72,10 @@ exports.subscriberJoins = function (req, res) {
   })
 }
 
-exports.resposndsToPoll = function (req, res) {
-  logger.serverLog(TAG, `in sequence resposndsToPoll ${JSON.stringify(req.body)}`)
+exports.resposndsToPoll = function (data) {
+  logger.serverLog(TAG, `in sequence resposndsToPoll ${JSON.stringify(data)}`)
 
-  SequencesDataLayer.genericFindForSequence({companyId: req.body.companyId, 'trigger.event': 'responds_to_poll', 'trigger.value': req.body.pollId})
+  SequencesDataLayer.genericFindForSequence({companyId: data.companyId, 'trigger.event': 'responds_to_poll', 'trigger.value': data.pollId})
     .then(sequences => {
       if (sequences.length > 0) {
         sequences.forEach(seq => {
@@ -84,8 +84,8 @@ exports.resposndsToPoll = function (req, res) {
               if (messages.length > 0) {
                 let sequenceSubscriberPayload = {
                   sequenceId: seq._id,
-                  subscriberId: req.body.subscriberId,
-                  companyId: req.body.companyId,
+                  subscriberId: data.subscriberId,
+                  companyId: data.companyId,
                   status: 'subscribed'
                 }
                 SequencesDataLayer.createForSequenceSubcriber(sequenceSubscriberPayload)
@@ -95,7 +95,7 @@ exports.resposndsToPoll = function (req, res) {
                       SequenceUtility.addToMessageQueue(seq._id, utcDate, message._id)
                     })
                     require('./../../../config/socketio').sendMessageToClient({
-                      room_id: req.body.companyId,
+                      room_id: data.companyId,
                       body: {
                         action: 'sequence_update',
                         payload: {
