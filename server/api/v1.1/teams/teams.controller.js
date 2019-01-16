@@ -10,30 +10,33 @@ exports.index = function (req, res) {
         .then(teams => {
           utility.callApi(`teams/agents/distinct`, 'post', {companyId: companyuser.companyId}, req.headers.authorization) // fetch distinct team agents
             .then(agentIds => {
-              utility.callApi(`user/query`, 'post', {_id: {$in: agentIds}}, req.headers.authorization) // fetch unique agents info
-                .then(uniqueAgents => {
-                  utility.callApi(`teams/pages/distinct`, 'post', {companyId: companyuser.companyId}, req.headers.authorization) // fetch distinct team pages
-                    .then(pageIds => {
-                      utility.callApi(`pages/query`, 'post', {_id: {$in: pageIds}}, req.headers.authorization) // fetch unique pages info
-                        .then(uniquePages => {
-                          return res.status(200).json({
-                            status: 'success',
-                            payload: {teams: teams, teamUniqueAgents: uniqueAgents, teamUniquePages: uniquePages}
+              populateAgentIds(agentIds)
+                .then(result => {
+                  utility.callApi(`user/query`, 'post', {_id: {$in: result.agentIds}}, req.headers.authorization) // fetch unique agents info
+                    .then(uniqueAgents => {
+                      utility.callApi(`teams/pages/distinct`, 'post', {companyId: companyuser.companyId}, req.headers.authorization) // fetch distinct team pages
+                        .then(pageIds => {
+                          utility.callApi(`pages/query`, 'post', {_id: {$in: pageIds}}, req.headers.authorization) // fetch unique pages info
+                            .then(uniquePages => {
+                              return res.status(200).json({
+                                status: 'success',
+                                payload: {teams: teams, teamUniqueAgents: uniqueAgents, teamUniquePages: uniquePages}
+                              })
+                            })
+                        })
+                        .catch(error => {
+                          return res.status(500).json({
+                            status: 'failed',
+                            payload: `Failed to fetch distinct team pages ${JSON.stringify(error)}`
                           })
                         })
                     })
                     .catch(error => {
                       return res.status(500).json({
                         status: 'failed',
-                        payload: `Failed to fetch distinct team pages ${JSON.stringify(error)}`
+                        payload: `Failed to fetch unique team agents ${JSON.stringify(error)}`
                       })
                     })
-                })
-                .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch unique team agents ${JSON.stringify(error)}`
-                  })
                 })
             })
             .catch(error => {
@@ -59,7 +62,6 @@ exports.index = function (req, res) {
 }
 
 exports.createTeam = function (req, res) {
-  console.log('createTeam', req.boy)
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let teamPayload = logicLayer.getTeamPayload(req, companyuser)
@@ -193,7 +195,6 @@ exports.addPage = function (req, res) {
 }
 
 exports.removeAgent = function (req, res) {
-  console.log('removeAgent funcion called')
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let agentPayload = logicLayer.getTeamAgentsPayload({_id: req.body.teamId}, companyuser, req.body.agentId)
@@ -290,7 +291,19 @@ exports.fetchPages = function (req, res) {
     .catch(error => {
       return res.status(500).json({
         status: 'failed',
-        payload: `Failed to fetch company User ${JSON.stringify(error)}`
+        payload: `Failed to fetch com pany User ${JSON.stringify(error)}`
       })
     })
+}
+
+function populateAgentIds (agentIds) {
+  return new Promise(function (resolve, reject) {
+    let agentIdsToSend = []
+    for (let i = 0; i < agentIds.length; i++) {
+      agentIdsToSend.push(agentIds[i].agentId._id)
+      if (agentIdsToSend.length === agentIds.length) {
+        resolve({agentIds: agentIdsToSend})
+      }
+    }
+  })
 }

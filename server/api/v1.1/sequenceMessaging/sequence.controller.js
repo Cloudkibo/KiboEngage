@@ -601,37 +601,39 @@ exports.subscribeToSequence = function (req, res) {
       req.body.subscriberIds.forEach(subscriberId => {
         SequenceDatalayer.genericFindForSequenceMessages({sequenceId: req.body.sequenceId})
           .then(messages => {
-            let sequenceSubscriberPayload = {
-              sequenceId: req.body.sequenceId,
-              subscriberId: subscriberId,
-              companyId: companyUser.companyId,
-              status: 'subscribed'
-            }
-            SequenceDatalayer.createForSequenceSubcriber(sequenceSubscriberPayload)
-              .then(subscriberCreated => {
-                messages.forEach(message => {
-                  let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                  SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, message._id)
-                })
-                if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
-                  require('./../../../config/socketio').sendMessageToClient({
-                    room_id: companyUser.companyId,
-                    body: {
-                      action: 'sequence_update',
-                      payload: {
-                        sequence_id: req.body.sequenceId
-                      }
-                    }
+            if (messages.length > 0) {
+              let sequenceSubscriberPayload = {
+                sequenceId: req.body.sequenceId,
+                subscriberId: subscriberId,
+                companyId: companyUser.companyId,
+                status: 'subscribed'
+              }
+              SequenceDatalayer.createForSequenceSubcriber(sequenceSubscriberPayload)
+                .then(subscriberCreated => {
+                  messages.forEach(message => {
+                    let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                    SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, message._id)
                   })
-                  res.status(201).json({ status: 'success', description: 'Subscribers subscribed successfully' })
-                }
-              })
-              .catch(err => {
-                return res.status(404).json({
-                  status: 'failed',
-                  description: `Internal server error in creating sequence subscriber ${err}`
+                  if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
+                    require('./../../../config/socketio').sendMessageToClient({
+                      room_id: companyUser.companyId,
+                      body: {
+                        action: 'sequence_update',
+                        payload: {
+                          sequence_id: req.body.sequenceId
+                        }
+                      }
+                    })
+                    res.status(201).json({ status: 'success', description: 'Subscribers subscribed successfully' })
+                  }
                 })
-              })
+                .catch(err => {
+                  return res.status(404).json({
+                    status: 'failed',
+                    description: `Internal server error in creating sequence subscriber ${err}`
+                  })
+                })
+            }
           })
           .catch(err => {
             return res.status(404).json({
@@ -666,20 +668,52 @@ exports.unsubscribeToSequence = function (req, res) {
                 utility.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
                   .then(subscriber => {
                     if (subscriber) {
-                      logger.serverLog(TAG, `Unsubscribes ${JSON.stringify(subscriber)}`)
-                      SequenceUtility.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'unsubscribes_from_other_sequence', value: req.body.sequenceId })
-                    }
-                    if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
-                      require('./../../../config/socketio').sendMessageToClient({
-                        room_id: companyUser.companyId,
-                        body: {
-                          action: 'sequence_update',
-                          payload: {
-                            sequence_id: req.body.sequenceId
+                      SequenceDatalayer.genericFindForSequence({companyId: subscriber.companyId, 'trigger.event': 'unsubscribes_from_other_sequence', 'trigger.value': req.body.sequenceId})
+                        .then(sequences => {
+                          if (sequences.length > 0) {
+                            sequences.forEach(seq => {
+                              SequenceDatalayer.genericFindForSequenceMessages({sequenceId: seq._id})
+                                .then(messages => {
+                                  if (messages.length > 0) {
+                                    let sequenceSubscriberPayload = {
+                                      sequenceId: seq._id,
+                                      subscriberId: subscriber._id,
+                                      companyId: subscriber.companyId,
+                                      status: 'subscribed'
+                                    }
+                                    SequenceDatalayer.createForSequenceSubcriber(sequenceSubscriberPayload)
+                                      .then(subscriberCreated => {
+                                        messages.forEach(message => {
+                                          let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                                          SequenceUtility.addToMessageQueue(seq._id, utcDate, message._id)
+                                        })
+                                        if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
+                                          require('./../../../config/socketio').sendMessageToClient({
+                                            room_id: subscriber.companyId,
+                                            body: {
+                                              action: 'sequence_update',
+                                              payload: {
+                                                sequence_id: req.body.sequenceId
+                                              }
+                                            }
+                                          })
+                                          return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
+                                        }
+                                      })
+                                      .catch(err => {
+                                        logger.serverLog(TAG, `Failed to create sequence subscriber ${err}`, 'error')
+                                      })
+                                  }
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, `Failed to fecth sequence messages ${err}`, 'error')
+                                })
+                            })
                           }
-                        }
-                      })
-                      return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to fecth sequences ${err}`, 'error')
+                        })
                     }
                   })
                   .catch(err => {

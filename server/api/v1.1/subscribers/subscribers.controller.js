@@ -1,10 +1,8 @@
 const logicLayer = require('./subscribers.logiclayer')
 const utility = require('../utility')
-const dataLayer = require('./subscribers.datalayer')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
 const util = require('util')
-const mongoose = require('mongoose')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
@@ -109,10 +107,13 @@ exports.getAll = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let criterias = logicLayer.getCriterias(req.body, companyuser)
+      console.log('criterias.countCriteria', criterias.countCriteria)
+      console.log('criterias.fetchCriteria', criterias.fetchCriteria)
       utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
         .then(count => {
           utility.callApi(`subscribers/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch subscribers
             .then(subscribers => {
+              console.log('subscribers', subscribers)
               let subscriberIds = logicLayer.getSubscriberIds(subscribers)
               logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
               utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)

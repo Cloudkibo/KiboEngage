@@ -8,6 +8,7 @@ const pollController = require('./pollResponse.controller')
 const surveyController = require('./surveyResponse.controller')
 const messagingReferrals = require('./messagingReferrals.controller')
 const landingPage = require('./landingPage.controller')
+const sequenceController = require('./sequence.controller')
 const auth = require('../../../auth/auth.service')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
@@ -16,5 +17,7 @@ router.post('/pollResponse', auth.isItWebhookServer(), pollController.pollRespon
 router.post('/surveyResponse', auth.isItWebhookServer(), surveyController.surveyResponse)
 router.post('/messagingReferrals', auth.isItWebhookServer(), messagingReferrals.index)
 router.post('/landingPage', auth.isItWebhookServer(), landingPage.index)
+router.post('/sequence', auth.isItWebhookServer(), sequenceController.index)
+router.post('/sequence/subscriberJoins', auth.isItWebhookServer(), sequenceController.subscriberJoins)
 
 module.exports = router

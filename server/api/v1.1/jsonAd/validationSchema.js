@@ -11,12 +11,6 @@ exports.create = {
     'pageId': {
       'type': 'string'
     },
-    'companyId': {
-      'type': 'string'
-    },
-    'userId': {
-      'type': 'string'
-    },
     'jsonAdMessages': {
       'type': 'array',
       'items': {}
@@ -24,8 +18,6 @@ exports.create = {
   },
   'required': [
     'pageId',
-    'companyId',
-    'userId',
     'jsonAdMessages'
   ]
 }
