@@ -3,7 +3,7 @@ const TAG = 'api/v1/messengerEvents/pollResponse.controller.js'
 const mongoose = require('mongoose')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const needle = require('needle')
-const sequenceController = require('../sequenceMessaging/sequence.controller')
+const sequenceController = require('./sequence.controller')
 const notificationsUtility = require('../notifications/notifications.utility')
 const {callApi} = require('../utility')
 
@@ -19,7 +19,7 @@ exports.pollResponse = function (req, res) {
           let subscriber = subscribers[0]
           if (subscriber) {
             logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`)
-            sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_poll', value: resp.poll_id })
+            sequenceController.resposndsToPoll({companyId: subscriber.companyId, subscriberId: subscriber._id, pollId: resp.poll_id})
             return res.status(200).json({
               status: 'success',
               description: `received the payload`

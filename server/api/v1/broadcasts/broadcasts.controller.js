@@ -136,7 +136,7 @@ exports.addButton = function (req, res) {
   }
 }
 exports.editButton = function (req, res) {
-  if (req.body.type === 'web_url' && !(_.has(req.body, 'newUrl'))) {
+  if (req.body.type === 'web_url' && !req.body.messenger_extensions && !(_.has(req.body, 'newUrl'))) {
     return res.status(500).json({
       status: 'failed',
       description: 'Url is required for type web_url.'
