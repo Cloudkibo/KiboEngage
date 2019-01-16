@@ -464,7 +464,7 @@ exports.send = function (req, res) {
                         })
                     })
                     .catch(error => {
-                      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
+                      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${error}`})
                     })
                 })
                 .catch(error => {
