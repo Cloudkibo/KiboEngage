@@ -202,7 +202,7 @@ exports.create = function (req, res) {
 }
 exports.send = function (req, res) {
   let abort = false
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { userId: req.user._id }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
@@ -488,7 +488,7 @@ exports.send = function (req, res) {
 }
 exports.sendPoll = function (req, res) {
   let abort = false
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { userId: req.user._id }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
