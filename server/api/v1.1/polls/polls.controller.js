@@ -202,8 +202,10 @@ exports.create = function (req, res) {
 }
 exports.send = function (req, res) {
   let abort = false
+  logger.serverLog(TAG, `req.user ${JSON.stringify(req.user)}`)
   utility.callApi(`companyUser/query`, 'post', { userId: req.user._id }, req.headers.authorization)
     .then(companyUser => {
+      logger.serverLog(TAG, `companyUser ${JSON.stringify(companyUser)}`)
       utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
