@@ -689,7 +689,7 @@ exports.unsubscribeToSequence = function (req, res) {
                                         })
                                         if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
                                           require('./../../../config/socketio').sendMessageToClient({
-                                            room_id: subscriber.companyId,
+                                            room_id: subscriberId.companyId,
                                             body: {
                                               action: 'sequence_update',
                                               payload: {
