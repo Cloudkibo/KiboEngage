@@ -60,7 +60,7 @@ exports.allSurveys = function (req, res) {
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed due to survey count ${JSON.stringify(error)}`})
+          return res.status(500).json({status: 'failed', payload: `Failed due to survey count ${error}`})
         })
     })
     .catch(error => {
