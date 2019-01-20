@@ -26,12 +26,24 @@ function updateBroadcastSent (req) {
 }
 
 function updatePollSent (req) {
-  PollPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
-    .then(updated => {
-      logger.serverLog(TAG, `Poll sent updated successfully`)
+  PollPageDataLayer.genericFind({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false })
+    .then(pollPages => {
+      PollPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
+        .then(updated => {
+          logger.serverLog(TAG, `Poll sent updated successfully`)
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: pollPages[0].companyId,
+            body: {
+              action: 'poll_send'
+            }
+          })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `ERROR at updating poll sent ${JSON.stringify(err)}`)
+        })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR at updating poll sent ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR in fetching poll pages ${JSON.stringify(err)}`)
     })
 }
 
