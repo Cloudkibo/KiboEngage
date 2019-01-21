@@ -2,8 +2,9 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/pollResponse.controller.js'
 const mongoose = require('mongoose')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
+const PollsDataLayer = require('../polls/polls.datalayer')
 const needle = require('needle')
-const sequenceController = require('../sequenceMessaging/sequence.controller')
+const sequenceController = require('./sequence.controller')
 const notificationsUtility = require('../notifications/notifications.utility')
 const {callApi} = require('../utility')
 
@@ -14,26 +15,33 @@ exports.pollResponse = function (req, res) {
   let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
   savepoll(req.body.entry[0].messaging[0], resp)
     .then(response => {
-      callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id })
-        .then(subscribers => {
-          let subscriber = subscribers[0]
-          if (subscriber) {
-            logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`)
-            sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_poll', value: resp.poll_id })
-            return res.status(200).json({
-              status: 'success',
-              description: `received the payload`
+      PollsDataLayer.findOnePoll(resp.poll_id)
+        .then(poll => {
+          callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: poll.companyId })
+            .then(subscribers => {
+              let subscriber = subscribers[0]
+              if (subscriber) {
+                logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`)
+                sequenceController.resposndsToPoll({companyId: poll.companyId, subscriberId: subscriber._id, pollId: resp.poll_id})
+                return res.status(200).json({
+                  status: 'success',
+                  description: `received the payload`
+                })
+              } else {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `no subscriber found`
+                })
+              }
             })
-          } else {
-            return res.status(500).json({
-              status: 'failed',
-              description: `no subscriber found`
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+              return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
             })
-          }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
-          return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
+          logger.serverLog(TAG, `Failed to fetch poll ${JSON.stringify(err)}`)
+          return res.status(500).json({status: 'failed', description: `Failed to fetch poll ${err}`})
         })
     })
     .catch(err => {

@@ -304,7 +304,7 @@ exports.enable = function (req, res) {
                                       })
                                     })
                                 } else {
-                                  res.status(400).json({
+                                  res.status(200).json({
                                     status: 'success',
                                     payload: {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name}. In order to manage this page please ask ${pageConnected[0].userId.facebookInfo.name} to create a team account and invite you.`}
                                   })
@@ -617,13 +617,9 @@ exports.whitelistDomain = function (req, res) {
 exports.isWhitelisted = function (req, res) {
   broadcastUtility.isWhiteListedDomain(req.body.domain, req.body.pageId, req.user)
     .then(result => {
-      if (result.returnValue) {
-        return res.status(200).json({
-          status: 'success',
-          payload: result.returnValue
-        })
-      } else {
-        return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
-      }
+      return res.status(200).json({
+        status: 'success',
+        payload: result.returnValue
+      })
     })
 }

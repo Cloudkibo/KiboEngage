@@ -202,8 +202,10 @@ exports.create = function (req, res) {
 }
 exports.send = function (req, res) {
   let abort = false
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  logger.serverLog(TAG, `req.user ${JSON.stringify(req.user)}`)
+  utility.callApi(`companyUser/query`, 'post', { userId: req.user._id }, req.headers.authorization)
     .then(companyUser => {
+      logger.serverLog(TAG, `companyUser ${JSON.stringify(companyUser)}`)
       utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {
           utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
@@ -464,7 +466,7 @@ exports.send = function (req, res) {
                         })
                     })
                     .catch(error => {
-                      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
+                      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${error}`})
                     })
                 })
                 .catch(error => {
@@ -488,7 +490,7 @@ exports.send = function (req, res) {
 }
 exports.sendPoll = function (req, res) {
   let abort = false
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { userId: req.user._id }, req.headers.authorization)
     .then(companyUser => {
       utility.callApi(`companyprofile/query`, 'post', {_id: companyUser.companyId}, req.headers.authorization)
         .then(companyProfile => {

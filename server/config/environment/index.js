@@ -11,18 +11,10 @@ const all = {
   // Project root path
   root: path.normalize(`${__dirname}/../../..`),
 
-  // Server port
-  port: process.env.PORT || 3000,
-
-  // Secure Server port
-  secure_port: process.env.SECURE_PORT || 8443,
-
   ip: process.env.IP || undefined,
 
   // List of user roles, NOTE: don't change the order
   userRoles: ['buyer', 'admin', 'supervisor', 'agent'],
-
-  domain: `${process.env.DOMAIN || 'project domain'}`,
 
   // Mongo Options
   mongo: {
@@ -38,16 +30,7 @@ const all = {
     consumer_token: process.env.TWITTER_TOKEN || '1059331127113080832-7BRFuE18tyLXmdUZORbW2z3Xu1SC6S',
     consumer_token_secret: process.env.TWITTER_TOKEN_SECRET || 'HvdJuX3jZ4bWIURLJvNNETvY8AVvmSwtFE8hn6251XUp3',
     callbackUrl: 'https://swebhooks.cloudkibo.com/api/twitter'
-  },
-  api_urls: {
-    webhook: process.env.NODE_ENV === 'production' ? 'https://webhook.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://swebhook.cloudkibo.com/api' : 'http://localhost:3002/api',
-    kibopush: process.env.NODE_ENV === 'production' ? 'https://app.kibopush.com/api' : process.env.NODE_ENV === 'staging' ? 'https://staging.kibopush.com/api' : 'http://localhost:3000/api',
-    accounts: process.env.NODE_ENV === 'production' ? 'https://accounts.cloudkibo.com/api/v1' : process.env.NODE_ENV === 'staging' ? 'https://saccounts.cloudkibo.com/api/v1' : 'http://localhost:3001/api/v1',
-    chat: process.env.NODE_ENV === 'production' ? 'https://kibochat.cloudkibo.com/api' : process.env.NODE_ENV === 'staging' ? 'https://skibochat.cloudkibo.com/api' : 'http://localhost:3000/api',
-    kibochat: `${process.env.DB_LAYER_IP_KIBOCHAT}/api/v1`,
-    kiboengage: `${process.env.DB_LAYER_IP_KIBOENGAGE}/api/v1`
-  },
-  webhook_ip: process.env.WEBHOOK_IP_ADDRESS || 'localhost'
+  }
 }
 
 module.exports = _.merge(

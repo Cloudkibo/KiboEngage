@@ -68,7 +68,7 @@ exports.getCriterias = function (body, companyUser) {
   let temp = JSON.parse(JSON.stringify(findCriteria))
   temp['pageId._id'] = temp.pageId
   delete temp.pageId
-
+  console.log('temp', temp)
   if (body.first_page === 'first') {
     finalCriteria = [
       { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
