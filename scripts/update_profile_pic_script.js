@@ -15,7 +15,7 @@ function updateSubscribersPic (pageTokens, companyId) {
               logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
             }
             console.log('resp.body', resp.body)
-            logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
+            // logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
             utility.callApi(`subscribers/update`, 'put', {query: {_id: users[i]._id}, newPayload: {firstName: resp.body.first_name, lastName: resp.body.last_name, profilePic: resp.body.profile_pic, locale: resp.body.locale, timezone: resp.body.timezone, gender: resp.body.gender}, options: {}})
               .then(updated => {
                 logger.serverLog(TAG, `Succesfully updated subscriber ${users[i]._id}`)
@@ -40,7 +40,7 @@ function getPageAccessTokenAndUpdate (companyId) {
           `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
           (err, resp) => {
             if (err) {
-              logger.serverLog(TAG, `Page access token from graph api error ${err}`)
+              logger.serverLog(TAG, `Page access token from graph api error ${err} pageId: ${pages[i].pageId} accessToken: ${pages[i].accessToken}`)
             } else {
               logger.serverLog(TAG, `Retrieved page access token for ${JSON.stringify(pages[i])}`)
               pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
