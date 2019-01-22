@@ -18,6 +18,7 @@ function updateSubscribersPic (pageTokens, companyId) {
             logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
             utility.callApi(`subscribers/${users[i]._id}`, 'put', {firstName: resp.body.first_name, lastName: resp.body.last_name, profilePic: resp.body.profile_pic, locale: resp.body.locale, timezone: resp.body.timezone, gender: resp.body.gender})
               .then(updated => {
+                logger.serverLog(TAG, `Succesfully updated subscriber ${users[i]._id}`)
               })
               .catch(err => {
                 logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
@@ -41,6 +42,7 @@ function getPageAccessTokenAndUpdate (companyId) {
             if (err || resp.body.error) {
               logger.serverLog(TAG, `Page accesstoken from graph api Error ${JSON.stringify(pages[i])}`)
             } else {
+              logger.serverLog(TAG, `Retrieved page access token for ${JSON.stringify(pages[i])}`)
               pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
               if (pageTokens.length === pages.length) {
                 updateSubscribersPic(pageTokens, companyId)
@@ -66,7 +68,9 @@ utility.callApi(`user/query`, 'post', {})
             }
             if (resp.body.picture) {
               utility.callApi(`user/${user._id}`, 'put', {'facebookInfo.profilePic': resp.body.picture.data.url})
-                .then(updated => {})
+                .then(updated => {
+                  logger.serverLog(TAG, `Succesfully updated user ${user._id}`)
+                })
                 .catch(err => {
                   logger.serverLog(TAG, `Failed to update user ${JSON.stringify(err)}`)
                 })
