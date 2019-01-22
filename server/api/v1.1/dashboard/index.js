@@ -64,4 +64,10 @@ router.post('/getAllSubscribers/:pageid',
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.getAllSubscribers)
 
+router.post('/subscriberSummary',
+  auth.isAuthenticated(),
+  // auth.doesPlanPermitsThisAction('dashboard'),
+  // auth.doesRolePermitsThisAction('dashboardPermission'),
+  controller.subscriberSummary)
+
 module.exports = router

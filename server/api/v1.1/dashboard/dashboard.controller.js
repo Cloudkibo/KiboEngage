@@ -1079,3 +1079,49 @@ exports.updateSubscriptionPermission = function (req, res) {
       })
     })
 }
+exports.subscriberSummary = function (req, res) {
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      let query = [ {$match: { companyId: companyUser.companyId,
+        'datetime': req.body.datetime === 'all' ? { $exists: true } : {
+          $gte: new Date(
+            (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
+          $lt: new Date(
+            (new Date().getTime()))
+        },
+        'pageId': req.body.pageId === 'all' ? { $exists: true } : req.body.pageId,
+        isSubscribed: true
+      }
+      },
+      {$group: {
+        _id: null,
+        count: {$sum: 1}}
+      }
+      ]
+      callApi.callApi('subscribers/aggregate', 'post', query, req.headers.authorization)
+        .then(subscribers => {
+          return res.status(200).json({
+            status: 'success',
+            payload: subscribers
+          })
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Error in getting subscribers ${JSON.stringify(err)}`
+          })
+        })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Internal Server Error ${JSON.stringify(err)}`
+      })
+    })
+}
