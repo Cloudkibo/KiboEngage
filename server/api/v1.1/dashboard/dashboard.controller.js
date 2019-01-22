@@ -1090,8 +1090,11 @@ exports.subscriberSummary = function (req, res) {
       }
       callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true), req.headers.authorization)
         .then(subscribers => {
+          console.log('subscribes', subscribers)
           callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false), req.headers.authorization)
             .then(unsubscribes => {
+              console.log('unsubscribes', unsubscribes)
+              console.log('LogicLayer', JSON.stringify(LogicLayer.queryForSubscribersGraph(req.body, companyUser, true)))
               callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true), req.headers.authorization)
                 .then(graphdata => {
                   let data = {
