@@ -27,7 +27,7 @@ function updateSubscribersPic (pageTokens, companyId) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscribers ${err}`)
+      logger.serverLog(TAG, `Failed to fetch subscribers ${err} companyId: ${companyId}`)
     })
 }
 
