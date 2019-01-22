@@ -1088,28 +1088,35 @@ exports.subscriberSummary = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      let query = [ {$match: { companyId: companyUser.companyId,
-        'datetime': req.body.days === 'all' ? { $exists: true } : {
-          $gte: new Date(
-            (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
-          $lt: new Date(
-            (new Date().getTime()))
-        },
-        'pageId': req.body.pageId === 'all' ? { $exists: true } : req.body.pageId,
-        isSubscribed: true
-      }
-      },
-      {$group: {
-        _id: null,
-        count: {$sum: 1}}
-      }
-      ]
-      callApi.callApi('subscribers/aggregate', 'post', query, req.headers.authorization)
+      callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true), req.headers.authorization)
         .then(subscribers => {
-          return res.status(200).json({
-            status: 'success',
-            payload: subscribers
-          })
+          callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false), req.headers.authorization)
+            .then(unsubscribes => {
+              callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true), req.headers.authorization)
+                .then(graphdata => {
+                  let data = {
+                    subscribes: subscribers[0].count,
+                    unsubscribes: unsubscribes[0].count,
+                    graphdata: graphdata
+                  }
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: data
+                  })
+                })
+                .catch(err => {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Error in getting graphdata ${JSON.stringify(err)}`
+                  })
+                })
+            })
+            .catch(err => {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Error in getting unsubscribers ${JSON.stringify(err)}`
+              })
+            })
         })
         .catch(err => {
           return res.status(500).json({
