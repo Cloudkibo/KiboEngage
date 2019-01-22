@@ -369,14 +369,23 @@ exports.sentVsSeenNew = function (req, res) {
                                                 }
                                               }
                                               logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`)
-                                              let graphDatas = graphDataNew(req.body, companyUser)
-                                              res.status(200).json({
-                                                status: 'success',
-                                                payload: {
-                                                  datacounts,
-                                                  graphDatas
-                                                }
-                                              })
+                                              graphDataNew(req.body, companyUser)
+                                                .then(result => {
+                                                  return res.status(200).json({
+                                                    status: 'success',
+                                                    payload: {
+                                                      datacounts,
+                                                      graphDatas: result
+                                                    }
+                                                  })
+                                                })
+                                                .catch(err => {
+                                                  return res.status(500).json({
+                                                    status: 'failed',
+                                                    description: `Error in getting graphdaya ${JSON.stringify(
+                                                      err)}`
+                                                  })
+                                                })
                                             })
                                             .catch(err => {
                                               if (err) {
@@ -805,38 +814,40 @@ exports.graphData = function (req, res) {
     })
 }
 function graphDataNew (body, companyUser) {
-  logger.serverLog(TAG, `graphDataNew`)
-  let groupAggregate = {
-    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
-    count: {$sum: 1}}
+  return new Promise(function (resolve, reject) {
+    logger.serverLog(TAG, `graphDataNew`)
+    let groupAggregate = {
+      _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+      count: {$sum: 1}}
 
-  PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser), groupAggregate)
-    .then(broadcastsgraphdata => {
-      logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
-      console.log('broadcastsgraphdata', broadcastsgraphdata)
-      PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
-        .then(pollsgraphdata => {
-          console.log('pollsgraphdata', pollsgraphdata)
-          PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser), groupAggregate)
-            .then(surveysgraphdata => {
-              console.log('surveysgraphdata', surveysgraphdata)
-              return {
-                broadcastsgraphdata: broadcastsgraphdata,
-                pollsgraphdata: pollsgraphdata,
-                surveysgraphdata: surveysgraphdata
-              }
-            })
-            .catch(err => {
-              return `Error in getting surveys count ${JSON.stringify(err)}`
-            })
-        })
-        .catch(err => {
-          return `Error in getting polls count ${JSON.stringify(err)}`
-        })
-    })
-    .catch(err => {
-      return `Error in getting broadcasts count ${JSON.stringify(err)}`
-    })
+    PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser), groupAggregate)
+      .then(broadcastsgraphdata => {
+        logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
+        console.log('broadcastsgraphdata', broadcastsgraphdata)
+        PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
+          .then(pollsgraphdata => {
+            console.log('pollsgraphdata', pollsgraphdata)
+            PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser), groupAggregate)
+              .then(surveysgraphdata => {
+                console.log('surveysgraphdata', surveysgraphdata)
+                resolve({
+                  broadcastsgraphdata: broadcastsgraphdata,
+                  pollsgraphdata: pollsgraphdata,
+                  surveysgraphdata: surveysgraphdata
+                })
+              })
+              .catch(err => {
+                reject(err)
+              })
+          })
+          .catch(err => {
+            reject(err)
+          })
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
 }
 
 exports.toppages = function (req, res) {
