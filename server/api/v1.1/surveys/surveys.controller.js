@@ -44,7 +44,7 @@ exports.allSurveys = function (req, res) {
                     .then(responsesCount => {
                       res.status(200).json({
                         status: 'success',
-                        payload: {surveys: req.body.first_page === 'previous' ? surveys.reverse() : surveys, surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
+                        payload: {surveys: surveys, surveypages: surveypages, responsesCount: responsesCount, count: surveys.length > 0 && surveysCount.length > 0 ? surveysCount[0].count : ''}
                       })
                     })
                     .catch(error => {
