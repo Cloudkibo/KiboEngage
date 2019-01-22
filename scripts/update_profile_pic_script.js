@@ -42,7 +42,7 @@ function getPageAccessTokenAndUpdate (companyId) {
           `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
           (err, resp) => {
             if (err) {
-              logger.serverLog(TAG, `Page access token from graph api error ${err} pageId: ${pages[i].pageId} accessToken: ${pages[i].accessToken}`, 'error')
+              logger.serverLog(TAG, `Page access token from graph api error ${err} companyId: ${companyId} pageId: ${pages[i].pageId} accessToken: ${pages[i].accessToken}`, 'error')
             } else {
               logger.serverLog(TAG, `Retrieved page access token for ${JSON.stringify(pages[i])}`)
               pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
@@ -109,6 +109,7 @@ utility.callApi(`user/query`, 'post', {})
 utility.callApi(`companyUser/queryAll`, 'post', {})
   .then(profiles => {
     profiles.forEach(profile => {
+      logger.serverLog(TAG, `profile.companyId: ${profile.companyId}`)
       getPageAccessTokenAndUpdate(profile.companyId)
     })
   })
