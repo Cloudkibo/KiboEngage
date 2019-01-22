@@ -282,10 +282,13 @@ exports.sentVsSeenNew = function (req, res) {
                           // we should call the v1.1 count function because we are counting here.
                           PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true))
                             .then(pollSeenCount => {
+                              console.log('pollSeenCount', pollSeenCount)
                               PageSurveyDataLayer.find(LogicLayer.getCriterias(req.body, companyUser))
                                 .then(surveyPages => {
+                                  console.log('surveyPages', surveyPages)
                                   SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
                                     .then(surveyResponseCount => {
+                                      console.log('surveyResponseCount', surveyResponseCount)
                                       PagePollDataLayer.find(LogicLayer.getCriterias(req.body, companyUser))
                                         .then(pollPages => {
                                           // we should call the pollresponse datalayer method in v1.1
