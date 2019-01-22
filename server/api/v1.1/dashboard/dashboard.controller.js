@@ -309,6 +309,7 @@ exports.sentVsSeenNew = function (req, res) {
                                                   }
                                                 }
                                               }
+                                              logger.serverLog(TAG, `responsesCount ${JSON.stringify(responsesCount)}`)
                                               var sum = 0
                                               if (responsesCount.length > 0) {
                                                 for (var c = 0; c < responsesCount.length; c++) {
@@ -323,10 +324,11 @@ exports.sentVsSeenNew = function (req, res) {
                                                   }
                                                 }
                                               }
+                                              logger.serverLog(TAG, `surveyResponses ${JSON.stringify(surveyResponses)}`)
                                               var sum1 = 0
                                               if (surveyResponses.length > 0) {
-                                                for (var j = 0; j < surveyResponses.length; j++) {
-                                                  sum1 = sum1 + surveyResponses[j].isresponded
+                                                for (var k = 0; k < surveyResponses.length; k++) {
+                                                  sum1 = sum1 + surveyResponses[k].isresponded
                                                 }
                                               }
 
@@ -366,6 +368,7 @@ exports.sentVsSeenNew = function (req, res) {
                                                   datacounts.poll.pollResponseCount = sum
                                                 }
                                               }
+                                              logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`)
                                               let graphDatas = graphDataNew(req.body, companyUser)
                                               res.status(200).json({
                                                 status: 'success',
@@ -802,12 +805,14 @@ exports.graphData = function (req, res) {
     })
 }
 function graphDataNew (body, companyUser) {
+  logger.serverLog(TAG, `graphDataNew`)
   let groupAggregate = {
     _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
     count: {$sum: 1}}
 
   PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser), groupAggregate)
     .then(broadcastsgraphdata => {
+      logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
       console.log('broadcastsgraphdata', broadcastsgraphdata)
       PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
         .then(pollsgraphdata => {
