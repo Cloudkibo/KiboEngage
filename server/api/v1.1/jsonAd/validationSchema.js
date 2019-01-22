@@ -14,7 +14,6 @@ exports.create = {
     }
   },
   'required': [
-    'pageId',
     'jsonAdMessages'
   ]
 }
