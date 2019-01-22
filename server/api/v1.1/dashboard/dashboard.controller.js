@@ -264,9 +264,11 @@ exports.sentVsSeenNew = function (req, res) {
       // We should call the count function when we switch to v1.1
       PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser))
         .then(broadcastSentCount => {
+          console.log('broadcastSentCount', broadcastSentCount)
           // We should call the count function when we switch to v1.1
           PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true))
             .then(broadcastSeenCount => {
+              console.log('broadcastSeenCount', broadcastSeenCount)
               // call the count function in v1.1
               PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser))
                 .then(surveySentCount => {
