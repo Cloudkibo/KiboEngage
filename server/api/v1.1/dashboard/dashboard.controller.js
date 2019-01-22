@@ -1089,7 +1089,7 @@ exports.subscriberSummary = function (req, res) {
         })
       }
       let query = [ {$match: { companyId: companyUser.companyId,
-        'datetime': req.body.datetime === 'all' ? { $exists: true } : {
+        'datetime': req.body.days === 'all' ? { $exists: true } : {
           $gte: new Date(
             (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
           $lt: new Date(
