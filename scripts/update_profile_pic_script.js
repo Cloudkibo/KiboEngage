@@ -3,7 +3,7 @@ const logger = require('../server/components/logger')
 const needle = require('needle')
 const TAG = 'scripts/update_profile_pic_script.js'
 
-function updateSubcribersPic (pageTokens, companyId) {
+function updateSubscribersPic (pageTokens, companyId) {
   utility.callApi(`subscribers/query`, 'post', {companyId: companyId})
     .then(users => {
       for (let i = 0; i < users.length; i++) {
@@ -36,14 +36,15 @@ function getPageAccessTokenAndUpdate (companyId) {
     .then(pages => {
       for (let i = 0; i < pages.length; i++) {
         needle.get(
-          `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].userId.facebookInfo.fbToken}`,
+          `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
           (err, resp) => {
-            if (err) {
-              logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err)}`)
-            }
-            pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
-            if (pageTokens.length === pages.length) {
-              updateSubcribersPic(pageTokens, companyId)
+            if (err || resp.body.error) {
+              logger.serverLog(TAG, `Page accesstoken from graph api Error ${JSON.stringify(pages[i])}`)
+            } else {
+              pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
+              if (pageTokens.length === pages.length) {
+                updateSubscribersPic(pageTokens, companyId)
+              }
             }
           })
       }
