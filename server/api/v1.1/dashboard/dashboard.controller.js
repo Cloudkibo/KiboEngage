@@ -253,6 +253,7 @@ exports.sentVsSeen = function (req, res) {
 }
 
 exports.sentVsSeenNew = function (req, res) {
+  console.log('req.body in sentVsSeenNew', req.body)
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
