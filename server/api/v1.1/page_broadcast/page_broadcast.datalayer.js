@@ -41,3 +41,17 @@ exports.countDocuments = (filter) => {
   console.log('query', query)
   return callApi(`page_broadcast/query`, 'post', query, '', 'kiboengage')
 }
+
+exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
+  let query = {
+    purpose: 'aggregate',
+    match: match
+  }
+  if (group) query.group = group
+  if (lookup) query.lookup = lookup
+  if (limit) query.limit = limit
+  if (sort) query.sort = sort
+  if (skip) query.skip = skip
+  console.log('query', JSON.stringify(query))
+  return callApi(`page_broadcast/query`, 'post', query, '', 'kiboengage')
+}
