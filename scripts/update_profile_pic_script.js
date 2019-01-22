@@ -8,11 +8,13 @@ function updateSubscribersPic (pageTokens, companyId) {
     .then(users => {
       for (let i = 0; i < users.length; i++) {
         let accessToken = pageTokens.filter((item) => item.id === users[i].pageId.pageId)[0].token
+
+        logger.serverLog(TAG, `https://graph.facebook.com/v2.10/${users[i].senderId}?access_token=${accessToken}`)
         needle.get(
           `https://graph.facebook.com/v2.10/${users[i].senderId}?access_token=${accessToken}`,
           (err, resp) => {
             if (err) {
-              logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
+              logger.serverLog(TAG, `error in retrieving https://graph.facebook.com/v2.10/${users[i].senderId}?access_token=${accessToken} ${JSON.stringify(err)}`, 'error')
             }
             console.log('resp.body', resp.body)
             // logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
@@ -27,7 +29,7 @@ function updateSubscribersPic (pageTokens, companyId) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscribers ${err} companyId: ${companyId}`)
+      logger.serverLog(TAG, `Failed to fetch subscribers ${err} companyId: ${companyId}`, 'error')
     })
 }
 
@@ -40,7 +42,7 @@ function getPageAccessTokenAndUpdate (companyId) {
           `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
           (err, resp) => {
             if (err) {
-              logger.serverLog(TAG, `Page access token from graph api error ${err} pageId: ${pages[i].pageId} accessToken: ${pages[i].accessToken}`)
+              logger.serverLog(TAG, `Page access token from graph api error ${err} pageId: ${pages[i].pageId} accessToken: ${pages[i].accessToken}`, 'error')
             } else {
               logger.serverLog(TAG, `Retrieved page access token for ${JSON.stringify(pages[i])}`)
               pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
