@@ -806,14 +806,14 @@ exports.graphData = function (req, res) {
 }
 function graphDataNew (body, companyUser) {
   return new Promise(function (resolve, reject) {
-    logger.serverLog(TAG, `graphDataNew`)
+    logger.serverLog(TAG, `graphDataNew`, body.days)
     let groupAggregate = {
       _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
       count: {$sum: 1}}
     let matchBroadcastAggregate = { companyId: companyUser.companyId.toString(),
       'datetime': {
         $gte: new Date(
-          (new Date().getTime() - (100 * 24 * 60 * 60 * 1000))),
+          (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
         $lt: new Date(
           (new Date().getTime()))
       }
@@ -821,6 +821,7 @@ function graphDataNew (body, companyUser) {
     let groupBroadcastAggregate = {
       _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
       count: {$sum: 1}}
+    logger.serverLog(TAG, `aggregateForBroadcasts`, JSON.stringify(matchBroadcastAggregate))
     BroadcastsDataLayer.aggregateForBroadcasts(matchBroadcastAggregate, groupBroadcastAggregate)
       .then(broadcastsgraphdata => {
         logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
