@@ -59,7 +59,7 @@ function updateSurveySent (req) {
             require('./../../../config/socketio').sendMessageToClient({
               room_id: surveyPages[0].companyId,
               body: {
-                action: 'poll_send'
+                action: 'survey_send'
               }
             })
           }
