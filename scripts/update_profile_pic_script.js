@@ -16,7 +16,7 @@ function updateSubscribersPic (pageTokens, companyId) {
             }
             console.log('resp.body', resp.body)
             logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
-            utility.callApi(`subscribers/${users[i]._id}`, 'put', {firstName: resp.body.first_name, lastName: resp.body.last_name, profilePic: resp.body.profile_pic, locale: resp.body.locale, timezone: resp.body.timezone, gender: resp.body.gender})
+            utility.callApi(`subscribers/update`, 'put', {query: {_id: users[i]._id}, newPayload: {firstName: resp.body.first_name, lastName: resp.body.last_name, profilePic: resp.body.profile_pic, locale: resp.body.locale, timezone: resp.body.timezone, gender: resp.body.gender}, options: {}})
               .then(updated => {
                 logger.serverLog(TAG, `Succesfully updated subscriber ${users[i]._id}`)
               })
