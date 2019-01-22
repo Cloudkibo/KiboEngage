@@ -8,9 +8,6 @@ exports.create = {
   '$schema': 'http://json-schema.org/draft-04/schema#',
   'type': 'object',
   'properties': {
-    'pageId': {
-      'type': 'string'
-    },
     'jsonAdMessages': {
       'type': 'array',
       'items': {}
