@@ -90,5 +90,5 @@ utility.callApi(`companyUser/query`, 'post', {})
     })
   })
   .catch(err => {
-    logger.serverLog(TAG, `Failed to fetch company users ${JSON.stringify(err)}`)
+    logger.serverLog(TAG, `Failed to fetch company users ${err}`)
   })
