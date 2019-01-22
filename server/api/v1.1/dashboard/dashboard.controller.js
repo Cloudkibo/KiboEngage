@@ -810,18 +810,7 @@ function graphDataNew (body, companyUser) {
     let groupAggregate = {
       _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
       count: {$sum: 1}}
-      let matchBroadcastAggregate = { companyId: companyUser.companyId.toString(),
-        'datetime': {
-          $gte: new Date(
-            (new Date().getTime() - (100 * 24 * 60 * 60 * 1000))),
-          $lt: new Date(
-            (new Date().getTime()))
-        }
-      }
-      let groupBroadcastAggregate = {
-        _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
-        count: {$sum: 1}}
-    BroadcastsDataLayer.aggregateForBroadcasts(matchBroadcastAggregate, groupBroadcastAggregate)
+    BroadcastsDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser), groupAggregate)
       .then(broadcastsgraphdata => {
         logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
         console.log('broadcastsgraphdata', broadcastsgraphdata)
