@@ -283,13 +283,11 @@ exports.sentVsSeenNew = function (req, res) {
                           PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true))
                             .then(pollSeenCount => {
                               console.log('pollSeenCount', pollSeenCount)
-                              PageSurveyDataLayer.genericFind(LogicLayer.getCriterias(req.body, companyUser))
-                                .then(surveyPages => {
-                                  console.log('surveyPages', surveyPages)
-                                  SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
-                                    .then(surveyResponseCount => {
-                                      console.log('surveyResponseCount', surveyResponseCount)
-                                      PagePollDataLayer.find(LogicLayer.getCriterias(req.body, companyUser))
+                              SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
+                                .then(surveyResponseCount => {
+                                  PollsDataLayer.genericFindForPolls({companyId: companyUser.companyId})
+                                    .then(polls => {
+                                      PagePollDataLayer.find({companyId: companyUser.companyId})
                                         .then(pollPages => {
                                           // we should call the pollresponse datalayer method in v1.1
                                           let groupPollAggregate = {
@@ -302,33 +300,26 @@ exports.sentVsSeenNew = function (req, res) {
                                               logger.serverLog(TAG,
                                                 `counts for dashboard poll response ${JSON.stringify(
                                                   pollResponseCount)}`)
-                                              for (let a = 0; a < pollPages.length; a++) {
+                                              for (let a = 0; a < polls.length; a++) {
                                                 for (let b = 0; b < pollResponseCount.length; b++) {
-                                                  if (pollPages[a].pollId.toString() === pollResponseCount[b]._id.toString()) {
+                                                  if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
                                                     responsesCount.push(pollResponseCount[b].count)
                                                   }
                                                 }
                                               }
-                                              logger.serverLog(TAG, `responsesCount ${JSON.stringify(responsesCount)}`)
                                               var sum = 0
                                               if (responsesCount.length > 0) {
-                                                for (var c = 0; c < responsesCount.length; c++) {
+                                                for (var c = 0; c <
+                                                                    responsesCount.length; c++) {
                                                   sum = sum + responsesCount[c]
                                                 }
                                               }
-                                              let surveyResponses = []
-                                              for (let i = 0; i < surveyPages.length; i++) {
-                                                for (let j = 0; j < surveyResponseCount.length; j++) {
-                                                  if (surveyPages[i].surveyId.toString() === surveyResponseCount[j]._id.toString()) {
-                                                    surveyResponses.push(surveyResponseCount[j])
-                                                  }
-                                                }
-                                              }
-                                              logger.serverLog(TAG, `surveyResponses ${JSON.stringify(surveyResponses)}`)
                                               var sum1 = 0
-                                              if (surveyResponses.length > 0) {
-                                                for (var k = 0; k < surveyResponses.length; k++) {
-                                                  sum1 = sum1 + surveyResponses[k].isresponded
+                                              if (surveyResponseCount.length > 0) {
+                                                for (var j = 0; j <
+                                                                    surveyResponseCount.length; j++) {
+                                                  sum1 = sum1 +
+                                                                        surveyResponseCount[j].isresponded
                                                 }
                                               }
 
@@ -408,16 +399,16 @@ exports.sentVsSeenNew = function (req, res) {
                                           }
                                         })
                                     })
-                                })
-                                .catch(err => {
-                                  if (err) {
-                                    logger.serverLog(TAG, `Error: ${err}`)
-                                    return res.status(500).json({
-                                      status: 'failed',
-                                      description: `Internal Server Error${JSON.stringify(
-                                        err)}`
+                                    .catch(err => {
+                                      if (err) {
+                                        logger.serverLog(TAG, `Error: ${err}`)
+                                        return res.status(500).json({
+                                          status: 'failed',
+                                          description: `Internal Server Error${JSON.stringify(
+                                            err)}`
+                                        })
+                                      }
                                     })
-                                  }
                                 })
                                 .catch(err => {
                                   if (err) {
