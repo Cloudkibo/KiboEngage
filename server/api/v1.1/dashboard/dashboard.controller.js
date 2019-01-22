@@ -1098,8 +1098,8 @@ exports.subscriberSummary = function (req, res) {
               callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true), req.headers.authorization)
                 .then(graphdata => {
                   let data = {
-                    subscribes: subscribers[0].count,
-                    unsubscribes: unsubscribes[0].count,
+                    subscribes: subscribers.length > 0 ? subscribers[0].count : 0,
+                    unsubscribes: unsubscribes.length > 0 ? unsubscribes[0].count : 0,
                     graphdata: graphdata
                   }
                   return res.status(200).json({
