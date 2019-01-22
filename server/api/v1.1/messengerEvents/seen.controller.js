@@ -31,22 +31,50 @@ function updateBroadcastSeen (req) {
 }
 
 function updatePollSeen (req) {
-  PollPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false }, { seen: true }, { multi: true })
-    .then(updated => {
-      logger.serverLog(TAG, `Poll seen updated successfully`)
+  PollPageDataLayer.genericFind({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false })
+    .then(pollPages => {
+      PollPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false }, { seen: true }, { multi: true })
+        .then(updated => {
+          logger.serverLog(TAG, `Poll seen updated successfully`)
+          if (pollPages.length > 0) {
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: pollPages[0].companyId,
+              body: {
+                action: 'poll_send'
+              }
+            })
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `ERROR at updating poll seen ${JSON.stringify(err)}`)
+        })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR at updating poll seen ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR in retrieving poll pages ${JSON.stringify(err)}`)
     })
 }
 
 function updateSurveySeen (req) {
-  SurveyPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false }, { seen: true }, { multi: true })
-    .then(updated => {
-      logger.serverLog(TAG, `survey seen updated successfully`)
+  SurveyPageDataLayer.genericFind({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false })
+    .then(surveyPages => {
+      SurveyPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, seen: false }, { seen: true }, { multi: true })
+        .then(updated => {
+          logger.serverLog(TAG, `survey seen updated successfully`)
+          if (surveyPages.length > 0) {
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: surveyPages[0].companyId,
+              body: {
+                action: 'survey_send'
+              }
+            })
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `ERROR at updating survey seen ${JSON.stringify(err)}`)
+        })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR at updating survey seen ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR in retrieving survey pages ${JSON.stringify(err)}`)
     })
 }
 

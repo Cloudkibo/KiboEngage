@@ -31,12 +31,14 @@ function updatePollSent (req) {
       PollPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
         .then(updated => {
           logger.serverLog(TAG, `Poll sent updated successfully`)
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: pollPages[0].companyId,
-            body: {
-              action: 'poll_send'
-            }
-          })
+          if (pollPages.length > 0) {
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: pollPages[0].companyId,
+              body: {
+                action: 'poll_send'
+              }
+            })
+          }
         })
         .catch(err => {
           logger.serverLog(TAG, `ERROR at updating poll sent ${JSON.stringify(err)}`)
@@ -48,11 +50,25 @@ function updatePollSent (req) {
 }
 
 function updateSurveySent (req) {
-  SurveyPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
-    .then(updated => {
-      logger.serverLog(TAG, `survey sent updated successfully`)
+  SurveyPageDataLayer.genericFind({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false })
+    .then(surveyPages => {
+      SurveyPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
+        .then(updated => {
+          logger.serverLog(TAG, `survey sent updated successfully`)
+          if (surveyPages.length > 0) {
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: surveyPages[0].companyId,
+              body: {
+                action: 'survey_send'
+              }
+            })
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `ERROR at updating survey sent ${JSON.stringify(err)}`)
+        })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR at updating survey sent ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR in fetching survey pages ${JSON.stringify(err)}`)
     })
 }

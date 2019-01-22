@@ -38,7 +38,7 @@ exports.index = function (req, res) {
                   console.log('broadcastpages', broadcastpages)
                   res.status(200).json({
                     status: 'success',
-                    payload: { broadcasts: req.body.first_page === 'previous' ? broadcasts.reverse() : broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
+                    payload: { broadcasts: broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
                   })
                   console.log('sent successfully')
                 })
