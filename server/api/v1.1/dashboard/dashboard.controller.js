@@ -283,7 +283,7 @@ exports.sentVsSeenNew = function (req, res) {
                           PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true))
                             .then(pollSeenCount => {
                               console.log('pollSeenCount', pollSeenCount)
-                              PageSurveyDataLayer.find(LogicLayer.getCriterias(req.body, companyUser))
+                              PageSurveyDataLayer.genericFind(LogicLayer.getCriterias(req.body, companyUser))
                                 .then(surveyPages => {
                                   console.log('surveyPages', surveyPages)
                                   SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})

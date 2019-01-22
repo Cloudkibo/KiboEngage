@@ -22,7 +22,6 @@ exports.genericFind = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  console.log('query', query)
   return callApi(`page_survey/query`, 'post', query, '', 'kiboengage')
 }
 
