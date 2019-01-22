@@ -1,5 +1,5 @@
 exports.getCriterias = function (body, companyUser, seen) {
-  let matchAggregate = { companyId: companyUser.companyId,
+  let matchAggregate = { companyId: companyUser.companyId.toString(),
     'pageId': body.pageId === 'all' ? { $exists: true } : body.pageId,
     'datetime': body.days === 'all' ? { $exists: true } : {
       $gte: new Date(

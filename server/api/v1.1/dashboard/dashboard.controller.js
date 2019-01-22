@@ -826,6 +826,7 @@ function graphDataNew (body, companyUser) {
       .then(broadcastsgraphdata => {
         logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
         console.log('broadcastsgraphdata', broadcastsgraphdata)
+        logger.serverLog(TAG, `aggregateForPolls`, JSON.stringify(LogicLayer.getCriterias(body, companyUser)))
         PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
           .then(pollsgraphdata => {
             console.log('pollsgraphdata', pollsgraphdata)
