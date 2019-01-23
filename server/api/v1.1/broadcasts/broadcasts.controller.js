@@ -599,7 +599,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
       let temp = subscriptionUser.userId.facebookInfo.name.split(' ')
       let fname = temp[0]
       let lname = temp[1] ? temp[1] : ''
-      broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, req.body.fbMessageTag)
+      broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag)
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch adminsubscription ${JSON.stringify(error)}`})
