@@ -596,7 +596,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       logger.serverLog(TAG,
-        `subscriptionUser ${JSON.stringify(subscriptionUser)}`)
+        `subscriptionUser ${subscriptionUser}`)
       subscriptionUser = subscriptionUser[0]
       let temp = subscriptionUser.userId.facebookInfo.name.split(' ')
       let fname = temp[0]
