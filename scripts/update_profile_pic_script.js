@@ -43,6 +43,10 @@ function getPageAccessTokenAndUpdate (companyId) {
           (err, resp) => {
             if (err) {
               logger.serverLog(TAG, `Page access token from graph api error: ${err} resp: ${JSON.stringify(resp)} companyId: ${companyId} https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`, 'error')
+              pageTokens.push({id: pages[i].pageId, token: pages[i].accessToken})
+              if (pageTokens.length === pages.length) {
+                updateSubscribersPic(pageTokens, companyId)
+              }
             } else {
               logger.serverLog(TAG, `Retrieved page access token for ${pages[i].pageId}`)
               pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
