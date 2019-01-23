@@ -42,12 +42,13 @@ function getPageAccessTokenAndUpdate (companyId) {
           `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
           (err, resp) => {
             if (err) {
-              logger.serverLog(TAG, `Page access token from graph api error ${err} companyId: ${companyId} pageId: ${pages[i].pageId} accessToken: ${pages[i].accessToken}`, 'error')
-            }
-            logger.serverLog(TAG, `Retrieved page access token for pageId: ${pages[i].pageId}`)
-            pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
-            if (pageTokens.length === pages.length) {
-              updateSubscribersPic(pageTokens, companyId)
+              logger.serverLog(TAG, `Page access token from graph api error: ${err} resp: ${JSON.stringify(resp)} companyId: ${companyId} https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`, 'error')
+            } else {
+              logger.serverLog(TAG, `Retrieved page access token for ${pages[i].pageId}`)
+              pageTokens.push({id: pages[i].pageId, token: resp.body.access_token})
+              if (pageTokens.length === pages.length) {
+                updateSubscribersPic(pageTokens, companyId)
+              }
             }
           })
       }
