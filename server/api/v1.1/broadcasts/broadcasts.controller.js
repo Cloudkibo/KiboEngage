@@ -595,11 +595,13 @@ const updatePayload = (self, payload, broadcast) => {
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
+      subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
         `subscriptionUser ${subscriptionUser}`)
-      subscriptionUser = subscriptionUser[0]
       utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId}, req.headers.authorization)
         .then(user => {
+          logger.serverLog(TAG,
+            `user ${user}`)
           let temp = user.facebookInfo.name.split(' ')
           let fname = temp[0]
           let lname = temp[1] ? temp[1] : ''
