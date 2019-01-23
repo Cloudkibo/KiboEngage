@@ -531,7 +531,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
     })
 }
-const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength) => {
+const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     console.log('Send Response Broadcast', body)
     if (err) {
@@ -547,7 +547,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       // we don't need to send res for persistant menu
     } else {
       logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
-      if (subscriberNumber === (subscribersLength - 1)) {
+      if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
         return res.status(200)
           .json({status: 'success', description: 'Conversation sent successfully!'})
       }
@@ -593,6 +593,7 @@ const updatePayload = (self, payload, broadcast) => {
 }
 
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
+  var testBroadcast = true
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
@@ -606,7 +607,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
           let temp = user.facebookInfo.name.split(' ')
           let fname = temp[0]
           let lname = temp[1] ? temp[1] : ''
-          broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag)
+          broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
         })
         .catch(error => {
           return res.status(500).json({status: 'failed', payload: `Failed to fetch user ${JSON.stringify(error)}`})
