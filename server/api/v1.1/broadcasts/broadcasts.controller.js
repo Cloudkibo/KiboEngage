@@ -600,6 +600,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
         `subscriptionUser ${subscriptionUser}`)
       utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId}, req.headers.authorization)
         .then(user => {
+          user = user[0]
           logger.serverLog(TAG,
             `user ${JSON.stringify(user)}`)
           let temp = user.facebookInfo.name.split(' ')
