@@ -5,10 +5,10 @@ var Schema = mongoose.Schema
 
 var PageAdminSubscriptionsSchema = new Schema({
 
-  companyId: { type: Schema.ObjectId, ref: 'companyprofile' },
-  userId: { type: Schema.ObjectId, ref: 'users' },
+  companyId: { type: Schema.ObjectId },
+  userId: { type: Schema.ObjectId },
   subscriberId: String,
-  pageId: { type: Schema.ObjectId, ref: 'pages' }
+  pageId: { type: Schema.ObjectId }
 
 })
 

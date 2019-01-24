@@ -41,6 +41,7 @@ exports.create = function (req, res) {
     'subscriberId': req.body.subscriberId,
     'pageId': mongoose.Types.ObjectId(req.body.pageId)
   }
+  logger.serverLog('', `payload ${JSON.stringify(payload)}`)
   PageAdminSubscriptionsDataLayer.create(payload)
     .then(updatedRecord => {
       return res.status(200).json({
