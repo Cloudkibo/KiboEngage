@@ -627,7 +627,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
 }
 
 /* eslint-disable */
-function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, res, subscriberNumber, subscribersLength, fbMessageTag) {
+function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, res, subscriberNumber, subscribersLength, fbMessageTag, testBroadcast) {
   let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": recipientId}))
   let tag = "tag=" + encodeURIComponent(fbMessageTag)
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
@@ -643,7 +643,7 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
       batch.push({ "method": "POST", "name": `message${index + 1}`, "depends_on": `message${index}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
     }
     if (index === (payload.length - 1)) {
-      sendBroadcast(JSON.stringify(batch), page, res, subscriberNumber, subscribersLength)
+      sendBroadcast(JSON.stringify(batch), page, res, subscriberNumber, subscribersLength, testBroadcast)
     }
   })
 }
