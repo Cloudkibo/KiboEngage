@@ -44,6 +44,25 @@ exports.create = function (req, res) {
   logger.serverLog('', `payload ${JSON.stringify(payload)}`)
   PageAdminSubscriptionsDataLayer.create(payload)
     .then(updatedRecord => {
+      utility.callApi(`pages/query`, 'post', { pageId: req.body.pageId, companyId: req.body.companyId }, 'accounts')
+        .then(pages => {
+          let page = pages[0]
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: updatedRecord.companyId,
+            body: {
+              action: 'admin_subscriber',
+              payload: {
+                subscribed_page: page
+              }
+            }
+          })
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Internal Server Error in Getting pages${JSON.stringify(err)}`
+          })
+        })
       return res.status(200).json({
         status: 'success',
         payload: updatedRecord
