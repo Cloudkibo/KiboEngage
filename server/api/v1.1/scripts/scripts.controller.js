@@ -1,7 +1,8 @@
-const utility = require('../server/api/v1.1/utility')
-const logger = require('../server/components/logger')
+
+const TAG = 'api/v1.1/scripts/scripts.controller.js'
+const utility = require('../utility')
+const logger = require('../../../components/logger')
 const needle = require('needle')
-const TAG = 'scripts/update_profile_pic_script.js'
 
 function updateSubscribersPic (pageTokens, companyId) {
   utility.callApi(`subscribers/query`, 'post', {companyId: companyId})
@@ -42,7 +43,7 @@ function getPageAccessTokenAndUpdate (companyId) {
           `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
           (err, resp) => {
             if (err) {
-              logger.serverLog(TAG, `Page access token from graph api error: ${err} resp: ${JSON.stringify(resp)} companyId: ${companyId} https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`, 'error')
+              // logger.serverLog(TAG, `Page access token from graph api error: ${err} resp: ${JSON.stringify(resp)} companyId: ${companyId} https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`, 'error')
               pageTokens.push({id: pages[i].pageId, token: pages[i].accessToken})
               if (pageTokens.length === pages.length) {
                 updateSubscribersPic(pageTokens, companyId)
@@ -62,61 +63,42 @@ function getPageAccessTokenAndUpdate (companyId) {
     })
 }
 
-// exports.genericUpdatePayload = {
-//   '$schema': 'http://json-schema.org/draft-04/schema#',
-//   'type': 'object',
-//   'properties': {
-//     'query': {
-//       'type': 'object'
-//     },
-//     'newPayload': {
-//       'type': 'object'
-//     },
-//     'options': {
-//       'type': 'object'
-//     }
-//   },
-//   'required': [
-//     'query',
-//     'newPayload',
-//     'options'
-//   ]
-// }
-
-utility.callApi(`user/query`, 'post', {})
-  .then(users => {
-    users.forEach((user, index) => {
-      if (user.facebookInfo) {
-        needle.get(
-          `https://graph.facebook.com/v2.10/${user.facebookInfo.fbId}?fields=picture&access_token=${user.facebookInfo.fbToken}`,
-          (err, resp) => {
-            if (err) {
-              logger.serverLog(TAG, `ERROR in cron script update_profile_pic ${JSON.stringify(err)}`)
-            }
-            if (resp.body.picture) {
-              utility.callApi(`user/update`, 'post', {query: {_id: user._id}, newPayload: {'facebookInfo.profilePic': resp.body.picture.data.url}, options: {}})
-                .then(updated => {
-                  logger.serverLog(TAG, `Succesfully updated user ${user._id}`)
-                })
-                .catch(err => {
-                  logger.serverLog(TAG, `Failed to update user ${JSON.stringify(err)}`)
-                })
-            }
-          })
-      }
+exports.updateProfilePics = function (req, res) {
+  utility.callApi(`user/query`, 'post', {})
+    .then(users => {
+      users.forEach((user, index) => {
+        if (user.facebookInfo) {
+          needle.get(
+            `https://graph.facebook.com/v2.10/${user.facebookInfo.fbId}?fields=picture&access_token=${user.facebookInfo.fbToken}`,
+            (err, resp) => {
+              if (err) {
+                logger.serverLog(TAG, `ERROR in cron script update_profile_pic ${JSON.stringify(err)}`)
+              }
+              if (resp.body.picture) {
+                utility.callApi(`user/update`, 'post', {query: {_id: user._id}, newPayload: {'facebookInfo.profilePic': resp.body.picture.data.url}, options: {}})
+                  .then(updated => {
+                    logger.serverLog(TAG, `Succesfully updated user ${user._id}`)
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to update user ${JSON.stringify(err)}`)
+                  })
+              }
+            })
+        }
+      })
     })
-  })
-  .catch(err => {
-    logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(err)}`)
-  })
-
-utility.callApi(`companyUser/queryAll`, 'post', {})
-  .then(profiles => {
-    profiles.forEach(profile => {
-      logger.serverLog(TAG, `profile.companyId: ${profile.companyId}`)
-      getPageAccessTokenAndUpdate(profile.companyId)
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(err)}`)
     })
-  })
-  .catch(err => {
-    logger.serverLog(TAG, `Failed to fetch company users ${err}`)
-  })
+
+  utility.callApi(`companyUser/queryAll`, 'post', {})
+    .then(profiles => {
+      profiles.forEach(profile => {
+        logger.serverLog(TAG, `profile.companyId: ${profile.companyId}`)
+        getPageAccessTokenAndUpdate(profile.companyId)
+      })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch company users ${err}`)
+    })
+}

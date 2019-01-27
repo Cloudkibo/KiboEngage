@@ -38,7 +38,7 @@ exports.index = function (req, res) {
                   console.log('broadcastpages', broadcastpages)
                   res.status(200).json({
                     status: 'success',
-                    payload: { broadcasts: req.body.first_page === 'previous' ? broadcasts.reverse() : broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
+                    payload: { broadcasts: broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
                   })
                   console.log('sent successfully')
                 })
@@ -531,7 +531,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
     })
 }
-const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength) => {
+const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     console.log('Send Response Broadcast', body)
     if (err) {
@@ -547,7 +547,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       // we don't need to send res for persistant menu
     } else {
       logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
-      if (subscriberNumber === (subscribersLength - 1)) {
+      if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
         return res.status(200)
           .json({status: 'success', description: 'Conversation sent successfully!'})
       }
@@ -593,13 +593,25 @@ const updatePayload = (self, payload, broadcast) => {
 }
 
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
+  var testBroadcast = true
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
-      let temp = subscriptionUser.userId.facebookInfo.name.split(' ')
-      let fname = temp[0]
-      let lname = temp[1] ? temp[1] : ''
-      broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, req.body.fbMessageTag)
+      logger.serverLog(TAG,
+        `subscriptionUser ${subscriptionUser}`)
+      utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId}, req.headers.authorization)
+        .then(user => {
+          user = user[0]
+          logger.serverLog(TAG,
+            `user ${JSON.stringify(user)}`)
+          let temp = user.facebookInfo.name.split(' ')
+          let fname = temp[0]
+          let lname = temp[1] ? temp[1] : ''
+          broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to fetch user ${JSON.stringify(error)}`})
+        })
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch adminsubscription ${JSON.stringify(error)}`})

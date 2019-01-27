@@ -41,17 +41,10 @@ exports.getAll = function (req, res) {
         .then(count => {
           utility.callApi(`lists/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch lists
             .then(lists => {
-              if (req.body.first_page === 'previous') {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {lists: lists.reverse(), count: count.length > 0 ? count[0].count : 0}
-                })
-              } else {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {lists: lists, count: count.length > 0 ? count[0].count : 0}
-                })
-              }
+              res.status(200).json({
+                status: 'success',
+                payload: {lists: lists, count: count.length > 0 ? count[0].count : 0}
+              })
             })
             .catch(error => {
               return res.status(500).json({
