@@ -3,6 +3,7 @@ const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
 const util = require('util')
+const needle = require('needle')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
@@ -167,6 +168,22 @@ exports.subscribeBack = function (req, res) {
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to fetch subscriber ${JSON.stringify(error)}`
+      })
+    })
+}
+
+exports.updateData = function (req, res) {
+  utility.callApi('subscribers/updateData', 'get', {}, req.headers.authorization)
+    .then(updatedSubscribers => {
+      return res.status(200).json({
+        status: 'success',
+        payload: updatedSubscribers
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to fetch subscribers ${JSON.stringify(err)}`
       })
     })
 }
