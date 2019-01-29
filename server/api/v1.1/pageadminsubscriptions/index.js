@@ -10,7 +10,6 @@ var router = express.Router()
 
 router.get('/', auth.isAuthenticated(), controller.index)
 router.post('/',
-  auth.isAuthenticated(),
   validate({body: validationSchema.createPayload}),
   controller.create)
 // router.get('/fetch', auth.isAuthenticated(), controller.fetch)
