@@ -2,6 +2,7 @@ const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
 const TAG = 'LandingPage'
+const path = require('path')
 
 module.exports = function (app) {
   const env = app.get('env')
@@ -54,6 +55,10 @@ module.exports = function (app) {
       {expires: new Date(Date.now() + 900000)})
     // res.sendFile(path.join(config.root, 'client/index.html'))
     res.render('main', { environment: env })
+  })
+
+  app.get('/react-bundle', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../Staging/KiboPush/client/public/js', 'bundle.js'))
   })
 
   app.get('/landingPage/:id', (req, res) => {
