@@ -31,5 +31,5 @@ module.exports = {
     kibochat: `http://localhost:3030/api/v1`,
     kiboengage: `http://localhost:3031/api/v1`
   },
-  webhook_ip: 'http://localhost:3020',
+  webhook_ip: 'http://localhost:3020'
 }

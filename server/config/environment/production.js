@@ -7,7 +7,7 @@ module.exports = {
 
   // Secure Server port
   secure_port: process.env.SECURE_PORT || 8443,
-  
+
   domain: `${process.env.DOMAIN || 'https://kiboengage.cloudkibo.com'}`,
 
   // MongoDB connection options
