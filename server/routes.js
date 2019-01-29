@@ -2,6 +2,7 @@ const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
 const TAG = 'LandingPage'
+const Raven = require('raven')
 
 module.exports = function (app) {
   const env = app.get('env')
@@ -139,4 +140,8 @@ module.exports = function (app) {
   }).post((req, res) => {
     res.redirect('/')
   })
+
+  if (env === 'production' || env === 'staging') {
+    app.use(Raven.errorHandler())
+  }
 }
