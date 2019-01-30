@@ -2,6 +2,7 @@ const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
 const TAG = 'LandingPage'
+const path = require('path')
 
 module.exports = function (app) {
   const env = app.get('env')
@@ -44,6 +45,7 @@ module.exports = function (app) {
   app.use('/api/landingPage', require('./api/v1.1/landingPage'))
   app.use('/api/pageReferrals', require('./api/v1.1/pageReferrals'))
   app.use('/api/jsonAd', require('./api/v1.1/jsonAd'))
+  app.use('/api/scripts', require('./api/v1.1/scripts'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
@@ -53,6 +55,10 @@ module.exports = function (app) {
       {expires: new Date(Date.now() + 900000)})
     // res.sendFile(path.join(config.root, 'client/index.html'))
     res.render('main', { environment: env })
+  })
+
+  app.get('/react-bundle', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../KiboPush/client/public/js', 'bundle.js'))
   })
 
   app.get('/landingPage/:id', (req, res) => {

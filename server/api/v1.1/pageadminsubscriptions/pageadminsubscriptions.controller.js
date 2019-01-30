@@ -44,6 +44,15 @@ exports.create = function (req, res) {
   logger.serverLog('', `payload ${JSON.stringify(payload)}`)
   PageAdminSubscriptionsDataLayer.create(payload)
     .then(updatedRecord => {
+      require('./../../../config/socketio').sendMessageToClient({
+        room_id: updatedRecord.companyId,
+        body: {
+          action: 'admin_subscriber',
+          payload: {
+            subscribed_page: req.body.pageId
+          }
+        }
+      })
       return res.status(200).json({
         status: 'success',
         payload: updatedRecord

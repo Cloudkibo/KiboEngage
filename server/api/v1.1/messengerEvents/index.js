@@ -10,6 +10,7 @@ const messagingReferrals = require('./messagingReferrals.controller')
 const landingPage = require('./landingPage.controller')
 const sequenceController = require('./sequence.controller')
 const auth = require('../../../auth/auth.service')
+const profilePicController = require('./profilePic.controller')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
@@ -19,5 +20,6 @@ router.post('/messagingReferrals', auth.isItWebhookServer(), messagingReferrals.
 router.post('/landingPage', auth.isItWebhookServer(), landingPage.index)
 router.post('/sequence', auth.isItWebhookServer(), sequenceController.index)
 router.post('/sequence/subscriberJoins', auth.isItWebhookServer(), sequenceController.subscriberJoins)
+router.post('/updateProfilePic', auth.isItWebhookServer, profilePicController.updateProfilePic)
 
 module.exports = router
