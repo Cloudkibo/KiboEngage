@@ -44,7 +44,9 @@ exports.create = function (req, res) {
         })
       }
       let customFieldPayload = {
-        customField: req.body.customField,
+        name: req.body.name,
+        type: req.body.type,
+        description: req.body.description,
         companyId: companyUser.companyId,
         createdBy: req.user._id
       }
