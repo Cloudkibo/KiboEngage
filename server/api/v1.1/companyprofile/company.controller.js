@@ -56,7 +56,6 @@ exports.updateRole = function (req, res) {
       console.log('err', err)
       res.status(200).json({status: 'failed', payload: err.error.payload})
     })
-
 }
 
 exports.updateAutomatedOptions = function (req, res) {
