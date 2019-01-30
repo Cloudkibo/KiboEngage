@@ -46,6 +46,7 @@ module.exports = function (app) {
   app.use('/api/pageReferrals', require('./api/v1.1/pageReferrals'))
   app.use('/api/jsonAd', require('./api/v1.1/jsonAd'))
   app.use('/api/scripts', require('./api/v1.1/scripts'))
+  app.use('/api/custom_fields', require('./api/v1.1/custom_fields'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
