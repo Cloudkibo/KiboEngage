@@ -1,3 +1,6 @@
+const TAG = 'api/pages/dashboard.controller.js'
+const logger = require('../../../components/logger')
+
 exports.getCriterias = function (body, companyUser, seen, pageIds) {
   console.log('pageIds', pageIds)
   let matchAggregate = { companyId: companyUser.companyId.toString(),
@@ -58,5 +61,8 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
       count: {$sum: 1}}
     }
   ]
+  logger.serverLog(TAG,
+    `final query ${JSON.stringify(
+      query)}`)
   return query
 }
