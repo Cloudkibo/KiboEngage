@@ -64,13 +64,9 @@ exports.create = function (req, res) {
           return res.status(201).json({ status: 'success', payload: newCustomField })
         })
         .catch(err => {
-          console.log('============================================')
-          console.log("error => "+err)
-          console.log('============================================')
-          console.log("payload: "+err.payload)
           return res.status(500).json({
             status: 'failed',
-            description: err.payload
+            description: err
           })
         })
     })
@@ -81,6 +77,7 @@ exports.create = function (req, res) {
       })
     })
 }
+
 exports.update = function (req, res) {
   callApi.callApi('custom_fields/query', 'post', { purpose: 'findOne', match: { _id: req.body.customFieldId } }, req.headers.authorization)
     .then(fieldPayload => {
