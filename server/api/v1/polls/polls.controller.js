@@ -272,6 +272,7 @@ exports.send = function (req, res) {
                                                           logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
                                                           needle.post(
                                                             `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`, data, (err, resp) => {
+                                                              logger.serverLog(TAG, 'Poll response', resp.body)
                                                               if (err) {
                                                                 logger.serverLog(TAG, err)
                                                                 logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
@@ -374,6 +375,7 @@ exports.send = function (req, res) {
                                                         needle.post(
                                                           `https://graph.facebook.com/v2.10/me/messages?access_token=${resp.body.access_token}`,
                                                           data, (err, resp) => {
+                                                            logger.serverLog(TAG, 'Poll response', resp.body)
                                                             if (err) {
                                                               logger.serverLog(TAG, err)
                                                               logger.serverLog(TAG,
@@ -580,6 +582,7 @@ exports.sendPoll = function (req, res) {
                                                               needle.post(
                                                                 `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`, data, (err, resp) => {
                                                                   if (err) {
+                                                                    logger.serverLog(TAG, 'Poll response', resp.body)
                                                                     logger.serverLog(TAG, err)
                                                                     logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
                                                                   }
@@ -681,6 +684,7 @@ exports.sendPoll = function (req, res) {
                                                             needle.post(
                                                               `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
                                                               data, (err, resp) => {
+                                                                logger.serverLog(TAG, 'Poll response', resp.body)
                                                                 if (err) {
                                                                   logger.serverLog(TAG, err)
                                                                   logger.serverLog(TAG,
