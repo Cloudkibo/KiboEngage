@@ -2,6 +2,7 @@ const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
 const TAG = 'LandingPage'
+const Raven = require('raven')
 const path = require('path')
 
 module.exports = function (app) {
@@ -46,6 +47,7 @@ module.exports = function (app) {
   app.use('/api/pageReferrals', require('./api/v1.1/pageReferrals'))
   app.use('/api/jsonAd', require('./api/v1.1/jsonAd'))
   app.use('/api/scripts', require('./api/v1.1/scripts'))
+  app.use('/api/custom_fields', require('./api/v1.1/custom_fields'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
@@ -144,4 +146,8 @@ module.exports = function (app) {
   }).post((req, res) => {
     res.redirect('/')
   })
+
+  if (env === 'production' || env === 'staging') {
+    app.use(Raven.errorHandler())
+  }
 }

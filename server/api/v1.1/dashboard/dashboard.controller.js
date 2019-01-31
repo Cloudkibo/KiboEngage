@@ -252,8 +252,19 @@ exports.sentVsSeen = function (req, res) {
     })
 }
 
+function populateIds (pages) {
+  return new Promise(function (resolve, reject) {
+    let pageIds = []
+    for (let i = 0; i < pages.length; i++) {
+      pageIds.push(pages[i].pageId)
+      if (pageIds.length === pages.length) {
+        resolve({pageIds: pageIds})
+      }
+    }
+  })
+}
+
 exports.sentVsSeenNew = function (req, res) {
-  console.log('req.body in sentVsSeenNew', req.body)
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
@@ -262,218 +273,229 @@ exports.sentVsSeenNew = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      // We should call the count function when we switch to v1.1
-      PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser))
-        .then(broadcastSentCount => {
-          console.log('broadcastSentCount', broadcastSentCount)
+      callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}, req.headers.authorization) // fetch connected pages
+        .then(pages => {
+          populateIds(pages).then(result => {
           // We should call the count function when we switch to v1.1
-          PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true))
-            .then(broadcastSeenCount => {
-              console.log('broadcastSeenCount', broadcastSeenCount)
-              // call the count function in v1.1
-              PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser))
-                .then(surveySentCount => {
-                  // call the count function in v1.1
-                  PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true))
-                    .then(surveySeenCount => {
-                      // we should call the v1.1 count function because we are counting here.
-                      PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser))
-                        .then(pollSentCount => {
-                          // we should call the v1.1 count function because we are counting here.
-                          PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true))
-                            .then(pollSeenCount => {
-                              console.log('pollSeenCount', pollSeenCount)
-                              SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
-                                .then(surveyResponseCount => {
-                                  PollsDataLayer.genericFindForPolls({companyId: companyUser.companyId})
-                                    .then(polls => {
-                                      PagePollDataLayer.find({companyId: companyUser.companyId})
-                                        .then(pollPages => {
-                                          // we should call the pollresponse datalayer method in v1.1
-                                          let groupPollAggregate = {
-                                            _id: '$pollId',
-                                            count: {$sum: 1}
-                                          }
-                                          PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
-                                            .then(pollResponseCount => {
-                                              let responsesCount = []
-                                              logger.serverLog(TAG,
-                                                `counts for dashboard poll response ${JSON.stringify(
-                                                  pollResponseCount)}`)
-                                              for (let a = 0; a < polls.length; a++) {
-                                                for (let b = 0; b < pollResponseCount.length; b++) {
-                                                  if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
-                                                    responsesCount.push(pollResponseCount[b].count)
-                                                  }
+            PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
+              .then(broadcastSentCount => {
+                // We should call the count function when we switch to v1.1
+                PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
+                  .then(broadcastSeenCount => {
+                    // call the count function in v1.1
+                    PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
+                      .then(surveySentCount => {
+                        // call the count function in v1.1
+                        PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
+                          .then(surveySeenCount => {
+                            // we should call the v1.1 count function because we are counting here.
+                            PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
+                              .then(pollSentCount => {
+                                // we should call the v1.1 count function because we are counting here.
+                                PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
+                                  .then(pollSeenCount => {
+                                    SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
+                                      .then(surveyResponseCount => {
+                                        PollsDataLayer.genericFindForPolls({companyId: companyUser.companyId})
+                                          .then(polls => {
+                                            PagePollDataLayer.find({companyId: companyUser.companyId})
+                                              .then(pollPages => {
+                                                // we should call the pollresponse datalayer method in v1.1
+                                                let groupPollAggregate = {
+                                                  _id: '$pollId',
+                                                  count: {$sum: 1}
                                                 }
-                                              }
-                                              var sum = 0
-                                              if (responsesCount.length > 0) {
-                                                for (var c = 0; c <
-                                                                    responsesCount.length; c++) {
-                                                  sum = sum + responsesCount[c]
-                                                }
-                                              }
-                                              var sum1 = 0
-                                              if (surveyResponseCount.length > 0) {
-                                                for (var j = 0; j <
-                                                                    surveyResponseCount.length; j++) {
-                                                  sum1 = sum1 +
-                                                                        surveyResponseCount[j].isresponded
-                                                }
-                                              }
+                                                PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
+                                                  .then(pollResponseCount => {
+                                                    let responsesCount = []
+                                                    logger.serverLog(TAG,
+                                                      `counts for dashboard poll response ${JSON.stringify(
+                                                        pollResponseCount)}`)
+                                                    for (let a = 0; a < polls.length; a++) {
+                                                      for (let b = 0; b < pollResponseCount.length; b++) {
+                                                        if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
+                                                          responsesCount.push(pollResponseCount[b].count)
+                                                        }
+                                                      }
+                                                    }
+                                                    var sum = 0
+                                                    if (responsesCount.length > 0) {
+                                                      for (var c = 0; c <
+                                                                          responsesCount.length; c++) {
+                                                        sum = sum + responsesCount[c]
+                                                      }
+                                                    }
+                                                    var sum1 = 0
+                                                    if (surveyResponseCount.length > 0) {
+                                                      for (var j = 0; j <
+                                                                          surveyResponseCount.length; j++) {
+                                                        sum1 = sum1 +
+                                                                              surveyResponseCount[j].isresponded
+                                                      }
+                                                    }
 
-                                              let datacounts = {
-                                                broadcast: {
-                                                  broadcastSentCount: 0,
-                                                  broadcastSeenCount: 0
-                                                },
-                                                survey: {
-                                                  surveySentCount: 0,
-                                                  surveySeenCount: 0,
-                                                  surveyResponseCount: 0
-                                                },
-                                                poll: {
-                                                  pollSentCount: 0,
-                                                  pollSeenCount: 0,
-                                                  pollResponseCount: 0
-                                                }
-                                              }
-                                              if (broadcastSentCount.length > 0) {
-                                                datacounts.broadcast.broadcastSentCount = broadcastSentCount[0].count
-                                                if (broadcastSeenCount.length > 0) {
-                                                  datacounts.broadcast.broadcastSeenCount = broadcastSeenCount[0].count
-                                                }
-                                              }
-                                              if (surveySentCount.length > 0) {
-                                                datacounts.survey.surveySentCount = surveySentCount[0].count
-                                                if (surveySeenCount.length > 0) {
-                                                  datacounts.survey.surveySeenCount = surveySeenCount[0].count
-                                                  datacounts.survey.surveyResponseCount = sum1
-                                                }
-                                              }
-                                              if (pollSentCount.length > 0) {
-                                                datacounts.poll.pollSentCount = pollSentCount[0].count
-                                                if (pollSeenCount.length > 0) {
-                                                  datacounts.poll.pollSeenCount = pollSeenCount[0].count
-                                                  datacounts.poll.pollResponseCount = sum
-                                                }
-                                              }
-                                              logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`)
-                                              graphDataNew(req.body, companyUser)
-                                                .then(result => {
-                                                  return res.status(200).json({
-                                                    status: 'success',
-                                                    payload: {
-                                                      datacounts,
-                                                      graphDatas: result
+                                                    let datacounts = {
+                                                      broadcast: {
+                                                        broadcastSentCount: 0,
+                                                        broadcastSeenCount: 0
+                                                      },
+                                                      survey: {
+                                                        surveySentCount: 0,
+                                                        surveySeenCount: 0,
+                                                        surveyResponseCount: 0
+                                                      },
+                                                      poll: {
+                                                        pollSentCount: 0,
+                                                        pollSeenCount: 0,
+                                                        pollResponseCount: 0
+                                                      }
+                                                    }
+                                                    if (broadcastSentCount.length > 0) {
+                                                      datacounts.broadcast.broadcastSentCount = broadcastSentCount[0].count
+                                                      if (broadcastSeenCount.length > 0) {
+                                                        datacounts.broadcast.broadcastSeenCount = broadcastSeenCount[0].count
+                                                      }
+                                                    }
+                                                    if (surveySentCount.length > 0) {
+                                                      datacounts.survey.surveySentCount = surveySentCount[0].count
+                                                      if (surveySeenCount.length > 0) {
+                                                        datacounts.survey.surveySeenCount = surveySeenCount[0].count
+                                                        datacounts.survey.surveyResponseCount = sum1
+                                                      }
+                                                    }
+                                                    if (pollSentCount.length > 0) {
+                                                      datacounts.poll.pollSentCount = pollSentCount[0].count
+                                                      if (pollSeenCount.length > 0) {
+                                                        datacounts.poll.pollSeenCount = pollSeenCount[0].count
+                                                        datacounts.poll.pollResponseCount = sum
+                                                      }
+                                                    }
+                                                    logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`)
+                                                    graphDataNew(req.body, companyUser, result.pageIds)
+                                                      .then(result => {
+                                                        return res.status(200).json({
+                                                          status: 'success',
+                                                          payload: {
+                                                            datacounts,
+                                                            graphDatas: result
+                                                          }
+                                                        })
+                                                      })
+                                                      .catch(err => {
+                                                        return res.status(500).json({
+                                                          status: 'failed',
+                                                          description: `Error in getting graphdaya ${JSON.stringify(
+                                                            err)}`
+                                                        })
+                                                      })
+                                                  })
+                                                  .catch(err => {
+                                                    if (err) {
+                                                      return res.status(500).json({
+                                                        status: 'failed',
+                                                        description: `Error in getting poll response count ${JSON.stringify(
+                                                          err)}`
+                                                      })
                                                     }
                                                   })
-                                                })
-                                                .catch(err => {
+                                              })
+                                              .catch(err => {
+                                                if (err) {
+                                                  logger.serverLog(TAG, `Error: ${err}`)
                                                   return res.status(500).json({
                                                     status: 'failed',
-                                                    description: `Error in getting graphdaya ${JSON.stringify(
+                                                    description: `Internal Server Error${JSON.stringify(
                                                       err)}`
                                                   })
-                                                })
-                                            })
-                                            .catch(err => {
-                                              if (err) {
-                                                return res.status(500).json({
-                                                  status: 'failed',
-                                                  description: `Error in getting poll response count ${JSON.stringify(
-                                                    err)}`
-                                                })
-                                              }
-                                            })
-                                        })
-                                        .catch(err => {
-                                          if (err) {
-                                            logger.serverLog(TAG, `Error: ${err}`)
-                                            return res.status(500).json({
-                                              status: 'failed',
-                                              description: `Internal Server Error${JSON.stringify(
-                                                err)}`
-                                            })
-                                          }
-                                        })
-                                    })
-                                    .catch(err => {
-                                      if (err) {
-                                        logger.serverLog(TAG, `Error: ${err}`)
-                                        return res.status(500).json({
-                                          status: 'failed',
-                                          description: `Internal Server Error${JSON.stringify(
-                                            err)}`
-                                        })
-                                      }
-                                    })
-                                })
-                                .catch(err => {
-                                  if (err) {
-                                    return res.status(500).json({
-                                      status: 'failed',
-                                      description: 'responses count not found'
-                                    })
-                                  }
-                                })
-                            })
-                            .catch(err => {
-                              if (err) {
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `Error in getting pollSeenCount count ${JSON.stringify(
-                                    err)}`
-                                })
-                              }
-                            })
-                        })
-                        .catch(err => {
-                          if (err) {
-                            return res.status(500).json({
-                              status: 'failed',
-                              description: `Error in getting pollSentCount count ${JSON.stringify(
-                                err)}`
-                            })
-                          }
-                        })
-                    })
-                    .catch(err => {
-                      if (err) {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Error in getting surveytSeenCount count ${JSON.stringify(
-                            err)}`
-                        })
-                      }
-                    })
-                })
-                .catch(err => {
-                  if (err) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Error in getting surveySentCount count ${JSON.stringify(
-                        err)}`
-                    })
-                  }
-                })
-            })
-            .catch(err => {
-              if (err) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Error in getting broadcastSeenCount count ${JSON.stringify(
-                    err)}`
-                })
-              }
-            })
+                                                }
+                                              })
+                                          })
+                                          .catch(err => {
+                                            if (err) {
+                                              logger.serverLog(TAG, `Error: ${err}`)
+                                              return res.status(500).json({
+                                                status: 'failed',
+                                                description: `Internal Server Error${JSON.stringify(
+                                                  err)}`
+                                              })
+                                            }
+                                          })
+                                      })
+                                      .catch(err => {
+                                        if (err) {
+                                          return res.status(500).json({
+                                            status: 'failed',
+                                            description: 'responses count not found'
+                                          })
+                                        }
+                                      })
+                                  })
+                                  .catch(err => {
+                                    if (err) {
+                                      return res.status(500).json({
+                                        status: 'failed',
+                                        description: `Error in getting pollSeenCount count ${JSON.stringify(
+                                          err)}`
+                                      })
+                                    }
+                                  })
+                              })
+                              .catch(err => {
+                                if (err) {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Error in getting pollSentCount count ${JSON.stringify(
+                                      err)}`
+                                  })
+                                }
+                              })
+                          })
+                          .catch(err => {
+                            if (err) {
+                              return res.status(500).json({
+                                status: 'failed',
+                                description: `Error in getting surveytSeenCount count ${JSON.stringify(
+                                  err)}`
+                              })
+                            }
+                          })
+                      })
+                      .catch(err => {
+                        if (err) {
+                          return res.status(500).json({
+                            status: 'failed',
+                            description: `Error in getting surveySentCount count ${JSON.stringify(
+                              err)}`
+                          })
+                        }
+                      })
+                  })
+                  .catch(err => {
+                    if (err) {
+                      return res.status(500).json({
+                        status: 'failed',
+                        description: `Error in getting broadcastSeenCount count ${JSON.stringify(
+                          err)}`
+                      })
+                    }
+                  })
+              })
+              .catch(err => {
+                if (err) {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Error in getting broadcastSentCount count ${JSON.stringify(
+                      err)}`
+                  })
+                }
+              })
+          })
         })
         .catch(err => {
           if (err) {
             return res.status(500).json({
               status: 'failed',
-              description: `Error in getting broadcastSentCount count ${JSON.stringify(
+              description: `Error in getting connected pages ${JSON.stringify(
                 err)}`
             })
           }
@@ -729,7 +751,6 @@ exports.graphData = function (req, res) {
 
       BroadcastsDataLayer.aggregateForBroadcasts(matchBroadcastAggregate, groupBroadcastAggregate)
         .then(broadcastsgraphdata => {
-          console.log('broadcastsgraphdata', broadcastsgraphdata)
           // We should call the aggregate of polls layer
           let matchPollAggregate = { companyId: companyUser.companyId.toString(),
             'datetime': {
@@ -744,7 +765,6 @@ exports.graphData = function (req, res) {
             count: {$sum: 1}}
           PollsDataLayer.aggregateForPolls(matchPollAggregate, groupPollAggregate)
             .then(pollsgraphdata => {
-              console.log('pollsgraphdata', pollsgraphdata)
               let matchSurveyAggregate = { companyId: companyUser.companyId.toString(),
                 'datetime': {
                   $gte: new Date(
@@ -758,7 +778,6 @@ exports.graphData = function (req, res) {
                 count: {$sum: 1}}
               SurveysDataLayer.aggregateForSurveys(matchSurveyAggregate, groupSurveyAggregate)
                 .then(surveysgraphdata => {
-                  console.log('surveysgraphdata', surveysgraphdata)
                   return res.status(200)
                     .json({status: 'success', payload: {broadcastsgraphdata: broadcastsgraphdata, pollsgraphdata: pollsgraphdata, surveysgraphdata: surveysgraphdata}})
                 })
@@ -804,23 +823,20 @@ exports.graphData = function (req, res) {
       }
     })
 }
-function graphDataNew (body, companyUser) {
+function graphDataNew (body, companyUser, pageIds) {
   return new Promise(function (resolve, reject) {
     logger.serverLog(TAG, `graphDataNew`, body.days)
     let groupAggregate = {
       _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
       count: {$sum: 1}}
-    PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser), groupAggregate)
+    PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
       .then(broadcastsgraphdata => {
         logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
-        console.log('broadcastsgraphdata', broadcastsgraphdata)
-        logger.serverLog(TAG, `aggregateForPolls`, JSON.stringify(LogicLayer.getCriterias(body, companyUser)))
+        logger.serverLog(TAG, `aggregateForPolls`, JSON.stringify(LogicLayer.getCriterias(body, companyUser, false, pageIds)))
         PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
           .then(pollsgraphdata => {
-            console.log('pollsgraphdata', pollsgraphdata)
-            PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser), groupAggregate)
+            PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
               .then(surveysgraphdata => {
-                console.log('surveysgraphdata', surveysgraphdata)
                 resolve({
                   broadcastsgraphdata: broadcastsgraphdata,
                   pollsgraphdata: pollsgraphdata,
@@ -1037,14 +1053,11 @@ exports.updateSubscriptionPermission = function (req, res) {
                       `Page access token from graph api error ${JSON.stringify(
                         err)}`)
                   }
-                  console.log('response from subscription_messaging', respp.body)
                   if (respp.body && respp.body.data && respp.body.data.length > 0) {
                     for (let a = 0; a < respp.body.data.length; a++) {
                       if (respp.body.data[a].feature === 'subscription_messaging' && respp.body.data[a].status === 'approved') {
-                        console.log('inside if')
                         callApi.callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}, req.headers.authorization) // disconnect page
                           .then(updated => {
-                            console.log('updated', updated)
                           })
                           .catch(err => {
                             console.log('failed to update page', err)
@@ -1076,13 +1089,11 @@ exports.subscriberSummary = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
+      console.log('subscriber summary')
       callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true), req.headers.authorization)
         .then(subscribers => {
-          console.log('subscribes', subscribers)
           callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false), req.headers.authorization)
             .then(unsubscribes => {
-              console.log('unsubscribes', unsubscribes)
-              console.log('LogicLayer', JSON.stringify(LogicLayer.queryForSubscribersGraph(req.body, companyUser, true)))
               callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true), req.headers.authorization)
                 .then(graphdata => {
                   let data = {
