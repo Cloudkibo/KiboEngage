@@ -4,7 +4,6 @@ const SequenceUtility = require('./utility')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/sequenceMessaging/sequence.controller.js'
-const mongoose = require('mongoose')
 
 exports.allMessages = function (req, res) {
   SequenceDatalayer.genericFindForSequenceMessages({ sequenceId: req.params.id })
@@ -803,7 +802,7 @@ exports.updateTrigger = function (req, res) {
           })
         let trigger = req.body.trigger
         if (trigger.event === 'clicks') {
-          let messageIdToBeUpdated = mongoose.Types.ObjectId(trigger.value)
+          let messageIdToBeUpdated = trigger.value
           // find the message whose payload needs to be updated
           SequenceDatalayer.genericFindForSequenceMessages({ _id: messageIdToBeUpdated })
             .then(seqMessage => {

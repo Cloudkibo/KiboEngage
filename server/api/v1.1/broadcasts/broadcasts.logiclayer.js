@@ -1,4 +1,3 @@
-const mongoose = require('mongoose')
 let _ = require('lodash')
 
 exports.getCriterias = function (body, companyUser) {
@@ -14,7 +13,7 @@ exports.getCriterias = function (body, companyUser) {
   let recordsToSkip = 0
   if (body.filter_criteria.search_value === '' && body.filter_criteria.type_value === '') {
     findCriteria = {
-      companyId: mongoose.Types.ObjectId(companyUser.companyId),
+      companyId: companyUser.companyId,
       'datetime': body.filter_criteria.days !== '0' ? {
         $gte: startDate
       } : { $exists: true }
@@ -22,7 +21,7 @@ exports.getCriterias = function (body, companyUser) {
   } else {
     if (body.filter_criteria.type_value === 'miscellaneous') {
       findCriteria = {
-        companyId: mongoose.Types.ObjectId(companyUser.companyId),
+        companyId: companyUser.companyId,
         'payload.1': { $exists: true },
         title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
         'datetime': body.filter_criteria.days !== '0' ? {
@@ -31,7 +30,7 @@ exports.getCriterias = function (body, companyUser) {
       }
     } else {
       findCriteria = {
-        companyId: mongoose.Types.ObjectId(companyUser.companyId),
+        companyId: companyUser.companyId,
         $and: [{'payload.0.componentType': body.filter_criteria.type_value !== '' ? body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
         title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
         'datetime': body.filter_criteria.days !== '0' ? {
@@ -50,7 +49,7 @@ exports.getCriterias = function (body, companyUser) {
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $lt: mongoose.Types.ObjectId(body.last_id) } }] } },
+      { $match: { $and: [findCriteria, { _id: { $lt: body.last_id } }] } },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
@@ -58,7 +57,7 @@ exports.getCriterias = function (body, companyUser) {
   } else if (body.first_page === 'previous') {
     recordsToSkip = Math.abs((body.requested_page * body.number_of_records) - body.number_of_records)
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $gt: mongoose.Types.ObjectId(body.last_id) } }] } },
+      { $match: { $and: [findCriteria, { _id: { $gt: body.last_id } }] } },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }

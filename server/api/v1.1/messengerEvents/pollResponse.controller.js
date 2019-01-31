@@ -1,6 +1,5 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/pollResponse.controller.js'
-const mongoose = require('mongoose')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const PollsDataLayer = require('../polls/polls.datalayer')
 const needle = require('needle')
@@ -60,10 +59,10 @@ function savepoll (req, resp) {
       }
       if (array.length > 0) {
         for (var i = 0; i < array.length; i++) {
-          if (mongoose.Types.ObjectId(array[i].pollId) ===
-            mongoose.Types.ObjectId(resp.poll_id) &&
-            mongoose.Types.ObjectId(array[i].subscriberId) ===
-            mongoose.Types.ObjectId(subscriber._id)) {
+          if (array[i].pollId ===
+            resp.poll_id &&
+            array[i].subscriberId ===
+            subscriber._id) {
             temp = false
             break
           }

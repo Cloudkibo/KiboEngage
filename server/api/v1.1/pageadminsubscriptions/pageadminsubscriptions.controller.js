@@ -2,7 +2,6 @@
 
 const PageAdminSubscriptionsDataLayer = require('./pageadminsubscriptions.datalayer')
 const utility = require('../utility')
-const mongoose = require('mongoose')
 const logger = require('../../../components/logger')
 
 // Get list of companyprofiles
@@ -36,10 +35,10 @@ exports.index = function (req, res) {
 
 exports.create = function (req, res) {
   var payload = {
-    'companyId': mongoose.Types.ObjectId(req.body.companyId),
-    'userId': mongoose.Types.ObjectId(req.body.userId),
+    'companyId': req.body.companyId,
+    'userId': req.body.userId,
     'subscriberId': req.body.subscriberId,
-    'pageId': mongoose.Types.ObjectId(req.body.pageId)
+    'pageId': req.body.pageId
   }
   logger.serverLog('', `payload ${JSON.stringify(payload)}`)
   PageAdminSubscriptionsDataLayer.create(payload)
