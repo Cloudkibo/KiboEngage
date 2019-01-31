@@ -682,6 +682,7 @@ exports.sendPoll = function (req, res) {
                                                   `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                               }
                                               if (subscribers.length > 0) {
+                                                logger.serverLog(TAG, `subscribers ${JSON.stringify(subscribers)}`)
                                                 broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                   subscribers = taggedSubscribers
                                                   logger.serverLog(TAG, `taggedSubscribers ${JSON.stringify(subscribers)}`)
