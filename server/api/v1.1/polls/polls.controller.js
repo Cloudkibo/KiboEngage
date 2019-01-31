@@ -570,7 +570,7 @@ exports.sendPoll = function (req, res) {
                                       utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
                                         .then(lists => {
                                           let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
-                                          console.log('subsFindCriteria', subsFindCriteria)
+                                          logger.serverLog(TAG, `subsFindCriteria${JSON.stringify(subsFindCriteria)}`)
                                           utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                             .then(subscribers => {
                                               console.log('subscribers', subscribers)
