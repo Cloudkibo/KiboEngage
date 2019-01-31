@@ -574,8 +574,10 @@ exports.sendPoll = function (req, res) {
                                       utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
                                         .then(lists => {
                                           let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
+                                          console.log('subsFindCriteria', subsFindCriteria)
                                           utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                             .then(subscribers => {
+                                              console.log('subscribers', subscribers)
                                               needle.get(
                                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`, (err, resp) => {
                                                   if (err) {
