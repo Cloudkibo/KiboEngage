@@ -355,8 +355,6 @@ function parseUrl (text) {
 }
 
 function applyTagFilterIfNecessary (req, subscribers, fn) {
-  logger.serverLog(TAG, `subscribers in Tags ${JSON.stringify(subscribers)}`)
-  logger.serverLog(TAG, `Segmentation tags ${JSON.stringify(req.body)}`)
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
     callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tagSubscribers => {
@@ -365,7 +363,7 @@ function applyTagFilterIfNecessary (req, subscribers, fn) {
         for (let i = 0; i < subscribers.length; i++) {
           for (let j = 0; j < tagSubscribers.length; j++) {
             if (subscribers[i]._id.toString() ===
-              tagSubscribers[j].subscriberId.toString()) {
+              tagSubscribers[j].subscriberId._id.toString()) {
               subscribersPayload.push({
                 _id: subscribers[i]._id,
                 firstName: subscribers[i].firstName,
