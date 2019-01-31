@@ -1,6 +1,5 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/surveyResponse.controller.js'
-const mongoose = require('mongoose')
 const needle = require('needle')
 const SurveysDataLayer = require('../surveys/surveys.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
@@ -142,7 +141,7 @@ function savesurvey (req) {
                       })
                   })
               } else { // else send thank you message
-                SurveysDataLayer.genericUpdateForSurvey({ _id: mongoose.Types.ObjectId(resp.survey_id) },
+                SurveysDataLayer.genericUpdateForSurvey({ _id: resp.survey_id },
                   { $inc: { isresponded: 1 - surveyresponse.nModified } }, {})
                   .then(updated => {
                   })

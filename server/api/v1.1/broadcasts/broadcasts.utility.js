@@ -11,7 +11,6 @@ const callApi = require('../utility')
 const SurveyResponsesDataLayer = require('./../surveys/surveyresponse.datalayer')
 const PollResponsesDataLayer = require('./../polls/pollresponse.datalayer')
 const request = require('request')
-const mongoose = require('mongoose')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const needle = require('needle')
 
@@ -696,7 +695,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
-          URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+          URLDataLayer.findOneURL(urlId)
             .then(URLObject => {
               let module = URLObject.module
               module.id = broadcastId
@@ -721,7 +720,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
           if (button.url) {
             let temp = button.url.split('/')
             let urlId = temp[temp.length - 1]
-            URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+            URLDataLayer.findOneURL(urlId)
               .then(URLObject => {
                 URLObject.module.id = broadcastId
                 URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
@@ -745,7 +744,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
             if (button.url) {
               let temp = button.url.split('/')
               let urlId = temp[temp.length - 1]
-              URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+              URLDataLayer.findOneURL(urlId)
                 .then(URLObject => {
                   URLObject.module.id = broadcastId
                   URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})

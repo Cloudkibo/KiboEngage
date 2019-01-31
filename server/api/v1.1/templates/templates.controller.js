@@ -1,4 +1,3 @@
-const SurveyQuestions = require('./surveyQuestion.model')
 const dataLayer = require('./template.datalayer')
 const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
@@ -398,11 +397,11 @@ exports.editSurvey = function (req, res) {
               for (let question in req.body.questions) {
                 let options = []
                 options = req.body.questions[question].options
-                const surveyQuestion = new SurveyQuestions({
+                const surveyQuestion = {
                   statement: req.body.questions[question].statement, // question statement
                   options, // array of question options
                   surveyId: survey._id
-                })
+                }
                 QuestionsurveydataLayer.createQuestionSurveys(surveyQuestion)
                   .then(survey => {
                   })

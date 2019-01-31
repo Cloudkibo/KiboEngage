@@ -10,7 +10,6 @@ const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
 const PagePollDataLayer = require('../page_poll/page_poll.datalayer')
 const SequenceDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const TAG = 'api/pages/dashboard.controller.js'
-const mongoose = require('mongoose')
 const sortBy = require('sort-array')
 const callApi = require('../utility')
 const needle = require('needle')
@@ -252,11 +251,15 @@ exports.sentVsSeen = function (req, res) {
     })
 }
 
-function populateIds (pages) {
+function populateIds (pages, subscriber) {
   return new Promise(function (resolve, reject) {
     let pageIds = []
     for (let i = 0; i < pages.length; i++) {
-      pageIds.push(pages[i].pageId)
+      if (subscriber) {
+        pageIds.push(pages[i]._id)
+      } else {
+        pageIds.push(pages[i].pageId)
+      }
       if (pageIds.length === pages.length) {
         resolve({pageIds: pageIds})
       }
@@ -517,7 +520,7 @@ exports.likesVsSubscribers = function (req, res) {
       callApi.callApi('subscribers/aggregate', 'post', [
         {
           $match: {
-            userId: mongoose.Types.ObjectId(req.params.userid)
+            userId: req.params.userid
           }
         }, {
           $group: {
@@ -940,7 +943,7 @@ exports.toppages = function (req, res) {
 exports.getAllSubscribers = function (req, res) {
   let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
   let findCriteria = {
-    pageId: mongoose.Types.ObjectId(req.params.pageid),
+    pageId: req.params.pageid,
     $or: [{firstName: {$regex: search}}, {lastName: {$regex: search}}],
     gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
     locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
@@ -1089,41 +1092,51 @@ exports.subscriberSummary = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      console.log('subscriber summary')
-      callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true), req.headers.authorization)
-        .then(subscribers => {
-          callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false), req.headers.authorization)
-            .then(unsubscribes => {
-              callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true), req.headers.authorization)
-                .then(graphdata => {
-                  let data = {
-                    subscribes: subscribers.length > 0 ? subscribers[0].count : 0,
-                    unsubscribes: unsubscribes.length > 0 ? unsubscribes[0].count : 0,
-                    graphdata: graphdata
-                  }
-                  return res.status(200).json({
-                    status: 'success',
-                    payload: data
+      callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}, req.headers.authorization) // fetch connected pages
+        .then(pages => {
+          populateIds(pages, true).then(result => {
+            callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true, result.pageIds), req.headers.authorization)
+              .then(subscribers => {
+                callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false, result.pageIds), req.headers.authorization)
+                  .then(unsubscribes => {
+                    callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true, result.pageIds), req.headers.authorization)
+                      .then(graphdata => {
+                        let data = {
+                          subscribes: subscribers.length > 0 ? subscribers[0].count : 0,
+                          unsubscribes: unsubscribes.length > 0 ? unsubscribes[0].count : 0,
+                          graphdata: graphdata
+                        }
+                        return res.status(200).json({
+                          status: 'success',
+                          payload: data
+                        })
+                      })
+                      .catch(err => {
+                        return res.status(500).json({
+                          status: 'failed',
+                          description: `Error in getting graphdata ${JSON.stringify(err)}`
+                        })
+                      })
                   })
-                })
-                .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Error in getting graphdata ${JSON.stringify(err)}`
+                  .catch(err => {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Error in getting unsubscribers ${JSON.stringify(err)}`
+                    })
                   })
-                })
-            })
-            .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Error in getting unsubscribers ${JSON.stringify(err)}`
               })
-            })
+              .catch(err => {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Error in getting subscribers ${JSON.stringify(err)}`
+                })
+              })
+          })
         })
         .catch(err => {
           return res.status(500).json({
             status: 'failed',
-            description: `Error in getting subscribers ${JSON.stringify(err)}`
+            description: `Internal Server Error ${JSON.stringify(err)}`
           })
         })
     })
