@@ -66,7 +66,7 @@ exports.create = function (req, res) {
         .catch(err => {
           return res.status(500).json({
             status: 'failed',
-            description: err
+            description: err.error.messsage
           })
         })
     })
