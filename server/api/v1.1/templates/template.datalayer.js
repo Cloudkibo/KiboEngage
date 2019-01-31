@@ -1,4 +1,3 @@
-const mongoose = require('mongoose')
 const { callApi } = require('../utility')
 
 exports.allPolls = () => {
@@ -25,7 +24,7 @@ exports.pollTemplateaggregateLimit = (aggregateObject) => {
 exports.pollTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
     purpose: 'aggregate',
-    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: aggregateObject.req.body.last_id}}]},
     sort: {datetime: -1},
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records
@@ -58,7 +57,7 @@ exports.surveyTemplateaggregateLimit = (aggregateObject) => {
 exports.surveyTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
     purpose: 'aggregate',
-    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: aggregateObject.req.body.last_id}}]},
     sort: {datetime: -1},
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records
@@ -312,7 +311,7 @@ exports.broadcastTemplateaggregateLimit = (aggregateObject) => {
 exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
     purpose: 'aggregate',
-    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: aggregateObject.req.body.last_id}}]},
     sort: {datetime: -1},
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records

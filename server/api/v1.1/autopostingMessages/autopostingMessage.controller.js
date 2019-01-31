@@ -1,6 +1,5 @@
 const AutopostingMessages = require('./autopostingMessages.datalayer')
 const utility = require('../utility')
-const mongoose = require('mongoose')
 
 exports.getMessages = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -13,7 +12,7 @@ exports.getMessages = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         AutopostingMessages.countAutopostingMessagesDocuments(
-          {companyId: mongoose.Types.ObjectId(companyUser.companyId), autopostingId: mongoose.Types.ObjectId(req.params.id)}
+          {companyId: companyUser.companyId, autopostingId: req.params.id}
         )
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id}, req.body.number_of_records)
@@ -34,7 +33,7 @@ exports.getMessages = function (req, res) {
           })
       } else if (req.body.first_page === 'next') {
         AutopostingMessages.countAutopostingMessagesDocuments(
-          {companyId: mongoose.Types.ObjectId(companyUser.companyId), autopostingId: mongoose.Types.ObjectId(req.params.id)}
+          {companyId: companyUser.companyId, autopostingId: req.params.id}
         )
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id, _id: {$gt: req.body.last_id}}, req.body.number_of_records)
@@ -55,7 +54,7 @@ exports.getMessages = function (req, res) {
           })
       } else if (req.body.first_page === 'previous') {
         AutopostingMessages.countAutopostingMessagesDocuments(
-          {companyId: mongoose.Types.ObjectId(companyUser.companyId), autopostingId: mongoose.Types.ObjectId(req.params.id)}
+          {companyId: companyUser.companyId, autopostingId: req.params.id}
         )
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id, _id: {$lt: req.body.last_id}}, req.body.number_of_records)
