@@ -255,7 +255,7 @@ exports.sentVsSeen = function (req, res) {
 function populateIds (pages) {
   return new Promise(function (resolve, reject) {
     let pageIds = []
-    for (let i = 0; i < pages; i++) {
+    for (let i = 0; i < pages.length; i++) {
       pageIds.push(pages[i].pageId)
       if (pageIds.length === pages.length) {
         resolve({pageIds: pageIds})
