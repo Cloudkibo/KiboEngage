@@ -39,39 +39,12 @@ exports.deletePayload = {
   '$schema': 'http://json-schema.org/draft-04/schema#',
   'type': 'object',
   'properties': {
-    'purpose': {
+    'customFieldId': {
       'type': 'string'
-    },
-    'match': {
-      'type': 'object',
-      'properties': {
-        '_id': {
-          'type': 'string'
-        },
-        'name': {
-          'type': 'string'
-        },
-        'type': {
-          'type': 'string'
-        },
-        'description': {
-          'type': 'string'
-        },
-        'companyId': {
-          'type': 'string'
-        },
-        'createdBy': {
-          'type': 'string'
-        },
-        'createdDate': {
-          'type': 'string'
-        }
-      }
     }
   },
   'required': [
-    'purpose',
-    'match'
+    'customFieldId'
   ]
 }
 
@@ -80,42 +53,14 @@ exports.updatePayload =
     '$schema': 'http://json-schema.org/draft-04/schema#',
     'type': 'object',
     'properties': {
-      'purpose': {
+      'customFieldId': {
         'type': 'string'
-      },
-      'match': {
-        'type': 'object',
-        'properties': {
-          '_id': {
-            'type': 'string'
-          },
-          'name': {
-            'type': 'string'
-          },
-          'type': {
-            'type': 'string'
-          },
-          'description': {
-            'type': 'string'
-          },
-          'companyId': {
-            'type': 'string'
-          },
-          'createdBy': {
-            'type': 'string'
-          },
-          'createdDate': {
-            'type': 'string'
-          }
-        }
       },
       'updated': {
         'type': 'object'
       }
     },
     'required': [
-      'purpose',
-      'match',
       'updated'
     ]
   }
