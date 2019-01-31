@@ -22,7 +22,7 @@ exports.policyNotification = function (req, res) {
           subject: 'Facebook Page Policy Violation',
           text: "Your Facebook page is violating Facebook's terms of service"
         })
-        var emailText = `Your page ${pages[i].pageName} is blocked because of ${req.body.policy.reason}`
+        var emailText = `Your page ${pages[0].pageName} is blocked because of ${req.body.policy.reason}`
         email.setHtml(
           '<body style="min-width: 80%;-webkit-text-size-adjust: 100%;-ms-text-size-adjust: 100%;margin: 0;padding: 0;direction: ltr;background: #f6f8f1;width: 80% !important;"><table class="body", style="width:100%"> ' +
               '<tr> <td class="center" align="center" valign="top"> <!-- BEGIN: Header --> <table class="page-header" align="center" style="width: 100%;background: #1f1f1f;"> <tr> <td class="center" align="center"> ' +
