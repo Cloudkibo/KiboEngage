@@ -19,8 +19,6 @@ exports.getCriterias = function (body, companyUser, seen, pageIds) {
 
 exports.queryForSubscribers = function (body, companyUser, isSubscribed, pageIds) {
   let query = [
-    { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
-    { $unwind: '$pageId' },
     {$match: { companyId: companyUser.companyId,
       'datetime': body.days === 'all' ? { $exists: true } : {
         $gte: new Date(
@@ -43,8 +41,6 @@ exports.queryForSubscribers = function (body, companyUser, isSubscribed, pageIds
 
 exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pageIds) {
   let query = [
-    { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
-    { $unwind: '$pageId' },
     {$match: { companyId: companyUser.companyId,
       'datetime': body.days === 'all' ? { $exists: true } : {
         $gte: new Date(
