@@ -182,57 +182,56 @@ exports.delete = function (req, res) {
       console.log('tagsSubscriber[0]', tagsSubscriber[0])
       console.log('req.body.tagId', req.body.tagId)
       if (tagsSubscriber[0]) {
-      callApi.callApi(`tags_subscriber/${tagsSubscriber[0]._id}`, 'delete', {}, req.headers.authorization)
-        .then(result => {
-          callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
-            .then(tagPayload => {
-              require('./../../../config/socketio').sendMessageToClient({
-                room_id: tagPayload.companyId,
-                body: {
-                  action: 'tag_remove',
-                  payload: {
-                    tag_id: req.body.tagId
+        callApi.callApi(`tags_subscriber/${tagsSubscriber[0]._id}`, 'delete', {}, req.headers.authorization)
+          .then(result => {
+            callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
+              .then(tagPayload => {
+                require('./../../../config/socketio').sendMessageToClient({
+                  room_id: tagPayload.companyId,
+                  body: {
+                    action: 'tag_remove',
+                    payload: {
+                      tag_id: req.body.tagId
+                    }
                   }
-                }
+                })
+                return res.status(200)
+                  .json({status: 'success', description: 'Tag removed successfully'})
               })
-              return res.status(200)
-                .json({status: 'success', description: 'Tag removed successfully'})
-            })
-            .catch(err => {
-              return res.status(404).json({
-                status: 'failed',
-                description: `Failed to remove tag ${err}`
+              .catch(err => {
+                return res.status(404).json({
+                  status: 'failed',
+                  description: `Failed to remove tag ${err}`
+                })
               })
-            })
-        })
-        .catch(err => {
-          return res.status(404).json({
-            status: 'failed',
-            description: `Failed to remove tag subscriber${err}`
           })
-        })
-      }
-      else {
+          .catch(err => {
+            return res.status(404).json({
+              status: 'failed',
+              description: `Failed to remove tag subscriber${err}`
+            })
+          })
+      } else {
         callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
-        .then(tagPayload => {
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: tagPayload.companyId,
-            body: {
-              action: 'tag_remove',
-              payload: {
-                tag_id: req.body.tagId
+          .then(tagPayload => {
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: tagPayload.companyId,
+              body: {
+                action: 'tag_remove',
+                payload: {
+                  tag_id: req.body.tagId
+                }
               }
-            }
+            })
+            return res.status(200)
+              .json({status: 'success', description: 'Tag removed successfully'})
           })
-          return res.status(200)
-            .json({status: 'success', description: 'Tag removed successfully'})
-        })
-        .catch(err => {
-          return res.status(404).json({
-            status: 'failed',
-            description: `Failed to remove tag ${err}`
+          .catch(err => {
+            return res.status(404).json({
+              status: 'failed',
+              description: `Failed to remove tag ${err}`
+            })
           })
-        })
       }
     })
     .catch(err => {

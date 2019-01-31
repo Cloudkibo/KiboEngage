@@ -30,6 +30,10 @@ const all = {
     consumer_token: process.env.TWITTER_TOKEN || '1059331127113080832-7BRFuE18tyLXmdUZORbW2z3Xu1SC6S',
     consumer_token_secret: process.env.TWITTER_TOKEN_SECRET || 'HvdJuX3jZ4bWIURLJvNNETvY8AVvmSwtFE8hn6251XUp3',
     callbackUrl: 'https://swebhooks.cloudkibo.com/api/twitter'
+  },
+  sendgrid: {
+    username: 'cloudkibo',
+    password: 'cl0udk1b0'
   }
 }
 

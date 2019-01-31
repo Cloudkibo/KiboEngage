@@ -18,7 +18,7 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     }
   }
   let apiUrl = config.api_urls[type]
-  //console.log('apiUrl: ', apiUrl)
+  // console.log('apiUrl: ', apiUrl)
   let options = {
     method: method.toUpperCase(),
     uri: `${apiUrl}/${endpoint}`,
