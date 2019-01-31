@@ -13,6 +13,7 @@ exports.getCriterias = function (body, companyUser, seen, pageIds) {
 }
 
 exports.queryForSubscribers = function (body, companyUser, isSubscribed) {
+  console.log('query for subscribers')
   let query = [
     { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
     { $unwind: '$pageId' },

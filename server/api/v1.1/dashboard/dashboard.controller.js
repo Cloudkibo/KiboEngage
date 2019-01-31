@@ -1089,6 +1089,7 @@ exports.subscriberSummary = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
+      console.log('subscriber summary')
       callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true), req.headers.authorization)
         .then(subscribers => {
           callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false), req.headers.authorization)
