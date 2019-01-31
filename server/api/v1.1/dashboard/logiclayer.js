@@ -50,7 +50,6 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed) {
         $lt: new Date(
           (new Date().getTime()))
       },
-      'pageId': body.pageId === 'all' ? { $exists: true } : body.pageId,
       isSubscribed: isSubscribed
     }
     },

@@ -265,7 +265,6 @@ function populateIds (pages) {
 }
 
 exports.sentVsSeenNew = function (req, res) {
-  console.log('req.body in sentVsSeenNew', req.body)
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
@@ -280,11 +279,9 @@ exports.sentVsSeenNew = function (req, res) {
           // We should call the count function when we switch to v1.1
             PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
               .then(broadcastSentCount => {
-                console.log('broadcastSentCount', broadcastSentCount)
                 // We should call the count function when we switch to v1.1
                 PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
                   .then(broadcastSeenCount => {
-                    console.log('broadcastSeenCount', broadcastSeenCount)
                     // call the count function in v1.1
                     PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
                       .then(surveySentCount => {
@@ -297,7 +294,6 @@ exports.sentVsSeenNew = function (req, res) {
                                 // we should call the v1.1 count function because we are counting here.
                                 PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
                                   .then(pollSeenCount => {
-                                    console.log('pollSeenCount', pollSeenCount)
                                     SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
                                       .then(surveyResponseCount => {
                                         PollsDataLayer.genericFindForPolls({companyId: companyUser.companyId})
@@ -755,7 +751,6 @@ exports.graphData = function (req, res) {
 
       BroadcastsDataLayer.aggregateForBroadcasts(matchBroadcastAggregate, groupBroadcastAggregate)
         .then(broadcastsgraphdata => {
-          console.log('broadcastsgraphdata', broadcastsgraphdata)
           // We should call the aggregate of polls layer
           let matchPollAggregate = { companyId: companyUser.companyId.toString(),
             'datetime': {
@@ -770,7 +765,6 @@ exports.graphData = function (req, res) {
             count: {$sum: 1}}
           PollsDataLayer.aggregateForPolls(matchPollAggregate, groupPollAggregate)
             .then(pollsgraphdata => {
-              console.log('pollsgraphdata', pollsgraphdata)
               let matchSurveyAggregate = { companyId: companyUser.companyId.toString(),
                 'datetime': {
                   $gte: new Date(
@@ -784,7 +778,6 @@ exports.graphData = function (req, res) {
                 count: {$sum: 1}}
               SurveysDataLayer.aggregateForSurveys(matchSurveyAggregate, groupSurveyAggregate)
                 .then(surveysgraphdata => {
-                  console.log('surveysgraphdata', surveysgraphdata)
                   return res.status(200)
                     .json({status: 'success', payload: {broadcastsgraphdata: broadcastsgraphdata, pollsgraphdata: pollsgraphdata, surveysgraphdata: surveysgraphdata}})
                 })
@@ -839,14 +832,11 @@ function graphDataNew (body, companyUser, pageIds) {
     PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
       .then(broadcastsgraphdata => {
         logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
-        console.log('broadcastsgraphdata', broadcastsgraphdata)
         logger.serverLog(TAG, `aggregateForPolls`, JSON.stringify(LogicLayer.getCriterias(body, companyUser, false, pageIds)))
         PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
           .then(pollsgraphdata => {
-            console.log('pollsgraphdata', pollsgraphdata)
             PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
               .then(surveysgraphdata => {
-                console.log('surveysgraphdata', surveysgraphdata)
                 resolve({
                   broadcastsgraphdata: broadcastsgraphdata,
                   pollsgraphdata: pollsgraphdata,
@@ -1063,14 +1053,11 @@ exports.updateSubscriptionPermission = function (req, res) {
                       `Page access token from graph api error ${JSON.stringify(
                         err)}`)
                   }
-                  console.log('response from subscription_messaging', respp.body)
                   if (respp.body && respp.body.data && respp.body.data.length > 0) {
                     for (let a = 0; a < respp.body.data.length; a++) {
                       if (respp.body.data[a].feature === 'subscription_messaging' && respp.body.data[a].status === 'approved') {
-                        console.log('inside if')
                         callApi.callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}, req.headers.authorization) // disconnect page
                           .then(updated => {
-                            console.log('updated', updated)
                           })
                           .catch(err => {
                             console.log('failed to update page', err)
@@ -1104,11 +1091,8 @@ exports.subscriberSummary = function (req, res) {
       }
       callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true), req.headers.authorization)
         .then(subscribers => {
-          console.log('subscribes', subscribers)
           callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false), req.headers.authorization)
             .then(unsubscribes => {
-              console.log('unsubscribes', unsubscribes)
-              console.log('LogicLayer', JSON.stringify(LogicLayer.queryForSubscribersGraph(req.body, companyUser, true)))
               callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true), req.headers.authorization)
                 .then(graphdata => {
                   let data = {
