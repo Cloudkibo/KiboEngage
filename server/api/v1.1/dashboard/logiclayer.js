@@ -33,10 +33,11 @@ exports.queryForSubscribers = function (body, companyUser, isSubscribed) {
       count: {$sum: 1}}
     }
   ]
+  console.log('query before', query)
   if (body.pageId === 'all') {
-    query[0].$match.pageId.connected = true
+    query[0].$match.pageId = {connected: true}
   } else {
-    query[0].$match.pageId._id = body.pageId
+    query[0].$match.pageId = {_id: body.pageId}
   }
   console.log('final query', query)
   return query
