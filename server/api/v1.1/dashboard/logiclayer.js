@@ -23,7 +23,8 @@ exports.queryForSubscribers = function (body, companyUser, isSubscribed) {
         $lt: new Date(
           (new Date().getTime()))
       },
-      isSubscribed: isSubscribed
+      isSubscribed: isSubscribed,
+      pageId: {}
     }
     },
     {$group: {
@@ -36,6 +37,7 @@ exports.queryForSubscribers = function (body, companyUser, isSubscribed) {
   } else {
     query[0].$match.pageId._id = body.pageId
   }
+  console.log('final query', query)
   return query
 }
 
