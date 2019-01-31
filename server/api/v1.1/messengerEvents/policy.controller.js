@@ -19,8 +19,8 @@ exports.policyNotification = function (req, res) {
         let email = new sendgrid.Email({
           to: user.email,
           from: 'support@cloudkibo.com',
-          subject: 'KiboPush: Webhook failed',
-          text: 'Welcome to KiboPush'
+          subject: 'Facebook Page Policy Violation',
+          text: "Your Facebook page is violating Facebook's terms of service"
         })
         var emailText = `Your page ${pages[i].pageName} is blocked because of ${req.body.policy.reason}`
         email.setHtml(
