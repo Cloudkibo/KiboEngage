@@ -507,6 +507,7 @@ exports.sendPoll = function (req, res) {
                     })
                   }
                   let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
+                  logger.serverLog(TAG, `pollPayload ${JSON.stringify(pollPayload)}`)
                   PollDataLayer.createForPoll(pollPayload)
                     .then(pollCreated => {
                       require('./../../../config/socketio').sendMessageToClient({
@@ -534,7 +535,9 @@ exports.sendPoll = function (req, res) {
                                 currentUser = connectedUser
                               }
                               const messageData = PollLogicLayer.prepareMessageData(req.body, pollCreated._id)
+                              logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
                               let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
+                              logger.serverLog(TAG, `pagesFindCriteria ${JSON.stringify(pagesFindCriteria)}`)
                               utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                                 .then(pages => {
                                   for (let z = 0; z < pages.length && !abort; z++) {
@@ -681,6 +684,7 @@ exports.sendPoll = function (req, res) {
                                               if (subscribers.length > 0) {
                                                 broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                   subscribers = taggedSubscribers
+                                                  logger.serverLog(TAG, `taggedSubscribers ${JSON.stringify(subscribers)}`)
                                                   broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                     subscribers = repliedSubscribers
                                                     console.log('subscribers.length', subscribers.length)
