@@ -1095,7 +1095,7 @@ exports.subscriberSummary = function (req, res) {
       }
       callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}, req.headers.authorization) // fetch connected pages
         .then(pages => {
-          populateIds(pages).then(result => {
+          populateIds(pages, true).then(result => {
             callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true, result.pageIds), req.headers.authorization)
               .then(subscribers => {
                 callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false, result.pageIds), req.headers.authorization)
