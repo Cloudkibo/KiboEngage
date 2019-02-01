@@ -108,8 +108,8 @@ exports.getAll = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let criterias = logicLayer.getCriterias(req.body, companyuser)
-      console.log('criterias.countCriteria', criterias.countCriteria)
-      console.log('criterias.fetchCriteria', JSON.stringify(criterias.fetchCriteria))
+      console.log('criterias.countCriteria new', criterias.countCriteria)
+      console.log('criterias.fetchCriteria new', JSON.stringify(criterias.fetchCriteria))
       utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
         .then(count => {
           utility.callApi(`subscribers/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch subscribers
@@ -119,9 +119,11 @@ exports.getAll = function (req, res) {
               logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
               utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
                 .then(tags => {
-                  logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
+                  //  logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
+                  console.log('tags fetched:', tags)
                   let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags, req.body.filter_criteria.tag_value)
-                  logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`)
+                  //  logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`)
+                  console.log('subscribersPayload', subscribersPayload)
                   return res.status(200).json({
                     status: 'success',
                     payload: {subscribers: subscribersPayload, count: count.length > 0 ? count[0].count : 0}

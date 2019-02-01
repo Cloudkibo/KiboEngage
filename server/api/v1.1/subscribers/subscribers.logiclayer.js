@@ -18,11 +18,13 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
     subscribersPayload[i].tags = []
     var isTaggedSubscriber = false
     for (let j = 0; j < tags.length; j++) {
-      if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
-        if (tagValue === tags[j].tagId._id.toString()) {
-          isTaggedSubscriber = true
+      if (tags[j].tagId) {
+        if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
+          if (tagValue === tags[j].tagId._id.toString()) {
+            isTaggedSubscriber = true
+          }
+          subscribersPayload[i].tags.push(tags[j].tagId.tag)
         }
-        subscribersPayload[i].tags.push(tags[j].tagId.tag)
       }
     }
     if (isTaggedSubscriber) {
@@ -42,14 +44,12 @@ exports.getCriterias = function (body, companyUser) {
   let recordsToSkip = 0
   if (!body.filter) {
     findCriteria = {
-      companyId: companyUser.companyId,
-      isEnabledByPage: true
+      companyId: companyUser.companyId
     }
   } else {
     search = '.*' + body.filter_criteria.search_value + '.*'
     findCriteria = {
       companyId: companyUser.companyId,
-      isEnabledByPage: true,
       $or: [{firstName: {$regex: search, $options: 'i'}}, {lastName: {$regex: search, $options: 'i'}}],
       gender: body.filter_criteria.gender_value !== '' ? body.filter_criteria.gender_value : {$exists: true},
       locale: body.filter_criteria.locale_value !== '' ? body.filter_criteria.locale_value : {$exists: true},
@@ -57,16 +57,20 @@ exports.getCriterias = function (body, companyUser) {
       pageId: body.filter_criteria.page_value !== '' ? body.filter_criteria.page_value : {$exists: true}
     }
   }
+  let temp = JSON.parse(JSON.stringify(findCriteria))
+  temp['pageId._id'] = temp.pageId
+  temp['pageId.connected'] = true
+
   let countCriteria = [
-    {$match: findCriteria},
+    { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+    { $unwind: '$pageId' },
+    { $match: temp },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
   // findCriteria is for the count
   // here temp is the findcriteria for Payload
-  let temp = JSON.parse(JSON.stringify(findCriteria))
-  temp['pageId._id'] = temp.pageId
   delete temp.pageId
-  console.log('temp', temp)
+  console.log('temp new', temp)
   if (body.first_page === 'first') {
     finalCriteria = [
       { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
