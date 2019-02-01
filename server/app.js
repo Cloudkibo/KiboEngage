@@ -17,8 +17,6 @@ if (config.env === 'production' || config.env === 'staging') {
     appObj.use(Raven.requestHandler())
 }
 
-appObj.use(Raven.requestHandler())
-
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
 require('./routes')(appObj)
