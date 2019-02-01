@@ -403,7 +403,7 @@ exports.send = function (req, res) {
                                                   $in: req.body.segmentationList
                                                 }
                                               })
-                                            callApi.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                            callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                               .then(lists => {
                                                 let subsFindCriteria = {pageId: pages[z]._id}
                                                 let listData = []
@@ -430,8 +430,10 @@ exports.send = function (req, res) {
                                                 callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                                   .then(subscribers => {
                                                     needle.get(
-                                                      `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
-                                                      .then(resp => {
+                                                      `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`, (err, resp) => {
+                                                        if (err) {
+                                                          logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err)}`)
+                                                        }
                                                         utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                           subscribers = taggedSubscribers
                                                           utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
@@ -915,6 +917,7 @@ exports.sendSurvey = function (req, res) {
                                                   return res.status(500).json({status: `failed ${error}`, payload: error})
                                                 })
                                               if (req.body.isList === true) {
+                                                console.log('Inside Lists')
                                                 let ListFindCriteria = {}
                                                 ListFindCriteria = _.merge(ListFindCriteria,
                                                   {
@@ -923,8 +926,9 @@ exports.sendSurvey = function (req, res) {
                                                     }
                                                   })
 
-                                                utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                                callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                                   .then(lists => {
+                                                    console.log('Lists', lists)
                                                     let subsFindCriteria = {pageId: pages[z]._id}
                                                     let listData = []
                                                     if (lists.length > 1) {
@@ -950,9 +954,11 @@ exports.sendSurvey = function (req, res) {
 
                                                     callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                                       .then(subscribers => {
+                                                        console.log('subscribers in list', subscribers)
                                                         needle.get(
                                                           `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                                           (err, resp) => {
+                                                            console.log('Response access token', resp)
                                                             if (err) {
                                                               logger.serverLog(TAG,
                                                                 `Page access token from graph api error ${JSON.stringify(
@@ -960,6 +966,7 @@ exports.sendSurvey = function (req, res) {
                                                             }
                                                             utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                               subscribers = taggedSubscribers
+                                                              console.log('taggedSubscribers', taggedSubscribers)
                                                               utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                                 subscribers = repliedSubscribers
                                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
@@ -990,7 +997,8 @@ exports.sendSurvey = function (req, res) {
                                                                           // this calls the needle when the last message was older than 30 minutes
                                                                           // checks the age of function using callback
                                                                           logger.serverLog(TAG, 'just before sending')
-                                                                          compUtility.checkLastMessageAge(subscribers[j].senderId, (err, isLastMessage) => {
+                                                                          compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
+                                                                            console.log('IslastMessage', isLastMessage)
                                                                             if (err) {
                                                                               logger.serverLog(TAG, 'inside error')
                                                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -1094,7 +1102,7 @@ exports.sendSurvey = function (req, res) {
                                                         if (err) {
                                                           logger.serverLog(TAG,
                                                             `Page access token from graph api error ${JSON.stringify(
-                                                              err)}`)
+                                                              err.body)}`)
                                                         }
                                                         utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                           subscribers = taggedSubscribers
@@ -1129,6 +1137,7 @@ exports.sendSurvey = function (req, res) {
                                                                       // checks the age of function using callback
                                                                       logger.serverLog(TAG, 'just before sending')
                                                                       compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
+                                                                        console.log('islastmessage', isLastMessage)
                                                                         if (err) {
                                                                           logger.serverLog(TAG, 'inside error')
                                                                           return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -1196,7 +1205,7 @@ exports.sendSurvey = function (req, res) {
                                               }
                                             }
                                             return res.status(200)
-                                              .json({status: 'success', payload: 'Survey sent successfully.'})
+                                              .json({status: `success`, payload: 'Survey Sent Successfully'})
                                           })
                                       } else {
                                         return res.status(404)
