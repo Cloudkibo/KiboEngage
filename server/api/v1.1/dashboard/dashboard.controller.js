@@ -615,98 +615,100 @@ exports.stats = function (req, res) {
       }
       callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId}, req.headers.authorization)
         .then((pages) => {
-          payload.pages = pages.length
-          callApi.callApi('pages/query', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
-            .then(allPages => {
-              let removeDuplicates = (myArr, prop) => {
-                return myArr.filter((obj, pos, arr) => {
-                  return arr.map(mapObj => mapObj[prop]).indexOf(obj[prop]) === pos
-                })
-              }
-              let allPagesWithoutDuplicates = removeDuplicates(allPages, 'pageId')
-              payload.totalPages = allPagesWithoutDuplicates.length
-              callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization)
-                .then(subscribers => {
-                  logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`)
-                  payload.subscribers = subscribers.length
-                  BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
-                    .then(recentBroadcasts => {
-                      payload.recentBroadcasts = recentBroadcasts
-                      BroadcastsDataLayer.countBroadcasts({companyId: companyUser.companyId})
-                        .then(broadcastCount => {
-                          PollsDataLayer.countPolls({companyId: companyUser.companyId})
-                            .then(pollsCount => {
-                              SurveysDataLayer.countSurveys({companyId: companyUser.companyId})
-                                .then(surveysCount => {
-                                  payload.activityChart = {
-                                    messages: broadcastCount,
-                                    polls: pollsCount,
-                                    surveys: surveysCount
-                                  }
-                                  SequenceDataLayer.countSequences({companyId: companyUser.companyId})
-                                    .then(sequences => {
-                                      payload.sequences = sequences.length
-                                      res.status(200).json({
-                                        status: 'success',
-                                        payload
+          populateIds(pages, true).then(result => {
+            payload.pages = pages.length
+            callApi.callApi('pages/query', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
+              .then(allPages => {
+                let removeDuplicates = (myArr, prop) => {
+                  return myArr.filter((obj, pos, arr) => {
+                    return arr.map(mapObj => mapObj[prop]).indexOf(obj[prop]) === pos
+                  })
+                }
+                let allPagesWithoutDuplicates = removeDuplicates(allPages, 'pageId')
+                payload.totalPages = allPagesWithoutDuplicates.length
+                callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isSubscribed: true, pageId: {$in: result.pageIds}}, req.headers.authorization)
+                  .then(subscribers => {
+                    logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`)
+                    payload.subscribers = subscribers.length
+                    BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
+                      .then(recentBroadcasts => {
+                        payload.recentBroadcasts = recentBroadcasts
+                        BroadcastsDataLayer.countBroadcasts({companyId: companyUser.companyId})
+                          .then(broadcastCount => {
+                            PollsDataLayer.countPolls({companyId: companyUser.companyId})
+                              .then(pollsCount => {
+                                SurveysDataLayer.countSurveys({companyId: companyUser.companyId})
+                                  .then(surveysCount => {
+                                    payload.activityChart = {
+                                      messages: broadcastCount,
+                                      polls: pollsCount,
+                                      surveys: surveysCount
+                                    }
+                                    SequenceDataLayer.countSequences({companyId: companyUser.companyId})
+                                      .then(sequences => {
+                                        payload.sequences = sequences.length
+                                        res.status(200).json({
+                                          status: 'success',
+                                          payload
+                                        })
                                       })
-                                    })
-                                    .catch(err => {
+                                      .catch(err => {
+                                        return res.status(500).json({
+                                          status: 'failed',
+                                          description: `failed to retrieve sequences ${err}`
+                                        })
+                                      })
+                                  })
+                                  .catch(err => {
+                                    if (err) {
                                       return res.status(500).json({
-                                        status: 'failed',
-                                        description: `failed to retrieve sequences ${err}`
+                                        status: 'failed to retrieve surveysCount',
+                                        description: JSON.stringify(err)
                                       })
-                                    })
-                                })
-                                .catch(err => {
-                                  if (err) {
-                                    return res.status(500).json({
-                                      status: 'failed to retrieve surveysCount',
-                                      description: JSON.stringify(err)
-                                    })
-                                  }
-                                })
-                            })
-                            .catch(err => {
-                              if (err) {
-                                return res.status(500).json({
-                                  status: 'failed to retrieve pollsCount',
-                                  description: JSON.stringify(err)
-                                })
-                              }
-                            })
-                        })
-                        .catch(err => {
-                          if (err) {
-                            return res.status(500).json({
-                              status: 'failed to retrieve broadcastCount',
-                              description: JSON.stringify(err)
-                            })
-                          }
-                        })
-                    })
-                    .catch(err => {
-                      if (err) {
-                        return res.status(500).json({
-                          status: 'failed to retrieve recentBroadcast',
-                          description: JSON.stringify(err)
-                        })
-                      }
-                    })
-                })
-                .catch(err => {
-                  if (err) {
-                    return res.status(500).json(
-                      {status: `failed to retrieve subscribers ${err}`, description: err})
-                  }
-                })
-            })
-            .catch(err => {
-              if (err) {
-                return res.status(500)
-                  .json({status: 'failed to retrieve userPages', description: err})
-              }
-            })
+                                    }
+                                  })
+                              })
+                              .catch(err => {
+                                if (err) {
+                                  return res.status(500).json({
+                                    status: 'failed to retrieve pollsCount',
+                                    description: JSON.stringify(err)
+                                  })
+                                }
+                              })
+                          })
+                          .catch(err => {
+                            if (err) {
+                              return res.status(500).json({
+                                status: 'failed to retrieve broadcastCount',
+                                description: JSON.stringify(err)
+                              })
+                            }
+                          })
+                      })
+                      .catch(err => {
+                        if (err) {
+                          return res.status(500).json({
+                            status: 'failed to retrieve recentBroadcast',
+                            description: JSON.stringify(err)
+                          })
+                        }
+                      })
+                  })
+                  .catch(err => {
+                    if (err) {
+                      return res.status(500).json(
+                        {status: `failed to retrieve subscribers ${err}`, description: err})
+                    }
+                  })
+              })
+              .catch(err => {
+                if (err) {
+                  return res.status(500)
+                    .json({status: 'failed to retrieve userPages', description: err})
+                }
+              })
+          })
         })
         .catch(err => {
           if (err) {
