@@ -1198,7 +1198,7 @@ exports.sendSurvey = function (req, res) {
                                               }
                                             }
                                             return res.status(200)
-                                              .json({status: `success`, payload: 'Survey Sent Successfully'})
+                                              .json({status: `success`, payload: 'Survey sent successfully'})
                                           })
                                       } else {
                                         return res.status(404)
