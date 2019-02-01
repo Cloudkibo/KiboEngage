@@ -8,7 +8,6 @@ const surveyQuestionsDataLayer = require('./surveyquestion.datalayer')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const AutomationQueueDataLayer = require('./../automationQueue/automationQueue.datalayer')
 const TAG = 'api/surveys/surveys.controller.js'
-const mongoose = require('mongoose')
 const webhookUtility = require('./../notifications/notifications.utility')
 const surveyDataLayer = require('./surveys.datalayer')
 const surveyLogicLayer = require('./surveys.logiclayer')
@@ -314,11 +313,10 @@ exports.submitresponse = function (req, res) {
       })
   }
 
-  surveyDataLayer.genericUpdateForSurvey({_id: mongoose.Types.ObjectId(req.body.surveyId)}, {$inc: {isresponded: 1}})
+  surveyDataLayer.genericUpdateForSurvey({_id: req.body.surveyId}, {$inc: {isresponded: 1}})
     .then(success => {
       return res.status(200).json({status: 'success', payload: 'Response submitted successfully'})
     })
-  //  Surveys.update({ _id: mongoose.Types.ObjectId(req.body.surveyId) }, { $set: { isresponded: true } })
     .catch(error => {
       return res.status(500).json({status: 'failed', description: error})
     })

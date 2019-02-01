@@ -11,7 +11,6 @@ const callApi = require('../utility')
 const SurveyResponsesDataLayer = require('./../surveys/surveyresponse.datalayer')
 const PollResponsesDataLayer = require('./../polls/pollresponse.datalayer')
 const request = require('request')
-const mongoose = require('mongoose')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const needle = require('needle')
 
@@ -355,8 +354,6 @@ function parseUrl (text) {
 }
 
 function applyTagFilterIfNecessary (req, subscribers, fn) {
-  logger.serverLog(TAG, `subscribers in Tags ${JSON.stringify(subscribers)}`)
-  logger.serverLog(TAG, `Segmentation tags ${JSON.stringify(req.body)}`)
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
     callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tagSubscribers => {
@@ -365,7 +362,7 @@ function applyTagFilterIfNecessary (req, subscribers, fn) {
         for (let i = 0; i < subscribers.length; i++) {
           for (let j = 0; j < tagSubscribers.length; j++) {
             if (subscribers[i]._id.toString() ===
-              tagSubscribers[j].subscriberId.toString()) {
+              tagSubscribers[j].subscriberId._id.toString()) {
               subscribersPayload.push({
                 _id: subscribers[i]._id,
                 firstName: subscribers[i].firstName,
@@ -696,7 +693,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
-          URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+          URLDataLayer.findOneURL(urlId)
             .then(URLObject => {
               let module = URLObject.module
               module.id = broadcastId
@@ -721,7 +718,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
           if (button.url) {
             let temp = button.url.split('/')
             let urlId = temp[temp.length - 1]
-            URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+            URLDataLayer.findOneURL(urlId)
               .then(URLObject => {
                 URLObject.module.id = broadcastId
                 URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
@@ -745,7 +742,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
             if (button.url) {
               let temp = button.url.split('/')
               let urlId = temp[temp.length - 1]
-              URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+              URLDataLayer.findOneURL(urlId)
                 .then(URLObject => {
                   URLObject.module.id = broadcastId
                   URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})

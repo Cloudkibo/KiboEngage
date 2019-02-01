@@ -64,9 +64,13 @@ exports.create = function (req, res) {
           return res.status(201).json({ status: 'success', payload: newCustomField })
         })
         .catch(err => {
+          console.log('============================================')
+          console.log("error => "+err)
+          console.log('============================================')
+          console.log("payload: "+err.payload)
           return res.status(500).json({
             status: 'failed',
-            description: `Internal Server Error in creating custom field${JSON.stringify(err)}`
+            description: err.payload
           })
         })
     })

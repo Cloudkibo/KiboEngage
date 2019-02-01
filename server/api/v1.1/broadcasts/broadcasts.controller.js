@@ -11,7 +11,6 @@ const fs = require('fs')
 let config = require('./../../../config/environment')
 const uniqid = require('uniqid')
 let _ = require('lodash')
-const mongoose = require('mongoose')
 let request = require('request')
 const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
@@ -174,7 +173,7 @@ exports.editButton = function (req, res) {
     // TODO save module id when sending broadcast
     let temp = req.body.oldUrl.split('/')
     let id = temp[temp.length - 1]
-    URLDataLayer.updateOneURL(mongoose.Types.ObjectId(id), {originalURL: req.body.newUrl})
+    URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
       .then(savedurl => {
         let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
         buttonPayload.newUrl = newURL
@@ -215,7 +214,7 @@ exports.editButton = function (req, res) {
   }
 }
 exports.deleteButton = function (req, res) {
-  URLDataLayer.deleteOneURL(mongoose.Types.ObjectId(req.params.id))
+  URLDataLayer.deleteOneURL(req.params.id)
     .then(deleted => {
       return res.status(200).json({
         status: 'success',
@@ -288,7 +287,7 @@ exports.upload = function (req, res) {
       if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
         let pages = JSON.parse(req.body.pages)
         logger.serverLog(TAG, `Pages in upload file ${pages}`)
-        utility.callApi(`pages/${mongoose.Types.ObjectId(pages[0])}`)
+        utility.callApi(`pages/${pages[0]}`)
           .then(page => {
             needle.get(
               `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
@@ -361,7 +360,7 @@ exports.upload = function (req, res) {
 exports.uploadForTemplate = function (req, res) {
   let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
   console.log('req.body', req.body)
-  utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0])}`)
+  utility.callApi(`pages/${req.body.pages[0]}`)
     .then(page => {
       console.log('page fetched', page)
       needle.get(

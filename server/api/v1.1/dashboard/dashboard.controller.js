@@ -10,7 +10,6 @@ const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
 const PagePollDataLayer = require('../page_poll/page_poll.datalayer')
 const SequenceDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const TAG = 'api/pages/dashboard.controller.js'
-const mongoose = require('mongoose')
 const sortBy = require('sort-array')
 const callApi = require('../utility')
 const needle = require('needle')
@@ -521,7 +520,7 @@ exports.likesVsSubscribers = function (req, res) {
       callApi.callApi('subscribers/aggregate', 'post', [
         {
           $match: {
-            userId: mongoose.Types.ObjectId(req.params.userid)
+            userId: req.params.userid
           }
         }, {
           $group: {
@@ -946,7 +945,7 @@ exports.toppages = function (req, res) {
 exports.getAllSubscribers = function (req, res) {
   let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
   let findCriteria = {
-    pageId: mongoose.Types.ObjectId(req.params.pageid),
+    pageId: req.params.pageid,
     $or: [{firstName: {$regex: search}}, {lastName: {$regex: search}}],
     gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
     locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
