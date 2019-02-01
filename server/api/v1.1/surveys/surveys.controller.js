@@ -916,8 +916,7 @@ exports.sendSurvey = function (req, res) {
                                                 .catch(error => {
                                                   return res.status(500).json({status: `failed ${error}`, payload: error})
                                                 })
-                                              if (req.body.isList === true) {
-                                                console.log('Inside Lists')
+                                              if (req.body.isList === true)
                                                 let ListFindCriteria = {}
                                                 ListFindCriteria = _.merge(ListFindCriteria,
                                                   {
@@ -928,7 +927,6 @@ exports.sendSurvey = function (req, res) {
 
                                                 callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                                   .then(lists => {
-                                                    console.log('Lists', lists)
                                                     let subsFindCriteria = {pageId: pages[z]._id}
                                                     let listData = []
                                                     if (lists.length > 1) {
@@ -954,11 +952,9 @@ exports.sendSurvey = function (req, res) {
 
                                                     callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                                       .then(subscribers => {
-                                                        console.log('subscribers in list', subscribers)
                                                         needle.get(
                                                           `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                                           (err, resp) => {
-                                                            console.log('Response access token', resp)
                                                             if (err) {
                                                               logger.serverLog(TAG,
                                                                 `Page access token from graph api error ${JSON.stringify(
@@ -966,7 +962,6 @@ exports.sendSurvey = function (req, res) {
                                                             }
                                                             utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                               subscribers = taggedSubscribers
-                                                              console.log('taggedSubscribers', taggedSubscribers)
                                                               utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                                 subscribers = repliedSubscribers
                                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
@@ -998,7 +993,6 @@ exports.sendSurvey = function (req, res) {
                                                                           // checks the age of function using callback
                                                                           logger.serverLog(TAG, 'just before sending')
                                                                           compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
-                                                                            console.log('IslastMessage', isLastMessage)
                                                                             if (err) {
                                                                               logger.serverLog(TAG, 'inside error')
                                                                               return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -1137,7 +1131,6 @@ exports.sendSurvey = function (req, res) {
                                                                       // checks the age of function using callback
                                                                       logger.serverLog(TAG, 'just before sending')
                                                                       compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
-                                                                        console.log('islastmessage', isLastMessage)
                                                                         if (err) {
                                                                           logger.serverLog(TAG, 'inside error')
                                                                           return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
