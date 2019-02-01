@@ -70,7 +70,6 @@ exports.getCriterias = function (body, companyUser) {
   // findCriteria is for the count
   // here temp is the findcriteria for Payload
   delete temp.pageId
-  console.log('temp new', temp)
   if (body.first_page === 'first') {
     finalCriteria = [
       { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },

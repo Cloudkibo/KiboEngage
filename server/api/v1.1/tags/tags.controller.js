@@ -64,10 +64,8 @@ exports.create = function (req, res) {
                     userId: req.user._id,
                     companyId: companyUser.companyId
                   }
-                  console.log('Tag Payload', tagPayload)
                   callApi.callApi('tags/', 'post', tagPayload, req.headers.authorization)
                     .then(newTag => {
-                      console.log('New Tag', newTag)
                       callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
                         .then(updated => {
                           logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`)
@@ -145,7 +143,6 @@ exports.rename = function (req, res) {
       tagPayload.tag = req.body.tagName
       callApi.callApi('tags/update', 'put', {query: {_id: req.body.tagId}, newPayload: tagPayload, options: {}}, req.headers.authorization)
         .then(newTag => {
-          console.log('New tag', tagPayload)
           require('./../../../config/socketio').sendMessageToClient({
             room_id: tagPayload.companyId._id,
             body: {
@@ -178,19 +175,12 @@ exports.rename = function (req, res) {
 exports.delete = function (req, res) {
   callApi.callApi(`tags_subscriber/query`, 'post', {tagId: req.body.tagId}, req.headers.authorization)
     .then(tagsSubscriber => {
-      console.log('tagsSubscriber', tagsSubscriber.length)
-      console.log('tagsSubscriber[0]', tagsSubscriber[0])
-      console.log('req.body.tagId', req.body.tagId)
       for (let i = 0; i < tagsSubscriber.length; i++) {
         callApi.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {}, req.headers.authorization)
           .then(result => {
-            console.log('result from delete subscriber', result)
           })
           .catch(err => {
-            return res.status(404).json({
-              status: 'failed',
-              description: `Failed to remove tag subscriber${err}`
-            })
+            logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`)
           })
       }
       callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
@@ -239,10 +229,8 @@ exports.assign = function (req, res) {
               subscriberId: subscriber._id,
               companyId: tagPayload.companyId._id
             }
-            console.log('TagPayload', subscriberTagsPayload)
             callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
               .then(newRecord => {
-                console.log('newRecord', newRecord)
                 require('./../../../config/socketio').sendMessageToClient({
                   room_id: tagPayload.companyId._id,
                   body: {
@@ -319,7 +307,6 @@ exports.unassign = function (req, res) {
 exports.subscribertags = function (req, res) {
   callApi.callApi(`tags_subscriber/query`, 'post', {subscriberId: req.body.subscriberId}, req.headers.authorization)
     .then(tagsSubscriber => {
-      console.log('Tags SUbscriebr', tagsSubscriber)
       let payload = []
       for (let i = 0; i < tagsSubscriber.length; i++) {
         payload.push({
