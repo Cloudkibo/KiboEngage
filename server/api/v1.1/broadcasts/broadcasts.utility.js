@@ -597,6 +597,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         galleryCards.push(galleryCard)
       }
     }
+    console.log('galleryCards', galleryCards)
     payload = {
       'attachment': {
         'type': 'template',
