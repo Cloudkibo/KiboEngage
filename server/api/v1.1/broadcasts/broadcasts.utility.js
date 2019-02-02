@@ -582,12 +582,27 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'gallery') {
+    var galleryCards = []
+    if (body.cards && body.cards.length > 0) {
+      for (var g = 0; g < body.cards.length; g++) {
+        var card = body.cards[g]
+        var galleryCard = {}
+        galleryCard.image_url = card.image_url
+        galleryCard.title = card.title
+        galleryCard.buttons = card.buttons
+        galleryCard.subtitle = card.subtitle
+        if (card.default_action) {
+          galleryCard.default_action = card.default_action
+        }
+        galleryCards.push(galleryCard)
+      }
+    }
     payload = {
       'attachment': {
         'type': 'template',
         'payload': {
           'template_type': 'generic',
-          'elements': body.cards
+          'elements': galleryCards
         }
       }
     }
