@@ -37,8 +37,8 @@ exports.index = function (req, res) {
 function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken) {
   console.log('replyPayload', replyPayload)
   for (let i = 0; i < replyPayload.length; i++) {
-    let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
     console.log('function returning', logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true))
+    let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
     logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
     console.log('messageData in sendMenuReplyToSubscriber', messageData)
     console.log('accessToken in sendMenuReplyToSubscriber', accessToken)
