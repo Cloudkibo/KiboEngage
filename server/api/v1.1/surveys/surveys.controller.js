@@ -916,7 +916,7 @@ exports.sendSurvey = function (req, res) {
                                                 .catch(error => {
                                                   return res.status(500).json({status: `failed ${error}`, payload: error})
                                                 })
-                                              if (req.body.isList === true)
+                                              if (req.body.isList === true) {
                                                 let ListFindCriteria = {}
                                                 ListFindCriteria = _.merge(ListFindCriteria,
                                                   {
