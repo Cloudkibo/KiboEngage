@@ -582,11 +582,13 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'gallery') {
+    console.log('body cards', body.cards)
     var galleryCards = []
     if (body.cards && body.cards.length > 0) {
       for (var gc = 0; gc < body.cards.length; gc++) {
         var card = body.cards[gc]
         var galleryCard
+        console.log('Card', card)
         galleryCard.image_url = card.image_url
         galleryCard.title = card.title
         galleryCard.buttons = card.buttons
@@ -598,7 +600,6 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
     console.log('galleryCards', galleryCards)
-    console.log('body cards', body.cards)
     payload = {
       'attachment': {
         'type': 'template',
