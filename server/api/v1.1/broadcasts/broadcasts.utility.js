@@ -584,14 +584,18 @@ function prepareMessageData (subscriberId, body, fname, lname) {
   } else if (body.componentType === 'gallery') {
     var galleryCards = []
     if (body.cards && body.cards.length > 0) {
-      body.cards.map((card) => {
+      for (var gc = 0; gc < body.cards.length; gc++) {
+        var card = body.cards[gc]
         var galleryCard
         galleryCard.image_url = card.image_url
         galleryCard.title = card.title
         galleryCard.buttons = card.buttons
         galleryCard.subtitle = card.description
+        if (card.default_action) {
+          galleryCard.default_action = card.default_action
+        }
         galleryCards.push(galleryCard)
-      })
+      }
     }
     payload = {
       'attachment': {
