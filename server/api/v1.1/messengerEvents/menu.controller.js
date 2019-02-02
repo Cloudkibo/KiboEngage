@@ -4,7 +4,7 @@ const {callApi} = require('../utility')
 const logicLayer = require('./logiclayer')
 const request = require('request')
 
-exports.menu = function (req, res) {
+exports.index = function (req, res) {
   res.status(200).json({
     status: 'success',
     description: `received the payload`
