@@ -5,6 +5,7 @@ const logicLayer = require('./logiclayer')
 const request = require('request')
 
 exports.index = function (req, res) {
+  console.log('in menu controller')
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -18,6 +19,7 @@ exports.index = function (req, res) {
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
+          console.log('subscriber fetched', subscriber)
           logger.serverLog(TAG, `subscriber fetched ${JSON.stringify(subscriber)}`)
           if (subscriber) {
             sendMenuReplyToSubscriber(replyPayload, subscriber.senderId, subscriber.firstName, subscriber.lastName, subscriber.pageId.accessToken)
