@@ -585,14 +585,14 @@ function prepareMessageData (subscriberId, body, fname, lname) {
     console.log('body cards', body.cards)
     var galleryCards = []
     if (body.cards && body.cards.length > 0) {
-      for (var gc = 0; gc < body.cards.length; gc++) {
-        var card = body.cards[gc]
+      for (var g = 0; g < body.cards.length; g++) {
+        var card = body.cards[g]
         var galleryCard
         console.log('Card', card)
         galleryCard.image_url = card.image_url
         galleryCard.title = card.title
         galleryCard.buttons = card.buttons
-        galleryCard.subtitle = card.description
+        galleryCard.subtitle = card.subtitle
         if (card.default_action) {
           galleryCard.default_action = card.default_action
         }
