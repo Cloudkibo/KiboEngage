@@ -582,12 +582,23 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'gallery') {
+    var galleryCards = []
+    if (body.cards && body.cards.length > 0) {
+      body.cards.map((card) => {
+        var galleryCard
+        galleryCard.image_url = card.image_url
+        galleryCard.title = card.title
+        galleryCard.buttons = card.buttons
+        galleryCard.subtitle = card.description
+        galleryCards.push(galleryCard)
+      })
+    }
     payload = {
       'attachment': {
         'type': 'template',
         'payload': {
           'template_type': 'generic',
-          'elements': body.cards
+          'elements': galleryCards
         }
       }
     }
