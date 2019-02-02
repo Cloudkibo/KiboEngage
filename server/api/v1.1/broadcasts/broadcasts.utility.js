@@ -598,6 +598,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
     console.log('galleryCards', galleryCards)
+    console.log('body cards', body.cards)
     payload = {
       'attachment': {
         'type': 'template',
