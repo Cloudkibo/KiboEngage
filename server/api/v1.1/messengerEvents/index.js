@@ -12,6 +12,7 @@ const sequenceController = require('./sequence.controller')
 const auth = require('../../../auth/auth.service')
 const profilePicController = require('./profilePic.controller')
 const policyController = require('./policy.controller')
+const menuController = require('./menu.controller')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
@@ -23,5 +24,6 @@ router.post('/sequence', auth.isItWebhookServer(), sequenceController.index)
 router.post('/sequence/subscriberJoins', auth.isItWebhookServer(), sequenceController.subscriberJoins)
 router.post('/updateProfilePic', auth.isItWebhookServer(), profilePicController.updateProfilePic)
 router.post('/policyNotification', auth.isItWebhookServer(), policyController.policyNotification)
+router.post('/menuReply', auth.isItWebhookServer(), menuController.index)
 
 module.exports = router
