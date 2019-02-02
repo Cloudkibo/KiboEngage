@@ -38,15 +38,15 @@ function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName,
   console.log('replyPayload', replyPayload)
   for (let i = 0; i < replyPayload.length; i++) {
     console.log('function returning', logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true))
-    let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
-    logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
-    console.log('messageData in sendMenuReplyToSubscriber', messageData)
+    // let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
+    // logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
+    // console.log('messageData in sendMenuReplyToSubscriber', messageData)
     console.log('accessToken in sendMenuReplyToSubscriber', accessToken)
     request(
       {
         'method': 'POST',
         'json': true,
-        'formData': messageData,
+        'formData': logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true),
         'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' + accessToken
       },
       (err, res) => {
