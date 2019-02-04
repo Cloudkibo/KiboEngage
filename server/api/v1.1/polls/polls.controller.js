@@ -242,7 +242,7 @@ exports.send = function (req, res) {
                                   let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
                                   utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                     .then(lists => {
-                                      let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
+                                      let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
                                       utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                         .then(subscribers => {
                                           needle.get(
@@ -342,7 +342,6 @@ exports.send = function (req, res) {
                                 } else {
                                   console.log('in else')
                                   let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
-                                  console.log('subscriberFindCriteria', subscriberFindCriteria)
                                   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                     .then(subscribers => {
                                       console.log('subscribersfetched', subscribers.length)
@@ -507,7 +506,6 @@ exports.sendPoll = function (req, res) {
                     })
                   }
                   let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
-                  logger.serverLog(TAG, `pollPayload ${JSON.stringify(pollPayload)}`)
                   PollDataLayer.createForPoll(pollPayload)
                     .then(pollCreated => {
                       require('./../../../config/socketio').sendMessageToClient({
@@ -535,9 +533,7 @@ exports.sendPoll = function (req, res) {
                                 currentUser = connectedUser
                               }
                               const messageData = PollLogicLayer.prepareMessageData(req.body, pollCreated._id)
-                              logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
                               let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
-                              logger.serverLog(TAG, `pagesFindCriteria ${JSON.stringify(pagesFindCriteria)}`)
                               utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                                 .then(pages => {
                                   for (let z = 0; z < pages.length && !abort; z++) {
@@ -571,11 +567,12 @@ exports.sendPoll = function (req, res) {
                                       })
                                     if (req.body.isList === true) {
                                       let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
-                                      utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                      utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                         .then(lists => {
-                                          let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
+                                          let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
                                           utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                             .then(subscribers => {
+                                              console.log('subscribers', subscribers)
                                               needle.get(
                                                 `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`, (err, resp) => {
                                                   if (err) {
@@ -682,7 +679,6 @@ exports.sendPoll = function (req, res) {
                                                   `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                               }
                                               if (subscribers.length > 0) {
-                                                logger.serverLog(TAG, `subscribers ${JSON.stringify(subscribers)}`)
                                                 broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                   subscribers = taggedSubscribers
                                                   logger.serverLog(TAG, `taggedSubscribers ${JSON.stringify(subscribers)}`)

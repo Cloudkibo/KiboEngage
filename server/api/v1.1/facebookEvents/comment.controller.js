@@ -12,8 +12,9 @@ exports.sendCommentReply = function (req, res) {
   logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`)
   let send = true
   let postId = req.body.entry[0].changes[0].value.post_id
-  utility.callApi(`comment_capture/${postId}`)
+  utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
     .then(post => {
+      post = post[0]
       utility.callApi(`comment_capture/update`, 'put', {query: { post_id: postId }, newPayload: { $inc: { count: 1 } }, options: {}})
         .then(updated => {
           if (post && post.pageId) {

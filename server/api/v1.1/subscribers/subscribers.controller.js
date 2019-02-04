@@ -14,7 +14,6 @@ exports.index = function (req, res) {
           utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
-              console.log('Subscribers Payload', subscribersPayload)
               return res.status(200).json({
                 status: 'success',
                 payload: subscribersPayload
@@ -108,13 +107,10 @@ exports.getAll = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let criterias = logicLayer.getCriterias(req.body, companyuser)
-      console.log('criterias.countCriteria', criterias.countCriteria)
-      console.log('criterias.fetchCriteria', JSON.stringify(criterias.fetchCriteria))
       utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
         .then(count => {
           utility.callApi(`subscribers/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch subscribers
             .then(subscribers => {
-              console.log('subscribers', subscribers)
               let subscriberIds = logicLayer.getSubscriberIds(subscribers)
               logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
               utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)

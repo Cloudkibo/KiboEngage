@@ -260,6 +260,21 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
       })
     }
   } else if (body.componentType === 'gallery') {
+    var galleryCards = []
+    if (body.cards && body.cards.length > 0) {
+      for (var g = 0; g < body.cards.length; g++) {
+        var card = body.cards[g]
+        var galleryCard = {}
+        galleryCard.image_url = card.image_url
+        galleryCard.title = card.title
+        galleryCard.buttons = card.buttons
+        galleryCard.subtitle = card.subtitle
+        if (card.default_action) {
+          galleryCard.default_action = card.default_action
+        }
+        galleryCards.push(galleryCard)
+      }
+    }
     payload = {
       'messaging_type': messageType,
       'recipient': JSON.stringify({
@@ -270,7 +285,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           'type': 'template',
           'payload': {
             'template_type': 'generic',
-            'elements': body.cards
+            'elements': galleryCards
           }
         }
       })
@@ -354,8 +369,6 @@ function parseUrl (text) {
 }
 
 function applyTagFilterIfNecessary (req, subscribers, fn) {
-  logger.serverLog(TAG, `subscribers in Tags ${JSON.stringify(subscribers)}`)
-  logger.serverLog(TAG, `Segmentation tags ${JSON.stringify(req.body)}`)
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
     callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tagSubscribers => {
@@ -364,7 +377,7 @@ function applyTagFilterIfNecessary (req, subscribers, fn) {
         for (let i = 0; i < subscribers.length; i++) {
           for (let j = 0; j < tagSubscribers.length; j++) {
             if (subscribers[i]._id.toString() ===
-              tagSubscribers[j].subscriberId.toString()) {
+              tagSubscribers[j].subscriberId._id.toString()) {
               subscribersPayload.push({
                 _id: subscribers[i]._id,
                 firstName: subscribers[i].firstName,
@@ -584,12 +597,27 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'gallery') {
+    var galleryCards = []
+    if (body.cards && body.cards.length > 0) {
+      for (var g = 0; g < body.cards.length; g++) {
+        var card = body.cards[g]
+        var galleryCard = {}
+        galleryCard.image_url = card.image_url
+        galleryCard.title = card.title
+        galleryCard.buttons = card.buttons
+        galleryCard.subtitle = card.subtitle
+        if (card.default_action) {
+          galleryCard.default_action = card.default_action
+        }
+        galleryCards.push(galleryCard)
+      }
+    }
     payload = {
       'attachment': {
         'type': 'template',
         'payload': {
           'template_type': 'generic',
-          'elements': body.cards
+          'elements': galleryCards
         }
       }
     }
