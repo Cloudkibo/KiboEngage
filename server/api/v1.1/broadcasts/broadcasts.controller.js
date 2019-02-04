@@ -505,6 +505,9 @@ exports.sendConversation = function (req, res) {
 const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
     .then(subscribers => {
+      if (subscribers.length < 1) {
+        return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+      }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
           // update broadcast sent field

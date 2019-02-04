@@ -242,7 +242,7 @@ exports.send = function (req, res) {
                                   let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
                                   utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                     .then(lists => {
-                                      let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
+                                      let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
                                       utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                         .then(subscribers => {
                                           needle.get(
@@ -567,10 +567,9 @@ exports.sendPoll = function (req, res) {
                                       })
                                     if (req.body.isList === true) {
                                       let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
-                                      utility.callApi(`pages/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                      utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                         .then(lists => {
-                                          let subsFindCriteria = PollLogicLayer.subsFindCriteria(pages[z], lists)
-                                          logger.serverLog(TAG, `subsFindCriteria${JSON.stringify(subsFindCriteria)}`)
+                                          let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
                                           utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                             .then(subscribers => {
                                               console.log('subscribers', subscribers)
