@@ -15,7 +15,8 @@ exports.sendCommentReply = function (req, res) {
   utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
     .then(post => {
       post = post[0]
-      utility.callApi(`comment_capture/update`, 'put', {query: { post_id: postId }, newPayload: { $inc: { count: 1 } }, options: {}})
+      let newPayload = req.body.entry[0].changes[0].value.verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: -1 } }
+      utility.callApi(`comment_capture/update`, 'put', {query: { post_id: postId }, newPayload: newPayload, options: {}})
         .then(updated => {
           if (post && post.pageId) {
             send = commentCaptureLogicLayer.getSendValue(post, req.body)
