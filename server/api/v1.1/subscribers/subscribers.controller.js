@@ -8,7 +8,7 @@ const needle = require('needle')
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
     .then(companyuser => {
-      utility.callApi(`subscribers/query`, 'post', {companyId: companyuser.companyId, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization) // fetch subscribers of company
+      utility.callApi(`subscribers/query`, 'post', {companyId: companyuser.companyId, isSubscribed: true}, req.headers.authorization) // fetch subscribers of company
         .then(subscribers => {
           let subscriberIds = logicLayer.getSubscriberIds(subscribers)
           utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
@@ -164,6 +164,23 @@ exports.subscribeBack = function (req, res) {
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to fetch subscriber ${JSON.stringify(error)}`
+      })
+    })
+}
+
+exports.updatePicture = function (req, res) {
+  console.log('hit the updatePicture endpoint', req.body)
+  utility.callApi('subscribers/updatePicture', 'post', req.body, req.headers.authorization)
+    .then(update => {
+      return res.status(200).json({
+        status: 'success',
+        payload: update
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to update subscriber data ${JSON.stringify(err)}`
       })
     })
 }

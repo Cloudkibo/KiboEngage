@@ -169,23 +169,45 @@ exports.editButton = function (req, res) {
     title: req.body.title,
     type: req.body.type
   }
-  if (req.body.type === 'web_url' && req.body.oldUrl) {
+  if (req.body.type === 'web_url' && !req.body.messenger_extensions) {
     // TODO save module id when sending broadcast
-    let temp = req.body.oldUrl.split('/')
-    let id = temp[temp.length - 1]
-    URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
-      .then(savedurl => {
-        let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-        buttonPayload.newUrl = newURL
-        buttonPayload.url = req.body.oldUrl
-        return res.status(200).json({
-          status: 'success',
-          payload: { id: req.body.id, button: buttonPayload }
+    if (req.body.oldUrl && req.body.oldUrl !== '') {
+      let temp = req.body.oldUrl.split('/')
+      let id = temp[temp.length - 1]
+      URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
+        .then(savedurl => {
+          console.log('Saved Url', savedurl)
+          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+          buttonPayload.newUrl = newURL
+          buttonPayload.url = req.body.newUrl
+          return res.status(200).json({
+            status: 'success',
+            payload: { id: req.body.id, button: buttonPayload }
+          })
         })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        })
+    } else {
+      URLDataLayer.createURLObject({
+        originalURL: req.body.newUrl,
+        module: {
+          type: 'broadcast'
+        }
       })
-      .catch(error => {
-        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
-      })
+        .then(savedurl => {
+          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+          buttonPayload.newUrl = newURL
+          buttonPayload.url = req.body.newUrl
+          return res.status(200).json({
+            status: 'success',
+            payload: { id: req.body.id, button: buttonPayload }
+          })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        })
+    }
   } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
     if (!broadcastUtility.isWebView(req.body)) {
       return res.status(500).json({status: 'failed', payload: `parameters are missing`})
@@ -193,14 +215,29 @@ exports.editButton = function (req, res) {
     broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
       .then(result => {
         if (result.returnValue) {
+          var webViewPayload = {
+            type: req.body.type,
+            url: req.body.url, // User defined link,
+            title: req.body.title, // User defined label
+            messenger_extensions: req.body.messenger_extensions,
+            webview_height_ratio: req.body.webview_height_ratio
+          }
           return res.status(200).json({
             status: 'success',
-            payload: req.body
+            payload: {id: req.body.id, button: webViewPayload}
           })
         } else {
           return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
         }
       })
+  } else if (req.body.type === 'element_share') {
+    buttonPayload = {
+      type: req.body.type
+    }
+    return res.status(200).json({
+      status: 'success',
+      payload: {id: req.body.id, button: buttonPayload}
+    })
   } else {
     buttonPayload.payload = JSON.stringify({
       sequenceId: req.body.sequenceId,
