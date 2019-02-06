@@ -1058,7 +1058,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                       `Page access token from graph api error ${JSON.stringify(
                         err)}`)
                   }
-                  if (respp.body && respp.body.data && respp.body.data.length > 0) {
+                  if (respp && respp.body && respp.body.data && respp.body.data.length > 0) {
                     for (let a = 0; a < respp.body.data.length; a++) {
                       if (respp.body.data[a].feature === 'subscription_messaging' && respp.body.data[a].status === 'approved') {
                         callApi.callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}, req.headers.authorization) // disconnect page

@@ -29,6 +29,10 @@ router.get('/updateData',
   auth.isAuthenticated(),
   controller.updateData)
 
+router.post('/updatePicture',
+  auth.isAuthenticated(),
+  controller.updatePicture)
+
 router.post('/unSubscribe',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('livechat'),
