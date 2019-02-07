@@ -454,50 +454,45 @@ exports.editPoll = function (req, res) {
 }
 
 exports.createBroadcast = function (req, res) {
-  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
     .then(companyUser => {
       console.log('companyUser', companyUser)
-      callApi.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
-        .then(companyProfile => {
-          callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
-            .then(planUsage => {
-              planUsage = planUsage[0]
-              callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
-                .then(companyUsage => {
-                  console.log('planUsage', planUsage)
-                  console.log('companyUsage', companyUsage)
-                  companyUsage = companyUsage[0]
-                  if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
-                    })
+      callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+        .then(planUsage => {
+          planUsage = planUsage[0]
+          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+            .then(companyUsage => {
+              console.log('planUsage', planUsage)
+              console.log('companyUsage', companyUsage)
+              companyUsage = companyUsage[0]
+              // add paid plan check later
+              // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+              //   return res.status(500).json({
+              //     status: 'failed',
+              //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
+              //   })
+              // }
+              let broadcastPayload = logicLayer.createDataBroadcast(req, companyUser)
+              if (req.user.isSuperUser) {
+                broadcastPayload.createdBySuperUser = true
+              }
+              console.log('broadcastPayload', broadcastPayload)
+              dataLayer.createBroadcast(broadcastPayload)
+                .then(broadcastCreated => {
+                  console.log('broadcastCreated')
+                  if (!req.user.isSuperUser) {
+                    callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
+                      .then(update => {
+                        console.log('update company')
+                      })
+                      .catch(err => {
+                        return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
+                      })
                   }
-                  let broadcastPayload = logicLayer.createDataBroadcast(req, companyUser)
-                  if (req.user.isSuperUser) {
-                    broadcastPayload.createdBySuperUser = true
-                  }
-                  console.log('broadcastPayload', broadcastPayload)
-                  dataLayer.createBroadcast(broadcastPayload)
-                    .then(broadcastCreated => {
-                      console.log('broadcastCreated')
-                      if (!req.user.isSuperUser) {
-                        callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
-                          .then(update => {
-                            console.log('update company')
-                          })
-                          .catch(err => {
-                            return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
-                          })
-                      }
-                      res.status(201).json({status: 'success', payload: broadcastCreated})
-                    })
-                    .catch(err => {
-                      return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
-                    })
+                  res.status(201).json({status: 'success', payload: broadcastCreated})
                 })
                 .catch(err => {
-                  return res.status(500).json({status: `failed ${err}`, payload: err})
+                  return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
                 })
             })
             .catch(err => {

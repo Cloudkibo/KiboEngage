@@ -202,7 +202,7 @@ exports.deleteSequence = function (req, res) {
 }
 
 exports.createSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -210,57 +210,49 @@ exports.createSequence = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
-        .then(companyProfile => {
-          // calling accounts feature usage for this
-          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
-            .then(planUsage => {
-              utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
-                .then(companyUsage => {
-                  if (planUsage.broadcast_sequences !== -1 && companyUsage.broadcast_sequences >= planUsage.broadcast_sequences) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Your sequences limit has reached. Please upgrade your plan to premium in order to create more sequences.`
-                    })
-                  }
-                  let sequencePayload = {
-                    name: req.body.name,
-                    companyId: companyUser.companyId,
-                    userId: req.user._id
-                  }
-                  SequenceDatalayer.createSequence(sequencePayload)
-                    .then(sequenceCreated => {
-                      utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}}, req.headers.authorization)
-                        .then(result => {
-                          require('./../../../config/socketio').sendMessageToClient({
-                            room_id: companyUser.companyId,
-                            body: {
-                              action: 'sequence_create',
-                              payload: {
-                                sequence_id: sequenceCreated._id
-                              }
-                            }
-                          })
-                          return res.status(201).json({status: 'success', payload: sequenceCreated})
-                        })
-                        .catch(err => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            description: `Internal Server Error in updating company usage ${JSON.stringify(err)}`
-                          })
-                        })
+      // calling accounts feature usage for this
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+        .then(planUsage => {
+          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+            .then(companyUsage => {
+              // add paid plan check later
+              // if (planUsage.broadcast_sequences !== -1 && companyUsage.broadcast_sequences >= planUsage.broadcast_sequences) {
+              //   return res.status(500).json({
+              //     status: 'failed',
+              //     description: `Your sequences limit has reached. Please upgrade your plan to premium in order to create more sequences.`
+              //   })
+              // }
+              let sequencePayload = {
+                name: req.body.name,
+                companyId: companyUser.companyId._id,
+                userId: req.user._id
+              }
+              SequenceDatalayer.createSequence(sequencePayload)
+                .then(sequenceCreated => {
+                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}}, req.headers.authorization)
+                    .then(result => {
+                      require('./../../../config/socketio').sendMessageToClient({
+                        room_id: companyUser.companyId._id,
+                        body: {
+                          action: 'sequence_create',
+                          payload: {
+                            sequence_id: sequenceCreated._id
+                          }
+                        }
+                      })
+                      return res.status(201).json({status: 'success', payload: sequenceCreated})
                     })
                     .catch(err => {
                       return res.status(500).json({
                         status: 'failed',
-                        description: `Internal Server Error in saving subscriber ${JSON.stringify(err)}`
+                        description: `Internal Server Error in updating company usage ${JSON.stringify(err)}`
                       })
                     })
                 })
                 .catch(err => {
                   return res.status(500).json({
                     status: 'failed',
-                    description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
+                    description: `Internal Server Error in saving subscriber ${JSON.stringify(err)}`
                   })
                 })
             })
@@ -274,7 +266,7 @@ exports.createSequence = function (req, res) {
         .catch(err => {
           return res.status(500).json({
             status: 'failed',
-            description: `Internal Server Error in fetching company profile ${JSON.stringify(err)}`
+            description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
           })
         })
     })
@@ -324,7 +316,7 @@ exports.editSequence = function (req, res) {
 }
 
 exports.createMessage = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -332,65 +324,57 @@ exports.createMessage = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
-        .then(companyProfile => {
-          // calling accounts feature usage for this
-          utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
-            .then(planUsage => {
-              utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyProfile._id}, req.headers.authorization)
-                .then(companyUsage => {
-                  if (planUsage.messages_per_sequence !== -1 && companyUsage.messages_per_sequence >= planUsage.messages_per_sequence) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Your sequence messages limit has reached. Please upgrade your plan to premium in order to create more messages.`
-                    })
-                  }
-                  let messagePayload = {
-                    schedule: req.body.schedule,
-                    sequenceId: req.body.sequenceId,
-                    payload: req.body.payload,
-                    title: req.body.title
-                  }
-                  SequenceDatalayer.createMessage(messagePayload)
-                    .then(messageCreated => {
-                      utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyProfile._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}}, req.headers.authorization)
-                        .then(result => {
-                          logger.serverLog('Message Created:', messageCreated)
-                          if (messageCreated.trigger.event === 'none') {
-                            let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
-                            SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, messageCreated._id)
-                          } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
-                            SequenceUtility.checkParentMessageTrigger(messageCreated)
+      // calling accounts feature usage for this
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+        .then(planUsage => {
+          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+            .then(companyUsage => {
+              // add paid plan check later
+              // if (planUsage.messages_per_sequence !== -1 && companyUsage.messages_per_sequence >= planUsage.messages_per_sequence) {
+              //   return res.status(500).json({
+              //     status: 'failed',
+              //     description: `Your sequence messages limit has reached. Please upgrade your plan to premium in order to create more messages.`
+              //   })
+              // }
+              let messagePayload = {
+                schedule: req.body.schedule,
+                sequenceId: req.body.sequenceId,
+                payload: req.body.payload,
+                title: req.body.title
+              }
+              SequenceDatalayer.createMessage(messagePayload)
+                .then(messageCreated => {
+                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}}, req.headers.authorization)
+                    .then(result => {
+                      logger.serverLog('Message Created:', messageCreated)
+                      if (messageCreated.trigger.event === 'none') {
+                        let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
+                        SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, messageCreated._id)
+                      } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
+                        SequenceUtility.checkParentMessageTrigger(messageCreated)
+                      }
+                      require('./../../../config/socketio').sendMessageToClient({
+                        room_id: companyUser.companyId._id,
+                        body: {
+                          action: 'sequence_update',
+                          payload: {
+                            sequence_id: req.body.sequenceId
                           }
-                          require('./../../../config/socketio').sendMessageToClient({
-                            room_id: companyUser.companyId,
-                            body: {
-                              action: 'sequence_update',
-                              payload: {
-                                sequence_id: req.body.sequenceId
-                              }
-                            }
-                          })
-                          return res.status(201).json({status: 'success', payload: messageCreated})
-                        })
-                        .catch(err => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            description: `Internal Server Error in updating company usage ${JSON.stringify(err)}`
-                          })
-                        })
+                        }
+                      })
+                      return res.status(201).json({status: 'success', payload: messageCreated})
                     })
                     .catch(err => {
                       return res.status(500).json({
                         status: 'failed',
-                        description: `Internal Server Error in saving subscriber ${JSON.stringify(err)}`
+                        description: `Internal Server Error in updating company usage ${JSON.stringify(err)}`
                       })
                     })
                 })
                 .catch(err => {
                   return res.status(500).json({
                     status: 'failed',
-                    description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
+                    description: `Internal Server Error in saving subscriber ${JSON.stringify(err)}`
                   })
                 })
             })
@@ -404,7 +388,7 @@ exports.createMessage = function (req, res) {
         .catch(err => {
           return res.status(500).json({
             status: 'failed',
-            description: `Internal Server Error in fetching company profile ${JSON.stringify(err)}`
+            description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
           })
         })
     })
