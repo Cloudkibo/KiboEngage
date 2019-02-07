@@ -1,5 +1,3 @@
-const logger = require('../../../components/logger')
-const TAG = 'api/autoposting/migrations.controller.js'
 const config = require('../../../config/environment/index')
 let Twit = require('twit')
 
@@ -13,7 +11,7 @@ let twitterClient = new Twit({
 const prepareAutopostingPayload = (req, companyUser) => {
   let autoPostingPayload = {
     userId: req.user._id,
-    companyId: companyUser.companyId,
+    companyId: companyUser.companyId._id,
     subscriptionUrl: req.body.subscriptionUrl,
     subscriptionType: req.body.subscriptionType,
     accountTitle: req.body.accountTitle

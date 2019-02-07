@@ -91,7 +91,7 @@ exports.createDataBroadcast = function (req, companyUser) {
     category: req.body.category,
     payload: req.body.payload,
     userId: req.user._id,
-    companyId: companyUser.companyId
+    companyId: companyUser.companyId._id
   }
   return broadcastPayload
 }
