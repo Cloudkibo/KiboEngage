@@ -376,8 +376,6 @@ exports.sentVsSeenNew = function (req, res) {
                                                     logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`)
                                                     graphDataNew(req.body, companyUser, result.pageIds)
                                                       .then(result => {
-                                                        console.log('graphDataNew', result)
-
                                                         return res.status(200).json({
                                                           status: 'success',
                                                           payload: {
