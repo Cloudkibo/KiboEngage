@@ -376,6 +376,8 @@ exports.sentVsSeenNew = function (req, res) {
                                                     logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`)
                                                     graphDataNew(req.body, companyUser, result.pageIds)
                                                       .then(result => {
+                                                        console.log('graphDataNew', result)
+
                                                         return res.status(200).json({
                                                           status: 'success',
                                                           payload: {
@@ -840,6 +842,7 @@ function graphDataNew (body, companyUser, pageIds) {
         logger.serverLog(TAG, `aggregateForPolls`, JSON.stringify(LogicLayer.getCriterias(body, companyUser, false, pageIds)))
         PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
           .then(pollsgraphdata => {
+            console.log('polls found', pollsgraphdata)
             PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
               .then(surveysgraphdata => {
                 resolve({
