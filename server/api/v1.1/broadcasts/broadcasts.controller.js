@@ -276,6 +276,7 @@ exports.download = function (req, res) {
 }
 
 exports.upload = function (req, res) {
+  console.log('in upload')
   var today = new Date()
   var uid = crypto.randomBytes(5).toString('hex')
   var serverPath = 'f' + uid + '' + today.getFullYear() + '' +
