@@ -91,6 +91,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
             'filedata': fileReaderStream
           }
           console.log('in filedata', payload)
+          fs.unlink(fileToStore)
           resolve({payload})
         })
       })
