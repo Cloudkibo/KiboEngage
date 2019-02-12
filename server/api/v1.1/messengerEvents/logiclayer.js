@@ -64,7 +64,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
     body.componentType) > -1) {
     let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
     var stream = request(`https://saccounts.cloudkibo.com/api/v1/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(dir + '/anisha.png'))
-    stream.on('finish', function () {
+    stream.on('end', function () {
       console.log('finished')
     })
     let fileReaderStream
