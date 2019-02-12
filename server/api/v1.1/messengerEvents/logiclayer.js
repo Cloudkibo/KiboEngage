@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const utility = require('../utility')
 
 function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
   let messageType = isResponse ? 'RESPONSE' : 'UPDATE'
@@ -60,6 +61,10 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
     }
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
+    utility.callApi(`files/download/${body.fileurl.id}`, 'get', {})
+      .then(file => {
+        console.log('file', file)
+      })
     let dir = path.resolve(__dirname, '../../../../broadcastFiles/userfiles')
     let fileReaderStream
     if (body.componentType === 'file') {
