@@ -65,6 +65,9 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
       .then(file => {
         console.log('file fetched', file)
       })
+      .catch((err) => {
+        console.log('error in file fetch', err)
+      })
     let dir = path.resolve(__dirname, '../../../../broadcastFiles/userfiles')
     let fileReaderStream
     if (body.componentType === 'file') {
