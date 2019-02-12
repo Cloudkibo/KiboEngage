@@ -61,7 +61,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
     }
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
-    utility.callApi(`files/download/${body.fileurl.id}`, 'get', {})
+    utility.callApi(body.fileurl.id, 'get', {})
       .then(file => {
         console.log('file fetched', file)
       })
