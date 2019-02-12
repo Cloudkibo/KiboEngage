@@ -49,7 +49,7 @@ exports.createSurveyPayload = function (req, companyUser) {
     title: req.body.survey.title,
     description: req.body.survey.description,
     userId: req.user._id,
-    companyId: companyUser.companyId,
+    companyId: companyUser.companyId._id,
     isresponded: 0
   }
   if (req.body.isSegmented) {
@@ -80,7 +80,7 @@ exports.createSurveyPayload = function (req, companyUser) {
 }
 
 exports.pageFindCriteria = function (req, companyUser) {
-  let pagesFindCriteria = {companyId: companyUser.companyId, connected: true}
+  let pagesFindCriteria = {companyId: companyUser.companyId._id, connected: true}
   if (req.body.isSegmented) {
     if (req.body.segmentationPageIds.length > 0) {
       pagesFindCriteria = _.merge(pagesFindCriteria, {

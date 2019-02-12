@@ -17,10 +17,13 @@ exports.getMessages = function (req, res) {
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id}, req.body.number_of_records)
               .then(autopostingMessages => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {messages: autopostingMessages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
-                })
+                populatePages(autopostingMessages, req)
+                  .then(result => {
+                    res.status(200).json({
+                      status: 'success',
+                      payload: {messages: result.messages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
+                    })
+                  })
               })
               .catch(err => {
                 return res.status(500)
@@ -38,10 +41,13 @@ exports.getMessages = function (req, res) {
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id, _id: {$gt: req.body.last_id}}, req.body.number_of_records)
               .then(autopostingMessages => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {messages: autopostingMessages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
-                })
+                populatePages(autopostingMessages, req)
+                  .then(result => {
+                    res.status(200).json({
+                      status: 'success',
+                      payload: {messages: result.messages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
+                    })
+                  })
               })
               .catch(err => {
                 return res.status(500)
@@ -59,10 +65,13 @@ exports.getMessages = function (req, res) {
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id, _id: {$lt: req.body.last_id}}, req.body.number_of_records)
               .then(autopostingMessages => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {messages: autopostingMessages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
-                })
+                populatePages(autopostingMessages, req)
+                  .then(result => {
+                    res.status(200).json({
+                      status: 'success',
+                      payload: {messages: result.messages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
+                    })
+                  })
               })
               .catch(err => {
                 return res.status(500)
@@ -81,4 +90,35 @@ exports.getMessages = function (req, res) {
         description: `Internal Server Error ${JSON.stringify(err)}`
       })
     })
+}
+function populatePages (messages, req) {
+  return new Promise(function (resolve, reject) {
+    let sendPayload = []
+    if (messages && messages.length > 0) {
+      for (let i = 0; i < messages.length; i++) {
+        utility.callApi(`pages/query`, 'post', {_id: messages[i].pageId}, req.headers.authorization)
+          .then(page => {
+            sendPayload.push({
+              _id: messages[i]._id,
+              autoposting_type: messages[i].autoposting_type,
+              clicked: messages[i].clicked,
+              companyId: messages[i].companyId,
+              datetime: messages[i].datetime,
+              message_id: messages[i].message_id ? messages[i].message_id : 0,
+              pageId: page[0],
+              seen: messages[i].seen,
+              sent: messages[i].sent
+            })
+            if (sendPayload.length === messages.length) {
+              resolve({messages: sendPayload})
+            }
+          })
+          .catch(err => {
+            reject(err)
+          })
+      }
+    } else {
+      resolve({messages: []})
+    }
+  })
 }

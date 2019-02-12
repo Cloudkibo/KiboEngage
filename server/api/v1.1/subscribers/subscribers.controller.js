@@ -10,6 +10,7 @@ exports.index = function (req, res) {
     .then(companyuser => {
       utility.callApi(`subscribers/query`, 'post', {companyId: companyuser.companyId, isSubscribed: true}, req.headers.authorization) // fetch subscribers of company
         .then(subscribers => {
+          subscribers = subscribers.filter((subscriber) => subscriber.pageId.connected === true)
           let subscriberIds = logicLayer.getSubscriberIds(subscribers)
           utility.callApi(`tags_subscriber/query`, 'post', {subscriberId: {$in: subscriberIds}}, req.headers.authorization)
             .then(tags => {
