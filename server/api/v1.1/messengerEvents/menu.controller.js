@@ -37,7 +37,7 @@ exports.index = function (req, res) {
 function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken) {
   console.log('replyPayload', replyPayload)
   for (let i = 0; i < replyPayload.length; i++) {
-    console.log('function returning', logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true))
+    console.log('function returning', logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true).payload)
     // let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
     // logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
     // console.log('messageData in sendMenuReplyToSubscriber', messageData)
@@ -46,7 +46,7 @@ function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName,
       {
         'method': 'POST',
         'json': true,
-        'formData': logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true),
+        'formData': logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true).payload,
         'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' + accessToken
       },
       (err, res) => {
