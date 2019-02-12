@@ -75,9 +75,9 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
       let fileReaderStream = fs.createReadStream(fileToStore)
       payload = {
         'messaging_type': messageType,
-        'recipient': JSON.stringify({
+        'recipient': {
           'id': subscriberId
-        }),
+        },
         'message': JSON.stringify({
           'attachment': {
             'type': body.componentType,
