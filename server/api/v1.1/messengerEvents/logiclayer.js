@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
-const utility = require('../utility')
 let request = require('request')
+const config = require('../../../config/environment/index')
 
 function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
   let messageType = isResponse ? 'RESPONSE' : 'UPDATE'
@@ -63,36 +63,32 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
     let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
-    var stream = request(`https://saccounts.cloudkibo.com/api/v1/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(dir + '/anisha.png'))
-    stream.on('end', function () {
-      console.log('finished')
-    })
-    let fileReaderStream
+    let fileToStore = ''
     if (body.componentType === 'file') {
-      if (dir + '/' + body.fileurl.name) {
-        fileReaderStream = fs.createReadStream(dir + '/' + body.fileurl.name)
-      }
+      fileToStore = dir + '/' + body.fileurl.name
     } else {
-      if (dir + '/' + body.fileurl.id) {
-        fileReaderStream = fs.createReadStream(dir + '/' + body.fileurl.id)
+      fileToStore = dir + '/' + body.fileurl.id
+    }
+    var stream = request(`${config.api_urls['accounts']}/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(fileToStore))
+    stream.on('finish', function () {
+      console.log('finished')
+      let fileReaderStream = fs.createReadStream(fileToStore)
+      payload = {
+        'messaging_type': messageType,
+        'recipient': JSON.stringify({
+          'id': subscriberId
+        }),
+        'message': JSON.stringify({
+          'attachment': {
+            'type': body.componentType,
+            'payload': {}
+          }
+        }),
+        'filedata': fileReaderStream
       }
-    }
-
-    payload = {
-      'messaging_type': messageType,
-      'recipient': JSON.stringify({
-        'id': subscriberId
-      }),
-      'message': JSON.stringify({
-        'attachment': {
-          'type': body.componentType,
-          'payload': {}
-        }
-      }),
-      'filedata': fileReaderStream
-    }
-    console.log('in filedata', payload)
-    return payload
+      console.log('in filedata', payload)
+      return payload
+    })
     // todo test this one. we are not removing as we need to keep it for live chat
     // if (!isForLiveChat) deleteFile(body.fileurl)
   } else if (['gif', 'sticker', 'thumbsUp'].indexOf(
