@@ -63,7 +63,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
     body.componentType) > -1) {
     utility.callApi(`files/download/${body.fileurl.id}`, 'get', {})
       .then(file => {
-        console.log('file', file)
+        console.log('file fetched', file)
       })
     let dir = path.resolve(__dirname, '../../../../broadcastFiles/userfiles')
     let fileReaderStream
