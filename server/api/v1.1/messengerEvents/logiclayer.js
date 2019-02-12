@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const utility = require('../utility')
+const utility = require('./utility')
 
 function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
   let messageType = isResponse ? 'RESPONSE' : 'UPDATE'
