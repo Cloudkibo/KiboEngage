@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
-const utility = require('./utility')
+const utility = require('../utility')
+let request = require('request')
 
 function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
   let messageType = isResponse ? 'RESPONSE' : 'UPDATE'
@@ -61,14 +62,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
     }
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
-    utility.callApi(body.fileurl.id, 'get', {})
-      .then(file => {
-        console.log('file fetched', file)
-      })
-      .catch((err) => {
-        console.log('error in file fetch', err)
-      })
-    let dir = path.resolve(__dirname, '../../../../broadcastFiles/userfiles')
+    let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
+    request(`https://saccounts.cloudkibo.com/api/v1/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(dir + '/userfiles/' + body.fileurl.id))
     let fileReaderStream
     if (body.componentType === 'file') {
       if (dir + '/' + body.fileurl.name) {
