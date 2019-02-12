@@ -65,9 +65,9 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
     let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
     let fileToStore = ''
     if (body.componentType === 'file') {
-      fileToStore = dir + '/' + body.fileurl.name
+      fileToStore = dir + '/userfiles/' + body.fileurl.name
     } else {
-      fileToStore = dir + '/' + body.fileurl.id
+      fileToStore = dir + '/userfiles/' + body.fileurl.id
     }
     var stream = request(`${config.api_urls['accounts']}/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(fileToStore))
     stream.on('finish', function () {
