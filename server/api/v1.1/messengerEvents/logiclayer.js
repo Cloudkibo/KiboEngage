@@ -61,6 +61,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           }
         })
       }
+      resolve({payload})
     } else if (['image', 'audio', 'file', 'video'].indexOf(
       body.componentType) > -1) {
       let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
@@ -111,6 +112,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           }
         })
       }
+      resolve({payload})
     } else if (body.componentType === 'card') {
       payload = {
         'messaging_type': messageType,
@@ -134,6 +136,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           }
         })
       }
+      resolve({payload})
     } else if (body.componentType === 'gallery') {
       var galleryCards = []
       if (body.cards && body.cards.length > 0) {
@@ -165,6 +168,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           }
         })
       }
+      resolve({payload})
     } else if (body.componentType === 'list') {
       payload = {
         'messaging_type': messageType,
@@ -183,8 +187,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           }
         })
       }
+      resolve({payload})
     }
-    resolve({payload})
   })
 }
 exports.prepareSendAPIPayload = prepareSendAPIPayload
