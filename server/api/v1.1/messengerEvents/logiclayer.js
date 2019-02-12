@@ -63,7 +63,10 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
     let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
-    request(`https://saccounts.cloudkibo.com/api/v1/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(dir + '/anisha.png'))
+    var stream = request(`https://saccounts.cloudkibo.com/api/v1/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(dir + '/anisha.png'))
+    stream.on('finish', function () {
+      console.log('finished')
+    })
     let fileReaderStream
     if (body.componentType === 'file') {
       if (dir + '/' + body.fileurl.name) {
