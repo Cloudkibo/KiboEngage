@@ -37,31 +37,34 @@ exports.index = function (req, res) {
 function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken) {
   console.log('replyPayload', replyPayload)
   for (let i = 0; i < replyPayload.length; i++) {
-    console.log('function returning', logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true).payload)
-    // let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
-    // logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
-    // console.log('messageData in sendMenuReplyToSubscriber', messageData)
-    console.log('accessToken in sendMenuReplyToSubscriber', accessToken)
-    request(
-      {
-        'method': 'POST',
-        'json': true,
-        'formData': logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true).payload,
-        'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' + accessToken
-      },
-      (err, res) => {
-        console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res)}`)
-        if (err) {
-          console.log('error', err)
-        } else {
-          if (res.statusCode !== 200) {
-            logger.serverLog(TAG,
-              `At send message landingPage ${JSON.stringify(
-                res.body.error)}`)
-          }
-          logger.serverLog(TAG, `At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
-          console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
-        }
+    logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
+      .then(result => {
+        console.log('result from file', result)
+        // let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
+        // logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
+        // console.log('messageData in sendMenuReplyToSubscriber', messageData)
+        console.log('accessToken in sendMenuReplyToSubscriber', accessToken)
+        request(
+          {
+            'method': 'POST',
+            'json': true,
+            'formData': result.payload,
+            'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' + accessToken
+          },
+          (err, res) => {
+            console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res)}`)
+            if (err) {
+              console.log('error', err)
+            } else {
+              if (res.statusCode !== 200) {
+                logger.serverLog(TAG,
+                  `At send message landingPage ${JSON.stringify(
+                    res.body.error)}`)
+              }
+              logger.serverLog(TAG, `At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
+              console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
+            }
+          })
       })
   }
 }
