@@ -3,10 +3,9 @@ const TAG = 'api/messengerEvents/menu.controller.js'
 const {callApi} = require('../utility')
 const logicLayer = require('./logiclayer')
 const request = require('request')
-const broadcastUtility = require('../broadcasts/broadcasts.utility')
 
 exports.index = function (req, res) {
-  console.log('in menu controller')
+  console.log('in welcome message controller')
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -23,8 +22,7 @@ exports.index = function (req, res) {
           console.log('subscriber fetched', subscriber)
           logger.serverLog(TAG, `subscriber fetched ${JSON.stringify(subscriber)}`)
           if (subscriber) {
-            //  sendMenuReplyToSubscriber(replyPayload, subscriber.senderId, subscriber.firstName, subscriber.lastName, subscriber.pageId.accessToken)
-            broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+            sendMenuReplyToSubscriber(replyPayload, subscriber.senderId, subscriber.firstName, subscriber.lastName, subscriber.pageId.accessToken)
           }
         })
         .catch(err => {
@@ -69,20 +67,4 @@ function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName,
           })
       })
   }
-}
-const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
-  const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-    console.log('Send Response Broadcast', body)
-    if (err) {
-      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
-      console.log(`Batch send error ${JSON.stringify(err)}`)
-      // return res.status(500).json({
-      //   status: 'failed',
-      //   description: `Failed to send broadcast ${JSON.stringify(err)}`
-      // })
-    }
-  })
-  const form = r.form()
-  form.append('access_token', page.accessToken)
-  form.append('batch', batchMessages)
 }
