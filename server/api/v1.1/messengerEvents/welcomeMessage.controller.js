@@ -13,15 +13,15 @@ exports.index = function (req, res) {
   })
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
-  callApi(`pages/query`, 'post', { pageId: pageId, connected: true }, 'accounts')
+  callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      console.log('page fetched', page)
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender }, 'accounts')
+      console.log('page fetched in welcomeMessage', page)
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
           if (subscriber) {
-            console.log('subscriber fetched', subscriber)
+            console.log('subscriber fetched in welcomeMessage', subscriber)
             broadcastUtility.getBatchData(page.welcomeMessage, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
           } else {
             console.log('going to newSubscriberWebhook')
