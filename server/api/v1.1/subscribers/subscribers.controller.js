@@ -130,7 +130,7 @@ exports.getAll = function (req, res) {
                           logger.serverLog(TAG, `subscribersFinalPayload: ${util.inspect(finalPayload)}`)
                           return res.status(200).json({
                             status: 'success',
-                            payload: {subscribers: finalPayload}
+                            payload: {subscribers: finalPayload, count: count.length > 0 ? count[0].count : 0}
                           })
                         })
                         .catch(error => {
