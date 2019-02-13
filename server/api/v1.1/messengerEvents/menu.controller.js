@@ -20,8 +20,6 @@ exports.index = function (req, res) {
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
-          console.log('subscriber fetched', subscriber)
-          logger.serverLog(TAG, `subscriber fetched ${JSON.stringify(subscriber)}`)
           if (subscriber) {
             //  sendMenuReplyToSubscriber(replyPayload, subscriber.senderId, subscriber.firstName, subscriber.lastName, subscriber.pageId.accessToken)
             broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
