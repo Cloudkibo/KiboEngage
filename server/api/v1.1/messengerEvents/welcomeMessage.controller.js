@@ -13,11 +13,11 @@ exports.index = function (req, res) {
   })
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
-  callApi.callApi(`pages/query`, 'post', { pageId: pageId, connected: true }, 'accounts')
+  callApi(`pages/query`, 'post', { pageId: pageId, connected: true }, 'accounts')
     .then(page => {
       page = page[0]
       console.log('page fetched', page)
-      callApi.callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender }, 'accounts')
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender }, 'accounts')
         .then(subscriber => {
           subscriber = subscriber[0]
           if (subscriber) {
