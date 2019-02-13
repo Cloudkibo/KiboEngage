@@ -26,27 +26,28 @@ exports.index = function (req, res) {
               if (landingPage.isActive) {
                 console.log('landingPage', landingPage)
                 for (let i = 0; i < landingPage.optInMessage.length; i++) {
-                  let messageData = logicLayer.prepareSendAPIPayload(subscriber.senderId, landingPage.optInMessage[i], subscriber.firstName, subscriber.lastName, true)
-                  console.log('messageData', messageData)
-                  request(
-                    {
-                      'method': 'POST',
-                      'json': true,
-                      'formData': messageData,
-                      'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
-                        subscriber.pageId.accessToken
-                    },
-                    (err, res) => {
-                      if (err) {
-                        console.log(`At send message landingPage ${JSON.stringify(err)}`)
-                      } else {
-                        console.log('res', res.body)
-                        if (res.statusCode !== 200) {
-                          logger.serverLog(TAG,
-                            `At send message landingPage ${JSON.stringify(
-                              res.body.error)}`)
-                        }
-                      }
+                  logicLayer.prepareSendAPIPayload(subscriber.senderId, landingPage.optInMessage[i], subscriber.firstName, subscriber.lastName, true)
+                    .then(result => {
+                      request(
+                        {
+                          'method': 'POST',
+                          'json': true,
+                          'formData': result.payload,
+                          'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
+                            subscriber.pageId.accessToken
+                        },
+                        (err, res) => {
+                          if (err) {
+                            console.log(`At send message landingPage ${JSON.stringify(err)}`)
+                          } else {
+                            console.log('res', res.body)
+                            if (res.statusCode !== 200) {
+                              logger.serverLog(TAG,
+                                `At send message landingPage ${JSON.stringify(
+                                  res.body.error)}`)
+                            }
+                          }
+                        })
                     })
                 }
               }

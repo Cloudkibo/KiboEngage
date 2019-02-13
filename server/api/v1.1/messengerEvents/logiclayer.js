@@ -64,6 +64,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
       resolve({payload})
     } else if (['image', 'audio', 'file', 'video'].indexOf(
       body.componentType) > -1) {
+      console.log('body.fileurl', body)
       let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
       let fileToStore = ''
       if (body.componentType === 'file') {

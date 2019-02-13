@@ -25,29 +25,30 @@ exports.index = function (req, res) {
               pageReferral = pageReferral[0]
               console.log('page referral', pageReferral)
               for (let i = 0; i < pageReferral.reply.length; i++) {
-                let messageData = logicLayer.prepareSendAPIPayload(subscriber.senderId, pageReferral.reply[i], subscriber.firstName, subscriber.lastName, true)
-                console.log('messageData', messageData)
-                request(
-                  {
-                    'method': 'POST',
-                    'json': true,
-                    'formData': messageData,
-                    'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
-                      subscriber.pageId.accessToken
-                  },
-                  (err, res) => {
-                    if (err) {
-                      console.log(`At send message pageReferralt ${JSON.stringify(err)}`)
-                      return logger.serverLog(TAG,
-                        `At send message pageReferralt ${JSON.stringify(err)}`)
-                    } else {
-                      console.log('res', res.body)
-                      if (res.statusCode !== 200) {
-                        logger.serverLog(TAG,
-                          `At send message page referral ${JSON.stringify(
-                            res.body.error)}`)
-                      }
-                    }
+                logicLayer.prepareSendAPIPayload(subscriber.senderId, pageReferral.reply[i], subscriber.firstName, subscriber.lastName, true)
+                  .then(result => {
+                    request(
+                      {
+                        'method': 'POST',
+                        'json': true,
+                        'formData': result.payload,
+                        'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
+                          subscriber.pageId.accessToken
+                      },
+                      (err, res) => {
+                        if (err) {
+                          console.log(`At send message pageReferralt ${JSON.stringify(err)}`)
+                          return logger.serverLog(TAG,
+                            `At send message pageReferralt ${JSON.stringify(err)}`)
+                        } else {
+                          console.log('res', res.body)
+                          if (res.statusCode !== 200) {
+                            logger.serverLog(TAG,
+                              `At send message page referral ${JSON.stringify(
+                                res.body.error)}`)
+                          }
+                        }
+                      })
                   })
               }
             })
