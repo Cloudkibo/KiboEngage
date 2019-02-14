@@ -90,7 +90,7 @@ exports.update = function (req, res) {
       let updatedPayload = {}
       if (req.body.updated.name) updatedPayload.name = req.body.updated.name
       if (req.body.updated.type) updatedPayload.type = req.body.updated.type
-      if (req.body.updated.description) updatedPayload.description = req.body.updated.description
+      updatedPayload.description = req.body.updated.description
       callApi.callApi('custom_fields/', 'put', { purpose: 'updateOne', match: { _id: req.body.customFieldId }, updated: updatedPayload }, req.headers.authorization)
         .then(updated => {
           require('./../../../config/socketio').sendMessageToClient({
