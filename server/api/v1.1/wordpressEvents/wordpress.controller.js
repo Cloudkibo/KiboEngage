@@ -21,7 +21,7 @@ exports.postPublish = function (req, res) {
     .then(autopostings => {
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
-          companyId: postingItem.companyId,
+          companyId: postingItem.companyId._id,
           connected: true
         }
         if (postingItem.isSegmented) {
@@ -72,8 +72,10 @@ exports.postPublish = function (req, res) {
                       seen: 0,
                       clicked: 0
                     }
+                    console.log('subscribers', subscribers, newMsg)
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
+                        console.log('Autposting New Message', savedMsg)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
@@ -87,6 +89,7 @@ exports.postPublish = function (req, res) {
                             }
                             URLObject.createURLObject(urlObject)
                               .then(savedurl => {
+                                console.log('Saved Url', savedurl)
                                 let newURL = config.domain + '/api/URL/' + savedurl._id
                                 messageData = {
                                   'messaging_type': 'UPDATE',
@@ -124,6 +127,7 @@ exports.postPublish = function (req, res) {
 
                                   if (isLastMessage) {
                                     logger.serverLog(TAG, 'inside autoposting wordpress send')
+                                    console.log('Inside Autoposting wordpress send')
                                     sendAutopostingMessage(messageData, page, savedMsg)
                                     let newSubscriberMsg = {
                                       pageId: page.pageId,
@@ -239,6 +243,7 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
+      console.log('Facebook Response', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send wordpress broadcast ${JSON.stringify(
