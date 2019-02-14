@@ -94,6 +94,7 @@ exports.twitterwebhook = function (req, res) {
                       .then(savedMsg => {
                         console.log('new autoposting message created', savedMsg)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
+                          console.log('taggedSubscribers', taggedSubscribers.length)
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
                             if (!req.body.entities.media) { // (tweet.entities.urls.length === 0 && !tweet.entities.media) {
@@ -107,6 +108,7 @@ exports.twitterwebhook = function (req, res) {
                                   'metadata': 'This is a meta data for tweet'
                                 })
                               }
+                              console.log('messageData', messageData)
                               // Logic to control the autoposting when last activity is less than 30 minutes
                               compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                 if (err) {
@@ -123,6 +125,7 @@ exports.twitterwebhook = function (req, res) {
                                     autoposting_messages_id: savedMsg._id,
                                     subscriberId: subscriber.senderId
                                   }
+                                  console.log('newAutoPostingSubscriberMsg', newAutoPostingSubscriberMsg)
                                   AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
                                     .then(result => {
                                       console.log('AutoPostingSubscriberMessage created', result)
