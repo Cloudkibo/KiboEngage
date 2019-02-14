@@ -15,15 +15,12 @@ function validateUrl (str) {
 }
 
 function checkLastMessageAge (subscriberId, req, callback) {
-  console.log('subscriberId', subscriberId)
   utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId }, req.headers.authorization)
     .then(subscribers => {
       var subscriber = subscribers[0]
-      console.log('subscriber in checkLastMessageAge', subscriber)
       utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
         .then(sessions => {
           var session = sessions[0]
-          console.log('sesions in checkLastMessageAge', sessions)
           if (session && session.agent_activity_time) {
             let lastActivity = new Date(session.agent_activity_time)
             let inMiliSeconds = Date.now() - lastActivity
@@ -34,7 +31,6 @@ function checkLastMessageAge (subscriberId, req, callback) {
           }
         })
         .catch(error => {
-          console.log(`failed to fetch session ${JSON.stringify(error)}`)
           logger.serverLog(TAG, `failed to fetch session ${JSON.stringify(error)}`)
           return callback(error)
         })
