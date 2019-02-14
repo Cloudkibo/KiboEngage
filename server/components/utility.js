@@ -34,6 +34,7 @@ function checkLastMessageAge (subscriberId, req, callback) {
           }
         })
         .catch(error => {
+          console.log(`failed to fetch session ${JSON.stringify(error)}`)
           logger.serverLog(TAG, `failed to fetch session ${JSON.stringify(error)}`)
           return callback(error)
         })
