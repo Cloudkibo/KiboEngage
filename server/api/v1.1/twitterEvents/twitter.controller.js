@@ -36,7 +36,7 @@ exports.twitterwebhook = function (req, res) {
       console.log('autopostings found', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
-          companyId: postingItem.companyId._id,
+          companyId: postingItem.companyId,
           connected: true
         }
         if (postingItem.isSegmented) {
@@ -286,53 +286,35 @@ exports.twitterwebhook = function (req, res) {
                                             })
                                         })
                                         .catch(err => {
-                                          return res.status(500).json({
-                                            status: 'failed',
-                                            description: `Internal server error while saving automation queue object ${err}`
-                                          })
+                                          if (err) logger.serverLog(TAG, `Internal server error while saving automation queue object ${err}`)
                                         })
                                     }
                                   })
                                 })
                                 .catch(err => {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    description: `Internal server error while creating URL object ${err}`
-                                  })
+                                  if (err) logger.serverLog(TAG, `Internal server error while creating URL object ${err}`)
                                 })
                             }
                           })
                         })
                       })
                       .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Internal server error while creating Autoposting ${err}`
-                        })
+                        if (err) logger.serverLog(TAG, `Internal server error while creating Autoposting ${err}`)
                       })
                   }
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal server error while fetching subscribers ${err}`
-                  })
+                  if (err) logger.serverLog(TAG, `Internal server error while fetching subscribers ${err}`)
                 })
             })
           })
           .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal server error while fetching pages ${err}`
-            })
+            if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`)
           })
       })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal server error while fetching autoposts ${err}`
-      })
+      if (err) logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`)
     })
 }
 
