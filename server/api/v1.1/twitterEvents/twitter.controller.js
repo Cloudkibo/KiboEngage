@@ -33,7 +33,7 @@ exports.twitterwebhook = function (req, res) {
   console.log('in twitter webhook', req.body)
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
-      console.log('autopostings found', autopostings.length)
+      console.log('autopostings found', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
           companyId: postingItem.companyId,
@@ -75,6 +75,7 @@ exports.twitterwebhook = function (req, res) {
                     })
                 }
               }
+              console.log('subscriberFindCriteria', subscriberFindCriteria)
               utility.callApi('subscribers/query', 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
                   console.log('subscribers found', subscribers.length)
@@ -334,7 +335,6 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
-      console.log('Response from facebook', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send tweet broadcast ${JSON.stringify(
