@@ -34,7 +34,7 @@ exports.twitterwebhook = function (req, res) {
     .then(autopostings => {
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
-          companyId: postingItem.companyId,
+          companyId: postingItem.companyId._id,
           connected: true
         }
         if (postingItem.isSegmented) {
@@ -81,7 +81,7 @@ exports.twitterwebhook = function (req, res) {
                       autoposting_type: 'twitter',
                       autopostingId: postingItem._id,
                       sent: subscribers.length,
-                      message_id: req.body.id.toString(),
+                      message_id: req.body.id,
                       seen: 0,
                       clicked: 0
                     }
@@ -280,35 +280,53 @@ exports.twitterwebhook = function (req, res) {
                                             })
                                         })
                                         .catch(err => {
-                                          if (err) logger.serverLog(TAG, `Internal server error while saving automation queue object ${err}`)
+                                          return res.status(500).json({
+                                            status: 'failed',
+                                            description: `Internal server error while saving automation queue object ${err}`
+                                          })
                                         })
                                     }
                                   })
                                 })
                                 .catch(err => {
-                                  if (err) logger.serverLog(TAG, `Internal server error while creating URL object ${err}`)
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Internal server error while creating URL object ${err}`
+                                  })
                                 })
                             }
                           })
                         })
                       })
                       .catch(err => {
-                        if (err) logger.serverLog(TAG, `Internal server error while creating Autoposting ${err}`)
+                        return res.status(500).json({
+                          status: 'failed',
+                          description: `Internal server error while creating Autoposting ${err}`
+                        })
                       })
                   }
                 })
                 .catch(err => {
-                  if (err) logger.serverLog(TAG, `Internal server error while fetching subscribers ${err}`)
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Internal server error while fetching subscribers ${err}`
+                  })
                 })
             })
           })
           .catch(err => {
-            if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`)
+            return res.status(500).json({
+              status: 'failed',
+              description: `Internal server error while fetching pages ${err}`
+            })
           })
       })
     })
     .catch(err => {
-      if (err) logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`)
+      return res.status(500).json({
+        status: 'failed',
+        description: `Internal server error while fetching autoposts ${err}`
+      })
     })
 }
 
@@ -322,6 +340,7 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
+      console.log('Response from facebook', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send tweet broadcast ${JSON.stringify(
