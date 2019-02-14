@@ -85,7 +85,7 @@ exports.twitterwebhook = function (req, res) {
                       autoposting_type: 'twitter',
                       autopostingId: postingItem._id,
                       sent: subscribers.length,
-                      message_id: req.body.id,
+                      message_id: req.body.id.toString(),
                       seen: 0,
                       clicked: 0
                     }
