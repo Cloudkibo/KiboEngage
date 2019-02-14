@@ -21,7 +21,7 @@ exports.postPublish = function (req, res) {
     .then(autopostings => {
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
-          companyId: postingItem.companyId._id,
+          companyId: postingItem.companyId,
           connected: true
         }
         if (postingItem.isSegmented) {
@@ -243,7 +243,6 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
-      console.log('Facebook Response', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send wordpress broadcast ${JSON.stringify(
