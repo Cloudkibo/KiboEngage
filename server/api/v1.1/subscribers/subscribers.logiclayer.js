@@ -10,7 +10,27 @@ exports.getSubscriberIds = function (subscribers) {
   }
   return subscriberIds
 }
-
+exports.getFinalPayload = (subscribers, customFields, customFieldSubscribers) => {
+  let subscribersPayload = subscribers
+  let data = {}
+  for (let i = 0; i < subscribers.length; i++) {
+    subscribersPayload[i].customFields = []
+    for (let j = 0; j < customFields.length; j++) {
+      data = {
+        _id: customFields[j]._id,
+        name: customFields[j].name,
+        value: ''
+      }
+      for (let k = 0; k < customFieldSubscribers.length; k++) {
+        if (customFieldSubscribers[k].subscriberId._id === subscribers[i]._id && customFieldSubscribers[k].customFieldId._id === customFields[j]._id) {
+          data.value = customFieldSubscribers[k].value
+        }
+      }
+      subscribersPayload[i].customFields.push(data)
+    }
+  }
+  return subscribersPayload
+}
 exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
   let subscribersPayload = subscribers
   let filteredTagSubscribers = []
@@ -63,7 +83,7 @@ exports.getCriterias = function (body, companyUser) {
   temp['pageId.connected'] = true
 
   let countCriteria = [
-    { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+    { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
     { $unwind: '$pageId' },
     { $project: {
       'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
@@ -92,7 +112,7 @@ exports.getCriterias = function (body, companyUser) {
     }
     console.log('temp match', temp)
     finalCriteria = [
-      { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
@@ -118,7 +138,7 @@ exports.getCriterias = function (body, companyUser) {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
       { $sort: { datetime: -1 } },
-      { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
@@ -144,7 +164,7 @@ exports.getCriterias = function (body, companyUser) {
     recordsToSkip = Math.abs((body.requested_page * body.number_of_records) - body.number_of_records)
     finalCriteria = [
       { $sort: { datetime: -1 } },
-      { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
@@ -167,5 +187,5 @@ exports.getCriterias = function (body, companyUser) {
       { $limit: body.number_of_records }
     ]
   }
-  return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
+  return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }

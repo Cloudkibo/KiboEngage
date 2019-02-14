@@ -14,7 +14,7 @@ exports.getMessagePayload = {
       type: 'string'
     },
     number_of_records: {
-      type: 'string'
+      type: 'number'
     }
   }
 }

@@ -30,11 +30,13 @@ exports.findAutoposting = function (req, res) {
 
 exports.twitterwebhook = function (req, res) {
   // logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
+  console.log('in twitter webhook', req.body)
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
+      console.log('autopostings found', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
-          companyId: postingItem.companyId._id,
+          companyId: postingItem.companyId,
           connected: true
         }
         if (postingItem.isSegmented) {
@@ -48,6 +50,7 @@ exports.twitterwebhook = function (req, res) {
         }
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
+            console.log('pagesfound', pages.length)
             pages.forEach(page => {
               let subscriberFindCriteria = {
                 pageId: page._id,
@@ -72,8 +75,10 @@ exports.twitterwebhook = function (req, res) {
                     })
                 }
               }
+              console.log('subscriberFindCriteria', subscriberFindCriteria)
               utility.callApi('subscribers/query', 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
+                  console.log('subscribers found', subscribers.length)
                   if (subscribers.length > 0) {
                     let newMsg = {
                       pageId: page._id,
@@ -81,13 +86,16 @@ exports.twitterwebhook = function (req, res) {
                       autoposting_type: 'twitter',
                       autopostingId: postingItem._id,
                       sent: subscribers.length,
-                      message_id: req.body.id,
+                      message_id: req.body.id.toString(),
                       seen: 0,
                       clicked: 0
                     }
+                    console.log('newMsg', newMsg)
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
+                        console.log('new autoposting message created', savedMsg)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
+                          console.log('taggedSubscribers', taggedSubscribers.length)
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
                             if (!req.body.entities.media) { // (tweet.entities.urls.length === 0 && !tweet.entities.media) {
@@ -101,8 +109,10 @@ exports.twitterwebhook = function (req, res) {
                                   'metadata': 'This is a meta data for tweet'
                                 })
                               }
+                              console.log('messageData', messageData)
                               // Logic to control the autoposting when last activity is less than 30 minutes
                               compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
+                                console.log('isLastMessage', isLastMessage)
                                 if (err) {
                                   logger.serverLog(TAG, 'inside error')
                                   return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
@@ -117,8 +127,10 @@ exports.twitterwebhook = function (req, res) {
                                     autoposting_messages_id: savedMsg._id,
                                     subscriberId: subscriber.senderId
                                   }
+                                  console.log('newAutoPostingSubscriberMsg', newAutoPostingSubscriberMsg)
                                   AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
                                     .then(result => {
+                                      console.log('AutoPostingSubscriberMessage created', result)
                                       logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                                       return res.status(200).json({
                                         status: 'success',
@@ -280,57 +292,40 @@ exports.twitterwebhook = function (req, res) {
                                             })
                                         })
                                         .catch(err => {
-                                          return res.status(500).json({
-                                            status: 'failed',
-                                            description: `Internal server error while saving automation queue object ${err}`
-                                          })
+                                          if (err) logger.serverLog(TAG, `Internal server error while saving automation queue object ${err}`)
                                         })
                                     }
                                   })
                                 })
                                 .catch(err => {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    description: `Internal server error while creating URL object ${err}`
-                                  })
+                                  if (err) logger.serverLog(TAG, `Internal server error while creating URL object ${err}`)
                                 })
                             }
                           })
                         })
                       })
                       .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Internal server error while creating Autoposting ${err}`
-                        })
+                        if (err) logger.serverLog(TAG, `Internal server error while creating Autoposting ${err}`)
                       })
                   }
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal server error while fetching subscribers ${err}`
-                  })
+                  if (err) logger.serverLog(TAG, `Internal server error while fetching subscribers ${err}`)
                 })
             })
           })
           .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal server error while fetching pages ${err}`
-            })
+            if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`)
           })
       })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal server error while fetching autoposts ${err}`
-      })
+      if (err) logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`)
     })
 }
 
 function sendAutopostingMessage (messageData, page, savedMsg) {
+  console.log('sendAutopostingMessage')
   request(
     {
       'method': 'POST',
@@ -340,7 +335,6 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
-      console.log('Response from facebook', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send tweet broadcast ${JSON.stringify(
