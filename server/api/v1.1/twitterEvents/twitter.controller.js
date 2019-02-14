@@ -33,7 +33,7 @@ exports.twitterwebhook = function (req, res) {
   console.log('in twitter webhook', req.body)
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
-      console.log('autopostings found', autopostings)
+      console.log('autopostings found', autopostings.length)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
           companyId: postingItem.companyId,
@@ -89,6 +89,7 @@ exports.twitterwebhook = function (req, res) {
                       seen: 0,
                       clicked: 0
                     }
+                    console.log('newMsg', newMsg)
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
                         console.log('new autoposting message created', savedMsg)
