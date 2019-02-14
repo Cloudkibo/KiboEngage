@@ -14,6 +14,7 @@ const config = require('../../../config/environment/index')
 
 exports.postPublish = function (req, res) {
   logger.serverLog(TAG, `Wordpress post received : ${JSON.stringify(req.body)}`)
+  console.log(`Wordpress post received : ${JSON.stringify(req.body)}`)
   let wpUrl = req.body.guid
   let wordpressUniqueId = wpUrl.split('/')[0] + wpUrl.split('/')[1] + '//' + wpUrl.split('/')[2]
   logger.serverLog(TAG, `Wordpress unique id:  ${JSON.stringify(wordpressUniqueId)}`)
