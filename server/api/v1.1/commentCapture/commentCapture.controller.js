@@ -116,7 +116,7 @@ exports.create = function (req, res) {
                         }
                         logger.serverLog(TAG, `response from post in video ${JSON.stringify(resp.body)}`)
                         needle.get(
-                          `https://graph.facebook.com/${page.pageId}/feed?fields=object_id,type&limit=10&access_token=${respp.body.access_token}`, (err, response) => {
+                          `https://graph.facebook.com/${page.pageId}/feed?fields=object_id,type&access_token=${respp.body.access_token}`, (err, response) => {
                             if (err) {
                               logger.serverLog(TAG, err)
                             }
