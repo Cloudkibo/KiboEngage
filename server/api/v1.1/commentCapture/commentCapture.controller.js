@@ -109,7 +109,7 @@ exports.create = function (req, res) {
                       })
                   } else if (messageData.video) {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/videos?access_token=${respp.body.access_token}`,
+                      `https://graph-video.facebook.com/v2.11/${page.pageId}/videos?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err)
