@@ -80,16 +80,16 @@ exports.create = function (req, res) {
               }
               needle.get(
                 `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
-                (err, resp) => {
+                (err, respp) => {
                   if (err) {
                     logger.serverLog(TAG,
                       `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                   }
-                  console.log('response from pageaccesstoken', resp.body)
+                  console.log('response from pageaccesstoken', respp.body)
                   let messageData = logicLayer.setMessage(req.body.payload)
                   if (messageData.image) {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/photos?access_token=${resp.body.access_token}`,
+                      `https://graph.facebook.com/${page.pageId}/photos?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err)
@@ -109,14 +109,14 @@ exports.create = function (req, res) {
                       })
                   } else if (messageData.video) {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/videos?access_token=${resp.body.access_token}`,
+                      `https://graph.facebook.com/${page.pageId}/videos?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err)
                         }
                         logger.serverLog(TAG, `response from post in video ${JSON.stringify(resp.body)}`)
                         needle.get(
-                          `https://graph.facebook.com/${page.pageId}/feed?fields=object_id,type&limit=10&access_token=${resp.body.access_token}`, (err, response) => {
+                          `https://graph.facebook.com/${page.pageId}/feed?fields=object_id,type&limit=10&access_token=${respp.body.access_token}`, (err, response) => {
                             if (err) {
                               logger.serverLog(TAG, err)
                             }
@@ -138,7 +138,7 @@ exports.create = function (req, res) {
                       })
                   } else {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${resp.body.access_token}`,
+                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err)
