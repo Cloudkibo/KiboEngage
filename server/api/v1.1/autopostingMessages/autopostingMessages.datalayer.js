@@ -67,6 +67,7 @@ exports.genericUpdateAutopostingMessage = (queryObject, updated, options) => {
   return callApi(`autoposting_messages`, 'put', query, '', 'kiboengage')
 }
 exports.createAutopostingMessage = (payload) => {
+  console.log('in createAutopostingMessage')
   return callApi(`autoposting_messages`, 'post', payload, '', 'kiboengage')
 }
 exports.updateOneAutopostingMessage = (id, payload) => {
