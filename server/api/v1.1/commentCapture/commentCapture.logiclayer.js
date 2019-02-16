@@ -20,3 +20,15 @@ exports.setMessage = function (payload) {
   })
   return messageData
 }
+exports.getPostId = function (data, videoId) {
+  return new Promise(function (resolve, reject) {
+    let postId = ''
+    for (let i = 0; i < data.length; i++) {
+      if (data.type === 'video' && data.object_id === videoId) {
+        postId = data.id
+        break
+      }
+    }
+    resolve(postId)
+  })
+}

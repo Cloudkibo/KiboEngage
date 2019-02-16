@@ -80,16 +80,16 @@ exports.create = function (req, res) {
               }
               needle.get(
                 `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
-                (err, resp) => {
+                (err, respp) => {
                   if (err) {
                     logger.serverLog(TAG,
                       `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                   }
-                  console.log('response from pageaccesstoken', resp.body)
+                  console.log('response from pageaccesstoken', respp.body)
                   let messageData = logicLayer.setMessage(req.body.payload)
                   if (messageData.image) {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/photos?access_token=${resp.body.access_token}`,
+                      `https://graph.facebook.com/${page.pageId}/photos?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err)
@@ -109,27 +109,36 @@ exports.create = function (req, res) {
                       })
                   } else if (messageData.video) {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/videos?access_token=${resp.body.access_token}`,
+                      `https://graph-video.facebook.com/v2.11/${page.pageId}/videos?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err)
                         }
-                        logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
-                        let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
-                        utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}}, req.headers.authorization)
-                          .then(result => {
-                            res.status(201).json({status: 'success', payload: postCreated})
-                          })
-                          .catch(error => {
-                            return res.status(500).json({
-                              status: 'failed',
-                              payload: `Failed to create post ${JSON.stringify(error)}`
+                        logger.serverLog(TAG, `response from post in video ${JSON.stringify(resp.body)}`)
+                        needle.get(
+                          `https://graph.facebook.com/${page.pageId}/feed?fields=object_id,type&access_token=${respp.body.access_token}`, (err, response) => {
+                            if (err) {
+                              logger.serverLog(TAG, err)
+                            }
+                            logger.serverLog(TAG, `response from feed ${JSON.stringify(response.body)}`)
+                            logicLayer.getPostId(response.body.data, resp.body.id).then(postId => {
+                              logger.serverLog(TAG, `postId ${postId}`)
+                              utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}}, req.headers.authorization)
+                                .then(result => {
+                                  res.status(201).json({status: 'success', payload: postCreated})
+                                })
+                                .catch(error => {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    payload: `Failed to create post ${JSON.stringify(error)}`
+                                  })
+                                })
                             })
                           })
                       })
                   } else {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${resp.body.access_token}`,
+                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err)
