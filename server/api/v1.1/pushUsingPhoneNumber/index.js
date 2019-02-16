@@ -10,7 +10,7 @@ const multipartyMiddleware = multiparty()
 router.post('/uploadCSV',
   auth.isAuthenticated(),
   multipartyMiddleware,
-  validate({body: validationSchema.uploadCSV}),
+  // validate({body: validationSchema.uploadCSV}),
   controller.uploadCSV)
 
 module.exports = router
