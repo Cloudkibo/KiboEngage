@@ -8,7 +8,9 @@ const fs = require('fs')
 const csv = require('csv-parser')
 
 exports.uploadCSV = function (req, res) {
+  console.log('uploadCSV')
   let directory = logicLayer.directory(req)
+  console.log('Directory', directory)
   if (req.files.file.size === 0) {
     return res.status(400).json({
       status: 'failed',
@@ -17,14 +19,17 @@ exports.uploadCSV = function (req, res) {
   }
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
+      console.log('companyUser', companyUser)
       var phoneColumn = req.body.phoneColumn
       fs.createReadStream(directory.dir + '/userfiles/' + directory.serverPath)
         .pipe(csv())
         .on('data', function (data) {
+          console.log('data', data)
           if (data[`${phoneColumn}`]) {
             var phoneNumber = data[`${phoneColumn}`]
             CustomerDataLayer.findUsingQuery({'phoneNumber': phoneNumber, 'pageId': req.body._id, 'companyId': companyUser.companyId})
               .then(customer => {
+                console.log('customer', customer)
                 if (customer.length > 1) {
                   customer = customer[0]
                   var customerPayload = {}
@@ -38,11 +43,12 @@ exports.uploadCSV = function (req, res) {
                       customerPayload.payload.push(properties)
                     }
                     CustomerDataLayer.findAndUpdateCustomerObject({_id: customer._id}, customerPayload)
-                      .then(customer => {
+                      .then(updatedCustomer => {
+                        console.log('updatedCustomer', updatedCustomer)
                         sendMessage(req, phoneNumber)
                       })
                       .catch(error => {
-                        logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`)
+                        logger.serverLog(TAG, `Failed to update customer ${JSON.stringify(error)}`)
                       })
                   }
                 } else {
@@ -59,7 +65,8 @@ exports.uploadCSV = function (req, res) {
                     customerPayload.payload.push(properties)
                   }
                   CustomerDataLayer.createCustomerObject(customerPayload)
-                    .then(customer => {
+                    .then(savedCustomer => {
+                      console.log('savedCustomer', savedCustomer)
                       sendMessage(req, phoneNumber)
                     })
                     .catch(error => {
@@ -76,6 +83,7 @@ exports.uploadCSV = function (req, res) {
           }
         })
         .on('end', function () {
+          console.log('Calling on End')
           fs.unlinkSync(directory.dir + '/userfiles/' + directory.serverPath)
           return res.status(201)
             .json({

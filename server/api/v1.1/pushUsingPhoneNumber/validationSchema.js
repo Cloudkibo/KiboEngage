@@ -13,9 +13,6 @@ exports.uploadCSV = {
     columns: {
       type: 'array',
       items: {}
-    },
-    file: {
-      type: 'object'
     }
   }
 }
