@@ -8,7 +8,8 @@ exports.uploadCSV = {
       type: 'string'
     },
     message: {
-      type: 'object'
+      type: 'array',
+      items: {}
     },
     columns: {
       type: 'array',
