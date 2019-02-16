@@ -47,6 +47,7 @@ module.exports = function (app) {
   app.use('/api/scripts', require('./api/v1.1/scripts'))
   app.use('/api/custom_fields', require('./api/v1.1/custom_fields'))
   app.use('/api/custom_field_subscribers/', require('./api/v1.1/custom_field_subscribers'))
+  app.use('/api/pushUsingPhoneNumber/', require('./api/v1.1/pushUsingPhoneNumber'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
