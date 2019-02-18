@@ -18,6 +18,8 @@ exports.autoposting = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
+  // TODO REMOVE THIS RETURN AFTER DEBUGGING
+  return ;
   logger.serverLog(TAG, `in autoposting ${JSON.stringify(req.body)}`)
   for (let i = 0; i < req.body.entry[0].changes.length; i++) {
     const event = req.body.entry[0].changes[i]
@@ -33,13 +35,17 @@ exports.autoposting = function (req, res) {
           if (meta && meta.image && meta.image.url) {
             event.value.image = meta.image.url
           }
-          handleThePagePostsForAutoPosting(req, event)
+          // TODO FIX THIS FUNCTION
+          // handleThePagePostsForAutoPosting(req, event)
         })
       } else if (event.value.item === 'video' && event.value.message) {
-        handleThePagePostsForAutoPosting(req, event, 'status')
-        handleThePagePostsForAutoPosting(req, event)
+        // TODO FIX THIS FUNCTION
+        // handleThePagePostsForAutoPosting(req, event, 'status')
+        // TODO FIX THIS FUNCTION
+        // handleThePagePostsForAutoPosting(req, event)
       } else {
-        handleThePagePostsForAutoPosting(req, event)
+        // TODO FIX THIS FUNCTION
+        // handleThePagePostsForAutoPosting(req, event)
       }
     }
   }
