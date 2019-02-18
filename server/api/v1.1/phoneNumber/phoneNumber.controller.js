@@ -8,6 +8,7 @@ let request = require('request')
 
 exports.upload = function (req, res) {
   let directory = logicLayer.directory(req)
+  console.log('Directory Phone', directory)
   if (req.files.file.size === 0) {
     return res.status(400).json({
       status: 'failed',
