@@ -2,7 +2,7 @@ let _ = require('lodash')
 
 exports.pagesFindCriteria = function (postingItem) {
   let pagesFindCriteria = {
-    userId: postingItem.userId._id,
+    companyId: postingItem.companyId,
     connected: true
   }
 
