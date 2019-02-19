@@ -100,6 +100,7 @@ exports.create = function (req, res) {
                             autoPostingPayload.payload = payload
                             AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                               .then(result => {
+                                console.log('result from create', result)
                                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                   .then(result => {
                                     logger.serverLog('Company Usage updated')
