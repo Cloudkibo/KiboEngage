@@ -7,8 +7,10 @@ const logger = require('../../../components/logger')
 const sequenceUtility = require('./../sequenceMessaging/utility')
 
 exports.index = function (req, res) {
+  console.log('in index')
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
+      console.log('URLObject', URLObject)
       AutopostingMessagesDataLayer.updateOneAutopostingMessage(URLObject.module.id, {$inc: {clicked: 1}})
         .then(updatedData => {
           res.writeHead(301, {Location: URLObject.originalURL})
