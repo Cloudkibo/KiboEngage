@@ -92,7 +92,7 @@ exports.create = function (req, res) {
                           if (data && !data.errors) {
                             autoPostingPayload.accountUniqueName = data.screen_name
                             payload = {
-                              id: data.id,
+                              id: data.id_str,
                               name: data.name,
                               screen_name: data.screen_name,
                               profile_image_url: data.profile_image_url_https
@@ -100,6 +100,7 @@ exports.create = function (req, res) {
                             autoPostingPayload.payload = payload
                             AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                               .then(result => {
+                                console.log('result from create', result)
                                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                   .then(result => {
                                     logger.serverLog('Company Usage updated')

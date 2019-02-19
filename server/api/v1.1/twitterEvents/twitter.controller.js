@@ -7,6 +7,7 @@ const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
 const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
+const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 let request = require('request')
 let _ = require('lodash')
 const config = require('../../../config/environment/index')
@@ -29,7 +30,11 @@ exports.findAutoposting = function (req, res) {
 }
 
 exports.twitterwebhook = function (req, res) {
-  // logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
+  logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
+  res.status(200).json({
+    status: 'success',
+    description: `received the payload`
+  })
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
       autopostings.forEach(postingItem => {
@@ -120,10 +125,6 @@ exports.twitterwebhook = function (req, res) {
                                   AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
                                     .then(result => {
                                       logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                      return res.status(200).json({
-                                        status: 'success',
-                                        description: `Twitter Broadcast Message Sent`
-                                      })
                                     })
                                     .catch(err => {
                                       if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
@@ -156,10 +157,6 @@ exports.twitterwebhook = function (req, res) {
                                       AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
                                         .then(result => {
                                           logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                          return res.status(200).json({
-                                            status: 'success',
-                                            description: `Twitter Broadcast Message Sent`
-                                          })
                                         })
                                         .catch(err => {
                                           if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
@@ -185,7 +182,7 @@ exports.twitterwebhook = function (req, res) {
                                   type: 'autoposting'
                                 }
                               }
-                              URLObject.createURLObject(URLObject)
+                              URLDataLayer.createURLObject(URLObject)
                                 .then(savedurl => {
                                   let newURL = config.domain + '/api/URL/' + savedurl._id
                                   messageData = {
@@ -221,7 +218,6 @@ exports.twitterwebhook = function (req, res) {
                                       logger.serverLog(TAG, 'inside error')
                                       return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                     }
-
                                     if (isLastMessage) {
                                       logger.serverLog(TAG, 'inside autoposting autoposting twitter send')
                                       sendAutopostingMessage(messageData, page, savedMsg)
@@ -235,10 +231,6 @@ exports.twitterwebhook = function (req, res) {
                                       AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
                                         .then(result => {
                                           logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                          return res.status(200).json({
-                                            status: 'success',
-                                            description: `Twitter Broadcast Message Sent`
-                                          })
                                         })
                                         .catch(err => {
                                           if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
@@ -270,10 +262,6 @@ exports.twitterwebhook = function (req, res) {
                                           AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
                                             .then(result => {
                                               logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                              return res.status(200).json({
-                                                status: 'success',
-                                                description: `Twitter Broadcast Message Sent`
-                                              })
                                             })
                                             .catch(err => {
                                               if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
