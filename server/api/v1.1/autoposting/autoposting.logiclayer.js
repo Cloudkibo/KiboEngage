@@ -53,10 +53,19 @@ const checkPlanLimit = (subscriptionType, planUsage, companyUsage) => {
 
 const getFacebookScreenName = (subscriptionUrl) => {
   let url = subscriptionUrl
-  let urlAfterDot = url.substring(url.indexOf('.') + 1)
-  let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
-  while (screenName.indexOf('-') > -1) screenName = screenName.substring(screenName.indexOf('-') + 1)
-  if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
+  var screenName = ''
+  var url1 = url.split('-')
+  var url2 = url.split('/')
+  if (url2[2] === 'www.facebook.com' || url2[2] === 'web.facebook.com' || url2[2] === 'facebook.com'  ) {
+    if (url1[url1.length - 1] !== url) {
+      let temp = url1[url1.length - 1].split('/')
+      screenName = temp[0]
+    } else {
+      screenName = url2[url2.length - 1]
+    }
+  } else {
+    screenName = null
+  }
   return screenName
 }
 
