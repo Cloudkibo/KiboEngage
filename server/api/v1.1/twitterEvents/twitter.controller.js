@@ -30,6 +30,7 @@ exports.findAutoposting = function (req, res) {
 
 exports.twitterwebhook = function (req, res) {
   // logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
+  console.log('in twitterwebhook', JSON.stringify(req.body))
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
       autopostings.forEach(postingItem => {
@@ -177,6 +178,7 @@ exports.twitterwebhook = function (req, res) {
                                 }
                               })
                             } else {
+                              console.log('in media', req.body.entities.media)
                               let URLObject = {
                                 originalURL: req.body.entities.media[0].url,
                                 subscriberId: subscriber._id,
