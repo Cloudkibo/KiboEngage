@@ -7,7 +7,7 @@ const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
 const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
-const URLModel = require('../URLForClickedCount/URL.datalayer')
+const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 let request = require('request')
 let _ = require('lodash')
 const config = require('../../../config/environment/index')
@@ -182,7 +182,7 @@ exports.twitterwebhook = function (req, res) {
                                   type: 'autoposting'
                                 }
                               }
-                              URLModel.createURLObject(URLObject)
+                              URLDataLayer.createURLObject(URLObject)
                                 .then(savedurl => {
                                   let newURL = config.domain + '/api/URL/' + savedurl._id
                                   messageData = {
