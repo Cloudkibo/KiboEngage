@@ -92,7 +92,7 @@ exports.create = function (req, res) {
                           if (data && !data.errors) {
                             autoPostingPayload.accountUniqueName = data.screen_name
                             payload = {
-                              id: data.id_str,
+                              id: data.id,
                               name: data.name,
                               screen_name: data.screen_name,
                               profile_image_url: data.profile_image_url_https
