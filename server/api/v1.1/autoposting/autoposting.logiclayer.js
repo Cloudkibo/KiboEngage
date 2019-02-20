@@ -53,18 +53,18 @@ const checkPlanLimit = (subscriptionType, planUsage, companyUsage) => {
 
 const getFacebookScreenName = (subscriptionUrl) => {
   let url = subscriptionUrl
-  var screenName = ''
-  var url1 = url.split('-')
-  var url2 = url.split('/')
-  if (url2[2] === 'www.facebook.com' || url2[2] === 'web.facebook.com' || url2[2] === 'facebook.com'  ) {
-    if (url1[url1.length - 1] !== url) {
-      let temp = url1[url1.length - 1].split('/')
-      screenName = temp[0]
+  var screenName = null
+  var matchFacebookLink = new RegExp('(?:(?:https):\/\/)?(?:www.|web.|null)?facebook.com\/(?:(?:\w)*#!\/)?(?:(?:[\w\-]*)*([\w\-]*))?\/?')
+  if (url.match(matchFacebookLink)) {
+    let url1 = url.split('?')[0]
+    let urlAfterDot = url1.substring(url1.indexOf('.') + 1)
+    let urlAfterCom = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1).split('/')[0]
+    let temp = urlAfterCom.split('-')
+    if (temp.length > 0) {
+      screenName = temp[temp.length - 1]
     } else {
-      screenName = url2[url2.length - 1]
+      screenName = urlAfterCom
     }
-  } else {
-    screenName = null
   }
   return screenName
 }
