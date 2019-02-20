@@ -5,10 +5,10 @@ Thus we can use it from other non express callers like cron etc
 */
 const { callApi } = require('../utility')
 
-exports.findOneAutopostingObject = (objectId) => {
+exports.findOneAutopostingObject = (objectId, companyId) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: objectId}
+    match: {_id: objectId, companyId}
   }
   return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
 }

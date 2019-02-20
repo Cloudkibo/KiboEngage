@@ -140,7 +140,7 @@ exports.create = function (req, res) {
                       if (req.body.subscriptionType === 'facebook') {
                         let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
                         console.log('autoPostingPayload', autoPostingPayload)
-                        utility.callApi(`pages/query`, 'post', {userId: req.user._id, $or: [{pageId: screenName}, {pageUserName: screenName}]}, req.headers.authorization)
+                        utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, $or: [{pageId: screenName}, {pageUserName: screenName}]}, req.headers.authorization)
                           .then(pageInfo => {
                             if (!pageInfo) {
                               return res.status(404).json({
@@ -323,7 +323,7 @@ exports.edit = function (req, res) {
 }
 
 exports.destroy = function (req, res) {
-  AutopostingDataLayer.findOneAutopostingObject(req.params.id)
+  AutopostingDataLayer.findOneAutopostingObject(req.params.id, req.user.companyId)
     .then(autoposting => {
       if (!autoposting) {
         return res.status(404)

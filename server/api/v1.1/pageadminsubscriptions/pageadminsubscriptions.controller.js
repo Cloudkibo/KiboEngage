@@ -6,7 +6,7 @@ const logger = require('../../../components/logger')
 
 // Get list of companyprofiles
 exports.index = function (req, res) {
-  PageAdminSubscriptionsDataLayer.genericFind({userId: req.user._id})
+  PageAdminSubscriptionsDataLayer.genericFind({userId: req.user._id, companyId: req.user.companyId})
     .then(subscriptionInfo => {
       console.log('subscriptionInfo', subscriptionInfo)
       if (subscriptionInfo.length > 0) {

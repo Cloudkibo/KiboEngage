@@ -18,7 +18,7 @@ exports.index = function (req, res) {
       page = page[0]
       console.log('page fetched in welcomeMessage', page)
       if (page.isWelcomeMessageEnabled) {
-        callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
+        callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
           .then(subscriber => {
             subscriber = subscriber[0]
             if (subscriber) {

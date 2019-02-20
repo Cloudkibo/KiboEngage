@@ -12,15 +12,16 @@ exports.index = function (req, res) {
   })
   const sender = req.body.senderId
   const pageId = req.body.pageId
-  callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
+  const companyId = req.body.companyId
+  callApi(`pages/query`, 'post', { pageId: pageId, connected: true, companyId })
     .then(page => {
       page = page[0]
       console.log('page Found', page)
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
+      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
           console.log('page._id', page._id)
-          callApi(`landingPage/query`, 'post', { pageId: page._id })
+          callApi(`landingPage/query`, 'post', { pageId: page._id, companyId: page.companyId })
             .then(landingPage => {
               landingPage = landingPage[0]
               if (landingPage.isActive) {
