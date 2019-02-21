@@ -149,7 +149,7 @@ exports.create = function (req, res) {
                                   description: 'Cannot add this page or page not found'
                                 })
                               }
-                              autoPostingPayload.accountUniqueName = pageInfo.pageIdS
+                              autoPostingPayload.accountUniqueName = pageInfo.pageId
                               AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                                 .then(result => {
                                   utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} }, req.headers.authorization)
