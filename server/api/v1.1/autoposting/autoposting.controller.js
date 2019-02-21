@@ -92,7 +92,7 @@ exports.create = function (req, res) {
                           if (data && !data.errors) {
                             autoPostingPayload.accountUniqueName = data.screen_name
                             payload = {
-                              id: data.id,
+                              id: data.id_str,
                               name: data.name,
                               screen_name: data.screen_name,
                               profile_image_url: data.profile_image_url_https
@@ -100,6 +100,7 @@ exports.create = function (req, res) {
                             autoPostingPayload.payload = payload
                             AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                               .then(result => {
+                                console.log('result from create', result)
                                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                   .then(result => {
                                     logger.serverLog('Company Usage updated')
@@ -138,56 +139,64 @@ exports.create = function (req, res) {
                       }
                       if (req.body.subscriptionType === 'facebook') {
                         let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
-                        console.log('autoPostingPayload', autoPostingPayload)
-                        utility.callApi(`pages/query`, 'post', {userId: req.user._id, $or: [{pageId: screenName}, {pageUserName: screenName}]}, req.headers.authorization)
-                          .then(pageInfo => {
-                            if (!pageInfo) {
-                              return res.status(404).json({
-                                status: 'Failed',
-                                description: 'Cannot add this page or page not found'
-                              })
-                            }
-                            autoPostingPayload.accountUniqueName = pageInfo.pageId
-                            AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-                              .then(result => {
-                                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { facebook_autoposting: 1 }}, options: {}}, req.headers.authorization)
-                                  .then(result => {
-                                    logger.serverLog('Company Usage Updated')
-                                  })
-                                  .catch(err => {
-                                    return res.status(500).json({
-                                      status: 'failed',
-                                      description: `Internal server error in updating plan usage ${err}`
+                        if (screenName) {
+                          utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, $or: [{ pageId: screenName }, { pageUserName: screenName }] }, req.headers.authorization)
+                            .then(pagesInfo => {
+                              let pageInfo = pagesInfo[0]
+                              if (!pageInfo) {
+                                return res.status(404).json({
+                                  status: 'Failed',
+                                  description: 'Cannot add this page or page not found'
+                                })
+                              }
+                              autoPostingPayload.accountUniqueName = pageInfo.pageId
+                              AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+                                .then(result => {
+                                  utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} }, req.headers.authorization)
+                                    .then(result => {
+                                      logger.serverLog('Company Usage Updated')
                                     })
-                                  })
-                                require('./../../../config/socketio').sendMessageToClient({
-                                  room_id: companyUser.companyId._id,
-                                  body: {
-                                    action: 'autoposting_created',
-                                    payload: {
-                                      autoposting_id: result._id,
-                                      user_id: req.user._id,
-                                      user_name: req.user.name,
-                                      payload: result
+                                    .catch(err => {
+                                      return res.status(500).json({
+                                        status: 'failed',
+                                        description: `Internal server error in updating plan usage ${err}`
+                                      })
+                                    })
+                                  require('./../../../config/socketio').sendMessageToClient({
+                                    room_id: companyUser.companyId._id,
+                                    body: {
+                                      action: 'autoposting_created',
+                                      payload: {
+                                        autoposting_id: result._id,
+                                        user_id: req.user._id,
+                                        user_name: req.user.name,
+                                        payload: result
+                                      }
                                     }
-                                  }
+                                  })
+                                  return res.status(201)
+                                    .json({ status: 'success', payload: result })
                                 })
-                                return res.status(201)
-                                  .json({status: 'success', payload: result})
-                              })
-                              .catch(err => {
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
+                                .catch(err => {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
+                                  })
                                 })
-                              })
-                          })
-                          .catch(err => {
-                            return res.status(403).json({
-                              status: 'Failed',
-                              description: `Error while fetching facebook page in autoposting${err}`
                             })
+                            .catch(err => {
+                              return res.status(403).json({
+                                status: 'Failed',
+                                description: `Error while fetching facebook page in autoposting${err}`
+                              })
+                            })
+                        }
+                        else {
+                          return res.status(403).json({
+                            status: 'Failed',
+                            description: 'Invalid url'
                           })
+                        }
                       }
                       if (req.body.subscriptionType === 'youtube') {
                         let channelName = AutoPostingLogicLayer.getChannelName(req.body.subscriptionUrl)
