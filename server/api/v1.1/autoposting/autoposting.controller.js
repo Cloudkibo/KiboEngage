@@ -139,10 +139,10 @@ exports.create = function (req, res) {
                       }
                       if (req.body.subscriptionType === 'facebook') {
                         let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
-                        console.log('autoPostingPayload', autoPostingPayload)
                         if (screenName) {
-                          utility.callApi(`pages/query`, 'post', { userId: req.user._id, $or: [{ pageId: screenName }, { pageUserName: screenName }] }, req.headers.authorization)
-                            .then(pageInfo => {
+                          utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, $or: [{ pageId: screenName }, { pageUserName: screenName }] }, req.headers.authorization)
+                            .then(pagesInfo => {
+                              let pageInfo = pagesInfo[0]
                               if (!pageInfo) {
                                 return res.status(404).json({
                                   status: 'Failed',
