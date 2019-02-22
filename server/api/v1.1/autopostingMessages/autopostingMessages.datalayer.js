@@ -1,9 +1,9 @@
 const { callApi } = require('../utility')
 
-exports.findOneAutopostingMessage = (objectId) => {
+exports.findOneAutopostingMessage = (objectId, companyId) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: objectId}
+    match: {_id: objectId, companyId}
   }
   return callApi(`autoposting_messages/query`, 'post', query, '', 'kiboengage')
 }

@@ -38,6 +38,7 @@ exports.postPublish = function (req, res) {
             pages.forEach(page => {
               let subscriberFindCriteria = {
                 pageId: page._id,
+                companyId: page.companyId,
                 isSubscribed: true
               }
 
