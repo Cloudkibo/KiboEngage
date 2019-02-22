@@ -331,7 +331,7 @@ exports.edit = function (req, res) {
 }
 
 exports.destroy = function (req, res) {
-  AutopostingDataLayer.findOneAutopostingObject(req.params.id)
+  AutopostingDataLayer.findOneAutopostingObject(req.params.id, req.user.companyId)
     .then(autoposting => {
       if (!autoposting) {
         return res.status(404)

@@ -16,10 +16,10 @@ exports.index = function (req, res) {
     .then(page => {
       page = page[0]
       console.log('page Found in messaging', page)
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
+      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
-          callApi(`pageReferrals/query`, 'post', { pageId: page._id, ref_parameter: req.body.referral.ref })
+          callApi(`pageReferrals/query`, 'post', { pageId: page._id, companyId: page.companyId, ref_parameter: req.body.referral.ref })
             .then(pageReferral => {
               pageReferral = pageReferral[0]
               console.log('page referral', pageReferral)

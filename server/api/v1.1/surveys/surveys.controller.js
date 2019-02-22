@@ -390,7 +390,9 @@ exports.send = function (req, res) {
                                   .then(pages => {
                                     for (let z = 0; z < pages.length && !abort; z++) {
                                       if (req.body.isList === true) {
-                                        let ListFindCriteria = {}
+                                        let ListFindCriteria = {
+                                          companyId: req.user.companyId
+                                        }
                                         ListFindCriteria = _.merge(ListFindCriteria,
                                           {
                                             _id: {
@@ -399,7 +401,7 @@ exports.send = function (req, res) {
                                           })
                                         callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                           .then(lists => {
-                                            let subsFindCriteria = {pageId: pages[z]._id}
+                                            let subsFindCriteria = {pageId: pages[z]._id, companyId: pages[z].companyId}
                                             let listData = []
                                             if (lists.length > 1) {
                                               for (let i = 0; i < lists.length; i++) {
@@ -546,6 +548,7 @@ exports.send = function (req, res) {
                                       } else {
                                         let subscriberFindCriteria = {
                                           pageId: pages[z]._id,
+                                          companyId: pages[z].companyId,
                                           isSubscribed: true
                                         }
                                         if (req.body.isSegmented) {
@@ -869,7 +872,9 @@ exports.sendSurvey = function (req, res) {
                                               return res.status(500).json({status: `failed ${error}`, payload: error})
                                             })
                                           if (req.body.isList === true) {
-                                            let ListFindCriteria = {}
+                                            let ListFindCriteria = {
+                                              companyId: req.user.companyId
+                                            }
                                             ListFindCriteria = _.merge(ListFindCriteria,
                                               {
                                                 _id: {
@@ -879,7 +884,7 @@ exports.sendSurvey = function (req, res) {
 
                                             callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                               .then(lists => {
-                                                let subsFindCriteria = {pageId: pages[z]._id}
+                                                let subsFindCriteria = {pageId: pages[z]._id, companyId: pages[z].companyId}
                                                 let listData = []
                                                 if (lists.length > 1) {
                                                   for (let i = 0; i < lists.length; i++) {
@@ -1021,6 +1026,7 @@ exports.sendSurvey = function (req, res) {
                                           } else {
                                             let subscriberFindCriteria = {
                                               pageId: pages[z]._id,
+                                              companyId: pages[z].companyId,
                                               isSubscribed: true
                                             }
                                             if (req.body.isSegmented) {

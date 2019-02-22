@@ -506,7 +506,7 @@ exports.sendConversation = function (req, res) {
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
                 broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
                 if (req.body.isList === true) {
-                  utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body), req.headers.authorization)
+                  utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
                     .then(lists => {
                       let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
                       let interval = setInterval(() => {

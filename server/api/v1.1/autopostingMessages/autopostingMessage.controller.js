@@ -96,7 +96,7 @@ function populatePages (messages, req) {
     let sendPayload = []
     if (messages && messages.length > 0) {
       for (let i = 0; i < messages.length; i++) {
-        utility.callApi(`pages/query`, 'post', {_id: messages[i].pageId}, req.headers.authorization)
+        utility.callApi(`pages/query`, 'post', {_id: messages[i].pageId, companyId: messages[i].companyId}, req.headers.authorization)
           .then(page => {
             sendPayload.push({
               _id: messages[i]._id,

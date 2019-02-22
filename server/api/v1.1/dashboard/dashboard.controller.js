@@ -515,7 +515,7 @@ exports.sentVsSeenNew = function (req, res) {
 }
 
 exports.likesVsSubscribers = function (req, res) {
-  callApi.callApi('pages/query', 'post', {userId: req.params.userid, connected: true}, req.headers.authorization)
+  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: true}, req.headers.authorization)
     .then(pages => {
       callApi.callApi('subscribers/aggregate', 'post', [
         {
@@ -589,7 +589,7 @@ exports.enable = function (req, res) {
 // }
 
 exports.otherPages = function (req, res) {
-  callApi.callApi('pages/query', 'post', {connected: false}, req.headers.authorization)
+  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: false}, req.headers.authorization)
     .then(pages => {
       res.status(200).json(pages)
     })
@@ -947,6 +947,7 @@ exports.getAllSubscribers = function (req, res) {
   let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
   let findCriteria = {
     pageId: req.params.pageid,
+    companyId: req.user.companyId,
     $or: [{firstName: {$regex: search}}, {lastName: {$regex: search}}],
     gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
     locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
@@ -1039,7 +1040,7 @@ exports.getAllSubscribers = function (req, res) {
   }
 }
 exports.updateSubscriptionPermission = function (req, res) {
-  callApi.callApi('pages/query', 'post', {userId: req.user._id})
+  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId})
     .then(userPages => {
       userPages.forEach((page) => {
         needle.get(
