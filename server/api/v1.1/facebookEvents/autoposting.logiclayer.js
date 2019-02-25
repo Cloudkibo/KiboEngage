@@ -21,7 +21,8 @@ exports.subscriberFindCriteria = function (postingItem, page) {
   let subscriberFindCriteria = {
     pageId: page._id,
     isSubscribed: true,
-    isEnabledByPage: true
+    isEnabledByPage: true,
+    companyId: page.companyId
   }
 
   if (postingItem.isSegmented) {

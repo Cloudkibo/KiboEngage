@@ -194,7 +194,7 @@ exports.subscribeBack = function (req, res) {
 }
 
 exports.updatePicture = function (req, res) {
-  console.log('hit the updatePicture endpoint', req.body)
+  // console.log('hit the updatePicture endpoint', req.body)
   utility.callApi('subscribers/updatePicture', 'post', req.body, req.headers.authorization)
     .then(update => {
       return res.status(200).json({
@@ -308,7 +308,7 @@ exports.unSubscribe = function (req, res) {
       res.status(500).json({ status: 'failed', payload: `Failed to fetch user ${JSON.stringify(err)}` })
     })
 }
-function saveNotifications(companyUser, subscriber, req) {
+function saveNotifications (companyUser, subscriber, req) {
   let companyUserResponse = utility.callApi(`companyUser/query`, 'post', { companyId: companyUser.companyId }, req.headers.authorization)
 
   companyUserResponse.then(member => {

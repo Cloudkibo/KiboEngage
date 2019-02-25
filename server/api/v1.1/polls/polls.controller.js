@@ -230,7 +230,7 @@ exports.send = function (req, res) {
                           console.log('pagesFound', pages)
                           for (let z = 0; z < pages.length && !abort; z++) {
                             if (req.body.isList === true) {
-                              let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
+                              let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body, req.user)
                               utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                 .then(lists => {
                                   let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
@@ -552,7 +552,7 @@ exports.sendPoll = function (req, res) {
                                     }
                                   })
                                 if (req.body.isList === true) {
-                                  let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body)
+                                  let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body, req.user)
                                   utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                     .then(lists => {
                                       let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
