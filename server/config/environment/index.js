@@ -34,7 +34,8 @@ const all = {
   sendgrid: {
     username: 'cloudkibo',
     password: 'cl0udk1b0'
-  }
+  },
+  kibodashdomain: `${process.env.KIBODASH || 'http://localhost:5050'}`
 }
 
 module.exports = _.merge(
