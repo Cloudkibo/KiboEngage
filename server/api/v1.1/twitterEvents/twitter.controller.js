@@ -11,6 +11,7 @@ const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 let request = require('request')
 let _ = require('lodash')
 const config = require('../../../config/environment/index')
+const logicLayer = require('./logiclayer')
 
 exports.findAutoposting = function (req, res) {
   logger.serverLog(TAG, `in findAutoposting ${JSON.stringify(req.body)}`)
@@ -94,189 +95,78 @@ exports.twitterwebhook = function (req, res) {
                       .then(savedMsg => {
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
                           taggedSubscribers.forEach(subscriber => {
-                            let messageData = {}
-                            if (!req.body.entities.media) { // (tweet.entities.urls.length === 0 && !tweet.entities.media) {
-                              messageData = {
-                                'messaging_type': 'UPDATE',
-                                'recipient': JSON.stringify({
-                                  'id': subscriber.senderId
-                                }),
-                                'message': JSON.stringify({
-                                  'text': req.body.text,
-                                  'metadata': 'This is a meta data for tweet'
-                                })
-                              }
-                              // Logic to control the autoposting when last activity is less than 30 minutes
-                              compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
-                                if (err) {
-                                  logger.serverLog(TAG, 'inside error')
-                                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
-                                }
-                                if (isLastMessage) {
-                                  logger.serverLog(TAG, 'inside autoposting send')
-                                  sendAutopostingMessage(messageData, page, savedMsg)
-                                  let newAutoPostingSubscriberMsg = {
-                                    pageId: page.pageId,
-                                    companyId: postingItem.companyId,
-                                    autopostingId: postingItem._id,
-                                    autoposting_messages_id: savedMsg._id,
-                                    subscriberId: subscriber.senderId
+                            logicLayer.checkType(req.body, subscriber, savedMsg)
+                              .then(result => {
+                                compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
+                                  if (err) {
+                                    logger.serverLog(TAG, 'inside error')
+                                    return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                   }
-                                  AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
-                                    .then(result => {
-                                      logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                    })
-                                    .catch(err => {
-                                      if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
-                                    })
-                                } else {
-                                  // Logic to add into queue will go here
-                                  logger.serverLog(TAG, 'inside adding autoposting-twitter to autoposting queue')
-                                  let timeNow = new Date()
-                                  let automatedQueueMessage = {
-                                    automatedMessageId: savedMsg._id,
-                                    subscriberId: subscriber._id,
-                                    companyId: savedMsg.companyId,
-                                    type: 'autoposting-twitter',
-                                    scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
-                                  }
-
-                                  AutomationQueue.createAutomationQueueObject(automatedQueueMessage)
-                                    .then(result => {
-                                      logger.serverLog(TAG, {
-                                        status: 'success',
-                                        description: 'Automation Queue autoposting-twitter Message created'
+                                  if (isLastMessage) {
+                                    logger.serverLog(TAG, 'inside autoposting send')
+                                    if (result.otherMessage) {
+                                      sendAutopostingMessage(result.otherMessage, page, savedMsg)
+                                    }
+                                    sendAutopostingMessage(result.messageData, page, savedMsg)
+                                    let newAutoPostingSubscriberMsg = {
+                                      pageId: page.pageId,
+                                      companyId: postingItem.companyId,
+                                      autopostingId: postingItem._id,
+                                      autoposting_messages_id: savedMsg._id,
+                                      subscriberId: subscriber.senderId
+                                    }
+                                    AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                      .then(result => {
+                                        logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                                       })
-                                      let newAutoPostingSubscriberMsg = {
-                                        pageId: page.pageId,
-                                        companyId: postingItem.companyId,
-                                        autopostingId: postingItem._id,
-                                        autoposting_messages_id: savedMsg._id,
-                                        subscriberId: subscriber.senderId
-                                      }
-                                      AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
-                                        .then(result => {
-                                          logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                        })
-                                        .catch(err => {
-                                          if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
-                                        })
-                                    })
-                                    .catch(error => {
-                                      if (error) {
+                                      .catch(err => {
+                                        if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                      })
+                                  } else {
+                                    // Logic to add into queue will go here
+                                    logger.serverLog(TAG, 'inside adding autoposting-twitter to autoposting queue')
+                                    let timeNow = new Date()
+                                    let automatedQueueMessage = {
+                                      automatedMessageId: savedMsg._id,
+                                      subscriberId: subscriber._id,
+                                      companyId: savedMsg.companyId,
+                                      type: 'autoposting-twitter',
+                                      scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                    }
+
+                                    AutomationQueue.createAutomationQueueObject(automatedQueueMessage)
+                                      .then(result => {
                                         logger.serverLog(TAG, {
-                                          status: 'failed',
-                                          description: 'Automation Queue autoposting-twitter Message create failed',
-                                          error
+                                          status: 'success',
+                                          description: 'Automation Queue autoposting-twitter Message created'
                                         })
-                                      }
-                                    })
-                                }
-                              })
-                            } else {
-                              let URLObject = {
-                                originalURL: req.body.entities.media[0].url,
-                                subscriberId: subscriber._id,
-                                module: {
-                                  id: savedMsg._id,
-                                  type: 'autoposting'
-                                }
-                              }
-                              URLDataLayer.createURLObject(URLObject)
-                                .then(savedurl => {
-                                  let newURL = config.domain + '/api/URL/' + savedurl._id
-                                  messageData = {
-                                    'messaging_type': 'UPDATE',
-                                    'recipient': JSON.stringify({
-                                      'id': subscriber.senderId
-                                    }),
-                                    'message': JSON.stringify({
-                                      'attachment': {
-                                        'type': 'template',
-                                        'payload': {
-                                          'template_type': 'generic',
-                                          'elements': [
-                                            {
-                                              'title': req.body.text,
-                                              'image_url': req.body.entities.media[0].media_url,
-                                              'subtitle': 'kibopush.com',
-                                              'buttons': [
-                                                {
-                                                  'type': 'web_url',
-                                                  'url': newURL,
-                                                  'title': 'View Tweet'
-                                                }
-                                              ]
-                                            }
-                                          ]
+                                        let newAutoPostingSubscriberMsg = {
+                                          pageId: page.pageId,
+                                          companyId: postingItem.companyId,
+                                          autopostingId: postingItem._id,
+                                          autoposting_messages_id: savedMsg._id,
+                                          subscriberId: subscriber.senderId
                                         }
-                                      }
-                                    })
-                                  }
-                                  compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
-                                    if (err) {
-                                      logger.serverLog(TAG, 'inside error')
-                                      return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
-                                    }
-                                    if (isLastMessage) {
-                                      logger.serverLog(TAG, 'inside autoposting autoposting twitter send')
-                                      sendAutopostingMessage(messageData, page, savedMsg)
-                                      let newAutoPostingSubscriberMsg = {
-                                        pageId: page.pageId,
-                                        companyId: postingItem.companyId,
-                                        autopostingId: postingItem._id,
-                                        autoposting_messages_id: savedMsg._id,
-                                        subscriberId: subscriber.senderId
-                                      }
-                                      AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
-                                        .then(result => {
-                                          logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                        })
-                                        .catch(err => {
-                                          if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
-                                        })
-                                    } else {
-                                      // Logic to add into queue will go here
-                                      logger.serverLog(TAG, 'inside adding to autoposting queue')
-                                      let timeNow = new Date()
-                                      let automatedQueueMessage = {
-                                        automatedMessageId: savedMsg._id,
-                                        subscriberId: subscriber._id,
-                                        companyId: savedMsg.companyId,
-                                        type: 'autoposting-twitter',
-                                        scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
-                                      }
-                                      AutomationQueue.createAutomationQueueObject(automatedQueueMessage)
-                                        .then(result => {
-                                          logger.serverLog(TAG, {
-                                            status: 'status',
-                                            description: 'Automation queue object saved'
+                                        AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                          .then(result => {
+                                            logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                                           })
-                                          let newAutoPostingSubscriberMsg = {
-                                            pageId: page.pageId,
-                                            companyId: postingItem.companyId,
-                                            autopostingId: postingItem._id,
-                                            autoposting_messages_id: savedMsg._id,
-                                            subscriberId: subscriber.senderId
-                                          }
-                                          AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
-                                            .then(result => {
-                                              logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
-                                            })
-                                            .catch(err => {
-                                              if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
-                                            })
-                                        })
-                                        .catch(err => {
-                                          if (err) logger.serverLog(TAG, `Internal server error while saving automation queue object ${err}`)
-                                        })
-                                    }
-                                  })
+                                          .catch(err => {
+                                            if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                          })
+                                      })
+                                      .catch(error => {
+                                        if (error) {
+                                          logger.serverLog(TAG, {
+                                            status: 'failed',
+                                            description: 'Automation Queue autoposting-twitter Message create failed',
+                                            error
+                                          })
+                                        }
+                                      })
+                                  }
                                 })
-                                .catch(err => {
-                                  if (err) logger.serverLog(TAG, `Internal server error while creating URL object ${err}`)
-                                })
-                            }
+                              })
                           })
                         })
                       })
