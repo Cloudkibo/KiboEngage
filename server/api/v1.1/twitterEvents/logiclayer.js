@@ -66,21 +66,6 @@ exports.checkType = function (body, subscriber, savedMsg) {
         resolve({messageData: messageData})
       }
     }
-  //  if (!body.extended_entities || (body.extended_entities && body.extended_entities.media[0].type === 'photo')) {
-  //    let URLObject = {
-  //      originalURL: body.entities.media[0].url,
-  //      subscriberId: subscriber._id,
-  //      module: {
-  //        id: savedMsg._id,
-  //        type: 'autoposting'
-  //      }
-  //    }
-  //    URLDataLayer.createURLObject(URLObject)
-  //      .then(savedurl => {
-  //        let newURL = config.domain + '/api/URL/' + savedurl._id
-  //  } else {
-  //    preparePaylod(body, subscriber, newURL)
-  //  }
   })
 }
 function preparePaylod (body, subscriber, newURL, type, text) {
