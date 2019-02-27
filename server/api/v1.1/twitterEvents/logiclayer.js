@@ -36,11 +36,11 @@ exports.checkType = function (body, subscriber, savedMsg) {
           let newURL = config.domain + '/api/URL/' + savedurl._id
           if (body.extended_entities.media[0].type === 'photo') {
             let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0], true)
-            messageData = preparePaylod(body, subscriber, newURL, 'photo')
+            messageData = preparePaylod(body, subscriber, newURL, 'photo', text[1])
             resolve({messageData: messageData, otherMessage: otherMessage})
           } else {
             let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0], true)
-            messageData = preparePaylod(body, subscriber, '', 'video')
+            messageData = preparePaylod(body, subscriber, '', 'video', text[1])
             resolve({messageData: messageData, otherMessage: otherMessage})
           }
         })
@@ -58,7 +58,7 @@ exports.checkType = function (body, subscriber, savedMsg) {
         URLDataLayer.createURLObject(URLObject)
           .then(savedurl => {
             let newURL = config.domain + '/api/URL/' + savedurl._id
-            messageData = preparePaylod(body, subscriber, newURL, 'photo')
+            messageData = preparePaylod(body, subscriber, newURL, 'photo', text[1])
             resolve({messageData: messageData})
           })
       } else {
@@ -119,7 +119,7 @@ function preparePaylod (body, subscriber, newURL, type, text, otherMessage) {
           'type': 'template',
           'payload': {
             'template_type': 'generic',
-            'elements': prepareGallery(body.extended_entities.media, body, newURL)
+            'elements': prepareGallery(body.extended_entities.media, text, newURL)
           }
         }
       })
@@ -143,12 +143,12 @@ function preparePaylod (body, subscriber, newURL, type, text, otherMessage) {
     return messageData
   }
 }
-function prepareGallery (media, body, newURL) {
+function prepareGallery (media, text, newURL) {
   let length = media.length <= 10 ? media.length : 10
   let elements = []
   for (let i = 0; i < length; i++) {
     elements.push({
-      'title': body.text,
+      'title': text,
       'image_url': media[i].media_url,
       'subtitle': 'www.kiboengage.cloudkibo.com',
       'buttons': [
