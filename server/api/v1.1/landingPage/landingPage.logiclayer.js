@@ -29,7 +29,7 @@ exports.preparePayload = function (body, landingPageState, companyUser, landingP
 }
 exports.prepareUpdatePayload = function (body) {
   let paylaod = body
-  if (body.submittedState.state) {
+  if (body.submittedState.url === '') {
     paylaod.submittedState = {
       actionType: body.submittedState.actionType,
       title: body.submittedState.title,
