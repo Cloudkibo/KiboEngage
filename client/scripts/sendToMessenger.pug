@@ -10,8 +10,8 @@ script.
   FB.Event.subscribe('send_to_messenger', function(response) {
   if ( response.event == 'clicked' ) {
   if (landingPage.submittedState.actionType === 'REDIRECT_TO_URL') {
-     if (landingPage.submittedState.tab === 'NEW_TAB') window.open(landingPage.submittedState.url, '_blank')
-     else window.location.replace(landingPage.submittedState.url)
+     if (landingPage.submittedState.tab === 'NEW_TAB') window.open(landingPage.setProtocolUrl(landingPage.submittedState.url), '_blank')
+     else window.location.replace(landingPage.setProtocolUrl(landingPage.submittedState.url))
   } else {
     landingPage.currentState = 'submitted';
     let serverRequest = new XMLHttpRequest();

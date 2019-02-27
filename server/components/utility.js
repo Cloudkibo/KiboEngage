@@ -14,12 +14,23 @@ function validateUrl (str) {
   }
 }
 
+function setProtocolUrl (str) {
+  let prefix = str.substring(0, 4)
+  if (prefix === 'http') {
+    return str
+  } else {
+    return 'http://' + str
+  }
+}
+
 function checkLastMessageAge (subscriberId, req, callback) {
   utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId }, req.headers.authorization)
     .then(subscribers => {
       var subscriber = subscribers[0]
+      logger.serverLog(TAG, `subscribers found ${JSON.stringify(subscribers)}`)
       utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
         .then(sessions => {
+          logger.serverLog(TAG, `sessions found ${JSON.stringify(sessions)}`)
           var session = sessions[0]
           if (session && session.agent_activity_time) {
             let lastActivity = new Date(session.agent_activity_time)
@@ -43,3 +54,4 @@ function checkLastMessageAge (subscriberId, req, callback) {
 
 exports.validateUrl = validateUrl
 exports.checkLastMessageAge = checkLastMessageAge
+exports.setProtocolUrl = setProtocolUrl
