@@ -28,23 +28,23 @@ function checkLastMessageAge (subscriberId, req, callback) {
     .then(subscribers => {
       var subscriber = subscribers[0]
       logger.serverLog(TAG, `subscribers found ${JSON.stringify(subscribers)}`)
-      utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
-        .then(sessions => {
-          logger.serverLog(TAG, `sessions found ${JSON.stringify(sessions)}`)
-          var session = sessions[0]
-          if (session && session.agent_activity_time) {
-            let lastActivity = new Date(session.agent_activity_time)
-            let inMiliSeconds = Date.now() - lastActivity
-            let inMinutes = Math.floor((inMiliSeconds / 1000) / 60)
-            callback(null, (inMinutes > 30))
-          } else if (subscriber) {
-            callback(null, true)
-          }
-        })
-        .catch(error => {
-          logger.serverLog(TAG, `failed to fetch session ${JSON.stringify(error)}`)
-          return callback(error)
-        })
+      // utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
+      //   .then(sessions => {
+      //     logger.serverLog(TAG, `sessions found ${JSON.stringify(sessions)}`)
+      // var session = sessions[0]
+      if (subscriber && subscriber.agent_activity_time) {
+        let lastActivity = new Date(subscriber.agent_activity_time)
+        let inMiliSeconds = Date.now() - lastActivity
+        let inMinutes = Math.floor((inMiliSeconds / 1000) / 60)
+        callback(null, (inMinutes > 30))
+      } else if (subscriber) {
+        callback(null, true)
+      }
+      // })
+      // .catch(error => {
+      //   logger.serverLog(TAG, `failed to fetch session ${JSON.stringify(error)}`)
+      //   return callback(error)
+      // })
     })
     .catch(error => {
       logger.serverLog(TAG, `failed to fetch subscriber ${JSON.stringify(error)}`)
