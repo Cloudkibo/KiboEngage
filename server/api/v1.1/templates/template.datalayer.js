@@ -230,14 +230,14 @@ exports.findBroadcastById = (req) => {
 exports.findBotById = (req) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: req.params.botid}
+    match: {_id: req.params.botid, companyId: req.user.companyId}
   }
   return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }
 exports.BotFindById = (req) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: req.body._id}
+    match: {_id: req.body._id, companyId: req.user.companyId}
   }
   return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }

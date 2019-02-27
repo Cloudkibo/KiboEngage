@@ -1,9 +1,9 @@
 const { callApi } = require('../utility')
 
-exports.findOneAutopostingMessage = (objectId) => {
+exports.findOneAutopostingMessage = (objectId, companyId) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: objectId}
+    match: {_id: objectId, companyId}
   }
   return callApi(`autoposting_messages/query`, 'post', query, '', 'kiboengage')
 }
@@ -67,6 +67,7 @@ exports.genericUpdateAutopostingMessage = (queryObject, updated, options) => {
   return callApi(`autoposting_messages`, 'put', query, '', 'kiboengage')
 }
 exports.createAutopostingMessage = (payload) => {
+  console.log('in createAutopostingMessage')
   return callApi(`autoposting_messages`, 'post', payload, '', 'kiboengage')
 }
 exports.updateOneAutopostingMessage = (id, payload) => {

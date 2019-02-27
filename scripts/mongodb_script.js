@@ -112,7 +112,7 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
               })
           } else if (message.type === 'poll') {
           /* Getting the company user who has connected the facebook account */
-            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId)
+            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId, message.companyId)
               .then(autopostingMessage => {
                 utility.callApi(`subscribers/${message.subscriberId}`)
                   .then(subscriber => {
@@ -194,7 +194,7 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                 logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
               })
           } else if (message.type === 'autoposting-wordpress') {
-            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId)
+            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId, message.companyId)
               .then(autopostingMessage => {
                 utility.callApi(`subscribers/${message.subscriberId}`)
                   .then(subscriber => {
@@ -262,7 +262,7 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
               access_token: config.twitter.consumer_token,
               access_token_secret: config.twitter.consumer_token_secret
             })
-            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId)
+            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId, message.companyId)
               .then(autopostingMessage => {
                 twitterClient.get('statuses/show/:id', { id: autopostingMessage.message_id }, (err, tweet) => {
                   if (err) {
@@ -357,7 +357,7 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                 })
               })
           } else if (message.type === 'autoposting-fb') {
-            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId)
+            AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId, message.companyId)
               .then(autopostingMessage => {
                 utility.callApi(`subscribers/${message.subscriberId}`)
                   .then(subscriber => {

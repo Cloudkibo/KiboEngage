@@ -72,8 +72,10 @@ exports.getCriterias = function (body, companyUser) {
     countCriteria
   }
 }
-exports.ListFindCriteria = function (body) {
-  let ListFindCriteria = {}
+exports.ListFindCriteria = function (body, user) {
+  let ListFindCriteria = {
+    companyId: user.companyId
+  }
   ListFindCriteria = _.merge(ListFindCriteria,
     {
       _id: {
@@ -84,7 +86,7 @@ exports.ListFindCriteria = function (body) {
 }
 
 exports.subsFindCriteriaForList = function (lists, page) {
-  let subsFindCriteria = {pageId: page._id}
+  let subsFindCriteria = {pageId: page._id, companyId: page.companyId}
   let listData = []
   if (lists.length > 1) {
     for (let i = 0; i < lists.length; i++) {
@@ -109,7 +111,7 @@ exports.subsFindCriteriaForList = function (lists, page) {
   return subsFindCriteria
 }
 exports.subsFindCriteria = function (body, page) {
-  let subscriberFindCriteria = {pageId: page._id, isSubscribed: true}
+  let subscriberFindCriteria = {pageId: page._id, companyId: page.companyId, isSubscribed: true}
   if (body.isSegmented) {
     if (body.segmentationGender.length > 0) {
       subscriberFindCriteria = _.merge(subscriberFindCriteria,
