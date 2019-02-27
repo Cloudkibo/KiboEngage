@@ -30,7 +30,7 @@ exports.update = function (req, res) {
   let updatedLandingPage = logicLayer.prepareUpdatePayload(req.body)
   utility.callApi(`landingPage/${req.params.id}`, 'put', updatedLandingPage, req.headers.authorization)
     .then(updatedLandingPage => {
-      if (req.body.submittedState && req.body.submittedState.state) {
+      if (req.body.submittedState && !req.body.submittedState.url) {
         console.log('inside submittedState', req.body)
         utility.callApi(`landingPage/landingPageState/${req.body.submittedState.state._id}`, 'put', req.body.submittedState.state, req.headers.authorization)
           .then(landingPage => {
