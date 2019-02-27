@@ -36,6 +36,7 @@ exports.twitterwebhook = function (req, res) {
   })
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
+      logger.serverLog(TAG, `autoposting found ${JSON.stringify(autopostings)}`)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
           companyId: postingItem.companyId,
@@ -52,6 +53,7 @@ exports.twitterwebhook = function (req, res) {
         }
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
+            logger.serverLog(TAG, `pages found ${JSON.stringify(pages)}`)
             pages.forEach(page => {
               let subscriberFindCriteria = {
                 pageId: page._id,
@@ -78,6 +80,7 @@ exports.twitterwebhook = function (req, res) {
               }
               utility.callApi('subscribers/query', 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
+                  logger.serverLog(TAG, `subscribers found ${JSON.stringify(subscribers)}`)
                   if (subscribers.length > 0) {
                     let newMsg = {
                       pageId: page._id,
@@ -91,15 +94,19 @@ exports.twitterwebhook = function (req, res) {
                     }
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
+                        logger.serverLog(TAG, `savedMsg ${JSON.stringify(savedMsg)}`)
                         broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
+                          logger.serverLog(TAG, `taggedSubscribers ${JSON.stringify(taggedSubscribers)}`)
                           taggedSubscribers.forEach(subscriber => {
                             logicLayer.checkType(req.body, subscriber, savedMsg)
                               .then(result => {
+                                logger.serverLog(TAG, `checkType ${JSON.stringify(result)}`)
                                 compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                   if (err) {
                                     logger.serverLog(TAG, 'inside error')
-                                    return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                    logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
                                   }
+                                  logger.serverLog(TAG, `isLastMessage ${JSON.stringify(isLastMessage)}`)
                                   if (isLastMessage) {
                                     logger.serverLog(TAG, 'inside autoposting send')
                                     if (result.otherMessage) {
@@ -198,6 +205,7 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
+      logger.serverLog(TAG, `sending tweet ${res.body}`)
       if (err) {
         return logger.serverLog(TAG,
           `At send tweet broadcast ${JSON.stringify(
