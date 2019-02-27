@@ -1,6 +1,7 @@
 const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
+const utility = require('./components/utility')
 const TAG = 'LandingPage'
 const Raven = require('raven')
 const path = require('path')
@@ -47,6 +48,7 @@ module.exports = function (app) {
   app.use('/api/scripts', require('./api/v1.1/scripts'))
   app.use('/api/custom_fields', require('./api/v1.1/custom_fields'))
   app.use('/api/custom_field_subscribers/', require('./api/v1.1/custom_field_subscribers'))
+  // app.use('/api/operational', require('./api/v1.1/kiboDash'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
@@ -69,6 +71,7 @@ module.exports = function (app) {
         landingPage.state = landingPages[0].initialState
         landingPage.facebookClientId = config.facebook.clientID
         landingPage.currentState = 'initial'
+        landingPage.setProtocolUrl = utility.setProtocolUrl
         res.render('landingPage', { landingPage })
       })
       .catch(err => {

@@ -14,6 +14,15 @@ function validateUrl (str) {
   }
 }
 
+function setProtocolUrl (str) {
+  let prefix = str.substring(0, 4)
+  if (prefix === 'http') {
+    return str
+  } else {
+    return 'http://' + str
+  }
+}
+
 function checkLastMessageAge (subscriberId, req, callback) {
   utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId }, req.headers.authorization)
     .then(subscribers => {
@@ -43,3 +52,4 @@ function checkLastMessageAge (subscriberId, req, callback) {
 
 exports.validateUrl = validateUrl
 exports.checkLastMessageAge = checkLastMessageAge
+exports.setProtocolUrl = setProtocolUrl
