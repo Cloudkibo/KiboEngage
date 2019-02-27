@@ -35,11 +35,11 @@ exports.checkType = function (body, subscriber, savedMsg) {
         .then(savedurl => {
           let newURL = config.domain + '/api/URL/' + savedurl._id
           if (body.extended_entities.media[0].type === 'photo') {
-            let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0])
+            let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0], true)
             messageData = preparePaylod(body, subscriber, newURL, 'photo')
             resolve({messageData: messageData, otherMessage: otherMessage})
           } else {
-            let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0])
+            let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0], true)
             messageData = preparePaylod(body, subscriber, '', 'video')
             resolve({messageData: messageData, otherMessage: otherMessage})
           }
@@ -68,32 +68,46 @@ exports.checkType = function (body, subscriber, savedMsg) {
     }
   })
 }
-function preparePaylod (body, subscriber, newURL, type, text) {
+function preparePaylod (body, subscriber, newURL, type, text, otherMessage) {
   let messageData = {}
   if (type === 'text') {
-    messageData = {
-      'messaging_type': 'UPDATE',
-      'recipient': JSON.stringify({
-        'id': subscriber.senderId
-      }),
-      'message': JSON.stringify({
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'button',
-            'text': text,
-            'buttons': [
-              {
-                'type': 'web_url',
-                'url': newURL,
-                'title': 'View Tweet'
-              }
-            ]
+    if (otherMessage) {
+      messageData = {
+        'messaging_type': 'UPDATE',
+        'recipient': JSON.stringify({
+          'id': subscriber.senderId
+        }),
+        'message': JSON.stringify({
+          'text': text,
+          'metadata': 'This is a meta data'
+        })
+      }
+      return messageData
+    } else {
+      messageData = {
+        'messaging_type': 'UPDATE',
+        'recipient': JSON.stringify({
+          'id': subscriber.senderId
+        }),
+        'message': JSON.stringify({
+          'attachment': {
+            'type': 'template',
+            'payload': {
+              'template_type': 'button',
+              'text': text,
+              'buttons': [
+                {
+                  'type': 'web_url',
+                  'url': newURL,
+                  'title': 'View Tweet'
+                }
+              ]
+            }
           }
-        }
-      })
+        })
+      }
+      return messageData
     }
-    return messageData
   } else if (type === 'photo') {
     messageData = {
       'messaging_type': 'UPDATE',
