@@ -92,12 +92,12 @@ exports.performanceTestBroadcast = function (req, res) {
   let page = {
     accessToken: 'EAAB4wFi3BuIBAKDZCWBZC6dZAXXa893ajjFYpECZAaSaGTmZCWZAZBILhOJgeHXpWq99JsY7S8HrpTIHmh1fqOjcVDmxPMCThJrhsP7TpZB6JsqcxDWN5yUHU100mJNWNyYteNoR0R2ZAK2ZAO3EI1wjLkZC0Mz26f7tKZA75jxeKvtAyc9GXr9j0gIN'
   }
-  let payload = {
+  let payload = [{
     componentType: 'video',
     fileurl: {
       attachment_id: '346016792789004'
     }
-  }
+  }]
   for (let i = 0; i < count; i++) {
     BroadcastUtility.getBatchData(payload, senderId, page, sendBroadcast, 'Imran', 'Shoukat', res, i, count, 'NON_PROMOTIONAL_SUBSCRIPTION')
   }
