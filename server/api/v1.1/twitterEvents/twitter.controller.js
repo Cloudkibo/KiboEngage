@@ -7,10 +7,8 @@ const compUtility = require('../../../components/utility')
 const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
 const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
-const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 let request = require('request')
 let _ = require('lodash')
-const config = require('../../../config/environment/index')
 const logicLayer = require('./logiclayer')
 
 exports.findAutoposting = function (req, res) {
