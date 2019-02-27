@@ -1,6 +1,7 @@
 const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
+const utility = require('./components/utility')
 const TAG = 'LandingPage'
 const Raven = require('raven')
 const path = require('path')
@@ -70,6 +71,7 @@ module.exports = function (app) {
         landingPage.state = landingPages[0].initialState
         landingPage.facebookClientId = config.facebook.clientID
         landingPage.currentState = 'initial'
+        landingPage.setProtocolUrl = utility.setProtocolUrl
         res.render('landingPage', { landingPage })
       })
       .catch(err => {
