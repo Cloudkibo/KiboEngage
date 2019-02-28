@@ -3,8 +3,7 @@
  */
 const logger = require('../../../components/logger')
 const TAG = 'api/operational_dashboard/operational.controller.js'
-const request = require('request-promise')
-const config = require('../../../config/environment/index')
+const { callApi } = require('../utility')
 
 /*
 Endpoint: /api/v1/UserwiseData
@@ -29,11 +28,7 @@ Structure: UserwiseAggregate
 */
 
 exports.index = (req, res) => {
-  const options = {
-    uri: config.kibodashdomain + '/api/v1/UserwiseData',
-    json: true // Automatically parses the JSON string in the response
-  }
-  request(options)
+  callApi(`UserwiseData`, 'get', {}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result.payload})
     })
@@ -44,15 +39,7 @@ exports.index = (req, res) => {
 }
 
 exports.ranged = (req, res) => {
-  const options = {
-    method: 'POST',
-    uri: config.kibodashdomain + '/api/v1/UserwiseData/AggregateDatewise',
-    body: {
-      startDate: req.body.startDate
-    },
-    json: true // Automatically parses the JSON string in the response
-  }
-  request(options)
+  callApi(`UserwiseData/AggregateDatewise`, 'post', {startDate: req.body.startDate}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result.payload})
     })
@@ -63,15 +50,7 @@ exports.ranged = (req, res) => {
 }
 
 exports.oneUser = (req, res) => {
-  const options = {
-    method: 'POST',
-    uri: config.kibodashdomain + '/api/v1/UserwiseData/OneUserAnalytics',
-    body: {
-      companyId: req.body.companyId
-    },
-    json: true // Automatically parses the JSON string in the response
-  }
-  request(options)
+  callApi(`UserwiseData/OneUserAnalytics`, 'post', {companyId: req.body.companyId}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result.payload})
     })
@@ -82,16 +61,8 @@ exports.oneUser = (req, res) => {
 }
 
 exports.oneUserRanged = (req, res) => {
-  const options = {
-    method: 'POST',
-    uri: config.kibodashdomain + '/api/v1/UserwiseData/OneUserAggregateDatewise',
-    body: {
-      startDate: req.body.startDate,
-      companyId: req.body.companyId
-    },
-    json: true // Automatically parses the JSON string in the response
-  }
-  request(options)
+  callApi(`UserwiseData/OneUserAggregateDatewise`, 'post', {startDate: req.body.startDate,
+    companyId: req.body.companyId}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result.payload})
     })
