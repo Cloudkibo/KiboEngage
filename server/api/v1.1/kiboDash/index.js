@@ -11,7 +11,7 @@ const router = express.Router()
 const controller = require('./operational.controller')
 const platform = require('./platform.controller')
 const user = require('./user.controller')
-// const page = require('./page.controller')
+const page = require('./page.controller')
 // const autoposting = require('./autoposting.controller')
 const auth = require('../../../auth/auth.service')
 
@@ -27,13 +27,13 @@ router.post('/userwise/ranged', auth.isAuthorizedSuperUser(), user.ranged)
 router.post('/userwise/oneUser', auth.isAuthorizedSuperUser(), user.oneUser)
 router.post('/userwise/oneUser/ranged', auth.isAuthorizedSuperUser(), user.oneUserRanged)
 
-// // Pagewise Data
-// router.get('/pagewise', auth.isAuthorizedSuperUser(), page.index)
-// router.post('/pagewise/ranged', auth.isAuthorizedSuperUser(), page.ranged)
-// router.post('/pagewise/onePage', auth.isAuthorizedSuperUser(), page.onePage)
-// router.post('/pagewise/onePage/ranged', auth.isAuthorizedSuperUser(), page.onePageRanged)
-// router.post('/pagewise/topPages', auth.isAuthorizedSuperUser(), page.topPages)
-//
+// Pagewise Data
+router.get('/pagewise', auth.isAuthorizedSuperUser(), page.index)
+router.post('/pagewise/ranged', auth.isAuthorizedSuperUser(), page.ranged)
+router.post('/pagewise/onePage', auth.isAuthorizedSuperUser(), page.onePage)
+router.post('/pagewise/onePage/ranged', auth.isAuthorizedSuperUser(), page.onePageRanged)
+router.post('/pagewise/topPages', auth.isAuthorizedSuperUser(), page.topPages)
+
 // // Autoposting Data
 // router.get('/autoposting/platformwise', auth.isAuthorizedSuperUser(), autoposting.index)
 // router.post('/autoposting/platformwise/ranged', auth.isAuthorizedSuperUser(), autoposting.ranged)
