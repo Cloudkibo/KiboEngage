@@ -39,7 +39,7 @@ exports.getUpdateTeamPayload = function (body) {
     name: body.name,
     description: body.description,
     teamPages: body.teamPages,
-    teamPagesIds: body.pageIds
+    teamPagesIds: body.teamPagesIds
   }
   return teamPayload
 }

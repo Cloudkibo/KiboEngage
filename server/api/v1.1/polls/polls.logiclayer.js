@@ -1,4 +1,3 @@
-const mongoose = require('mongoose')
 let _ = require('lodash')
 
 exports.prepareResponsesPayload = function (polls, responsesCount1) {
@@ -25,7 +24,7 @@ exports.getCriterias = function (body, companyUser) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let findCriteria = {
-    companyId: mongoose.Types.ObjectId(companyUser.companyId),
+    companyId: companyUser.companyId,
     'datetime': body.days !== '0' ? {
       $gte: startDate
     } : {$exists: true}
@@ -42,16 +41,16 @@ exports.getCriterias = function (body, companyUser) {
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $lt: mongoose.Types.ObjectId(body.last_id) } }] } },
+      { $match: { $and: [findCriteria, { _id: { $lt: body.last_id } }] } },
       { $sort: {datetime: -1} },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
   } else if (body.first_page === 'previous') {
-    recordsToSkip = Math.abs(((body.requested_page) - (body.current_page - 1))) * body.number_of_records
+    recordsToSkip = Math.abs((body.requested_page * body.number_of_records) - body.number_of_records)
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $gt: mongoose.Types.ObjectId(body.last_id) } }] } },
-      { $sort: {datetime: 1} },
+      { $match: { $and: [findCriteria, { _id: { $gt: body.last_id } }] } },
+      { $sort: {datetime: -1} },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
@@ -67,7 +66,7 @@ exports.preparePollsPayload = function (user, companyUser, body) {
     platform: 'facebook',
     statement: body.statement,
     options: body.options,
-    companyId: companyUser.companyId,
+    companyId: companyUser.companyId._id,
     userId: user._id
   }
   if (body.isSegmented) {
@@ -97,7 +96,7 @@ exports.preparePollsPayload = function (user, companyUser, body) {
   return pollPayload
 }
 exports.pagesFindCriteria = function (companyUser, body) {
-  let pagesFindCriteria = {companyId: companyUser.companyId, connected: true}
+  let pagesFindCriteria = {companyId: companyUser.companyId._id, connected: true}
   if (body.isSegmented) {
     if (body.segmentationPageIds.length > 0) {
       pagesFindCriteria = _.merge(pagesFindCriteria, {
@@ -109,8 +108,10 @@ exports.pagesFindCriteria = function (companyUser, body) {
   }
   return pagesFindCriteria
 }
-exports.ListFindCriteria = function (body) {
-  let ListFindCriteria = {}
+exports.ListFindCriteria = function (body, user) {
+  let ListFindCriteria = {
+    companyId: user.companyId
+  }
   ListFindCriteria = _.merge(ListFindCriteria,
     {
       _id: {
@@ -120,7 +121,7 @@ exports.ListFindCriteria = function (body) {
   return ListFindCriteria
 }
 exports.subsFindCriteria = function (lists, page) {
-  let subsFindCriteria = {pageId: page._id}
+  let subsFindCriteria = {pageId: page._id, companyId: page.companyId}
   let listData = []
   if (lists.length > 1) {
     for (let i = 0; i < lists.length; i++) {
@@ -145,7 +146,7 @@ exports.subsFindCriteria = function (lists, page) {
   return subsFindCriteria
 }
 exports.subscriberFindCriteria = function (page, body) {
-  let subscriberFindCriteria = {pageId: page._id, isSubscribed: true}
+  let subscriberFindCriteria = {pageId: page._id, companyId: page.companyId, isSubscribed: true}
   if (body.isSegmented) {
     if (body.segmentationGender.length > 0) {
       subscriberFindCriteria = _.merge(subscriberFindCriteria, {
@@ -202,7 +203,7 @@ exports.preparePollPagePayload = function (page, user, companyUser, body, subscr
   let pollBroadcast = {
     pageId: page.pageId,
     userId: user._id,
-    companyId: companyUser.companyId,
+    companyId: companyUser.companyId._id,
     subscriberId: subscriber.senderId,
     pollId: id,
     seen: false,

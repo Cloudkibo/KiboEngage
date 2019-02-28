@@ -272,6 +272,7 @@ exports.send = function (req, res) {
                                                           logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
                                                           needle.post(
                                                             `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`, data, (err, resp) => {
+                                                              logger.serverLog(TAG, 'Poll response', resp.body)
                                                               if (err) {
                                                                 logger.serverLog(TAG, err)
                                                                 logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
@@ -374,6 +375,7 @@ exports.send = function (req, res) {
                                                         needle.post(
                                                           `https://graph.facebook.com/v2.10/me/messages?access_token=${resp.body.access_token}`,
                                                           data, (err, resp) => {
+                                                            logger.serverLog(TAG, 'Poll response', resp.body)
                                                             if (err) {
                                                               logger.serverLog(TAG, err)
                                                               logger.serverLog(TAG,
@@ -480,6 +482,8 @@ exports.sendPoll = function (req, res) {
                     })
                   }
                   let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
+                  logger.serverLog(TAG,
+                    `pollPayload ${JSON.stringify(pollPayload)}`)
                   PollDataLayer.createForPoll(pollPayload)
                     .then(pollCreated => {
                       require('./../../../config/socketio').sendMessageToClient({
@@ -503,9 +507,15 @@ exports.sendPoll = function (req, res) {
                             currentUser = connectedUser
                           }
                           const messageData = PollLogicLayer.prepareMessageData(req.body, pollCreated._id)
+                          logger.serverLog(TAG,
+                            `messageData ${JSON.stringify(messageData)}`)
                           let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
+                          logger.serverLog(TAG,
+                            `pagesFindCriteria ${JSON.stringify(pagesFindCriteria)}`)
                           utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
                             .then(pages => {
+                              logger.serverLog(TAG,
+                                `pages ${JSON.stringify(pages)}`)
                               for (let z = 0; z < pages.length && !abort; z++) {
                                 utility.callApi(`webhooks/query`, 'post', {pageId: pages[z].pageId}, req.headers.authorization)
                                   .then(webhook => {
@@ -580,6 +590,7 @@ exports.sendPoll = function (req, res) {
                                                               needle.post(
                                                                 `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`, data, (err, resp) => {
                                                                   if (err) {
+                                                                    logger.serverLog(TAG, 'Poll response', resp.body)
                                                                     logger.serverLog(TAG, err)
                                                                     logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
                                                                   }
@@ -649,6 +660,8 @@ exports.sendPoll = function (req, res) {
                                           if (subscribers.length > 0) {
                                             broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                               subscribers = taggedSubscribers
+                                              logger.serverLog(TAG,
+                                                `taggedSubscribers${JSON.stringify(taggedSubscribers)}`)
                                               broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
                                                 subscribers = repliedSubscribers
                                                 for (let j = 0; j < subscribers.length && !abort; j++) {
@@ -681,6 +694,7 @@ exports.sendPoll = function (req, res) {
                                                             needle.post(
                                                               `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
                                                               data, (err, resp) => {
+                                                                logger.serverLog(TAG, 'Poll response', resp.body)
                                                                 if (err) {
                                                                   logger.serverLog(TAG, err)
                                                                   logger.serverLog(TAG,

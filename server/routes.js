@@ -1,7 +1,10 @@
 const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
+const utility = require('./components/utility')
 const TAG = 'LandingPage'
+const Raven = require('raven')
+const path = require('path')
 
 module.exports = function (app) {
   const env = app.get('env')
@@ -17,7 +20,6 @@ module.exports = function (app) {
   app.use('/api/twitterEvents', require('./api/v1.1/twitterEvents'))
   app.use('/api/invitations', require('./api/v1.1/invitations'))
   app.use('/api/invite_verification', require('./api/v1.1/inviteagenttoken'))
-  app.use('/api/ip2country', require('./api/v1.1/ipcountry'))
   app.use('/api/lists', require('./api/v1.1/lists'))
   app.use('/api/menu', require('./api/v1.1/menu'))
   app.use('/api/notifications', require('./api/v1.1/notifications'))
@@ -40,10 +42,13 @@ module.exports = function (app) {
   app.use('/api/reset_password', require('./api/v1.1/passwordresettoken'))
   app.use('/api/messenger_code', require('./api/v1.1/messenger_code'))
   app.use('/api/scripts', require('./api/scripts'))
-  app.use('/api/api_ngp', require('./api/v1.1/api_ngp'))
   app.use('/api/landingPage', require('./api/v1.1/landingPage'))
   app.use('/api/pageReferrals', require('./api/v1.1/pageReferrals'))
   app.use('/api/jsonAd', require('./api/v1.1/jsonAd'))
+  app.use('/api/scripts', require('./api/v1.1/scripts'))
+  app.use('/api/custom_fields', require('./api/v1.1/custom_fields'))
+  app.use('/api/custom_field_subscribers/', require('./api/v1.1/custom_field_subscribers'))
+  // app.use('/api/operational', require('./api/v1.1/kiboDash'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
@@ -55,6 +60,10 @@ module.exports = function (app) {
     res.render('main', { environment: env })
   })
 
+  app.get('/react-bundle', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../KiboPush/client/public/js', 'bundle.js'))
+  })
+
   app.get('/landingPage/:id', (req, res) => {
     callApi('landingPage/query', 'post', {_id: req.params.id}, '')
       .then(landingPages => {
@@ -62,6 +71,7 @@ module.exports = function (app) {
         landingPage.state = landingPages[0].initialState
         landingPage.facebookClientId = config.facebook.clientID
         landingPage.currentState = 'initial'
+        landingPage.setProtocolUrl = utility.setProtocolUrl
         res.render('landingPage', { landingPage })
       })
       .catch(err => {
@@ -138,4 +148,8 @@ module.exports = function (app) {
   }).post((req, res) => {
     res.redirect('/')
   })
+
+  if (env === 'production' || env === 'staging') {
+    app.use(Raven.errorHandler())
+  }
 }

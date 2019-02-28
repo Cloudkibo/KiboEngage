@@ -1,4 +1,3 @@
-const mongoose = require('mongoose')
 const { callApi } = require('../utility')
 
 exports.allPolls = () => {
@@ -25,7 +24,7 @@ exports.pollTemplateaggregateLimit = (aggregateObject) => {
 exports.pollTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
     purpose: 'aggregate',
-    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: aggregateObject.req.body.last_id}}]},
     sort: {datetime: -1},
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records
@@ -58,7 +57,7 @@ exports.surveyTemplateaggregateLimit = (aggregateObject) => {
 exports.surveyTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
     purpose: 'aggregate',
-    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: aggregateObject.req.body.last_id}}]},
     sort: {datetime: -1},
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records
@@ -231,14 +230,14 @@ exports.findBroadcastById = (req) => {
 exports.findBotById = (req) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: req.params.botid}
+    match: {_id: req.params.botid, companyId: req.user.companyId}
   }
   return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }
 exports.BotFindById = (req) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: req.body._id}
+    match: {_id: req.body._id, companyId: req.user.companyId}
   }
   return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }
@@ -312,7 +311,7 @@ exports.broadcastTemplateaggregateLimit = (aggregateObject) => {
 exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
     purpose: 'aggregate',
-    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: mongoose.Types.ObjectId(aggregateObject.req.body.last_id)}}]},
+    match: {$and: [aggregateObject.findCriteria, {_id: {$lt: aggregateObject.req.body.last_id}}]},
     sort: {datetime: -1},
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records

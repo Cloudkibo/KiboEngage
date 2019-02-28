@@ -3,8 +3,6 @@ This file will contain the functions for logic layer.
 By separating it from controller, we are separating the concerns.
 Thus we can use it from other non express callers like cron etc
 */
-const mongoose = require('mongoose')
-
 exports.getSubscriberIds = function (subscribers) {
   let subscriberIds = []
   for (let i = 0; i < subscribers.length; i++) {
@@ -12,7 +10,28 @@ exports.getSubscriberIds = function (subscribers) {
   }
   return subscriberIds
 }
-
+exports.getFinalPayload = (subscribers, customFields, customFieldSubscribers) => {
+  let subscribersPayload = subscribers
+  let data = {}
+  for (let i = 0; i < subscribers.length; i++) {
+    subscribersPayload[i].customFields = []
+    for (let j = 0; j < customFields.length; j++) {
+      data = {
+        _id: customFields[j]._id,
+        name: customFields[j].name,
+        type: customFields[j].type,
+        value: ''
+      }
+      for (let k = 0; k < customFieldSubscribers.length; k++) {
+        if (customFieldSubscribers[k].subscriberId._id === subscribers[i]._id && customFieldSubscribers[k].customFieldId._id === customFields[j]._id) {
+          data.value = customFieldSubscribers[k].value
+        }
+      }
+      subscribersPayload[i].customFields.push(data)
+    }
+  }
+  return subscribersPayload
+}
 exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
   let subscribersPayload = subscribers
   let filteredTagSubscribers = []
@@ -20,11 +39,13 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
     subscribersPayload[i].tags = []
     var isTaggedSubscriber = false
     for (let j = 0; j < tags.length; j++) {
-      if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
-        if (tagValue === tags[j].tagId._id.toString()) {
-          isTaggedSubscriber = true
+      if (tags[j].tagId) {
+        if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
+          if (tagValue === tags[j].tagId._id.toString()) {
+            isTaggedSubscriber = true
+          }
+          subscribersPayload[i].tags.push(tags[j].tagId.tag)
         }
-        subscribersPayload[i].tags.push(tags[j].tagId.tag)
       }
     }
     if (isTaggedSubscriber) {
@@ -38,63 +59,134 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
 }
 
 exports.getCriterias = function (body, companyUser) {
+  console.log('getting criterias')
   let search = ''
   let findCriteria = {}
   let finalCriteria = {}
   let recordsToSkip = 0
   if (!body.filter) {
     findCriteria = {
-      companyId: mongoose.Types.ObjectId(companyUser.companyId),
-      isEnabledByPage: true
+      companyId: companyUser.companyId
     }
   } else {
     search = '.*' + body.filter_criteria.search_value + '.*'
     findCriteria = {
-      companyId: mongoose.Types.ObjectId(companyUser.companyId),
-      isEnabledByPage: true,
-      $or: [{firstName: {$regex: search, $options: 'i'}}, {lastName: {$regex: search, $options: 'i'}}],
+      companyId: companyUser.companyId,
+      fullName: {$regex: search, $options: 'i'},
       gender: body.filter_criteria.gender_value !== '' ? body.filter_criteria.gender_value : {$exists: true},
       locale: body.filter_criteria.locale_value !== '' ? body.filter_criteria.locale_value : {$exists: true},
       isSubscribed: body.filter_criteria.status_value !== '' ? body.filter_criteria.status_value : {$exists: true},
-      pageId: body.filter_criteria.page_value !== '' ? mongoose.Types.ObjectId(body.filter_criteria.page_value) : {$exists: true}
+      pageId: body.filter_criteria.page_value !== '' ? body.filter_criteria.page_value : {$exists: true}
     }
   }
+  let temp = JSON.parse(JSON.stringify(findCriteria))
+  temp['pageId._id'] = temp.pageId
+  temp['pageId.connected'] = true
+
   let countCriteria = [
-    {$match: findCriteria},
+    { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
+    { $unwind: '$pageId' },
+    { $project: {
+      'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
+      'firstName': 1,
+      'lastName': 1,
+      'profilePic': 1,
+      'companyId': 1,
+      'gender': 1,
+      'locale': 1,
+      'isSubscribed': 1,
+      'pageId': 1,
+      'datetime': 1,
+      'timezone': 1,
+      'senderId': 1,
+      '_id': 1
+    }},
+    { $match: temp },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
   // findCriteria is for the count
   // here temp is the findcriteria for Payload
-  let temp = JSON.parse(JSON.stringify(findCriteria))
-  temp['pageId._id'] = temp.pageId
   delete temp.pageId
-
   if (body.first_page === 'first') {
+    if (body.current_page) {
+      recordsToSkip = Math.abs(body.current_page * body.number_of_records)
+    }
+    console.log('temp match', temp)
     finalCriteria = [
-      { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
+      { $project: {
+        'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
+        'firstName': 1,
+        'lastName': 1,
+        'profilePic': 1,
+        'companyId': 1,
+        'gender': 1,
+        'locale': 1,
+        'isSubscribed': 1,
+        'pageId': 1,
+        'datetime': 1,
+        'timezone': 1,
+        'senderId': 1,
+        '_id': 1
+      }},
       { $match: temp },
+      { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
-      { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+      { $sort: { datetime: -1 } },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
-      { $match: { $and: [temp, { _id: { $gt: mongoose.Types.ObjectId(body.last_id) } }] } },
+      { $project: {
+        'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
+        'firstName': 1,
+        'lastName': 1,
+        'profilePic': 1,
+        'companyId': 1,
+        'gender': 1,
+        'locale': 1,
+        'isSubscribed': 1,
+        'pageId': 1,
+        'datetime': 1,
+        'timezone': 1,
+        'senderId': 1,
+        '_id': 1
+      }},
+      { $match: { $and: [temp, { _id: { $lt: body.last_id } }] } },
+      { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
   } else if (body.first_page === 'previous') {
-    recordsToSkip = Math.abs(((body.requested_page) - (body.current_page - 1))) * body.number_of_records
+    recordsToSkip = Math.abs((body.requested_page * body.number_of_records) - body.number_of_records)
     finalCriteria = [
-      { $lookup: {from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId'} },
+      { $sort: { datetime: -1 } },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
-      { $match: { $and: [temp, { _id: { $lt: mongoose.Types.ObjectId(body.last_id) } }] } },
+      { $project: {
+        'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
+        'firstName': 1,
+        'lastName': 1,
+        'profilePic': 1,
+        'companyId': 1,
+        'gender': 1,
+        'locale': 1,
+        'isSubscribed': 1,
+        'pageId': 1,
+        'datetime': 1,
+        'timezone': 1,
+        'senderId': 1,
+        '_id': 1
+      }},
+      { $match: { $and: [temp, { _id: { $gt: body.last_id } }] } },
+      { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
   }
-  return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
+  return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }

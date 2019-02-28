@@ -31,3 +31,20 @@ exports.index = function (req, res) {
       })
     })
 }
+
+exports.create = function (req, res) {
+  var payload = req.body
+  PageAdminSubscriptionsDataLayer.create(payload)
+    .then(updatedRecord => {
+      return res.status(200).json({
+        status: 'success',
+        payload: updatedRecord
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Internal Server Error ${JSON.stringify(err)}`
+      })
+    })
+}

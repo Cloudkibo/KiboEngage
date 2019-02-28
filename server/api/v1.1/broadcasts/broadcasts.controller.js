@@ -11,7 +11,6 @@ const fs = require('fs')
 let config = require('./../../../config/environment')
 const uniqid = require('uniqid')
 let _ = require('lodash')
-const mongoose = require('mongoose')
 let request = require('request')
 const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
@@ -38,7 +37,7 @@ exports.index = function (req, res) {
                   console.log('broadcastpages', broadcastpages)
                   res.status(200).json({
                     status: 'success',
-                    payload: { broadcasts: req.body.first_page === 'previous' ? broadcasts.reverse() : broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
+                    payload: { broadcasts: broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
                   })
                   console.log('sent successfully')
                 })
@@ -170,23 +169,45 @@ exports.editButton = function (req, res) {
     title: req.body.title,
     type: req.body.type
   }
-  if (req.body.type === 'web_url' && req.body.oldUrl) {
+  if (req.body.type === 'web_url' && !req.body.messenger_extensions) {
     // TODO save module id when sending broadcast
-    let temp = req.body.oldUrl.split('/')
-    let id = temp[temp.length - 1]
-    URLDataLayer.updateOneURL(mongoose.Types.ObjectId(id), {originalURL: req.body.newUrl})
-      .then(savedurl => {
-        let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-        buttonPayload.newUrl = newURL
-        buttonPayload.url = req.body.oldUrl
-        return res.status(200).json({
-          status: 'success',
-          payload: { id: req.body.id, button: buttonPayload }
+    if (req.body.oldUrl && req.body.oldUrl !== '') {
+      let temp = req.body.oldUrl.split('/')
+      let id = temp[temp.length - 1]
+      URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
+        .then(savedurl => {
+          console.log('Saved Url', savedurl)
+          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+          buttonPayload.newUrl = newURL
+          buttonPayload.url = req.body.newUrl
+          return res.status(200).json({
+            status: 'success',
+            payload: { id: req.body.id, button: buttonPayload }
+          })
         })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        })
+    } else {
+      URLDataLayer.createURLObject({
+        originalURL: req.body.newUrl,
+        module: {
+          type: 'broadcast'
+        }
       })
-      .catch(error => {
-        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
-      })
+        .then(savedurl => {
+          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+          buttonPayload.newUrl = newURL
+          buttonPayload.url = req.body.newUrl
+          return res.status(200).json({
+            status: 'success',
+            payload: { id: req.body.id, button: buttonPayload }
+          })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        })
+    }
   } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
     if (!broadcastUtility.isWebView(req.body)) {
       return res.status(500).json({status: 'failed', payload: `parameters are missing`})
@@ -194,14 +215,29 @@ exports.editButton = function (req, res) {
     broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
       .then(result => {
         if (result.returnValue) {
+          var webViewPayload = {
+            type: req.body.type,
+            url: req.body.url, // User defined link,
+            title: req.body.title, // User defined label
+            messenger_extensions: req.body.messenger_extensions,
+            webview_height_ratio: req.body.webview_height_ratio
+          }
           return res.status(200).json({
             status: 'success',
-            payload: req.body
+            payload: {id: req.body.id, button: webViewPayload}
           })
         } else {
           return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
         }
       })
+  } else if (req.body.type === 'element_share') {
+    buttonPayload = {
+      type: req.body.type
+    }
+    return res.status(200).json({
+      status: 'success',
+      payload: {id: req.body.id, button: buttonPayload}
+    })
   } else {
     buttonPayload.payload = JSON.stringify({
       sequenceId: req.body.sequenceId,
@@ -215,7 +251,7 @@ exports.editButton = function (req, res) {
   }
 }
 exports.deleteButton = function (req, res) {
-  URLDataLayer.deleteOneURL(mongoose.Types.ObjectId(req.params.id))
+  URLDataLayer.deleteOneURL(req.params.id)
     .then(deleted => {
       return res.status(200).json({
         status: 'success',
@@ -288,7 +324,7 @@ exports.upload = function (req, res) {
       if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
         let pages = JSON.parse(req.body.pages)
         logger.serverLog(TAG, `Pages in upload file ${pages}`)
-        utility.callApi(`pages/${mongoose.Types.ObjectId(pages[0])}`)
+        utility.callApi(`pages/${pages[0]}`)
           .then(page => {
             needle.get(
               `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
@@ -361,65 +397,69 @@ exports.upload = function (req, res) {
 exports.uploadForTemplate = function (req, res) {
   let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
   console.log('req.body', req.body)
-  utility.callApi(`pages/${mongoose.Types.ObjectId(req.body.pages[0])}`)
-    .then(page => {
-      console.log('page fetched', page)
-      needle.get(
-        `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
-        (err, resp2) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: 'unable to get page access_token: ' + JSON.stringify(err)
-            })
-          }
-          let pageAccessToken = resp2.body.access_token
-          let fileReaderStream = fs.createReadStream(dir + '/userfiles/' + req.body.name)
-          const messageData = {
-            'message': JSON.stringify({
-              'attachment': {
-                'type': req.body.componentType,
-                'payload': {
-                  'is_reusable': true
-                }
-              }
-            }),
-            'filedata': fileReaderStream
-          }
-          console.log('messageData', messageData)
-          request(
-            {
-              'method': 'POST',
-              'json': true,
-              'formData': messageData,
-              'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
-            },
-            function (err, resp) {
-              if (err) {
-                console.log('error in uploading', err)
-                return res.status(500).json({
-                  status: 'failed',
-                  description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
-                })
-              } else {
-                logger.serverLog(TAG,
-                  `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
-                return res.status(201).json({
-                  status: 'success',
-                  payload: {
-                    id: req.body.id,
-                    attachment_id: resp.body.attachment_id,
-                    name: req.body.name,
-                    url: req.body.url
+  if (req.body.pages && req.body.pages.length > 0) {
+    utility.callApi(`pages/${req.body.pages[0]}`)
+      .then(page => {
+        console.log('page fetched', page)
+        needle.get(
+          `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
+          (err, resp2) => {
+            if (err) {
+              return res.status(500).json({
+                status: 'failed',
+                description: 'unable to get page access_token: ' + JSON.stringify(err)
+              })
+            }
+            let pageAccessToken = resp2.body.access_token
+            let fileReaderStream = fs.createReadStream(dir + '/userfiles/' + req.body.name)
+            const messageData = {
+              'message': JSON.stringify({
+                'attachment': {
+                  'type': req.body.componentType,
+                  'payload': {
+                    'is_reusable': true
                   }
-                })
-              }
-            })
-        })
-    })
-    .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
-    })
+                }
+              }),
+              'filedata': fileReaderStream
+            }
+            console.log('messageData', messageData)
+            request(
+              {
+                'method': 'POST',
+                'json': true,
+                'formData': messageData,
+                'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
+              },
+              function (err, resp) {
+                if (err) {
+                  console.log('error in uploading', err)
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
+                  })
+                } else {
+                  logger.serverLog(TAG,
+                    `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
+                  return res.status(201).json({
+                    status: 'success',
+                    payload: {
+                      id: req.body.id,
+                      attachment_id: resp.body.attachment_id,
+                      name: req.body.name,
+                      url: req.body.url
+                    }
+                  })
+                }
+              })
+          })
+      })
+      .catch(error => {
+        return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
+      })
+  } else {
+    return res.status(500).json({status: 'failed', payload: `Failed to upload`})
+  }
 }
 
 exports.sendConversation = function (req, res) {
@@ -466,7 +506,7 @@ exports.sendConversation = function (req, res) {
                 let payload = updatePayload(req.body.self, payloadData, broadcast)
                 broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
                 if (req.body.isList === true) {
-                  utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body), req.headers.authorization)
+                  utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
                     .then(lists => {
                       let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
                       let interval = setInterval(() => {
@@ -506,6 +546,9 @@ exports.sendConversation = function (req, res) {
 const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
     .then(subscribers => {
+      if (subscribers.length < 1) {
+        return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+      }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
           // update broadcast sent field
@@ -531,7 +574,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
     })
 }
-const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength) => {
+const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     console.log('Send Response Broadcast', body)
     if (err) {
@@ -547,7 +590,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       // we don't need to send res for persistant menu
     } else {
       logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
-      if (subscriberNumber === (subscribersLength - 1)) {
+      if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
         return res.status(200)
           .json({status: 'success', description: 'Conversation sent successfully!'})
       }
@@ -593,13 +636,25 @@ const updatePayload = (self, payload, broadcast) => {
 }
 
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
+  var testBroadcast = true
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
-      let temp = subscriptionUser.userId.facebookInfo.name.split(' ')
-      let fname = temp[0]
-      let lname = temp[1] ? temp[1] : ''
-      broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, req.body.fbMessageTag)
+      logger.serverLog(TAG,
+        `subscriptionUser ${subscriptionUser}`)
+      utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId}, req.headers.authorization)
+        .then(user => {
+          user = user[0]
+          logger.serverLog(TAG,
+            `user ${JSON.stringify(user)}`)
+          let temp = user.facebookInfo.name.split(' ')
+          let fname = temp[0]
+          let lname = temp[1] ? temp[1] : ''
+          broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to fetch user ${JSON.stringify(error)}`})
+        })
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch adminsubscription ${JSON.stringify(error)}`})

@@ -41,17 +41,10 @@ exports.getAll = function (req, res) {
         .then(count => {
           utility.callApi(`lists/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch lists
             .then(lists => {
-              if (req.body.first_page === 'previous') {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {lists: lists.reverse(), count: count.length > 0 ? count[0].count : 0}
-                })
-              } else {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {lists: lists, count: count.length > 0 ? count[0].count : 0}
-                })
-              }
+              res.status(200).json({
+                status: 'success',
+                payload: {lists: lists, count: count.length > 0 ? count[0].count : 0}
+              })
             })
             .catch(error => {
               return res.status(500).json({
@@ -75,58 +68,50 @@ exports.getAll = function (req, res) {
     })
 }
 exports.createList = function (req, res) {
-  utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
-    .then(companyProfile => {
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
+    .then(companyUser => {
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
         .then(planUsage => {
           planUsage = planUsage[0]
-          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
+          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
             .then(companyUsage => {
               companyUsage = companyUsage[0]
-              if (planUsage.segmentation_lists !== -1 && companyUsage.segmentation_lists >= planUsage.segmentation_lists) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Your lists limit has reached. Please upgrade your plan to premium in order to create more lists.`
-                })
-              }
-              utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
-                .then(companyUser => {
-                  utility.callApi(`lists`, 'post', {
-                    companyId: companyUser.companyId,
-                    userId: req.user._id,
-                    listName: req.body.listName,
-                    conditions: req.body.conditions,
-                    content: req.body.content,
-                    parentList: req.body.parentListId,
-                    parentListName: req.body.parentListName
+              // add paid plan check later
+              // if (planUsage.segmentation_lists !== -1 && companyUsage.segmentation_lists >= planUsage.segmentation_lists) {
+              //   return res.status(500).json({
+              //     status: 'failed',
+              //     description: `Your lists limit has reached. Please upgrade your plan to premium in order to create more lists.`
+              //   })
+              // }
+              utility.callApi(`lists`, 'post', {
+                companyId: companyUser.companyId._id,
+                userId: req.user._id,
+                listName: req.body.listName,
+                conditions: req.body.conditions,
+                content: req.body.content,
+                parentList: req.body.parentListId,
+                parentListName: req.body.parentListName
+              }, req.headers.authorization)
+                .then(listCreated => {
+                  utility.callApi(`featureUsage/updateCompany`, 'put', {
+                    query: {companyId: req.body.companyId},
+                    newPayload: { $inc: { segmentation_lists: 1 } },
+                    options: {}
                   }, req.headers.authorization)
-                    .then(listCreated => {
-                      utility.callApi(`featureUsage/updateCompany`, 'put', {
-                        query: {companyId: req.body.companyId},
-                        newPayload: { $inc: { segmentation_lists: 1 } },
-                        options: {}
-                      }, req.headers.authorization)
-                        .then(updated => {
-                        })
-                        .catch(error => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            payload: `Failed to update company usage ${JSON.stringify(error)}`
-                          })
-                        })
-                      return res.status(201).json({status: 'success', payload: listCreated})
+                    .then(updated => {
                     })
                     .catch(error => {
                       return res.status(500).json({
                         status: 'failed',
-                        payload: `Failed to create list ${JSON.stringify(error)}`
+                        payload: `Failed to update company usage ${JSON.stringify(error)}`
                       })
                     })
+                  return res.status(201).json({status: 'success', payload: listCreated})
                 })
                 .catch(error => {
                   return res.status(500).json({
                     status: 'failed',
-                    payload: `Failed to fetch company user ${JSON.stringify(error)}`
+                    payload: `Failed to create list ${JSON.stringify(error)}`
                   })
                 })
             })
@@ -221,7 +206,7 @@ exports.viewList = function (req, res) {
               })
           } else {
             utility.callApi(`subscribers/query`, 'post', {
-              isSubscribed: true, _id: {$in: list.content}}, req.headers.authorization)
+              isSubscribed: true, companyId: companyUser.companyId, _id: {$in: list.content}}, req.headers.authorization)
               .then(subscribers => {
                 return res.status(201)
                   .json({status: 'success', payload: subscribers})
@@ -289,7 +274,7 @@ exports.repliedPollSubscribers = function (req, res) {
           let criteria = logicLayer.pollResponseCriteria(polls)
           PollResponseDataLayer.genericFindForPollResponse(criteria)
             .then(responses => {
-              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
+              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses, companyUser.companyId)
               utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
@@ -331,7 +316,7 @@ exports.repliedSurveySubscribers = function (req, res) {
           let criteria = logicLayer.pollResponseCriteria(surveys)
           SurveyResponseDataLayer.genericFind(criteria)
             .then(responses => {
-              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
+              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses, companyUser.companyId)
               utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)

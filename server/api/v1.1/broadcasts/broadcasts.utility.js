@@ -11,7 +11,6 @@ const callApi = require('../utility')
 const SurveyResponsesDataLayer = require('./../surveys/surveyresponse.datalayer')
 const PollResponsesDataLayer = require('./../polls/pollresponse.datalayer')
 const request = require('request')
-const mongoose = require('mongoose')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const needle = require('needle')
 
@@ -261,6 +260,21 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
       })
     }
   } else if (body.componentType === 'gallery') {
+    var galleryCards = []
+    if (body.cards && body.cards.length > 0) {
+      for (var g = 0; g < body.cards.length; g++) {
+        var card = body.cards[g]
+        var galleryCard = {}
+        galleryCard.image_url = card.image_url
+        galleryCard.title = card.title
+        galleryCard.buttons = card.buttons
+        galleryCard.subtitle = card.subtitle
+        if (card.default_action) {
+          galleryCard.default_action = card.default_action
+        }
+        galleryCards.push(galleryCard)
+      }
+    }
     payload = {
       'messaging_type': messageType,
       'recipient': JSON.stringify({
@@ -271,7 +285,7 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           'type': 'template',
           'payload': {
             'template_type': 'generic',
-            'elements': body.cards
+            'elements': galleryCards
           }
         }
       })
@@ -358,11 +372,12 @@ function applyTagFilterIfNecessary (req, subscribers, fn) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
     callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tagSubscribers => {
+        logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`)
         let subscribersPayload = []
         for (let i = 0; i < subscribers.length; i++) {
           for (let j = 0; j < tagSubscribers.length; j++) {
             if (subscribers[i]._id.toString() ===
-              tagSubscribers[j].subscriberId.toString()) {
+              tagSubscribers[j].subscriberId._id.toString()) {
               subscribersPayload.push({
                 _id: subscribers[i]._id,
                 firstName: subscribers[i].firstName,
@@ -582,12 +597,27 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'gallery') {
+    var galleryCards = []
+    if (body.cards && body.cards.length > 0) {
+      for (var g = 0; g < body.cards.length; g++) {
+        var card = body.cards[g]
+        var galleryCard = {}
+        galleryCard.image_url = card.image_url
+        galleryCard.title = card.title
+        galleryCard.buttons = card.buttons
+        galleryCard.subtitle = card.subtitle
+        if (card.default_action) {
+          galleryCard.default_action = card.default_action
+        }
+        galleryCards.push(galleryCard)
+      }
+    }
     payload = {
       'attachment': {
         'type': 'template',
         'payload': {
           'template_type': 'generic',
-          'elements': body.cards
+          'elements': galleryCards
         }
       }
     }
@@ -627,7 +657,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
 }
 
 /* eslint-disable */
-function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, res, subscriberNumber, subscribersLength, fbMessageTag) {
+function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, res, subscriberNumber, subscribersLength, fbMessageTag, testBroadcast) {
   let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": recipientId}))
   let tag = "tag=" + encodeURIComponent(fbMessageTag)
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
@@ -637,13 +667,15 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
   payload.forEach((item, index) => {
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
     let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData(recipientId, item, fname, lname)))
+    console.log('messagePayload', message)
     if (index === 0) {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
     } else {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "depends_on": `message${index}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
     }
     if (index === (payload.length - 1)) {
-      sendBroadcast(JSON.stringify(batch), page, res, subscriberNumber, subscribersLength)
+      console.log('batchData', batch)
+      sendBroadcast(JSON.stringify(batch), page, res, subscriberNumber, subscribersLength, testBroadcast)
     }
   })
 }
@@ -693,7 +725,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
-          URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+          URLDataLayer.findOneURL(urlId)
             .then(URLObject => {
               let module = URLObject.module
               module.id = broadcastId
@@ -718,7 +750,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
           if (button.url) {
             let temp = button.url.split('/')
             let urlId = temp[temp.length - 1]
-            URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+            URLDataLayer.findOneURL(urlId)
               .then(URLObject => {
                 URLObject.module.id = broadcastId
                 URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
@@ -742,7 +774,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
             if (button.url) {
               let temp = button.url.split('/')
               let urlId = temp[temp.length - 1]
-              URLDataLayer.findOneURL(mongoose.Types.ObjectId(urlId))
+              URLDataLayer.findOneURL(urlId)
                 .then(URLObject => {
                   URLObject.module.id = broadcastId
                   URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})

@@ -1,4 +1,3 @@
-const mongoose = require('mongoose')
 let _ = require('lodash')
 exports.getCriterias = function (body, companyUser) {
   let startDate = new Date() // Current date
@@ -7,7 +6,7 @@ exports.getCriterias = function (body, companyUser) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let findCriteria = {
-    companyId: mongoose.Types.ObjectId(companyUser.companyId),
+    companyId: companyUser.companyId,
     'datetime': body.days !== '0' ? {
       $gte: startDate
     } : {$exists: true}
@@ -24,16 +23,16 @@ exports.getCriterias = function (body, companyUser) {
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $lt: mongoose.Types.ObjectId(body.last_id) } }] } },
+      { $match: { $and: [findCriteria, { _id: { $lt: body.last_id } }] } },
       { $sort: {datetime: -1} },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
   } else if (body.first_page === 'previous') {
-    recordsToSkip = Math.abs(((body.requested_page) - (body.current_page - 1))) * body.number_of_records
+    recordsToSkip = Math.abs((body.requested_page * body.number_of_records) - body.number_of_records)
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $gt: mongoose.Types.ObjectId(body.last_id) } }] } },
-      { $sort: {datetime: 1} },
+      { $match: { $and: [findCriteria, { _id: { $gt: body.last_id } }] } },
+      { $sort: {datetime: -1} },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
@@ -50,7 +49,7 @@ exports.createSurveyPayload = function (req, companyUser) {
     title: req.body.survey.title,
     description: req.body.survey.description,
     userId: req.user._id,
-    companyId: companyUser.companyId,
+    companyId: companyUser.companyId._id,
     isresponded: 0
   }
   if (req.body.isSegmented) {
@@ -81,7 +80,7 @@ exports.createSurveyPayload = function (req, companyUser) {
 }
 
 exports.pageFindCriteria = function (req, companyUser) {
-  let pagesFindCriteria = {companyId: companyUser.companyId, connected: true}
+  let pagesFindCriteria = {companyId: companyUser.companyId._id, connected: true}
   if (req.body.isSegmented) {
     if (req.body.segmentationPageIds.length > 0) {
       pagesFindCriteria = _.merge(pagesFindCriteria, {

@@ -111,7 +111,6 @@ exports.createTeam = function (req, res) {
 
 exports.updateTeam = function (req, res) {
   let teamPayload = logicLayer.getUpdateTeamPayload(req.body)
-  console.log('teamPayload', teamPayload)
   utility.callApi(`teams/${req.body._id}`, 'put', teamPayload, req.headers.authorization) // update team
     .then(team => {
       return res.status(200).json({

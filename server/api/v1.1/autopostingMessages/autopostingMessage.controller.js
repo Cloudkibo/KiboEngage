@@ -1,6 +1,5 @@
 const AutopostingMessages = require('./autopostingMessages.datalayer')
 const utility = require('../utility')
-const mongoose = require('mongoose')
 
 exports.getMessages = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -13,15 +12,18 @@ exports.getMessages = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         AutopostingMessages.countAutopostingMessagesDocuments(
-          {companyId: mongoose.Types.ObjectId(companyUser.companyId), autopostingId: mongoose.Types.ObjectId(req.params.id)}
+          {companyId: companyUser.companyId, autopostingId: req.params.id}
         )
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id}, req.body.number_of_records)
               .then(autopostingMessages => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {messages: autopostingMessages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
-                })
+                populatePages(autopostingMessages, req)
+                  .then(result => {
+                    res.status(200).json({
+                      status: 'success',
+                      payload: {messages: result.messages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
+                    })
+                  })
               })
               .catch(err => {
                 return res.status(500)
@@ -34,15 +36,18 @@ exports.getMessages = function (req, res) {
           })
       } else if (req.body.first_page === 'next') {
         AutopostingMessages.countAutopostingMessagesDocuments(
-          {companyId: mongoose.Types.ObjectId(companyUser.companyId), autopostingId: mongoose.Types.ObjectId(req.params.id)}
+          {companyId: companyUser.companyId, autopostingId: req.params.id}
         )
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id, _id: {$gt: req.body.last_id}}, req.body.number_of_records)
               .then(autopostingMessages => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {messages: autopostingMessages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
-                })
+                populatePages(autopostingMessages, req)
+                  .then(result => {
+                    res.status(200).json({
+                      status: 'success',
+                      payload: {messages: result.messages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
+                    })
+                  })
               })
               .catch(err => {
                 return res.status(500)
@@ -55,15 +60,18 @@ exports.getMessages = function (req, res) {
           })
       } else if (req.body.first_page === 'previous') {
         AutopostingMessages.countAutopostingMessagesDocuments(
-          {companyId: mongoose.Types.ObjectId(companyUser.companyId), autopostingId: mongoose.Types.ObjectId(req.params.id)}
+          {companyId: companyUser.companyId, autopostingId: req.params.id}
         )
           .then(messagesCount => {
             AutopostingMessages.findAutopostingMessagesUsingQueryWithLimit({companyId: companyUser.companyId, autopostingId: req.params.id, _id: {$lt: req.body.last_id}}, req.body.number_of_records)
               .then(autopostingMessages => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {messages: autopostingMessages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
-                })
+                populatePages(autopostingMessages, req)
+                  .then(result => {
+                    res.status(200).json({
+                      status: 'success',
+                      payload: {messages: result.messages, count: messagesCount.length > 0 ? messagesCount[0].count : 0}
+                    })
+                  })
               })
               .catch(err => {
                 return res.status(500)
@@ -82,4 +90,35 @@ exports.getMessages = function (req, res) {
         description: `Internal Server Error ${JSON.stringify(err)}`
       })
     })
+}
+function populatePages (messages, req) {
+  return new Promise(function (resolve, reject) {
+    let sendPayload = []
+    if (messages && messages.length > 0) {
+      for (let i = 0; i < messages.length; i++) {
+        utility.callApi(`pages/query`, 'post', {_id: messages[i].pageId, companyId: messages[i].companyId}, req.headers.authorization)
+          .then(page => {
+            sendPayload.push({
+              _id: messages[i]._id,
+              autoposting_type: messages[i].autoposting_type,
+              clicked: messages[i].clicked,
+              companyId: messages[i].companyId,
+              datetime: messages[i].datetime,
+              message_id: messages[i].message_id ? messages[i].message_id : 0,
+              pageId: page[0],
+              seen: messages[i].seen,
+              sent: messages[i].sent
+            })
+            if (sendPayload.length === messages.length) {
+              resolve({messages: sendPayload})
+            }
+          })
+          .catch(err => {
+            reject(err)
+          })
+      }
+    } else {
+      resolve({messages: []})
+    }
+  })
 }
