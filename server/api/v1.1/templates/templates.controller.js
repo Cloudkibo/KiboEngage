@@ -437,7 +437,7 @@ exports.editPoll = function (req, res) {
         options: req.body.options,
         category: req.body.category
       }
-      dataLayer.editPoll({id: req.body._id}, payload)
+      dataLayer.editPoll({_id: req.body._id}, payload)
         .then(success => {
           res.status(201).json({
             status: 'success',
