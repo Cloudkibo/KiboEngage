@@ -65,7 +65,7 @@ exports.allPolls = function (req, res) {
                       let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
                       res.status(200).json({
                         status: 'success',
-                        payload: {polls: req.body.first_page === 'previous' ? polls.reverse() : polls, pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
+                        payload: {polls: polls, pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
                       })
                     })
                     .catch(error => {
@@ -194,12 +194,8 @@ exports.create = function (req, res) {
 }
 exports.send = function (req, res) {
   let abort = false
-<<<<<<< HEAD
-  utility.callApi(`companyUser/query`, 'post', { userId: req.user._id }, req.headers.authorization)
-=======
   logger.serverLog(TAG, `req.user ${JSON.stringify(req.user)}`)
   utility.callApi(`companyUser/query`, 'post', { userId: req.user._id, populate: 'companyId' }, req.headers.authorization)
->>>>>>> cdf6b1d55f408c1520927741228437be7cfbe46d
     .then(companyUser => {
       logger.serverLog(TAG, `companyUser ${JSON.stringify(companyUser)}`)
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
