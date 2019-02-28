@@ -1,8 +1,8 @@
-const logicLayer = require('./logiclayer')
 const {callApi} = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/landingPage.controller.js'
-const request = require('request')
+const broadcastUtility = require('../broadcasts/broadcasts.utility')
+const messengerEventsUtility = require('./utility')
 
 exports.index = function (req, res) {
   console.log('req.body in landingPage', req.body)
@@ -12,43 +12,21 @@ exports.index = function (req, res) {
   })
   const sender = req.body.senderId
   const pageId = req.body.pageId
-  callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
+  const companyId = req.body.companyId
+  callApi(`pages/query`, 'post', { pageId: pageId, connected: true, companyId })
     .then(page => {
       page = page[0]
       console.log('page Found', page)
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
+      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
           console.log('page._id', page._id)
-          callApi(`landingPage/query`, 'post', { pageId: page._id })
+          callApi(`landingPage/query`, 'post', { pageId: page._id, companyId: page.companyId })
             .then(landingPage => {
               landingPage = landingPage[0]
               if (landingPage.isActive) {
                 console.log('landingPage', landingPage)
-                for (let i = 0; i < landingPage.optInMessage.length; i++) {
-                  let messageData = logicLayer.prepareSendAPIPayload(subscriber.senderId, landingPage.optInMessage[i], subscriber.firstName, subscriber.lastName, true)
-                  console.log('messageData', messageData)
-                  request(
-                    {
-                      'method': 'POST',
-                      'json': true,
-                      'formData': messageData,
-                      'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
-                        subscriber.pageId.accessToken
-                    },
-                    (err, res) => {
-                      if (err) {
-                        console.log(`At send message landingPage ${JSON.stringify(err)}`)
-                      } else {
-                        console.log('res', res.body)
-                        if (res.statusCode !== 200) {
-                          logger.serverLog(TAG,
-                            `At send message landingPage ${JSON.stringify(
-                              res.body.error)}`)
-                        }
-                      }
-                    })
-                }
+                broadcastUtility.getBatchData(landingPage.optInMessage, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
               }
             })
             .catch(err => {

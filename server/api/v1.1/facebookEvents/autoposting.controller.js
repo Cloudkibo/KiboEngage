@@ -18,6 +18,7 @@ exports.autoposting = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
+
   logger.serverLog(TAG, `in autoposting ${JSON.stringify(req.body)}`)
   for (let i = 0; i < req.body.entry[0].changes.length; i++) {
     const event = req.body.entry[0].changes[i]
@@ -36,7 +37,7 @@ exports.autoposting = function (req, res) {
           handleThePagePostsForAutoPosting(req, event)
         })
       } else if (event.value.item === 'video' && event.value.message) {
-        handleThePagePostsForAutoPosting(req, event, 'status')
+        // handleThePagePostsForAutoPosting(req, event, 'status')
         handleThePagePostsForAutoPosting(req, event)
       } else {
         handleThePagePostsForAutoPosting(req, event)
@@ -55,21 +56,19 @@ function handleThePagePostsForAutoPosting (req, event, status) {
               let subscriberFindCriteria = autopostingLogicLayer.subscriberFindCriteria(postingItem, page)
               utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                 .then(subscribers => {
-                  logger.serverLog(TAG,
-                    `Total Subscribers of page ${page.pageName} are ${subscribers.length}`)
-                  AutopostingMessagesDataLayer.createAutopostingMessage({
-                    pageId: page._id,
-                    companyId: postingItem.companyId,
-                    autoposting_type: 'facebook',
-                    autopostingId: postingItem._id,
-                    sent: subscribers.length,
-                    message_id: event.value.post_id,
-                    seen: 0,
-                    clicked: 0
-                  })
-                    .then(savedMsg => {
-                      if (subscribers.length > 0) {
-                        broadcastUtility.applyTagFilterIfNecessary({ body: postingItem }, subscribers, (taggedSubscribers) => {
+                  if (subscribers.length > 0) {
+                    broadcastUtility.applyTagFilterIfNecessary({ body: postingItem }, subscribers, (taggedSubscribers) => {
+                      AutopostingMessagesDataLayer.createAutopostingMessage({
+                        pageId: page._id,
+                        companyId: postingItem.companyId,
+                        autoposting_type: 'facebook',
+                        autopostingId: postingItem._id,
+                        sent: taggedSubscribers.length,
+                        message_id: event.value.post_id,
+                        seen: 0,
+                        clicked: 0
+                      })
+                        .then(savedMsg => {
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
                             if (event.value.item === 'status' || status) {
@@ -199,11 +198,11 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                               })
                           })
                         })
-                      }
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to save autoposting message ${JSON.stringify(err)}`)
+                        })
                     })
-                    .catch(err => {
-                      logger.serverLog(TAG, `Failed to save autoposting message ${JSON.stringify(err)}`)
-                    })
+                  }
                 })
                 .catch(err => {
                   logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(err)}`)

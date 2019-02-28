@@ -48,16 +48,22 @@ exports.getCriterias = function (body, companyUser) {
     ]
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $lt: body.last_id } }] } },
+      { $match: finalFindCriteria },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
   } else if (body.first_page === 'previous') {
-    recordsToSkip = Math.abs((body.requested_page * body.number_of_records) - body.number_of_records)
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $gt: body.last_id } }] } },
+      { $match: finalFindCriteria },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
@@ -72,8 +78,10 @@ exports.getCriterias = function (body, companyUser) {
     countCriteria
   }
 }
-exports.ListFindCriteria = function (body) {
-  let ListFindCriteria = {}
+exports.ListFindCriteria = function (body, user) {
+  let ListFindCriteria = {
+    companyId: user.companyId
+  }
   ListFindCriteria = _.merge(ListFindCriteria,
     {
       _id: {
@@ -84,7 +92,7 @@ exports.ListFindCriteria = function (body) {
 }
 
 exports.subsFindCriteriaForList = function (lists, page) {
-  let subsFindCriteria = {pageId: page._id}
+  let subsFindCriteria = {pageId: page._id, companyId: page.companyId}
   let listData = []
   if (lists.length > 1) {
     for (let i = 0; i < lists.length; i++) {
@@ -109,7 +117,7 @@ exports.subsFindCriteriaForList = function (lists, page) {
   return subsFindCriteria
 }
 exports.subsFindCriteria = function (body, page) {
-  let subscriberFindCriteria = {pageId: page._id, isSubscribed: true}
+  let subscriberFindCriteria = {pageId: page._id, companyId: page.companyId, isSubscribed: true}
   if (body.isSegmented) {
     if (body.segmentationGender.length > 0) {
       subscriberFindCriteria = _.merge(subscriberFindCriteria,

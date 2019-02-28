@@ -77,7 +77,7 @@ exports.editPoll = (queryObject, updated) => {
   return callApi(`templates/poll`, 'put', query, '', 'kiboengage')
 }
 
-exports.editSurveys = (queryObject, updated) => {
+exports.editSurvey = (queryObject, updated) => {
   let query = {
     purpose: 'updateOne',
     match: queryObject,
@@ -230,14 +230,14 @@ exports.findBroadcastById = (req) => {
 exports.findBotById = (req) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: req.params.botid}
+    match: {_id: req.params.botid, companyId: req.user.companyId}
   }
   return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }
 exports.BotFindById = (req) => {
   let query = {
     purpose: 'findOne',
-    match: {_id: req.body._id}
+    match: {_id: req.body._id, companyId: req.user.companyId}
   }
   return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
 }

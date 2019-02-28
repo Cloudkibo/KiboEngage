@@ -20,7 +20,7 @@ module.exports = {
   facebook: {
     clientID: process.env.FACEBOOK_ID || '159385484629940',
     clientSecret: process.env.FACEBOOK_SECRET || '67527aa04570a034b6ff67335d95e91c',
-    callbackURL: `${process.env.DOMAIN || 'https://kibopush-sojharo.ngrok.io'}/auth/facebook/callback`
+    callbackURL: `${process.env.DOMAIN || 'https://kibopush-faizan.ngrok.io'}/auth/facebook/callback`
   },
 
   api_urls: {
@@ -29,7 +29,8 @@ module.exports = {
     accounts: 'http://localhost:3024/api/v1',
     chat: 'http://localhost:3022/api',
     kibochat: `http://localhost:3030/api/v1`,
-    kiboengage: `http://localhost:3031/api/v1`
+    kiboengage: `http://localhost:3031/api/v1`,
+    kibodash: `http://localhost:5050/api/v1`
   },
   webhook_ip: 'http://localhost:3020'
 }

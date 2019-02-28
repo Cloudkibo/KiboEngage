@@ -206,7 +206,7 @@ exports.viewList = function (req, res) {
               })
           } else {
             utility.callApi(`subscribers/query`, 'post', {
-              isSubscribed: true, _id: {$in: list.content}}, req.headers.authorization)
+              isSubscribed: true, companyId: companyUser.companyId, _id: {$in: list.content}}, req.headers.authorization)
               .then(subscribers => {
                 return res.status(201)
                   .json({status: 'success', payload: subscribers})
@@ -274,7 +274,7 @@ exports.repliedPollSubscribers = function (req, res) {
           let criteria = logicLayer.pollResponseCriteria(polls)
           PollResponseDataLayer.genericFindForPollResponse(criteria)
             .then(responses => {
-              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
+              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses, companyUser.companyId)
               utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
@@ -316,7 +316,7 @@ exports.repliedSurveySubscribers = function (req, res) {
           let criteria = logicLayer.pollResponseCriteria(surveys)
           SurveyResponseDataLayer.genericFind(criteria)
             .then(responses => {
-              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses)
+              let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses, companyUser.companyId)
               utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)

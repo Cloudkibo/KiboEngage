@@ -2,7 +2,7 @@ let _ = require('lodash')
 
 exports.pagesFindCriteria = function (postingItem) {
   let pagesFindCriteria = {
-    userId: postingItem.userId._id,
+    companyId: postingItem.companyId,
     connected: true
   }
 
@@ -21,7 +21,8 @@ exports.subscriberFindCriteria = function (postingItem, page) {
   let subscriberFindCriteria = {
     pageId: page._id,
     isSubscribed: true,
-    isEnabledByPage: true
+    isEnabledByPage: true,
+    companyId: page.companyId
   }
 
   if (postingItem.isSegmented) {

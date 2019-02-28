@@ -79,7 +79,7 @@ exports.create = function (req, res) {
 }
 
 exports.update = function (req, res) {
-  callApi.callApi('custom_fields/query', 'post', { purpose: 'findOne', match: { _id: req.body.customFieldId } }, req.headers.authorization)
+  callApi.callApi('custom_fields/query', 'post', { purpose: 'findOne', match: { _id: req.body.customFieldId, companyId: req.user.companyId } }, req.headers.authorization)
     .then(fieldPayload => {
       if (!fieldPayload) {
         return res.status(404).json({
@@ -90,7 +90,7 @@ exports.update = function (req, res) {
       let updatedPayload = {}
       if (req.body.updated.name) updatedPayload.name = req.body.updated.name
       if (req.body.updated.type) updatedPayload.type = req.body.updated.type
-      if (req.body.updated.description) updatedPayload.description = req.body.updated.description
+      updatedPayload.description = req.body.updated.description
       callApi.callApi('custom_fields/', 'put', { purpose: 'updateOne', match: { _id: req.body.customFieldId }, updated: updatedPayload }, req.headers.authorization)
         .then(updated => {
           require('./../../../config/socketio').sendMessageToClient({

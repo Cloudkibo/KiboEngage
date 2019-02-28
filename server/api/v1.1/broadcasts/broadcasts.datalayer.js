@@ -4,6 +4,8 @@ By separating it from controller, we are separating the concerns.
 Thus we can use it from other non express callers like cron etc
 */
 const { callApi } = require('../utility')
+const logger = require('../../../components/logger')
+const TAG = 'api/v1/broadcast/broadcasts.datalayer.js'
 
 exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -15,6 +17,8 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
+
+  logger.serverLog(TAG, `query ${JSON.stringify(query)}`)
   console.log('query', JSON.stringify(query))
   return callApi(`broadcasts/query`, 'post', query, '', 'kiboengage')
 }

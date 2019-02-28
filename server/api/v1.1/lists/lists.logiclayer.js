@@ -72,12 +72,12 @@ exports.pollResponseCriteria = function (polls) {
   let criteria = {pollId: {$in: pollIds}}
   return criteria
 }
-exports.respondedSubscribersCriteria = function (responses) {
+exports.respondedSubscribersCriteria = function (responses, companyId) {
   let respondedSubscribers = []
   for (let j = 0; j < responses.length; j++) {
     respondedSubscribers.push(responses[j].subscriberId)
   }
-  let criteria = {_id: {$in: respondedSubscribers}}
+  let criteria = {_id: {$in: respondedSubscribers}, companyId}
   return criteria
 }
 exports.preparePayload = function (subscribers, responses) {

@@ -3,6 +3,8 @@ const TAG = 'api/messengerEvents/menu.controller.js'
 const {callApi} = require('../utility')
 const logicLayer = require('./logiclayer')
 const request = require('request')
+const broadcastUtility = require('../broadcasts/broadcasts.utility')
+const messengerEventsUtility = require('./utility')
 
 exports.index = function (req, res) {
   console.log('in menu controller')
@@ -16,13 +18,12 @@ exports.index = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender })
+      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
         .then(subscriber => {
           subscriber = subscriber[0]
-          console.log('subscriber fetched', subscriber)
-          logger.serverLog(TAG, `subscriber fetched ${JSON.stringify(subscriber)}`)
           if (subscriber) {
-            sendMenuReplyToSubscriber(replyPayload, subscriber.senderId, subscriber.firstName, subscriber.lastName, subscriber.pageId.accessToken)
+            //  sendMenuReplyToSubscriber(replyPayload, subscriber.senderId, subscriber.firstName, subscriber.lastName, subscriber.pageId.accessToken)
+            broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
           }
         })
         .catch(err => {
@@ -37,31 +38,34 @@ exports.index = function (req, res) {
 function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken) {
   console.log('replyPayload', replyPayload)
   for (let i = 0; i < replyPayload.length; i++) {
-    console.log('function returning', logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true))
-    // let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
-    // logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
-    // console.log('messageData in sendMenuReplyToSubscriber', messageData)
-    console.log('accessToken in sendMenuReplyToSubscriber', accessToken)
-    request(
-      {
-        'method': 'POST',
-        'json': true,
-        'formData': logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true),
-        'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' + accessToken
-      },
-      (err, res) => {
-        console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res)}`)
-        if (err) {
-          console.log('error', err)
-        } else {
-          if (res.statusCode !== 200) {
-            logger.serverLog(TAG,
-              `At send message landingPage ${JSON.stringify(
-                res.body.error)}`)
-          }
-          logger.serverLog(TAG, `At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
-          console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
-        }
+    logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
+      .then(result => {
+        console.log('result from file', result)
+        // let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
+        // logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
+        // console.log('messageData in sendMenuReplyToSubscriber', messageData)
+        console.log('accessToken in sendMenuReplyToSubscriber', accessToken)
+        request(
+          {
+            'method': 'POST',
+            'json': true,
+            'formData': result.payload,
+            'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' + accessToken
+          },
+          (err, res) => {
+            console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res)}`)
+            if (err) {
+              console.log('error', err)
+            } else {
+              if (res.statusCode !== 200) {
+                logger.serverLog(TAG,
+                  `At send message landingPage ${JSON.stringify(
+                    res.body.error)}`)
+              }
+              logger.serverLog(TAG, `At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
+              console.log(`At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
+            }
+          })
       })
   }
 }
