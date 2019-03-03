@@ -21,9 +21,10 @@ Structure: PlatformwiseAggregate
 exports.index = (req, res) => {
   callApi(`PlatformwiseData`, 'get', {}, req.headers.authorization, 'kibodash')
     .then((result) => {
-      if (result.status === 'success' && result.payload.length === 1) {
+      console.log('result', result)
+      if (result.length === 1) {
         // The array length will always be 1
-        return res.status(200).json({status: 'success', payload: result.payload[0]})
+        return res.status(200).json({status: 'success', payload: result[0]})
       } else {
         return res.status(500).json({status: 'failed', description: 'Unable to fetch data from KiboDash'})
       }
@@ -37,7 +38,7 @@ exports.index = (req, res) => {
 exports.ranged = (req, res) => {
   callApi(`PlatformwiseData/AggregateDatewise`, 'post', {startDate: req.body.startDate}, req.headers.authorization, 'kibodash')
     .then((result) => {
-      return res.status(200).json({status: 'success', payload: result.payload})
+      return res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
       logger.serverLog(TAG, `Error in fetching data from KiboDash ${JSON.stringify(err)}`)
