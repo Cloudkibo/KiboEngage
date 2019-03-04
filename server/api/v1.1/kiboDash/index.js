@@ -12,7 +12,7 @@ const controller = require('./operational.controller')
 const platform = require('./platform.controller')
 const user = require('./user.controller')
 const page = require('./page.controller')
-// const autoposting = require('./autoposting.controller')
+const autoposting = require('./autoposting.controller')
 const auth = require('../../../auth/auth.service')
 
 router.get('/', auth.isAuthorizedSuperUser(), controller.index)
@@ -34,10 +34,10 @@ router.post('/pagewise/onePage', auth.isAuthorizedSuperUser(), page.onePage)
 router.post('/pagewise/onePage/ranged', auth.isAuthorizedSuperUser(), page.onePageRanged)
 router.post('/pagewise/topPages', auth.isAuthorizedSuperUser(), page.topPages)
 
-// // Autoposting Data
-// router.get('/autoposting/platformwise', auth.isAuthorizedSuperUser(), autoposting.index)
-// router.post('/autoposting/platformwise/ranged', auth.isAuthorizedSuperUser(), autoposting.ranged)
-// router.post('/autoposting/userwise', auth.isAuthorizedSuperUser(), autoposting.userwise)
-// router.post('/autoposting/userwise/ranged', auth.isAuthorizedSuperUser(), autoposting.userwiseRanged)
+// Autoposting Data
+router.get('/autoposting/platformwise', auth.isAuthorizedSuperUser(), autoposting.index)
+router.post('/autoposting/platformwise/ranged', auth.isAuthorizedSuperUser(), autoposting.ranged)
+router.post('/autoposting/userwise', auth.isAuthorizedSuperUser(), autoposting.userwise)
+router.post('/autoposting/userwise/ranged', auth.isAuthorizedSuperUser(), autoposting.userwiseRanged)
 
 module.exports = router
