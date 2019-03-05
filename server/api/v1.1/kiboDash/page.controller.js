@@ -36,7 +36,7 @@ Structure: TotalPagewiseAnalytics
 exports.index = (req, res) => {
   callApi(`PagewiseData`, 'get', {}, req.headers.authorization, 'kibodash')
     .then((result) => {
-      return res.status(200).json({status: 'success', payload: result.payload})
+      return res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
       logger.serverLog(TAG, `Error in fetching data from KiboDash ${JSON.stringify(err)}`)
@@ -47,7 +47,7 @@ exports.index = (req, res) => {
 exports.ranged = (req, res) => {
   callApi(`PagewiseData/AggregateDatewise`, 'post', {startDate: req.body.startDate}, req.headers.authorization, 'kibodash')
     .then((result) => {
-      return res.status(200).json({status: 'success', payload: result.payload})
+      return res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
       logger.serverLog(TAG, `Error in fetching data from KiboDash ${JSON.stringify(err)}`)
@@ -58,7 +58,7 @@ exports.ranged = (req, res) => {
 exports.onePage = (req, res) => {
   callApi(`PagewiseData/OnePageAnalytics`, 'post', {pageId: req.body.pageId}, req.headers.authorization, 'kibodash')
     .then((result) => {
-      return res.status(200).json({status: 'success', payload: result.payload})
+      return res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
       logger.serverLog(TAG, `Error in fetching data from KiboDash ${JSON.stringify(err)}`)
@@ -71,7 +71,7 @@ exports.onePageRanged = (req, res) => {
     pageId: req.body.pageId},
   req.headers.authorization, 'kibodash')
     .then((result) => {
-      return res.status(200).json({status: 'success', payload: result.payload})
+      return res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
       logger.serverLog(TAG, `Error in fetching data from KiboDash ${JSON.stringify(err)}`)
