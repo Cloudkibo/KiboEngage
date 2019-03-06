@@ -1,3 +1,5 @@
+let utility = require('../../../components/utility')
+
 exports.preparePayload = function (body, landingPageState, companyUser, landingPageSubmittedState) {
   let payload = {
     companyId: companyUser.companyId,
@@ -18,7 +20,7 @@ exports.preparePayload = function (body, landingPageState, companyUser, landingP
   } else {
     payload.submittedState = {
       actionType: body.submittedState.actionType,
-      url: body.submittedState.url,
+      url: utility.setProtocolUrl(body.submittedState.url),
       tab: body.submittedState.tab,
       title: body.submittedState.title,
       description: body.submittedState.description,
@@ -39,7 +41,7 @@ exports.prepareUpdatePayload = function (body) {
   } else {
     paylaod.submittedState = {
       actionType: body.submittedState.actionType,
-      url: body.submittedState.url,
+      url: utility.setProtocolUrl(body.submittedState.url),
       tab: body.submittedState.tab,
       title: body.submittedState.title,
       description: body.submittedState.description,

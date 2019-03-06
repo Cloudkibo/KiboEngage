@@ -77,7 +77,7 @@ exports.editPoll = (queryObject, updated) => {
   return callApi(`templates/poll`, 'put', query, '', 'kiboengage')
 }
 
-exports.editSurveys = (queryObject, updated) => {
+exports.editSurvey = (queryObject, updated) => {
   let query = {
     purpose: 'updateOne',
     match: queryObject,

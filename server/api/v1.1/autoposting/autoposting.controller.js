@@ -60,8 +60,8 @@ exports.create = function (req, res) {
                   }
                   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId._id, subscriptionUrl: req.body.subscriptionUrl})
                     .then(data => {
-                      console.log('data', data)
-                      if (data.length > 0) {
+                      if (data && data.length > 0) {
+                        console.log('data', data)
                         return res.status(403).json({
                           status: 'Failed',
                           description: 'Cannot add duplicate accounts.'
@@ -89,7 +89,9 @@ exports.create = function (req, res) {
                             logger.serverLog(`Twitter URL parse Error ${err}`)
                           }
                           let payload
+                          console.log('data', data)
                           if (data && !data.errors) {
+                            console.log('data-errors', data)
                             autoPostingPayload.accountUniqueName = data.screen_name
                             payload = {
                               id: data.id_str,
@@ -133,11 +135,13 @@ exports.create = function (req, res) {
                                 })
                               })
                           } else {
-                            return logger.serverLog('Data Errors from Find User - Twitter')
+                            return res.status(404).json({
+                              status: 'Failed',
+                              description: 'Cannot add this page or page not found'
+                            })
                           }
                         })
-                      }
-                      if (req.body.subscriptionType === 'facebook') {
+                      } else if (req.body.subscriptionType === 'facebook') {
                         let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
                         if (screenName) {
                           utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, $or: [{ pageId: screenName }, { pageUserName: screenName }] }, req.headers.authorization)
@@ -190,15 +194,13 @@ exports.create = function (req, res) {
                                 description: `Error while fetching facebook page in autoposting${err}`
                               })
                             })
-                        }
-                        else {
+                        } else {
                           return res.status(403).json({
                             status: 'Failed',
                             description: 'Invalid url'
                           })
                         }
-                      }
-                      if (req.body.subscriptionType === 'youtube') {
+                      } else if (req.body.subscriptionType === 'youtube') {
                         let channelName = AutoPostingLogicLayer.getChannelName(req.body.subscriptionUrl)
                         autoPostingPayload.accountUniqueName = channelName
                         AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
@@ -214,8 +216,7 @@ exports.create = function (req, res) {
                               description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
                             })
                           })
-                      }
-                      if (req.body.subscriptionType === 'wordpress') {
+                      } else if (req.body.subscriptionType === 'wordpress') {
                         let url = req.body.subscriptionUrl
                         let wordpressUniqueId = url.split('/')[0] + url.split('/')[1] + '//' + url.split('/')[2]
                         autoPostingPayload.accountUniqueName = wordpressUniqueId

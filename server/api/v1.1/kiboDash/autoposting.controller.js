@@ -6,29 +6,30 @@ const TAG = 'api/operational_dashboard/operational.controller.js'
 const { callApi } = require('../utility')
 
 /*
-Endpoint: /api/v1/UserwiseData
+//for platform wise total autoposting
+Endpoint: /api/v1/AutopostingData
 Type: Get
 Responds: Array
-Structure: TotalUserwiseAnalytics
-Endpoint: /api/v1/UserwiseData/OneUserAnalytics
-Type: Post
+Structure: {status: 'success', payload: {totalAutoposting, facebookAutoposting, twitterAutoposting, wordpressAutoposting}}
+Endpoint: /api/v1/AutopostingData/UserTotalAutoposting
+Type: post
 Body: companyId
 Responds: Array
-Structure: TotalUserwiseAnalytics
-Endpoint: /api/v1/UserwiseData/AggregateDatewise
-Type: Post
+Structure: {status: 'success', payload: {companyId, totalAutoposting, facebookAutoposting, twitterAutoposting, wordpressAutoposting}}
+Endpoint: /api/v1/AutopostingData/UserAutopostingDatewise
+Type: post
+Body: companyId, startDate
+Responds: Array
+Structure: {status: 'success', payload: {companyId, startDate, totalAutoposting, facebookAutoposting, twitterAutoposting, wordpressAutoposting}}
+Endpoint: /api/v1/AutopostingData/PlatformAutopostingDatewise
+Type: post
 Body: startDate
 Responds: Array
-Structure: UserwiseAggregate
-Endpoint: /api/v1/UserwiseData/OneUserAggregateDatewise
-Type: Post
-Body: startDate, companyId
-Responds: Array
-Structure: UserwiseAggregate
+Structure: {status: 'success', payload: {startDate, totalAutoposting, facebookAutoposting, twitterAutoposting, wordpressAutoposting}}
 */
 
 exports.index = (req, res) => {
-  callApi(`UserwiseData`, 'get', {}, req.headers.authorization, 'kibodash')
+  callApi(`AutopostingData`, 'get', {}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result})
     })
@@ -39,7 +40,7 @@ exports.index = (req, res) => {
 }
 
 exports.ranged = (req, res) => {
-  callApi(`UserwiseData/AggregateDatewise`, 'post', {startDate: req.body.startDate}, req.headers.authorization, 'kibodash')
+  callApi(`AutopostingData/PlatformAutopostingDatewise`, 'post', {startDate: req.body.startDate}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result})
     })
@@ -49,8 +50,8 @@ exports.ranged = (req, res) => {
     })
 }
 
-exports.oneUser = (req, res) => {
-  callApi(`UserwiseData/OneUserAnalytics`, 'post', {companyId: req.body.companyId}, req.headers.authorization, 'kibodash')
+exports.userwise = (req, res) => {
+  callApi(`AutopostingData/UserTotalAutoposting`, 'post', {companyId: req.body.companyId}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result})
     })
@@ -60,8 +61,8 @@ exports.oneUser = (req, res) => {
     })
 }
 
-exports.oneUserRanged = (req, res) => {
-  callApi(`UserwiseData/OneUserAggregateDatewise`, 'post', {startDate: req.body.startDate,
+exports.userwiseRanged = (req, res) => {
+  callApi(`AutopostingData/UserAutopostingDatewise`, 'post', {startDate: req.body.startDate,
     companyId: req.body.companyId}, req.headers.authorization, 'kibodash')
     .then((result) => {
       return res.status(200).json({status: 'success', payload: result})

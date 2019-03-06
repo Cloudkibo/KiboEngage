@@ -65,7 +65,7 @@ exports.allPolls = function (req, res) {
                       let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
                       res.status(200).json({
                         status: 'success',
-                        payload: {polls: req.body.first_page === 'previous' ? polls.reverse() : polls, pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
+                        payload: {polls: polls, pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
                       })
                     })
                     .catch(error => {
