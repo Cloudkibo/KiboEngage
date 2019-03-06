@@ -108,26 +108,28 @@ exports.getAll = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let criterias = logicLayer.getCriterias(req.body, companyuser)
+      console.log('subscriber criterias', criterias)
       utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
         .then(count => {
+          console.log('subscriber count', count)
           utility.callApi(`subscribers/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch subscribers
             .then(subscribers => {
               let subscriberIds = logicLayer.getSubscriberIds(subscribers)
-              logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
+              logger.serverLog(TAG, `subscriberIds: ${JSON.stringify(subscriberIds)}`)
               utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds } }, req.headers.authorization)
                 .then(tags => {
-                  logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
+                  logger.serverLog(TAG, `tags: ${JSON.stringify(tags)}`)
                   let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags, req.body.filter_criteria.tag_value)
-                  logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`)
+                  logger.serverLog(TAG, `subscribersPayload: ${JSON.stringify(subscribersPayload)}`)
                   // start append custom Fields
                   utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: companyuser.companyId } }, req.headers.authorization)
                     .then(customFields => {
-                      logger.serverLog(TAG, `customFields: ${util.inspect(customFields)}`)
+                      logger.serverLog(TAG, `customFields: ${JSON.stringify(customFields)}`)
                       utility.callApi('custom_field_subscribers', 'get')
                         .then(customFieldSubscribers => {
-                          logger.serverLog(TAG, `customFieldSubscribers: ${util.inspect(customFieldSubscribers)}`)
+                          logger.serverLog(TAG, `customFieldSubscribers: ${JSON.stringify(customFieldSubscribers)}`)
                           let finalPayload = logicLayer.getFinalPayload(subscribersPayload, customFields, customFieldSubscribers)
-                          logger.serverLog(TAG, `subscribersFinalPayload: ${util.inspect(finalPayload)}`)
+                          logger.serverLog(TAG, `subscribersFinalPayload: ${JSON.stringify(finalPayload)}`)
                           return res.status(200).json({
                             status: 'success',
                             payload: {subscribers: finalPayload, count: count.length > 0 ? count[0].count : 0}
