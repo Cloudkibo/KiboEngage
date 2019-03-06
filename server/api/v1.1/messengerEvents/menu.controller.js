@@ -11,7 +11,7 @@ exports.index = function (req, res) {
   res.status(200).json({
     status: 'success',
     description: `received the payload`
-  }) if (req.body.entry[0].messaging[0].postback.payload) {
+  })
   let replyPayload = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
@@ -33,7 +33,6 @@ exports.index = function (req, res) {
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
     })
-  }
 }
 
 function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken) {
