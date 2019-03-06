@@ -94,15 +94,15 @@ const findUser = (screenName, fn) => {
   twitterClient.get('users/show', {screen_name: screenName},
     (err, data, response) => {
       console.log('Inside Find User')
-      if (err) {
+      fn(err, data)
+      /*if (err) {
         fn(err)
       }
-      if (data.errors) {
-        if (data.errors[0].code === 50) {
+      if (data && data.errors) {
+        if (data.errors.length > 0 && data.errors[0].code === 50) {
           fn('User not found on Twitter')
         }
-      }
-      fn(null, data)
+      }*/
     })
 }
 
