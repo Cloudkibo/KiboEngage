@@ -51,7 +51,7 @@ router.post('/updateShowIntegrations',
 
 router.get('/disconnectFacebook',
   auth.isAuthenticated(),
-  controller.updateShowIntegrations)
+  controller.disconnectFacebook)
 
 router.get('/validateUserAccessToken',
   auth.isAuthenticated(),
