@@ -153,8 +153,7 @@ exports.getCriterias = function (body, companyUser) {
       { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
-      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags' } },
-      {$unwind: 'tags'},
+      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -169,7 +168,7 @@ exports.getCriterias = function (body, companyUser) {
         'timezone': 1,
         'senderId': 1,
         '_id': 1,
-        'tags': 1
+        'tags_subscriber': 1
       }},
       { $match: { $and: [temp, { _id: { $lt: body.last_id } }] } },
       { $sort: { datetime: -1 } },
@@ -182,6 +181,7 @@ exports.getCriterias = function (body, companyUser) {
       { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
+      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -195,7 +195,8 @@ exports.getCriterias = function (body, companyUser) {
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
-        '_id': 1
+        '_id': 1,
+        'tags_subscriber': 1
       }},
       { $match: { $and: [temp, { _id: { $gt: body.last_id } }] } },
       { $sort: { datetime: -1 } },

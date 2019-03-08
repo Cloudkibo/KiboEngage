@@ -31,10 +31,7 @@ exports.findAutopostingMessagesUsingQueryWithLimit = (queryObject, limit) => {
   }
   return callApi(`autoposting_messages/query`, 'post', query, '', 'kiboengage')
 }
-exports.findAutopostingMessageUsingAggregate = (aggregateObject) => {
-  // We will call the db layer with aggregate parameter - currently not used in controller
-  return new Promise(() => {})
-}
+
 exports.findOneAutopostingMessageAndUpdate = (queryObject, update, options) => {
   let query = {
     purpose: 'updateOne',
@@ -91,5 +88,20 @@ exports.countAutopostingMessagesDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
+  return callApi(`autoposting_messages/query`, 'post', query, '', 'kiboengage')
+}
+
+exports.findAutopostingMessageUsingAggregate = (match, group, lookup, limit, sort, skip) => {
+  let query = {
+    purpose: 'aggregate',
+    match: match
+  }
+  if (group) query.group = group
+  if (lookup) query.lookup = lookup
+  if (limit) query.limit = limit
+  if (sort) query.sort = sort
+  if (skip) query.skip = skip
+
+  console.log('query', JSON.stringify(query))
   return callApi(`autoposting_messages/query`, 'post', query, '', 'kiboengage')
 }

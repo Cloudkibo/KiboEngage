@@ -72,7 +72,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                           taggedSubscribers.forEach(subscriber => {
                             let messageData = {}
                             if (event.value.item === 'status' || status) {
-                              messageData = autopostingLogicLayer(subscriber, event)
+                              messageData = autopostingLogicLayer.prepareMessageDataForStatus(subscriber, event)
                               // Logic to control the autoposting when last activity is less than 30 minutes
                               compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                 if (err) {
@@ -139,7 +139,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                               })
                                 .then(savedurl => {
                                   let newURL = config.domain + '/api/URL/' + savedurl._id
-                                  messageData = AutoPostingDataLayer.prepareMessageDataForImage(subscriber, event, newURL)
+                                  messageData = autopostingLogicLayer.prepareMessageDataForImage(subscriber, event, newURL)
                                   // Logic to control the autoposting when last activity is less than 30 minutes
                                   compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
                                     if (err) {
