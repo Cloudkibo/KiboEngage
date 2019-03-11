@@ -113,6 +113,9 @@ function populatePages (messages, req) {
               sent: messages[i].sent
             })
             if (sendPayload.length === messages.length) {
+              sendPayload.sort(function (a, b) {
+                return new Date(b.date) - new Date(a.date)
+              })
               resolve({messages: sendPayload})
             }
           })
