@@ -13,50 +13,62 @@ exports.index = function (req, res) {
   })
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
+  let payloadToSend
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
       console.log('page fetched in welcomeMessage', page)
-      if (page.isWelcomeMessageEnabled) {
-        callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
-          .then(subscriber => {
-            subscriber = subscriber[0]
-            if (subscriber) {
-              console.log('subscriber fetched in welcomeMessage', subscriber)
-              broadcastUtility.getBatchData(page.welcomeMessage, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-            } else {
-              console.log('going to newSubscriberWebhook')
-              needle.get(
-                `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.accessToken}`,
-                (err, resp2) => {
-                  if (err) {
-                    logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
-                  }
-                  console.log('pageAccessToken', resp2.body)
-                  logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`)
-                  let pageAccessToken = resp2.body.access_token
-                  const options = {
-                    url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
-                    qs: { access_token: page.accessToken },
-                    method: 'GET'
-
-                  }
-                  logger.serverLog(TAG, `options: ${JSON.stringify(options)}`)
-                  needle.get(options.url, options, (error, response) => {
-                    if (error) {
-                      console.log('error', error)
-                    } else {
-                      console.log('subscriberInfo')
-                      broadcastUtility.getBatchData(page.welcomeMessage, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
+        .then(subscriber => {
+          subscriber = subscriber[0]
+          callApi(`pageReferrals/query`, 'post', { pageId: page._id, companyId: page.companyId, ref_parameter: req.body.referral.ref })
+            .then(pageReferral => {
+              pageReferral = pageReferral[0]
+              if (pageReferral) {
+                payloadToSend = pageReferral.reply
+                // broadcastUtility.getBatchData(pageReferral.reply, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+              } else if (page.isWelcomeMessageEnabled) {
+                payloadToSend = page.welcomeMessage
+              }
+              if (subscriber) {
+                console.log('subscriber fetched in welcomeMessage', subscriber)
+                broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+              } else {
+                console.log('going to newSubscriberWebhook')
+                needle.get(
+                  `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.accessToken}`,
+                  (err, resp2) => {
+                    if (err) {
+                      logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
                     }
+                    console.log('pageAccessToken', resp2.body)
+                    logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`)
+                    let pageAccessToken = resp2.body.access_token
+                    const options = {
+                      url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
+                      qs: { access_token: page.accessToken },
+                      method: 'GET'
+
+                    }
+                    logger.serverLog(TAG, `options: ${JSON.stringify(options)}`)
+                    needle.get(options.url, options, (error, response) => {
+                      if (error) {
+                        console.log('error', error)
+                      } else {
+                        console.log('subscriberInfo')
+                        broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                      }
+                    })
                   })
-                })
-            }
-          })
-          .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
-          })
-      }
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`)
+            })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+        })
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
