@@ -137,7 +137,7 @@ exports.create = function (req, res) {
                           } else {
                             return res.status(404).json({
                               status: 'Failed',
-                              description: 'Cannot add this page or page not found'
+                              description: 'Can not add this account or account not found'
                             })
                           }
                         })
