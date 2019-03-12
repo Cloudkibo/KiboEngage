@@ -305,7 +305,7 @@ exports.enable = function (req, res) {
                             } else {
                               res.status(200).json({
                                 status: 'success',
-                                payload: {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name}. In order to manage this page please ask ${pageConnected[0].userId.facebookInfo.name} to create a team account and invite you.`}
+                                payload: {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name} (${pageConnected[0].userId.email}).`}
                               })
                             }
                           })

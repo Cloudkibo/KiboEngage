@@ -51,10 +51,15 @@ router.post('/updateShowIntegrations',
 
 router.get('/disconnectFacebook',
   auth.isAuthenticated(),
-  controller.updateShowIntegrations)
+  controller.disconnectFacebook)
 
 router.get('/validateUserAccessToken',
   auth.isAuthenticated(),
   controller.validateUserAccessToken)
+
+router.post('/updatePlatform',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.platformPayload}),
+  controller.updatePlatform)
 
 module.exports = router
