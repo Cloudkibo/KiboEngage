@@ -202,9 +202,8 @@ function prepareGallery (media, text, newURL) {
   let elements = []
   for (let i = 0; i < length; i++) {
     elements.push({
-      'title': text,
+      'title': 'www.kiboengage.cloudkibo.com',
       'image_url': media[i].media_url,
-      'subtitle': 'www.kiboengage.cloudkibo.com',
       'buttons': [
         {
           'type': 'web_url',
