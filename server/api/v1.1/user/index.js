@@ -7,7 +7,7 @@ const validationSchema = require('./validationSchema')
 const controller = require('./user.controller')
 
 router.get('/',
-  // auth.isAuthenticated(),
+  auth.isAuthenticated(),
   controller.index)
 
 router.post('/updateChecks',
