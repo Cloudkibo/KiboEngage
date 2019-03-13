@@ -21,47 +21,51 @@ function isAuthenticated () {
   return compose()
   // Validate jwt or api keys
     .use((req, res, next) => {
-      if (req.headers.hasOwnProperty('app_id')) {
-        validateApiKeys(req, res, next)
-      } else {
-        // allow access_token to be passed through query parameter as well
-        if (req.query && req.query.hasOwnProperty('access_token')) {
-          req.headers.authorization = `Bearer ${req.query.access_token}`
-        }
-
-        let headers = {
-          'content-type': 'application/json',
-          'Authorization': req.headers.authorization
-        }
-        let path = config.api_urls['accounts'].slice(0, config.api_urls['accounts'].length - 7)
-        let options = {
-          method: 'GET',
-          uri: `${path}/auth/verify`,
-          headers,
-          json: true
-        }
-
-        requestPromise(options)
-          .then(result => {
-            // logger.serverLog(TAG, `response got ${result}`)
-            if (result.status === 'success') {
-              req.user = result.user
-              next()
-            } else {
-              return res.status(401)
-                .json({status: 'failed', description: 'Unauthorized'})
-            }
-          })
-          .catch(err => {
-            if (err.statusCode && err.statusCode === 401) {
-              return res.status(401)
-                .json({status: 'Unauthorized', description: 'jwt expired'})
-            } else {
-              return res.status(500)
-                .json({status: 'failed', description: `Internal Server Error: ${err}`})
-            }
-          })
+      let headers = {
+        'content-type': 'application/json',
+        'Authorization': req.headers.authorization
       }
+      // allow access_token to be passed through query parameter as well
+      if (req.query && req.query.hasOwnProperty('access_token')) {
+        headers = _.merge(headers, {
+          Authorization: `Bearer ${req.query.access_token}`
+        })
+      }
+      console.log('Headers from KiboAPI', req.headers)
+      if (req.headers.hasOwnProperty('consumer_id') && isAuthorizedKiboAPITrigger(req)) {
+        headers = _.merge(headers, {
+          consumer_id: req.headers.consumer_id
+        })
+      }
+      console.log('Headers to Accounts', headers)
+      let path = config.api_urls['accounts'].slice(0, config.api_urls['accounts'].length - 7)
+      let options = {
+        method: 'GET',
+        uri: `${path}/auth/verify`,
+        headers,
+        json: true
+      }
+
+      requestPromise(options)
+        .then(result => {
+          // logger.serverLog(TAG, `response got ${result}`)
+          if (result.status === 'success') {
+            req.user = result.user
+            next()
+          } else {
+            return res.status(401)
+              .json({status: 'failed', description: 'Unauthorized'})
+          }
+        })
+        .catch(err => {
+          if (err.statusCode && err.statusCode === 401) {
+            return res.status(401)
+              .json({status: 'Unauthorized', description: 'jwt expired'})
+          } else {
+            return res.status(500)
+              .json({status: 'failed', description: `Internal Server Error: ${err}`})
+          }
+        })
     })
 }
 
@@ -430,4 +434,17 @@ function fetchPages (url, user, req, token) {
       logger.serverLog(TAG, 'Undefined Cursor from graph API')
     }
   })
+}
+
+// eslint-disable-next-line no-unused-vars
+function isAuthorizedKiboAPITrigger (req) {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
+    req.socket.remoteAddress || req.connection.socket.remoteAddress
+  logger.serverLog(TAG, req.ip)
+  logger.serverLog(TAG, ip)
+  logger.serverLog(TAG, 'This call is from KIBOAPI')
+  logger.serverLog(TAG, req.body)
+  // We need to change it to based on the requestee app
+  if (config.kiboAPIIP.indexOf(ip) > -1) return true
+  else return false
 }
