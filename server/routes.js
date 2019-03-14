@@ -48,6 +48,7 @@ module.exports = function (app) {
   app.use('/api/custom_fields', require('./api/v1.1/custom_fields'))
   app.use('/api/custom_field_subscribers/', require('./api/v1.1/custom_field_subscribers'))
   app.use('/api/operational', require('./api/v1.1/kiboDash'))
+  app.use('/api/contacts', require('./api/v1.1/contacts'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
