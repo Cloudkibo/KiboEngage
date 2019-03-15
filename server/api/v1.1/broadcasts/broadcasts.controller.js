@@ -18,6 +18,7 @@ const utility = require('../utility')
 const { batchApi } = require('../../global/batchApi')
 const broadcastApi = require('../../global/broadcastApi')
 const validateInput = require('../../global/validateInput')
+const { facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -869,6 +870,30 @@ exports.addListAction = function (req, res) {
         return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
       })
   }
+}
+
+exports.retrieveReachEstimation = (req, res) => {
+  utility.callApi('pages/query', 'post', {_id: req.params.page_id}, req.headers.authorization)
+    .then(pages => {
+      let page = pages[0]
+      facebookApiCaller('v2.11', `${page.reachEstimationId}?access_token=${page.pageAccessToken}`)
+        .then(reachEstimation => {
+          if (reachEstimation.error) {
+            return res.status(500).json({status: 'failed', payload: `Failed to retrieve reach estimation ${JSON.stringify(reachEstimation.error)}`})
+          } else {
+            return res.status(200).json({
+              status: 'success',
+              payload: reachEstimation
+            })
+          }
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to retrieve reach estimation ${JSON.stringify(error)}`})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
+    })
 }
 
 exports.sendBroadcast = sendBroadcast
