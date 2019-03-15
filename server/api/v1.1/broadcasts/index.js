@@ -78,4 +78,10 @@ router.delete('/deleteButton/:id',
 
 router.get('/download/:id', controller.download)
 
+router.get('/retrieveReachEstimation/:page_id',
+  auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('broadcasts'),
+  auth.doesRolePermitsThisAction('broadcastPermission'),
+  controller.retrieveReachEstimation)
+
 module.exports = router
