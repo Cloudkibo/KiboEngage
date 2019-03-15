@@ -1,10 +1,49 @@
 const csv = require('csv-parser')
 const phoneNumberLogicLayer = require('../phoneNumber/phoneNumber.logiclayer')
+const logicLayer = require('./logiclayer')
 const utility = require('../utility')
 const fs = require('fs')
 const logger = require('../../../components/logger')
 const TAG = 'api/contacts/contacts.controller.js'
 const path = require('path')
+const accountSid = 'ACefabec3371ed0d290ca97021f58434cd'
+const authToken = '28ab445e489073477bf7e6b5a66f0fbd'
+const client = require('twilio')(accountSid, authToken)
+
+exports.index = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+    .then(companyuser => {
+      let criterias = logicLayer.getCriterias(req.body, companyuser)
+      utility.callApi(`contacts/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
+        .then(count => {
+          utility.callApi(`contacts/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch subscribers
+            .then(contacts => {
+              res.status(200).json({
+                status: 'success',
+                payload: {contacts: contacts, count: count.length > 0 ? count[0].count : 0}
+              })
+            })
+            .catch(error => {
+              return res.status(500).json({
+                status: 'failed',
+                payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
+              })
+            })
+        })
+        .catch(error => {
+          return res.status(500).json({
+            status: 'failed',
+            payload: `Failed to fetch subscriber count ${JSON.stringify(error)}`
+          })
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to fetch company user ${JSON.stringify(error)}`
+      })
+    })
+}
 
 exports.uploadFile = function (req, res) {
   let directory = phoneNumberLogicLayer.directory(req)
@@ -68,6 +107,14 @@ exports.uploadNumbers = function (req, res) {
         utility.callApi(`contacts/query`, 'post', {
           number: req.body.numbers[i].number, companyId: companyUser.companyId}, req.headers.authorization)
           .then(phone => {
+            client.validationRequests
+              .create({friendlyName: 'My Home Phone Number', phoneNumber: '+923352134405'})
+              .then(validationRequest => {
+                console.log('validationRequest againn', validationRequest)
+              })
+              .catch((err) => {
+                console.log('error at', err)
+              })
             if (phone.length === 0) {
               utility.callApi(`contacts`, 'post', {
                 name: req.body.numbers[i].name,
