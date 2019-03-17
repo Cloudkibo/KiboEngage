@@ -42,3 +42,19 @@ exports.getCriterias = function (body, companyUser) {
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }
+
+exports.preparePayload = function (body, companyUser, data, nameColumn, result) {
+  let payload = {
+    name: data[`${nameColumn}`],
+    number: result,
+    companyId: companyUser.companyId
+  }
+  if (body.otherColumns !== '') {
+    payload.otherColumns = {}
+    let otherColumns = body.otherColumns.split(',')
+    for (let i = 0; i < otherColumns.length; i++) {
+      payload.otherColumns[otherColumns[i]] = data[`${otherColumns[i]}`]
+    }
+  }
+  return payload
+}

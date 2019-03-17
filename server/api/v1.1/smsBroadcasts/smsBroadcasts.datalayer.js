@@ -23,6 +23,6 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  console.log('query', JSON.stringify(query))
+  console.log('query in aggregate', JSON.stringify(query))
   return callApi(`smsBroadcasts/query`, 'post', query, '', 'kiboengage')
 }

@@ -35,7 +35,6 @@ exports.getCriterias = function (body, companyUser) {
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
-    console.log(`finalCriteria ${JSON.stringify(finalCriteria)}`)
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
@@ -54,6 +53,39 @@ exports.getCriterias = function (body, companyUser) {
     ]
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
+}
+
+exports.checkFilterValues = function (values, data) {
+  var matchCriteria = true
+  if (values.length > 0) {
+    for (var i = 0; i < values.length; i++) {
+      var filter = values[i]
+      if (filter.criteria === 'is') {
+        if (data[`${filter.condition}`] === filter.text) {
+          matchCriteria = true
+        } else {
+          matchCriteria = false
+          break
+        }
+      } else if (filter.criteria === 'contains') {
+        if (data[`${filter.condition}`].toLowerCase().includes(filter.text.toLowerCase())) {
+          matchCriteria = true
+        } else {
+          matchCriteria = false
+          break
+        }
+      } else if (filter.criteria === 'begins') {
+        var subText = data[`${filter.condition}`].substring(0, filter.text.length)
+        if (subText.toLowerCase() === filter.text.toLowerCase()) {
+          matchCriteria = true
+        } else {
+          matchCriteria = false
+          break
+        }
+      }
+    }
+  }
+  return matchCriteria
 }
 
 exports.prepareBroadCastPayload = prepareBroadCastPayload
