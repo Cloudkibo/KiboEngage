@@ -298,18 +298,18 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                             utility.callApi('polls', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
                               .then(updated => {
                                 return res.status(200)
-                                  .json({status: 'success', description: 'Conversation sent successfully!'})
+                                  .json({status: 'success', description: 'Poll sent successfully!'})
                               })
                               .catch(err => {
                                 return res.status(500).json({
                                   status: 'failed',
-                                  description: `Failed to send broadcast ${JSON.stringify(err)}`
+                                  description: `Failed to send poll ${JSON.stringify(err)}`
                                 })
                               })
                           } else {
                             return res.status(500).json({
                               status: 'failed',
-                              description: `Failed to send broadcast ${JSON.stringify(response.description)}`
+                              description: `Failed to send poll ${JSON.stringify(response.description)}`
                             })
                           }
                         }
@@ -317,7 +317,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                       .catch(err => {
                         return res.status(500).json({
                           status: 'failed',
-                          description: `Failed to send broadcast ${JSON.stringify(err)}`
+                          description: `Failed to send poll ${JSON.stringify(err)}`
                         })
                       })
                   }
@@ -331,14 +331,14 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
             } else {
               return res.status(500).json({
                 status: 'failed',
-                description: `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`
+                description: `Failed to send poll ${JSON.stringify(messageCreative.description)}`
               })
             }
           })
           .catch(err => {
             return res.status(500).json({
               status: 'failed',
-              description: `Failed to send broadcast ${JSON.stringify(err)}`
+              description: `Failed to send poll ${JSON.stringify(err)}`
             })
           })
       } else {

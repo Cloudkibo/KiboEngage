@@ -44,12 +44,12 @@ exports.getCriterias = function (body, companyUser) {
   return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
 }
 
-exports.createSurveyPayload = function (req, companyUser) {
+exports.createSurveyPayload = function (req) {
   let surveyPayload = {
     title: req.body.survey.title,
     description: req.body.survey.description,
     userId: req.user._id,
-    companyId: companyUser.companyId._id,
+    companyId: req.user.companyId,
     isresponded: 0
   }
   if (req.body.isSegmented) {
@@ -79,8 +79,8 @@ exports.createSurveyPayload = function (req, companyUser) {
   return surveyPayload
 }
 
-exports.pageFindCriteria = function (req, companyUser) {
-  let pagesFindCriteria = {companyId: companyUser.companyId._id, connected: true}
+exports.pageFindCriteria = function (req) {
+  let pagesFindCriteria = {companyId: req.user.companyId, connected: true}
   if (req.body.isSegmented) {
     if (req.body.segmentationPageIds.length > 0) {
       pagesFindCriteria = _.merge(pagesFindCriteria, {
