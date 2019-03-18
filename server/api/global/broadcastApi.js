@@ -27,10 +27,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
     })
 }
 
-exports.callMessageCreativesEndpoint = (payload, pageAccessToken) => {
-  let data = {
-    'messages': getMessagesData(payload)
-  }
+exports.callMessageCreativesEndpoint = (data, pageAccessToken) => {
   facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', data)
     .then(response => {
       if (response.message_creative_id) {
@@ -44,7 +41,7 @@ exports.callMessageCreativesEndpoint = (payload, pageAccessToken) => {
     })
 }
 
-function getMessagesData (payload) {
+exports.getMessagesData = (payload) => {
   let messages = []
   payload.forEach((item, i) => {
     messages.push(prepareMessageData.facebook(payload, '{{first_name}}', '{{last_name}}'))
