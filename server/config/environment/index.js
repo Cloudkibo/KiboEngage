@@ -15,6 +15,7 @@ const all = {
 
   // List of user roles, NOTE: don't change the order
   userRoles: ['buyer', 'admin', 'supervisor', 'agent'],
+  kiboAPIIP: ['::ffff:142.93.66.26', '::ffff:127.0.0.1'],
 
   // Mongo Options
   mongo: {
