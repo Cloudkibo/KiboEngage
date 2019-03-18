@@ -70,6 +70,7 @@
     "socket.io-client": "^2.1.1",
     "socketio-jwt": "^4.5.0",
     "sort-array": "^2.0.0",
+    "twilio": "^3.29.1",
     "twit": "^2.2.11",
     "uniqid": "^5.0.3",
     "util": "^0.11.0",

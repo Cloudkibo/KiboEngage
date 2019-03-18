@@ -7,6 +7,10 @@ const controller = require('./contacts.controller')
 const multiparty = require('connect-multiparty')
 const multipartyMiddleware = multiparty()
 
+router.post('/',
+  auth.isAuthenticated(),
+  controller.index)
+
 router.post('/uploadFile',
   auth.isAuthenticated(),
   multipartyMiddleware,
