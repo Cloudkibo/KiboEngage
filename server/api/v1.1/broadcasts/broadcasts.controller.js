@@ -512,7 +512,9 @@ exports.sendConversation = function (req, res) {
               let interval = setInterval(() => {
                 if (payload) {
                   clearInterval(interval)
-                  broadcastApi.callMessageCreativesEndpoint(payload, page.accessToken)
+                  broadcastApi.callMessageCreativesEndpoint({
+                    'messages': broadcastApi.getMessagesData(payload)
+                  }, page.accessToken)
                     .then(messageCreative => {
                       if (messageCreative.status === 'sucess') {
                         const messageCreativeId = messageCreative.message_creative_id

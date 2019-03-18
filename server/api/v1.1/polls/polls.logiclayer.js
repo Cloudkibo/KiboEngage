@@ -61,12 +61,12 @@ exports.getCriterias = function (body, companyUser) {
   ]
   return {countCriteria: countCriteria, fetchCriteria: finalCriteria}
 }
-exports.preparePollsPayload = function (user, companyUser, body) {
+exports.preparePollsPayload = function (user, body) {
   let pollPayload = {
     platform: 'facebook',
     statement: body.statement,
     options: body.options,
-    companyId: companyUser.companyId._id,
+    companyId: user.companyId,
     userId: user._id
   }
   if (body.isSegmented) {
@@ -95,8 +95,8 @@ exports.preparePollsPayload = function (user, companyUser, body) {
   }
   return pollPayload
 }
-exports.pagesFindCriteria = function (companyUser, body) {
-  let pagesFindCriteria = {companyId: companyUser.companyId._id, connected: true}
+exports.pagesFindCriteria = function (user, body) {
+  let pagesFindCriteria = {companyId: user.companyId, connected: true}
   if (body.isSegmented) {
     if (body.segmentationPageIds.length > 0) {
       pagesFindCriteria = _.merge(pagesFindCriteria, {
@@ -199,11 +199,11 @@ function exists (list, content) {
   }
   return false
 }
-exports.preparePollPagePayload = function (page, user, companyUser, body, subscriber, id) {
+exports.preparePollPagePayload = function (page, user, body, subscriber, id) {
   let pollBroadcast = {
     pageId: page.pageId,
     userId: user._id,
-    companyId: companyUser.companyId._id,
+    companyId: user.companyId,
     subscriberId: subscriber.senderId,
     pollId: id,
     seen: false,
