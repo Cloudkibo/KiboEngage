@@ -24,7 +24,7 @@ module.exports = {
   },
 
   api_urls: {
-    webhook: 'http://localhost:3020/api',
+    webhook: 'https://kibopush-anisha.ngrok.io',
     kibopush: 'http://localhost:3000/api',
     accounts: 'http://localhost:3024/api/v1',
     chat: 'http://localhost:3022/api',
