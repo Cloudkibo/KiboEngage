@@ -2,6 +2,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/companyprofile/company.controller.js'
 const utility = require('../utility')
 const needle = require('needle')
+const config = require('../../../config/environment/index')
 
 exports.members = function (req, res) {
   utility.callApi(`companyprofile/members`, 'get', {}, req.headers.authorization)
@@ -102,6 +103,22 @@ exports.updatePlatform = function (req, res) {
           if (resp.statusCode === 200) {
             utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: req.body.twilio}, options: {}}, req.headers.authorization)
               .then(updatedProfile => {
+                let accountSid = req.body.twilio.accountSID
+                let authToken = req.body.twilio.authToken
+                let client = require('twilio')(accountSid, authToken)
+                client.incomingPhoneNumbers
+                  .list().then((incomingPhoneNumbers) => {
+                    for (let i = 0; i < incomingPhoneNumbers.length; i++) {
+                      client.incomingPhoneNumbers(incomingPhoneNumbers[i].sid)
+                        .update({
+                          accountSid: req.body.twilio.accountSID,
+                          smsUrl: `${config.api_urls['webhook']}/webhooks/twilio/receiveSms`
+                        })
+                        .then(result => {
+                          console.log('result from updating webhook', result)
+                        })
+                    }
+                  })
                 return res.status(200).json({status: 'success', payload: updatedProfile})
               })
               .catch(err => {
