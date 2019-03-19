@@ -100,7 +100,7 @@ exports.twitterwebhook = function (req, res) {
                                           .then(response => {
                                             if (i === limit - 1) {
                                               if (response.status === 'success') {
-                                                utility.callApi('autoposting', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                                                utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
                                                   .then(updated => {
                                                     logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
                                                   })
