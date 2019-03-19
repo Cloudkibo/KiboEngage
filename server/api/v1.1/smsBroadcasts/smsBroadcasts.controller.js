@@ -107,6 +107,7 @@ exports.getTwilioNumbers = function (req, res) {
       let client = require('twilio')(accountSid, authToken)
       client.incomingPhoneNumbers
         .list().then((incomingPhoneNumbers) => {
+          console.log('incomingPhoneNumbers', incomingPhoneNumbers)
           for (let i = 0; i < incomingPhoneNumbers.length; i++) {
             numbers.push(incomingPhoneNumbers[i].phoneNumber)
             if (i === incomingPhoneNumbers.length - 1) {
