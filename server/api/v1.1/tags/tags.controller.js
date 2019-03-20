@@ -6,6 +6,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/tags/tags.controller.js'
 const callApi = require('../utility')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const async = require('async')
 
 exports.index = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
@@ -136,35 +137,55 @@ exports.create = function (req, res) {
 }
 
 exports.rename = function (req, res) {
-  callApi.callApi(`tags/${req.body.tagId}`, 'get', {}, req.headers.authorization)
-    .then(tagPayload => {
-      if (!tagPayload) {
+  callApi.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.tag}, req.headers.authorization)
+    .then(tags => {
+      if (tags.length > 0) {
+        tags.forEach((tag, i) => {
+          callApi.callApi('pages/query', 'post', {_id: tag.pageId})
+            .then(page => {
+              facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`)
+                .then(label => {
+                  if (label.error) {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
+                    })
+                  }
+                  let data = {
+                    tag: req.body.newTag,
+                    labelFbId: label.id
+                  }
+                  async.parallelLimit([
+                    function (callback) {
+                      updateTag(data)
+                    }
+                    // re-assign
+                  ], 10, function (err, results) {
+                    if (err) {
+                      return res.status(500).json({
+                        status: 'failed',
+                        description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
+                      })
+                    }
+                    if (i === tags.length - 1) {
+                      return res.status(200).json({status: 'success', payload: 'Tag updated successfully!'})
+                    }
+                  })
+                })
+                .catch(err => {
+                  return res.status(404).json({
+                    status: 'failed',
+                    description: `Failed to fetch page ${err}`
+                  })
+                })
+            })
+        })
+      } else {
         return res.status(404).json({
           status: 'failed',
-          description: 'No tag is available on server with given tagId.'
+          description: 'Tag not found'
         })
       }
-      tagPayload.tag = req.body.tagName
-      callApi.callApi('tags/update', 'put', {query: {_id: req.body.tagId}, newPayload: tagPayload, options: {}}, req.headers.authorization)
-        .then(newTag => {
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: tagPayload.companyId._id,
-            body: {
-              action: 'tag_rename',
-              payload: {
-                tag_id: tagPayload._id,
-                tag_name: tagPayload.tag
-              }
-            }
-          })
-          return res.status(200).json({status: 'success', payload: newTag})
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in saving Tags${JSON.stringify(err)}`
-          })
-        })
     })
     .catch(err => {
       if (err) {
@@ -173,6 +194,26 @@ exports.rename = function (req, res) {
           description: `Internal Server Error ${JSON.stringify(err)}`
         })
       }
+    })
+}
+
+function updateTag (tag, data, req, callback) {
+  callApi.callApi('tags/update', 'put', {query: {_id: tag._id}, newPayload: data, options: {}}, req.headers.authorization)
+    .then(newTag => {
+      require('./../../../config/socketio').sendMessageToClient({
+        room_id: req.user.companyId,
+        body: {
+          action: 'tag_rename',
+          payload: {
+            tag_id: tag._id,
+            tag_name: tag.tag
+          }
+        }
+      })
+      callback(null, newTag)
+    })
+    .catch(err => {
+      callback(err)
     })
 }
 
