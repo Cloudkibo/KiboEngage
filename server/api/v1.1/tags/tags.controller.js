@@ -5,6 +5,7 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/tags/tags.controller.js'
 const callApi = require('../utility')
+const { facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.index = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
@@ -39,74 +40,87 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email, populate: 'companyId'}, req.headers.authorization)
-    .then(companyUser => {
-      if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
-      }
-      callApi.callApi('featureUsage/planQuery', 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
-        .then(planUsage => {
-          callApi.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
-            .then(companyUsage => {
-              // add paid plan check later
-              // if (planUsage.labels !== -1 && companyUsage.labels >= planUsage.labels) {
-              //   return res.status(500).json({
-              //     status: 'failed',
-              //     description: `Your tags limit has reached. Please upgrade your plan to premium in order to create more tags.`
-              //   })
-              // }
-              let tagPayload = {
-                tag: req.body.tag,
-                userId: req.user._id,
-                companyId: companyUser.companyId._id
-              }
-              callApi.callApi('tags/', 'post', tagPayload, req.headers.authorization)
-                .then(newTag => {
-                  callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
-                    .then(updated => {
-                      logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`)
-                    })
-                    .catch(err => {
-                      if (err) {
-                        logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`)
-                      }
-                    })
-                  require('./../../../config/socketio').sendMessageToClient({
-                    room_id: companyUser.companyId._id,
-                    body: {
-                      action: 'new_tag',
-                      payload: {
-                        tag_id: newTag._id,
-                        tag_name: newTag.tag
-                      }
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+    .then(planUsage => {
+      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId}, req.headers.authorization)
+        .then(companyUsage => {
+          // add paid plan check later
+          // if (planUsage.labels !== -1 && companyUsage.labels >= planUsage.labels) {
+          //   return res.status(500).json({
+          //     status: 'failed',
+          //     description: `Your tags limit has reached. Please upgrade your plan to premium in order to create more tags.`
+          //   })
+          // }
+          callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, conneected: true}, req.headers.authorization)
+            .then(pages => {
+              pages.forEach((page, i) => {
+                facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`)
+                  .then(label => {
+                    if (label.error) {
+                      return res.status(500).json({
+                        status: 'failed',
+                        description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
+                      })
                     }
+                    let tagPayload = {
+                      tag: req.body.tag,
+                      userId: req.user._id,
+                      companyId: req.user.companyId,
+                      pageId: page._id,
+                      labelFbId: label.id
+                    }
+                    callApi.callApi('tags/', 'post', tagPayload, req.headers.authorization)
+                      .then(newTag => {
+                        callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
+                          .then(updated => {
+                            logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`)
+                          })
+                          .catch(err => {
+                            if (err) {
+                              logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`)
+                            }
+                          })
+                        require('./../../../config/socketio').sendMessageToClient({
+                          room_id: req.user.companyId,
+                          body: {
+                            action: 'new_tag',
+                            payload: {
+                              tag_id: newTag._id,
+                              tag_name: newTag.tag
+                            }
+                          }
+                        })
+                        if (i === pages.length - 1) {
+                          return res.status(201).json({status: 'success', payload: newTag})
+                        }
+                      })
+                      .catch(err => {
+                        return res.status(500).json({
+                          status: 'failed',
+                          description: `Internal Server Error in saving tag${JSON.stringify(err)}`
+                        })
+                      })
                   })
-                  return res.status(201).json({status: 'success', payload: newTag})
-                })
-                .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal Server Error in saving tag${JSON.stringify(err)}`
+                  .catch(err => {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Internal Server Error in saving tag${JSON.stringify(err)}`
+                    })
                   })
-                })
+              })
             })
             .catch(err => {
-              if (err) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
-                })
-              }
+              return res.status(500).json({
+                status: 'failed',
+                description: `Failed to fetch connected pages ${JSON.stringify(err)}`
+              })
             })
         })
         .catch(err => {
           if (err) {
             return res.status(500).json({
               status: 'failed',
-              description: `Internal Server Error in fetching plan usage{JSON.stringify(err)}`
+              description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
             })
           }
         })
@@ -115,7 +129,7 @@ exports.create = function (req, res) {
       if (err) {
         return res.status(500).json({
           status: 'failed',
-          description: `Internal Server Error in fetching company profile ${JSON.stringify(err)}`
+          description: `Internal Server Error in fetching plan usage{JSON.stringify(err)}`
         })
       }
     })

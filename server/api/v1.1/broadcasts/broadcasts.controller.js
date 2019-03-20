@@ -878,7 +878,7 @@ exports.retrieveReachEstimation = (req, res) => {
   utility.callApi('pages/query', 'post', {_id: req.params.page_id}, req.headers.authorization)
     .then(pages => {
       let page = pages[0]
-      facebookApiCaller('v2.11', `${page.reachEstimationId}?access_token=${page.pageAccessToken}`)
+      facebookApiCaller('v2.11', `${page.reachEstimationId}?access_token=${page.pageAccessToken}`, 'get', {})
         .then(reachEstimation => {
           if (reachEstimation.error) {
             return res.status(500).json({status: 'failed', payload: `Failed to retrieve reach estimation ${JSON.stringify(reachEstimation.error)}`})
