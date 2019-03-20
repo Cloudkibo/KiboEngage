@@ -141,8 +141,9 @@ exports.rename = function (req, res) {
     .then(tags => {
       if (tags.length > 0) {
         tags.forEach((tag, i) => {
-          callApi.callApi('pages/query', 'post', {_id: tag.pageId})
-            .then(page => {
+          callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+            .then(pages => {
+              let page = pages[0]
               facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`)
                 .then(label => {
                   if (label.error) {
@@ -218,43 +219,97 @@ function updateTag (tag, data, req, callback) {
 }
 
 exports.delete = function (req, res) {
-  callApi.callApi(`tags_subscriber/query`, 'post', {tagId: req.body.tagId}, req.headers.authorization)
-    .then(tagsSubscriber => {
-      for (let i = 0; i < tagsSubscriber.length; i++) {
-        callApi.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {}, req.headers.authorization)
-          .then(result => {
-          })
-          .catch(err => {
-            logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`)
-          })
-      }
-      callApi.callApi(`tags/${req.body.tagId}`, 'delete', {}, req.headers.authorization)
-        .then(tagPayload => {
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: tagPayload.companyId,
-            body: {
-              action: 'tag_remove',
-              payload: {
-                tag_id: req.body.tagId
+  callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: req.body.tag}, req.headers.authorization)
+    .then(tags => {
+      if (tags.length > 0) {
+        tags.forEach((tag, i) => {
+          callApi.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id}, req.headers.authorization)
+            .then(tagsSubscriber => {
+              for (let i = 0; i < tagsSubscriber.length; i++) {
+                callApi.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {}, req.headers.authorization)
+                  .then(result => {
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`)
+                  })
               }
-            }
-          })
-          return res.status(200)
-            .json({status: 'success', description: 'Tag removed successfully'})
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+            })
         })
-        .catch(err => {
-          return res.status(404).json({
-            status: 'failed',
-            description: `Failed to remove tag ${err}`
-          })
+        async.parallelLimit([
+          function (callback) {
+            deleteTagsFromLocal(req, tags[0], callback)
+          },
+          function (callback) {
+            deleteTagsFromFacebook(req, tags, callback)
+          }
+        ], 10, function (err, results) {
+          if (err) {
+            return res.status(404).json({
+              status: 'failed',
+              description: `Failed to find tagSubscriber ${err}`
+            })
+          }
+          res.status(200).json({status: 'success', payload: 'Tag has been deleted successfully!'})
         })
+      } else {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'Tag not found'
+        })
+      }
     })
     .catch(err => {
       return res.status(404).json({
         status: 'failed',
-        description: `Failed to find tagSubscriber ${err}`
+        description: `Failed to find tags ${err}`
       })
     })
+}
+
+function deleteTagsFromLocal (req, label, callback) {
+  callApi.callApi(`tags/deleteMany`, 'post', {tag: label.tag}, req.headers.authorization)
+    .then(tagPayload => {
+      require('./../../../config/socketio').sendMessageToClient({
+        room_id: req.user.companyId,
+        body: {
+          action: 'tag_remove',
+          payload: {
+            tag_id: label._id
+          }
+        }
+      })
+      callback(null, 'success')
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+function deleteTagsFromFacebook (req, tags, callback) {
+  tags.forEach((tag, i) => {
+    callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+      .then(pages => {
+        let page = pages[0]
+        facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.pageAccessToken}`)
+          .then(label => {
+            if (label.error) {
+              callback(label.error)
+            }
+            if (i === tags.length - 1) {
+              callback(null, 'success')
+            }
+          })
+          .catch(err => {
+            callback(err)
+          })
+      })
+      .catch(err => {
+        callback(err)
+      })
+  })
 }
 
 exports.assign = function (req, res) {
