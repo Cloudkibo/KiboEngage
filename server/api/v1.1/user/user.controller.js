@@ -205,3 +205,20 @@ exports.updatePlatform = function (req, res) {
       res.status(500).json({status: 'failed', payload: err})
     })
 }
+
+exports.updatePicture = function (req, res) {
+  console.log('hit the updatePicture endpoint for user')
+  utility.callApi(`user/updatePicture`, 'get', {}, req.headers.authorization)
+    .then(updatedUser => {
+      return res.status(200).json({
+        status: 'success',
+        payload: updatedUser
+      })
+    }).catch(error => {
+      logger.serverLog(TAG, `Error while retrieving profile picture for user ${util.inspect(error)}`)
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to retrieve profile picture of user ${JSON.stringify(error)}`
+      })
+    })
+}
