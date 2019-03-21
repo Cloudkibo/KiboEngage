@@ -52,10 +52,10 @@ exports.create = function (req, res) {
           //     description: `Your tags limit has reached. Please upgrade your plan to premium in order to create more tags.`
           //   })
           // }
-          callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, conneected: true}, req.headers.authorization)
+          callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: true}, req.headers.authorization)
             .then(pages => {
               pages.forEach((page, i) => {
-                facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`)
+                facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`, 'post', {'label': req.body.tag})
                   .then(label => {
                     if (label.error) {
                       return res.status(500).json({
@@ -144,7 +144,7 @@ exports.rename = function (req, res) {
           callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
             .then(pages => {
               let page = pages[0]
-              facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`)
+              facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`, 'post', {'label': req.body.newTag})
                 .then(label => {
                   if (label.error) {
                     return res.status(500).json({
@@ -159,8 +159,15 @@ exports.rename = function (req, res) {
                   async.parallelLimit([
                     function (callback) {
                       updateTag(data)
+                    },
+                    function (callback) {
+                      callApi.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.tag}, req.headers.authorization)
+                        .then(tagSubscribers => {
+                          let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
+                          assignTagToSubscribers(subscribers, req.body.tag, req, callback)
+                        })
+                        .catch(err => callback(err))
                     }
-                    // re-assign
                   ], 10, function (err, results) {
                     if (err) {
                       return res.status(500).json({
@@ -293,7 +300,7 @@ function deleteTagsFromFacebook (req, tags, callback) {
     callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
       .then(pages => {
         let page = pages[0]
-        facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.pageAccessToken}`)
+        facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.pageAccessToken}`, 'delete', {})
           .then(label => {
             if (label.error) {
               callback(label.error)
@@ -312,96 +319,174 @@ function deleteTagsFromFacebook (req, tags, callback) {
   })
 }
 
-exports.assign = function (req, res) {
-  callApi.callApi(`tags/${req.body.tagId}`, 'get', {}, req.headers.authorization)
-    .then(tagPayload => {
-      if (!tagPayload) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'No tag is available on server with given tagId.'
-        })
-      }
-      req.body.subscribers.forEach((subscriberId) => {
-        callApi.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
-          .then(subscriber => {
-            let subscriberTagsPayload = {
-              tagId: tagPayload._id,
-              subscriberId: subscriber._id,
-              companyId: tagPayload.companyId._id
-            }
-            callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
-              .then(newRecord => {
-                require('./../../../config/socketio').sendMessageToClient({
-                  room_id: tagPayload.companyId._id,
-                  body: {
-                    action: 'tag_assign',
-                    payload: {
-                      tag_id: req.body.tagId,
-                      subscriber_ids: req.body.subscribers
-                    }
+function isTagExists (pageId, tags) {
+  let temp = tags.map((t) => t.pageId)
+  let index = temp.indexOf(pageId)
+  if (index > -1) {
+    return {status: true, index}
+  } else {
+    return {status: false}
+  }
+}
+
+function assignTagToSubscribers (subscribers, tag, req, callback) {
+  let tags = []
+  subscribers.forEach((subscriberId, i) => {
+    callApi.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
+      .then(subscriber => {
+        let existsTag = isTagExists(subscriber.pageId._id, tags)
+        if (existsTag.status) {
+          let tagPayload = tags[existsTag.index]
+          facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.pageAccessToken}`, 'post', {'user': subscriber.senderId})
+            .then(assignedLabel => {
+              if (assignedLabel.error) callback(assignedLabel.error)
+              let subscriberTagsPayload = {
+                tagId: tagPayload._id,
+                subscriberId: subscriber._id,
+                companyId: req.user.companyId
+              }
+              callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
+                .then(newRecord => {
+                  if (i === subscribers.length - 1) {
+                    callback(null, 'success')
                   }
                 })
-                return res.status(201).json({
-                  status: 'success',
-                  description: 'Tag assigned successfully'
-                })
-              })
-              .catch(err => {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Internal Server Error in Finding Subscriber ${JSON.stringify(err)}`
-                })
-              })
-          })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error in Assigning Tags ${JSON.stringify(err)}`
+                .catch(err => callback(err))
             })
-          })
+            .catch(err => callback(err))
+        } else {
+          callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id}, req.headers.authorization)
+            .then(tagPayload => {
+              tags.push(tagPayload)
+              facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.pageAccessToken}`, 'post', {'user': subscriber.senderId})
+                .then(assignedLabel => {
+                  if (assignedLabel.error) callback(assignedLabel.error)
+                  let subscriberTagsPayload = {
+                    tagId: tagPayload._id,
+                    subscriberId: subscriber._id,
+                    companyId: req.user.companyId
+                  }
+                  callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
+                    .then(newRecord => {
+                      if (i === subscribers.length - 1) {
+                        callback(null, 'success')
+                      }
+                    })
+                    .catch(err => callback(err))
+                })
+                .catch(err => callback(err))
+            })
+            .catch(err => callback(err))
+        }
       })
-    })
-    .catch(err => {
+      .catch(err => callback(err))
+  })
+}
+
+exports.assign = function (req, res) {
+  let subscribers = req.body.subscribers
+  let tag = req.body.tag
+  async.parallelLimit([
+    function (callback) {
+      assignTagToSubscribers(subscribers, tag, req, callback)
+    }
+  ], 10, function (err, results) {
+    if (err) {
       return res.status(500).json({
         status: 'failed',
-        description: `Internal Server Error in Finding Tag ${JSON.stringify(err)}`
+        description: `Internal Server Error in Assigning tag ${JSON.stringify(err)}`
       })
+    }
+    require('./../../../config/socketio').sendMessageToClient({
+      room_id: req.user.companyId,
+      body: {
+        action: 'tag_assign',
+        payload: {
+          tag: req.body.tag,
+          subscriber_ids: req.body.subscribers
+        }
+      }
     })
+    return res.status(200).json({
+      status: 'success',
+      description: 'Tag assigned successfully'
+    })
+  })
+}
+
+function unassignTagFromSubscribers (subscribers, tag, req, callback) {
+  let tags = []
+  subscribers.forEach((subscriberId, i) => {
+    callApi.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
+      .then(subscriber => {
+        let existsTag = isTagExists(subscriber.pageId._id, tags)
+        if (existsTag.status) {
+          let tagPayload = tags[existsTag.index]
+          facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.pageAccessToken}`, 'delete', {})
+            .then(unassignedLabel => {
+              if (unassignedLabel.error) callback(unassignedLabel.error)
+              callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
+                .then(deleteRecord => {
+                  if (i === subscribers.length - 1) {
+                    callback(null, 'success')
+                  }
+                })
+                .catch(err => callback(err))
+            })
+            .catch(err => callback(err))
+        } else {
+          callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id}, req.headers.authorization)
+            .then(tagPayload => {
+              tags.push(tagPayload)
+              facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.pageAccessToken}`, 'delete', {})
+                .then(unassignedLabel => {
+                  if (unassignedLabel.error) callback(unassignedLabel.error)
+                  callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
+                    .then(deleteRecord => {
+                      if (i === subscribers.length - 1) {
+                        callback(null, 'success')
+                      }
+                    })
+                    .catch(err => callback(err))
+                })
+                .catch(err => callback(err))
+            })
+            .catch(err => callback(err))
+        }
+      })
+      .catch(err => callback(err))
+  })
 }
 
 exports.unassign = function (req, res) {
-  callApi.callApi(`tags/${req.body.tagId}`, 'get', {}, req.headers.authorization)
-    .then(tagPayload => {
-      callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: req.body.tagId, subscriberId: {$in: req.body.subscribers}}, req.headers.authorization)
-        .then(result => {
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: tagPayload.companyId._id,
-            body: {
-              action: 'tag_unassign',
-              payload: {
-                tag_id: req.body.tagId,
-                subscriber_ids: req.body.subscribers
-              }
-            }
-          })
-          return res.status(201).json({
-            status: 'success',
-            description: 'Tags unassigned successfully'
-          })
-        })
-        .catch(err => {
-          return res.status(500)({
-            status: 'failed',
-            description: `Internal server error in unassigning tags. ${err}`
-          })
-        })
-    })
-    .catch(err => {
-      return res.status(500)({
+  let subscribers = req.body.subscribers
+  let tag = req.body.tag
+  async.parallelLimit([
+    function (callback) {
+      unassignTagFromSubscribers(subscribers, tag, req, callback)
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      return res.status(500).json({
         status: 'failed',
-        description: `Internal server error in fetching tags. ${err}`
+        description: `Internal Server Error in unassigning tag ${JSON.stringify(err)}`
       })
+    }
+    require('./../../../config/socketio').sendMessageToClient({
+      room_id: req.user.companyId,
+      body: {
+        action: 'tag_unassign',
+        payload: {
+          tag_id: req.body.tag,
+          subscriber_ids: req.body.subscribers
+        }
+      }
     })
+    return res.status(201).json({
+      status: 'success',
+      description: 'Tags unassigned successfully'
+    })
+  })
 }
 
 exports.subscribertags = function (req, res) {
