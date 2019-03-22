@@ -277,7 +277,7 @@ exports.delete = function (req, res) {
 }
 
 function deleteTagsFromLocal (req, label, callback) {
-  callApi.callApi(`tags/deleteMany`, 'post', {tag: label.tag}, req.headers.authorization)
+  callApi.callApi(`tags/deleteMany`, 'post', {tag: label.tag, companyId: req.user.companyId}, req.headers.authorization)
     .then(tagPayload => {
       require('./../../../config/socketio').sendMessageToClient({
         room_id: req.user.companyId,
