@@ -236,28 +236,7 @@ exports.viewList = function (req, res) {
 exports.deleteList = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      utility.callApi(`lists/${req.params.id}`, 'delete', {}, req.headers.authorization)
-        .then(result => {
-          utility.callApi(`featureUsage/updateCompany`, 'put', {
-            query: {companyId: companyUser.companyId},
-            newPayload: { $inc: { segmentation_lists: -1 } },
-            options: {}
-          }, req.headers.authorization)
-            .then(updated => {})
-            .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to update company usage ${JSON.stringify(error)}`
-              })
-            })
-          res.status(201).json({status: 'success', payload: result})
-        })
-        .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to delete list ${JSON.stringify(error)}`
-          })
-        })
+
     })
     .catch(error => {
       return res.status(500).json({
@@ -266,6 +245,27 @@ exports.deleteList = function (req, res) {
       })
     })
 }
+
+function deleteListFromLocal (req, list, callback) {
+  utility.callApi(`lists/${req.params.id}`, 'delete', {}, req.headers.authorization)
+    .then(result => {
+      utility.callApi(`featureUsage/updateCompany`, 'put', {
+        query: {companyId: req.user.companyId},
+        newPayload: { $inc: { segmentation_lists: -1 } },
+        options: {}
+      }, req.headers.authorization)
+        .then(updated => {
+          callback(null, {status: 'success', payload: result})
+        })
+        .catch(error => {
+          callback(error)
+        })
+    })
+    .catch(error => {
+      callback(error)
+    })
+}
+
 exports.repliedPollSubscribers = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
