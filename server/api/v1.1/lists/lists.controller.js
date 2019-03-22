@@ -4,6 +4,10 @@ const PollDataLayer = require('../polls/polls.datalayer')
 const SurveyDataLayer = require('../surveys/surveys.datalayer')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
+const logger = require('../../../components/logger')
+const TAG = 'api/tags/tags.controller.js'
+const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const async = require('async')
 
 exports.allLists = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -234,19 +238,57 @@ exports.viewList = function (req, res) {
     })
 }
 exports.deleteList = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
-    .then(companyUser => {
-
+  utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
+    .then(tags => {
+      if (tags.length > 0) {
+        tags.forEach((tag, i) => {
+          utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id}, req.headers.authorization)
+            .then(tagsSubscriber => {
+              for (let i = 0; i < tagsSubscriber.length; i++) {
+                utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {}, req.headers.authorization)
+                  .then(result => {
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`)
+                  })
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+            })
+        })
+        async.parallelLimit([
+          function (callback) {
+            deleteListFromLocal(req, callback)
+          },
+          function (callback) {
+            deleteListFromFacebook(req, tags, callback)
+          }
+        ], 10, function (err, results) {
+          if (err) {
+            return res.status(404).json({
+              status: 'failed',
+              description: `Failed to find list ${err}`
+            })
+          }
+          res.status(200).json({status: 'success', payload: 'List has been deleted successfully!'})
+        })
+      } else {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'Tag not found'
+        })
+      }
     })
-    .catch(error => {
-      return res.status(500).json({
+    .catch(err => {
+      return res.status(404).json({
         status: 'failed',
-        payload: `Failed to delete list ${JSON.stringify(error)}`
+        description: `Failed to find tags ${err}`
       })
     })
 }
 
-function deleteListFromLocal (req, list, callback) {
+function deleteListFromLocal (req, callback) {
   utility.callApi(`lists/${req.params.id}`, 'delete', {}, req.headers.authorization)
     .then(result => {
       utility.callApi(`featureUsage/updateCompany`, 'put', {
@@ -264,6 +306,30 @@ function deleteListFromLocal (req, list, callback) {
     .catch(error => {
       callback(error)
     })
+}
+
+function deleteListFromFacebook (req, tags, callback) {
+  tags.forEach((tag, i) => {
+    utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+      .then(pages => {
+        let page = pages[0]
+        facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
+          .then(label => {
+            if (label.error) {
+              callback(label.error)
+            }
+            if (i === tags.length - 1) {
+              callback(null, 'success')
+            }
+          })
+          .catch(err => {
+            callback(err)
+          })
+      })
+      .catch(err => {
+        callback(err)
+      })
+  })
 }
 
 exports.repliedPollSubscribers = function (req, res) {

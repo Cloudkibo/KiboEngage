@@ -277,7 +277,7 @@ exports.delete = function (req, res) {
 }
 
 function deleteTagsFromLocal (req, label, callback) {
-  callApi.callApi(`tags/deleteMany`, 'post', {tag: label.tag}, req.headers.authorization)
+  callApi.callApi(`tags/deleteMany`, 'post', {tag: label.tag, companyId: req.user.companyId}, req.headers.authorization)
     .then(tagPayload => {
       require('./../../../config/socketio').sendMessageToClient({
         room_id: req.user.companyId,
@@ -300,7 +300,7 @@ function deleteTagsFromFacebook (req, tags, callback) {
     callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
       .then(pages => {
         let page = pages[0]
-        facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.pageAccessToken}`, 'delete', {})
+        facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
             if (label.error) {
               callback(label.error)
