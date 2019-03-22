@@ -6,7 +6,7 @@ const SurveyDataLayer = require('../surveys/surveys.datalayer')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 const logger = require('../../../components/logger')
-const TAG = 'api/tags/tags.controller.js'
+const TAG = 'api/lists/lists.controller.js'
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 
