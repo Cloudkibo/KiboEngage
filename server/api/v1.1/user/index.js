@@ -62,4 +62,8 @@ router.post('/updatePlatform',
   validate({body: validationSchema.platformPayload}),
   controller.updatePlatform)
 
+router.get('/updatePicture',
+  auth.isAuthenticated(),
+  controller.updatePicture)
+
 module.exports = router
