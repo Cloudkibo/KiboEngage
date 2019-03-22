@@ -55,12 +55,12 @@ exports.create = function (req, res) {
           callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: true}, req.headers.authorization)
             .then(pages => {
               pages.forEach((page, i) => {
-                facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`, 'post', {'label': req.body.tag})
+                facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
                   .then(label => {
-                    if (label.error) {
+                    if (label.body.error) {
                       return res.status(500).json({
                         status: 'failed',
-                        description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
+                        description: `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`
                       })
                     }
                     let tagPayload = {
@@ -68,7 +68,7 @@ exports.create = function (req, res) {
                       userId: req.user._id,
                       companyId: req.user.companyId,
                       pageId: page._id,
-                      labelFbId: label.id
+                      labelFbId: label.body.id
                     }
                     callApi.callApi('tags/', 'post', tagPayload, req.headers.authorization)
                       .then(newTag => {
@@ -144,17 +144,17 @@ exports.rename = function (req, res) {
           callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
             .then(pages => {
               let page = pages[0]
-              facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.pageAccessToken}`, 'post', {'label': req.body.newTag})
+              facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'label': req.body.newTag})
                 .then(label => {
-                  if (label.error) {
+                  if (label.body.error) {
                     return res.status(500).json({
                       status: 'failed',
-                      description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
+                      description: `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`
                     })
                   }
                   let data = {
                     tag: req.body.newTag,
-                    labelFbId: label.id
+                    labelFbId: label.body.id
                   }
                   async.parallelLimit([
                     function (callback) {
@@ -302,8 +302,8 @@ function deleteTagsFromFacebook (req, tags, callback) {
         let page = pages[0]
         facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
-            if (label.error) {
-              callback(label.error)
+            if (label.body.error) {
+              callback(label.body.error)
             }
             if (i === tags.length - 1) {
               callback(null, 'success')
@@ -337,9 +337,9 @@ function assignTagToSubscribers (subscribers, tag, req, callback) {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
           let tagPayload = tags[existsTag.index]
-          facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.pageAccessToken}`, 'post', {'user': subscriber.senderId})
+          facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
-              if (assignedLabel.error) callback(assignedLabel.error)
+              if (assignedLabel.body.error) callback(assignedLabel.body.error)
               let subscriberTagsPayload = {
                 tagId: tagPayload._id,
                 subscriberId: subscriber._id,
@@ -358,9 +358,9 @@ function assignTagToSubscribers (subscribers, tag, req, callback) {
           callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id}, req.headers.authorization)
             .then(tagPayload => {
               tags.push(tagPayload)
-              facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.pageAccessToken}`, 'post', {'user': subscriber.senderId})
+              facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
                 .then(assignedLabel => {
-                  if (assignedLabel.error) callback(assignedLabel.error)
+                  if (assignedLabel.body.error) callback(assignedLabel.body.error)
                   let subscriberTagsPayload = {
                     tagId: tagPayload._id,
                     subscriberId: subscriber._id,
@@ -422,9 +422,9 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
           let tagPayload = tags[existsTag.index]
-          facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.pageAccessToken}`, 'delete', {})
+          facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.accessToken}`, 'delete', {})
             .then(unassignedLabel => {
-              if (unassignedLabel.error) callback(unassignedLabel.error)
+              if (unassignedLabel.body.error) callback(unassignedLabel.body.error)
               callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
                 .then(deleteRecord => {
                   if (i === subscribers.length - 1) {
@@ -438,9 +438,9 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
           callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id}, req.headers.authorization)
             .then(tagPayload => {
               tags.push(tagPayload)
-              facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.pageAccessToken}`, 'delete', {})
+              facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.accessToken}`, 'delete', {})
                 .then(unassignedLabel => {
-                  if (unassignedLabel.error) callback(unassignedLabel.error)
+                  if (unassignedLabel.body.error) callback(unassignedLabel.body.error)
                   callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
                     .then(deleteRecord => {
                       if (i === subscribers.length - 1) {
