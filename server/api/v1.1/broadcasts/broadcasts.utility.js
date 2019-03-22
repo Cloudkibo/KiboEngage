@@ -318,7 +318,8 @@ function prepareBroadCastPayload (req, companyId) {
     payload: req.body.payload,
     userId: req.user._id,
     companyId,
-    title: req.body.title
+    title: req.body.title,
+    sent: req.body.subscribersCount
   }
   if (req.body.isSegmented) {
     broadcastPayload.isSegmented = true
