@@ -41,7 +41,7 @@ exports.getMessages = function (req, res) {
         )
           .then(messagesCount => {
             let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
+            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id, _id: { $lt: req.body.last_id }}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
               .then(autopostingMessages => {
                 populatePages(autopostingMessages, req)
                   .then(result => {
@@ -66,7 +66,7 @@ exports.getMessages = function (req, res) {
         )
           .then(messagesCount => {
             let recordsToSkip = Math.abs(req.body.requested_page * req.body.number_of_records)
-            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
+            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id, _id: { $gt: req.body.last_id }}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
               .then(autopostingMessages => {
                 populatePages(autopostingMessages, req)
                   .then(result => {
@@ -114,7 +114,7 @@ function populatePages (messages, req) {
             })
             if (sendPayload.length === messages.length) {
               sendPayload.sort(function (a, b) {
-                return new Date(b.datetime) - new Date(a.datetime)
+                return new Date(b.date) - new Date(a.date)
               })
               resolve({messages: sendPayload})
             }
