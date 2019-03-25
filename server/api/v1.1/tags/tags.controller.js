@@ -52,7 +52,7 @@ exports.create = function (req, res) {
           //     description: `Your tags limit has reached. Please upgrade your plan to premium in order to create more tags.`
           //   })
           // }
-          callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: true}, req.headers.authorization)
+          callApi.callApi('pages/query', 'post', {companyId: req.user.companyId}, req.headers.authorization)
             .then(pages => {
               pages.forEach((page, i) => {
                 facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})

@@ -119,7 +119,7 @@ exports.create = function (req, res) {
 }
 
 function createTag (req, callback) {
-  utility.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: true}, req.headers.authorization)
+  utility.callApi('pages/query', 'post', {companyId: req.user.companyId}, req.headers.authorization)
     .then(pages => {
       pages.forEach((page, i) => {
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
