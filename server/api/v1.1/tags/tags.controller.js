@@ -158,7 +158,7 @@ exports.rename = function (req, res) {
                   }
                   async.parallelLimit([
                     function (callback) {
-                      updateTag(data)
+                      updateTag(tag, data, req, callback)
                     },
                     function (callback) {
                       callApi.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.tag}, req.headers.authorization)
