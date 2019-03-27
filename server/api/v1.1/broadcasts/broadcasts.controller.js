@@ -15,6 +15,10 @@ let request = require('request')
 const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
 const utility = require('../utility')
+const { batchApi } = require('../../global/batchApi')
+const broadcastApi = require('../../global/broadcastApi')
+const validateInput = require('../../global/validateInput')
+const { facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -465,7 +469,7 @@ exports.uploadForTemplate = function (req, res) {
 exports.sendConversation = function (req, res) {
   logger.serverLog(TAG, `Sending Broadcast ${JSON.stringify(req.body)}`)
   // validate braodcast
-  if (!broadcastUtility.validateInput(req.body)) {
+  if (!validateInput.facebookBroadcast(req.body)) {
     logger.serverLog(TAG, 'Parameters are missing.')
     return res.status(400)
       .json({status: 'failed', description: 'Please fill all the required fields'})
@@ -475,72 +479,163 @@ exports.sendConversation = function (req, res) {
     return res.status(400)
       .json({status: 'failed', description: 'Please select only one page'})
   }
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
-    .then(companyUser => {
-      utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true, _id: req.body.segmentationPageIds[0]}, req.headers.authorization)
-        .then(page => {
-          page = page[0]
-          let payloadData = req.body.payload
-          if (req.body.self) {
-            let payload = updatePayload(req.body.self, payloadData)
-            let interval = setInterval(() => {
-              if (payload) {
-                clearInterval(interval)
-                sendTestBroadcast(companyUser, page, payload, req, res)
-              }
-            }, 3000)
-          } else {
-            BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
-              .then(broadcast => {
-                require('./../../../config/socketio').sendMessageToClient({
-                  room_id: companyUser.companyId,
-                  body: {
-                    action: 'new_broadcast',
-                    payload: {
-                      broadcast_id: broadcast._id,
-                      user_id: req.user._id,
-                      user_name: req.user.name
-                    }
-                  }
-                })
-                let payload = updatePayload(req.body.self, payloadData, broadcast)
-                broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
-                if (req.body.isList === true) {
-                  utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
-                    .then(lists => {
-                      let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
-                      let interval = setInterval(() => {
-                        if (payload) {
-                          clearInterval(interval)
-                          sendToSubscribers(subsFindCriteria, req, res, page, broadcast, companyUser, payload)
-                        }
-                      }, 3000)
-                    })
-                    .catch(error => {
-                      return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
-                    })
-                } else {
-                  let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
-                  console.log('subsFindCriteria', subscriberFindCriteria)
-                  let interval = setInterval(() => {
-                    if (payload) {
-                      clearInterval(interval)
-                      sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, companyUser, payload)
-                    }
-                  }, 3000)
-                }
-              })
-              .catch(error => {
-                return res.status(500).json({status: 'failed', payload: `Failed to create broadcast ${JSON.stringify(error)}`})
-              })
+  utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]}, req.headers.authorization)
+    .then(page => {
+      page = page[0]
+      let payloadData = req.body.payload
+      if (req.body.self) {
+        let payload = updatePayload(req.body.self, payloadData)
+        let interval = setInterval(() => {
+          if (payload) {
+            clearInterval(interval)
+            sendTestBroadcast(req.user, page, payload, req, res)
           }
-        })
-        .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
-        })
+        }, 3000)
+      } else {
+        BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
+          .then(broadcast => {
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: req.user.companyId,
+              body: {
+                action: 'new_broadcast',
+                payload: {
+                  broadcast_id: broadcast._id,
+                  user_id: req.user._id,
+                  user_name: req.user.name
+                }
+              }
+            })
+            let payload = updatePayload(req.body.self, payloadData, broadcast)
+            broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
+            // condition to decide broadcast or batch api
+            if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
+              let interval = setInterval(() => {
+                if (payload) {
+                  clearInterval(interval)
+                  broadcastApi.callMessageCreativesEndpoint({
+                    'messages': broadcastApi.getMessagesData(payload)
+                  }, page.accessToken)
+                    .then(messageCreative => {
+                      if (messageCreative.status === 'sucess') {
+                        const messageCreativeId = messageCreative.message_creative_id
+                        utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: req.user.companyId, pageId: page._id}}, '', 'kiboengage')
+                          .then(pageTags => {
+                            const limit = Math.ceil(req.body.subscribersCount / 10000)
+                            for (let i = 0; i < limit; i++) {
+                              let labels = []
+                              labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                              if (req.body.isList) {
+                                utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
+                                  .then(lists => {
+                                    lists = lists.map((l) => l.listName)
+                                    let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
+                                    labels = labels.concat(temp)
+                                  })
+                                  .catch(err => {
+                                    return res.status(500).json({
+                                      status: 'failed',
+                                      description: `Failed to apply list segmentation ${JSON.stringify(err)}`
+                                    })
+                                  })
+                              } else {
+                                if (req.body.segmentationGender.length > 0) {
+                                  let temp = pageTags.filter((pt) => req.body.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
+                                  labels = labels.concat(temp)
+                                }
+                                if (req.body.segmentationLocale.length > 0) {
+                                  let temp = pageTags.filter((pt) => req.body.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
+                                  labels = labels.concat(temp)
+                                }
+                                if (req.body.segmentationTags.length > 0) {
+                                  let temp = pageTags.filter((pt) => req.body.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
+                                  labels = labels.concat(temp)
+                                }
+                              }
+                              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
+                                .then(response => {
+                                  if (i === limit - 1) {
+                                    if (response.status === 'success') {
+                                      utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                                        .then(updated => {
+                                          return res.status(200)
+                                            .json({status: 'success', description: 'Conversation sent successfully!'})
+                                        })
+                                        .catch(err => {
+                                          return res.status(500).json({
+                                            status: 'failed',
+                                            description: `Failed to send broadcast ${JSON.stringify(err)}`
+                                          })
+                                        })
+                                    } else {
+                                      return res.status(500).json({
+                                        status: 'failed',
+                                        description: `Failed to send broadcast ${JSON.stringify(response.description)}`
+                                      })
+                                    }
+                                  }
+                                })
+                                .catch(err => {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Failed to send broadcast ${JSON.stringify(err)}`
+                                  })
+                                })
+                            }
+                          })
+                          .catch(err => {
+                            return res.status(500).json({
+                              status: 'failed',
+                              description: `Failed to find tags ${JSON.stringify(err)}`
+                            })
+                          })
+                      } else {
+                        return res.status(500).json({
+                          status: 'failed',
+                          description: `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`
+                        })
+                      }
+                    })
+                    .catch(err => {
+                      return res.status(500).json({
+                        status: 'failed',
+                        description: `Failed to send broadcast ${JSON.stringify(err)}`
+                      })
+                    })
+                }
+              }, 3000)
+            } else {
+              if (req.body.isList === true) {
+                utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
+                  .then(lists => {
+                    let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
+                    let interval = setInterval(() => {
+                      if (payload) {
+                        clearInterval(interval)
+                        sendToSubscribers(subsFindCriteria, req, res, page, broadcast, req.user, payload)
+                      }
+                    }, 3000)
+                  })
+                  .catch(error => {
+                    return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
+                  })
+              } else {
+                let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
+                let interval = setInterval(() => {
+                  if (payload) {
+                    clearInterval(interval)
+                    sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, req.user, payload)
+                  }
+                }, 3000)
+              }
+            }
+          })
+          .catch(error => {
+            return res.status(500).json({status: 'failed', payload: `Failed to create broadcast ${JSON.stringify(error)}`})
+          })
+      }
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch companyUser ${JSON.stringify(error)}`})
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
     })
 }
 const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
@@ -562,7 +657,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
             companyId: companyUser.companyId
           })
             .then(savedpagebroadcast => {
-              broadcastUtility.getBatchData(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag)
+              batchApi(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag)
             })
             .catch(error => {
               return res.status(500).json({status: 'failed', payload: `Failed to create page_broadcast ${JSON.stringify(error)}`})
@@ -576,7 +671,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
 }
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-    console.log('Send Response Broadcast', body)
+    logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
       return res.status(500).json({
@@ -589,7 +684,6 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
-      logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
       if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
         return res.status(200)
           .json({status: 'success', description: 'Conversation sent successfully!'})
@@ -778,6 +872,30 @@ exports.addListAction = function (req, res) {
         return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
       })
   }
+}
+
+exports.retrieveReachEstimation = (req, res) => {
+  utility.callApi('pages/query', 'post', {_id: req.params.page_id}, req.headers.authorization)
+    .then(pages => {
+      let page = pages[0]
+      facebookApiCaller('v2.11', `${page.reachEstimationId}?access_token=${page.pageAccessToken}`, 'get', {})
+        .then(reachEstimation => {
+          if (reachEstimation.error) {
+            return res.status(500).json({status: 'failed', payload: `Failed to retrieve reach estimation ${JSON.stringify(reachEstimation.error)}`})
+          } else {
+            return res.status(200).json({
+              status: 'success',
+              payload: reachEstimation
+            })
+          }
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to retrieve reach estimation ${JSON.stringify(error)}`})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
+    })
 }
 
 exports.sendBroadcast = sendBroadcast
