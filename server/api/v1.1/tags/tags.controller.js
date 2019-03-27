@@ -17,7 +17,7 @@ exports.index = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('tags/query', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
+      callApi.callApi('tags/query', 'post', {companyId: companyUser.companyId, defaultTag: false, isList: false}, req.headers.authorization)
         .then(tags => {
           res.status(200).json({status: 'success', payload: tags})
         })
