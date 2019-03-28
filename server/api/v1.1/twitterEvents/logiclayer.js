@@ -1,7 +1,7 @@
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const config = require('../../../config/environment/index')
 
-exports.checkType = function (body, subscriber, savedMsg) {
+exports.checkType = function (body, savedMsg) {
   return new Promise(function (resolve, reject) {
     let messageData = {}
     let text = ''
@@ -16,14 +16,10 @@ exports.checkType = function (body, subscriber, savedMsg) {
         text[0] = text[0] + `\n${body.entities.urls[i].expanded_url}`
       }
     }
-    console.log('text in checkTypes', text[0])
-    console.log('text in checkTypes', text[1])
     if (text[0] && !text[1]) {
       // text only
-      console.log('in text')
       let URLObject = {
         originalURL: `https://twitter.com/${body.user.screen_name}`,
-        subscriberId: subscriber._id,
         module: {
           id: savedMsg._id,
           type: 'autoposting'
@@ -32,8 +28,8 @@ exports.checkType = function (body, subscriber, savedMsg) {
       URLDataLayer.createURLObject(URLObject)
         .then(savedurl => {
           let newURL = config.domain + '/api/URL/' + savedurl._id
-          messageData = preparePaylod(body, subscriber, newURL, 'text', text[0], button)
-          resolve({messageData: messageData})
+          messageData = preparePaylod(body, newURL, 'text', text[0], button)
+          resolve(messageData)
         })
     } else if (text[0] && text[1]) {
       // text with attachment
@@ -53,22 +49,19 @@ exports.checkType = function (body, subscriber, savedMsg) {
       }
       let URLObject = {
         originalURL: originalURL,
-        subscriberId: subscriber._id,
         module: {
           id: savedMsg._id,
           type: 'autoposting'
         }
       }
-      console.log('URLObject', URLObject)
       URLDataLayer.createURLObject(URLObject)
         .then(savedurl => {
-          console.log('saved url', savedurl)
           let newURL = config.domain + '/api/URL/' + savedurl._id
           if ((body.extended_entities && body.extended_entities.media[0].type === 'photo') || (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'photo')) {
             button = false
-            let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0], button)
-            messageData = preparePaylod(body, subscriber, newURL, 'photo', text[1])
-            resolve({messageData: messageData, otherMessage: otherMessage})
+            let otherMessage = preparePaylod(body, newURL, 'text', text[0], button)
+            messageData = preparePaylod(body, newURL, 'photo', text[1])
+            resolve(otherMessage.concat(messageData))
           } else {
             if ((body.extended_entities && body.extended_entities.media[0].type === 'video') ||
             (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'video') ||
@@ -76,11 +69,10 @@ exports.checkType = function (body, subscriber, savedMsg) {
             (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'animated_gif')
             ) {
               button = false
-              messageData = preparePaylod(body, subscriber, '', 'video', text[1])
+              messageData = preparePaylod(body, '', 'video', text[1])
             }
-            let otherMessage = preparePaylod(body, subscriber, newURL, 'text', text[0], button)
-            console.log('message', messageData)
-            resolve({messageData: messageData, otherMessage: otherMessage})
+            let otherMessage = preparePaylod(body, newURL, 'text', text[0], button)
+            resolve(otherMessage.concat(messageData))
           }
         })
         .catch(err => {
@@ -91,7 +83,6 @@ exports.checkType = function (body, subscriber, savedMsg) {
       if (body.extended_entities.media[0].type === 'photo') {
         let URLObject = {
           originalURL: body.entities.media[0].url,
-          subscriberId: subscriber._id,
           module: {
             id: savedMsg._id,
             type: 'autoposting'
@@ -100,55 +91,43 @@ exports.checkType = function (body, subscriber, savedMsg) {
         URLDataLayer.createURLObject(URLObject)
           .then(savedurl => {
             let newURL = config.domain + '/api/URL/' + savedurl._id
-            messageData = preparePaylod(body, subscriber, newURL, 'photo', text[1])
-            resolve({messageData: messageData})
+            messageData = preparePaylod(body, newURL, 'photo', text[1])
+            resolve(messageData)
           })
       } else {
-        messageData = preparePaylod(body, subscriber, '', 'video')
-        resolve({messageData: messageData})
+        messageData = preparePaylod(body, '', 'video')
+        resolve(messageData)
       }
     }
   })
 }
-function preparePaylod (body, subscriber, newURL, type, text, button) {
+function preparePaylod (body, newURL, type, text, button) {
   let messageData = {}
   if (type === 'text') {
     if (button) {
-      messageData = {
-        'messaging_type': 'UPDATE',
-        'recipient': JSON.stringify({
-          'id': subscriber.senderId
-        }),
-        'message': JSON.stringify({
-          'attachment': {
-            'type': 'template',
-            'payload': {
-              'template_type': 'button',
-              'text': text,
-              'buttons': [
-                {
-                  'type': 'web_url',
-                  'url': newURL,
-                  'title': 'View Tweet'
-                }
-              ]
-            }
+      messageData = JSON.stringify({
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'button',
+            'text': text,
+            'buttons': [
+              {
+                'type': 'web_url',
+                'url': newURL,
+                'title': 'View Tweet'
+              }
+            ]
           }
-        })
-      }
-      return messageData
+        }
+      })
+      return [messageData]
     } else {
-      messageData = {
-        'messaging_type': 'UPDATE',
-        'recipient': JSON.stringify({
-          'id': subscriber.senderId
-        }),
-        'message': JSON.stringify({
-          'text': text,
-          'metadata': 'This is a meta data'
-        })
-      }
-      return messageData
+      messageData = JSON.stringify({
+        'text': text,
+        'metadata': 'This is a meta data'
+      })
+      return [messageData]
     }
   } else if (type === 'photo') {
     let gallery
@@ -157,22 +136,16 @@ function preparePaylod (body, subscriber, newURL, type, text, button) {
     } else {
       gallery = prepareGallery(body.extended_entities.media, text, newURL)
     }
-    messageData = {
-      'messaging_type': 'UPDATE',
-      'recipient': JSON.stringify({
-        'id': subscriber.senderId
-      }),
-      'message': JSON.stringify({
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'generic',
-            'elements': gallery
-          }
+    messageData = JSON.stringify({
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'generic',
+          'elements': gallery
         }
-      })
-    }
-    return messageData
+      }
+    })
+    return [messageData]
   } else {
     let videoUrl
     if (body.truncated) {
@@ -180,21 +153,15 @@ function preparePaylod (body, subscriber, newURL, type, text, button) {
     } else {
       videoUrl = getVideoURL(body.extended_entities.media[0].video_info.variants)
     }
-    messageData = {
-      'messaging_type': 'UPDATE',
-      'recipient': JSON.stringify({
-        'id': subscriber.senderId
-      }),
-      'message': JSON.stringify({
-        'attachment': {
-          'type': 'video',
-          'payload': {
-            'url': videoUrl
-          }
+    messageData = JSON.stringify({
+      'attachment': {
+        'type': 'video',
+        'payload': {
+          'url': videoUrl
         }
-      })
-    }
-    return messageData
+      }
+    })
+    return [messageData]
   }
 }
 function prepareGallery (media, text, newURL) {

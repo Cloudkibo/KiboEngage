@@ -18,12 +18,17 @@ exports.index = function (req, res) {
     .then(page => {
       page = page[0]
       console.log('page fetched in welcomeMessage', page)
-      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
+      logger.serverLog(TAG, `pageId ${JSON.stringify(page._id)}`)
+      logger.serverLog(TAG, `companyId ${JSON.stringify(page.companyId)}`)
+      logger.serverLog(TAG, `senderId ${JSON.stringify(sender)}`)
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId}, req.headers.authorization)
         .then(subscriber => {
           subscriber = subscriber[0]
+         logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`)
           callApi(`pageReferrals/query`, 'post', { pageId: page._id, companyId: page.companyId, ref_parameter: req.body.referral.ref })
             .then(pageReferral => {
               pageReferral = pageReferral[0]
+            logger.serverLog(TAG, `pageReferral ${JSON.stringify(pageReferral)}`)
               if (pageReferral) {
                 payloadToSend = pageReferral.reply
                 // broadcastUtility.getBatchData(pageReferral.reply, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
@@ -67,7 +72,7 @@ exports.index = function (req, res) {
             })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`)
         })
     })
     .catch(err => {

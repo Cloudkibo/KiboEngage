@@ -18,7 +18,7 @@ router.post('/getAll',
 router.post('/createList',
   auth.isAuthenticated(),
   validate({body: validationSchema.createPayload}),
-  controller.createList)
+  controller.create)
 
 router.post('/editList',
   auth.isAuthenticated(),
