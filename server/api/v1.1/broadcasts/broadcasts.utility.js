@@ -542,7 +542,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       'attachment': {
         'type': body.componentType,
         'payload': {
-          'attachment_id': body.fileurl.attachment_id
+          'attachment_id': body.fileurl.id
         }
       }
     }
@@ -641,7 +641,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'template_type': 'media',
           'elements': [
             {
-              'attachment_id': body.fileurl.attachment_id,
+              'attachment_id': body.fileurl.id,
               'media_type': body.mediaType,
               'buttons': body.buttons
             }
