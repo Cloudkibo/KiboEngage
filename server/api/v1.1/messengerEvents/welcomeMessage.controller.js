@@ -25,14 +25,7 @@ exports.index = function (req, res) {
         .then(subscriber => {
           subscriber = subscriber[0]
          logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`)
-          callApi(`pageReferrals/query`, 'post', { pageId: page._id, companyId: page.companyId, ref_parameter: req.body.referral.ref })
-            .then(pageReferral => {
-              pageReferral = pageReferral[0]
-            logger.serverLog(TAG, `pageReferral ${JSON.stringify(pageReferral)}`)
-              if (pageReferral) {
-                payloadToSend = pageReferral.reply
-                // broadcastUtility.getBatchData(pageReferral.reply, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-              } else if (page.isWelcomeMessageEnabled) {
+              if (page.isWelcomeMessageEnabled) {
                 payloadToSend = page.welcomeMessage
               }
               if (subscriber) {
@@ -66,10 +59,7 @@ exports.index = function (req, res) {
                     })
                   })
               }
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`)
-            })
+            
         })
         .catch(err => {
           logger.serverLog(TAG, `Failed to fetch subscriber ${err}`)
