@@ -18,7 +18,9 @@ exports.index = function (req, res) {
     .then(page => {
       page = page[0]
       console.log('page fetched in welcomeMessage', page)
-      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender })
+      logger.serverLog(TAG, `page fetched in welcomeMessage ${JSON.stringify(page)}`)
+      logger.serverLog(TAG, `senderId ${JSON.stringify(sender)}`)
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId})
         .then(subscriber => {
           subscriber = subscriber[0]
           callApi(`pageReferrals/query`, 'post', { pageId: page._id, companyId: page.companyId, ref_parameter: req.body.referral.ref })
