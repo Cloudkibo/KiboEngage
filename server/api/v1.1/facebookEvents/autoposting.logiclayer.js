@@ -46,78 +46,102 @@ exports.subscriberFindCriteria = function (postingItem, page) {
   }
   return subscriberFindCriteria
 }
-exports.prepareMessageDataForStatus = function (event, newURL) {
-  let messageData = JSON.stringify({
-    'text': event.value.message,
-    'metadata': 'This is metadata'
-  })
-  return [messageData]
+exports.prepareMessageDataForStatus = function (subscriber, event, newURL) {
+  let messageData = {
+    'messaging_type': 'UPDATE',
+    'recipient': JSON.stringify({
+      'id': subscriber.senderId
+    }),
+    'message': JSON.stringify({
+      'text': event.value.message,
+      'metadata': 'This is metadata'
+    })
+  }
+  return messageData
 }
-exports.prepareMessageDataForShare = function (event, newURL) {
-  let messageData = JSON.stringify({
-    'attachment': {
-      'type': 'template',
-      'payload': {
-        'template_type': 'generic',
-        'elements': [
-          {
-            'title': (event.value.message)
-              ? event.value.message
-              : event.value.sender_name,
-            'image_url': event.value.image,
-            'subtitle': 'kibopush.com',
-            'buttons': [
-              {
-                'type': 'web_url',
-                'url': newURL,
-                'title': 'View Link'
-              }
-            ]
-          }
-        ]
+exports.prepareMessageDataForShare = function (subscriber, event, newURL) {
+  let messageData = {
+    'messaging_type': 'UPDATE',
+    'recipient': JSON.stringify({
+      'id': subscriber.senderId
+    }),
+    'message': JSON.stringify({
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'generic',
+          'elements': [
+            {
+              'title': (event.value.message)
+                ? event.value.message
+                : event.value.sender_name,
+              'image_url': event.value.image,
+              'subtitle': 'kibopush.com',
+              'buttons': [
+                {
+                  'type': 'web_url',
+                  'url': newURL,
+                  'title': 'View Link'
+                }
+              ]
+            }
+          ]
+        }
       }
-    }
-  })
-  return [messageData]
+    })
+  }
+  return messageData
 }
-exports.prepareMessageDataForImage = function (event, newURL) {
-  let messageData = JSON.stringify({
-    'attachment': {
-      'type': 'template',
-      'payload': {
-        'template_type': 'generic',
-        'elements': [
-          {
-            'title': (event.value.message)
-              ? event.value.message
-              : event.value.sender_name,
-            'image_url': event.value.link,
-            'subtitle': 'kibopush.com',
-            'buttons': [
-              {
-                'type': 'web_url',
-                'url': newURL,
-                'title': 'View Page'
-              }
-            ]
-          }
-        ]
+exports.prepareMessageDataForImage = function (subscriber, event, newURL) {
+  let messageData = {
+    'messaging_type': 'UPDATE',
+    'recipient': JSON.stringify({
+      'id': subscriber.senderId
+    }),
+    'message': JSON.stringify({
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'generic',
+          'elements': [
+            {
+              'title': (event.value.message)
+                ? event.value.message
+                : event.value.sender_name,
+              'image_url': event.value.link,
+              'subtitle': 'kibopush.com',
+              'buttons': [
+                {
+                  'type': 'web_url',
+                  'url': newURL,
+                  'title': 'View Page'
+                }
+              ]
+            }
+          ]
+        }
       }
-    }
-  })
-  return [messageData]
+    })
+  }
+  return messageData
 }
-exports.prepareMessageDataForVideo = function (event) {
-  let messageData = JSON.stringify({
-    'attachment': {
-      'type': 'video',
-      'payload': {
-        'url': event.value.link,
-        'is_reusable': false
+exports.prepareMessageDataForVideo = function (subscriber, event) {
+  let messageData = {
+    'messaging_type': 'UPDATE',
+    'recipient': JSON.stringify({
+      'id': subscriber.senderId
+    }),
+    'message': JSON.stringify({
+      'attachment': {
+        'type': 'video',
+        'payload': {
+          'url': event.value.link,
+          'is_reusable': false
+        }
       }
-    }
-  })
-  return [messageData]
+    })
+  }
+  return messageData
 }
 exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
   let timeNow = new Date()

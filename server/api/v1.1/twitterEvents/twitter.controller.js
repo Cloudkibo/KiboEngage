@@ -1,11 +1,15 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/twitterEvents/twitter.controller.js'
-const AutoPosting = require('../autoposting/autoposting.datalayer')
-const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
+let AutoPosting = require('../autoposting/autoposting.datalayer')
 const utility = require('../utility')
-const _ = require('lodash')
+let broadcastUtility = require('../broadcasts/broadcasts.utility')
+const compUtility = require('../../../components/utility')
+const AutomationQueue = require('../automationQueue/automationQueue.datalayer')
+const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.datalayer')
+const AutoPostingSubscriberMessage = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
+let request = require('request')
+let _ = require('lodash')
 const logicLayer = require('./logiclayer')
-const broadcastApi = require('../../global/broadcastApi')
 
 exports.findAutoposting = function (req, res) {
   logger.serverLog(TAG, `in findAutoposting ${JSON.stringify(req.body)}`)
@@ -51,94 +55,134 @@ exports.twitterwebhook = function (req, res) {
           .then(pages => {
             logger.serverLog(TAG, `pages found ${JSON.stringify(pages)}`)
             pages.forEach(page => {
-              let subscribersData = [
-                {$match: {pageId: page._id, companyId: page.companyId}},
-                {$group: {_id: null, count: {$sum: 1}}}
-              ]
-              utility.callApi('subscribers/query', 'post', subscribersData, req.headers.authorization)
-                .then(subscribersCount => {
-                  if (subscribersCount.length > 0) {
+              let subscriberFindCriteria = {
+                pageId: page._id,
+                companyId: page.companyId,
+                isSubscribed: true
+              }
+
+              if (postingItem.isSegmented) {
+                if (postingItem.segmentationGender.length > 0) {
+                  subscriberFindCriteria = _.merge(subscriberFindCriteria,
+                    {
+                      gender: {
+                        $in: postingItem.segmentationGender
+                      }
+                    })
+                }
+                if (postingItem.segmentationLocale.length > 0) {
+                  subscriberFindCriteria = _.merge(subscriberFindCriteria,
+                    {
+                      locale: {
+                        $in: postingItem.segmentationLocale
+                      }
+                    })
+                }
+              }
+              utility.callApi('subscribers/query', 'post', subscriberFindCriteria, req.headers.authorization)
+                .then(subscribers => {
+                  logger.serverLog(TAG, `subscribers found ${JSON.stringify(subscribers)}`)
+                  if (subscribers.length > 0) {
                     let newMsg = {
                       pageId: page._id,
                       companyId: postingItem.companyId,
                       autoposting_type: 'twitter',
                       autopostingId: postingItem._id,
-                      sent: subscribersCount[0].count,
+                      sent: subscribers.length,
                       message_id: req.body.id.toString(),
                       seen: 0,
                       clicked: 0
                     }
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
-                        logicLayer.checkType(req.body, savedMsg)
-                          .then(messageData => {
-                            broadcastApi.callMessageCreativesEndpoint({
-                              'messages': messageData
-                            }, page.accessToken)
-                              .then(messageCreative => {
-                                if (messageCreative.status === 'sucess') {
-                                  const messageCreativeId = messageCreative.message_creative_id
-                                  utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: page.companyId, pageId: page._id}}, '', 'kiboengage')
-                                    .then(pageTags => {
-                                      const limit = Math.ceil(subscribersCount[0].count / 10000)
-                                      for (let i = 0; i < limit; i++) {
-                                        let labels = []
-                                        labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
-                                        if (postingItem.segmentationGender.length > 0) {
-                                          let temp = pageTags.filter((pt) => postingItem.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                          labels = labels.concat(temp)
+                        logger.serverLog(TAG, `savedMsg ${JSON.stringify(savedMsg)}`)
+                        broadcastUtility.applyTagFilterIfNecessary({body: postingItem}, subscribers, (taggedSubscribers) => {
+                          logger.serverLog(TAG, `taggedSubscribers ${JSON.stringify(taggedSubscribers)}`)
+                          taggedSubscribers.forEach(subscriber => {
+                            logicLayer.checkType(req.body, subscriber, savedMsg)
+                              .then(result => {
+                                logger.serverLog(TAG, `checkType ${JSON.stringify(result)}`)
+                                compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
+                                  if (err) {
+                                    logger.serverLog(TAG, 'inside error')
+                                    logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                  }
+                                  logger.serverLog(TAG, `isLastMessage ${JSON.stringify(isLastMessage)}`)
+                                  if (isLastMessage) {
+                                    logger.serverLog(TAG, 'inside autoposting send')
+                                    if (result.otherMessage) {
+                                      sendAutopostingMessage(result.otherMessage, page, savedMsg)
+                                    }
+                                    sendAutopostingMessage(result.messageData, page, savedMsg)
+                                    let newAutoPostingSubscriberMsg = {
+                                      pageId: page.pageId,
+                                      companyId: postingItem.companyId,
+                                      autopostingId: postingItem._id,
+                                      autoposting_messages_id: savedMsg._id,
+                                      subscriberId: subscriber.senderId
+                                    }
+                                    AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                      .then(result => {
+                                        logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
+                                      })
+                                      .catch(err => {
+                                        if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
+                                      })
+                                  } else {
+                                    // Logic to add into queue will go here
+                                    logger.serverLog(TAG, 'inside adding autoposting-twitter to autoposting queue')
+                                    let timeNow = new Date()
+                                    let automatedQueueMessage = {
+                                      automatedMessageId: savedMsg._id,
+                                      subscriberId: subscriber._id,
+                                      companyId: savedMsg.companyId,
+                                      type: 'autoposting-twitter',
+                                      scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                    }
+
+                                    AutomationQueue.createAutomationQueueObject(automatedQueueMessage)
+                                      .then(result => {
+                                        logger.serverLog(TAG, {
+                                          status: 'success',
+                                          description: 'Automation Queue autoposting-twitter Message created'
+                                        })
+                                        let newAutoPostingSubscriberMsg = {
+                                          pageId: page.pageId,
+                                          companyId: postingItem.companyId,
+                                          autopostingId: postingItem._id,
+                                          autoposting_messages_id: savedMsg._id,
+                                          subscriberId: subscriber.senderId
                                         }
-                                        if (postingItem.segmentationLocale.length > 0) {
-                                          let temp = pageTags.filter((pt) => postingItem.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                          labels = labels.concat(temp)
-                                        }
-                                        if (postingItem.segmentationTags.length > 0) {
-                                          let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                                          labels = labels.concat(temp)
-                                        }
-                                        broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
-                                          .then(response => {
-                                            if (i === limit - 1) {
-                                              if (response.status === 'success') {
-                                                utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
-                                                  .then(updated => {
-                                                    logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
-                                                  })
-                                                  .catch(err => {
-                                                    logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
-                                                  })
-                                              } else {
-                                                logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`)
-                                              }
-                                            }
+                                        AutoPostingSubscriberMessage.createAutopostingSubscriberMessage(newAutoPostingSubscriberMsg)
+                                          .then(result => {
+                                            logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                                           })
                                           .catch(err => {
-                                            logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                                            if (err) logger.serverLog(TAG, `Error in creating Autoposting message object ${err}`)
                                           })
-                                      }
-                                    })
-                                    .catch(err => {
-                                      logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`)
-                                    })
-                                } else {
-                                  logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
-                                }
-                              })
-                              .catch(err => {
-                                logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                                      })
+                                      .catch(error => {
+                                        if (error) {
+                                          logger.serverLog(TAG, {
+                                            status: 'failed',
+                                            description: 'Automation Queue autoposting-twitter Message create failed',
+                                            error
+                                          })
+                                        }
+                                      })
+                                  }
+                                })
                               })
                           })
-                          .catch(err => {
-                            logger.serverLog(`Failed to prepare data ${JSON.stringify(err)}`)
-                          })
+                        })
                       })
                       .catch(err => {
-                        logger.serverLog(`Failed to create autoposting message ${JSON.stringify(err)}`)
+                        if (err) logger.serverLog(TAG, `Internal server error while creating Autoposting ${err}`)
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`)
+                  if (err) logger.serverLog(TAG, `Internal server error while fetching subscribers ${err}`)
                 })
             })
           })
@@ -149,5 +193,30 @@ exports.twitterwebhook = function (req, res) {
     })
     .catch(err => {
       if (err) logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`)
+    })
+}
+
+function sendAutopostingMessage (messageData, page, savedMsg) {
+  request(
+    {
+      'method': 'POST',
+      'json': true,
+      'formData': messageData,
+      'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
+      page.accessToken
+    },
+    function (err, res) {
+      logger.serverLog(TAG, `sending tweet ${res.body}`)
+      if (err) {
+        return logger.serverLog(TAG,
+          `At send tweet broadcast ${JSON.stringify(
+            err)}`)
+      } else {
+        if (res.statusCode !== 200) {
+          logger.serverLog(TAG,
+            `At send tweet broadcast response ${JSON.stringify(
+              res.body.error)}`)
+        } //   res.body.message_id)}`, true)
+      }
     })
 }
