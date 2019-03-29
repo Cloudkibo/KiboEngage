@@ -31,7 +31,7 @@ exports.preparePayload = function (body, landingPageState, companyUser, landingP
 }
 exports.prepareUpdatePayload = function (body) {
   let paylaod = body
-  if (body.submittedState.url === '') {
+  if (body.submittedState.actionType === 'SHOW_NEW_MESSAGE') {
     paylaod.submittedState = {
       actionType: body.submittedState.actionType,
       title: body.submittedState.title,

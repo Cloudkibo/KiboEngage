@@ -30,7 +30,7 @@ exports.update = function (req, res) {
   let updatedLandingPage = logicLayer.prepareUpdatePayload(req.body)
   utility.callApi(`landingPage/${req.params.id}`, 'put', updatedLandingPage, req.headers.authorization)
     .then(updatedLandingPage => {
-      if (req.body.submittedState && !req.body.submittedState.url) {
+      if (req.body.submittedState && req.body.submittedState.actionType === "SHOW_NEW_MESSAGE") {
         console.log('inside submittedState', req.body)
         utility.callApi(`landingPage/landingPageState/${req.body.submittedState.state._id}`, 'put', req.body.submittedState.state, req.headers.authorization)
           .then(landingPage => {
