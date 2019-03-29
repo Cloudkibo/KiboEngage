@@ -49,7 +49,6 @@ exports.index = function (req, res) {
 exports.allPolls = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser', companyUser)
       let criterias = PollLogicLayer.getCriterias(req.body, companyUser)
       PollDataLayer.countPolls(criterias.countCriteria[0].$match)
         .then(pollsCount => {
@@ -64,7 +63,6 @@ exports.allPolls = function (req, res) {
               console.log('polls', polls)
               PollPageDataLayer.genericFind({companyId: companyUser.companyId})
                 .then(pollpages => {
-                  console.log('pollpages', pollpages)
                   PollResponseDataLayer.aggregateForPollResponse({}, {
                     _id: {pollId: '$pollId'},
                     count: {$sum: 1}})
