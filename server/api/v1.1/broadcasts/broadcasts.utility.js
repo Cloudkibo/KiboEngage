@@ -659,37 +659,23 @@ function prepareMessageData (subscriberId, body, fname, lname) {
 /* eslint-disable */
 function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, res, subscriberNumber, subscribersLength, fbMessageTag, testBroadcast) {
   let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": recipientId}))
-  logger.serverLog(TAG, `recipientId: ${JSON.stringify(recipientId)}`)
   let tag = "tag=" + encodeURIComponent(fbMessageTag)
-  logger.serverLog(TAG, `tag: ${JSON.stringify(tag)}`)
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
-  logger.serverLog(TAG, `messagingType: ${JSON.stringify(messagingType)}`)
   let batch = []
   console.log('Payload received to send', payload)
   logger.serverLog(TAG, `Payload received to send: ${JSON.stringify(payload)}`)
   payload.forEach((item, index) => {
-    logger.serverLog(TAG, `item: ${JSON.stringify(item)}`)
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
     let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData(recipientId, item, fname, lname)))
     console.log('messagePayload', message)
-    logger.serverLog(TAG, `messagePayload: ${JSON.stringify(message)}`)
     if (index === 0) {
-      logger.serverLog(TAG, `batch.push if: ${JSON.stringify({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})}`)
       batch.push({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
 
     } else {
-      logger.serverLog(TAG, `batch.push else: ${JSON.stringify({ "method": "POST", "name": `message${index + 1}`, "depends_on": `message${index}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})}`)
       batch.push({ "method": "POST", "name": `message${index + 1}`, "depends_on": `message${index}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
     }
     if (index === (payload.length - 1)) {
       console.log('batchData', batch)
-      logger.serverLog(TAG, `batch: ${JSON.stringify(batch)}`)
-      logger.serverLog(TAG, `send broadsct: ${JSON.stringify(batch)}`)
-      logger.serverLog(TAG, `send broadsct pms page: ${JSON.stringify(page)}`)
-      logger.serverLog(TAG, `send broadsct pms res: ${JSON.stringify(res)}`)
-      logger.serverLog(TAG, `send broadsct pms subsriber num: ${JSON.stringify(subscriberNumber)}`)
-      logger.serverLog(TAG, `send broadsct pms subsriber slenght: ${JSON.stringify(subscribersLength)}`)
-      logger.serverLog(TAG, `send broadsct pms subsriber testBroadcast: ${JSON.stringify(testBroadcast)}`)
       sendBroadcast(JSON.stringify(batch), page, res, subscriberNumber, subscribersLength, testBroadcast)
     }
   })
