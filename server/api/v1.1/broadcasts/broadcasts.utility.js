@@ -663,13 +663,14 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
   let batch = []
   console.log('Payload received to send', payload)
-  logger.serverLog(TAG, `Payload received to send: ${JSON.stringify(payload)}`)
   payload.forEach((item, index) => {
+    logger.serverLog(TAG, `item: ${JSON.stringify(item)}`)
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
     let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData(recipientId, item, fname, lname)))
     console.log('messagePayload', message)
     if (index === 0) {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
+
     } else {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "depends_on": `message${index}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
     }
