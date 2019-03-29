@@ -52,7 +52,6 @@ exports.allPolls = function (req, res) {
       let criterias = PollLogicLayer.getCriterias(req.body, companyUser)
       PollDataLayer.countPolls(criterias.countCriteria[0].$match)
         .then(pollsCount => {
-          console.log('criterias', criterias)
           let aggregateMatch = criterias.fetchCriteria[0].$match
           let aggregateSort = criterias.fetchCriteria[1].$sort
           let aggregateSkip = criterias.fetchCriteria[2].$skip
@@ -60,7 +59,6 @@ exports.allPolls = function (req, res) {
 
           PollDataLayer.aggregateForPolls(aggregateMatch, null, null, aggregateLimit, aggregateSort, aggregateSkip)
             .then(polls => {
-              console.log('polls', polls)
               PollPageDataLayer.genericFind({companyId: companyUser.companyId})
                 .then(pollpages => {
                   PollResponseDataLayer.aggregateForPollResponse({}, {
