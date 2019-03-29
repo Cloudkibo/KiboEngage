@@ -10,8 +10,6 @@ const TAG = 'api/v1/polls/polls.controller.js'
 const utility = require('../utility')
 const compUtility = require('../../../components/utility')
 const notificationsUtility = require('../notifications/notifications.utility')
-const async = require('async')
-const broadcastApi = require('../../global/broadcastApi')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -90,118 +88,710 @@ exports.allPolls = function (req, res) {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch company user ${JSON.stringify(error)}`})
     })
 }
-
 exports.create = function (req, res) {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
-    .then(planUsage => {
-      planUsage = planUsage[0]
-      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId}, req.headers.authorization)
-        .then(companyUsage => {
-          companyUsage = companyUsage[0]
-          // add paid plan check later
-          // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
-          //   return res.status(500).json({
-          //     status: 'failed',
-          //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
-          //   })
-          // }
-          async.parallelLimit([
-            function (callback) {
-              sendWebhook(req.user, req.body, req.headers.authorization, callback)
-            },
-            function (callback) {
-              createPoll(req.user, req.body, callback)
-            }
-          ], 10, function (err, results) {
-            if (err) {
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
+    .then(companyUser => {
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+        .then(planUsage => {
+          planUsage = planUsage[0]
+          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+            .then(companyUsage => {
+              companyUsage = companyUsage[0]
+              // add paid plan check later
+              // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+              //   return res.status(500).json({
+              //     status: 'failed',
+              //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
+              //   })
+              // }
+              let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
+              let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
+              utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+                .then(pages => {
+                  pages.forEach((page) => {
+                    utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
+                      .then(webhook => {
+                        webhook = webhook[0]
+                        if (webhook && webhook.isEnabled) {
+                          needle.get(webhook.webhook_url, (err, r) => {
+                            if (err) {
+                              return res.status(500).json({
+                                status: 'failed',
+                                description: `Internal Server Error ${JSON.stringify(err)}`
+                              })
+                            } else if (r.statusCode === 200) {
+                              if (webhook && webhook.optIn.POLL_CREATED) {
+                                var data = {
+                                  subscription_type: 'POLL_CREATED',
+                                  payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId._id, statement: req.body.statement, options: req.body.options})
+                                }
+                                needle.post(webhook.webhook_url, data,
+                                  (error, response) => {
+                                    if (error) {
+                                    }
+                                  })
+                              }
+                            } else {
+                              notificationsUtility.saveNotification(webhook)
+                            }
+                          })
+                        }
+                      })
+                      .catch(error => {
+                        return res.status(500).json({
+                          status: 'failed',
+                          payload: `Failed to fetch webhooks ${JSON.stringify(error)}`
+                        })
+                      })
+                  })
+                })
+                .catch(error => {
+                  return res.status(500).json({
+                    status: 'failed',
+                    payload: `Failed to fetch pages ${JSON.stringify(error)}`
+                  })
+                })
+              PollDataLayer.createForPoll(pollPayload)
+                .then(pollCreated => {
+                  require('./../../../config/socketio').sendMessageToClient({
+                    room_id: companyUser.companyId._id,
+                    body: {
+                      action: 'poll_created',
+                      payload: {
+                        poll_id: pollCreated._id,
+                        user_id: req.user._id,
+                        user_name: req.user.name,
+                        company_id: companyUser.companyId._id
+                      }
+                    }
+                  })
+                  res.status(201).json({status: 'success', payload: pollCreated})
+                })
+                .catch(error => {
+                  return res.status(500).json({
+                    status: 'failed',
+                    payload: `Failed to create poll ${JSON.stringify(error)}`
+                  })
+                })
+            })
+            .catch(error => {
               return res.status(500).json({
                 status: 'failed',
-                payload: `Failed to create poll ${JSON.stringify(err)}`
+                payload: `Failed to fetch company usage ${JSON.stringify(error)}`
               })
-            }
-            res.status(200).json({status: 'success', payload: results[1]})
-          })
+            })
         })
         .catch(error => {
           return res.status(500).json({
             status: 'failed',
-            payload: `Failed to fetch company usage ${JSON.stringify(error)}`
+            payload: `Failed to plan usage ${JSON.stringify(error)}`
           })
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to plan usage ${JSON.stringify(error)}`
-      })
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch company user ${JSON.stringify(error)}`})
     })
 }
-
 exports.send = function (req, res) {
   let abort = false
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
-    .then(planUsage => {
-      planUsage = planUsage[0]
-      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId._id}, req.headers.authorization)
-        .then(companyUsage => {
-          companyUsage = companyUsage[0]
-          // add paid plan check later
-          // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
-          //   return res.status(500).json({
-          //     status: 'failed',
-          //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to send more polls`
-          //   })
-          // }
-          sendPoll(req, res, planUsage, companyUsage, abort)
+  logger.serverLog(TAG, `req.user ${JSON.stringify(req.user)}`)
+  utility.callApi(`companyUser/query`, 'post', { userId: req.user._id, populate: 'companyId' }, req.headers.authorization)
+    .then(companyUser => {
+      logger.serverLog(TAG, `companyUser ${JSON.stringify(companyUser)}`)
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+        .then(planUsage => {
+          planUsage = planUsage[0]
+          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+            .then(companyUsage => {
+              companyUsage = companyUsage[0]
+              // add paid plan check later
+              // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+              //   return res.status(500).json({
+              //     status: 'failed',
+              //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to send more polls`
+              //   })
+              // }
+              utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId._id, connected: true}, req.headers.authorization)
+                .then(userPage => {
+                  userPage = userPage[0]
+                  utility.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
+                    .then(connectedUser => {
+                      connectedUser = connectedUser[0]
+                      var currentUser
+                      if (req.user.facebookInfo) {
+                        currentUser = req.user
+                      } else {
+                        currentUser = connectedUser
+                      }
+                      const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
+                      let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
+                      utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+                        .then(pages => {
+                          console.log('pagesFound', pages)
+                          for (let z = 0; z < pages.length && !abort; z++) {
+                            if (req.body.isList === true) {
+                              let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body, req.user)
+                              utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                .then(lists => {
+                                  let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
+                                  utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
+                                    .then(subscribers => {
+                                      needle.get(
+                                        `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`, (err, resp) => {
+                                          if (err) {
+                                            logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err)}`)
+                                          }
+                                          broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                            subscribers = taggedSubscribers
+                                            for (let j = 0; j < subscribers.length && !abort; j++) {
+                                              utility.callApi(`featureUsage/updateCompany`, 'put', {
+                                                query: {companyId: companyUser.companyId._id},
+                                                newPayload: { $inc: { polls: 1 } },
+                                                options: {}
+                                              }, req.headers.authorization)
+                                                .then(updated => {
+                                                  utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+                                                    .then(companyUsage => {
+                                                      companyUsage = companyUsage[0]
+                                                      if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+                                                        abort = true
+                                                      }
+                                                      const data = {
+                                                        messaging_type: 'UPDATE',
+                                                        recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                        message: JSON.stringify(messageData),
+                                                        tag: req.body.fbMessageTag
+                                                      }
+                                                      // this calls the needle when the last message was older than 30 minutes
+                                                      // checks the age of function using callback
+                                                      compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
+                                                        if (err) {
+                                                          logger.serverLog(TAG, 'inside error')
+                                                          return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                                        }
+                                                        if (isLastMessage) {
+                                                          logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
+                                                          needle.post(
+                                                            `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`, data, (err, resp) => {
+                                                              if (err) {
+                                                                logger.serverLog(TAG, err)
+                                                                logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
+                                                              }
+                                                              console.log('sent poll response', resp.body)
+                                                              let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
+                                                              PollPageDataLayer.createForPollPage(pollBroadcast)
+                                                                .then(pollCreated => {
+                                                                  require('./../../../config/socketio').sendMessageToClient({
+                                                                    room_id: companyUser.companyId._id,
+                                                                    body: {
+                                                                      action: 'poll_send',
+                                                                      poll_id: pollCreated._id,
+                                                                      user_id: req.user._id,
+                                                                      user_name: req.user.name,
+                                                                      company_id: companyUser.companyId._id
+                                                                    }
+                                                                  })
+                                                                })
+                                                                .catch(error => {
+                                                                  return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
+                                                                })
+                                                            })
+                                                        } else {
+                                                          logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                                          let timeNow = new Date()
+                                                          AutomationQueueDataLayer.createAutomationQueueObject({
+                                                            automatedMessageId: req.body._id,
+                                                            subscriberId: subscribers[j]._id,
+                                                            companyId: companyUser.companyId._id,
+                                                            type: 'poll',
+                                                            scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                                          }).then(saved => {})
+                                                            .catch(error => {
+                                                              return res.status(500).json({status: 'failed', payload: `Failed to create automation queue object ${JSON.stringify(error)}`})
+                                                            })
+                                                        }
+                                                      })
+                                                    })
+                                                    .catch(error => {
+                                                      return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+                                                    })
+                                                })
+                                                .catch(error => {
+                                                  return res.status(500).json({status: 'failed', payload: `Failed to update company usage ${JSON.stringify(error)}`})
+                                                })
+                                            }
+                                          })
+                                        })
+                                    })
+                                    .catch(error => {
+                                      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+                                    })
+                                })
+                                .catch(error => {
+                                  return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
+                                })
+                            } else {
+                              console.log('in else')
+                              let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
+                              utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
+                                .then(subscribers => {
+                                  console.log('subscribersfetched', subscribers.length)
+                                  console.log('pages[z]', pages[z].pageId)
+                                  console.log('currentUser.facebookInfo.fbToken', pages[z].pageId)
+                                  needle.get(
+                                    `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                    (err, resp) => {
+                                      if (err) {
+                                        logger.serverLog(TAG,
+                                          `Page accesstoken from graph api Error${JSON.stringify(err)}`)
+                                      }
+                                      console.log('Page accesstoken', resp.body)
+                                      if (subscribers.length > 0) {
+                                        broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                          subscribers = taggedSubscribers
+                                          broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+                                            subscribers = repliedSubscribers
+                                            console.log('subscribers.length', subscribers.length)
+                                            for (let j = 0; j < subscribers.length && !abort; j++) {
+                                              utility.callApi(`featureUsage/updateCompany`, 'put', {
+                                                query: {companyId: companyUser.companyId._id},
+                                                newPayload: { $inc: { polls: 1 } },
+                                                options: {}
+                                              }, req.headers.authorization).then(updated => {
+                                                utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+                                                  .then(companyUsage => {
+                                                    console.log('companyUsage fetched', companyUsage)
+                                                    companyUsage = companyUsage[0]
+                                                    if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+                                                      abort = true
+                                                    }
+                                                    const data = {
+                                                      messaging_type: 'UPDATE',
+                                                      recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                      message: JSON.stringify(messageData),
+                                                      tag: req.body.fbMessageTag
+                                                    }
+                                                    // this calls the needle when the last message was older than 30 minutes
+                                                    // checks the age of function using callback
+                                                    compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
+                                                      if (err) {
+                                                        logger.serverLog(TAG, 'inside error')
+                                                        return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                                      }
+                                                      console.log('isLastMessage', isLastMessage)
+                                                      if (isLastMessage) {
+                                                        logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
+                                                        console.log('inside poll send,', JSON.stringify(data), resp.body.access_token)
+                                                        needle.post(
+                                                          `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                          data, (err, resp) => {
+                                                            if (err) {
+                                                              logger.serverLog(TAG, err)
+                                                              logger.serverLog(TAG,
+                                                                `Error occured at subscriber :${JSON.stringify(
+                                                                  subscribers[j])}`)
+                                                            }
+                                                            console.log('sent poll response', resp.body)
+                                                            let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
+                                                            PollPageDataLayer.createForPollPage(pollBroadcast)
+                                                              .then(pollCreated => {
+                                                                require('./../../../config/socketio').sendMessageToClient({
+                                                                  room_id: companyUser.companyId._id,
+                                                                  body: {
+                                                                    action: 'poll_send',
+                                                                    poll_id: pollCreated._id,
+                                                                    user_id: req.user._id,
+                                                                    user_name: req.user.name,
+                                                                    company_id: companyUser.companyId._id
+                                                                  }
+                                                                })
+                                                              })
+                                                              .catch(error => {
+                                                                return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
+                                                              })
+                                                          })
+                                                      } else {
+                                                        logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                                        let timeNow = new Date()
+                                                        AutomationQueueDataLayer.createAutomationQueueObject({
+                                                          automatedMessageId: req.body._id,
+                                                          subscriberId: subscribers[j]._id,
+                                                          companyId: companyUser.companyId._id,
+                                                          type: 'poll',
+                                                          scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                                        }).then(saved => {})
+                                                          .catch(error => {
+                                                            return res.status(500).json({status: 'failed', payload: `Failed to create automation queue object ${JSON.stringify(error)}`})
+                                                          })
+                                                      }
+                                                    })
+                                                  })
+                                                  .catch(error => {
+                                                    return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+                                                  })
+                                              })
+                                                .catch(error => {
+                                                  return res.status(500).json({status: 'failed', payload: `Failed to update company usage ${JSON.stringify(error)}`})
+                                                })
+                                            }
+                                          })
+                                        })
+                                      }
+                                    })
+                                })
+                                .catch(error => {
+                                  console.log('Error in fetching subscribers', JSON.stringify(error))
+                                  // return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+                                })
+                            }
+                          }
+                          return res.status(200).json({status: 'success', payload: 'Polls sent successfully.'})
+                        })
+                        .catch(error => {
+                          return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
+                        })
+                    })
+                    .catch(error => {
+                      return res.status(500).json({status: 'failed', payload: `Failed to fetch user ${JSON.stringify(error)}`})
+                    })
+                })
+                .catch(error => {
+                  return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${error}`})
+                })
+            })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+            })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
-        })
-    })
-    .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to plan usage ${JSON.stringify(error)}`
-      })
-    })
-}
-exports.sendPollDirectly = function (req, res) {
-  let abort = false
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
-    .then(planUsage => {
-      planUsage = planUsage[0]
-      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId}, req.headers.authorization)
-        .then(companyUsage => {
-          companyUsage = companyUsage[0]
-          // add paid plan check later
-          // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
-          //   return res.status(500).json({
-          //     status: 'failed',
-          //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to send more polls`
-          //   })
-          // }
-          async.parallelLimit([
-            function (callback) {
-              createPoll(req.user, req.body, callback)
-            }
-          ], 10, function (err, result) {
-            if (err) {
-              return res.status(500).json({status: 'failed', payload: `Failed to create poll ${JSON.stringify(err)}`})
-            }
-            let pollCreated = result[0]
-            req.body._id = pollCreated._id
-            sendPoll(req, res, planUsage, companyUsage, abort)
+          return res.status(500).json({
+            status: 'failed',
+            payload: `Failed to plan usage ${JSON.stringify(error)}`
           })
         })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch company user ${JSON.stringify(error)}`})
+    })
+}
+exports.sendPoll = function (req, res) {
+  let abort = false
+  utility.callApi(`companyUser/query`, 'post', { userId: req.user._id, populate: 'companyId' }, req.headers.authorization)
+    .then(companyUser => {
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+        .then(planUsage => {
+          planUsage = planUsage[0]
+          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+            .then(companyUsage => {
+              companyUsage = companyUsage[0]
+              // add paid plan check later
+              // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+              //   return res.status(500).json({
+              //     status: 'failed',
+              //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to send more polls`
+              //   })
+              // }
+              let pollPayload = PollLogicLayer.preparePollsPayload(req.user, companyUser, req.body)
+              PollDataLayer.createForPoll(pollPayload)
+                .then(pollCreated => {
+                  require('./../../../config/socketio').sendMessageToClient({
+                    room_id: companyUser.companyId._id,
+                    body: {
+                      action: 'poll_created',
+                      payload: {
+                        poll_id: pollCreated._id,
+                        user_id: req.user._id,
+                        user_name: req.user.name,
+                        company_id: companyUser.companyId._id
+                      }
+                    }
+                  })
+                  utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId._id, connected: true}, req.headers.authorization)
+                    .then(userPage => {
+                      userPage = userPage[0]
+                      utility.callApi(`user/query`, 'post', {_id: userPage.userId}, req.headers.authorization)
+                        .then(connectedUser => {
+                          connectedUser = connectedUser[0]
+                          var currentUser
+                          if (req.user.facebookInfo) {
+                            currentUser = req.user
+                          } else {
+                            currentUser = connectedUser
+                          }
+                          const messageData = PollLogicLayer.prepareMessageData(req.body, pollCreated._id)
+                          let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(companyUser, req.body)
+                          utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+                            .then(pages => {
+                              for (let z = 0; z < pages.length && !abort; z++) {
+                                utility.callApi(`webhooks/query`, 'post', {pageId: pages[z].pageId}, req.headers.authorization)
+                                  .then(webhook => {
+                                    webhook = webhook[0]
+                                    if (webhook && webhook.isEnabled) {
+                                      needle.get(webhook.webhook_url, (err, r) => {
+                                        if (err) {
+                                          return res.status(500).json({
+                                            status: 'failed',
+                                            description: `Internal Server Error ${JSON.stringify(err)}`
+                                          })
+                                        } else if (r.statusCode === 200) {
+                                          if (webhook && webhook.optIn.POLL_CREATED) {
+                                            var data = {
+                                              subscription_type: 'POLL_CREATED',
+                                              payload: JSON.stringify({userId: req.user._id, companyId: companyUser.companyId._id, statement: req.body.statement, options: req.body.options})
+                                            }
+                                            needle.post(webhook.webhook_url, data,
+                                              (error, response) => {
+                                                if (error) {
+                                                }
+                                              })
+                                          }
+                                        } else {
+                                          notificationsUtility.saveNotification(webhook)
+                                        }
+                                      })
+                                    }
+                                  })
+                                if (req.body.isList === true) {
+                                  let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body, req.user)
+                                  utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                    .then(lists => {
+                                      let subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, pages[z])
+                                      utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
+                                        .then(subscribers => {
+                                          console.log('subscribers', subscribers)
+                                          needle.get(
+                                            `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`, (err, resp) => {
+                                              if (err) {
+                                                logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err)}`)
+                                              }
+                                              broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                                subscribers = taggedSubscribers
+                                                for (let j = 0; j < subscribers.length && !abort; j++) {
+                                                  utility.callApi(`featureUsage/updateCompany`, 'put', {
+                                                    query: {companyId: companyUser.companyId._id},
+                                                    newPayload: { $inc: { polls: 1 } },
+                                                    options: {}
+                                                  }, req.headers.authorization)
+                                                    .then(updated => {
+                                                      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+                                                        .then(companyUsage => {
+                                                          companyUsage = companyUsage[0]
+                                                          if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+                                                            abort = true
+                                                          }
+                                                          const data = {
+                                                            messaging_type: 'UPDATE',
+                                                            recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                            message: JSON.stringify(messageData)
+                                                            //  tag: req.body.fbMessageTag
+                                                          }
+                                                          // this calls the needle when the last message was older than 30 minutes
+                                                          // checks the age of function using callback
+                                                          compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
+                                                            if (err) {
+                                                              logger.serverLog(TAG, 'inside error')
+                                                              return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                                            }
+                                                            if (isLastMessage) {
+                                                              logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
+                                                              needle.post(
+                                                                `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`, data, (err, resp) => {
+                                                                  if (err) {
+                                                                    logger.serverLog(TAG, err)
+                                                                    logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
+                                                                  }
+                                                                  console.log('sent poll response', resp.body)
+                                                                  let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
+                                                                  PollPageDataLayer.createForPollPage(pollBroadcast)
+                                                                    .then(pollCreated => {
+                                                                      require('./../../../config/socketio').sendMessageToClient({
+                                                                        room_id: companyUser.companyId._id,
+                                                                        body: {
+                                                                          action: 'poll_send',
+                                                                          poll_id: pollCreated._id,
+                                                                          user_id: req.user._id,
+                                                                          user_name: req.user.name,
+                                                                          company_id: companyUser.companyId._id
+                                                                        }
+                                                                      })
+                                                                    })
+                                                                    .catch(error => {
+                                                                      return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
+                                                                    })
+                                                                })
+                                                            } else {
+                                                              logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                                              let timeNow = new Date()
+                                                              AutomationQueueDataLayer.createAutomationQueueObject({
+                                                                automatedMessageId: pollCreated._id,
+                                                                subscriberId: subscribers[j]._id,
+                                                                companyId: companyUser.companyId._id,
+                                                                type: 'poll',
+                                                                scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                                              }).then(saved => {})
+                                                                .catch(error => {
+                                                                  return res.status(500).json({status: 'failed', payload: `Failed to create automation queue object ${JSON.stringify(error)}`})
+                                                                })
+                                                            }
+                                                          })
+                                                        })
+                                                        .catch(error => {
+                                                          return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+                                                        })
+                                                    })
+                                                    .catch(error => {
+                                                      return res.status(500).json({status: 'failed', payload: `Failed to update company usage ${JSON.stringify(error)}`})
+                                                    })
+                                                }
+                                              })
+                                            })
+                                        })
+                                        .catch(error => {
+                                          return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+                                        })
+                                    })
+                                    .catch(error => {
+                                      return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
+                                    })
+                                } else {
+                                  let subscriberFindCriteria = PollLogicLayer.subscriberFindCriteria(pages[z], req.body)
+                                  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
+                                    .then(subscribers => {
+                                      needle.get(
+                                        `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                        (err, resp) => {
+                                          if (err) {
+                                            logger.serverLog(TAG,
+                                              `Page accesstoken from graph api Error${JSON.stringify(err)}`)
+                                          }
+                                          if (subscribers.length > 0) {
+                                            broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+                                              subscribers = taggedSubscribers
+                                              logger.serverLog(TAG, `taggedSubscribers ${JSON.stringify(subscribers)}`)
+                                              broadcastUtility.applyPollFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+                                                subscribers = repliedSubscribers
+                                                console.log('subscribers.length', subscribers.length)
+                                                for (let j = 0; j < subscribers.length && !abort; j++) {
+                                                  utility.callApi(`featureUsage/updateCompany`, 'put', {
+                                                    query: {companyId: companyUser.companyId._id},
+                                                    newPayload: { $inc: { polls: 1 } },
+                                                    options: {}
+                                                  }, req.headers.authorization).then(updated => {
+                                                    utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+                                                      .then(companyUsage => {
+                                                        companyUsage = companyUsage[0]
+                                                        if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
+                                                          abort = true
+                                                        }
+                                                        const data = {
+                                                          messaging_type: 'UPDATE',
+                                                          recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
+                                                          message: JSON.stringify(messageData)
+                                                          // tag: req.body.fbMessageTag
+                                                        }
+                                                        // this calls the needle when the last message was older than 30 minutes
+                                                        // checks the age of function using callback
+                                                        compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
+                                                          if (err) {
+                                                            logger.serverLog(TAG, 'inside error')
+                                                            return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                                          }
+                                                          console.log('after compUtility', isLastMessage)
+                                                          if (isLastMessage) {
+                                                            logger.serverLog(TAG, 'inside poll send' + JSON.stringify(data))
+                                                            needle.post(
+                                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                              data, (err, resp) => {
+                                                                if (err) {
+                                                                  logger.serverLog(TAG, err)
+                                                                  logger.serverLog(TAG,
+                                                                    `Error occured at subscriber :${JSON.stringify(
+                                                                      subscribers[j])}`)
+                                                                }
+                                                                console.log('sent poll response', resp.body)
+                                                                let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], pollCreated._id)
+                                                                PollPageDataLayer.createForPollPage(pollBroadcast)
+                                                                  .then(pollCreated => {
+                                                                    require('./../../../config/socketio').sendMessageToClient({
+                                                                      room_id: companyUser.companyId._id,
+                                                                      body: {
+                                                                        action: 'poll_send',
+                                                                        poll_id: pollCreated._id,
+                                                                        user_id: req.user._id,
+                                                                        user_name: req.user.name,
+                                                                        company_id: companyUser.companyId._id
+                                                                      }
+                                                                    })
+                                                                  })
+                                                                  .catch(error => {
+                                                                    return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
+                                                                  })
+                                                              })
+                                                          } else {
+                                                            logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                                                            let timeNow = new Date()
+                                                            AutomationQueueDataLayer.createAutomationQueueObject({
+                                                              automatedMessageId: pollCreated._id,
+                                                              subscriberId: subscribers[j]._id,
+                                                              companyId: companyUser.companyId._id,
+                                                              type: 'poll',
+                                                              scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
+                                                            }).then(saved => {})
+                                                              .catch(error => {
+                                                                return res.status(500).json({status: 'failed', payload: `Failed to create automation queue object ${JSON.stringify(error)}`})
+                                                              })
+                                                          }
+                                                        })
+                                                      })
+                                                      .catch(error => {
+                                                        return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+                                                      })
+                                                  })
+                                                    .catch(error => {
+                                                      return res.status(500).json({status: 'failed', payload: `Failed to update company usage ${JSON.stringify(error)}`})
+                                                    })
+                                                }
+                                              })
+                                            })
+                                          }
+                                        })
+                                    })
+                                    .catch(error => {
+                                      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+                                    })
+                                }
+                              }
+                              return res.status(200).json({status: 'success', payload: 'Polls sent successfully.'})
+                            })
+                            .catch(error => {
+                              return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
+                            })
+                        })
+                        .catch(error => {
+                          return res.status(500).json({status: 'failed', payload: `Failed to fetch user ${JSON.stringify(error)}`})
+                        })
+                    })
+                    .catch(error => {
+                      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
+                    })
+                })
+                .catch(error => {
+                  return res.status(500).json({status: 'failed', payload: `Failed to create poll ${JSON.stringify(error)}`})
+                })
+            })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+            })
+        })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+          return res.status(500).json({
+            status: 'failed',
+            payload: `Failed to plan usage ${JSON.stringify(error)}`
+          })
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to plan usage ${JSON.stringify(error)}`
-      })
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch company user ${JSON.stringify(error)}`})
     })
 }
 exports.deletePoll = function (req, res) {
@@ -241,274 +831,5 @@ exports.getresponses = function (req, res) {
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch responses ${JSON.stringify(error)}`})
-    })
-}
-
-function sendPoll (req, res, planUsage, companyUsage, abort) {
-  let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(req.user, req.body)
-  utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
-    .then(pages => {
-      let page = pages[0]
-      const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
-      let subsFindCriteria = {}
-      if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
-        broadcastApi.callMessageCreativesEndpoint({
-          'messages': [messageData]
-        }, page.accessToken)
-          .then(messageCreative => {
-            if (messageCreative.status === 'sucess') {
-              const messageCreativeId = messageCreative.message_creative_id
-              utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: req.user.companyId, pageId: page._id}}, '', 'kiboengage')
-                .then(pageTags => {
-                  const limit = Math.ceil(req.body.subscribersCount / 10000)
-                  for (let i = 0; i < limit; i++) {
-                    let labels = []
-                    labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
-                    if (req.body.isList) {
-                      utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
-                        .then(lists => {
-                          lists = lists.map((l) => l.listName)
-                          let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
-                          labels = labels.concat(temp)
-                        })
-                        .catch(err => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            description: `Failed to apply list segmentation ${JSON.stringify(err)}`
-                          })
-                        })
-                    } else {
-                      if (req.body.segmentationGender.length > 0) {
-                        let temp = pageTags.filter((pt) => req.body.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                        labels = labels.concat(temp)
-                      }
-                      if (req.body.segmentationLocale.length > 0) {
-                        let temp = pageTags.filter((pt) => req.body.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                        labels = labels.concat(temp)
-                      }
-                      if (req.body.segmentationTags.length > 0) {
-                        let temp = pageTags.filter((pt) => req.body.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                        labels = labels.concat(temp)
-                      }
-                    }
-                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
-                      .then(response => {
-                        if (i === limit - 1) {
-                          if (response.status === 'success') {
-                            utility.callApi('polls', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
-                              .then(updated => {
-                                return res.status(200)
-                                  .json({status: 'success', description: 'Poll sent successfully!'})
-                              })
-                              .catch(err => {
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `Failed to send poll ${JSON.stringify(err)}`
-                                })
-                              })
-                          } else {
-                            return res.status(500).json({
-                              status: 'failed',
-                              description: `Failed to send poll ${JSON.stringify(response.description)}`
-                            })
-                          }
-                        }
-                      })
-                      .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Failed to send poll ${JSON.stringify(err)}`
-                        })
-                      })
-                  }
-                })
-                .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Failed to find tags ${JSON.stringify(err)}`
-                  })
-                })
-            } else {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Failed to send poll ${JSON.stringify(messageCreative.description)}`
-              })
-            }
-          })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to send poll ${JSON.stringify(err)}`
-            })
-          })
-      } else {
-        if (req.body.isList) {
-          let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body, req.user)
-          utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
-            .then(lists => {
-              subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, page)
-              sendToSubscribers(req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort)
-            })
-            .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
-            })
-        } else {
-          subsFindCriteria = PollLogicLayer.subscriberFindCriteria(page, req.body)
-          sendToSubscribers(req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort)
-        }
-      }
-    })
-    .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${error}`})
-    })
-}
-
-function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort) {
-  utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
-    .then(subscribers => {
-      broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
-        subscribers = taggedSubscribers
-        for (let j = 0; j < subscribers.length && !abort; j++) {
-          utility.callApi(`featureUsage/updateCompany`, 'put', {
-            query: {companyId: req.user.companyId},
-            newPayload: { $inc: { polls: 1 } },
-            options: {}
-          }, req.headers.authorization)
-            .then(updated => {
-              if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
-                abort = true
-              }
-              const data = {
-                messaging_type: 'UPDATE',
-                recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
-                message: JSON.stringify(messageData),
-                tag: req.body.fbMessageTag
-              }
-              // this calls the needle when the last message was older than 30 minutes
-              // checks the age of function using callback
-              compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
-                if (err) {
-                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
-                }
-                if (isLastMessage) {
-                  needle.post(
-                    `https://graph.facebook.com/v2.6/me/messages?access_token=${page.pageAccessToken}`, data, (err, resp) => {
-                      if (err) {
-                        logger.serverLog(TAG, err)
-                      }
-                      let pollBroadcast = PollLogicLayer.preparePollPagePayload(page, req.user, req.body, subscribers[j], req.body._id)
-                      PollPageDataLayer.createForPollPage(pollBroadcast)
-                        .then(pollCreated => {
-                          require('./../../../config/socketio').sendMessageToClient({
-                            room_id: req.user.companyId,
-                            body: {
-                              action: 'poll_send',
-                              poll_id: pollCreated._id,
-                              user_id: req.user._id,
-                              user_name: req.user.name,
-                              company_id: req.user.companyId
-                            }
-                          })
-                          if (j === subscribers.length - 1 || abort) {
-                            return res.status(200).json({status: 'success', payload: 'Polls sent successfully.'})
-                          }
-                        })
-                        .catch(error => {
-                          return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
-                        })
-                    })
-                } else {
-                  logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
-                  let timeNow = new Date()
-                  AutomationQueueDataLayer.createAutomationQueueObject({
-                    automatedMessageId: req.body._id,
-                    subscriberId: subscribers[j]._id,
-                    companyId: req.user.companyId,
-                    type: 'poll',
-                    scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
-                  }).then(saved => {
-                    if (j === subscribers.length - 1 || abort) {
-                      return res.status(200).json({status: 'success', payload: 'Polls sent successfully.'})
-                    }
-                  })
-                    .catch(error => {
-                      return res.status(500).json({status: 'failed', payload: `Failed to create automation queue object ${JSON.stringify(error)}`})
-                    })
-                }
-              })
-            })
-            .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to update company usage ${JSON.stringify(error)}`})
-            })
-        }
-      })
-    })
-    .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
-    })
-}
-
-function createPoll (user, body, callback) {
-  let pollPayload = PollLogicLayer.preparePollsPayload(user, body)
-  PollDataLayer.createForPoll(pollPayload)
-    .then(pollCreated => {
-      require('./../../../config/socketio').sendMessageToClient({
-        room_id: user.companyId,
-        body: {
-          action: 'poll_created',
-          payload: {
-            poll_id: pollCreated._id,
-            user_id: user._id,
-            user_name: user.name,
-            company_id: user.companyId
-          }
-        }
-      })
-      callback(null, pollCreated)
-    })
-    .catch(error => {
-      callback(error)
-    })
-}
-
-function sendWebhook (user, body, token, callback) {
-  let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(user, body)
-  utility.callApi(`pages/query`, 'post', pagesFindCriteria, token)
-    .then(pages => {
-      pages.forEach((page) => {
-        utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, token)
-          .then(webhook => {
-            webhook = webhook[0]
-            if (webhook && webhook.isEnabled) {
-              needle.get(webhook.webhook_url, (err, r) => {
-                if (err) {
-                  callback(err)
-                } else if (r.statusCode === 200) {
-                  if (webhook && webhook.optIn.POLL_CREATED) {
-                    var data = {
-                      subscription_type: 'POLL_CREATED',
-                      payload: JSON.stringify({userId: user._id, companyId: user.companyId, statement: body.statement, options: body.options})
-                    }
-                    needle.post(webhook.webhook_url, data,
-                      (error, response) => {
-                        if (error) {
-                          callback(error)
-                        }
-                        callback(null, response)
-                      })
-                  }
-                } else {
-                  notificationsUtility.saveNotification(webhook)
-                }
-              })
-            }
-          })
-          .catch(error => {
-            callback(error)
-          })
-      })
-    })
-    .catch(error => {
-      callback(error)
     })
 }

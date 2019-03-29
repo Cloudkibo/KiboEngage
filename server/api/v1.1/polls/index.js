@@ -40,7 +40,7 @@ router.post('/sendPollDirectly',
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   validate({body: validationSchema.createPayload}),
-  controller.sendPollDirectly)
+  controller.sendPoll)
 
 router.get('/responses/:id',
   auth.isAuthenticated(),

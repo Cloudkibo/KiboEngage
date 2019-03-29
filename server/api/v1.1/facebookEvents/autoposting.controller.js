@@ -1,13 +1,17 @@
 const logger = require('../../../components/logger')
+const AutomationQueueDataLayer = require('../automationQueue/automationQueue.datalayer')
 const AutoPostingDataLayer = require('../autoposting/autoposting.datalayer')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
+const AutopostingSubscriberMessagesDataLayer = require('../autopostingMessages/autopostingSubscriberMessages.datalayer')
+const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const autopostingLogicLayer = require('./autoposting.logiclayer')
+const compUtility = require('../../../components/utility')
 const og = require('open-graph')
+const request = require('request')
 const TAG = 'api/v1/facebookEvents/autoposting.controller.js'
 let config = require('./../../../config/environment')
 const utility = require('../utility')
-const broadcastApi = require('../../global/broadcastApi')
 
 exports.autoposting = function (req, res) {
   res.status(200).json({
@@ -49,72 +53,159 @@ function handleThePagePostsForAutoPosting (req, event, status) {
         utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
             pages.forEach(page => {
-              let subscribersData = [
-                {$match: {pageId: page._id, companyId: page.companyId}},
-                {$group: {_id: null, count: {$sum: 1}}}
-              ]
-              utility.callApi('subscribers/query', 'post', subscribersData, req.headers.authorization)
-                .then(subscribersCount => {
-                  if (subscribersCount.length > 0) {
-                    AutopostingMessagesDataLayer.createAutopostingMessage({
-                      pageId: page._id,
-                      companyId: postingItem.companyId,
-                      autoposting_type: 'facebook',
-                      autopostingId: postingItem._id,
-                      sent: subscribersCount[0].count,
-                      message_id: event.value.post_id,
-                      seen: 0,
-                      clicked: 0
+              let subscriberFindCriteria = autopostingLogicLayer.subscriberFindCriteria(postingItem, page)
+              utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
+                .then(subscribers => {
+                  if (subscribers.length > 0) {
+                    broadcastUtility.applyTagFilterIfNecessary({ body: postingItem }, subscribers, (taggedSubscribers) => {
+                      AutopostingMessagesDataLayer.createAutopostingMessage({
+                        pageId: page._id,
+                        companyId: postingItem.companyId,
+                        autoposting_type: 'facebook',
+                        autopostingId: postingItem._id,
+                        sent: taggedSubscribers.length,
+                        message_id: event.value.post_id,
+                        seen: 0,
+                        clicked: 0
+                      })
+                        .then(savedMsg => {
+                          taggedSubscribers.forEach(subscriber => {
+                            let messageData = {}
+                            if (event.value.item === 'status' || status) {
+                              messageData = autopostingLogicLayer.prepareMessageDataForStatus(subscriber, event)
+                              // Logic to control the autoposting when last activity is less than 30 minutes
+                              compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
+                                if (err) {
+                                  logger.serverLog(TAG, 'inside error')
+                                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                }
+
+                                if (isLastMessage) {
+                                  logger.serverLog(TAG, 'inside fb autoposting send')
+                                  sendAutopostingMessage(messageData, page, savedMsg)
+                                } else {
+                                  // Logic to add into queue will go here
+                                  logger.serverLog(TAG, 'inside adding to fb autoposting queue')
+                                  AutomationQueueDataLayer.createAutomationQueueObject(autopostingLogicLayer.prepareAutomationQueuePayload(savedMsg, subscriber))
+                                    .then(saved => {})
+                                    .catch(err => {
+                                      logger.serverLog(TAG, `Failed to save automationQueue ${JSON.stringify(err)}`)
+                                    })
+                                }
+                              })
+                            } else if (event.value.item === 'share') {
+                              URLDataLayer.createURLObject({
+                                originalURL: event.value.link,
+                                subscriberId: subscriber._id,
+                                module: {
+                                  id: savedMsg._id,
+                                  type: 'autoposting'
+                                }
+                              })
+                                .then(savedurl => {
+                                  let newURL = config.domain + '/api/URL/' + savedurl._id
+                                  messageData = autopostingLogicLayer.prepareMessageDataForShare(subscriber, event, newURL)
+                                  // Logic to control the autoposting when last activity is less than 30 minutes
+                                  compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
+                                    if (err) {
+                                      logger.serverLog(TAG, 'inside error')
+                                      return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                    }
+
+                                    if (isLastMessage) {
+                                      logger.serverLog(TAG, 'inside fb autoposting send')
+                                      sendAutopostingMessage(messageData, page, savedMsg)
+                                    } else {
+                                      // Logic to add into queue will go here
+                                      logger.serverLog(TAG, 'inside adding to fb autoposting queue')
+                                      AutomationQueueDataLayer.createAutomationQueueObject(autopostingLogicLayer.prepareAutomationQueuePayload(savedMsg, subscriber))
+                                        .then(saved => {})
+                                        .catch(err => {
+                                          logger.serverLog(TAG, `Failed to create automation queue object ${JSON.stringify(err)}`)
+                                        })
+                                    }
+                                  })
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, `Failed to save url ${JSON.stringify(err)}`)
+                                })
+                            } else if (event.value.item === 'photo') {
+                              URLDataLayer.createURLObject({originalURL: 'https://www.facebook.com/' + event.value.sender_id,
+                                subscriberId: subscriber._id,
+                                module: {
+                                  id: savedMsg._id,
+                                  type: 'autoposting'
+                                }
+                              })
+                                .then(savedurl => {
+                                  let newURL = config.domain + '/api/URL/' + savedurl._id
+                                  messageData = autopostingLogicLayer.prepareMessageDataForImage(subscriber, event, newURL)
+                                  // Logic to control the autoposting when last activity is less than 30 minutes
+                                  compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
+                                    if (err) {
+                                      logger.serverLog(TAG, 'inside error')
+                                      return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                    }
+
+                                    if (isLastMessage) {
+                                      logger.serverLog(TAG, 'inside fb autoposting send')
+                                      sendAutopostingMessage(messageData, page, savedMsg)
+                                    } else {
+                                      // Logic to add into queue will go here
+                                      logger.serverLog(TAG, 'inside adding to fb autoposting queue')
+                                      AutomationQueueDataLayer.createAutomationQueueObject(autopostingLogicLayer.prepareAutomationQueuePayload(savedMsg, subscriber))
+                                        .then(saved => {})
+                                        .catch(err => {
+                                          logger.serverLog(TAG, `Failed to save automation queue ${JSON.stringify(err)}`)
+                                        })
+                                    }
+                                  })
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, `Failed to save url ${JSON.stringify(err)}`)
+                                })
+                            } else if (event.value.item === 'video') {
+                              messageData = autopostingLogicLayer.prepareMessageDataForVideo(subscriber, event)
+                              // Logic to control the autoposting when last activity is less than 30 minutes
+                              compUtility.checkLastMessageAge(subscriber.senderId, req, (err, isLastMessage) => {
+                                if (err) {
+                                  logger.serverLog(TAG, 'inside error')
+                                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                }
+
+                                if (isLastMessage) {
+                                  logger.serverLog(TAG, 'inside fb autoposting send')
+                                  sendAutopostingMessage(messageData, page, savedMsg)
+                                } else {
+                                  // Logic to add into queue will go here
+                                  logger.serverLog(TAG, 'inside adding to fb autoposting queue')
+                                  AutomationQueueDataLayer.createAutomationQueueObject(autopostingLogicLayer.prepareAutomationQueuePayload(savedMsg, subscriber))
+                                    .then(saved => {})
+                                    .catch(err => {
+                                      logger.serverLog(TAG, `Failed to create automation queue object ${JSON.stringify(err)}`)
+                                    })
+                                }
+                              })
+                            }
+                            AutopostingSubscriberMessagesDataLayer.createAutopostingSubscriberMessage({pageId: page.pageId,
+                              companyId: postingItem.companyId,
+                              autopostingId: postingItem._id,
+                              autoposting_messages_id: savedMsg._id,
+                              subscriberId: subscriber.senderId})
+                              .then(savedSubscriberMsg => {})
+                              .catch(err => {
+                                logger.serverLog(TAG, `Failed to create automation queue object ${JSON.stringify(err)}`)
+                              })
+                          })
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to save autoposting message ${JSON.stringify(err)}`)
+                        })
                     })
-                      .then(savedMsg => {
-                        let messageData = {}
-                        if (event.value.item === 'status' || status) {
-                          messageData = autopostingLogicLayer.prepareMessageDataForStatus(event)
-                          sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
-                        } else if (event.value.item === 'share') {
-                          URLDataLayer.createURLObject({
-                            originalURL: event.value.link,
-                            module: {
-                              id: savedMsg._id,
-                              type: 'autoposting'
-                            }
-                          })
-                            .then(savedurl => {
-                              let newURL = config.domain + '/api/URL/' + savedurl._id
-                              messageData = autopostingLogicLayer.prepareMessageDataForShare(event, newURL)
-                              sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
-                            })
-                            .catch(err => {
-                              logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
-                            })
-                        } else if (event.value.item === 'photo') {
-                          URLDataLayer.createURLObject({
-                            originalURL: 'https://www.facebook.com/' + event.value.sender_id,
-                            module: {
-                              id: savedMsg._id,
-                              type: 'autoposting'
-                            }
-                          })
-                            .then(savedurl => {
-                              let newURL = config.domain + '/api/URL/' + savedurl._id
-                              messageData = autopostingLogicLayer.prepareMessageDataForImage(event, newURL)
-                              sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
-                            })
-                            .catch(err => {
-                              logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
-                            })
-                        } else if (event.value.item === 'video') {
-                          messageData = autopostingLogicLayer.prepareMessageDataForVideo(event)
-                          sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
-                        }
-                      })
-                      .catch(err => {
-                        logger.serverLog(`Failed to create autoposting message ${JSON.stringify(err)}`)
-                      })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(err)}`)
                 })
             })
           })
@@ -127,60 +218,30 @@ function handleThePagePostsForAutoPosting (req, event, status) {
       logger.serverLog(TAG, `Failed to fetch autopostings ${JSON.stringify(err)}`)
     })
 }
-function sendAutopostingMessage (messageData, postingItem, subscribersCount, page) {
-  broadcastApi.callMessageCreativesEndpoint({
-    'messages': messageData
-  }, page.accessToken)
-    .then(messageCreative => {
-      if (messageCreative.status === 'sucess') {
-        const messageCreativeId = messageCreative.message_creative_id
-        utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: page.companyId, pageId: page._id}}, '', 'kiboengage')
-          .then(pageTags => {
-            const limit = Math.ceil(subscribersCount[0].count / 10000)
-            for (let i = 0; i < limit; i++) {
-              let labels = []
-              labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
-              if (postingItem.segmentationGender.length > 0) {
-                let temp = pageTags.filter((pt) => postingItem.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                labels = labels.concat(temp)
-              }
-              if (postingItem.segmentationLocale.length > 0) {
-                let temp = pageTags.filter((pt) => postingItem.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                labels = labels.concat(temp)
-              }
-              if (postingItem.segmentationTags.length > 0) {
-                let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                labels = labels.concat(temp)
-              }
-              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
-                .then(response => {
-                  if (i === limit - 1) {
-                    if (response.status === 'success') {
-                      utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
-                        .then(updated => {
-                          logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
-                        })
-                        .catch(err => {
-                          logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
-                        })
-                    } else {
-                      logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`)
-                    }
-                  }
-                })
-                .catch(err => {
-                  logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
-                })
-            }
-          })
-          .catch(err => {
-            logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`)
-          })
+function sendAutopostingMessage (messageData, page, savedMsg) {
+  request(
+    {
+      'method': 'POST',
+      'json': true,
+      'formData': messageData,
+      'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
+        page.accessToken
+    },
+    function (err, res) {
+      if (err) {
+        return logger.serverLog(TAG,
+          `At send fb post broadcast ${JSON.stringify(
+            err)}`)
       } else {
-        logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
+        if (res.statusCode !== 200) {
+          logger.serverLog(TAG,
+            `At send fb post broadcast response ${JSON.stringify(
+              res.body.error)}`)
+        } else {
+          logger.serverLog(TAG,
+            `At send fb post broadcast response ${JSON.stringify(
+              res.body.message_id)}`)
+        }
       }
-    })
-    .catch(err => {
-      logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
     })
 }
