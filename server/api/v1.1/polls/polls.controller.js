@@ -56,7 +56,6 @@ exports.allPolls = function (req, res) {
           let aggregateSort = criterias.fetchCriteria[1].$sort
           let aggregateSkip = criterias.fetchCriteria[2].$skip
           let aggregateLimit = criterias.fetchCriteria[3].$limit
-
           PollDataLayer.aggregateForPolls(aggregateMatch, null, null, aggregateLimit, aggregateSort, aggregateSkip)
             .then(polls => {
               PollPageDataLayer.genericFind({companyId: companyUser.companyId})
