@@ -64,23 +64,23 @@ exports.create = function (req, res) {
       }
       utility.callApi(`landingPage/landingPageState`, 'post', req.body.initialState, req.headers.authorization)
         .then(landingPageState => {
-          if (req.body.submittedState.actionType === 'SHOW_NEW_MESSAGE') {
-            console.log()
-            utility.callApi(`landingPage/landingPageState`, 'post', req.body.submittedState.state, req.headers.authorization)
-              .then(landingPageSubmittedState => {
-                let payload = logicLayer.preparePayload(req.body, landingPageState, companyUser, landingPageSubmittedState)
-                utility.callApi(`landingPage`, 'post', payload, req.headers.authorization)
-                  .then(landingPage => {
-                    return res.status(201).json({status: 'success', payload: landingPage})
-                  })
-                  .catch(error => {
-                    return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
-                  })
-              })
-              .catch(error => {
-                return res.status(500).json({status: 'failed', payload: `Failed to create landingPageState ${JSON.stringify(error)}`})
-              })
-          } else {
+          // if (req.body.submittedState.actionType === 'SHOW_NEW_MESSAGE') {
+          //   console.log()
+          //   utility.callApi(`landingPage/landingPageState`, 'post', req.body.submittedState.state, req.headers.authorization)
+          //     .then(landingPageSubmittedState => {
+          //       let payload = logicLayer.preparePayload(req.body, landingPageState, companyUser, landingPageSubmittedState)
+          //       utility.callApi(`landingPage`, 'post', payload, req.headers.authorization)
+          //         .then(landingPage => {
+          //           return res.status(201).json({status: 'success', payload: landingPage})
+          //         })
+          //         .catch(error => {
+          //           return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
+          //         })
+          //     })
+          //     .catch(error => {
+          //       return res.status(500).json({status: 'failed', payload: `Failed to create landingPageState ${JSON.stringify(error)}`})
+          //     })
+          // } else {
             let payload = logicLayer.preparePayload(req.body, landingPageState, companyUser)
             utility.callApi(`landingPage`, 'post', payload, req.headers.authorization)
               .then(landingPage => {
@@ -90,7 +90,8 @@ exports.create = function (req, res) {
                 return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
               })
           }
-        })
+        //}
+        )
         .catch(error => {
           return res.status(500).json({status: 'failed', payload: `Failed to create landingPageState ${JSON.stringify(error)}`})
         })
