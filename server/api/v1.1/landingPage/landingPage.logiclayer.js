@@ -9,13 +9,21 @@ exports.preparePayload = function (body, landingPageState, companyUser, landingP
     optInMessage: body.optInMessage,
     title: body.title
   }
-  if (landingPageSubmittedState) {
+  if (body.submittedState.actionType === 'SHOW_NEW_MESSAGE') {
     payload.submittedState = {
       actionType: body.submittedState.actionType,
-      state: landingPageSubmittedState._id,
       title: body.submittedState.title,
       description: body.submittedState.description,
-      buttonText: body.submittedState.buttonText
+      state:{
+        backgroundColor: body.submittedState.state.backgroundColor,
+        titleColor: body.submittedState.state.titleColor,
+        descriptionColor: body.submittedState.state.descriptionColor,
+        mediaType: body.submittedState.state.mediaType,
+        mediaLink: body.submittedState.state.mediaLink,
+        mediaPlacement: body.submittedState.state.mediaPlacement  
+        },
+      buttonText: body.submittedState.buttonText,
+      
     }
   } else {
     payload.submittedState = {
@@ -35,8 +43,17 @@ exports.prepareUpdatePayload = function (body) {
     paylaod.submittedState = {
       actionType: body.submittedState.actionType,
       title: body.submittedState.title,
+      state :{
+        backgroundColor: body.submittedState.state.backgroundColor,
+        titleColor: body.submittedState.state.titleColor,
+        descriptionColor: body.submittedState.state.descriptionColor,
+        mediaType: body.submittedState.state.mediaType,
+        mediaLink: body.submittedState.state.mediaLink,
+        mediaPlacement: body.submittedState.state.mediaPlacement  
+    },
       description: body.submittedState.description,
-      buttonText: body.submittedState.buttonText
+      buttonText: body.submittedState.buttonText,
+      
     }
   } else {
     paylaod.submittedState = {

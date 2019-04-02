@@ -492,6 +492,7 @@ exports.sendConversation = function (req, res) {
           } else {
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
               .then(broadcast => {
+                console.log('After broadcast', broadcast)
                 require('./../../../config/socketio').sendMessageToClient({
                   room_id: companyUser.companyId,
                   body: {
@@ -549,7 +550,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       if (subscribers.length < 1) {
         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
       }
-      broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
+      broadcastUtility.applyTagFilterIfNecessary(req, res, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
           // update broadcast sent field
           BroadcastPageDataLayer.createForBroadcastPage({
