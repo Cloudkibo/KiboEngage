@@ -192,6 +192,189 @@ exports.getAllBroadcastsCriteria = function (body) {
     countCriteria
   }
 }
+exports.getAllPollsCriteria = function (body) {
+  let findCriteria = {}
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - body.filter_criteria.days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  findCriteria = {
+    statement: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    'datetime': body.filter_criteria.days !== '0' ? {
+      $gte: startDate
+    } : { $exists: true }
+  }
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $lookup: { from: 'page_polls', localField: '_id', foreignField: 'pollId', as: 'pollPages' } },
+      { $match: findCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records },
+      { $lookup: { from: 'pollresponses', localField: '_id', foreignField: 'pollId', as: 'pollResponses' } }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $lookup: { from: 'page_polls', localField: '_id', foreignField: 'pollId', as: 'pollPages' } },
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records },
+      { $lookup: { from: 'pollresponses', localField: '_id', foreignField: 'pollId', as: 'pollResponses' } }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $lookup: { from: 'page_polls', localField: '_id', foreignField: 'pollId', as: 'pollPages' } },
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records },
+      { $lookup: { from: 'pollresponses', localField: '_id', foreignField: 'pollId', as: 'pollResponses' } }
+    ]
+  }
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
+}
+exports.getAllSurveysCriteria = function (body) {
+  let findCriteria = {}
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - body.filter_criteria.days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  findCriteria = {
+    title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    'datetime': body.filter_criteria.days !== '0' ? {
+      $gte: startDate
+    } : { $exists: true }
+  }
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $lookup: { from: 'page_surveys', localField: '_id', foreignField: 'surveyId', as: 'surveyPages' } },
+      { $match: findCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records },
+      { $lookup: { from: 'surveyresponses', localField: '_id', foreignField: 'surveyId', as: 'surveyResponses' } }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $lookup: { from: 'page_surveys', localField: '_id', foreignField: 'surveyId', as: 'surveyPages' } },
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records },
+      { $lookup: { from: 'surveyresponses', localField: '_id', foreignField: 'surveyId', as: 'surveyResponses' } }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $lookup: { from: 'page_surveys', localField: '_id', foreignField: 'surveyId', as: 'surveyPages' } },
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records },
+      { $lookup: { from: 'surveyresponses', localField: '_id', foreignField: 'surveyId', as: 'surveyResponses' } }
+    ]
+  }
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
+}
+exports.allUserPollsCriteria = function (userid, body, survey) {
+  let findCriteria = {}
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - body.filter_criteria.days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  findCriteria = {
+    userId: userid,
+    'datetime': body.filter_criteria.days !== '0' ? {
+      $gte: startDate
+    } : { $exists: true }
+  }
+  if (survey) {
+    findCriteria.title = body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+  } else {
+    findCriteria.statement = body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+  }
+  console.log('findCriteria', findCriteria)
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $match: findCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  }
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
+}
 exports.getAllSubscribersCriteria = function (pageid, body) {
   let search = '.*' + body.filter_criteria.search_value + '.*'
   let findCriteria = {
