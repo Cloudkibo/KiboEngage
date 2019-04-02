@@ -39,7 +39,6 @@ exports.countBroadcasts = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  console.log('query', query)
   return callApi(`broadcasts/query`, 'post', query, '', 'kiboengage')
 }
 
