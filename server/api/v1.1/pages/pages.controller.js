@@ -191,7 +191,7 @@ exports.enable = function (req, res) {
                   needle('get', `https://graph.facebook.com/v2.6/me?access_token=${page.accessToken}`)
                     .then(response => {
                       if (response.body.error) {
-                        return res.status(400).json({status: 'failed', payload: response.body.error.message})
+                        return res.status(400).json({status: 'failed', payload: response.body.error.message, type: 'invalid_permissions'})
                       } else {
                         needle.get(
                           `https://graph.facebook.com/v2.10/${page.pageId}?fields=is_published&access_token=${page.userId.facebookInfo.fbToken}`,
