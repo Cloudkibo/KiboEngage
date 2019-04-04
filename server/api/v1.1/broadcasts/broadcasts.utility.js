@@ -368,7 +368,7 @@ function parseUrl (text) {
   return onlyUrl
 }
 
-function applyTagFilterIfNecessary (req, res, subscribers, fn) {
+function applyTagFilterIfNecessary (req, subscribers, fn, res) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
     callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tagSubscribers => {
@@ -546,7 +546,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       'attachment': {
         'type': body.componentType,
         'payload': {
-          'attachment_id': body.fileurl.attachment_id
+          'attachment_id': body.fileurl.id
         }
       }
     }
@@ -645,7 +645,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'template_type': 'media',
           'elements': [
             {
-              'attachment_id': body.fileurl.attachment_id,
+              'attachment_id': body.fileurl.id,
               'media_type': body.mediaType,
               'buttons': body.buttons
             }
@@ -668,7 +668,6 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
   let batch = []
   console.log('Payload received to send', payload)
   payload.forEach((item, index) => {
-    logger.serverLog(TAG, `item: ${JSON.stringify(item)}`)
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
     let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData(recipientId, item, fname, lname)))
     console.log('messagePayload', message)

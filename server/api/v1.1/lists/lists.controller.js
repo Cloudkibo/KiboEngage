@@ -111,7 +111,7 @@ exports.createList = function (req, res) {
                 .catch(error => {
                   return res.status(500).json({
                     status: 'failed',
-                    payload: `Failed to create list ${JSON.stringify(error)}`
+                    description: JSON.parse(JSON.stringify(error)).error.payload
                   })
                 })
             })

@@ -4,7 +4,10 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/messengerEvents/delivery.controller'
 const sortBy = require('sort-array')
 const DataLayer = require('./datalayer')
-const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
+const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
+const PollPageDataLayer = require('../page_poll/page_poll.datalayer')
+const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
+const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 
 exports.getAllUsers = function (req, res) {
   console.log('in getAllUsers')
@@ -140,6 +143,48 @@ exports.allUserBroadcasts = function (req, res) {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
     })
 }
+exports.allUserPolls = function (req, res) {
+  let criteria = LogicLayer.allUserPollsCriteria(req.params.userid, req.body)
+  DataLayer.countPolls(criteria.countCriteria[0].$match)
+    .then(pollsCount => {
+      console.log('pollsCount', pollsCount)
+      let aggregateMatch = criteria.finalCriteria[0].$match
+      let aggregateSort = criteria.finalCriteria[1].$sort
+      let aggregateSkip = criteria.finalCriteria[2].$skip
+      let aggregateLimit = criteria.finalCriteria[3].$limit
+      DataLayer.aggregateForPolls(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
+        .then(polls => {
+          console.log('polls fetched', polls)
+          res.status(200).json({
+            status: 'success',
+            payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
+          })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to polls ${JSON.stringify(error)}`})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch polls count ${JSON.stringify(error)}`})
+    })
+}
+exports.allUserSurveys = function (req, res) {
+  let criteria = LogicLayer.allUserPollsCriteria(req.params.userid, req.body, true)
+  DataLayer.countSurveys(criteria.countCriteria[0].$match)
+    .then(surveysCount => {
+      let aggregateMatch = criteria.finalCriteria[0].$match
+      let aggregateSort = criteria.finalCriteria[1].$sort
+      let aggregateSkip = criteria.finalCriteria[2].$skip
+      let aggregateLimit = criteria.finalCriteria[3].$limit
+      DataLayer.aggregateForSurveys(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
+        .then(surveys => {
+          res.status(200).json({
+            status: 'success',
+            payload: {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : ''}
+          })
+        })
+    })
+}
 exports.getAllBroadcasts = function (req, res) {
   let criteria = LogicLayer.getAllBroadcastsCriteria(req.body)
   DataLayer.countBroadcasts(criteria.countCriteria[0].$match)
@@ -152,41 +197,14 @@ exports.getAllBroadcasts = function (req, res) {
       let aggregateLimit = criteria.finalCriteria[4].$limit
       DataLayer.aggregateForBroadcasts(aggregateMatch, undefined, aggregateLookup, aggregateLimit, aggregateSort, aggregateSkip)
         .then(broadcasts => {
-          console.log('broadcasts fetched inn', broadcasts[0])
-          let temp = []
-          let tempUser = []
-          let tempCompany = []
-          for (let i = 0; i < broadcasts.length; i++) {
-            temp.push(broadcasts[i]._id)
-            tempUser.push(broadcasts[i].userId)
-            tempCompany.push(broadcasts[i].companyId)
-          }
-          BroadcastPageDataLayer.genericFind({broadcastId: {$in: temp}})
-            .then(broadcastpages => {
-              // utility.callApi(`user/query`, 'post', {_id: {$in: tempUser}}, req.headers.authorization)
-              //   .then(users => {
-                  // utility.callApi(`companyprofile/query`, 'post', {findAll: true, _id: {$in: tempCompany}}, req.headers.authorization)
-                  //   .then(companies => {
-                      prepareDataToSend(broadcasts, req)
-                      .then(result => {
-                        console.log('data fetched', result)
-                      return res.status(200)
-                        .json({
-                          status: 'success',
-                          payload: {broadcasts: result.data, count: result.data.length > 0 ? broadcastsCount[0].count : ''}
-                        })
-                      })
-                    // })
-                    // .catch(error => {
-                    //   return res.status(500).json({status: 'failed', payload: `Failed to fetch company profiles ${JSON.stringify(error)}`})
-                    // })
-                // })
-                // .catch(error => {
-                //   return res.status(500).json({status: 'failed', payload: `Failed to fetch users ${JSON.stringify(error)}`})
-                // })
-            })
-            .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcast pages ${JSON.stringify(error)}`})
+          prepareDataToSend(broadcasts, req)
+            .then(result => {
+              console.log('data fetched', result)
+              return res.status(200)
+                .json({
+                  status: 'success',
+                  payload: {broadcasts: result.data, count: result.data.length > 0 ? broadcastsCount[0].count : ''}
+                })
             })
         })
         .catch(error => {
@@ -196,6 +214,134 @@ exports.getAllBroadcasts = function (req, res) {
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
     })
+}
+
+exports.getAllPolls = function (req, res) {
+  let criteria = LogicLayer.getAllPollsCriteria(req.body)
+  DataLayer.countPolls(criteria.countCriteria[0].$match)
+    .then(pollsCount => {
+      let aggregateLookup = criteria.finalCriteria[0].$lookup
+      let aggregateMatch = criteria.finalCriteria[1].$match
+      let aggregateSort = criteria.finalCriteria[2].$sort
+      let aggregateSkip = criteria.finalCriteria[3].$skip
+      let aggregateLimit = criteria.finalCriteria[4].$limit
+      let aggregateLookup1 = criteria.finalCriteria[5].$lookup
+      DataLayer.aggregateForPolls(aggregateMatch, undefined, aggregateLookup, aggregateLimit, aggregateSort, aggregateSkip, aggregateLookup1)
+        .then(polls => {
+          preparePollDataToSend(polls, req)
+            .then(result => {
+              return res.status(200)
+                .json({
+                  status: 'success',
+                  payload: {polls: result.data, count: result.data.length > 0 ? pollsCount[0].count : ''}
+                })
+            })
+        })
+    })
+}
+
+exports.getAllSurveys = function (req, res) {
+  let criteria = LogicLayer.getAllSurveysCriteria(req.body)
+  DataLayer.countSurveys(criteria.countCriteria[0].$match)
+    .then(surveysCount => {
+      console.log('surveysCount fetched', surveysCount)
+      let aggregateLookup = criteria.finalCriteria[0].$lookup
+      let aggregateMatch = criteria.finalCriteria[1].$match
+      let aggregateSort = criteria.finalCriteria[2].$sort
+      let aggregateSkip = criteria.finalCriteria[3].$skip
+      let aggregateLimit = criteria.finalCriteria[4].$limit
+      let aggregateLookup1 = criteria.finalCriteria[5].$lookup
+      DataLayer.aggregateForSurveys(aggregateMatch, undefined, aggregateLookup, aggregateLimit, aggregateSort, aggregateSkip, aggregateLookup1)
+        .then(surveys => {
+          console.log('surveysAggregate fetched', surveys)
+          prepareSurveyDataToSend(surveys, req)
+            .then(result => {
+              return res.status(200)
+                .json({
+                  status: 'success',
+                  payload: {surveys: result.data, count: result.data.length > 0 ? surveysCount[0].count : ''}
+                })
+            })
+        })
+    })
+}
+
+function prepareSurveyDataToSend (surveys, req) {
+  return new Promise(function (resolve, reject) {
+    let data = []
+    for (let j = 0; j < surveys.length; j++) {
+      let pagesurveyTapped = surveys[j].surveyPages.filter((c) => c.seen === true)
+      utility.callApi(`user/query`, 'post', {_id: surveys[j].userId}, req.headers.authorization)
+        .then(user => {
+          utility.callApi(`pages/query`, 'post', {companyId: surveys[j].companyId}, req.headers.authorization)
+            .then(pages => {
+              let pageSend = []
+              if (surveys[j].segmentationPageIds && surveys[j].segmentationPageIds.length > 0) {
+                for (let k = 0; k < surveys[j].segmentationPageIds.length; k++) {
+                  let page = pages.filter((c) => JSON.stringify(c.pageId) === JSON.stringify(surveys[j].segmentationPageIds[k]))
+                  pageSend.push(page[0].pageName)
+                }
+              } else {
+                let page = pages.filter((c) => c.connected === true)
+                for (let a = 0; a < page.length; a++) {
+                  pageSend.push(page[a].pageName)
+                }
+              }
+              data.push({_id: surveys[j]._id,
+                title: surveys[j].title,
+                datetime: surveys[j].datetime,
+                page: pageSend,
+                user: user[0],
+                sent: surveys[j].surveyPages.length,
+                seen: pagesurveyTapped.length,
+                responded: surveys[j].surveyResponses.length})
+              console.log('data in surveys', data)
+              if (data.length === surveys.length) {
+                resolve({data: data})
+              }
+            })
+        })
+    }
+  })
+}
+
+function preparePollDataToSend (polls, req) {
+  return new Promise(function (resolve, reject) {
+    let data = []
+    for (let j = 0; j < polls.length; j++) {
+      let pagepollTapped = polls[j].pollPages.filter((c) => c.seen === true)
+      utility.callApi(`user/query`, 'post', {_id: polls[j].userId}, req.headers.authorization)
+        .then(user => {
+          utility.callApi(`pages/query`, 'post', {companyId: polls[j].companyId}, req.headers.authorization)
+            .then(pages => {
+              let pageSend = []
+              if (polls[j].segmentationPageIds && polls[j].segmentationPageIds.length > 0) {
+                for (let k = 0; k < polls[j].segmentationPageIds.length; k++) {
+                  let page = pages.filter((c) => JSON.stringify(c.pageId) === JSON.stringify(polls[j].segmentationPageIds[k]))
+                  pageSend.push(page[0].pageName)
+                }
+              } else {
+                let page = pages.filter((c) => c.connected === true)
+                for (let a = 0; a < page.length; a++) {
+                  pageSend.push(page[a].pageName)
+                }
+              }
+              data.push({_id: polls[j]._id,
+                statement: polls[j].statement,
+                datetime: polls[j].datetime,
+                page: pageSend,
+                user: user[0],
+                sent: polls[j].pollPages.length,
+                seen: pagepollTapped.length,
+                responded: polls[j].pollResponses.length
+              })
+              if (data.length === polls.length) {
+                resolve({data: data})
+              }
+            })
+        })
+    }
+  })
 }
 
 function prepareDataToSend (broadcasts, req) {
@@ -224,7 +370,6 @@ function prepareDataToSend (broadcasts, req) {
                   }
                 }
               }
-              console.log('pageSend value', pageSend)
               data.push({_id: broadcasts[j]._id,
                 title: broadcasts[j].title,
                 datetime: broadcasts[j].datetime,
@@ -233,8 +378,7 @@ function prepareDataToSend (broadcasts, req) {
                 user: user[0],
                 sent: broadcasts[j].broadcastPages.length,
                 seen: pagebroadcastTapped.length
-              }) // total tapped
-              console.log('data value', data)
+              })
               if (data.length === broadcasts.length) {
                 resolve({data: data})
               }
@@ -268,6 +412,60 @@ exports.broadcastsGraph = function (req, res) {
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts ${JSON.stringify(error)}`})
+    })
+}
+exports.pollsGraph = function (req, res) {
+  var days = 0
+  if (req.params.days === '0') {
+    days = 10
+  } else {
+    days = req.params.days
+  }
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let aggregateMatch = {
+    'datetime': {$gte: startDate}
+  }
+  let aggregateGroup = {
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1}}
+  DataLayer.aggregateForPolls(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
+    .then(pollsgraphdata => {
+      return res.status(200)
+        .json({status: 'success', payload: {pollsgraphdata}})
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch polls ${JSON.stringify(error)}`})
+    })
+}
+exports.surveysGraph = function (req, res) {
+  var days = 0
+  if (req.params.days === '0') {
+    days = 10
+  } else {
+    days = req.params.days
+  }
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let aggregateMatch = {
+    'datetime': {$gte: startDate}
+  }
+  let aggregateGroup = {
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1}}
+  DataLayer.aggregateForSurveys(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
+    .then(surveysgraphdata => {
+      return res.status(200)
+        .json({status: 'success', payload: {surveysgraphdata}})
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch surveys ${JSON.stringify(error)}`})
     })
 }
 exports.sessionsGraph = function (req, res) {
@@ -317,5 +515,49 @@ exports.getAllSubscribers = function (req, res) {
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers count ${JSON.stringify(error)}`})
+    })
+}
+exports.poll = function (req, res) {
+  DataLayer.findOnePoll(req.params.pollid)
+    .then(poll => {
+      PollResponseDataLayer.genericFindForPollResponse({pollId: req.params.pollid})
+        .then(pollResponses => {
+          PollPageDataLayer.genericFind({pollId: req.params.pollid})
+            .then(pollpages => {
+              return res.status(200)
+                .json({status: 'success', payload: {pollResponses, poll, pollpages}})
+            })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: `Failed to fetch poll pages ${JSON.stringify(error)}`})
+            })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to fetch poll responses ${JSON.stringify(error)}`})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch poll ${JSON.stringify(error)}`})
+    })
+}
+exports.surveyDetails = function (req, res) {
+  DataLayer.findSurvey({_id: req.params.surveyid})
+    .then(survey => {
+      SurveyQuestionDataLayer.findSurveyWithId(req.params.surveyid)
+        .then(questions => {
+          SurveyResponseDataLayer.genericFind({surveyId: req.params.surveyid})
+            .then(responses => {
+              return res.status(200)
+                .json({status: 'success', payload: {survey, questions, responses}})
+            })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: `Failed to fetch survey responses ${JSON.stringify(error)}`})
+            })
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to fetch survey questions ${JSON.stringify(error)}`})
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch survey ${JSON.stringify(error)}`})
     })
 }
