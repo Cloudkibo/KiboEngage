@@ -550,7 +550,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       if (subscribers.length < 1) {
         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
       }
-      broadcastUtility.applyTagFilterIfNecessary(req, res, subscribers, (taggedSubscribers) => {
+      broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
           // update broadcast sent field
           BroadcastPageDataLayer.createForBroadcastPage({
@@ -569,7 +569,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
               return res.status(500).json({status: 'failed', payload: `Failed to create page_broadcast ${JSON.stringify(error)}`})
             })
         })
-      })
+      }, res)
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
