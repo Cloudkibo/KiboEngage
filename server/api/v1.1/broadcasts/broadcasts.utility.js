@@ -368,7 +368,7 @@ function parseUrl (text) {
   return onlyUrl
 }
 
-function applyTagFilterIfNecessary (req, res, subscribers, fn) {
+function applyTagFilterIfNecessary (req, subscribers, fn, res) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
     callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tagSubscribers => {
