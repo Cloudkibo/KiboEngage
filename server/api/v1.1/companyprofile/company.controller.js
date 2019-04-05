@@ -149,3 +149,69 @@ exports.updatePlatform = function (req, res) {
       })
     })
 }
+exports.updatePlatformWhatsApp = function (req, res) {
+  console.log('inside updatePlatformWhatsApp')
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      needle.get(
+        `https://${req.body.accountSID}:${req.body.authToken}@api.twilio.com/2010-04-01/Accounts`,
+        (err, resp) => {
+          console.log('response from twiliostatus code', resp.statusCode)
+          if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: 'unable to authenticate twilio account'
+            })
+          }
+          if (resp.statusCode === 200) {
+            let newPayload = {twilioWhatsApp: {
+              accountSID: req.body.accountSID,
+              authToken: req.body.authToken,
+              sandboxNumber: req.body.sandboxNumber,
+              sandboxCode: req.body.sandboxCode
+            }}
+            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}}, req.headers.authorization)
+              .then(updatedProfile => {
+                // let accountSid = req.body.accountSID
+                // let authToken = req.body.authToken
+                // let client = require('twilio')(accountSid, authToken)
+                // client.incomingPhoneNumbers
+                //   .list().then((incomingPhoneNumbers) => {
+                //     for (let i = 0; i < incomingPhoneNumbers.length; i++) {
+                //       client.incomingPhoneNumbers(incomingPhoneNumbers[i].sid)
+                //         .update({
+                //           accountSid: req.body.twilio.accountSID,
+                //           smsUrl: `${config.api_urls['webhook']}/webhooks/twilio/receiveSms`
+                //         })
+                //         .then(result => {
+                //           console.log('result from updating webhook', result)
+                //         })
+                //     }
+                //   })
+                console.log('returning', updatedProfile)
+                return res.status(200).json({status: 'success', payload: updatedProfile})
+              })
+              .catch(err => {
+                console.log(`Failed to update company profile ${err}`)
+                res.status(500).json({status: 'failed', payload: `Failed to update company profile ${err}`})
+              })
+          } else {
+            return res.status(500).json({
+              status: 'failed',
+              description: 'Twilio account not found. Please enter correct details'
+            })
+          }
+        })
+    })
+    .catch(error => {
+      console.log(`Failed to company user ${JSON.stringify(error)}`)
+      return res.status(500).json({status: 'failed', payload: `Failed to company user ${JSON.stringify(error)}`
+      })
+    })
+}
