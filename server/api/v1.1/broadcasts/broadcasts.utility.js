@@ -626,13 +626,25 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   } else if (body.componentType === 'list') {
+    var listElements = []
+    for (let i = 0; i < body.listItems.length; i++) {
+      var element = {}
+      element.title = body.listItems[i].title
+      element.subtitle = body.listItems[i].subtitle
+      element.image_url = body.listItems[i].image_url
+      element.buttons = body.listItems[i].buttons
+      if (body.listItems.default_action) {
+        element.default_action = body.listItems[i].default_action
+      }
+      listElements.push(element)
+    }
     payload = {
       'attachment': {
         'type': 'template',
         'payload': {
           'template_type': 'list',
           'top_element_style': body.topElementStyle,
-          'elements': body.listItems,
+          'elements': listElements,
           'buttons': body.buttons
         }
       }
