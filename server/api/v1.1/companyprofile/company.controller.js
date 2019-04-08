@@ -169,8 +169,6 @@ exports.updatePlatformWhatsApp = function (req, res) {
               description: 'unable to authenticate twilio account'
             })
           }
-          let newNumber = req.body.sandboxNumber.trim()
-          console.log('newNumber', newNumber)
           if (resp.statusCode === 200) {
             let newPayload = {twilioWhatsApp: {
               accountSID: req.body.accountSID,
