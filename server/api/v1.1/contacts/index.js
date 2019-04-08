@@ -9,6 +9,7 @@ const multipartyMiddleware = multiparty()
 
 router.post('/',
   auth.isAuthenticated(),
+  validate({body: validationSchema.payload}),
   controller.index)
 
 router.post('/uploadFile',
