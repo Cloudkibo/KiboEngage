@@ -1,14 +1,14 @@
 exports.getCriterias = function (body) {
   let findCriteria = {}
   let finalCriteria = {}
-  let search = new RegExp('.*' + body.filter_criteria.search_value + '.*', 'i')
+  let search = '.*' + body.filter_criteria.search_value + '.*'
   if (body.filter_criteria.search_value !== '') {
-    findCriteria = Object.assign(findCriteria, {name: {$regex: search}})
+    findCriteria = Object.assign(findCriteria, {name: {$regex: search, $options: 'i'}})
   }
-  if (body.filter_criteria.locale_value !== '') {
+  if (body.filter_criteria.locale_value !== '' && body.filter_criteria.locale_value !== 'all') {
     findCriteria = Object.assign(findCriteria, {'facebookInfo.locale': body.filter_criteria.locale_value})
   }
-  if (body.filter_criteria.gender_value !== '') {
+  if (body.filter_criteria.gender_value !== '' && body.filter_criteria.gender_value !== 'all') {
     findCriteria = Object.assign(findCriteria, {'facebookInfo.gender': body.filter_criteria.gender_value})
   }
   if (body.first_page) {
@@ -30,10 +30,10 @@ exports.getCriterias = function (body) {
   }
 }
 exports.getAllPagesCriteria = function (userid, body) {
-  let search = new RegExp('.*' + body.search_value + '.*', 'i')
+  let search = '.*' + body.search_value + '.*'
   let findCriteria = {
     userId: userid,
-    pageName: body.search_value !== '' ? {$regex: search} : {$exists: true}
+    pageName: body.search_value !== '' ? {$regex: search, $options: 'i'} : {$exists: true}
   }
   let recordsToSkip = 0
   let finalCriteria = {}

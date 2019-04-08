@@ -48,6 +48,7 @@
     "form-data": "^2.3.2",
     "helmet": "^3.13.0",
     "isomorphic-fetch": "^2.2.1",
+    "json2csv": "^4.4.1",
     "jsonschema": "^1.2.4",
     "jsonwebtoken": "^8.3.0",
     "lodash": "^4.17.10",

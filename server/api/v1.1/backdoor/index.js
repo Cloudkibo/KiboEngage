@@ -74,4 +74,8 @@ router.get('/allLocales',
   auth.isAuthorizedSuperUser(),
   controller.allLocales)
 
+router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.sendEmail)
+
+router.get('/uploadFile', auth.isAuthorizedSuperUser(), controller.uploadFile)
+
 module.exports = router

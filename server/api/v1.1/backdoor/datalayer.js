@@ -96,3 +96,17 @@ exports.findSurvey = (queryObject) => {
   }
   return callApi(`surveys/kiboDashQuery`, 'post', query, '', 'kiboengage')
 }
+exports.findBroadcasts = (queryObject) => {
+  let query = {
+    purpose: 'findAll',
+    match: queryObject
+  }
+  return callApi(`surveys/kiboDashQuery`, 'post', query, '', 'kiboengage')
+}
+exports.findPolls = (queryObject) => {
+  let query = {
+    purpose: 'findAll',
+    match: queryObject
+  }
+  return callApi(`polls/kiboDashQuery`, 'post', query, '', 'kiboengage')
+}
