@@ -81,16 +81,16 @@ exports.create = function (req, res) {
           //       return res.status(500).json({status: 'failed', payload: `Failed to create landingPageState ${JSON.stringify(error)}`})
           //     })
           // } else {
-            let payload = logicLayer.preparePayload(req.body, landingPageState, companyUser)
-            utility.callApi(`landingPage`, 'post', payload, req.headers.authorization)
-              .then(landingPage => {
-                return res.status(201).json({status: 'success', payload: landingPage})
-              })
-              .catch(error => {
-                return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
-              })
-          }
-        //}
+          let payload = logicLayer.preparePayload(req.body, landingPageState, companyUser)
+          utility.callApi(`landingPage`, 'post', payload, req.headers.authorization)
+            .then(landingPage => {
+              return res.status(201).json({status: 'success', payload: landingPage})
+            })
+            .catch(error => {
+              return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
+            })
+        }
+        // }
         )
         .catch(error => {
           return res.status(500).json({status: 'failed', payload: `Failed to create landingPageState ${JSON.stringify(error)}`})
