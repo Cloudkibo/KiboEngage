@@ -173,7 +173,7 @@ exports.updatePlatformWhatsApp = function (req, res) {
             let newPayload = {twilioWhatsApp: {
               accountSID: req.body.accountSID,
               authToken: req.body.authToken,
-              sandboxNumber: req.body.sandboxNumber,
+              sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
               sandboxCode: req.body.sandboxCode
             }}
             utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}}, req.headers.authorization)

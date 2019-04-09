@@ -49,6 +49,7 @@ module.exports = function (app) {
   app.use('/api/custom_field_subscribers/', require('./api/v1.1/custom_field_subscribers'))
   app.use('/api/operational', require('./api/v1.1/kiboDash'))
   app.use('/api/contacts', require('./api/v1.1/contacts'))
+  app.use('/api/whatsAppContacts', require('./api/v1.1/whatsAppContacts'))
   app.use('/api/smsBroadcasts', require('./api/v1.1/smsBroadcasts'))
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
 
