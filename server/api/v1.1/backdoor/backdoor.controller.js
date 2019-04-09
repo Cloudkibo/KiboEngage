@@ -10,6 +10,7 @@ const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 var json2csv = require('json2csv')
 const config = require('./../../../config/environment/index')
+const { parse } = require('json2csv')
 
 exports.getAllUsers = function (req, res) {
   console.log('in getAllUsers')
@@ -619,7 +620,7 @@ exports.uploadFile = function (req, res) {
 function downloadCSV (pages, req) {
   return new Promise(function (resolve, reject) {
     let usersPayload = []
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < pages.length; i++) {
       if (pages[i].userId) {
         utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization)
           .then(subscribers => {
@@ -645,7 +646,7 @@ function downloadCSV (pages, req) {
                           Surveys: surveys && surveys.length > 0 ? surveys.length : 0,
                           Polls: polls && polls.length > 0 ? polls.length : 0
                         })
-                        if (i === 0) {
+                        if (i === pages.length - 1) {
                           console.log('usersPayload', usersPayload)
                           var info = usersPayload
                           var keys = []
@@ -657,14 +658,22 @@ function downloadCSV (pages, req) {
                           }
                           console.log('info', info)
                           console.log('keys', keys)
-                          json2csv({ data: info, fields: keys }, function (err, csv) {
-                            if (err) {
-                              console.log('error at exporting', err)
-                              logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`)
-                            }
-                            console.log('csv', csv)
+                          const opts = { keys }
+                          try {
+                            const csv = parse(info, opts)
+                            console.log('csv data', csv)
                             resolve({data: csv})
-                          })
+                          } catch (err) {
+                            console.error('error at parse', err)
+                          }
+                          // json2csv({ data: info, fields: keys }, function (err, csv) {
+                          //   if (err) {
+                          //     console.log('error at exporting', err)
+                          //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`)
+                          //   }
+                          //   console.log('csv in', csv)
+                          //   resolve({data: csv})
+                          // })
                         }
                       })
                       .catch(error => {

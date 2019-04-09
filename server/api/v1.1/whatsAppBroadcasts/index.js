@@ -11,9 +11,9 @@ router.post('/',
   validate({body: validationSchema.payload}),
   controller.index)
 
-// router.post('/sendBroadcast',
-//   auth.isAuthenticated(),
-//   validate({body: validationSchema.sendBroadcastPayload}),
-//   controller.sendBroadcast)
+router.post('/sendBroadcast',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.sendBroadcastPayload}),
+  controller.sendBroadcast)
 
 module.exports = router
