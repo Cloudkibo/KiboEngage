@@ -84,13 +84,13 @@ exports.allUserBroadcastsCriteria = function (userid, body) {
       findCriteria = {
         userId: userid,
         'payload.1': { $exists: true },
-        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+        title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
       }
     } else {
       findCriteria = {
         userId: userid,
         $and: [{'payload.0.componentType': body.filter_criteria.type_value !== '' ? body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
-        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+        title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
       }
     }
   }
@@ -144,7 +144,7 @@ exports.getAllBroadcastsCriteria = function (body) {
   let countCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true },
     'datetime': body.filter_criteria.days !== '0' ? {
       $gte: startDate
     } : { $exists: true }
@@ -203,7 +203,7 @@ exports.getAllPollsCriteria = function (body) {
   let countCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    statement: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    statement: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true },
     'datetime': body.filter_criteria.days !== '0' ? {
       $gte: startDate
     } : { $exists: true }
@@ -264,7 +264,7 @@ exports.getAllSurveysCriteria = function (body) {
   let countCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true },
     'datetime': body.filter_criteria.days !== '0' ? {
       $gte: startDate
     } : { $exists: true }
@@ -331,9 +331,9 @@ exports.allUserPollsCriteria = function (userid, body, survey) {
     } : { $exists: true }
   }
   if (survey) {
-    findCriteria.title = body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+    findCriteria.title = body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
   } else {
-    findCriteria.statement = body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+    findCriteria.statement = body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
   }
   console.log('findCriteria', findCriteria)
   if (body.first_page === 'first') {
