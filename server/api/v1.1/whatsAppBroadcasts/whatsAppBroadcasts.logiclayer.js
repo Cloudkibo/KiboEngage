@@ -1,18 +1,3 @@
-function prepareBroadCastPayload (req, companyId) {
-  let broadcastPayload = {
-    platform: req.body.platform,
-    payload: req.body.payload,
-    userId: req.user._id,
-    companyId,
-    title: req.body.title,
-    phoneNumber: req.body.phoneNumber
-  }
-  if (req.body.segmentation) {
-    broadcastPayload.segmentation = req.body.segmentation
-  }
-  return broadcastPayload
-}
-
 exports.getCriterias = function (body, companyUser) {
   let findCriteria = {}
   let finalCriteria = {}
@@ -60,38 +45,3 @@ exports.getCriterias = function (body, companyUser) {
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }
-
-exports.checkFilterValues = function (values, data) {
-  var matchCriteria = true
-  if (values.length > 0) {
-    for (var i = 0; i < values.length; i++) {
-      var filter = values[i]
-      if (filter.criteria === 'is') {
-        if (data[`${filter.condition}`] === filter.text) {
-          matchCriteria = true
-        } else {
-          matchCriteria = false
-          break
-        }
-      } else if (filter.criteria === 'contains') {
-        if (data[`${filter.condition}`].toLowerCase().includes(filter.text.toLowerCase())) {
-          matchCriteria = true
-        } else {
-          matchCriteria = false
-          break
-        }
-      } else if (filter.criteria === 'begins') {
-        var subText = data[`${filter.condition}`].substring(0, filter.text.length)
-        if (subText.toLowerCase() === filter.text.toLowerCase()) {
-          matchCriteria = true
-        } else {
-          matchCriteria = false
-          break
-        }
-      }
-    }
-  }
-  return matchCriteria
-}
-
-exports.prepareBroadCastPayload = prepareBroadCastPayload

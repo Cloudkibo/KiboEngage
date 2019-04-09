@@ -4,20 +4,16 @@ const auth = require('../../../auth/auth.service')
 const validate = require('express-jsonschema').validate
 
 const validationSchema = require('./validationSchema')
-const controller = require('./smsBroadcasts.controller')
+const controller = require('./whatsAppBroadcasts.controller')
 
 router.post('/',
   auth.isAuthenticated(),
   validate({body: validationSchema.payload}),
   controller.index)
 
-router.post('/sendBroadcast',
-  auth.isAuthenticated(),
-  validate({body: validationSchema.sendBroadcastPayload}),
-  controller.sendBroadcast)
-
-router.get('/getTwilioNumbers',
-  auth.isAuthenticated(),
-  controller.getTwilioNumbers)
+// router.post('/sendBroadcast',
+//   auth.isAuthenticated(),
+//   validate({body: validationSchema.sendBroadcastPayload}),
+//   controller.sendBroadcast)
 
 module.exports = router
