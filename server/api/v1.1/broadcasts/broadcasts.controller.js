@@ -19,6 +19,7 @@ const { batchApi } = require('../../global/batchApi')
 const broadcastApi = require('../../global/broadcastApi')
 const validateInput = require('../../global/validateInput')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const util = require('util')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -516,6 +517,7 @@ exports.sendConversation = function (req, res) {
                     'messages': broadcastApi.getMessagesData(payload)
                   }, page.accessToken)
                     .then(messageCreative => {
+                      logger.serverLog(TAG, `messageCreative ${util.inspect(messageCreative)}`)
                       if (messageCreative.status === 'sucess') {
                         const messageCreativeId = messageCreative.message_creative_id
                         utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: req.user.companyId, pageId: page._id}}, '', 'kiboengage')
@@ -553,6 +555,7 @@ exports.sendConversation = function (req, res) {
                               }
                               broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
                                 .then(response => {
+                                  logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                                   if (i === limit - 1) {
                                     if (response.status === 'success') {
                                       utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
