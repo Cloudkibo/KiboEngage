@@ -53,6 +53,7 @@ module.exports = function (app) {
   app.use('/api/whatsAppBroadcasts', require('./api/v1.1/whatsAppBroadcasts'))
   app.use('/api/smsBroadcasts', require('./api/v1.1/smsBroadcasts'))
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
+  app.use('/api/sponsoredmessaging', require('./api/v1.1/sponsoredMessaging'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
