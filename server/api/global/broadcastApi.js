@@ -16,28 +16,36 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
   }
   facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
     .then(response => {
-      if (response.broadcast_id) {
-        return {status: 'success', broadcast_id: response.broadcast_id}
-      } else {
-        return {status: 'failed', description: response.error}
-      }
+      return new Promise((resolve, reject) => {
+        if (response.broadcast_id) {
+          resolve({status: 'success', broadcast_id: response.broadcast_id})
+        } else {
+          resolve({status: 'failed', description: response.error})
+        }
+      })
     })
     .catch(err => {
-      return err
+      return new Promise((resolve, reject) => {
+        reject(err)
+      })
     })
 }
 
 exports.callMessageCreativesEndpoint = (data, pageAccessToken) => {
   facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', data)
     .then(response => {
-      if (response.message_creative_id) {
-        return {status: 'success', message_creative_id: response.message_creative_id}
-      } else {
-        return {status: 'failed', description: response.error}
-      }
+      return new Promise((resolve, reject) => {
+        if (response.message_creative_id) {
+          resolve({status: 'success', message_creative_id: response.message_creative_id})
+        } else {
+          resolve({status: 'failed', description: response.error})
+        }
+      })
     })
     .catch(err => {
-      return err
+      return new Promise((resolve, reject) => {
+        reject(err)
+      })
     })
 }
 
