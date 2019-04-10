@@ -39,7 +39,7 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken) => {
         'messages': messages
       }
       console.log('dataToSend', JSON.stringify(dataToSend))
-      facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', dataToSend)
+      facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', JSON.stringify(dataToSend))
         .then(response => {
           if (response.body.message_creative_id) {
             resolve({status: 'success', message_creative_id: response.body.message_creative_id})
