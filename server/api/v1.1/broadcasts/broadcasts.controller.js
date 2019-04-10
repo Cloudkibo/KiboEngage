@@ -513,15 +513,14 @@ exports.sendConversation = function (req, res) {
               let interval = setInterval(() => {
                 if (payload) {
                   clearInterval(interval)
-                  broadcastApi.callMessageCreativesEndpoint({
-                    'messages': broadcastApi.getMessagesData(payload)
-                  }, page.accessToken)
+                  broadcastApi.callMessageCreativesEndpoint(payload, page.accessToken)
                     .then(messageCreative => {
                       logger.serverLog(TAG, `messageCreative ${util.inspect(messageCreative)}`)
-                      if (messageCreative.status === 'sucess') {
+                      if (messageCreative.status === 'success') {
                         const messageCreativeId = messageCreative.message_creative_id
-                        utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: req.user.companyId, pageId: page._id}}, '', 'kiboengage')
+                        utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
                           .then(pageTags => {
+                            console.log('pageTags', util.inspect(pageTags))
                             const limit = Math.ceil(req.body.subscribersCount / 10000)
                             for (let i = 0; i < limit; i++) {
                               let labels = []
@@ -553,7 +552,7 @@ exports.sendConversation = function (req, res) {
                                   labels = labels.concat(temp)
                                 }
                               }
-                              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
+                              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                                 .then(response => {
                                   logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                                   if (i === limit - 1) {

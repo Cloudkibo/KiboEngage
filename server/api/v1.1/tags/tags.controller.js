@@ -17,8 +17,13 @@ exports.index = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('tags/query', 'post', {companyId: companyUser.companyId, defaultTag: false, isList: false}, req.headers.authorization)
+      let aggregateData = [
+        {$match: {companyId: companyUser.companyId, defaultTag: false, isList: false}},
+        {$group: {_id: '$tag', doc: {$first: '$$ROOT'}}}
+      ]
+      callApi.callApi('tags/aggregate', 'post', aggregateData, req.headers.authorization)
         .then(tags => {
+          tags = tags.map((t) => t.doc[0])
           res.status(200).json({status: 'success', payload: tags})
         })
         .catch(err => {

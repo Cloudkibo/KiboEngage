@@ -15,8 +15,7 @@ exports.facebook = (body, fname, lname) => {
         '{{user_last_name}}', lname)
     }
     payload = {
-      'text': text,
-      'metadata': 'This is a meta data'
+      'text': text
     }
     return payload
   } else if (body.componentType === 'text' && body.buttons) {
