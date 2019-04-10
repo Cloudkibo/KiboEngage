@@ -1,5 +1,6 @@
 const prepareMessageData = require('./prepareMessageData')
 const { facebookApiCaller } = require('./facebookApiCaller')
+const util = require('util')
 
 exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessToken) => {
   return new Promise((resolve, reject) => {
@@ -15,6 +16,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
         }
       }
     }
+    console.log('braodcast data to be sent', util.inspect(data))
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
         if (response.broadcast_id) {
@@ -30,6 +32,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
 }
 
 exports.callMessageCreativesEndpoint = (data, pageAccessToken) => {
+  console.log('message_creatives data', util.inspect(data))
   return new Promise((resolve, reject) => {
     facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
