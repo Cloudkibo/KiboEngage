@@ -23,7 +23,7 @@ exports.index = function (req, res) {
       ]
       callApi.callApi('tags/aggregate', 'post', aggregateData, req.headers.authorization)
         .then(tags => {
-          tags = tags.map((t) => t.doc[0])
+          tags = tags.map((t) => t.doc)
           res.status(200).json({status: 'success', payload: tags})
         })
         .catch(err => {
