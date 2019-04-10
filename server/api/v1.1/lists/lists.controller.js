@@ -123,8 +123,10 @@ function createTag (req, callback) {
   utility.callApi('pages/query', 'post', {companyId: req.user.companyId}, req.headers.authorization)
     .then(pages => {
       pages.forEach((page, i) => {
-        facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
+        let tag = req.body.tag ? req.body.tag : req.body.listName
+        facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
+            console.log('label created', label.body)
             if (label.body.error) {
               callback(label.body.error)
             }
