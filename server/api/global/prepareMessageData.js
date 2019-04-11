@@ -15,10 +15,9 @@ exports.facebook = (body, fname, lname) => {
         '{{user_last_name}}', lname)
     }
     payload = {
-      'text': text,
-      'metadata': 'This is a meta data'
+      'text': text
     }
-    return payload
+    return JSON.stringify(payload)
   } else if (body.componentType === 'text' && body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
       text = text.replace(
@@ -52,7 +51,7 @@ exports.facebook = (body, fname, lname) => {
         }
       }
     }
-    return payload
+    return JSON.stringify(payload)
     // todo test this one. we are not removing as we need to keep it for live chat
     // if (!isForLiveChat) deleteFile(body.fileurl)
   } else if (['gif', 'sticker', 'thumbsUp'].indexOf(
@@ -156,5 +155,5 @@ exports.facebook = (body, fname, lname) => {
       }
     }
   }
-  return payload
+  return JSON.stringify(payload)
 }

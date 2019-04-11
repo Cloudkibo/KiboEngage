@@ -19,10 +19,10 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
     console.log('braodcast data to be sent', util.inspect(data))
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
-        if (response.broadcast_id) {
-          resolve({status: 'success', broadcast_id: response.broadcast_id})
+        if (response.body.broadcast_id) {
+          resolve({status: 'success', broadcast_id: response.body.broadcast_id})
         } else {
-          resolve({status: 'failed', description: response.error})
+          resolve({status: 'failed', description: response.body.error})
         }
       })
       .catch(err => {
@@ -32,28 +32,39 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
 }
 
 exports.callMessageCreativesEndpoint = (data, pageAccessToken) => {
-  console.log('message_creatives data', util.inspect(data))
   return new Promise((resolve, reject) => {
-    facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', data)
-      .then(response => {
-        if (response.message_creative_id) {
-          resolve({status: 'success', message_creative_id: response.message_creative_id})
-        } else {
-          resolve({status: 'failed', description: response.error})
-        }
-      })
-      .catch(err => {
-        reject(err)
-      })
+    console.log('message_creatives data', util.inspect(data))
+    getMessagesData(data).then(messages => {
+      let dataToSend = {
+        'messages': messages
+      }
+      console.log('dataToSend', JSON.stringify(dataToSend))
+      facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', dataToSend)
+        .then(response => {
+          if (response.body.message_creative_id) {
+            resolve({status: 'success', message_creative_id: response.body.message_creative_id})
+          } else {
+            resolve({status: 'failed', description: response.body.error})
+          }
+        })
+        .catch(err => {
+          reject(err)
+        })
+    })
   })
 }
 
-exports.getMessagesData = (payload) => {
-  let messages = []
-  payload.forEach((item, i) => {
-    messages.push(prepareMessageData.facebook(payload, '{{first_name}}', '{{last_name}}'))
-    if (i === messages.length - 1) {
-      return messages
-    }
+const getMessagesData = (payload) => {
+  return new Promise((resolve, reject) => {
+    let messages = []
+    payload.forEach((item, i) => {
+      messages.push(prepareMessageData.facebook(item, '{{first_name}}', '{{last_name}}'))
+      if (i === messages.length - 1) {
+        console.log('messages', util.inspect(messages))
+        resolve(messages)
+      }
+    })
   })
 }
+
+exports.getMessagesData = getMessagesData
