@@ -12,6 +12,7 @@ const compUtility = require('../../../components/utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 const async = require('async')
 const broadcastApi = require('../../global/broadcastApi')
+const util = require('util')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -107,9 +108,11 @@ exports.create = function (req, res) {
           // }
           async.parallelLimit([
             function (callback) {
+              console.log('sendWebhook called')
               sendWebhook(req.user, req.body, req.headers.authorization, callback)
             },
             function (callback) {
+              console.log('createPoll called')
               createPoll(req.user, req.body, callback)
             }
           ], 10, function (err, results) {
@@ -119,6 +122,7 @@ exports.create = function (req, res) {
                 payload: `Failed to create poll ${JSON.stringify(err)}`
               })
             }
+            console.log('create results', util.inspect(results))
             res.status(200).json({status: 'success', payload: results[1]})
           })
         })
@@ -252,13 +256,11 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
       const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
       let subsFindCriteria = {}
       if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
-        broadcastApi.callMessageCreativesEndpoint({
-          'messages': [messageData]
-        }, page.accessToken)
+        broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'poll')
           .then(messageCreative => {
-            if (messageCreative.status === 'sucess') {
+            if (messageCreative.status === 'success') {
               const messageCreativeId = messageCreative.message_creative_id
-              utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: req.user.companyId, pageId: page._id}}, '', 'kiboengage')
+              utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
                 .then(pageTags => {
                   const limit = Math.ceil(req.body.subscribersCount / 10000)
                   for (let i = 0; i < limit; i++) {
@@ -291,7 +293,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                         labels = labels.concat(temp)
                       }
                     }
-                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
+                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                       .then(response => {
                         if (i === limit - 1) {
                           if (response.status === 'success') {
@@ -379,10 +381,10 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                 abort = true
               }
               const data = {
-                messaging_type: 'UPDATE',
+                messaging_type: 'MESSAGE_TAG',
                 recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
                 message: JSON.stringify(messageData),
-                tag: req.body.fbMessageTag
+                tag: req.body.fbMessageTag ? req.body.fbMessageTag : 'NON_PROMOTIONAL_SUBSCRIPTION'
               }
               // this calls the needle when the last message was older than 30 minutes
               // checks the age of function using callback
@@ -392,10 +394,11 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                 }
                 if (isLastMessage) {
                   needle.post(
-                    `https://graph.facebook.com/v2.6/me/messages?access_token=${page.pageAccessToken}`, data, (err, resp) => {
+                    `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`, data, (err, resp) => {
                       if (err) {
                         logger.serverLog(TAG, err)
                       }
+                      console.log('pollsend response', util.inspect(resp.body))
                       let pollBroadcast = PollLogicLayer.preparePollPagePayload(page, req.user, req.body, subscribers[j], req.body._id)
                       PollPageDataLayer.createForPollPage(pollBroadcast)
                         .then(pollCreated => {
@@ -496,11 +499,16 @@ function sendWebhook (user, body, token, callback) {
                         }
                         callback(null, response)
                       })
+                  } else {
+                    callback(null, 'success')
                   }
                 } else {
                   notificationsUtility.saveNotification(webhook)
+                  callback(null, 'success')
                 }
               })
+            } else {
+              callback(null, 'success')
             }
           })
           .catch(error => {

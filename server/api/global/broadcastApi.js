@@ -31,7 +31,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
   })
 }
 
-exports.callMessageCreativesEndpoint = (data, pageAccessToken) => {
+exports.callMessageCreativesEndpoint = (data, pageAccessToken, module = 'broadcast') => {
   return new Promise((resolve, reject) => {
     console.log('message_creatives data', util.inspect(data))
     getMessagesData(data).then(messages => {
@@ -54,16 +54,20 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken) => {
   })
 }
 
-const getMessagesData = (payload) => {
+const getMessagesData = (payload, module) => {
   return new Promise((resolve, reject) => {
-    let messages = []
-    payload.forEach((item, i) => {
-      messages.push(prepareMessageData.facebook(item, '{{first_name}}', '{{last_name}}'))
-      if (i === messages.length - 1) {
-        console.log('messages', util.inspect(messages))
-        resolve(messages)
-      }
-    })
+    if (module === 'broadcast') {
+      let messages = []
+      payload.forEach((item, i) => {
+        messages.push(prepareMessageData.facebook(item, '{{first_name}}', '{{last_name}}'))
+        if (i === messages.length - 1) {
+          console.log('messages', util.inspect(messages))
+          resolve(messages)
+        }
+      })
+    } else {
+      resolve([JSON.stringify(payload)])
+    }
   })
 }
 
