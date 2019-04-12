@@ -310,16 +310,12 @@ exports.sendSurveyDirectly = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
-  console.log('delete survey function')
   surveyDataLayer.deleteForSurveys(req.params.id)
     .then(survey => {
-      console.log('delete survey Page')
       SurveyPageDataLayer.deleteSurveyPage({surveyId: req.params.id})
         .then(surveypages => {
-          console.log('delete removeAllSurveyResponse')
           surveyResponseDataLayer.removeAllSurveyResponse(req.params.id)
             .then(surveyresponses => {
-              console.log('delete removeAllSurveyQuestionsQuery')
               surveyQuestionsDataLayer.removeAllSurveyQuestionsQuery(req.params.id)
                 .then(success => {
                   return res.status(200).json({status: 'success'})
@@ -399,20 +395,21 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                           }
                         }
                       }
-                      broadcastApi.callMessageCreativesEndpoint({
-                        'messages': [messageData]
-                      }, page.accessToken)
+                      broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'survey')
                         .then(messageCreative => {
-                          if (messageCreative.status === 'sucess') {
+                          console.log('messageCreative')
+                          if (messageCreative.status === 'success') {
                             const messageCreativeId = messageCreative.message_creative_id
-                            utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: req.user.companyId, pageId: page._id}}, '', 'kiboengage')
+                            console.log('before pagetags', req.user.companyId)
+                            callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
                               .then(pageTags => {
+                                console.log('pageTags')
                                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                                 for (let i = 0; i < limit; i++) {
                                   let labels = []
                                   labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
                                   if (req.body.isList) {
-                                    utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                    callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                       .then(lists => {
                                         lists = lists.map((l) => l.listName)
                                         let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
@@ -438,11 +435,11 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                       labels = labels.concat(temp)
                                     }
                                   }
-                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
+                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                                     .then(response => {
                                       if (i === limit - 1) {
                                         if (response.status === 'success') {
-                                          utility.callApi('surveys', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                                          callApi.callApi('surveys', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
                                             .then(updated => {
                                               return res.status(200)
                                                 .json({status: 'success', description: 'Survey sent successfully!'})
@@ -483,6 +480,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                           }
                         })
                         .catch(err => {
+                          console.log('error 5')
                           return res.status(500).json({
                             status: 'failed',
                             description: `Failed to send survey ${JSON.stringify(err)}`
@@ -616,7 +614,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                   if (isLastMessage) {
                     logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data))
                     needle.post(
-                      `https://graph.facebook.com/v2.6/me/messages?access_token=${page.pageAccessToken}`,
+                      `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
                       data, (err, resp) => {
                         if (err) {
                           return res.status(500).json({
@@ -631,7 +629,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                           surveyId: req.body._id,
                           seen: false,
                           sent: false,
-                          companyId: req.user.companyId._id
+                          companyId: req.user.companyId
                         }
 
                         SurveyPageDataLayer.createForSurveyPage(surveyPage)
@@ -755,11 +753,16 @@ function sendWebhook (req, callback) {
                       }
                       callback(null, response)
                     })
+                } else {
+                  callback(null, 'success')
                 }
               } else {
                 webhookUtility.saveNotification(webhook)
+                callback(null, 'success')
               }
             })
+          } else {
+            callback(null, 'success')
           }
         })
         .catch(error => {
