@@ -95,14 +95,14 @@ const findUser = (screenName, fn) => {
     (err, data, response) => {
       console.log('Inside Find User')
       fn(err, data)
-      /*if (err) {
+      /* if (err) {
         fn(err)
       }
       if (data && data.errors) {
         if (data.errors.length > 0 && data.errors[0].code === 50) {
           fn('User not found on Twitter')
         }
-      }*/
+      } */
     })
 }
 

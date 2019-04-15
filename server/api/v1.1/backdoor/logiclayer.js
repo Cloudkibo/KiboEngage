@@ -1,14 +1,14 @@
 exports.getCriterias = function (body) {
   let findCriteria = {}
   let finalCriteria = {}
-  let search = new RegExp('.*' + body.filter_criteria.search_value + '.*', 'i')
+  let search = '.*' + body.filter_criteria.search_value + '.*'
   if (body.filter_criteria.search_value !== '') {
-    findCriteria = Object.assign(findCriteria, {name: {$regex: search}})
+    findCriteria = Object.assign(findCriteria, {name: {$regex: search, $options: 'i'}})
   }
-  if (body.filter_criteria.locale_value !== '') {
+  if (body.filter_criteria.locale_value !== '' && body.filter_criteria.locale_value !== 'all') {
     findCriteria = Object.assign(findCriteria, {'facebookInfo.locale': body.filter_criteria.locale_value})
   }
-  if (body.filter_criteria.gender_value !== '') {
+  if (body.filter_criteria.gender_value !== '' && body.filter_criteria.gender_value !== 'all') {
     findCriteria = Object.assign(findCriteria, {'facebookInfo.gender': body.filter_criteria.gender_value})
   }
   if (body.first_page) {
@@ -30,10 +30,10 @@ exports.getCriterias = function (body) {
   }
 }
 exports.getAllPagesCriteria = function (userid, body) {
-  let search = new RegExp('.*' + body.search_value + '.*', 'i')
+  let search = '.*' + body.search_value + '.*'
   let findCriteria = {
     userId: userid,
-    pageName: body.search_value !== '' ? {$regex: search} : {$exists: true}
+    pageName: body.search_value !== '' ? {$regex: search, $options: 'i'} : {$exists: true}
   }
   let recordsToSkip = 0
   let finalCriteria = {}
@@ -84,13 +84,13 @@ exports.allUserBroadcastsCriteria = function (userid, body) {
       findCriteria = {
         userId: userid,
         'payload.1': { $exists: true },
-        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+        title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
       }
     } else {
       findCriteria = {
         userId: userid,
         $and: [{'payload.0.componentType': body.filter_criteria.type_value !== '' ? body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
-        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+        title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
       }
     }
   }
@@ -144,7 +144,7 @@ exports.getAllBroadcastsCriteria = function (body) {
   let countCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true },
     'datetime': body.filter_criteria.days !== '0' ? {
       $gte: startDate
     } : { $exists: true }
@@ -203,7 +203,7 @@ exports.getAllPollsCriteria = function (body) {
   let countCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    statement: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    statement: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true },
     'datetime': body.filter_criteria.days !== '0' ? {
       $gte: startDate
     } : { $exists: true }
@@ -264,7 +264,7 @@ exports.getAllSurveysCriteria = function (body) {
   let countCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+    title: body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true },
     'datetime': body.filter_criteria.days !== '0' ? {
       $gte: startDate
     } : { $exists: true }
@@ -331,9 +331,9 @@ exports.allUserPollsCriteria = function (userid, body, survey) {
     } : { $exists: true }
   }
   if (survey) {
-    findCriteria.title = body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+    findCriteria.title = body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
   } else {
-    findCriteria.statement = body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true }
+    findCriteria.statement = body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
   }
   console.log('findCriteria', findCriteria)
   if (body.first_page === 'first') {

@@ -173,27 +173,20 @@ exports.updatePlatformWhatsApp = function (req, res) {
             let newPayload = {twilioWhatsApp: {
               accountSID: req.body.accountSID,
               authToken: req.body.authToken,
-              sandboxNumber: req.body.sandboxNumber,
+              sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
               sandboxCode: req.body.sandboxCode
             }}
             utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}}, req.headers.authorization)
               .then(updatedProfile => {
-                // let accountSid = req.body.accountSID
-                // let authToken = req.body.authToken
-                // let client = require('twilio')(accountSid, authToken)
-                // client.incomingPhoneNumbers
-                //   .list().then((incomingPhoneNumbers) => {
-                //     for (let i = 0; i < incomingPhoneNumbers.length; i++) {
-                //       client.incomingPhoneNumbers(incomingPhoneNumbers[i].sid)
-                //         .update({
-                //           accountSid: req.body.twilio.accountSID,
-                //           smsUrl: `${config.api_urls['webhook']}/webhooks/twilio/receiveSms`
-                //         })
-                //         .then(result => {
-                //           console.log('result from updating webhook', result)
-                //         })
-                //     }
-                //   })
+                if (req.body.platform) {
+                  utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.platform}, options: {}})
+                    .then(updated => {
+                      console.log('user updated', updated)
+                    })
+                    .catch(err => {
+                      res.status(500).json({status: 'failed', payload: err})
+                    })
+                }
                 console.log('returning', updatedProfile)
                 return res.status(200).json({status: 'success', payload: updatedProfile})
               })

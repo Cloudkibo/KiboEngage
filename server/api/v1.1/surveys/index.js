@@ -41,7 +41,7 @@ router.post('/sendSurveyDirectly',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('surveys'),
   auth.doesRolePermitsThisAction('surveyPermission'),
-  controller.sendSurvey)
+  controller.sendSurveyDirectly)
 
 //  router.post('/submitresponse', controller.submitresponse)
 

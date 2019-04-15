@@ -318,7 +318,8 @@ function prepareBroadCastPayload (req, companyId) {
     payload: req.body.payload,
     userId: req.user._id,
     companyId,
-    title: req.body.title
+    title: req.body.title,
+    sent: req.body.subscribersCount
   }
   if (req.body.isSegmented) {
     broadcastPayload.isSegmented = true
@@ -374,7 +375,7 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
       .then(tagSubscribers => {
         console.log('tagSubscribers in applyTagFilterIfNecessary', tagSubscribers)
         if (tagSubscribers.length === 0) {
-         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+          return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
         }
         logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`)
         let subscribersPayload = []

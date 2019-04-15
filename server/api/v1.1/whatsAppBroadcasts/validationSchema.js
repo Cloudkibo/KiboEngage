@@ -1,24 +1,3 @@
-exports.sendBroadcastPayload = {
-  type: 'object',
-  properties: {
-    title: {
-      type: 'string',
-      required: true
-    },
-    payload: {
-      type: 'array',
-      required: true
-    },
-    platform: {
-      type: 'string',
-      required: true
-    },
-    phoneNumber: {
-      type: 'string',
-      required: true
-    }
-  }
-}
 exports.payload = {
   type: 'object',
   properties: {
@@ -31,6 +10,23 @@ exports.payload = {
       required: true
     },
     first_page: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+exports.sendBroadcastPayload = {
+  type: 'object',
+  properties: {
+    title: {
+      type: 'string',
+      required: true
+    },
+    payload: {
+      type: 'array',
+      required: true
+    },
+    platform: {
       type: 'string',
       required: true
     }

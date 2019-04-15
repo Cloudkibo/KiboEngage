@@ -1,18 +1,3 @@
-function prepareBroadCastPayload (req, companyId) {
-  let broadcastPayload = {
-    platform: req.body.platform,
-    payload: req.body.payload,
-    userId: req.user._id,
-    companyId,
-    title: req.body.title,
-    phoneNumber: req.body.phoneNumber
-  }
-  if (req.body.segmentation) {
-    broadcastPayload.segmentation = req.body.segmentation
-  }
-  return broadcastPayload
-}
-
 exports.getCriterias = function (body, companyUser) {
   let findCriteria = {}
   let finalCriteria = {}
@@ -60,7 +45,19 @@ exports.getCriterias = function (body, companyUser) {
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }
-
+exports.prepareBroadCastPayload = function (req, companyId) {
+  let broadcastPayload = {
+    platform: req.body.platform,
+    payload: req.body.payload,
+    userId: req.user._id,
+    companyId,
+    title: req.body.title
+  }
+  if (req.body.segmentation) {
+    broadcastPayload.segmentation = req.body.segmentation
+  }
+  return broadcastPayload
+}
 exports.checkFilterValues = function (values, data) {
   var matchCriteria = true
   if (values.length > 0) {
@@ -93,5 +90,3 @@ exports.checkFilterValues = function (values, data) {
   }
   return matchCriteria
 }
-
-exports.prepareBroadCastPayload = prepareBroadCastPayload
