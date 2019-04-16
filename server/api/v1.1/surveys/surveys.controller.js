@@ -578,6 +578,9 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
 function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUsage, companyUsage, abort) {
   callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
     .then(subscribers => {
+      if (subscribers.length === 0) {
+        return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+      }
       utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         subscribers = taggedSubscribers
         utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {

@@ -368,6 +368,10 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
 function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort) {
   utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
     .then(subscribers => {
+      console.log('subscribers in subFindCriteria', subscribers)
+      if (subscribers.length === 0) {
+        return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+      }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         subscribers = taggedSubscribers
         for (let j = 0; j < subscribers.length && !abort; j++) {
@@ -444,7 +448,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
               return res.status(500).json({status: 'failed', payload: `Failed to update company usage ${JSON.stringify(error)}`})
             })
         }
-      })
+      }, res)
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
