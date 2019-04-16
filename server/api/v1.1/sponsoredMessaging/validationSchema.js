@@ -10,3 +10,16 @@ exports.createPayload = {
     }
 
 }
+
+exports.updatePayload = {
+    type:'object',
+    companyId: {
+        type: 'string',
+        required: true
+    },
+    userId: {
+        type: 'string',
+        required: true
+    }
+
+}

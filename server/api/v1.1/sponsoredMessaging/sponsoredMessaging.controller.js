@@ -15,12 +15,23 @@ exports.create = function(req,res){
 
     let payload = logiclayer.preparePayload(companyUser.companyId, req.user._id)
         utility.callApi(`sponsoredMessaging`, 'post', payload, req.headers.authorization)
-                .then(sponsoredMessage => {
-                return res.status(201).json({status: 'success', payload: sponsoredMessage})
-                })
-                .catch(error => {
-                return res.status(500).json({status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}`})
-                })
+        .then(sponsoredMessage => {
+          return res.status(201).json({status: 'success', payload: sponsoredMessage})
+        })
+        .catch(error => {
+          return res.status(500).json({status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}`})
+        })
+      })
+    }
 
-              })
-        }
+exports.update = function(req,res){
+
+  let updatePayload = logiclayer.prepareUpdatePayload(req.body)
+  utility.callApi( `sponsoredMessaging/${req.body._id}`,'post',updatePayload, req.headers.authorization)
+  .then(sponsoredMessage => {
+    return res.status(201).json({status: 'success', payload: sponsoredMessage})
+  })
+  .catch(error => {
+    return res.status(500).json({status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}`})
+  })
+}

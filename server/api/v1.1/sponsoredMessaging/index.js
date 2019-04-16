@@ -11,5 +11,10 @@ router.post('/',
     validate({body: validationSchema.createPayload}),
     controller.create)
 
+router.post('/update/:id',
+auth.isAuthenticated(),
+validate({body: validationSchema.updatePayload}),
+controller.update
+)
 
 module.exports = router
