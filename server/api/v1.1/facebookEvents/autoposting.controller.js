@@ -155,6 +155,7 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
               }
               broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
                 .then(response => {
+                  console.log('response from callBroadcastMessagesEndpoint', response)
                   if (i === limit - 1) {
                     if (response.status === 'success') {
                       utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
