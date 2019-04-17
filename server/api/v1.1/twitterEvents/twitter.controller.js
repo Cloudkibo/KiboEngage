@@ -51,7 +51,7 @@ exports.twitterwebhook = function (req, res) {
         }
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
-            console.log('pages found', pages.length)
+            console.log('pages found', pages)
             logger.serverLog(TAG, `pages found ${JSON.stringify(pages)}`)
             pages.forEach(page => {
               let subscribersData = [
@@ -132,7 +132,7 @@ exports.twitterwebhook = function (req, res) {
                                 }
                               })
                               .catch(err => {
-                                console.log('error in messageCreative', messageCreative)
+                                console.log('error in messageCreative', err)
                                 logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
                               })
                           })
@@ -146,6 +146,7 @@ exports.twitterwebhook = function (req, res) {
                   }
                 })
                 .catch(err => {
+                  console.log('Failed to fetch subscriber count', err)
                   logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`)
                 })
             })
