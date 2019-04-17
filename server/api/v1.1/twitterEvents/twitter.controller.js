@@ -26,6 +26,7 @@ exports.findAutoposting = function (req, res) {
 
 exports.twitterwebhook = function (req, res) {
   logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
+  console.log('in twitterwebhook', JSON.stringify(req.body))
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -72,10 +73,12 @@ exports.twitterwebhook = function (req, res) {
                       .then(savedMsg => {
                         logicLayer.checkType(req.body, savedMsg)
                           .then(messageData => {
+                            console.log('messageData', messageData)
                             broadcastApi.callMessageCreativesEndpoint({
                               'messages': messageData
                             }, page.accessToken)
                               .then(messageCreative => {
+                                console.log('messageCreative', messageCreative)
                                 if (messageCreative.status === 'sucess') {
                                   const messageCreativeId = messageCreative.message_creative_id
                                   utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: page.companyId, pageId: page._id}}, '', 'kiboengage')
@@ -125,6 +128,7 @@ exports.twitterwebhook = function (req, res) {
                                 }
                               })
                               .catch(err => {
+                                console.log('error in messageCreative', messageCreative)
                                 logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
                               })
                           })
