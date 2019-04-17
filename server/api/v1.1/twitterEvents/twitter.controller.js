@@ -103,6 +103,7 @@ exports.twitterwebhook = function (req, res) {
                                           let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                                           labels = labels.concat(temp)
                                         }
+                                        console.log('label in twitter', labels)
                                         broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                                           .then(response => {
                                             console.log('response from callBroadcastMessagesEndpoint', response)

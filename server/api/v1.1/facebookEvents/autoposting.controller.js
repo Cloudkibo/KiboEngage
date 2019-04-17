@@ -154,7 +154,7 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
                 let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                 labels = labels.concat(temp)
               }
-              console.log('labels', labels)
+              console.log('label in facebook', labels)
               broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                 .then(response => {
                   console.log('response from callBroadcastMessagesEndpoint', response)
