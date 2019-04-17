@@ -81,11 +81,15 @@ exports.getAllPages = function (req, res) {
   let criterias = LogicLayer.getAllPagesCriteria(req.params.userid, req.body)
   console.log('criterias.countCriteria', JSON.stringify(criterias.countCriteria))
   console.log('criterias.finalCriteria', JSON.stringify(criterias.finalCriteria))
+  console.log('Miliseconds before call api-1', new Date().getMilliseconds)
   utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch connected pages count
     .then(count => {
+      console.log('Miliseconds after call api-1', new Date().getMilliseconds)
       console.log('pagesCount', count)
+      console.log('Miliseconds before call api-2', new Date().getMilliseconds)
       utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, req.headers.authorization) // fetch connected pages
         .then(pages => {
+          console.log('Miliseconds after call api-2', new Date().getMilliseconds)
           console.log('fetched pages', pages)
           let pagesPayload = []
           for (let i = 0; i < pages.length; i++) {

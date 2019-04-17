@@ -19,6 +19,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
     console.log('braodcast data to be sent', util.inspect(data))
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
+        console.log('response from facebookApiCaller', JSON.stringify(response.body))
         if (response.body.broadcast_id) {
           resolve({status: 'success', broadcast_id: response.body.broadcast_id})
         } else {
@@ -34,11 +35,11 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
 exports.callMessageCreativesEndpoint = (data, pageAccessToken, module = 'broadcast') => {
   return new Promise((resolve, reject) => {
     console.log('message_creatives data', util.inspect(data))
-    getMessagesData(data).then(messages => {
+    getMessagesData(data, module).then(messages => {
       let dataToSend = {
         'messages': messages
       }
-      console.log('dataToSend', JSON.stringify(dataToSend))
+      console.log('dataToSend in message_creatives', JSON.stringify(dataToSend))
       facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', dataToSend)
         .then(response => {
           if (response.body.message_creative_id) {
@@ -65,6 +66,8 @@ const getMessagesData = (payload, module) => {
           resolve(messages)
         }
       })
+    } else if (module === 'autoposting') {
+      resolve(JSON.stringify(payload))
     } else {
       resolve([JSON.stringify(payload)])
     }

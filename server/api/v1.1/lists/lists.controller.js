@@ -169,7 +169,8 @@ function createList (req, callback) {
     conditions: req.body.conditions,
     content: req.body.content,
     parentList: req.body.parentListId,
-    parentListName: req.body.parentListName
+    parentListName: req.body.parentListName,
+    joiningCondition: req.body.joiningCondition
   }, req.headers.authorization)
     .then(listCreated => {
       utility.callApi(`featureUsage/updateCompany`, 'put', {
@@ -192,7 +193,8 @@ exports.editList = function (req, res) {
         utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
           .then(pages => {
             let page = pages[0]
-            facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'label': req.body.newTag})
+            let label = req.body.newTag ? req.body.newTag : req.body.newListName
+            facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'label': label})
               .then(label => {
                 if (label.body.error) {
                   return res.status(500).json({
@@ -203,6 +205,7 @@ exports.editList = function (req, res) {
                 let data = {
                   listName: req.body.newListName,
                   conditions: req.body.conditions,
+                  joiningCondition: req.body.joiningCondition,
                   content: req.body.content
                 }
                 async.parallelLimit([
