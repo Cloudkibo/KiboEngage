@@ -153,7 +153,7 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
                 let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                 labels = labels.concat(temp)
               }
-              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
+              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                 .then(response => {
                   console.log('response from callBroadcastMessagesEndpoint', response)
                   if (i === limit - 1) {
