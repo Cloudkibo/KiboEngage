@@ -133,7 +133,7 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
   broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'autoposting')
     .then(messageCreative => {
       console.log('messageCreative', messageCreative)
-      if (messageCreative.status === 'sucess') {
+      if (messageCreative.status === 'success') {
         const messageCreativeId = messageCreative.message_creative_id
         utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
           .then(pageTags => {
