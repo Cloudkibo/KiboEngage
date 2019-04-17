@@ -105,7 +105,7 @@ function preparePaylod (body, newURL, type, text, button) {
   let messageData = {}
   if (type === 'text') {
     if (button) {
-      messageData = JSON.stringify({
+      messageData = {
         'attachment': {
           'type': 'template',
           'payload': {
@@ -120,13 +120,13 @@ function preparePaylod (body, newURL, type, text, button) {
             ]
           }
         }
-      })
+      }
       return [messageData]
     } else {
-      messageData = JSON.stringify({
+      messageData = {
         'text': text,
         'metadata': 'This is a meta data'
-      })
+      }
       return [messageData]
     }
   } else if (type === 'photo') {
@@ -136,7 +136,7 @@ function preparePaylod (body, newURL, type, text, button) {
     } else {
       gallery = prepareGallery(body.extended_entities.media, text, newURL)
     }
-    messageData = JSON.stringify({
+    messageData = {
       'attachment': {
         'type': 'template',
         'payload': {
@@ -144,7 +144,7 @@ function preparePaylod (body, newURL, type, text, button) {
           'elements': gallery
         }
       }
-    })
+    }
     return [messageData]
   } else {
     let videoUrl
@@ -153,14 +153,14 @@ function preparePaylod (body, newURL, type, text, button) {
     } else {
       videoUrl = getVideoURL(body.extended_entities.media[0].video_info.variants)
     }
-    messageData = JSON.stringify({
+    messageData = {
       'attachment': {
         'type': 'video',
         'payload': {
           'url': videoUrl
         }
       }
-    })
+    }
     return [messageData]
   }
 }

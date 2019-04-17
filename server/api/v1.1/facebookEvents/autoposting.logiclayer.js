@@ -47,14 +47,13 @@ exports.subscriberFindCriteria = function (postingItem, page) {
   return subscriberFindCriteria
 }
 exports.prepareMessageDataForStatus = function (event, newURL) {
-  let messageData = JSON.stringify({
-    'text': event.value.message,
-    'metadata': 'This is metadata'
-  })
+  let messageData = {
+    'text': event.value.message
+  }
   return [messageData]
 }
 exports.prepareMessageDataForShare = function (event, newURL) {
-  let messageData = JSON.stringify({
+  let messageData = {
     'attachment': {
       'type': 'template',
       'payload': {
@@ -77,11 +76,11 @@ exports.prepareMessageDataForShare = function (event, newURL) {
         ]
       }
     }
-  })
+  }
   return [messageData]
 }
 exports.prepareMessageDataForImage = function (event, newURL) {
-  let messageData = JSON.stringify({
+  let messageData = {
     'attachment': {
       'type': 'template',
       'payload': {
@@ -104,11 +103,11 @@ exports.prepareMessageDataForImage = function (event, newURL) {
         ]
       }
     }
-  })
+  }
   return [messageData]
 }
 exports.prepareMessageDataForVideo = function (event) {
-  let messageData = JSON.stringify({
+  let messageData = {
     'attachment': {
       'type': 'video',
       'payload': {
@@ -116,7 +115,7 @@ exports.prepareMessageDataForVideo = function (event) {
         'is_reusable': false
       }
     }
-  })
+  }
   return [messageData]
 }
 exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
