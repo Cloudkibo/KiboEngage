@@ -33,6 +33,7 @@ exports.twitterwebhook = function (req, res) {
   })
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
+      console.log('autopostings found', autopostings)
       logger.serverLog(TAG, `autoposting found ${JSON.stringify(autopostings)}`)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
@@ -50,6 +51,7 @@ exports.twitterwebhook = function (req, res) {
         }
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
+            console.log('pages found', pages.length)
             logger.serverLog(TAG, `pages found ${JSON.stringify(pages)}`)
             pages.forEach(page => {
               let subscribersData = [
@@ -58,6 +60,7 @@ exports.twitterwebhook = function (req, res) {
               ]
               utility.callApi('subscribers/query', 'post', subscribersData, req.headers.authorization)
                 .then(subscribersCount => {
+                  console.log('subscribers found', subscribersCount)
                   if (subscribersCount.length > 0) {
                     let newMsg = {
                       pageId: page._id,
@@ -71,6 +74,7 @@ exports.twitterwebhook = function (req, res) {
                     }
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
+                        console.log('savedMsg', savedMsg)
                         logicLayer.checkType(req.body, savedMsg)
                           .then(messageData => {
                             console.log('messageData', messageData)
