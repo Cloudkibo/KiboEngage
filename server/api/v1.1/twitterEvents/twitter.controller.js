@@ -58,7 +58,7 @@ exports.twitterwebhook = function (req, res) {
                 {$match: {pageId: page._id, companyId: page.companyId}},
                 {$group: {_id: null, count: {$sum: 1}}}
               ]
-              utility.callApi('subscribers/query', 'post', subscribersData, req.headers.authorization)
+              utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
                 .then(subscribersCount => {
                   console.log('subscribers found', subscribersCount)
                   if (subscribersCount.length > 0) {
@@ -78,16 +78,16 @@ exports.twitterwebhook = function (req, res) {
                         logicLayer.checkType(req.body, savedMsg)
                           .then(messageData => {
                             console.log('messageData', messageData)
-                            broadcastApi.callMessageCreativesEndpoint({
-                              'messages': messageData
-                            }, page.accessToken)
+                            broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'autoposting')
                               .then(messageCreative => {
                                 console.log('messageCreative', messageCreative)
-                                if (messageCreative.status === 'sucess') {
+                                if (messageCreative.status === 'success') {
                                   const messageCreativeId = messageCreative.message_creative_id
-                                  utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: page.companyId, pageId: page._id}}, '', 'kiboengage')
+                                  utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
                                     .then(pageTags => {
+                                      console.log('pageTags', pageTags)
                                       const limit = Math.ceil(subscribersCount[0].count / 10000)
+                                      console.log('limit', limit)
                                       for (let i = 0; i < limit; i++) {
                                         let labels = []
                                         labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
@@ -103,8 +103,9 @@ exports.twitterwebhook = function (req, res) {
                                           let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                                           labels = labels.concat(temp)
                                         }
-                                        broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
+                                        broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                                           .then(response => {
+                                            console.log('response from callBroadcastMessagesEndpoint', response)
                                             if (i === limit - 1) {
                                               if (response.status === 'success') {
                                                 utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
@@ -125,6 +126,7 @@ exports.twitterwebhook = function (req, res) {
                                       }
                                     })
                                     .catch(err => {
+                                      console.log('error in fetching tags', JSON.stringify(err))
                                       logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`)
                                     })
                                 } else {
