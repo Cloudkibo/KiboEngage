@@ -17,4 +17,9 @@ validate({body: validationSchema.updatePayload}),
 controller.update
 )
 
+router.delete('/:_id',
+  auth.isAuthenticated(),
+  controller.delete)
+
+
 module.exports = router

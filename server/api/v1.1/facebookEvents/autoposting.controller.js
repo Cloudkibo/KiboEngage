@@ -44,6 +44,7 @@ exports.autoposting = function (req, res) {
 function handleThePagePostsForAutoPosting (req, event, status) {
   AutoPostingDataLayer.findAllAutopostingObjectsUsingQuery({ accountUniqueName: event.value.sender_id, isActive: true })
     .then(autopostings => {
+      console.log('autopostings found', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = autopostingLogicLayer.pagesFindCriteria(postingItem)
         utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
@@ -53,8 +54,9 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                 {$match: {pageId: page._id, companyId: page.companyId}},
                 {$group: {_id: null, count: {$sum: 1}}}
               ]
-              utility.callApi('subscribers/query', 'post', subscribersData, req.headers.authorization)
+              utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
                 .then(subscribersCount => {
+                  console.log('subscribersCount', subscribersCount)
                   if (subscribersCount.length > 0) {
                     AutopostingMessagesDataLayer.createAutopostingMessage({
                       pageId: page._id,
@@ -70,7 +72,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                         let messageData = {}
                         if (event.value.item === 'status' || status) {
                           messageData = autopostingLogicLayer.prepareMessageDataForStatus(event)
-                          sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
+                          sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
                         } else if (event.value.item === 'share') {
                           URLDataLayer.createURLObject({
                             originalURL: event.value.link,
@@ -82,7 +84,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                             .then(savedurl => {
                               let newURL = config.domain + '/api/URL/' + savedurl._id
                               messageData = autopostingLogicLayer.prepareMessageDataForShare(event, newURL)
-                              sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
+                              sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
                             })
                             .catch(err => {
                               logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
@@ -98,14 +100,14 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                             .then(savedurl => {
                               let newURL = config.domain + '/api/URL/' + savedurl._id
                               messageData = autopostingLogicLayer.prepareMessageDataForImage(event, newURL)
-                              sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
+                              sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
                             })
                             .catch(err => {
                               logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
                             })
                         } else if (event.value.item === 'video') {
                           messageData = autopostingLogicLayer.prepareMessageDataForVideo(event)
-                          sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
+                          sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
                         }
                       })
                       .catch(err => {
@@ -127,15 +129,15 @@ function handleThePagePostsForAutoPosting (req, event, status) {
       logger.serverLog(TAG, `Failed to fetch autopostings ${JSON.stringify(err)}`)
     })
 }
-function sendAutopostingMessage (messageData, postingItem, subscribersCount, page) {
-  broadcastApi.callMessageCreativesEndpoint({
-    'messages': messageData
-  }, page.accessToken)
+function sendAutopostingMessage (messageData, postingItem, subscribersCount, page, req) {
+  broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'autoposting')
     .then(messageCreative => {
-      if (messageCreative.status === 'sucess') {
+      console.log('messageCreative', messageCreative)
+      if (messageCreative.status === 'success') {
         const messageCreativeId = messageCreative.message_creative_id
-        utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: page.companyId, pageId: page._id}}, '', 'kiboengage')
+        utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
           .then(pageTags => {
+            console.log('pageTags found', pageTags)
             const limit = Math.ceil(subscribersCount[0].count / 10000)
             for (let i = 0; i < limit; i++) {
               let labels = []
@@ -152,8 +154,10 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
                 let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                 labels = labels.concat(temp)
               }
-              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
+              console.log('label in facebook', labels)
+              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                 .then(response => {
+                  console.log('response from callBroadcastMessagesEndpoint', response)
                   if (i === limit - 1) {
                     if (response.status === 'success') {
                       utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')

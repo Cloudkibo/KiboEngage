@@ -35,3 +35,14 @@ exports.update = function(req,res){
     return res.status(500).json({status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}`})
   })
 }
+
+exports.delete = function (req, res) {
+
+  utility.callApi( `sponsoredMessaging/${req.params._id}`,'DELETE', {}, req.headers.authorization)
+  .then(sponsoredMessage => {
+    return res.status(201).json({status: 'success', payload: sponsoredMessage})
+  })
+  .catch(error => {
+    return res.status(500).json({status: 'failed', payload: `Failed to delete sponsored message ${error}`})
+  })
+}

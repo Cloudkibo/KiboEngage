@@ -7,7 +7,7 @@ exports.batchApi = (payload, recipientId, page, sendBroadcast, fname, lname, res
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
   let batch = []
   payload.forEach((item, index) => {
-    let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData.facebook(item, fname, lname)))
+    let message = "message=" + encodeURIComponent(prepareMessageData.facebook(item, fname, lname))
     if (index === 0) {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
     } else {
