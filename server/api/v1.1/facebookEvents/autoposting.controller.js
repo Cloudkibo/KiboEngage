@@ -137,6 +137,7 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
         const messageCreativeId = messageCreative.message_creative_id
         utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
           .then(pageTags => {
+            console.log('pageTags found', pageTags)
             const limit = Math.ceil(subscribersCount[0].count / 10000)
             for (let i = 0; i < limit; i++) {
               let labels = []
@@ -153,6 +154,7 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
                 let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                 labels = labels.concat(temp)
               }
+              console.log('labels', labels)
               broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                 .then(response => {
                   console.log('response from callBroadcastMessagesEndpoint', response)
