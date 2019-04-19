@@ -1,25 +1,25 @@
 exports.createPayload = {
-    type:'object',
-    companyId: {
-        type: 'string',
-        required: true
-    },
-    userId: {
-        type: 'string',
-        required: true
-    }
+  type: 'object',
+  companyId: {
+    type: 'string',
+    required: true
+  },
+  userId: {
+    type: 'string',
+    required: true
+  }
 
 }
 
 exports.updatePayload = {
-    type:'object',
-    companyId: {
-        type: 'string',
-        required: true
-    },
-    userId: {
-        type: 'string',
-        required: true
-    }
+  type: 'object',
+  companyId: {
+    type: 'string',
+    required: true
+  },
+  userId: {
+    type: 'string',
+    required: true
+  }
 
 }
