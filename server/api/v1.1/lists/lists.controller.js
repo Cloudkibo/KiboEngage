@@ -123,7 +123,7 @@ function createTag (req, callback) {
   utility.callApi('pages/query', 'post', {companyId: req.user.companyId}, req.headers.authorization)
     .then(pages => {
       pages.forEach((page, i) => {
-        let tag = req.body.tag ? req.body.tag : req.body.listName
+        let tag = req.body.listName
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
             console.log('label created', label.body)
@@ -187,74 +187,101 @@ function createList (req, callback) {
 }
 
 exports.editList = function (req, res) {
-  utility.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
-    .then(tags => {
-      tags.forEach((tag, i) => {
-        utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
-          .then(pages => {
-            let page = pages[0]
-            let label = req.body.newTag ? req.body.newTag : req.body.newListName
-            facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'label': label})
-              .then(label => {
-                if (label.body.error) {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`
-                  })
-                }
-                let data = {
-                  listName: req.body.newListName,
-                  conditions: req.body.conditions,
-                  joiningCondition: req.body.joiningCondition,
-                  content: req.body.content
-                }
-                async.parallelLimit([
-                  function (callback) {
-                    updateList(data, req, callback)
-                  }
-                ], 10, function (err, results) {
-                  if (err) {
+  if (req.body.newListName !== req.body.listName) {
+    utility.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
+      .then(tags => {
+        tags.forEach((tag, i) => {
+          utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+            .then(pages => {
+              let page = pages[0]
+              let label = req.body.newListName
+              facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': label})
+                .then(label => {
+                  if (label.body.error) {
                     return res.status(500).json({
                       status: 'failed',
-                      description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
+                      description: `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`
                     })
                   }
-                  if (i === tags.length - 1) {
-                    utility.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
-                      .then(tagSubscribers => {
-                        let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
-                        assignTagToSubscribers(subscribers, req.body.listName, req, res)
-                      })
-                      .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Failed to create tag on Facebook ${JSON.stringify(err)}`
-                        })
-                      })
+                  let data = {
+                    listName: req.body.newListName,
+                    conditions: req.body.conditions,
+                    joiningCondition: req.body.joiningCondition,
+                    content: req.body.content
                   }
+                  async.parallelLimit([
+                    function (callback) {
+                      updateList(data, req, callback)
+                    }
+                  ], 10, function (err, results) {
+                    if (err) {
+                      return res.status(500).json({
+                        status: 'failed',
+                        description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
+                      })
+                    }
+                    if (i === tags.length - 1) {
+                      utility.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
+                        .then(tagSubscribers => {
+                          let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
+                          if (subscribers.length > 0) {
+                            assignTagToSubscribers(subscribers, req.body.listName, req, res)
+                          } else {
+                            res.status(200).json({status: 'success', payload: 'List updated successfully!'})
+                          }
+                        })
+                        .catch(err => {
+                          return res.status(500).json({
+                            status: 'failed',
+                            description: `Failed to create tag on Facebook ${JSON.stringify(err)}`
+                          })
+                        })
+                    }
+                  })
                 })
-              })
-              .catch(error => {
-                return res.status(500).json({
-                  status: 'failed',
-                  payload: `Failed to create tag on Facebook ${JSON.stringify(error)}`
+                .catch(error => {
+                  return res.status(500).json({
+                    status: 'failed',
+                    payload: `Failed to create tag on Facebook ${JSON.stringify(error)}`
+                  })
                 })
-              })
-          })
-          .catch(error => {
-            return res.status(500).json({
-              status: 'failed',
-              payload: `Failed to fetch page ${JSON.stringify(error)}`
             })
-          })
+            .catch(error => {
+              return res.status(500).json({
+                status: 'failed',
+                payload: `Failed to fetch page ${JSON.stringify(error)}`
+              })
+            })
+        })
       })
-    })
-    .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch tags ${JSON.stringify(error)}`
+      .catch(error => {
+        return res.status(500).json({
+          status: 'failed',
+          payload: `Failed to fetch tags ${JSON.stringify(error)}`
+        })
       })
+  } else {
+    let data = {
+      listName: req.body.newListName,
+      conditions: req.body.conditions,
+      joiningCondition: req.body.joiningCondition,
+      content: req.body.content
+    }
+    async.parallelLimit([
+      function (callback) {
+        updateList(data, req, callback)
+      }
+    ], 10, function (err, results) {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Failed to update list`
+        })
+      } else {
+        res.status(200).json({status: 'success', payload: 'List updated successfully!'})
+      }
     })
+  }
 }
 
 function updateList (data, req, callback) {
@@ -424,7 +451,7 @@ function deleteListFromFacebook (req, tags, callback) {
     utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
       .then(pages => {
         let page = pages[0]
-        facebookApiCaller('v2.11', `me/${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
+        facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
             if (label.error) {
               callback(label.error)
@@ -546,7 +573,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
           let tagPayload = tags[existsTag.index]
-          facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
+          facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
               if (assignedLabel.body.error) {
                 res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${assignedLabel.body.error}`})
@@ -570,10 +597,11 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${err}`})
             })
         } else {
-          utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id}, req.headers.authorization)
+          utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId}, req.headers.authorization)
             .then(tagPayload => {
+              tagPayload = tagPayload[0]
               tags.push(tagPayload)
-              facebookApiCaller('v2.11', `me/${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
+              facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
                 .then(assignedLabel => {
                   if (assignedLabel.body.error) {
                     res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${assignedLabel.body.error}`})
