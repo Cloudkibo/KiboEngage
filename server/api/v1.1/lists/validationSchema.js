@@ -45,6 +45,10 @@ exports.createPayload = {
     parentListName: {
       type: 'string',
       required: false
+    },
+    joiningCondition: {
+      type: 'string',
+      required: true
     }
   }
 }
@@ -63,7 +67,7 @@ exports.editPayload = {
       type: 'array',
       required: true
     },
-    _id: {
+    joiningCondition: {
       type: 'string',
       required: true
     }

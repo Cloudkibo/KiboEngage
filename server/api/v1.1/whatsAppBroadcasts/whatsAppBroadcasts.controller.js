@@ -48,16 +48,13 @@ exports.sendBroadcast = function (req, res) {
     .then(companyUser => {
       dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
         .then(broadcast => {
-          utility.callApi(`contacts/query`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization) // fetch company user
+          utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization) // fetch company user
             .then(contacts => {
-              console.log('contacts fetched in sendBroadcast', contacts)
-              console.log('companyUser fetched in sendBroadcast', companyUser)
               let accountSid = companyUser.companyId.twilioWhatsApp.accountSID
               let authToken = companyUser.companyId.twilioWhatsApp.authToken
               let client = require('twilio')(accountSid, authToken)
               for (let i = 0; i < contacts.length; i++) {
                 var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
-                console.log('matchCriteria', matchCriteria)
                 if (matchCriteria) {
                   client.messages
                     .create({
@@ -67,11 +64,9 @@ exports.sendBroadcast = function (req, res) {
                       statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
                     })
                     .then(response => {
-                      console.log('response from twilio send', response)
                       logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
                     })
                     .catch(error => {
-                      console.log('error at sending message', error)
                       logger.serverLog(TAG, `error at sending message ${error}`)
                     })
                 }
