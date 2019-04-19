@@ -17,4 +17,10 @@ validate({body: validationSchema.updatePayload}),
 controller.update
 )
 
+router.post('/send/:id',
+auth.isAuthenticated(),
+validate({body: validationSchema.updatePayload}),
+controller.send
+)
+
 module.exports = router
