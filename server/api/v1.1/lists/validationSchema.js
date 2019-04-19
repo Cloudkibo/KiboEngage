@@ -48,7 +48,7 @@ exports.createPayload = {
     },
     joiningCondition: {
       type: 'string',
-      required: true
+      required: false
     }
   }
 }
@@ -69,7 +69,7 @@ exports.editPayload = {
     },
     joiningCondition: {
       type: 'string',
-      required: true
+      required: false
     }
   }
 }
