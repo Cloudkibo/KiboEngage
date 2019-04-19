@@ -3,6 +3,34 @@ const logiclayer = require('./sponsoredMessaging.logiclayer')
 const {facebookApiCaller} = require('../../global/facebookApiCaller')
 const {marketingApiAccessToken} = require('../../../config/environment')
 
+exports.index = function(req,res){
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      utility.callApi(`sponsoredmessaging/query`, 'get', {companyId: companyUser.companyId}, req.headers.authorization)
+      .then(sponsoredMessages => {
+        return res.status(200).json({status: 'success', payload: sponsoredMessages})
+      })
+      .catch(error => {
+        return res.status(500).json({status: 'failed', payload: `Failed to fetch sponsoredMessages ${JSON.stringify(error)}`})
+      })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to fetch company user ${JSON.stringify(error)}`
+      })
+    })
+   
+    
+}
+
+
 exports.create = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
@@ -41,8 +69,9 @@ exports.send = function (req, res) {
   console.log('id', id)
 
   if (id !== undefined && id !== '') {
-    utility.callApi(`sponsoredMessaging/query/${id}`, 'get', {}, req.headers.authorization)
-      .then(sponsoredMessage => {
+    utility.callApi(`sponsoredMessaging/query`, 'get', {_id:id}, req.headers.authorization)
+      .then(sponsoredMessages => {
+        let sponsoredMessage = sponsoredMessages[0]
         let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
         console.log('campaign paylaod', campaignPayload)
         facebookApiCaller('v3.1', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)

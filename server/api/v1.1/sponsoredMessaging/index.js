@@ -6,7 +6,11 @@ const validate = require('express-jsonschema').validate
 const controller = require('./sponsoredMessaging.controller')
 const validationSchema = require('./validationSchema')
 
-router.post('/',
+router.get('/',
+  auth.isAuthenticated(),
+  controller.index)
+
+  router.post('/',
   auth.isAuthenticated(),
   validate({body: validationSchema.createPayload}),
   controller.create)
