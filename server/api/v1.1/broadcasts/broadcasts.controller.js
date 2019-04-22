@@ -513,7 +513,7 @@ exports.sendConversation = function (req, res) {
               let interval = setInterval(() => {
                 if (payload) {
                   clearInterval(interval)
-                  sentUsinInterval(payload, page, broadcast, req, res, 1000)
+                  sentUsinInterval(payload, page, broadcast, req, res, 3000)
                 }
               }, 3000)
             } else {
@@ -825,7 +825,6 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
             const messageCreativeId = messageCreative.message_creative_id
             utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
               .then(pageTags => {
-                console.log('pageTags', util.inspect(pageTags))
                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                 for (let i = 0; i < limit; i++) {
                   let labels = []
@@ -860,11 +859,13 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                   broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
                     .then(response => {
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
+                      console.log('current is', current)
                       if (i === limit - 1) {
                         if (response.status === 'success') {
                           utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
                             .then(updated => {
                               current++
+                              console.log('current updated', current)
                             })
                             .catch(err => {
                               return res.status(500).json({

@@ -8,7 +8,13 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
       'message_creative_id': messageCreativeId,
       'notification_type': 'REGULAR',
       'messaging_type': 'MESSAGE_TAG',
-      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION'
+      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
+      'targetting': {
+        'labels': {
+          'operator': 'AND',
+          'values': labels
+        }
+      }
     }
     console.log('braodcast data to be sent', util.inspect(data))
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
@@ -56,8 +62,6 @@ const getMessagesData = (payload, module) => {
       messages.push(prepareMessageData.facebook(payload, '{{first_name}}', '{{last_name}}'))
       console.log('messages', util.inspect(messages))
       resolve(messages)
-    } else if (module === 'autoposting') {
-      resolve(JSON.stringify(payload))
     } else {
       resolve([JSON.stringify(payload)])
     }
