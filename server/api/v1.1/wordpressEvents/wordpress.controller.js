@@ -84,7 +84,7 @@ exports.postPublish = function (req, res) {
                                 }
                               }
                             })
-                            sendAutopostingMessage(messageData, postingItem, subscribersCount, page)
+                            sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
                           })
                           .catch(err => {
                             logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
@@ -116,60 +116,74 @@ exports.postPublish = function (req, res) {
     })
 }
 
-function sendAutopostingMessage (messageData, postingItem, subscribersCount, page) {
-  broadcastApi.callMessageCreativesEndpoint({
-    'messages': messageData
-  }, page.accessToken)
-    .then(messageCreative => {
-      if (messageCreative.status === 'sucess') {
-        const messageCreativeId = messageCreative.message_creative_id
-        utility.callApi('tags/query', 'post', {purpose: 'findAll', match: {companyId: page.companyId, pageId: page._id}}, '', 'kiboengage')
-          .then(pageTags => {
-            const limit = Math.ceil(subscribersCount[0].count / 10000)
-            for (let i = 0; i < limit; i++) {
-              let labels = []
-              labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
-              if (postingItem.segmentationGender.length > 0) {
-                let temp = pageTags.filter((pt) => postingItem.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                labels = labels.concat(temp)
-              }
-              if (postingItem.segmentationLocale.length > 0) {
-                let temp = pageTags.filter((pt) => postingItem.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                labels = labels.concat(temp)
-              }
-              if (postingItem.segmentationTags.length > 0) {
-                let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                labels = labels.concat(temp)
-              }
-              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.pageAccessToken)
-                .then(response => {
-                  if (i === limit - 1) {
-                    if (response.status === 'success') {
-                      utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
-                        .then(updated => {
-                          logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
-                        })
-                        .catch(err => {
-                          logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
-                        })
-                    } else {
-                      logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`)
-                    }
+const sentUsinInterval = function (messageData, page, postingItem, subscribersCount, req, delay) {
+  let current = 0
+  let interval = setInterval(() => {
+    if (current === messageData.length) {
+      clearInterval(interval)
+      logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
+    } else {
+      broadcastApi.callMessageCreativesEndpoint(messageData[current], page.accessToken, 'autoposting')
+        .then(messageCreative => {
+          console.log('messageCreative', messageCreative)
+          if (messageCreative.status === 'success') {
+            const messageCreativeId = messageCreative.message_creative_id
+            utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
+              .then(pageTags => {
+                const limit = Math.ceil(subscribersCount[0].count / 10000)
+                for (let i = 0; i < limit; i++) {
+                  let labels = []
+                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                  if (postingItem.segmentationGender.length > 0) {
+                    let temp = pageTags.filter((pt) => postingItem.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
+                    labels = labels.concat(temp)
                   }
-                })
-                .catch(err => {
-                  logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
-                })
-            }
-          })
-          .catch(err => {
-            logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`)
-          })
-      } else {
-        logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
-      }
-    })
-    .catch(err => {
-      logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
-    })
+                  if (postingItem.segmentationLocale.length > 0) {
+                    let temp = pageTags.filter((pt) => postingItem.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
+                    labels = labels.concat(temp)
+                  }
+                  if (postingItem.segmentationTags.length > 0) {
+                    let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
+                    labels = labels.concat(temp)
+                  }
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                    .then(response => {
+                      console.log('response from callBroadcastMessagesEndpoint', JSON.stringify(response.body))
+                      if (i === limit - 1) {
+                        if (response.status === 'success') {
+                          utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                            .then(updated => {
+                              current++
+                            })
+                            .catch(err => {
+                              logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                              current++
+                            })
+                        } else {
+                          logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`)
+                          current++
+                        }
+                      }
+                    })
+                    .catch(err => {
+                      logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                      current++
+                    })
+                }
+              })
+              .catch(err => {
+                logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`)
+                current++
+              })
+          } else {
+            logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
+            current++
+          }
+        })
+        .catch(err => {
+          logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+          current++
+        })
+    }
+  }, delay)
 }
