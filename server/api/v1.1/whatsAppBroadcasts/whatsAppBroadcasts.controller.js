@@ -48,7 +48,7 @@ exports.sendBroadcast = function (req, res) {
     .then(companyUser => {
       dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
         .then(broadcast => {
-          utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization) // fetch company user
+          utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}, req.headers.authorization) // fetch company user
             .then(contacts => {
               let accountSid = companyUser.companyId.twilioWhatsApp.accountSID
               let authToken = companyUser.companyId.twilioWhatsApp.authToken
