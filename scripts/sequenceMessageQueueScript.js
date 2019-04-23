@@ -7,76 +7,78 @@ const LogicLayer = require('./logiclayer')
 const TAG = 'scripts/SequenceMessageQueueScript.js'
 const request = require('request')
 
-SequenceMessagesQueueDataLayer.findAll()
-  .then(data => {
-    logger.serverLog(TAG, `Found sequenceMessageQueue objects ${data.length}`)
-    if (data) {
-      for (let i = 0; i < data.length; i++) {
-        let message = data[i]
-        if (message.queueScheduledTime.getTime() < new Date().getTime()) {
-          logger.serverLog(TAG, `queueScheduledTime arrived for ${JSON.stringify(message)}`)
-          SequenceDataLayer.genericFindForSequence({ _id: message.sequenceId })
-            .then(sequence => {
-              sequence = sequence[0]
-              logger.serverLog(TAG, `sequence found ${JSON.stringify(sequence)}`)
-              SequenceDataLayer.genericFindForSequenceMessages({ _id: message.sequenceMessageId })
-                .then(sequenceMessage => {
-                  sequenceMessage = sequenceMessage[0]
-                  logger.serverLog(TAG, `sequenceMessage found ${JSON.stringify(sequenceMessage)}`)
-                  if (sequenceMessage.trigger.event === 'none') {
-                    sendSequenceMessage(message, sequence, sequenceMessage)
-                  } else if (sequenceMessage.trigger.event === 'sees') {
-                    SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
-                      .then(seenMessage => {
-                        if (seenMessage.seen) {
-                          sendSequenceMessage(message, sequence, sequenceMessage)
-                        }
-                      })
-                      .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch sequence subscriber message - sees trigger ${JSON.stringify(err)}`)
-                      })
-                  } else if (sequenceMessage.trigger.event === 'clicks') {
-                    SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
-                      .then(clickedMessage => {
-                        if (clickedMessage.clicked && clickedMessage.clicked.status && clickedMessage.clicked.values.includes(sequenceMessage.trigger.buttonId)) {
-                          sendSequenceMessage(message, sequence, sequenceMessage)
-                        }
-                      })
-                      .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch sequence subscriber message - sees trigger ${JSON.stringify(err)}`)
-                      })
-                  } else if (sequenceMessage.trigger.event === 'receives') {
-                    SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
-                      .then(receivedMessage => {
-                        if (receivedMessage.received) {
-                          sendSequenceMessage(message, sequence, sequenceMessage)
-                        }
-                      })
-                      .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch sequence subscriber message - sees trigger ${JSON.stringify(err)}`)
-                      })
-                  }
-                })
-                .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch sequence message ${JSON.stringify(err)}`)
-                })
-            }) // Sequence Find ends here
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch sequence ${JSON.stringify(err)}`)
-            })
-        }
-        if (i === data.length - 1) {
-          setTimeout(() => process.exit(), 5000)
-        }
-      } // For loop ends here
-    } else {
+exports.runSequenceMessageQueueScript = function () {
+  SequenceMessagesQueueDataLayer.findAll()
+    .then(data => {
+      logger.serverLog(TAG, `Found sequenceMessageQueue objects ${data.length}`)
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          let message = data[i]
+          if (message.queueScheduledTime.getTime() < new Date().getTime()) {
+            logger.serverLog(TAG, `queueScheduledTime arrived for ${JSON.stringify(message)}`)
+            SequenceDataLayer.genericFindForSequence({ _id: message.sequenceId })
+              .then(sequence => {
+                sequence = sequence[0]
+                logger.serverLog(TAG, `sequence found ${JSON.stringify(sequence)}`)
+                SequenceDataLayer.genericFindForSequenceMessages({ _id: message.sequenceMessageId })
+                  .then(sequenceMessage => {
+                    sequenceMessage = sequenceMessage[0]
+                    logger.serverLog(TAG, `sequenceMessage found ${JSON.stringify(sequenceMessage)}`)
+                    if (sequenceMessage.trigger.event === 'none') {
+                      sendSequenceMessage(message, sequence, sequenceMessage)
+                    } else if (sequenceMessage.trigger.event === 'sees') {
+                      SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
+                        .then(seenMessage => {
+                          if (seenMessage.seen) {
+                            sendSequenceMessage(message, sequence, sequenceMessage)
+                          }
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to fetch sequence subscriber message - sees trigger ${JSON.stringify(err)}`)
+                        })
+                    } else if (sequenceMessage.trigger.event === 'clicks') {
+                      SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
+                        .then(clickedMessage => {
+                          if (clickedMessage.clicked && clickedMessage.clicked.status && clickedMessage.clicked.values.includes(sequenceMessage.trigger.buttonId)) {
+                            sendSequenceMessage(message, sequence, sequenceMessage)
+                          }
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to fetch sequence subscriber message - sees trigger ${JSON.stringify(err)}`)
+                        })
+                    } else if (sequenceMessage.trigger.event === 'receives') {
+                      SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
+                        .then(receivedMessage => {
+                          if (receivedMessage.received) {
+                            sendSequenceMessage(message, sequence, sequenceMessage)
+                          }
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to fetch sequence subscriber message - sees trigger ${JSON.stringify(err)}`)
+                        })
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to fetch sequence message ${JSON.stringify(err)}`)
+                  })
+              }) // Sequence Find ends here
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch sequence ${JSON.stringify(err)}`)
+              })
+          }
+          if (i === data.length - 1) {
+            setTimeout(() => process.exit(), 5000)
+          }
+        } // For loop ends here
+      } else {
+        process.exit()
+      } // If data clause check
+    }) // Quence find ends here
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`, 'error')
       process.exit()
-    } // If data clause check
-  }) // Quence find ends here
-  .catch(err => {
-    logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`, 'error')
-    process.exit()
-  })
+    })
+}
 
 function sendSequenceMessage (message, sequence, sequenceMessage) {
   utility.callApi(`subscribers/${message.subscriberId}`)

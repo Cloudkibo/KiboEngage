@@ -3,6 +3,9 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development' // production
 const express = require('express')
 const config = require('./config/environment/index')
 
+const cron = require('node-cron')
+const SequenceScript = require('../scripts/sequenceMessageQueueScript.js')
+
 const app = express()
 const httpApp = express()
 
@@ -16,6 +19,8 @@ if (config.env === 'production' || config.env === 'staging') {
   }).install()
   appObj.use(Raven.requestHandler())
 }
+
+cron.schedule('*/5 * * * * *', SequenceScript.runSequenceMessageQueueScript)
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
