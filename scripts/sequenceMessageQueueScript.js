@@ -79,79 +79,54 @@ function sendSequenceMessage (message, sequence, sequenceMessage) {
     .then(subscriber => {
       utility.callApi(`companyUser/query`, 'post', { 'companyId': message.companyId })
         .then(companyUser => {
-          utility.callApi(`pages/${subscriber.pageId}`)
-            .then(page => {
-              SequenceDataLayer.genericFindForSequenceSubscribers({subscriberId: subscriber._id, sequenceId: sequence.id})
-                .then(seqSub => {
-                  seqSub = seqSub[0]
-                  utility.callApi(`tags/query`, 'post', {companyId: companyUser.companyId})
-                    .then(tags => {
-                      let newPayload = sequenceMessage.payload
-                      let sequenceSubMessagePayload = {
-                        subscriberId: subscriber._id,
-                        messageId: sequenceMessage._id,
-                        companyId: companyUser.companyId,
-                        datetime: new Date(),
-                        seen: false
+          let page = subscriber.pageId
+          SequenceDataLayer.genericFindForSequenceSubscribers({subscriberId: subscriber._id, sequenceId: sequence.id})
+            .then(seqSub => {
+              seqSub = seqSub[0]
+              utility.callApi(`tags/query`, 'post', {companyId: companyUser.companyId})
+                .then(tags => {
+                  let newPayload = sequenceMessage.payload
+                  let sequenceSubMessagePayload = {
+                    subscriberId: subscriber._id,
+                    messageId: sequenceMessage._id,
+                    companyId: companyUser.companyId,
+                    datetime: new Date(),
+                    seen: false
+                  }
+                  // Below work is to check segmentation
+                  if (sequenceMessage.segmentation.length > 0) {
+                    let tempSegmentCondition = sequenceMessage.segmentationCondition
+                    let temp = LogicLayer.getValue(sequenceMessage, subscriber, tags, page, seqSub)
+                    let tempFlag = temp.tempFlag
+                    let tempSegment = temp.tempSegment
+                    // Send message if all of the conditions matched
+                    if (tempSegmentCondition === 'and') {
+                      if (tempFlag === tempSegment.length) {
+                        logger.serverLog(TAG, 'all conditions satisfied')
+                        SequenceDataLayer.createForSequenceSubscribersMessages(sequenceSubMessagePayload)
+                          .then(result => {
+                            SequenceDataLayer.genericUpdateForSequenceMessages({_id: sequenceMessage._id}, {$inc: {sent: 1}}, {multi: true})
+                              .then(updated => {})
+                              .catch(err => {
+                                logger.serverLog(TAG, `Failed to update sequenceMessage ${JSON.stringify(err)}`)
+                              })
+                            let fbMessageTag = 'NON_PROMOTIONAL_SUBSCRIPTION'
+                            BroadcastUtility.getBatchData(newPayload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, '', '', '', fbMessageTag)
+                            SequenceMessagesQueueDataLayer.deleteOneObject(message._id)
+                              .then(result => {})
+                              .catch(err => {
+                                logger.serverLog(TAG, `Failed to delete sequenceMessageQueue ${JSON.stringify(err)}`)
+                              })
+                          })
+                          .catch(err => {
+                            logger.serverLog(TAG, `Failed to create SequenceSubscribersMessage ${JSON.stringify(err)}`)
+                          })
+                      } else {
+                        logger.serverLog(TAG, 'All segmentation conditions are not satisfied')
                       }
-                      // Below work is to check segmentation
-                      if (sequenceMessage.segmentation.length > 0) {
-                        let tempSegmentCondition = sequenceMessage.segmentationCondition
-                        let temp = LogicLayer.getValue(sequenceMessage, subscriber, tags, page, seqSub)
-                        let tempFlag = temp.tempFlag
-                        let tempSegment = temp.tempSegment
-                        // Send message if all of the conditions matched
-                        if (tempSegmentCondition === 'and') {
-                          if (tempFlag === tempSegment.length) {
-                            logger.serverLog(TAG, 'all conditions satisfied')
-                            SequenceDataLayer.createForSequenceSubscribersMessages(sequenceSubMessagePayload)
-                              .then(result => {
-                                SequenceDataLayer.genericUpdateForSequenceMessages({_id: sequenceMessage._id}, {$inc: {sent: 1}}, {multi: true})
-                                  .then(updated => {})
-                                  .catch(err => {
-                                    logger.serverLog(TAG, `Failed to update sequenceMessage ${JSON.stringify(err)}`)
-                                  })
-                                let fbMessageTag = 'NON_PROMOTIONAL_SUBSCRIPTION'
-                                BroadcastUtility.getBatchData(newPayload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, '', '', '', fbMessageTag)
-                                SequenceMessagesQueueDataLayer.deleteOneObject(message._id)
-                                  .then(result => {})
-                                  .catch(err => {
-                                    logger.serverLog(TAG, `Failed to delete sequenceMessageQueue ${JSON.stringify(err)}`)
-                                  })
-                              })
-                              .catch(err => {
-                                logger.serverLog(TAG, `Failed to create SequenceSubscribersMessage ${JSON.stringify(err)}`)
-                              })
-                          } else {
-                            logger.serverLog(TAG, 'All segmentation conditions are not satisfied')
-                          }
-                        } else if (tempSegmentCondition === 'or') {
-                          // Send messages if any one of the condition matched.
-                          if (tempFlag > 0) {
-                            logger.serverLog(TAG, 'at least one condition satisfied')
-                            SequenceDataLayer.createForSequenceSubscribersMessages(sequenceSubMessagePayload)
-                              .then(result => {
-                                SequenceDataLayer.genericUpdateForSequenceMessages({_id: sequenceMessage._id}, {$inc: {sent: 1}}, {multi: true})
-                                  .then(updated => {})
-                                  .catch(err => {
-                                    logger.serverLog(TAG, `Failed to update sequenceMessage ${JSON.stringify(err)}`)
-                                  })
-                                let fbMessageTag = 'NON_PROMOTIONAL_SUBSCRIPTION'
-                                BroadcastUtility.getBatchData(newPayload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, '', '', '', fbMessageTag)
-                                SequenceMessagesQueueDataLayer.deleteOneObject(message._id)
-                                  .then(result => {})
-                                  .catch(err => {
-                                    logger.serverLog(TAG, `Failed to delete sequenceMessageQueue ${JSON.stringify(err)}`)
-                                  })
-                              })
-                              .catch(err => {
-                                logger.serverLog(TAG, `Failed to create SequenceSubscribersMessage ${JSON.stringify(err)}`)
-                              })
-                          } else {
-                            logger.serverLog(TAG, 'Not even one condition is satisfied')
-                          }
-                        }
-                      } else { // No segmentation
+                    } else if (tempSegmentCondition === 'or') {
+                      // Send messages if any one of the condition matched.
+                      if (tempFlag > 0) {
                         logger.serverLog(TAG, 'at least one condition satisfied')
                         SequenceDataLayer.createForSequenceSubscribersMessages(sequenceSubMessagePayload)
                           .then(result => {
@@ -171,18 +146,38 @@ function sendSequenceMessage (message, sequence, sequenceMessage) {
                           .catch(err => {
                             logger.serverLog(TAG, `Failed to create SequenceSubscribersMessage ${JSON.stringify(err)}`)
                           })
+                      } else {
+                        logger.serverLog(TAG, 'Not even one condition is satisfied')
                       }
-                    }) // Tags find ends here
-                    .catch(err => {
-                      logger.serverLog(TAG, `Failed to fetch tags ${JSON.stringify(err)}`)
-                    })
-                }) // Sequence Subscriber find ends here
+                    }
+                  } else { // No segmentation
+                    logger.serverLog(TAG, 'at least one condition satisfied')
+                    SequenceDataLayer.createForSequenceSubscribersMessages(sequenceSubMessagePayload)
+                      .then(result => {
+                        SequenceDataLayer.genericUpdateForSequenceMessages({_id: sequenceMessage._id}, {$inc: {sent: 1}}, {multi: true})
+                          .then(updated => {})
+                          .catch(err => {
+                            logger.serverLog(TAG, `Failed to update sequenceMessage ${JSON.stringify(err)}`)
+                          })
+                        let fbMessageTag = 'NON_PROMOTIONAL_SUBSCRIPTION'
+                        BroadcastUtility.getBatchData(newPayload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, '', '', '', fbMessageTag)
+                        SequenceMessagesQueueDataLayer.deleteOneObject(message._id)
+                          .then(result => {})
+                          .catch(err => {
+                            logger.serverLog(TAG, `Failed to delete sequenceMessageQueue ${JSON.stringify(err)}`)
+                          })
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Failed to create SequenceSubscribersMessage ${JSON.stringify(err)}`)
+                      })
+                  }
+                }) // Tags find ends here
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch sequence subscriber ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to fetch tags ${JSON.stringify(err)}`)
                 })
-            }) // Page find ends here
+            }) // Sequence Subscriber find ends here
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+              logger.serverLog(TAG, `Failed to fetch sequence subscriber ${JSON.stringify(err)}`)
             })
         }) // Company find ends here
         .catch(err => {
