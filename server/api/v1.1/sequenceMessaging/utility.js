@@ -3,30 +3,20 @@ const TAG = 'api/sequenceMessaging/logiclayer.js'
 const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
 const SequenceDatalayer = require('./sequence.datalayer')
 
-function addToMessageQueue (sequenceId, scheduleDate, messageId) {
-  SequenceDatalayer.genericFindForSequenceSubscribers({sequenceId: sequenceId})
-    .then(sequences => {
-      if (sequences.length > 0) {
-        sequences.forEach(sequence => {
-          let sequenceQueuePayload = {
-            sequenceId: sequenceId,
-            subscriberId: sequence.subscriberId,
-            companyId: sequence.companyId,
-            sequenceMessageId: messageId,
-            queueScheduledTime: scheduleDate
-          }
-          SequenceMessageQueueDatalayer.create(sequenceQueuePayload)
-            .then(result => {
-              logger.serverLog(TAG, 'Message queue created')
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to insert record in message queue ${err}`)
-            })
-        })
-      }
+function addToMessageQueue (sequenceId, scheduleDate, messageId, subscriberId, companyId) {
+  let sequenceQueuePayload = {
+    sequenceId: sequenceId,
+    subscriberId: subscriberId,
+    companyId: companyId,
+    sequenceMessageId: messageId,
+    queueScheduledTime: scheduleDate
+  }
+  SequenceMessageQueueDatalayer.create(sequenceQueuePayload)
+    .then(result => {
+      logger.serverLog(TAG, 'Message queue created')
     })
     .catch(err => {
-      logger.serverLog(TAG, `subscriber find error in add to message queue ${err}`)
+      logger.serverLog(TAG, `Failed to insert record in message queue ${err}`)
     })
 }
 
