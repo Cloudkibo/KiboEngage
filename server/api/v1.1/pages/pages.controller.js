@@ -336,6 +336,12 @@ exports.enable = function (req, res) {
                                   res.status(500).json({status: 'failed', payload: err})
                                 })
                             }
+                            else {
+                              res.status(200).json({
+                                status: 'success',
+                                payload: {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name} (${pageConnected[0].userId.email}).`}
+                              })
+                            }
                           })
                       }
                     })
