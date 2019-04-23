@@ -20,7 +20,7 @@ if (config.env === 'production' || config.env === 'staging') {
   appObj.use(Raven.requestHandler())
 }
 
-cron.schedule('*/5 * * * * *', SequenceScript.runSequenceMessageQueueScript)
+cron.schedule('* * * * *', SequenceScript.runSequenceMessageQueueScript)
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
