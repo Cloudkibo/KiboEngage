@@ -49,7 +49,7 @@ exports.sendBroadcast = function (req, res) {
     .then(companyUser => {
       dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
         .then(broadcast => {
-          utility.callApi(`contacts/query`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization) // fetch company user
+          utility.callApi(`contacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}, req.headers.authorization) // fetch company user
             .then(contacts => {
               let accountSid = companyUser.companyId.twilio.accountSID
               let authToken = companyUser.companyId.twilio.authToken
