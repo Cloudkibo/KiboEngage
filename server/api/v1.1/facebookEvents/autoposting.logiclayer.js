@@ -50,7 +50,7 @@ exports.prepareMessageDataForStatus = function (event, newURL) {
   let messageData = {
     'text': event.value.message
   }
-  return [messageData]
+  return messageData
 }
 exports.prepareMessageDataForShare = function (event, newURL) {
   let messageData = {
@@ -104,7 +104,7 @@ exports.prepareMessageDataForImage = function (event, newURL) {
       }
     }
   }
-  return [messageData]
+  return messageData
 }
 exports.prepareMessageDataForVideo = function (event) {
   let messageData = {
@@ -116,7 +116,7 @@ exports.prepareMessageDataForVideo = function (event) {
       }
     }
   }
-  return [messageData]
+  return messageData
 }
 exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
   let timeNow = new Date()
