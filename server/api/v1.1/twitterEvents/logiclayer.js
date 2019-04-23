@@ -124,8 +124,7 @@ function preparePaylod (body, newURL, type, text, button) {
       return [messageData]
     } else {
       messageData = {
-        'text': text,
-        'metadata': 'This is a meta data'
+        'text': text
       }
       return [messageData]
     }
