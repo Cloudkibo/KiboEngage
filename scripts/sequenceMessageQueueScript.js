@@ -66,17 +66,11 @@ exports.runSequenceMessageQueueScript = function () {
                 logger.serverLog(TAG, `Failed to fetch sequence ${JSON.stringify(err)}`)
               })
           }
-          if (i === data.length - 1) {
-            setTimeout(() => process.exit(), 5000)
-          }
         } // For loop ends here
-      } else {
-        process.exit()
       } // If data clause check
     }) // Quence find ends here
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch SequenceMessagesQueue ${JSON.stringify(err)}`, 'error')
-      process.exit()
     })
 }
 
