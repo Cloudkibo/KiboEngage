@@ -573,65 +573,51 @@ exports.getAll = function (req, res) {
 }
 
 exports.subscribeToSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
-    .then(companyUser => {
-      if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
-      }
-      req.body.subscriberIds.forEach(subscriberId => {
-        SequenceDatalayer.genericFindForSequenceMessages({sequenceId: req.body.sequenceId})
-          .then(messages => {
-            if (messages.length > 0) {
-              let sequenceSubscriberPayload = {
-                sequenceId: req.body.sequenceId,
-                subscriberId: subscriberId,
-                companyId: companyUser.companyId,
-                status: 'subscribed'
-              }
-              SequenceDatalayer.createForSequenceSubcriber(sequenceSubscriberPayload)
-                .then(subscriberCreated => {
-                  messages.forEach(message => {
-                    let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                    SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, message._id)
-                  })
-                  if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
-                    require('./../../../config/socketio').sendMessageToClient({
-                      room_id: companyUser.companyId,
-                      body: {
-                        action: 'sequence_update',
-                        payload: {
-                          sequence_id: req.body.sequenceId
-                        }
-                      }
-                    })
-                    res.status(201).json({ status: 'success', description: 'Subscribers subscribed successfully' })
+  req.body.subscriberIds.forEach(subscriberId => {
+    SequenceDatalayer.genericFindForSequenceMessages({sequenceId: req.body.sequenceId})
+      .then(messages => {
+        if (messages.length > 0) {
+          let sequenceSubscriberPayload = {
+            sequenceId: req.body.sequenceId,
+            subscriberId: subscriberId,
+            companyId: req.user.companyId,
+            status: 'subscribed'
+          }
+          SequenceDatalayer.createForSequenceSubcriber(sequenceSubscriberPayload)
+            .then(subscriberCreated => {
+              console.log('subscriberCreated', JSON.stringify(subscriberCreated))
+              messages.forEach(message => {
+                let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, message._id, subscriberId, req.user.companyId)
+              })
+              if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
+                require('./../../../config/socketio').sendMessageToClient({
+                  room_id: req.user.companyId,
+                  body: {
+                    action: 'sequence_update',
+                    payload: {
+                      sequence_id: req.body.sequenceId
+                    }
                   }
                 })
-                .catch(err => {
-                  return res.status(404).json({
-                    status: 'failed',
-                    description: `Internal server error in creating sequence subscriber ${err}`
-                  })
-                })
-            }
-          })
-          .catch(err => {
-            return res.status(404).json({
-              status: 'failed',
-              description: `Internal server error in finding sequence messages ${err}`
+                res.status(201).json({ status: 'success', description: 'Subscribers subscribed successfully' })
+              }
             })
-          })
+            .catch(err => {
+              return res.status(404).json({
+                status: 'failed',
+                description: `Internal server error in creating sequence subscriber ${err}`
+              })
+            })
+        }
       })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
+      .catch(err => {
+        return res.status(404).json({
+          status: 'failed',
+          description: `Internal server error in finding sequence messages ${err}`
+        })
       })
-    })
+  })
 }
 
 exports.unsubscribeToSequence = function (req, res) {
