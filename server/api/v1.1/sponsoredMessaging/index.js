@@ -31,4 +31,9 @@ router.delete('/:_id',
   auth.isAuthenticated(),
   controller.delete)
 
+  router.get('/insights/:ad_id', 
+  auth.isAuthenticated(),
+  controller.getInsight
+  )
+
 module.exports = router

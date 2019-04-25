@@ -59,15 +59,9 @@ const getMessagesData = (payload, module) => {
   return new Promise((resolve, reject) => {
     if (module === 'broadcast') {
       let messages = []
-      payload.forEach((item, i) => {
-        messages.push(prepareMessageData.facebook(item, '{{first_name}}', '{{last_name}}'))
-        if (i === messages.length - 1) {
-          console.log('messages', util.inspect(messages))
-          resolve(messages)
-        }
-      })
-    } else if (module === 'autoposting') {
-      resolve(JSON.stringify(payload))
+      messages.push(prepareMessageData.facebook(payload, '{{first_name}}', '{{last_name}}'))
+      console.log('messages', util.inspect(messages))
+      resolve(messages)
     } else {
       resolve([JSON.stringify(payload)])
     }

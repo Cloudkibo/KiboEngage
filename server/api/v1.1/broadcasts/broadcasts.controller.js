@@ -513,96 +513,7 @@ exports.sendConversation = function (req, res) {
               let interval = setInterval(() => {
                 if (payload) {
                   clearInterval(interval)
-                  broadcastApi.callMessageCreativesEndpoint(payload, page.accessToken)
-                    .then(messageCreative => {
-                      logger.serverLog(TAG, `messageCreative ${util.inspect(messageCreative)}`)
-                      if (messageCreative.status === 'success') {
-                        const messageCreativeId = messageCreative.message_creative_id
-                        utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
-                          .then(pageTags => {
-                            console.log('pageTags', util.inspect(pageTags))
-                            const limit = Math.ceil(req.body.subscribersCount / 10000)
-                            for (let i = 0; i < limit; i++) {
-                              let labels = []
-                              labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
-                              if (req.body.isList) {
-                                utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
-                                  .then(lists => {
-                                    lists = lists.map((l) => l.listName)
-                                    let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                    labels = labels.concat(temp)
-                                  })
-                                  .catch(err => {
-                                    return res.status(500).json({
-                                      status: 'failed',
-                                      description: `Failed to apply list segmentation ${JSON.stringify(err)}`
-                                    })
-                                  })
-                              } else {
-                                if (req.body.segmentationGender.length > 0) {
-                                  let temp = pageTags.filter((pt) => req.body.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                  labels = labels.concat(temp)
-                                }
-                                if (req.body.segmentationLocale.length > 0) {
-                                  let temp = pageTags.filter((pt) => req.body.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                  labels = labels.concat(temp)
-                                }
-                                if (req.body.segmentationTags.length > 0) {
-                                  let temp = pageTags.filter((pt) => req.body.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                                  labels = labels.concat(temp)
-                                }
-                              }
-                              broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
-                                .then(response => {
-                                  logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
-                                  if (i === limit - 1) {
-                                    if (response.status === 'success') {
-                                      utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
-                                        .then(updated => {
-                                          return res.status(200)
-                                            .json({status: 'success', description: 'Conversation sent successfully!'})
-                                        })
-                                        .catch(err => {
-                                          return res.status(500).json({
-                                            status: 'failed',
-                                            description: `Failed to send broadcast ${JSON.stringify(err)}`
-                                          })
-                                        })
-                                    } else {
-                                      return res.status(500).json({
-                                        status: 'failed',
-                                        description: `Failed to send broadcast ${JSON.stringify(response.description)}`
-                                      })
-                                    }
-                                  }
-                                })
-                                .catch(err => {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    description: `Failed to send broadcast ${JSON.stringify(err)}`
-                                  })
-                                })
-                            }
-                          })
-                          .catch(err => {
-                            return res.status(500).json({
-                              status: 'failed',
-                              description: `Failed to find tags ${JSON.stringify(err)}`
-                            })
-                          })
-                      } else {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`
-                        })
-                      }
-                    })
-                    .catch(err => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Failed to send broadcast ${JSON.stringify(err)}`
-                      })
-                    })
+                  sentUsinInterval(payload, page, broadcast, req, res, 3000)
                 }
               }, 3000)
             } else {
@@ -898,6 +809,107 @@ exports.retrieveReachEstimation = (req, res) => {
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
     })
+}
+
+const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
+  let current = 0
+  let interval = setInterval(() => {
+    if (current === payload.length) {
+      clearInterval(interval)
+      return res.status(200).json({status: 'success', description: 'Conversation sent successfully!'})
+    } else {
+      broadcastApi.callMessageCreativesEndpoint(payload[current], page.accessToken)
+        .then(messageCreative => {
+          logger.serverLog(TAG, `messageCreative ${util.inspect(messageCreative)}`)
+          if (messageCreative.status === 'success') {
+            const messageCreativeId = messageCreative.message_creative_id
+            utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
+              .then(pageTags => {
+                const limit = Math.ceil(req.body.subscribersCount / 10000)
+                for (let i = 0; i < limit; i++) {
+                  let labels = []
+                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                  if (req.body.isList) {
+                    utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
+                      .then(lists => {
+                        lists = lists.map((l) => l.listName)
+                        let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
+                        labels = labels.concat(temp)
+                      })
+                      .catch(err => {
+                        return res.status(500).json({
+                          status: 'failed',
+                          description: `Failed to apply list segmentation ${JSON.stringify(err)}`
+                        })
+                      })
+                  } else {
+                    if (req.body.segmentationGender.length > 0) {
+                      let temp = pageTags.filter((pt) => req.body.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
+                      labels = labels.concat(temp)
+                    }
+                    if (req.body.segmentationLocale.length > 0) {
+                      let temp = pageTags.filter((pt) => req.body.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
+                      labels = labels.concat(temp)
+                    }
+                    if (req.body.segmentationTags.length > 0) {
+                      let temp = pageTags.filter((pt) => req.body.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
+                      labels = labels.concat(temp)
+                    }
+                  }
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                    .then(response => {
+                      logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
+                      console.log('current is', current)
+                      if (i === limit - 1) {
+                        if (response.status === 'success') {
+                          utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                            .then(updated => {
+                              current++
+                              console.log('current updated', current)
+                            })
+                            .catch(err => {
+                              return res.status(500).json({
+                                status: 'failed',
+                                description: `Failed to send broadcast ${JSON.stringify(err)}`
+                              })
+                            })
+                        } else {
+                          return res.status(500).json({
+                            status: 'failed',
+                            description: `Failed to send broadcast ${JSON.stringify(response.description)}`
+                          })
+                        }
+                      }
+                    })
+                    .catch(err => {
+                      return res.status(500).json({
+                        status: 'failed',
+                        description: `Failed to send broadcast ${JSON.stringify(err)}`
+                      })
+                    })
+                }
+              })
+              .catch(err => {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Failed to find tags ${JSON.stringify(err)}`
+                })
+              })
+          } else {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`
+            })
+          }
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Failed to send broadcast ${JSON.stringify(err)}`
+          })
+        })
+    }
+  }, delay)
 }
 
 exports.sendBroadcast = sendBroadcast
