@@ -828,7 +828,10 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                 for (let i = 0; i < limit; i++) {
                   let labels = []
-                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
+                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
+                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
+                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                   if (req.body.isList) {
                     utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
                       .then(lists => {
@@ -856,7 +859,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                       labels = labels.concat(temp)
                     }
                   }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                     .then(response => {
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                       console.log('current is', current)

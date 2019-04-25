@@ -407,7 +407,10 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                                 for (let i = 0; i < limit; i++) {
                                   let labels = []
-                                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
+                                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
+                                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
+                                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                                   if (req.body.isList) {
                                     callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                       .then(lists => {
@@ -435,7 +438,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                       labels = labels.concat(temp)
                                     }
                                   }
-                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                                     .then(response => {
                                       if (i === limit - 1) {
                                         if (response.status === 'success') {
