@@ -217,6 +217,9 @@ exports.enable = function (req, res) {
                                       if (!defaultTags.includes(`_${page.pageId}_1`)) {
                                         createTag(req.user, page, `_${page.pageId}_1`, req)
                                       }
+                                      if (!defaultTags.includes(`_${page.pageId}_unsubscribe`)) {
+                                        createTag(req.user, page, `_${page.pageId}_unsubscribe`, req)
+                                      }
                                       if (!defaultTags.includes('male')) {
                                         createTag(req.user, page, 'male', req)
                                       }
@@ -335,8 +338,7 @@ exports.enable = function (req, res) {
                                   logger.serverLog(TAG, `Error at find page ${err}`)
                                   res.status(500).json({status: 'failed', payload: err})
                                 })
-                            }
-                            else {
+                            } else {
                               res.status(200).json({
                                 status: 'success',
                                 payload: {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name} (${pageConnected[0].userId.email}).`}
