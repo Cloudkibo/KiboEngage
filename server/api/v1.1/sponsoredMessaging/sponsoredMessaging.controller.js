@@ -151,3 +151,20 @@ exports.delete = function (req, res) {
       return res.status(500).json({status: 'failed', payload: `Failed to delete sponsored message ${error}`})
     })
 }
+
+exports.getInsight = function (req, res) {
+  const accesstoken = marketingApiAccessToken
+  let ad_id = req.params.ad_id
+
+  if (ad_id !== undefined && ad_id !== '') {
+    let insightPayload = logiclayer.prepareInsightPayload(accesstoken)
+    facebookApiCaller('v3.1', ad_id, 'get', insightPayload)
+    .then(response => {
+      return res.status(200).json({status: 'success', payload: response})
+    })
+    .catch(error => {
+      return res.status(500).json({status: 'failed', payload: `Failed to fetch insight of a ad ${JSON.stringify(error)}`})
+    })
+  }
+}
+

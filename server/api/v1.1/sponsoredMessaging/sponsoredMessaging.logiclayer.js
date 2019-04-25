@@ -97,3 +97,11 @@ exports.prepareadAdPayload = function (body, adset_id, message_creative_id, acce
 
   return payload
 }
+
+exports.prepareInsightPayload = function (access_token){
+  let payload = {
+    fields: {name, insights},
+    access_token: access_token
+  }
+  return payload
+}
