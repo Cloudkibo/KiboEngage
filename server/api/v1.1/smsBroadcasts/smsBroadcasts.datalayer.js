@@ -9,7 +9,6 @@ exports.countBroadcasts = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  console.log('query', query)
   return callApi(`smsBroadcasts/query`, 'post', query, '', 'kiboengage')
 }
 exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
@@ -23,6 +22,5 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  console.log('query in aggregatebroadcast', JSON.stringify(query))
   return callApi(`smsBroadcasts/query`, 'post', query, '', 'kiboengage')
 }
