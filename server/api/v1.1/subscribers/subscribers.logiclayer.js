@@ -72,7 +72,7 @@ exports.getCriterias = function (body, companyUser) {
     console.log('filter_criteria', body.filter_criteria)
     search = '.*' + body.filter_criteria.search_value + '.*'
     findCriteria = {
-      companyId: companyUser.companyId,
+      //companyId: companyUser.companyId,
       fullName: {$regex: search, $options: 'i'},
       gender: body.filter_criteria.gender_value !== '' ? body.filter_criteria.gender_value : {$exists: true},
       locale: body.filter_criteria.locale_value !== '' ? body.filter_criteria.locale_value : {$exists: true},
@@ -91,6 +91,7 @@ exports.getCriterias = function (body, companyUser) {
   temp['pageId.connected'] = true
 
   let countCriteria = [
+    { $match: {companyId: companyUser.companyId} },
     { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
     { $unwind: '$pageId' },
     { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
@@ -122,6 +123,7 @@ exports.getCriterias = function (body, companyUser) {
     }
     console.log('temp match', temp)
     finalCriteria = [
+      { $match: {companyId: companyUser.companyId} },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
       { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
