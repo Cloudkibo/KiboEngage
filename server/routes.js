@@ -52,6 +52,8 @@ module.exports = function (app) {
   app.use('/api/whatsAppContacts', require('./api/v1.1/whatsAppContacts'))
   app.use('/api/whatsAppBroadcasts', require('./api/v1.1/whatsAppBroadcasts'))
   app.use('/api/smsBroadcasts', require('./api/v1.1/smsBroadcasts'))
+  app.use('/api/smsDashboard', require('./api/v1.1/smsDashboard'))
+  app.use('/api/whatsAppDashboard', require('./api/v1.1/whatsAppDashboard'))
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
 
   // auth middleware go here if you authenticate on same server
