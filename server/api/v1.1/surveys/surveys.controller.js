@@ -19,6 +19,7 @@ const broadcastApi = require('../../global/broadcastApi')
 const needle = require('needle')
 const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
+const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -628,6 +629,8 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                             description: JSON.stringify(err)
                           })
                         }
+                        let message = preparePayload(subscribers[j], page, messageData)
+                        saveLiveChat(message)
                         let surveyPage = {
                           pageId: page.pageId,
                           userId: req.user._id,

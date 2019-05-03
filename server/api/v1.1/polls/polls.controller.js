@@ -13,6 +13,7 @@ const notificationsUtility = require('../notifications/notifications.utility')
 const async = require('async')
 const broadcastApi = require('../../global/broadcastApi')
 const util = require('util')
+const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -406,6 +407,8 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                         logger.serverLog(TAG, err)
                       }
                       console.log('pollsend response', util.inspect(resp.body))
+                      let message = preparePayload(subscribers[j], page, messageData)
+                      saveLiveChat(message)
                       let pollBroadcast = PollLogicLayer.preparePollPagePayload(page, req.user, req.body, subscribers[j], req.body._id)
                       PollPageDataLayer.createForPollPage(pollBroadcast)
                         .then(pollCreated => {
