@@ -3,6 +3,7 @@ const TAG = 'api/companyprofile/company.controller.js'
 const utility = require('../utility')
 const needle = require('needle')
 const config = require('../../../config/environment/index')
+const logicLayer = require('./company.logiclayer.js')
 
 exports.members = function (req, res) {
   utility.callApi(`companyprofile/members`, 'get', {}, req.headers.authorization)
@@ -101,7 +102,7 @@ exports.updatePlatform = function (req, res) {
             })
           }
           if (resp.statusCode === 200) {
-            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}}, req.headers.authorization)
+            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken, connected: true}}, options: {}}, req.headers.authorization)
               .then(updatedProfile => {
                 if (req.body.twilio.platform) {
                   utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.twilio.platform}, options: {}})
@@ -174,7 +175,8 @@ exports.updatePlatformWhatsApp = function (req, res) {
               accountSID: req.body.accountSID,
               authToken: req.body.authToken,
               sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
-              sandboxCode: req.body.sandboxCode
+              sandboxCode: req.body.sandboxCode,
+              connected: true
             }}
             utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}}, req.headers.authorization)
               .then(updatedProfile => {
@@ -204,6 +206,42 @@ exports.updatePlatformWhatsApp = function (req, res) {
     })
     .catch(error => {
       console.log(`Failed to company user ${JSON.stringify(error)}`)
+      return res.status(500).json({status: 'failed', payload: `Failed to company user ${JSON.stringify(error)}`
+      })
+    })
+}
+exports.disconnect = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      let updated = {}
+      if (req.body.type === 'sms') {
+        updated = {$unset: {twilio: 1}}
+      } else {
+        updated = {$unset: {twilioWhatsApp: 1}}
+      }
+      let userUpdated = logicLayer.getPlatform(companyUser, req.body)
+      utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: updated, options: {}}, req.headers.authorization)
+        .then(updatedProfile => {
+          utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: userUpdated, options: {}})
+            .then(updated => {
+              return res.status(200).json({status: 'success', payload: updatedProfile})
+            })
+            .catch(err => {
+              res.status(500).json({status: 'failed', payload: err})
+            })
+          return res.status(200).json({status: 'success', payload: updatedProfile})
+        })
+        .catch(err => {
+          res.status(500).json({status: 'failed', payload: `Failed to update company profile ${err}`})
+        })
+    })
+    .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to company user ${JSON.stringify(error)}`
       })
     })
