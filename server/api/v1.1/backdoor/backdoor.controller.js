@@ -331,6 +331,9 @@ function prepareSurveyDataToSend (surveys, req) {
                 responded: surveys[j].surveyResponses.length})
               console.log('data in surveys', data)
               if (data.length === surveys.length) {
+                data.sort(function (a, b) { 
+                  return new Date(b.datetime) - new Date(a.datetime)
+                })
                 resolve({data: data})
               }
             })
@@ -370,6 +373,9 @@ function preparePollDataToSend (polls, req) {
                 responded: polls[j].pollResponses.length
               })
               if (data.length === polls.length) {
+                data.sort(function (a, b) { 
+                  return new Date(b.datetime) - new Date(a.datetime)
+                })
                 resolve({data: data})
               }
             })
@@ -414,6 +420,9 @@ function prepareDataToSend (broadcasts, req) {
                 seen: pagebroadcastTapped.length
               })
               if (data.length === broadcasts.length) {
+                data.sort(function (a, b) { 
+                  return new Date(b.datetime) - new Date(a.datetime)
+                })
                 resolve({data: data})
               }
             })

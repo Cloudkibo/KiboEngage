@@ -133,7 +133,10 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
                 const limit = Math.ceil(subscribersCount[0].count / 10000)
                 for (let i = 0; i < limit; i++) {
                   let labels = []
-                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
+                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
+                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
+                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                   if (postingItem.segmentationGender.length > 0) {
                     let temp = pageTags.filter((pt) => postingItem.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
                     labels = labels.concat(temp)
@@ -146,7 +149,7 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
                     let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                     labels = labels.concat(temp)
                   }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                     .then(response => {
                       console.log('response from callBroadcastMessagesEndpoint', JSON.stringify(response.body))
                       if (i === limit - 1) {
