@@ -71,12 +71,7 @@ module.exports = function (app) {
       {expires: new Date(Date.now() + 900000)})
     res.cookie('url_development', 'http://localhost:3021',
       {expires: new Date(Date.now() + 900000)})
-    // res.sendFile(path.join(config.root, 'client/index.html'))
-    if (env === 'staging' || env === 'development') {
-      res.sendFile(path.join(config.root, 'client/index.html'))
-    } else {
-      res.render('main', { environment: env })
-    }
+    res.sendFile(path.join(config.root, 'client/index.html'))
   })
 
   app.post('/uploadHtml',

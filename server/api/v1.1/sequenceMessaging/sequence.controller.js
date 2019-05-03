@@ -587,8 +587,12 @@ exports.subscribeToSequence = function (req, res) {
             .then(subscriberCreated => {
               console.log('subscriberCreated', JSON.stringify(subscriberCreated))
               messages.forEach(message => {
-                let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, message._id, subscriberId, req.user.companyId)
+                if (message.trigger.event === 'none') {
+                  let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                  SequenceUtility.addToMessageQueue(req.body.sequenceId, message._id, subscriberId, req.user.companyId, utcDate)
+                } else {
+                  SequenceUtility.addToMessageQueue(req.body.sequenceId, message._id, subscriberId, req.user.companyId)
+                }
               })
               if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
                 require('./../../../config/socketio').sendMessageToClient({
