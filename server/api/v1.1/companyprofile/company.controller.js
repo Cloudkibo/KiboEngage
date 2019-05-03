@@ -102,7 +102,7 @@ exports.updatePlatform = function (req, res) {
             })
           }
           if (resp.statusCode === 200) {
-            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken, connected: true}}, options: {}}, req.headers.authorization)
+            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}}, req.headers.authorization)
               .then(updatedProfile => {
                 if (req.body.twilio.platform) {
                   utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.twilio.platform}, options: {}})
@@ -175,8 +175,7 @@ exports.updatePlatformWhatsApp = function (req, res) {
               accountSID: req.body.accountSID,
               authToken: req.body.authToken,
               sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
-              sandboxCode: req.body.sandboxCode,
-              connected: true
+              sandboxCode: req.body.sandboxCode
             }}
             utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}}, req.headers.authorization)
               .then(updatedProfile => {
