@@ -20,6 +20,7 @@ const broadcastApi = require('../../global/broadcastApi')
 const validateInput = require('../../global/validateInput')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const util = require('util')
+const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -559,7 +560,8 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
-          // update broadcast sent field
+          let message = preparePayload(subscriber, page, payload)
+          saveLiveChat(message)
           BroadcastPageDataLayer.createForBroadcastPage({
             pageId: page.pageId,
             userId: req.user._id,
