@@ -107,6 +107,7 @@ exports.prepareMessageDataForImage = function (event, newURL) {
   return messageData
 }
 exports.prepareMessageDataForVideo = function (event) {
+  let messageDataText = {}
   let messageData = {
     'attachment': {
       'type': 'video',
@@ -116,7 +117,12 @@ exports.prepareMessageDataForVideo = function (event) {
       }
     }
   }
-  return messageData
+  if (event.value.message) {
+    messageDataText = {
+      'text': event.value.message
+    }
+  }
+  return {messageData: [messageData], messageDataText: [messageDataText]}
 }
 exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
   let timeNow = new Date()

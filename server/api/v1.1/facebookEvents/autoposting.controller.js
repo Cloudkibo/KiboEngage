@@ -107,7 +107,10 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                             })
                         } else if (event.value.item === 'video') {
                           messageData = autopostingLogicLayer.prepareMessageDataForVideo(event)
-                          sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
+                          if (messageData.messageDataText && messageData.messageDataText.length !== 0) {
+                            sendAutopostingMessage(messageData.messageDataText, postingItem, subscribersCount, page, req)
+                          }
+                          sendAutopostingMessage(messageData.messageData, postingItem, subscribersCount, page, req)
                         }
                       })
                       .catch(err => {
