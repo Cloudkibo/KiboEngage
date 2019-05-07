@@ -19,6 +19,7 @@ const broadcastApi = require('../../global/broadcastApi')
 const needle = require('needle')
 const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
+const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -407,7 +408,10 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                                 for (let i = 0; i < limit; i++) {
                                   let labels = []
-                                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
+                                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
+                                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
+                                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                                   if (req.body.isList) {
                                     callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                       .then(lists => {
@@ -435,7 +439,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                       labels = labels.concat(temp)
                                     }
                                   }
-                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                                     .then(response => {
                                       if (i === limit - 1) {
                                         if (response.status === 'success') {
@@ -625,6 +629,8 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                             description: JSON.stringify(err)
                           })
                         }
+                        let message = preparePayload(subscribers[j], page, messageData)
+                        saveLiveChat(message)
                         let surveyPage = {
                           pageId: page.pageId,
                           userId: req.user._id,

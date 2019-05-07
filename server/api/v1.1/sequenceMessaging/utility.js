@@ -3,7 +3,7 @@ const TAG = 'api/sequenceMessaging/logiclayer.js'
 const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
 const SequenceDatalayer = require('./sequence.datalayer')
 
-function addToMessageQueue (sequenceId, scheduleDate, messageId, subscriberId, companyId) {
+function addToMessageQueue (sequenceId, messageId, subscriberId, companyId, scheduleDate) {
   let sequenceQueuePayload = {
     sequenceId: sequenceId,
     subscriberId: subscriberId,

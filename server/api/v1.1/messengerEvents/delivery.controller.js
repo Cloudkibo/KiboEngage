@@ -3,6 +3,10 @@ const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalay
 const PollPageDataLayer = require('../page_poll/page_poll.datalayer')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const logger = require('../../../components/logger')
+const SequenceUtility = require('../sequenceMessaging/utility')
+const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
+const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
+const utility = require('../utility')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -13,6 +17,7 @@ exports.index = function (req, res) {
   updateBroadcastSent(req.body.entry[0].messaging[0])
   updatePollSent(req.body.entry[0].messaging[0])
   updateSurveySent(req.body.entry[0].messaging[0])
+  updateSequenceSubscriberMessage(req.body.entry[0].messaging[0])
 }
 
 function updateBroadcastSent (req) {
@@ -70,5 +75,63 @@ function updateSurveySent (req) {
     })
     .catch(err => {
       logger.serverLog(TAG, `ERROR in fetching survey pages ${JSON.stringify(err)}`)
+    })
+}
+
+function updateSequenceSubscriberMessage (req) {
+  utility.callApi(`pages/query`, 'post', {pageId: req.recipient.id, connected: true})
+    .then(pages => {
+      const page = pages[0]
+      if (page) {
+        utility.callApi(`subscribers/query`, 'post', { senderId: req.sender.id, companyId: page.companyId })
+          .then(subscribers => {
+            const subscriber = subscribers[0]
+            if (subscriber) {
+              SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(req.delivery.watermark) }})
+                .then(seqSubMsg => {
+                  logger.serverLog('DateTime', `${JSON.stringify(new Date(req.delivery.watermark))}`)
+                  SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(req.delivery.watermark) }},
+                    { received: true }, { multi: true })
+                    .then(updated => {
+                      for (let k = 0; k < seqSubMsg.length; k++) {
+                        // check queue for trigger - sees the message
+                        SequenceMessageQueueDataLayer.genericFind({ subscriberId: subscriber._id, companyId: subscriber.companyId })
+                          .then(seqQueue => {
+                            if (seqQueue.length > 0) {
+                              for (let i = 0; i < seqQueue.length; i++) {
+                                if (seqQueue[i].sequenceMessageId.trigger.event === 'receives' && seqQueue[i].sequenceMessageId.trigger.value === seqSubMsg[k].messageId) {
+                                  let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
+                                  SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
+                                    .then(updated => {
+                                      logger.serverLog(TAG, `queueScheduledTime updated successfully for record _id ${seqQueue[i]._id}`)
+                                    })
+                                    .catch(err => {
+                                      logger.serverLog(TAG, `ERROR in updating sequence message queue ${JSON.stringify(err)}`)
+                                    })
+                                }
+                              }
+                            }
+                          })
+                          .catch(err => {
+                            logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`)
+                          })
+                      }
+                    })
+                    .catch(err => {
+                      logger.serverLog(TAG, `ERROR in updating sequence subscriber messages ${JSON.stringify(err)}`)
+                    })
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`)
+                })
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `ERROR in retrieving subscriber ${JSON.stringify(err)}`)
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `ERROR in retrieving page ${JSON.stringify(err)}`)
     })
 }

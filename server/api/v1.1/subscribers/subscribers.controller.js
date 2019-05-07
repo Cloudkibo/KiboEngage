@@ -105,25 +105,27 @@ exports.allLocales = function (req, res) {
 }
 
 exports.getAll = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
-    .then(companyuser => {
-      let criterias = logicLayer.getCriterias(req.body, companyuser)
-      utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
-        .then(count => {
-          utility.callApi(`subscribers/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch subscribers
-            .then(subscribers => {
-              let subscriberIds = logicLayer.getSubscriberIds(subscribers)
-              logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
-              utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds } }, req.headers.authorization)
-                .then(tags => {
-                  logger.serverLog(TAG, `tags: ${util.inspect(tags)}`)
-                  let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags, req.body.filter_criteria.tag_value)
+  let criterias = logicLayer.getCriterias(req)
+  utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
+    .then(count => {
+      utility.callApi(`subscribers/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch subscribers
+        .then(subscribers => {
+          let subscriberIds = logicLayer.getSubscriberIds(subscribers)
+          logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`)
+          utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, isList: false, defaultTag: false }, req.headers.authorization)
+            .then(tags => {
+              let tagIds = tags.map((t) => t._id)
+              utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds }, tagId: {$in: tagIds} }, req.headers.authorization)
+                .then(tagSubscribers => {
+                  logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`)
+                  let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, req.body.filter_criteria.tag_value)
                   logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`)
                   // start append custom Fields
-                  utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: companyuser.companyId } }, req.headers.authorization)
+                  utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } }, req.headers.authorization)
                     .then(customFields => {
                       logger.serverLog(TAG, `customFields: ${util.inspect(customFields)}`)
-                      utility.callApi('custom_field_subscribers', 'get')
+                      let customFieldIds = customFields.map((cf) => cf._id)
+                      utility.callApi('custom_field_subscribers/query', 'post', {purpose: 'findAll', match: {subscriberId: {$in: subscriberIds}, customFieldId: {$in: customFieldIds}}}, req.headers.authorization)
                         .then(customFieldSubscribers => {
                           logger.serverLog(TAG, `customFieldSubscribers: ${util.inspect(customFieldSubscribers)}`)
                           let finalPayload = logicLayer.getFinalPayload(subscribersPayload, customFields, customFieldSubscribers)
@@ -158,21 +160,21 @@ exports.getAll = function (req, res) {
             .catch(error => {
               return res.status(500).json({
                 status: 'failed',
-                payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
+                payload: `Failed to fetch tags ${JSON.stringify(error)}`
               })
             })
         })
         .catch(error => {
           return res.status(500).json({
             status: 'failed',
-            payload: `Failed to fetch subscriber count ${JSON.stringify(error)}`
+            payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
           })
         })
     })
     .catch(error => {
       return res.status(500).json({
         status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
+        payload: `Failed to fetch subscriber count ${JSON.stringify(error)}`
       })
     })
 }
