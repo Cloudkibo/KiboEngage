@@ -185,7 +185,6 @@ exports.rename = function (req, res) {
                         .then(tagSubscribers => {
                           let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
                           if (subscribers.length > 0) {
-                            //unassignTagFromSubscribers(subscribers, tag, req, () => {
                             assignTagToSubscribers(subscribers, req.body.newTag, req, callback,false)
                             
                           } else {
@@ -450,12 +449,10 @@ exports.assign = function (req, res) {
 }
 
 function unassignTagFromSubscribers (subscribers, tag, req, callback) {
-  //console.log('unassignTagFromSubscribers',unassignTagFromSubscribers)
   let tags = []
   subscribers.forEach((subscriberId, i) => {
     callApi.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
       .then(subscriber => {
-        console.log('subscriber', subscriber)
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
           let tagPayload = tags[existsTag.index]
@@ -465,7 +462,6 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
               callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
                 .then(deleteRecord => {
                   if (i === subscribers.length - 1) {
-                    console.log('Tag subscriber delete successfully in if')
                     callback(null, 'success')
                   }
                 })
@@ -484,7 +480,6 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
                   callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
                     .then(deleteRecord => {
                       if (i === subscribers.length - 1) {
-                        console.log('Tag subscriber delete successfully in else')
                         callback(null, 'success')
                       }
                     })
