@@ -50,6 +50,7 @@ exports.allPages = function (req, res) {
           ]
           utility.callApi(`subscribers/aggregate`, 'post', subscribeAggregate, req.headers.authorization)
             .then(subscribesCount => {
+              console.log('subscribesCount', subscribesCount)
               let unsubscribeAggregate = [
                 {$match: {isSubscribed: false}},
                 {
@@ -61,9 +62,13 @@ exports.allPages = function (req, res) {
               ]
               utility.callApi(`subscribers/aggregate`, 'post', unsubscribeAggregate, req.headers.authorization)
                 .then(unsubscribesCount => {
+                  console.log('unsubscribesCount', unsubscribesCount)
                   let updatedPages = logicLayer.appendSubUnsub(pages)
+                  console.log('updatedPages 1', updatedPages)
                   updatedPages = logicLayer.appendSubscribersCount(updatedPages, subscribesCount)
-                  updatedPages = logicLayer.appendUnsubscribesCount(updatedPages, unsubscribesCount)
+                  console.log('updatedPages 2', updatedPages)
+                  // updatedPages = logicLayer.appendUnsubscribesCount(updatedPages, unsubscribesCount)
+                  console.log('updatedPages 3', updatedPages)
                   res.status(200).json({
                     status: 'success',
                     payload: updatedPages
