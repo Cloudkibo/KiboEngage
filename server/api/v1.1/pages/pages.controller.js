@@ -50,7 +50,6 @@ exports.allPages = function (req, res) {
           ]
           utility.callApi(`subscribers/aggregate`, 'post', subscribeAggregate, req.headers.authorization)
             .then(subscribesCount => {
-              console.log('subscribesCount', subscribesCount)
               let unsubscribeAggregate = [
                 {$match: {isSubscribed: false}},
                 {
