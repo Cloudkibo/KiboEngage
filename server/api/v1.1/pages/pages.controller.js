@@ -67,7 +67,7 @@ exports.allPages = function (req, res) {
                   console.log('updatedPages 1', updatedPages)
                   updatedPages = logicLayer.appendSubscribersCount(updatedPages, subscribesCount)
                   console.log('updatedPages 2', updatedPages)
-                  // updatedPages = logicLayer.appendUnsubscribesCount(updatedPages, unsubscribesCount)
+                  updatedPages = logicLayer.appendUnsubscribesCount(updatedPages, unsubscribesCount)
                   console.log('updatedPages 3', updatedPages)
                   res.status(200).json({
                     status: 'success',
