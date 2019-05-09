@@ -142,6 +142,8 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
           .then(pageTags => {
             console.log('pageTags found', pageTags)
             const limit = Math.ceil(subscribersCount[0].count / 10000)
+            console.log('subscribersCount', subscribersCount[0].count)
+            console.log('limit count', limit)
             for (let i = 0; i < limit; i++) {
               let labels = []
               let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)

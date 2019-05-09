@@ -9,7 +9,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
       'notification_type': 'REGULAR',
       'messaging_type': 'MESSAGE_TAG',
       'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
-      'targeting': {
+      'targetting': {
         'labels': {
           'operator': 'NOT',
           'values': notlabels
