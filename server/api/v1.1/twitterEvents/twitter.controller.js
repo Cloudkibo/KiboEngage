@@ -78,7 +78,8 @@ exports.twitterwebhook = function (req, res) {
                           .then(messageData => {
                             console.log('messageData', messageData)
                             if (messageData[0] && messageData[0].attachment && messageData[0].attachment.type === 'video') {
-                              sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 5000)
+                              console.log('in video')
+                              sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 8000)
                             } else {
                               sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
                             }
