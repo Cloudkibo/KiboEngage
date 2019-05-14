@@ -603,7 +603,8 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                       text: `${surveyData.survey.description}\n${surveyData.first_question.statement}`,
                       buttons: surveyData.buttons
                     }
-                  }
+                  },
+                  metadata: 'SENT_FROM_KIBOPUSH'
                 }
                 const data = {
                   messaging_type: 'MESSAGE_TAG',
@@ -630,6 +631,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                           })
                         }
                         let message = preparePayload(subscribers[j], page, messageData)
+                        message.componentType = 'survey'
                         saveLiveChat(message)
                         let surveyPage = {
                           pageId: page.pageId,

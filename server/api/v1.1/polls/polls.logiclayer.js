@@ -187,7 +187,8 @@ exports.prepareMessageData = function (body, id) {
         'payload': JSON.stringify(
           {poll_id: id, option: body.options[2]})
       }
-    ]
+    ],
+    metadata: 'SENT_FROM_KIBOPUSH'
   }
   return messageData
 }
