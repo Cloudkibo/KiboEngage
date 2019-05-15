@@ -26,6 +26,7 @@ exports.findAllAutopostingObjectsUsingQuery = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
+  console.log('queryObject', queryObject)
   return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
 }
 
