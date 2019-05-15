@@ -57,16 +57,16 @@ exports.checkType = function (body, savedMsg) {
       URLDataLayer.createURLObject(URLObject)
         .then(savedurl => {
           let newURL = config.domain + '/api/URL/' + savedurl._id
-          if ((body.extended_entities && body.extended_entities.media[0].type === 'photo') || (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'photo')) {
+          if ((body.extended_entities && body.extended_entities.media[0].type === 'photo') || (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'photo')) {
             button = false
             let otherMessage = preparePaylod(body, newURL, 'text', text[0], button)
             messageData = preparePaylod(body, newURL, 'photo', text[1])
             resolve(otherMessage.concat(messageData))
           } else {
             if ((body.extended_entities && body.extended_entities.media[0].type === 'video') ||
-            (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'video') ||
-            (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'animated_gif') ||
-            (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'animated_gif')
+            (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'video') ||
+            (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'animated_gif') ||
+            (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'animated_gif')
             ) {
               button = false
               messageData = preparePaylod(body, '', 'video', text[1])
