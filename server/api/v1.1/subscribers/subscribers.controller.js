@@ -113,7 +113,6 @@ exports.getAll = function (req, res) {
       for (let i = 0; i < tags.length; i++) { 
         tagIDs.push(tags[i]._id)
       }
-      console.log('----------------------tagIDs in get all --------------->', tagIDs.length)     
       let criterias = logicLayer.getCriterias(req,tagIDs)
       utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch subscribers count
         .then(count => {
@@ -128,7 +127,7 @@ exports.getAll = function (req, res) {
                   utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds }, tagId: {$in: tagIds} }, req.headers.authorization)
                     .then(tagSubscribers => {
                       logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`)
-                      let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, req.body.filter_criteria.tag_value)
+                      let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, tagIds, req.body.filter_criteria.tag_value)
                       logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`)
                       // start append custom Fields
                       utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } }, req.headers.authorization)
