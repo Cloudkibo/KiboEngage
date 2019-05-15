@@ -371,44 +371,55 @@ function parseUrl (text) {
 
 function applyTagFilterIfNecessary (req, subscribers, fn, res) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
-    callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
-      .then(tagSubscribers => {
-        console.log('tagSubscribers in applyTagFilterIfNecessary', tagSubscribers)
-        if (tagSubscribers.length === 0) {
-          return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
-        }
-        logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`)
-        let subscribersPayload = []
-        for (let i = 0; i < subscribers.length; i++) {
-          for (let j = 0; j < tagSubscribers.length; j++) {
-            if (subscribers[i]._id.toString() ===
-              tagSubscribers[j].subscriberId._id.toString()) {
-              subscribersPayload.push({
-                _id: subscribers[i]._id,
-                firstName: subscribers[i].firstName,
-                lastName: subscribers[i].lastName,
-                locale: subscribers[i].locale,
-                gender: subscribers[i].gender,
-                timezone: subscribers[i].timezone,
-                profilePic: subscribers[i].profilePic,
-                companyId: subscribers[i].companyId,
-                pageScopedId: '',
-                email: '',
-                senderId: subscribers[i].senderId,
-                pageId: subscribers[i].pageId,
-                datetime: subscribers[i].datetime,
-                isEnabledByPage: subscribers[i].isEnabledByPage,
-                isSubscribed: subscribers[i].isSubscribed,
-                unSubscribedBy: subscribers[i].unSubscribedBy,
-                source: subscribers[i].source
-              })
+    callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }, req.headers.authorization)
+      .then(tags => {
+        console.log('----------------------tags in applyTagFilterIfNecessary --------------->', tags.length)
+        let tagIDs = []
+         for (let i = 0; i < tags.length; i++) { 
+          tagIDs.push(tags[i]._id)
+         }
+        callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIDs } }, req.headers.authorization)
+          .then(tagSubscribers => {
+            console.log('tagSubscribers in applyTagFilterIfNecessary', tagSubscribers)
+            if (tagSubscribers.length === 0) {
+              return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
             }
-          }
-        }
-        fn(subscribersPayload)
+            logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`)
+            let subscribersPayload = []
+            for (let i = 0; i < subscribers.length; i++) {
+              for (let j = 0; j < tagSubscribers.length; j++) {
+                if (subscribers[i]._id.toString() ===
+                  tagSubscribers[j].subscriberId._id.toString()) {
+                  subscribersPayload.push({
+                    _id: subscribers[i]._id,
+                    firstName: subscribers[i].firstName,
+                    lastName: subscribers[i].lastName,
+                    locale: subscribers[i].locale,
+                    gender: subscribers[i].gender,
+                    timezone: subscribers[i].timezone,
+                    profilePic: subscribers[i].profilePic,
+                    companyId: subscribers[i].companyId,
+                    pageScopedId: '',
+                    email: '',
+                    senderId: subscribers[i].senderId,
+                    pageId: subscribers[i].pageId,
+                    datetime: subscribers[i].datetime,
+                    isEnabledByPage: subscribers[i].isEnabledByPage,
+                    isSubscribed: subscribers[i].isSubscribed,
+                    unSubscribedBy: subscribers[i].unSubscribedBy,
+                    source: subscribers[i].source
+                  })
+                }
+              }
+            }
+            fn(subscribersPayload)
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+          })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to fetch tag  ${JSON.stringify(err)}`)
       })
   } else {
     fn(subscribers)

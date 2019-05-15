@@ -32,7 +32,7 @@ exports.getFinalPayload = (subscribers, customFields, customFieldSubscribers) =>
   }
   return subscribersPayload
 }
-exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
+exports.getSusbscribersPayload = function (subscribers, tags, tagIds, tagValue) {
   let subscribersPayload = subscribers
   let filteredTagSubscribers = []
   for (let i = 0; i < subscribers.length; i++) {
@@ -41,7 +41,7 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
     for (let j = 0; j < tags.length; j++) {
       if (tags[j].tagId) {
         if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
-          if (tagValue === tags[j].tagId._id.toString()) {
+          if (tagIds.includes(tags[j].tagId._id.toString())) {
             isTaggedSubscriber = true
           }
           subscribersPayload[i].tags.push(tags[j].tagId.tag)
@@ -58,7 +58,7 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
   return subscribersPayload
 }
 
-exports.getCriterias = function (req) {
+exports.getCriterias = function (req, tagIDs) {
   console.log('getting criterias')
   let search = ''
   let findCriteria = {}
@@ -80,7 +80,7 @@ exports.getCriterias = function (req) {
     }
     if (req.body.filter_criteria.tag_value) {
       console.log('tag_value', req.body.filter_criteria.tag_value)
-      findCriteria['tags_subscriber'] = {$elemMatch: {tagId: req.body.filter_criteria.tag_value}}
+      findCriteria['tags_subscriber.tagId'] = { $in: tagIDs }
     }
     console.log(`findCriteria  ${JSON.stringify(findCriteria)}`)
   }
