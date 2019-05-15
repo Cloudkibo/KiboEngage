@@ -41,7 +41,7 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagIds, tagValue) 
     for (let j = 0; j < tags.length; j++) {
       if (tags[j].tagId) {
         if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
-          if (tagIds.includes(tags[j].tagId._id.toString())) {
+          if (tagIds && tagIds.length !== 0 && tagIds.includes(tags[j].tagId._id.toString())) {
             isTaggedSubscriber = true
           }
           subscribersPayload[i].tags.push(tags[j].tagId.tag)
