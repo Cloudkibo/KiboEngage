@@ -77,12 +77,7 @@ exports.twitterwebhook = function (req, res) {
                         logicLayer.checkType(req.body, savedMsg)
                           .then(messageData => {
                             console.log('messageData', messageData)
-                            if (messageData[0] && messageData[0].attachment && messageData[0].attachment.type === 'video') {
-                              console.log('in video')
-                              sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
-                            } else {
-                              sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
-                            }
+                            sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
                           })
                           .catch(err => {
                             logger.serverLog(`Failed to prepare data ${JSON.stringify(err)}`)
