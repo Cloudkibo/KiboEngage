@@ -630,8 +630,8 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                             description: JSON.stringify(err)
                           })
                         }
+                        messageData.componentType = 'survey'
                         let message = preparePayload(subscribers[j], page, messageData)
-                        message.componentType = 'survey'
                         saveLiveChat(message)
                         let surveyPage = {
                           pageId: page.pageId,

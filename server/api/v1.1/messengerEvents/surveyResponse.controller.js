@@ -6,6 +6,7 @@ const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const {callApi} = require('../utility')
 const notificationsUtility = require('../notifications/notifications.utility')
+const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.surveyResponse = function (req, res) {
   logger.serverLog(TAG, `in surveyResponse ${JSON.stringify(req.body)}`)
@@ -18,6 +19,8 @@ exports.surveyResponse = function (req, res) {
           .then(subscribers => {
             let subscriber = subscribers[0]
             if (subscriber) {
+              let message = preparePayload(subscriber, subscriber.pageId, {componentType: 'text', text: event.postback.title})
+              saveLiveChat(message)
               savesurvey(event, subscriber)
                 .then(response => {
                   logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`)
