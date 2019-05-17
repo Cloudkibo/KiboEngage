@@ -13,10 +13,10 @@ exports.saveLiveChat = function (message) {
 exports.preparePayload = function (subscriber, page, message) {
   let payload = {
     format: 'convos',
-    sender_id: subscriber._id,
-    recipient_id: page.userId._id,
-    sender_fb_id: subscriber.senderId,
-    recipient_fb_id: page.pageId,
+    sender_id: page._id,
+    recipient_id: subscriber._id,
+    sender_fb_id: page.pageId,
+    recipient_fb_id: subscriber.senderId,
     subscriber_id: subscriber._id,
     company_id: page.companyId,
     status: 'unseen', // seen or unseen
