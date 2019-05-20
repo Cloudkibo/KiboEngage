@@ -110,7 +110,7 @@ function preparePaylod (body, newURL, type, text, button) {
           'type': 'template',
           'payload': {
             'template_type': 'button',
-            'text': text,
+            'text': `@${body.user.screen_name} tweeted:\ntext`,
             'buttons': [
               {
                 'type': 'web_url',
@@ -124,16 +124,16 @@ function preparePaylod (body, newURL, type, text, button) {
       return [messageData]
     } else {
       messageData = {
-        'text': text
+        'text': `@${body.user.screen_name} tweeted:\ntext`
       }
       return [messageData]
     }
   } else if (type === 'photo') {
     let gallery
     if (body.truncated) {
-      gallery = prepareGallery(body.extended_tweet.extended_entities.media, text, newURL)
+      gallery = prepareGallery(body.extended_tweet.extended_entities.media, text, newURL, body.user.screen_name)
     } else {
-      gallery = prepareGallery(body.extended_entities.media, text, newURL)
+      gallery = prepareGallery(body.extended_entities.media, text, newURL, body.user.screen_name)
     }
     messageData = {
       'attachment': {
@@ -163,12 +163,13 @@ function preparePaylod (body, newURL, type, text, button) {
     return [messageData]
   }
 }
-function prepareGallery (media, text, newURL) {
+function prepareGallery (media, text, newURL, user) {
   let length = media.length <= 10 ? media.length : 10
   let elements = []
   for (let i = 0; i < length; i++) {
     elements.push({
-      'title': 'www.kiboengage.cloudkibo.com',
+      'title': `@${user} tweeted`,
+      'subtitle': 'https://kibopush.com/',
       'image_url': media[i].media_url,
       'buttons': [
         {
