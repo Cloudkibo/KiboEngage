@@ -26,7 +26,6 @@ exports.findAutoposting = function (req, res) {
 
 exports.twitterwebhook = function (req, res) {
   logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
-  console.log('in twitterwebhook', JSON.stringify(req.body))
   res.status(200).json({
     status: 'success',
     description: `received the payload`
