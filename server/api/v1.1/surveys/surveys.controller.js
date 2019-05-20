@@ -631,7 +631,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                           })
                         }
                         messageData.componentType = 'survey'
-                        let message = preparePayload(subscribers[j], page, messageData)
+                        let message = preparePayload(req.user, subscribers[j], page, messageData)
                         saveLiveChat(message)
                         let surveyPage = {
                           pageId: page.pageId,

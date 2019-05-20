@@ -408,7 +408,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                       }
                       console.log('pollsend response', util.inspect(resp.body))
                       messageData.componentType = 'poll'
-                      let message = preparePayload(subscribers[j], page, messageData)
+                      let message = preparePayload(req.user, subscribers[j], page, messageData)
                       saveLiveChat(message)
                       let pollBroadcast = PollLogicLayer.preparePollPagePayload(page, req.user, req.body, subscribers[j], req.body._id)
                       PollPageDataLayer.createForPollPage(pollBroadcast)
