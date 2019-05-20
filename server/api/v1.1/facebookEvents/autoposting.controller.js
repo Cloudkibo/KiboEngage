@@ -70,7 +70,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                     })
                       .then(savedMsg => {
                         let messageData = {}
-                        if (event.value.item === 'status' || status) {
+                        if ((event.value.item === 'status' || status) && !event.value.photos) {
                           messageData = autopostingLogicLayer.prepareMessageDataForStatus(event)
                           sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
                         } else if (event.value.item === 'share') {
@@ -89,7 +89,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                             .catch(err => {
                               logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
                             })
-                        } else if (event.value.item === 'photo') {
+                        } else if (event.value.item === 'photo' || event.value.photos) {
                           URLDataLayer.createURLObject({
                             originalURL: 'https://www.facebook.com/' + event.value.sender_id,
                             module: {

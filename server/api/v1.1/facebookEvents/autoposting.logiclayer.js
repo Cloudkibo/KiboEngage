@@ -85,22 +85,7 @@ exports.prepareMessageDataForImage = function (event, newURL) {
       'type': 'template',
       'payload': {
         'template_type': 'generic',
-        'elements': [
-          {
-            'title': (event.value.message)
-              ? event.value.message
-              : event.value.sender_name,
-            'image_url': event.value.link,
-            'subtitle': 'kibopush.com',
-            'buttons': [
-              {
-                'type': 'web_url',
-                'url': newURL,
-                'title': 'View Page'
-              }
-            ]
-          }
-        ]
+        'elements': prepareElements(event, newURL)
       }
     }
   }
@@ -133,4 +118,41 @@ exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
     type: 'autoposting-fb',
     scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
   }
+}
+function prepareElements (event, newURL) {
+  let elements = []
+  if (event.value.photos && event.value.photos.length > 0) {
+    for (let i = 0; i < event.value.photos.length; i++) {
+      elements.push({
+        'title': (event.value.message)
+          ? event.value.message
+          : event.value.sender_name,
+        'image_url': event.value.photos[i],
+        'subtitle': 'kibopush.com',
+        'buttons': [
+          {
+            'type': 'web_url',
+            'url': newURL,
+            'title': 'View Link'
+          }
+        ]
+      })
+    }
+  } else {
+    elements.push({
+      'title': (event.value.message)
+        ? event.value.message
+        : event.value.sender_name,
+      'image_url': event.value.image,
+      'subtitle': 'kibopush.com',
+      'buttons': [
+        {
+          'type': 'web_url',
+          'url': newURL,
+          'title': 'View Link'
+        }
+      ]
+    })
+  }
+  return elements
 }
