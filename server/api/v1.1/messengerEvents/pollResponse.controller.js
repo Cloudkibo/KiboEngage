@@ -6,7 +6,7 @@ const needle = require('needle')
 const sequenceController = require('./sequence.controller')
 const notificationsUtility = require('../notifications/notifications.utility')
 const {callApi} = require('../utility')
-const { saveLiveChat, preparePayload } = require('../../global/livechat')
+const { saveLiveChat, preparePayloadFacebook } = require('../../global/livechat')
 
 var array = []
 
@@ -19,7 +19,7 @@ exports.pollResponse = function (req, res) {
         .then(subscribers => {
           let subscriber = subscribers[0]
           if (subscriber) {
-            let message = preparePayload(subscriber, subscriber.pageId, {componentType: 'text', text: req.body.entry[0].messaging[0].message.text})
+            let message = preparePayloadFacebook(subscriber, subscriber.pageId, {componentType: 'text', text: req.body.entry[0].messaging[0].message.text})
             saveLiveChat(message)
             savepoll(req.body.entry[0].messaging[0], resp, subscriber)
               .then(response => {
