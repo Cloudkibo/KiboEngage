@@ -83,7 +83,7 @@ exports.create = function (req, res) {
                 (err, respp) => {
                   if (err) {
                     logger.serverLog(TAG,
-                      `Page accesstoken from graph api Error${JSON.stringify(err)}`)
+                      `Page accesstoken from graph api Error${JSON.stringify(err)}`, 'error')
                   }
                   console.log('response from pageaccesstoken', respp.body)
                   let messageData = logicLayer.setMessage(req.body.payload)
@@ -92,7 +92,7 @@ exports.create = function (req, res) {
                       `https://graph.facebook.com/${page.pageId}/photos?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
-                          logger.serverLog(TAG, err)
+                          logger.serverLog(TAG, err, 'error')
                         }
                         logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
@@ -112,17 +112,17 @@ exports.create = function (req, res) {
                       `https://graph-video.facebook.com/v2.11/${page.pageId}/videos?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
-                          logger.serverLog(TAG, err)
+                          logger.serverLog(TAG, err, 'error')
                         }
                         logger.serverLog(TAG, `response from post in video ${JSON.stringify(resp.body)}`)
                         needle.get(
                           `https://graph.facebook.com/${page.pageId}/feed?fields=object_id,type&access_token=${respp.body.access_token}`, (err, response) => {
                             if (err) {
-                              logger.serverLog(TAG, err)
+                              logger.serverLog(TAG, err, 'error')
                             }
                             logger.serverLog(TAG, `response from feed ${JSON.stringify(response.body)}`)
                             logicLayer.getPostId(response.body.data, resp.body.id).then(postId => {
-                              logger.serverLog(TAG, `postId ${postId}`)
+                              logger.serverLog(TAG, `postId ${postId}`, 'debug')
                               utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}}, req.headers.authorization)
                                 .then(result => {
                                   res.status(201).json({status: 'success', payload: postCreated})
@@ -141,7 +141,7 @@ exports.create = function (req, res) {
                       `https://graph.facebook.com/${page.pageId}/feed?access_token=${respp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
-                          logger.serverLog(TAG, err)
+                          logger.serverLog(TAG, err, 'error')
                         }
                         logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id

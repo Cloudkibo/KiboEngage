@@ -346,7 +346,7 @@ exports.createMessage = function (req, res) {
                 .then(messageCreated => {
                   utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}}, req.headers.authorization)
                     .then(result => {
-                      logger.serverLog('Message Created:', messageCreated)
+                      logger.serverLog('Message Created:', messageCreated, 'debug')
                       if (messageCreated.trigger.event === 'none') {
                         let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
                         SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, messageCreated._id)
@@ -801,7 +801,7 @@ exports.updateTrigger = function (req, res) {
                 seqMessage.payLoad = tempPayloadArray
                 SequenceDatalayer.createMessage(tempPayloadArray)
                   .then(savedMessage => {
-                    logger.serverLog('Saved Message:', savedMessage)
+                    logger.serverLog('Saved Message:', savedMessage, 'debug')
                     return res.status(200).json({ status: 'success', payload: savedMessage })
                   })
                   .catch(err => {

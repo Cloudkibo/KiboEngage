@@ -398,13 +398,13 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
               // checks the age of function using callback
               compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                 if (err) {
-                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err), 'error')
                 }
                 if (isLastMessage) {
                   needle.post(
                     `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`, data, (err, resp) => {
                       if (err) {
-                        logger.serverLog(TAG, err)
+                        logger.serverLog(TAG, err, 'error')
                       }
                       console.log('pollsend response', util.inspect(resp.body))
                       messageData.componentType = 'poll'
@@ -432,7 +432,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                         })
                     })
                 } else {
-                  logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                  logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ', 'debug')
                   let timeNow = new Date()
                   AutomationQueueDataLayer.createAutomationQueueObject({
                     automatedMessageId: req.body._id,

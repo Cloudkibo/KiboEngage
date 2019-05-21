@@ -15,18 +15,17 @@ exports.index = function (req, res) {
           res.end()
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch update autoposting message ${JSON.stringify(err)}`)
+          logger.serverLog(TAG, `Failed to fetch update autoposting message ${JSON.stringify(err)}`, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
     })
 }
 
 exports.broadcast = function (req, res) {
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
-      console.log('URLObject', URLObject)
       if (URLObject) {
         BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
           .then(updatedData => {
@@ -59,11 +58,11 @@ exports.broadcast = function (req, res) {
 }
 
 exports.sequence = function (req, res) {
-  logger.serverLog(`Sequence Click Count ${JSON.stringify(req.params.id)}`)
+  logger.serverLog(`Sequence Click Count ${JSON.stringify(req.params.id)}`, 'debug')
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
       if (URLObject) {
-        logger.serverLog(`Sequence Click Count ${JSON.stringify(URLObject)}`)
+        logger.serverLog(`Sequence Click Count ${JSON.stringify(URLObject)}`, 'debug')
         SequenceMessagesDataLayer.genericUpdateForSequenceMessages({_id: URLObject.module.id}, {$inc: {clicks: 1}})
           .then(updatedData => {
             let seqMessageId = URLObject.module.id

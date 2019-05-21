@@ -79,11 +79,11 @@ exports.create = function (req, res) {
                       .then(newTag => {
                         callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
                           .then(updated => {
-                            logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`)
+                            logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
                           })
                           .catch(err => {
                             if (err) {
-                              logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`)
+                              logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
                             }
                           })
                         require('./../../../config/socketio').sendMessageToClient({
@@ -162,8 +162,8 @@ exports.rename = function (req, res) {
                   return res.status(404).json({
                     status: 'failed',
                     description: `Failed to fetch page ${err}`
+                  })
                 })
-              })
               facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.newTag})
                 .then(label => {
                   if (label.body.error) {
@@ -185,8 +185,7 @@ exports.rename = function (req, res) {
                         .then(tagSubscribers => {
                           let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
                           if (subscribers.length > 0) {
-                            assignTagToSubscribers(subscribers, req.body.newTag, req, callback,false)
-                            
+                            assignTagToSubscribers(subscribers, req.body.newTag, req, callback, false)
                           } else {
                             callback(null, 'success')
                           }
@@ -264,13 +263,13 @@ exports.delete = function (req, res) {
                     .then(result => {
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`)
+                      logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
                     })
                 }
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
             })
         })
         async.parallelLimit([
@@ -328,7 +327,6 @@ function deleteTagsFromFacebook (req, tags, callback) {
     callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
       .then(pages => {
         let page = pages[0]
-        console.log('tag.labelFbId',tag.labelFbId)
         facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
             if (label.body.error) {
@@ -358,7 +356,7 @@ function isTagExists (pageId, tags) {
   }
 }
 
-function assignTagToSubscribers (subscribers, tag, req, callback,flag) {
+function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
   let tags = []
   subscribers.forEach((subscriberId, i) => {
     callApi.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
@@ -406,7 +404,7 @@ function assignTagToSubscribers (subscribers, tag, req, callback,flag) {
                         }
                       })
                       .catch(err => callback(err))
-                  } 
+                  }
                 })
                 .catch(err => callback(err))
             })
@@ -422,7 +420,7 @@ exports.assign = function (req, res) {
   let tag = req.body.tag
   async.parallelLimit([
     function (callback) {
-      assignTagToSubscribers(subscribers, tag, req, callback,true)
+      assignTagToSubscribers(subscribers, tag, req, callback, true)
     }
   ], 10, function (err, results) {
     if (err) {
@@ -491,8 +489,8 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
         }
       })
       .catch(err => {
-        console.log('caught subscriber in catch')
-        callback(err) })
+        callback(err)
+      })
   })
 }
 
