@@ -837,7 +837,7 @@ function isWhiteListedDomain (domain, pageId, user) {
               console.log('error in getting whitelisted_domains', err)
             }
             console.log('domain', domain)
-            console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
+           // console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
             if (resp.body.data && resp.body.data[0].whitelisted_domains) {
               for (let i = 0; i < resp.body.data[0].whitelisted_domains.length; i++) {
                 console.log('hostName of whitelist', getHostName(resp.body.data[0].whitelisted_domains[i]))
