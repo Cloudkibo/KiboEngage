@@ -87,16 +87,16 @@ exports.postPublish = function (req, res) {
                             sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
                           })
                           .catch(err => {
-                            logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
+                            logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(`Failed to create autoposting message ${JSON.stringify(err)}`)
+                        logger.serverLog(`Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`)
+                  logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`, 'error')
                 })
             })
           })
@@ -121,11 +121,10 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
   let interval = setInterval(() => {
     if (current === messageData.length) {
       clearInterval(interval)
-      logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
+      logger.serverLog(TAG, `Wordpress autoposting sent successfully!`)
     } else {
       broadcastApi.callMessageCreativesEndpoint(messageData[current], page.accessToken, 'autoposting')
         .then(messageCreative => {
-          console.log('messageCreative', messageCreative)
           if (messageCreative.status === 'success') {
             const messageCreativeId = messageCreative.message_creative_id
             utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
@@ -151,7 +150,6 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
                   }
                   broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                     .then(response => {
-                      console.log('response from callBroadcastMessagesEndpoint', JSON.stringify(response.body))
                       if (i === limit - 1) {
                         if (response.status === 'success') {
                           utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
@@ -159,32 +157,32 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
                               current++
                             })
                             .catch(err => {
-                              logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                              logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
                               current++
                             })
                         } else {
-                          logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`)
+                          logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`, 'error')
                           current++
                         }
                       }
                     })
                     .catch(err => {
-                      logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                      logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
                       current++
                     })
                 }
               })
               .catch(err => {
-                logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`)
+                logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`, 'error')
                 current++
               })
           } else {
-            logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
+            logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`, 'error')
             current++
           }
         })
         .catch(err => {
-          logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+          logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
           current++
         })
     }

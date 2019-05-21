@@ -13,7 +13,7 @@ exports.index = function (req, res) {
 }
 
 exports.subscriberJoins = function (req, res) {
-  logger.serverLog(TAG, `in sequence subscriberJoins ${JSON.stringify(req.body)}`)
+  logger.serverLog(TAG, `in sequence subscriberJoins ${JSON.stringify(req.body)}`, 'debug')
 
   callApi(`subscribers/query`, 'post', {senderId: req.body.senderId, pageId: req.body.pageId})
     .then(subscribers => {
@@ -73,7 +73,7 @@ exports.subscriberJoins = function (req, res) {
 }
 
 exports.resposndsToPoll = function (data) {
-  logger.serverLog(TAG, `in sequence resposndsToPoll ${JSON.stringify(data)}`)
+  logger.serverLog(TAG, `in sequence resposndsToPoll ${JSON.stringify(data)}`, 'debug')
 
   SequencesDataLayer.genericFindForSequence({companyId: data.companyId, 'trigger.event': 'responds_to_poll', 'trigger.value': data.pollId})
     .then(sequences => {

@@ -25,7 +25,7 @@ exports.index = function (req, res) {
           })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Internal Server Error on fetch ${err}`)
+          logger.serverLog(TAG, `Internal Server Error on fetch ${err}`, 'error')
           return res.status(500)
             .json({status: 'failed', description: 'Internal Server Error'})
         })
@@ -59,7 +59,7 @@ exports.indexByPage = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                logger.serverLog(TAG, `Internal Server Error on fetch ${err}`)
+                logger.serverLog(TAG, `Internal Server Error on fetch ${err}`, 'error')
                 return res.status(500)
                   .json({status: 'failed', description: 'Internal Server Error'})
               }
@@ -67,7 +67,7 @@ exports.indexByPage = function (req, res) {
         })
         .catch(err => {
           if (err) {
-            logger.serverLog(TAG, `Internal Server Error on fetch ${err}`)
+            logger.serverLog(TAG, `Internal Server Error on fetch ${err}`, 'error')
             return res.status(500)
               .json({status: 'failed', description: 'Internal Server Error'})
           }
@@ -87,7 +87,7 @@ exports.create = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
     .then(companyUser => {
       if (!companyUser) {
-        logger.serverLog(TAG, 'The user account does not belong to any company.')
+        logger.serverLog(TAG, 'The user account does not belong to any company.', 'error')
         return res.status(404).json({
           status: 'failed',
           description: 'The user account does not belong to any company. Please contact support'
@@ -97,13 +97,13 @@ exports.create = function (req, res) {
         .then(page => {
           page = page[0]
           if (!page) {
-            logger.serverLog(TAG, 'Page not found')
+            logger.serverLog(TAG, 'Page not found', 'error')
             return res.status(404).json({
               status: 'failed',
               description: 'Page not found'
             })
           }
-          logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`)
+          logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`, 'debug')
           callApi.callApi('menu/query', 'post', {pageId: page._id, companyId: page.companyId}, req.headers.authorization)
             .then(info => {
               info = info[0]
@@ -128,12 +128,12 @@ exports.create = function (req, res) {
                       }
                     })
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
+                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`, 'debug')
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG,
-                            `Internal Server Error ${JSON.stringify(err)}`)
+                            `Internal Server Error ${JSON.stringify(err)}`, 'error')
                         }
                         if (!err) {
                         }
@@ -161,7 +161,7 @@ exports.create = function (req, res) {
                 }, req.headers.authorization)
                   .then(updated => {
                     const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`)
+                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`, 'debug')
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: companyUser.companyId,
                       body: {
@@ -174,17 +174,17 @@ exports.create = function (req, res) {
                         }
                       }
                     })
-                    logger.serverLog(TAG, `req.body.payload passed to graph api ${JSON.stringify(req.body.payload)}`)
+                    logger.serverLog(TAG, `req.body.payload passed to graph api ${JSON.stringify(req.body.payload)}`, 'debug')
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (!err) {
                         }
                         if (err) {
                           logger.serverLog(TAG,
-                            `Internal Server Error ${JSON.stringify(err)}`)
+                            `Internal Server Error ${JSON.stringify(err)}`, 'error')
                         }
                         if (JSON.stringify(resp.body.error)) {
-                          logger.serverLog(TAG, `Error from facebook graph api: ${JSON.stringify(resp.body.error)}`)
+                          logger.serverLog(TAG, `Error from facebook graph api: ${JSON.stringify(resp.body.error)}`, 'error')
                           return res.status(404).json({
                             status: 'error',
                             description: JSON.stringify(resp.body.error)
@@ -197,7 +197,7 @@ exports.create = function (req, res) {
                             })
                             .catch(err => {
                               if (err) {
-                                logger.serverLog(TAG, `Error occurred in finding menu${JSON.stringify(err)}`)
+                                logger.serverLog(TAG, `Error occurred in finding menu${JSON.stringify(err)}`, 'error')
                               }
                             })
                         }
@@ -207,7 +207,7 @@ exports.create = function (req, res) {
                     if (err) {
                       logger.serverLog(TAG,
                         `Error occurred in finding subscriber${JSON.stringify(
-                          err)}`)
+                          err)}`, 'error')
                     }
                   })
               }
@@ -215,7 +215,7 @@ exports.create = function (req, res) {
             .catch(err => {
               if (err) {
                 logger.serverLog(TAG,
-                  `Internal Server Error ${JSON.stringify(err)}`)
+                  `Internal Server Error ${JSON.stringify(err)}`, 'error')
                 return res.status(500).json({
                   status: 'failed',
                   description: 'Failed to find menu. Internal Server Error'
@@ -226,7 +226,7 @@ exports.create = function (req, res) {
         .catch(err => {
           if (err) {
             logger.serverLog(TAG,
-              `Internal Server Error ${JSON.stringify(err)}`)
+              `Internal Server Error ${JSON.stringify(err)}`, 'error')
             return res.status(500).json({
               status: 'failed',
               description: 'Failed to find page. Internal Server Error'

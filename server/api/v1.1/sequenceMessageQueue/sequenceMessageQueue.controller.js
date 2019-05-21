@@ -18,7 +18,7 @@ exports.index = function (req, res) {
       })
     })
     .catch(err => {
-      logger.serverLog(TAG, JSON.stringify(err))
+      logger.serverLog(TAG, JSON.stringify(err), 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Internal Server Error ${JSON.stringify(err)}`

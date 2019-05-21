@@ -59,6 +59,6 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
   ]
   logger.serverLog(TAG,
     `final query ${JSON.stringify(
-      query)}`)
+      query)}`, 'debug')
   return query
 }

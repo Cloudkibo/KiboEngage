@@ -26,7 +26,7 @@ function updateBroadcastSent (req) {
       logger.serverLog(TAG, `Broadcast sent updated successfully`)
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR at updating broadcast sent ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR at updating broadcast sent ${JSON.stringify(err)}`, 'error')
     })
 }
 
@@ -46,11 +46,11 @@ function updatePollSent (req) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `ERROR at updating poll sent ${JSON.stringify(err)}`)
+          logger.serverLog(TAG, `ERROR at updating poll sent ${JSON.stringify(err)}`, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR in fetching poll pages ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR in fetching poll pages ${JSON.stringify(err)}`, 'error')
     })
 }
 
@@ -70,11 +70,11 @@ function updateSurveySent (req) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `ERROR at updating survey sent ${JSON.stringify(err)}`)
+          logger.serverLog(TAG, `ERROR at updating survey sent ${JSON.stringify(err)}`, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR in fetching survey pages ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR in fetching survey pages ${JSON.stringify(err)}`, 'error')
     })
 }
 
@@ -89,7 +89,7 @@ function updateSequenceSubscriberMessage (req) {
             if (subscriber) {
               SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(req.delivery.watermark) }})
                 .then(seqSubMsg => {
-                  logger.serverLog('DateTime', `${JSON.stringify(new Date(req.delivery.watermark))}`)
+                  logger.serverLog('DateTime', `${JSON.stringify(new Date(req.delivery.watermark))}`, 'debug')
                   SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(req.delivery.watermark) }},
                     { received: true }, { multi: true })
                     .then(updated => {
@@ -103,35 +103,35 @@ function updateSequenceSubscriberMessage (req) {
                                   let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
                                   SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
                                     .then(updated => {
-                                      logger.serverLog(TAG, `queueScheduledTime updated successfully for record _id ${seqQueue[i]._id}`)
+                                      logger.serverLog(TAG, `queueScheduledTime updated successfully for record _id ${seqQueue[i]._id}`, 'error')
                                     })
                                     .catch(err => {
-                                      logger.serverLog(TAG, `ERROR in updating sequence message queue ${JSON.stringify(err)}`)
+                                      logger.serverLog(TAG, `ERROR in updating sequence message queue ${JSON.stringify(err)}`, 'error')
                                     })
                                 }
                               }
                             }
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`)
+                            logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`, 'error')
                           })
                       }
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `ERROR in updating sequence subscriber messages ${JSON.stringify(err)}`)
+                      logger.serverLog(TAG, `ERROR in updating sequence subscriber messages ${JSON.stringify(err)}`, 'error')
                     })
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`, 'error')
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `ERROR in retrieving subscriber ${JSON.stringify(err)}`)
+            logger.serverLog(TAG, `ERROR in retrieving subscriber ${JSON.stringify(err)}`, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR in retrieving page ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `ERROR in retrieving page ${JSON.stringify(err)}`, 'error')
     })
 }

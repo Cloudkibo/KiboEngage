@@ -13,10 +13,10 @@ function addToMessageQueue (sequenceId, messageId, subscriberId, companyId, sche
   }
   SequenceMessageQueueDatalayer.create(sequenceQueuePayload)
     .then(result => {
-      logger.serverLog(TAG, 'Message queue created')
+      logger.serverLog(TAG, 'Message queue created', 'debug')
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to insert record in message queue ${err}`)
+      logger.serverLog(TAG, `Failed to insert record in message queue ${err}`, 'error')
     })
 }
 
@@ -29,7 +29,7 @@ function checkParentMessageTrigger (message) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to find message record ${err}`)
+      logger.serverLog(TAG, `Failed to find message record ${err}`, 'error')
     })
 }
 
@@ -68,14 +68,14 @@ const setSequenceTrigger = function (companyId, subscriberId, trigger) {
                           addToMessageQueue(sequence._id, utcDate, message._id)
                         })
                       }
-                      logger.serverLog(TAG, `Subscribed to sequence successfully`)
+                      logger.serverLog(TAG, `Subscribed to sequence successfully`, 'debug')
                     })
                     .catch(err => {
-                      return logger.serverLog(TAG, `ERROR saving sequence subscriber ${JSON.stringify(err)}`)
+                      return logger.serverLog(TAG, `ERROR saving sequence subscriber ${JSON.stringify(err)}`, 'error')
                     })
                 })
                 .catch(err => {
-                  return logger.serverLog(TAG, `ERROR getting sequence message${JSON.stringify(err)}`)
+                  return logger.serverLog(TAG, `ERROR getting sequence message${JSON.stringify(err)}`, 'error')
                 })
             }
           }
@@ -83,7 +83,7 @@ const setSequenceTrigger = function (companyId, subscriberId, trigger) {
       }
     })
     .catch(err => {
-      return logger.serverLog(TAG, `ERROR getting sequence ${JSON.stringify(err)}`)
+      return logger.serverLog(TAG, `ERROR getting sequence ${JSON.stringify(err)}`, 'error')
     })
 }
 

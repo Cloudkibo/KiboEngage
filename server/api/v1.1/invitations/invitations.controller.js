@@ -40,13 +40,13 @@ exports.cancel = function (req, res) {
 exports.invite = function (req, res) {
   callApi.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name}, req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
-      logger.serverLog(TAG, result)
+      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+      logger.serverLog(TAG, result, 'debug')
       res.status(200).json(result)
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
-      logger.serverLog(TAG, err)
+      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+      logger.serverLog(TAG, err, 'debug')
       res.status(500).json(err)
     })
 }
