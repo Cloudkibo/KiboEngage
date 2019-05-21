@@ -110,7 +110,7 @@ function preparePaylod (body, newURL, type, text, button) {
           'type': 'template',
           'payload': {
             'template_type': 'button',
-            'text': `@${body.user.screen_name} tweeted:\ntext`,
+            'text': `@${body.user.screen_name} tweeted:\n${text}`,
             'buttons': [
               {
                 'type': 'web_url',
@@ -124,7 +124,7 @@ function preparePaylod (body, newURL, type, text, button) {
       return [messageData]
     } else {
       messageData = {
-        'text': `@${body.user.screen_name} tweeted:\ntext`
+        'text': `@${body.user.screen_name} tweeted:\n${text}`
       }
       return [messageData]
     }
@@ -169,7 +169,7 @@ function prepareGallery (media, text, newURL, user) {
   for (let i = 0; i < length; i++) {
     elements.push({
       'title': `@${user} tweeted`,
-      'subtitle': 'https://kibopush.com/',
+      'subtitle': 'kibopush.com',
       'image_url': media[i].media_url,
       'buttons': [
         {
