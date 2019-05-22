@@ -24,9 +24,10 @@ exports.findAutoposting = function (req, res) {
     })
 }
 
-exports.twitterwebhook = function (req, res) {
+exports.twitterwebhookk = function (req, res) {
   logger.serverLog(TAG, `in twitterwebhook ${JSON.stringify(req.body)}`)
-  console.log('in twitterwebhook', JSON.stringify(req.body))
+  console.log('req.tweet', JSON.stringify(req.tweet))
+  console.log('req.tweetUser', JSON.stringify(req.tweetUser))
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -196,4 +197,17 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
       }
     }
   }, delay)
+}
+exports.twitterwebhook = function (req, res) {
+  res.status(200).json({
+    status: 'success',
+    description: `received the payload`
+  })
+  AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
+    .then(autopostings => {
+
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`, 'error')
+    })
 }

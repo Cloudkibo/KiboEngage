@@ -110,7 +110,7 @@ function preparePaylod (body, newURL, type, text, button) {
           'type': 'template',
           'payload': {
             'template_type': 'button',
-            'text': `@${body.user.screen_name} tweeted:\ntext`,
+            'text': `@${body.user.screen_name} tweeted:\n${text}`,
             'buttons': [
               {
                 'type': 'web_url',
@@ -124,7 +124,7 @@ function preparePaylod (body, newURL, type, text, button) {
       return [messageData]
     } else {
       messageData = {
-        'text': `@${body.user.screen_name} tweeted:\ntext`
+        'text': `@${body.user.screen_name} tweeted:\n${text}`
       }
       return [messageData]
     }
