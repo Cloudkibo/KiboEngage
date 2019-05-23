@@ -20,7 +20,6 @@ const broadcastApi = require('../../global/broadcastApi')
 const validateInput = require('../../global/validateInput')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const util = require('util')
-const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -68,7 +67,7 @@ exports.delete = function (req, res) {
   // unlink file
   fs.unlink(dir + '/' + req.params.id, function (err) {
     if (err) {
-      logger.serverLog(TAG, err)
+      logger.serverLog(TAG, err, 'error')
       return res.status(404)
         .json({status: 'failed', description: 'File not found'})
     } else {
@@ -275,7 +274,7 @@ exports.download = function (req, res) {
     res.sendfile(req.params.id, {root: dir})
   } catch (err) {
     logger.serverLog(TAG,
-      `Inside Download file, err = ${JSON.stringify(err)}`)
+      `Inside Download file, err = ${JSON.stringify(err)}`, 'error')
     res.status(404)
       .json({status: 'success', payload: 'Not Found ' + JSON.stringify(err)})
   }
@@ -300,13 +299,13 @@ exports.upload = function (req, res) {
     })
   }
   logger.serverLog(TAG,
-    `req.files.file ${JSON.stringify(req.files.file.path)}`)
+    `req.files.file ${JSON.stringify(req.files.file.path)}`, 'debug')
   logger.serverLog(TAG,
-    `req.files.file ${JSON.stringify(req.files.file.name)}`)
+    `req.files.file ${JSON.stringify(req.files.file.name)}`, 'debug')
   logger.serverLog(TAG,
-    `dir ${JSON.stringify(dir)}`)
+    `dir ${JSON.stringify(dir)}`, 'debug')
   logger.serverLog(TAG,
-    `serverPath ${JSON.stringify(serverPath)}`)
+    `serverPath ${JSON.stringify(serverPath)}`, 'debug')
   fs.rename(
     req.files.file.path,
     dir + '/userfiles/' + serverPath,
@@ -329,7 +328,7 @@ exports.upload = function (req, res) {
         })}`)
       if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
         let pages = JSON.parse(req.body.pages)
-        logger.serverLog(TAG, `Pages in upload file ${pages}`)
+        logger.serverLog(TAG, `Pages in upload file ${pages}`, 'debug')
         utility.callApi(`pages/${pages[0]}`)
           .then(page => {
             needle.get(
@@ -469,10 +468,10 @@ exports.uploadForTemplate = function (req, res) {
 }
 
 exports.sendConversation = function (req, res) {
-  logger.serverLog(TAG, `Sending Broadcast ${JSON.stringify(req.body)}`)
+  logger.serverLog(TAG, `Sending Broadcast ${JSON.stringify(req.body)}`, 'debug')
   // validate braodcast
   if (!validateInput.facebookBroadcast(req.body)) {
-    logger.serverLog(TAG, 'Parameters are missing.')
+    logger.serverLog(TAG, 'Parameters are missing.', 'error')
     return res.status(400)
       .json({status: 'failed', description: 'Please fill all the required fields'})
   }
@@ -560,8 +559,6 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
-          let message = preparePayload(subscriber, page, payload)
-          saveLiveChat(message)
           BroadcastPageDataLayer.createForBroadcastPage({
             pageId: page.pageId,
             userId: req.user._id,
@@ -588,7 +585,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
     if (err) {
-      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to send broadcast ${JSON.stringify(err)}`
@@ -611,7 +608,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
 }
 const updatePayload = (self, payload, broadcast) => {
   let shouldReturn = false
-  logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`)
+  logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`, 'debug')
   for (let j = 0; j < payload.length; j++) {
     if (!self && payload[j].componentType === 'list') {
       payload[j].listItems.forEach((element, lindex) => {
@@ -628,7 +625,7 @@ const updatePayload = (self, payload, broadcast) => {
               payload[j].listItems[lindex].default_action.url = newURL
             })
             .catch(error => {
-              logger.serverLog(TAG, error)
+              logger.serverLog(TAG, error, 'error')
             })
         }
         if (lindex === (payload[j].listItems.length - 1)) {
@@ -650,12 +647,12 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
-        `subscriptionUser ${subscriptionUser}`)
+        `subscriptionUser ${subscriptionUser}`, 'debug')
       utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId}, req.headers.authorization)
         .then(user => {
           user = user[0]
           logger.serverLog(TAG,
-            `user ${JSON.stringify(user)}`)
+            `user ${JSON.stringify(user)}`, 'debug')
           let temp = user.facebookInfo.name.split(' ')
           let fname = temp[0]
           let lname = temp[1] ? temp[1] : ''

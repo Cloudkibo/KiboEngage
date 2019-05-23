@@ -55,11 +55,11 @@ exports.getAllUsers = function (req, res) {
                       }
                     })
                     .catch(error => {
-                      logger.serverLog(TAG, `ERROR in fetching subscribers ${JSON.stringify(error)}`)
+                      logger.serverLog(TAG, `ERROR in fetching subscribers ${JSON.stringify(error)}`, 'error')
                     })
                 })
                 .catch(error => {
-                  logger.serverLog(TAG, `ERROR in fetching pages ${JSON.stringify(error)}`)
+                  logger.serverLog(TAG, `ERROR in fetching pages ${JSON.stringify(error)}`, 'error')
                 })
             })
           } else {
@@ -331,7 +331,7 @@ function prepareSurveyDataToSend (surveys, req) {
                 responded: surveys[j].surveyResponses.length})
               console.log('data in surveys', data)
               if (data.length === surveys.length) {
-                data.sort(function (a, b) { 
+                data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
                 resolve({data: data})
@@ -373,7 +373,7 @@ function preparePollDataToSend (polls, req) {
                 responded: polls[j].pollResponses.length
               })
               if (data.length === polls.length) {
-                data.sort(function (a, b) { 
+                data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
                 resolve({data: data})
@@ -420,7 +420,7 @@ function prepareDataToSend (broadcasts, req) {
                 seen: pagebroadcastTapped.length
               })
               if (data.length === broadcasts.length) {
-                data.sort(function (a, b) { 
+                data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
                 resolve({data: data})
@@ -682,7 +682,7 @@ function downloadCSV (pages, req) {
                           // json2csv({ data: info, fields: keys }, function (err, csv) {
                           //   if (err) {
                           //     console.log('error at exporting', err)
-                          //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`)
+                          //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`, 'error')
                           //   }
                           //   console.log('csv in', csv)
                           //   resolve({data: csv})
@@ -690,19 +690,19 @@ function downloadCSV (pages, req) {
                         }
                       })
                       .catch(error => {
-                        logger.serverLog(TAG, `Failed to fetch polls ${JSON.stringify(error)}`)
+                        logger.serverLog(TAG, `Failed to fetch polls ${JSON.stringify(error)}`, 'error')
                       })
                   })
                   .catch(error => {
-                    logger.serverLog(TAG, `Failed to fetch surveys ${JSON.stringify(error)}`)
+                    logger.serverLog(TAG, `Failed to fetch surveys ${JSON.stringify(error)}`, 'error')
                   })
               })
               .catch(error => {
-                logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
+                logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`, 'error')
               })
           })
           .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+            logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
           })
       }
     }
@@ -794,28 +794,28 @@ exports.sendEmail = function (req, res) {
                             if (err) {
                               logger.serverLog(TAG,
                                 `Internal Server Error on sending email : ${JSON.stringify(
-                                  err)}`)
+                                  err)}`, 'error')
                             }
                           })
                         // }
                         })
                     })
                     .catch(error => {
-                      logger.serverLog(TAG, `Failed to aggregate subscribers ${JSON.stringify(error)}`)
+                      logger.serverLog(TAG, `Failed to aggregate subscribers ${JSON.stringify(error)}`, 'error')
                     })
                 }
               })
               .catch(error => {
-                logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+                logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
               })
           })
           .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch company user ${JSON.stringify(error)}`)
+            logger.serverLog(TAG, `Failed to fetch company user ${JSON.stringify(error)}`, 'error')
           })
       })
     })
     .catch(error => {
-      logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(error)}`)
+      logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(error)}`, 'error')
     })
   return res.status(200)
     .json({status: 'success'})

@@ -13,7 +13,6 @@ exports.index = function (req, res) {
   })
   const sender = req.body.payload.entry[0].messaging[0].sender.id
   const pageId = req.body.payload.entry[0].messaging[0].recipient.id
-  let payloadToSend
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
@@ -35,7 +34,7 @@ exports.index = function (req, res) {
                       `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.accessToken}`,
                       (err, resp2) => {
                         if (err) {
-                          logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
+                          logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                         }
                         let pageAccessToken = resp2.body.access_token
                         const options = {
@@ -44,7 +43,7 @@ exports.index = function (req, res) {
                           method: 'GET'
 
                         }
-                        logger.serverLog(TAG, `options: ${JSON.stringify(options)}`)
+                        logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'error')
                         needle.get(options.url, options, (error, response) => {
                           if (error) {
                             console.log('error', error)
@@ -57,18 +56,18 @@ exports.index = function (req, res) {
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch json ad ${err}`)
+                  logger.serverLog(TAG, `Failed to fetch json ad ${err}`, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch jsonAd ${err}`)
+              logger.serverLog(TAG, `Failed to fetch jsonAd ${err}`, 'error')
             })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`)
+          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
     })
 }

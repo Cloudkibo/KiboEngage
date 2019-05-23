@@ -4,7 +4,7 @@ const TAG = 'api/v1/messengerEvents/profilePic.controller'
 const config = require('../../../../server/config/environment')
 
 exports.policyNotification = function (req, res) {
-  logger.serverLog(TAG, `in policyNotification ${JSON.stringify(req.body)}`)
+  logger.serverLog(TAG, `in policyNotification ${JSON.stringify(req.body)}`, 'debug')
   callApi(`pages/query`, 'post', {pageId: req.body.pageId})
     .then(pages => {
       let users = []

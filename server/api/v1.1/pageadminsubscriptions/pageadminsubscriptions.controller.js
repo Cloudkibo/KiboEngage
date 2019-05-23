@@ -46,7 +46,6 @@ exports.create = function (req, res) {
     'subscriberId': req.body.subscriberId,
     'pageId': req.body.pageId
   }
-  logger.serverLog('', `payload ${JSON.stringify(payload)}`)
   PageAdminSubscriptionsDataLayer.create(payload)
     .then(updatedRecord => {
       require('./../../../config/socketio').sendMessageToClient({

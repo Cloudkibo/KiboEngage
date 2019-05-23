@@ -31,13 +31,13 @@ exports.invite = function (req, res) {
   utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, req.headers.authorization)
     .then((result) => {
       console.log('result', result)
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
-      logger.serverLog(TAG, result)
+      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+      logger.serverLog(TAG, result, 'debug')
       res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
-      logger.serverLog(TAG, err)
+      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+      logger.serverLog(TAG, err, 'debug')
       console.log('err.status', err.error.status)
       console.log('err.payload', err.error.payload)
       res.status(200).json({status: 'failed', payload: err.error.payload})
@@ -50,8 +50,8 @@ exports.updateRole = function (req, res) {
   utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email}, req.headers.authorization)
     .then((result) => {
       console.log('result', result)
-      logger.serverLog(TAG, 'result from invite endpoint accounts')
-      logger.serverLog(TAG, result)
+      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+      logger.serverLog(TAG, result, 'debug')
       res.status(200).json({status: 'success', payload: result})
     })
     .catch((err) => {

@@ -371,44 +371,55 @@ function parseUrl (text) {
 
 function applyTagFilterIfNecessary (req, subscribers, fn, res) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
-    callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: req.body.segmentationTags } }, req.headers.authorization)
-      .then(tagSubscribers => {
-        console.log('tagSubscribers in applyTagFilterIfNecessary', tagSubscribers)
-        if (tagSubscribers.length === 0) {
-          return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+    callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }, req.headers.authorization)
+      .then(tags => {
+        console.log('----------------------tags in applyTagFilterIfNecessary --------------->', tags.length)
+        let tagIDs = []
+        for (let i = 0; i < tags.length; i++) {
+          tagIDs.push(tags[i]._id)
         }
-        logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`)
-        let subscribersPayload = []
-        for (let i = 0; i < subscribers.length; i++) {
-          for (let j = 0; j < tagSubscribers.length; j++) {
-            if (subscribers[i]._id.toString() ===
-              tagSubscribers[j].subscriberId._id.toString()) {
-              subscribersPayload.push({
-                _id: subscribers[i]._id,
-                firstName: subscribers[i].firstName,
-                lastName: subscribers[i].lastName,
-                locale: subscribers[i].locale,
-                gender: subscribers[i].gender,
-                timezone: subscribers[i].timezone,
-                profilePic: subscribers[i].profilePic,
-                companyId: subscribers[i].companyId,
-                pageScopedId: '',
-                email: '',
-                senderId: subscribers[i].senderId,
-                pageId: subscribers[i].pageId,
-                datetime: subscribers[i].datetime,
-                isEnabledByPage: subscribers[i].isEnabledByPage,
-                isSubscribed: subscribers[i].isSubscribed,
-                unSubscribedBy: subscribers[i].unSubscribedBy,
-                source: subscribers[i].source
-              })
+        callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIDs } }, req.headers.authorization)
+          .then(tagSubscribers => {
+            console.log('tagSubscribers in applyTagFilterIfNecessary', tagSubscribers)
+            if (tagSubscribers.length === 0) {
+              return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
             }
-          }
-        }
-        fn(subscribersPayload)
+            logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`, 'debug')
+            let subscribersPayload = []
+            for (let i = 0; i < subscribers.length; i++) {
+              for (let j = 0; j < tagSubscribers.length; j++) {
+                if (subscribers[i]._id.toString() ===
+                  tagSubscribers[j].subscriberId._id.toString()) {
+                  subscribersPayload.push({
+                    _id: subscribers[i]._id,
+                    firstName: subscribers[i].firstName,
+                    lastName: subscribers[i].lastName,
+                    locale: subscribers[i].locale,
+                    gender: subscribers[i].gender,
+                    timezone: subscribers[i].timezone,
+                    profilePic: subscribers[i].profilePic,
+                    companyId: subscribers[i].companyId,
+                    pageScopedId: '',
+                    email: '',
+                    senderId: subscribers[i].senderId,
+                    pageId: subscribers[i].pageId,
+                    datetime: subscribers[i].datetime,
+                    isEnabledByPage: subscribers[i].isEnabledByPage,
+                    isSubscribed: subscribers[i].isSubscribed,
+                    unSubscribedBy: subscribers[i].unSubscribedBy,
+                    source: subscribers[i].source
+                  })
+                }
+              }
+            }
+            fn(subscribersPayload)
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
+          })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to fetch tag  ${JSON.stringify(err)}`, 'error')
       })
   } else {
     fn(subscribers)
@@ -449,7 +460,7 @@ function applySurveyFilterIfNecessary (req, subscribers, fn) {
         fn(subscribersPayload)
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch survey responses ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to fetch survey responses ${JSON.stringify(err)}`, 'error')
       })
   } else {
     fn(subscribers)
@@ -489,7 +500,7 @@ function applyPollFilterIfNecessary (req, subscribers, fn) {
         fn(subscribersPayload)
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch poll responses ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to fetch poll responses ${JSON.stringify(err)}`, 'error')
       })
   } else {
     fn(subscribers)
@@ -669,7 +680,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
   }
   console.log('Return payload', payload)
   logger.serverLog(TAG,
-    `Return Payload ${JSON.stringify(payload)}`)
+    `Return Payload ${JSON.stringify(payload)}`, 'debug')
   return payload
 }
 
@@ -722,12 +733,12 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
     },
     function (err, resp) {
       if (err) {
-        logger.serverLog(TAG, `ERROR! unable to upload attachment on Facebook: ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `ERROR! unable to upload attachment on Facebook: ${JSON.stringify(err)}`, 'error')
         return ({status: 'failed', data: err})
       } else {
         logger.serverLog(TAG, `file uploaded on Facebook: ${JSON.stringify(resp.body)}`)
         payloadItem.fileurl.attachment_id = resp.body.attachment_id
-        logger.serverLog(TAG, `broadcast after attachment: ${JSON.stringify(payloadItem)}`)
+        logger.serverLog(TAG, `broadcast after attachment: ${JSON.stringify(payloadItem)}`, 'debug')
         return ({status: 'success', data: payloadItem})
       }
     })
@@ -753,11 +764,11 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                   console.log('savedurl', savedurl)
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
             })
         }
       })
@@ -775,11 +786,11 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                     console.log('savedurl', savedurl)
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+                logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
               })
           }
         })
@@ -799,11 +810,11 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                       console.log('savedurl', savedurl)
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                      logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
                     })
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
                 })
             }
           })
@@ -826,7 +837,7 @@ function isWhiteListedDomain (domain, pageId, user) {
               console.log('error in getting whitelisted_domains', err)
             }
             console.log('domain', domain)
-            console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
+           // console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
             if (resp.body.data && resp.body.data[0].whitelisted_domains) {
               for (let i = 0; i < resp.body.data[0].whitelisted_domains.length; i++) {
                 console.log('hostName of whitelist', getHostName(resp.body.data[0].whitelisted_domains[i]))

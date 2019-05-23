@@ -5,7 +5,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     console.log('Send Response Broadcast', body)
     if (err) {
-      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       console.log(`Batch send error ${JSON.stringify(err)}`)
     }
   })

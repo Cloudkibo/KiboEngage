@@ -67,7 +67,7 @@ exports.sendBroadcast = function (req, res) {
                       logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
                     })
                     .catch(error => {
-                      logger.serverLog(TAG, `error at sending message ${error}`)
+                      logger.serverLog(TAG, `error at sending message ${error}`, 'error')
                     })
                 }
                 if (i === contacts.length - 1) {

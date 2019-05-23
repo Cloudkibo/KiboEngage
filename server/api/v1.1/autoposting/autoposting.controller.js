@@ -2,6 +2,7 @@ const AutopostingDataLayer = require('./autoposting.datalayer')
 const AutoPostingLogicLayer = require('./autoposting.logiclayer')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
+const TAG = 'api/autoposting/autoposting.controller'
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -86,7 +87,7 @@ exports.create = function (req, res) {
                         AutoPostingLogicLayer.findUser(screenName, (err, data) => {
                           console.log('Find User', err, data)
                           if (err) {
-                            logger.serverLog(`Twitter URL parse Error ${err}`)
+                            logger.serverLog(TAG, `Twitter URL parse Error ${err}`, 'error')
                           }
                           let payload
                           console.log('data', data)
@@ -105,7 +106,7 @@ exports.create = function (req, res) {
                                 console.log('result from create', result)
                                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                   .then(result => {
-                                    logger.serverLog('Company Usage updated')
+                                    logger.serverLog(TAG, 'Company Usage updated', 'debug')
                                   })
                                   .catch(err => {
                                     return res.status(500).json({
@@ -158,7 +159,7 @@ exports.create = function (req, res) {
                                 .then(result => {
                                   utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} }, req.headers.authorization)
                                     .then(result => {
-                                      logger.serverLog('Company Usage Updated')
+                                      logger.serverLog(TAG, 'Company Usage Updated', 'debug')
                                     })
                                     .catch(err => {
                                       return res.status(500).json({
