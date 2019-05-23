@@ -1,187 +1,344 @@
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const config = require('../../../config/environment/index')
+const needle = require('needle')
+let request = require('request')
+const og = require('open-graph')
 
-exports.checkType = function (body, savedMsg) {
-  return new Promise(function (resolve, reject) {
-    let messageData = {}
-    let text = ''
-    let button = true
-    if (body.truncated) {
-      text = body.extended_tweet.full_text.split('https://t.co/')
-    } else {
-      text = body.text.split('https://t.co/')
-    }
-    if (body.entities.urls && body.entities.urls.length > 0) {
-      for (let i = 0; i < body.entities.urls.length; i++) {
-        text[0] = text[0] + `\n${body.entities.urls[i].expanded_url}`
-      }
-    }
-    if (text[0] && !text[1]) {
-      // text only
-      let URLObject = {
-        originalURL: `https://twitter.com/${body.user.screen_name}`,
-        module: {
-          id: savedMsg._id,
-          type: 'autoposting'
-        }
-      }
-      URLDataLayer.createURLObject(URLObject)
-        .then(savedurl => {
-          let newURL = config.domain + '/api/URL/' + savedurl._id
-          messageData = preparePaylod(body, newURL, 'text', text[0], button)
-          resolve(messageData)
+exports.handleTwitterPayload = function (req, savedMsg, page) {
+  return new Promise((resolve, reject) => {
+    let tagline = ''
+    if (req.quote) {
+      let originalUser = req.retweet.user
+      let twitterUrls = req.urls.map((url) => url.url)
+      let textArray = req.quote.split(' ')
+      tagline = `@${req.tweetUser.screen_name} retweeted @${originalUser.screen_name}:${prepareText(twitterUrls, textArray, req.urls)}\n\n@${originalUser.screen_name}'s tweet:`
+      if (req.retweet.truncated) {
+        handleTweet(
+          tagline,
+          req.retweet.extended_tweet.full_text,
+          req.retweet.extended_tweet.extended_entities,
+          req.retweet.extended_tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page).then(result => {
+          resolve(result)
         })
-    } else if (text[0] && text[1]) {
-      // text with attachment
-      let originalURL
-      if (body.truncated) {
-        if (body.extended_tweet.entities.media) {
-          originalURL = body.extended_tweet.entities.media[0].url
-        } else {
-          originalURL = `https://twitter.com/${body.user.screen_name}`
-        }
       } else {
-        if (body.entities.media) {
-          originalURL = body.entities.media[0].url
-        } else {
-          originalURL = `https://twitter.com/${body.user.screen_name}`
-        }
-      }
-      let URLObject = {
-        originalURL: originalURL,
-        module: {
-          id: savedMsg._id,
-          type: 'autoposting'
-        }
-      }
-      URLDataLayer.createURLObject(URLObject)
-        .then(savedurl => {
-          let newURL = config.domain + '/api/URL/' + savedurl._id
-          if ((body.extended_entities && body.extended_entities.media[0].type === 'photo') || (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'photo')) {
-            button = false
-            let otherMessage = preparePaylod(body, newURL, 'text', text[0], button)
-            messageData = preparePaylod(body, newURL, 'photo', text[1])
-            resolve(otherMessage.concat(messageData))
-          } else {
-            if ((body.extended_entities && body.extended_entities.media[0].type === 'video') ||
-            (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'video') ||
-            (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'animated_gif') ||
-            (body.truncated && body.extended_tweet && body.extended_tweet.extended_entities && body.extended_tweet.extended_entities.media[0].type === 'animated_gif')
-            ) {
-              button = false
-              messageData = preparePaylod(body, '', 'video', text[1])
-            }
-            let otherMessage = preparePaylod(body, newURL, 'text', text[0], button)
-            resolve(otherMessage.concat(messageData))
-          }
+        handleTweet(
+          tagline,
+          req.retweet.text,
+          req.retweet.extended_entities,
+          req.retweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page).then(result => {
+          resolve(result)
         })
-        .catch(err => {
-          console.log(`Error in creating Autoposting message object ${err}`)
+      }
+    } else if (req.retweet) {
+      let originalUser = req.retweet.user
+      tagline = `@${req.tweetUser.screen_name} retweeted @${originalUser.screen_name}:`
+      if (req.retweet.truncated) {
+        handleTweet(
+          tagline,
+          req.retweet.extended_tweet.full_text,
+          req.retweet.extended_tweet.extended_entities,
+          req.retweet.extended_tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page).then(result => {
+          resolve(result)
         })
-    } else {
-      //  attachment only
-      if (body.extended_entities.media[0].type === 'photo') {
-        let URLObject = {
-          originalURL: body.entities.media[0].url,
-          module: {
-            id: savedMsg._id,
-            type: 'autoposting'
-          }
-        }
-        URLDataLayer.createURLObject(URLObject)
-          .then(savedurl => {
-            let newURL = config.domain + '/api/URL/' + savedurl._id
-            messageData = preparePaylod(body, newURL, 'photo', text[1])
-            resolve(messageData)
-          })
       } else {
-        messageData = preparePaylod(body, '', 'video')
-        resolve(messageData)
+        handleTweet(
+          tagline,
+          req.retweet.text,
+          req.retweet.extended_entities,
+          req.retweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page).then(result => {
+          resolve(result)
+        })
+      }
+    } else if (req.tweet) {
+      tagline = `@${req.tweetUser.screen_name} tweeted:`
+      if (req.tweet.truncated) {
+        handleTweet(
+          tagline,
+          req.tweet.extended_tweet.full_text,
+          req.tweet.extended_tweet.extended_entities,
+          req.tweet.extended_tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page).then(result => {
+          resolve(result)
+        })
+      } else {
+        handleTweet(
+          tagline,
+          req.tweet.text,
+          req.tweet.extended_entities,
+          req.tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page).then(result => {
+          resolve(result)
+        })
       }
     }
   })
 }
-function preparePaylod (body, newURL, type, text, button) {
-  let messageData = {}
-  if (type === 'text') {
-    if (button) {
-      messageData = {
+
+const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page) => {
+  return new Promise((resolve, reject) => {
+    let button = !(tweet && tweet.media && tweet.media.length > 0)
+    let payload = []
+    let twitterUrls = urls.map((url) => url.url)
+    let textArray = text.split(' ')
+    text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
+    payload.push(prepareFacbookPayloadForText('text', {text}, savedMsg, tweetId, button))
+    if (tweet && tweet.media && tweet.media.length > 0) {
+      if (tweet.media[0].type === 'photo') {
+        payload.push(prepareFacbookPayloadForImage(tweet, savedMsg, tweetId, userName))
+        resolve(payload)
+      } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
+        payload.push(prepareFacbookPayloadForVideo(tweet, savedMsg, tweetId, userName, page))
+        resolve(payload)
+      }
+    } else if (urls.length > 0 && button) {
+      prepareFacbookPayloadForLink(urls, savedMsg, tweetId, userName).then(linkpayload => {
+        console.log('linkpayload', linkpayload)
+        payload.push(linkpayload.messageData)
+        if (!linkpayload.showButton) { // remove button from text
+          payload[0] = {
+            'text': payload[0].attachment.payload.text
+          }
+          resolve(payload)
+        } else {
+          resolve(payload)
+        }
+      })
+    } else {
+      resolve(payload)
+    }
+  })
+}
+
+const prepareFacbookPayloadForVideo = (tweet, savedMsg, tweetId, userName, page) => {
+  // return new Promise((resolve, reject) => {
+  //   let url = getVideoURL(tweet.media[0].video_info.variants)
+  //   uploadOnFaceBook(url, page).then(attachmentId => {
+  //     let messageData = {
+  //       'attachment': {
+  //         'type': 'template',
+  //         'payload': {
+  //           'template_type': 'media',
+  //           'elements': [
+  //             {
+  //               'attachment_id': attachmentId,
+  //               'media_type': 'video',
+  //               'buttons': body.buttons
+  //             }
+  //           ]
+  //         }
+  //       }
+  //     }
+  //     resolve(messageData)
+  //   })
+  // })
+  let messageData = {
+    'attachment': {
+      'type': 'video',
+      'payload': {
+        'url': getVideoURL(tweet.media[0].video_info.variants)
+      }
+    }
+  }
+  return messageData
+}
+
+const prepareFacbookPayloadForLink = (urls, savedMsg, tweetId, userName) => {
+  return new Promise(function (resolve, reject) {
+    prepareGalleryForLink(urls, savedMsg, tweetId).then(gallery => {
+      let messageData = {
         'attachment': {
           'type': 'template',
           'payload': {
-            'template_type': 'button',
-            'text': `@${body.user.screen_name} tweeted:\ntext`,
-            'buttons': [
-              {
-                'type': 'web_url',
-                'url': newURL,
-                'title': 'View Tweet'
-              }
-            ]
+            'template_type': 'generic',
+            'elements': gallery
           }
         }
       }
-      return [messageData]
-    } else {
-      messageData = {
-        'text': `@${body.user.screen_name} tweeted:\ntext`
-      }
-      return [messageData]
-    }
-  } else if (type === 'photo') {
-    let gallery
-    if (body.truncated) {
-      gallery = prepareGallery(body.extended_tweet.extended_entities.media, text, newURL, body.user.screen_name)
-    } else {
-      gallery = prepareGallery(body.extended_entities.media, text, newURL, body.user.screen_name)
-    }
-    messageData = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'generic',
-          'elements': gallery
-        }
-      }
-    }
-    return [messageData]
-  } else {
-    let videoUrl
-    if (body.truncated) {
-      videoUrl = getVideoURL(body.extended_tweet.extended_entities.media[0].video_info.variants)
-    } else {
-      videoUrl = getVideoURL(body.extended_entities.media[0].video_info.variants)
-    }
-    messageData = {
-      'attachment': {
-        'type': 'video',
-        'payload': {
-          'url': videoUrl
-        }
-      }
-    }
-    return [messageData]
-  }
+      resolve({messageData: messageData, showButton: !(gallery.length > 0)})
+    })
+  })
 }
-function prepareGallery (media, text, newURL, user) {
+
+const prepareGalleryForLink = (urls, savedMsg, tweetId) => {
+  return new Promise(function (resolve, reject) {
+    let gallery = []
+    let buttons = []
+    prepareViewTweetButton(savedMsg, tweetId).then(button => {
+      buttons.push(button)
+    })
+    buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
+    for (let i = 0; i < urls.length; i++) {
+      og(urls[i].expanded_url, (err, meta) => {
+        if (err) {
+          console.log('error in fetching metdata')
+        }
+        if (meta !== {}) {
+          console.log('metadata', meta)
+          gallery.push({
+            'title': meta.title,
+            'subtitle': 'kibopush.com',
+            'image_url': meta.image.url,
+            'buttons': buttons
+          })
+          if (i === urls.length - 1) {
+            resolve(gallery)
+          }
+        } else {
+          if (i === urls.length - 1) {
+            resolve(gallery)
+          }
+        }
+      })
+    }
+  })
+}
+
+const prepareFacbookPayloadForImage = (tweet, savedMsg, tweetId, userName) => {
+  let gallery = prepareGallery(tweet.media, savedMsg, tweetId, userName)
+  let messageData = {
+    'attachment': {
+      'type': 'template',
+      'payload': {
+        'template_type': 'generic',
+        'elements': gallery
+      }
+    }
+  }
+  return messageData
+}
+
+function prepareGallery (media, savedMsg, tweetId, userName) {
   let length = media.length <= 10 ? media.length : 10
   let elements = []
+  let buttons = []
+  prepareViewTweetButton(savedMsg, tweetId).then(button => {
+    buttons.push(button)
+  })
+  buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
   for (let i = 0; i < length; i++) {
     elements.push({
-      'title': `@${user} tweeted`,
-      'subtitle': 'https://kibopush.com/',
+      'title': userName,
+      'subtitle': 'kibopush.com',
       'image_url': media[i].media_url,
-      'buttons': [
-        {
-          'type': 'web_url',
-          'url': newURL,
-          'title': 'View Tweet'
-        }
-      ]
+      'buttons': buttons
     })
   }
   return elements
 }
+
+const prepareFacbookPayloadForText = (type, body, savedMsg, tweetId, showButton) => {
+  let messageData = {}
+  let buttons = []
+  if (showButton) {
+    prepareViewTweetButton(savedMsg, tweetId).then(button => {
+      buttons.push(button)
+    })
+    buttons.push(prepareShareButton(savedMsg, tweetId, body))
+    messageData = {
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'button',
+          'text': body.text,
+          'buttons': buttons
+        }
+      }
+    }
+  } else {
+    messageData = {
+      'text': body.text
+    }
+  }
+  return messageData
+}
+
+const prepareText = (twitterUrls, textArray, urls) => {
+  for (let i = 0; i < textArray.length; i++) {
+    let index = twitterUrls.indexOf(textArray[i])
+    if (index > -1) {
+      textArray[i] = urls[index].expanded_url
+    } else if (textArray[i].startsWith('http')) {
+      textArray[i] = ''
+    }
+  }
+  let text = textArray.join(' ')
+  return text !== '' ? `\n${text}` : text
+}
+
+const prepareViewTweetButton = (savedMsg, tweetId) => {
+  return new Promise(function (resolve, reject) {
+    let URLObject = {
+      originalURL: `https://twitter.com/statuses/${tweetId}`,
+      module: {
+        id: savedMsg._id,
+        type: 'autoposting'
+      }
+    }
+    URLDataLayer.createURLObject(URLObject)
+      .then(savedurl => {
+        let newURL = config.domain + '/api/URL/' + savedurl._id
+        let button = {
+          'type': 'web_url',
+          'url': newURL,
+          'title': 'View Tweet'
+        }
+        resolve(button)
+      })
+  })
+}
+const prepareShareButton = (savedMsg, tweetId, body, type) => {
+  let button
+  if (type && type === 'card') {
+    button = {
+      'type': 'element_share'
+    }
+  } else {
+    button = {
+      'type': 'element_share',
+      'share_contents': {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'generic',
+            'elements': [{
+              'title': body.text,
+              'subtitle': 'kibopush.com',
+              'default_action': {
+                'type': 'web_url',
+                'url': `https://twitter.com/statuses/${tweetId}`
+              },
+              'buttons': []
+            }]
+          }
+        }
+      }
+    }
+  }
+  return button
+}
+
 function getVideoURL (variants) {
   let url = ''
   for (let i = 0; i < variants.length; i++) {
@@ -191,4 +348,47 @@ function getVideoURL (variants) {
     }
   }
   return url
+}
+
+function uploadOnFaceBook (url, page) {
+  return new Promise((resolve, reject) => {
+    needle.get(
+      `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
+      (err, resp2) => {
+        if (err) {
+          console.log('error in fetching page access_token', JSON.stringify(err))
+        }
+        let pageAccessToken = resp2.body.access_token
+        // let fileReaderStream = fs.createReadStream(payload.fileurl)
+        const messageData = {
+          'message': JSON.stringify({
+            'attachment': {
+              'type': 'video',
+              'payload': {
+                'is_reusable': true,
+                'url': url
+              }
+            }
+          })
+        }
+        request(
+          {
+            'method': 'POST',
+            'json': true,
+            'formData': messageData,
+            'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
+          },
+          function (err, resp) {
+            console.log('response from uploading attachment', JSON.stringify(resp.body))
+            if (err) {
+              console.log('error in uploading attachment on facebook', JSON.stringify(err))
+              reject(err)
+            } else if (resp.statusCode !== 200) {
+              reject(resp)
+            } else {
+              resolve(resp.body.attachment_id)
+            }
+          })
+      })
+  })
 }
