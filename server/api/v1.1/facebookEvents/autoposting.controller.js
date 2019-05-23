@@ -44,7 +44,6 @@ exports.autoposting = function (req, res) {
 function handleThePagePostsForAutoPosting (req, event, status) {
   AutoPostingDataLayer.findAllAutopostingObjectsUsingQuery({ accountUniqueName: event.value.sender_id, isActive: true })
     .then(autopostings => {
-      console.log('autopostings found', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = autopostingLogicLayer.pagesFindCriteria(postingItem)
         utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
