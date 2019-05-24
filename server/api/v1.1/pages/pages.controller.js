@@ -231,7 +231,7 @@ exports.enable = function (req, res) {
                                       }
                                     })
                                     .catch(err => {
-                                      logger.serverLog(TAG, `Error at find default tags ${err}`)
+                                      logger.serverLog(TAG, `Error at find default tags ${err}`, 'error')
                                     })
                                   // initiate reach estimation
                                   needle('post', `https://graph.facebook.com/v2.11/me/broadcast_reach_estimations?access_token=${page.accessToken}`)
@@ -246,7 +246,7 @@ exports.enable = function (req, res) {
                                               })
                                               .catch(error => {
                                                 logger.serverLog(TAG,
-                                                  `Failed to whitelist domain ${JSON.stringify(error)}`)
+                                                  `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
                                               })
                                             utility.callApi(`featureUsage/updateCompany`, 'put', {
                                               query: {companyId: req.body.companyId},
@@ -291,7 +291,7 @@ exports.enable = function (req, res) {
                                                       if (err) {
                                                         logger.serverLog(TAG,
                                                           `Internal Server Error ${JSON.stringify(
-                                                            err)}`)
+                                                            err)}`, 'error')
                                                       }
                                                       console.log('response from gettingStarted', resp.body)
                                                     })
@@ -327,15 +327,15 @@ exports.enable = function (req, res) {
                                             })
                                           })
                                       } else {
-                                        logger.serverLog(TAG, `Failed to start reach estimation`)
+                                        logger.serverLog(TAG, `Failed to start reach estimation`, 'error')
                                       }
                                     })
                                     .catch(err => {
-                                      logger.serverLog(TAG, `Error at find page ${err}`)
+                                      logger.serverLog(TAG, `Error at find page ${err}`, 'error')
                                     })
                                 })
                                 .catch(err => {
-                                  logger.serverLog(TAG, `Error at find page ${err}`)
+                                  logger.serverLog(TAG, `Error at find page ${err}`, 'error')
                                   res.status(500).json({status: 'failed', payload: err})
                                 })
                             } else {
@@ -386,7 +386,7 @@ exports.enable = function (req, res) {
 exports.disable = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', {connected: false}, req.headers.authorization) // disconnect page
     .then(disconnectPage => {
-      logger.serverLog(TAG, 'updated page successfully')
+      logger.serverLog(TAG, 'updated page successfully', 'debug')
       utility.callApi(`subscribers/update`, 'put', {query: {pageId: req.body._id}, newPayload: {isEnabledByPage: false}, options: {multi: true}}, req.headers.authorization) // update subscribers
         .then(updatedSubscriber => {
           utility.callApi(`featureUsage/updateCompany`, 'put', {
@@ -395,7 +395,7 @@ exports.disable = function (req, res) {
             options: {}
           }, req.headers.authorization)
             .then(updated => {
-              logger.serverLog(TAG, 'company updated successfully')
+              logger.serverLog(TAG, 'company updated successfully', 'debug')
             })
             .catch(error => {
               return res.status(500).json({
@@ -511,7 +511,7 @@ exports.saveGreetingText = function (req, res) {
                     }
                     if (err) {
                       logger.serverLog(TAG,
-                        `Internal Server Error ${JSON.stringify(err)}`)
+                        `Internal Server Error ${JSON.stringify(err)}`, 'error')
                     }
                   })
               } else {
@@ -667,16 +667,16 @@ function createTag (user, page, tag, req) {
         }
         utility.callApi('tags', 'post', tagData, req.headers.authorization)
           .then(created => {
-            logger.serverLog(TAG, `default tag created successfully!`)
+            logger.serverLog(TAG, `default tag created successfully!`, 'debug')
           })
           .catch(err => {
-            logger.serverLog(TAG, `Error at save tag ${err}`)
+            logger.serverLog(TAG, `Error at save tag ${err}`, 'error')
           })
       } else {
-        logger.serverLog(TAG, `Error at create tag on Facebook ${label.body.error}`)
+        logger.serverLog(TAG, `Error at create tag on Facebook ${label.body.error}`, 'error')
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Error at create tag on Facebook ${err}`)
+      logger.serverLog(TAG, `Error at create tag on Facebook ${err}`, 'error')
     })
 }

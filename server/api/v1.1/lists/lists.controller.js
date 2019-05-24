@@ -142,11 +142,11 @@ function createTag (req, callback) {
               .then(newTag => {
                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
                   .then(updated => {
-                    logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`)
+                    logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
                   })
                   .catch(err => {
                     if (err) {
-                      logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`)
+                      logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
                     }
                   })
                 if (i === pages.length - 1) {
@@ -387,12 +387,12 @@ exports.deleteList = function (req, res) {
                   .then(result => {
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`)
+                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
                   })
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
             })
         })
         async.parallelLimit([

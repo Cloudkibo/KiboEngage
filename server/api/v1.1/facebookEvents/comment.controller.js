@@ -9,7 +9,7 @@ exports.sendCommentReply = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`)
+  logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`, 'debug')
   let send = true
   let postId = req.body.entry[0].changes[0].value.post_id
   utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
@@ -21,20 +21,20 @@ exports.sendCommentReply = function (req, res) {
           if (post && post.pageId) {
             send = commentCaptureLogicLayer.getSendValue(post, req.body)
             logger.serverLog(TAG,
-              `send value ${JSON.stringify(send)}`)
+              `send value ${JSON.stringify(send)}`, 'debug')
             if (send) {
               needle.get(
                 `https://graph.facebook.com/v2.10/${post.pageId.pageId}?fields=access_token&access_token=${post.userId.facebookInfo.fbToken}`,
                 (err, resp) => {
                   if (err) {
-                    logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
+                    logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                   }
                   let messageData = { message: post.reply }
                   needle.post(
                     `https://graph.facebook.com/${req.body.entry[0].changes[0].value.comment_id}/private_replies?access_token=${resp.body.access_token}`,
                     messageData, (err, resp) => {
                       if (err) {
-                        logger.serverLog(TAG, err)
+                        logger.serverLog(TAG, err, 'error')
                       }
                       logger.serverLog(TAG,
                         `response from comment on facebook 2 ${JSON.stringify(resp.body)}`)
@@ -44,10 +44,10 @@ exports.sendCommentReply = function (req, res) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`)
+          logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch facebook posts ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Failed to fetch facebook posts ${JSON.stringify(err)}`, 'error')
     })
 }

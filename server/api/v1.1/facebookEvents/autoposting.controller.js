@@ -15,8 +15,7 @@ exports.autoposting = function (req, res) {
     description: `received the payload`
   })
 
-  logger.serverLog(TAG, `in autoposting ${JSON.stringify(req.body)}`)
-  console.log('in autoposting', JSON.stringify(req.body))
+  logger.serverLog(TAG, `in autoposting ${JSON.stringify(req.body)}`, 'debug')
   for (let i = 0; i < req.body.entry[0].changes.length; i++) {
     const event = req.body.entry[0].changes[i]
     if (event.value.verb === 'add' &&
@@ -25,9 +24,9 @@ exports.autoposting = function (req, res) {
       if (event.value.item === 'share' && event.value.link) {
         og(event.value.link, (err, meta) => {
           if (err) {
-            logger.serverLog(TAG, `Error: ${err}`)
+            logger.serverLog(TAG, `Error: ${err}`, 'error')
           }
-          logger.serverLog(TAG, `Url Meta: ${JSON.stringify(meta)}`)
+          logger.serverLog(TAG, `Url Meta: ${JSON.stringify(meta)}`, 'debug')
           if (meta && meta.image && meta.image.url) {
             event.value.image = meta.image.url
           }
@@ -45,7 +44,6 @@ exports.autoposting = function (req, res) {
 function handleThePagePostsForAutoPosting (req, event, status) {
   AutoPostingDataLayer.findAllAutopostingObjectsUsingQuery({ accountUniqueName: event.value.sender_id, isActive: true })
     .then(autopostings => {
-      console.log('autopostings found', autopostings)
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = autopostingLogicLayer.pagesFindCriteria(postingItem)
         utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
@@ -88,7 +86,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                               sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
                             })
                             .catch(err => {
-                              logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
+                              logger.serverLog(TAG, `Failed to create url object ${JSON.stringify(err)}`, 'error')
                             })
                         } else if (event.value.item === 'photo' || event.value.photos) {
                           URLDataLayer.createURLObject({
@@ -104,7 +102,7 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                               sendAutopostingMessage(messageData, postingItem, subscribersCount, page, req)
                             })
                             .catch(err => {
-                              logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`)
+                              logger.serverLog(TAG, `Failed to create url object ${JSON.stringify(err)}`, 'error')
                             })
                         } else if (event.value.item === 'video') {
                           messageData = autopostingLogicLayer.prepareMessageDataForVideo(event)
@@ -115,22 +113,22 @@ function handleThePagePostsForAutoPosting (req, event, status) {
                         }
                       })
                       .catch(err => {
-                        logger.serverLog(`Failed to create autoposting message ${JSON.stringify(err)}`)
+                        logger.serverLog(TAG, `Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to fetch subscriber count ${JSON.stringify(err)}`, 'error')
                 })
             })
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(err)}`)
+            logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(err)}`, 'error')
           })
       })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch autopostings ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Failed to fetch autopostings ${JSON.stringify(err)}`, 'error')
     })
 }
 function sendAutopostingMessage (messageData, postingItem, subscribersCount, page, req) {
@@ -172,26 +170,26 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
                           logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
                         })
                         .catch(err => {
-                          logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                          logger.serverLog(TAG, `Failed to send broadcast ${JSON.stringify(err)}`, 'error')
                         })
                     } else {
-                      logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`)
+                      logger.serverLog(TAG, `Failed to send broadcast ${JSON.stringify(response.description)}`, 'error')
                     }
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to send broadcast ${JSON.stringify(err)}`, 'error')
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`)
+            logger.serverLog(TAG, `Failed to find tags ${JSON.stringify(err)}`, 'error')
           })
       } else {
-        logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
+        logger.serverLog(TAG, `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`, 'error')
       }
     })
     .catch(err => {
-      logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Failed to send broadcast ${JSON.stringify(err)}`, 'error')
     })
 }

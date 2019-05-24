@@ -375,16 +375,16 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
       .then(tags => {
         console.log('----------------------tags in applyTagFilterIfNecessary --------------->', tags.length)
         let tagIDs = []
-         for (let i = 0; i < tags.length; i++) { 
+        for (let i = 0; i < tags.length; i++) {
           tagIDs.push(tags[i]._id)
-         }
+        }
         callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIDs } }, req.headers.authorization)
           .then(tagSubscribers => {
             console.log('tagSubscribers in applyTagFilterIfNecessary', tagSubscribers)
             if (tagSubscribers.length === 0) {
               return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
             }
-            logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`)
+            logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`, 'debug')
             let subscribersPayload = []
             for (let i = 0; i < subscribers.length; i++) {
               for (let j = 0; j < tagSubscribers.length; j++) {
@@ -415,11 +415,11 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
             fn(subscribersPayload)
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+            logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
           })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch tag  ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to fetch tag  ${JSON.stringify(err)}`, 'error')
       })
   } else {
     fn(subscribers)
@@ -460,7 +460,7 @@ function applySurveyFilterIfNecessary (req, subscribers, fn) {
         fn(subscribersPayload)
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch survey responses ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to fetch survey responses ${JSON.stringify(err)}`, 'error')
       })
   } else {
     fn(subscribers)
@@ -500,7 +500,7 @@ function applyPollFilterIfNecessary (req, subscribers, fn) {
         fn(subscribersPayload)
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch poll responses ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to fetch poll responses ${JSON.stringify(err)}`, 'error')
       })
   } else {
     fn(subscribers)
@@ -680,7 +680,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
   }
   console.log('Return payload', payload)
   logger.serverLog(TAG,
-    `Return Payload ${JSON.stringify(payload)}`)
+    `Return Payload ${JSON.stringify(payload)}`, 'debug')
   return payload
 }
 
@@ -733,12 +733,12 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
     },
     function (err, resp) {
       if (err) {
-        logger.serverLog(TAG, `ERROR! unable to upload attachment on Facebook: ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `ERROR! unable to upload attachment on Facebook: ${JSON.stringify(err)}`, 'error')
         return ({status: 'failed', data: err})
       } else {
         logger.serverLog(TAG, `file uploaded on Facebook: ${JSON.stringify(resp.body)}`)
         payloadItem.fileurl.attachment_id = resp.body.attachment_id
-        logger.serverLog(TAG, `broadcast after attachment: ${JSON.stringify(payloadItem)}`)
+        logger.serverLog(TAG, `broadcast after attachment: ${JSON.stringify(payloadItem)}`, 'debug')
         return ({status: 'success', data: payloadItem})
       }
     })
@@ -764,11 +764,11 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                   console.log('savedurl', savedurl)
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
             })
         }
       })
@@ -786,11 +786,11 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                     console.log('savedurl', savedurl)
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+                logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
               })
           }
         })
@@ -810,11 +810,11 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                       console.log('savedurl', savedurl)
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
+                      logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
                     })
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`)
+                  logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
                 })
             }
           })
@@ -837,7 +837,7 @@ function isWhiteListedDomain (domain, pageId, user) {
               console.log('error in getting whitelisted_domains', err)
             }
             console.log('domain', domain)
-            console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
+           // console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
             if (resp.body.data && resp.body.data[0].whitelisted_domains) {
               for (let i = 0; i < resp.body.data[0].whitelisted_domains.length; i++) {
                 console.log('hostName of whitelist', getHostName(resp.body.data[0].whitelisted_domains[i]))
