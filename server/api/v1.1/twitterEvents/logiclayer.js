@@ -187,8 +187,8 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId) => {
     let buttons = []
     prepareViewTweetButton(savedMsg, tweetId).then(button => {
       buttons.push(button)
+      buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
     })
-    buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
     for (let i = 0; i < urls.length; i++) {
       og(urls[i].expanded_url, (err, meta) => {
         if (err) {
@@ -235,8 +235,8 @@ function prepareGallery (media, savedMsg, tweetId, userName) {
   let buttons = []
   prepareViewTweetButton(savedMsg, tweetId).then(button => {
     buttons.push(button)
+    buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
   })
-  buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
   for (let i = 0; i < length; i++) {
     elements.push({
       'title': userName,
@@ -254,8 +254,8 @@ const prepareFacbookPayloadForText = (type, body, savedMsg, tweetId, showButton)
   if (showButton) {
     prepareViewTweetButton(savedMsg, tweetId).then(button => {
       buttons.push(button)
+      buttons.push(prepareShareButton(savedMsg, tweetId, body))
     })
-    buttons.push(prepareShareButton(savedMsg, tweetId, body))
     messageData = {
       'attachment': {
         'type': 'template',
