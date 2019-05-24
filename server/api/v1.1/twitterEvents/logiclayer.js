@@ -194,7 +194,7 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId) => {
         if (err) {
           console.log('error in fetching metdata')
         }
-        if (meta !== {}) {
+        if (meta !== {} && meta.image && meta.title) {
           console.log('metadata', meta)
           gallery.push({
             'title': meta.title,
