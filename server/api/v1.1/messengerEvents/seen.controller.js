@@ -14,7 +14,6 @@ exports.index = function (req, res) {
     description: `received the payload`
   })
   logger.serverLog(TAG, `in seen ${JSON.stringify(req.body)}`)
-  console.log('in seen', JSON.stringify(req.body))
   updateBroadcastSeen(req.body.entry[0].messaging[0])
   updatePollSeen(req.body.entry[0].messaging[0])
   updateSurveySeen(req.body.entry[0].messaging[0])

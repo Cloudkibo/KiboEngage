@@ -17,7 +17,6 @@ function updateSubscribersPic (pageTokens, companyId) {
             if (err) {
               logger.serverLog(TAG, `error in retrieving https://graph.facebook.com/v2.10/${users[i].senderId}?access_token=${accessToken} ${JSON.stringify(err)}`, 'error')
             }
-            console.log('resp.body', resp.body)
             // logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
             utility.callApi(`subscribers/update`, 'put', {query: {_id: users[i]._id}, newPayload: {firstName: resp.body.first_name, lastName: resp.body.last_name, profilePic: resp.body.profile_pic, locale: resp.body.locale, timezone: resp.body.timezone, gender: resp.body.gender}, options: {}})
               .then(updated => {

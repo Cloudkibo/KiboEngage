@@ -6,7 +6,6 @@ const messengerEventsUtility = require('./utility')
 const needle = require('needle')
 
 exports.index = function (req, res) {
-  console.log('in welcome message controller')
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -16,18 +15,14 @@ exports.index = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      console.log('page fetched in messengerAds', page)
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId }, req.headers.authorization)
         .then(subscriber => {
           subscriber = subscriber[0]
           callApi(`jsonAd/jsonAdResponse/${req.body.jsonMessageId}`, 'get', {}, req.headers.authorization)
             .then(response => {
-              console.log('jsonAdResponse', response)
               callApi(`jsonAd/${response.jsonAdId}`, 'get', {}, req.headers.authorization)
                 .then(jsonAd => {
-                  console.log('jsonAd', jsonAd)
                   if (subscriber) {
-                    console.log('subscriber fetched in welcomeMessage', subscriber)
                     broadcastUtility.getBatchData(response.messageContent, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                   } else {
                     needle.get(
@@ -46,9 +41,7 @@ exports.index = function (req, res) {
                         logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'error')
                         needle.get(options.url, options, (error, response) => {
                           if (error) {
-                            console.log('error', error)
                           } else {
-                            console.log('subscriberInfo')
                             broadcastUtility.getBatchData(response.messageContent, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                           }
                         })

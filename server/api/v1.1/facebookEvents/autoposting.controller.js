@@ -55,7 +55,6 @@ function handleThePagePostsForAutoPosting (req, event, status) {
               ]
               utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
                 .then(subscribersCount => {
-                  console.log('subscribersCount', subscribersCount)
                   if (subscribersCount.length > 0) {
                     AutopostingMessagesDataLayer.createAutopostingMessage({
                       pageId: page._id,
@@ -134,12 +133,10 @@ function handleThePagePostsForAutoPosting (req, event, status) {
 function sendAutopostingMessage (messageData, postingItem, subscribersCount, page, req) {
   broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'autoposting')
     .then(messageCreative => {
-      console.log('messageCreative', messageCreative)
       if (messageCreative.status === 'success') {
         const messageCreativeId = messageCreative.message_creative_id
         utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
           .then(pageTags => {
-            console.log('pageTags found', pageTags)
             const limit = Math.ceil(subscribersCount[0].count / 10000)
             for (let i = 0; i < limit; i++) {
               let labels = []
@@ -159,10 +156,8 @@ function sendAutopostingMessage (messageData, postingItem, subscribersCount, pag
                 let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                 labels = labels.concat(temp)
               }
-              console.log('label in facebook', labels)
               broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                 .then(response => {
-                  console.log('response from callBroadcastMessagesEndpoint', response)
                   if (i === limit - 1) {
                     if (response.status === 'success') {
                       utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')

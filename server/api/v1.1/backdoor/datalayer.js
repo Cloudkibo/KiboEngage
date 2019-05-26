@@ -6,7 +6,6 @@ exports.countBroadcasts = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  console.log('query in count broadcasts', query)
   return callApi(`broadcasts/kiboDashQuery`, 'post', query, '', 'kiboengage')
 }
 exports.countPolls = (filter) => {
@@ -15,7 +14,6 @@ exports.countPolls = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  console.log('query in countPolls', query)
   return callApi(`polls/kiboDashQuery`, 'post', query, '', 'kiboengage')
 }
 exports.countSurveys = (filter) => {
@@ -37,7 +35,6 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  console.log('query', JSON.stringify(query))
   return callApi(`broadcasts/kiboDashQuery`, 'post', query, '', 'kiboengage')
 }
 exports.aggregateForPolls = (match, group, lookup, limit, sort, skip, lookup1) => {
@@ -79,7 +76,6 @@ exports.aggregateForSessions = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  console.log('query', JSON.stringify(query))
   return callApi(`broadcasts/kiboDashQuery`, 'post', query, '', 'kiboengage')
 }
 exports.findOnePoll = (id) => {

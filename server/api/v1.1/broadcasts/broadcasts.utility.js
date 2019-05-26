@@ -373,14 +373,12 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
     callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }, req.headers.authorization)
       .then(tags => {
-        console.log('----------------------tags in applyTagFilterIfNecessary --------------->', tags.length)
         let tagIDs = []
         for (let i = 0; i < tags.length; i++) {
           tagIDs.push(tags[i]._id)
         }
         callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIDs } }, req.headers.authorization)
           .then(tagSubscribers => {
-            console.log('tagSubscribers in applyTagFilterIfNecessary', tagSubscribers)
             if (tagSubscribers.length === 0) {
               return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
             }
@@ -510,7 +508,6 @@ function applyPollFilterIfNecessary (req, subscribers, fn) {
 function prepareMessageData (subscriberId, body, fname, lname) {
   let payload = {}
   let text = body.text
-  console.log(body.buttons)
   if (body.componentType === 'text' && !body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
       text = text.replace(
@@ -678,7 +675,6 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
   }
-  console.log('Return payload', payload)
   logger.serverLog(TAG,
     `Return Payload ${JSON.stringify(payload)}`, 'debug')
   return payload
@@ -690,11 +686,9 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
   let tag = "tag=" + encodeURIComponent(fbMessageTag)
   let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
   let batch = []
-  console.log('Payload received to send', payload)
   payload.forEach((item, index) => {
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
     let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData(recipientId, item, fname, lname)))
-    console.log('messagePayload', message)
     if (index === 0) {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
 
@@ -702,7 +696,6 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
       batch.push({ "method": "POST", "name": `message${index + 1}`, "depends_on": `message${index}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
     }
     if (index === (payload.length - 1)) {
-      console.log('batchData', batch)
       sendBroadcast(JSON.stringify(batch), page, res, subscriberNumber, subscribersLength, testBroadcast)
     }
   })
@@ -745,8 +738,6 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
 }
 
 function addModuleIdIfNecessary (payload, broadcastId) {
-  console.log('payload body', payload)
-  console.log('broadcastId', broadcastId)
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
@@ -758,10 +749,8 @@ function addModuleIdIfNecessary (payload, broadcastId) {
               let module = URLObject.module
               module.id = broadcastId
               URLObject.module = module
-              console.log('URLObject', URLObject)
               URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
                 .then(savedurl => {
-                  console.log('savedurl', savedurl)
                 })
                 .catch(err => {
                   logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
@@ -783,7 +772,6 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                 URLObject.module.id = broadcastId
                 URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
                   .then(savedurl => {
-                    console.log('savedurl', savedurl)
                   })
                   .catch(err => {
                     logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
@@ -807,7 +795,6 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                   URLObject.module.id = broadcastId
                   URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
                     .then(savedurl => {
-                      console.log('savedurl', savedurl)
                     })
                     .catch(err => {
                       logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
@@ -829,24 +816,18 @@ function isWhiteListedDomain (domain, pageId, user) {
     needle.get(`https://graph.facebook.com/v2.10/${pageId}?fields=access_token&access_token=${user.facebookInfo.fbToken}`,
       (err, resp) => {
         if (err) {
-          console.log('error in getting page access token', err)
         }
         needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
           (err, resp) => {
             if (err) {
-              console.log('error in getting whitelisted_domains', err)
             }
-            console.log('domain', domain)
            // console.log('reponse from whitelisted_domains', resp.body.data[0].whitelisted_domains)
             if (resp.body.data && resp.body.data[0].whitelisted_domains) {
               for (let i = 0; i < resp.body.data[0].whitelisted_domains.length; i++) {
-                console.log('hostName of whitelist', getHostName(resp.body.data[0].whitelisted_domains[i]))
-                console.log('hostName of domain', getHostName(domain))
                 if (domain.includes(getHostName(resp.body.data[0].whitelisted_domains[i]))) {
                   returnValue = true
                 }
                 if (i === resp.body.data[0].whitelisted_domains.length - 1) {
-                  console.log('returnValue', returnValue)
                   resolve({returnValue: returnValue})
                 }
               }

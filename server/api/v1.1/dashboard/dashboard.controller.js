@@ -838,7 +838,6 @@ function graphDataNew (body, companyUser, pageIds) {
         logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`, 'debug')
         PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
           .then(pollsgraphdata => {
-            console.log('polls found', pollsgraphdata)
             PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
               .then(surveysgraphdata => {
                 resolve({
@@ -1065,7 +1064,6 @@ exports.updateSubscriptionPermission = function (req, res) {
                           .then(updated => {
                           })
                           .catch(err => {
-                            console.log('failed to update page', err)
                           })
                       }
                     }

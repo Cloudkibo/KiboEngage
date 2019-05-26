@@ -21,7 +21,6 @@ Structure: PlatformwiseAggregate
 exports.index = (req, res) => {
   callApi(`PlatformwiseData`, 'get', {}, req.headers.authorization, 'kibodash')
     .then((result) => {
-      console.log('result', result)
       if (result.length === 1) {
         // The array length will always be 1
         return res.status(200).json({status: 'success', payload: result[0]})

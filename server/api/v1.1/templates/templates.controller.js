@@ -16,16 +16,12 @@ exports.allPolls = function (req, res) {
 }
 
 exports.getAllPolls = function (req, res) {
-  console.log('getAllPolls req.body', req.body)
   if (req.body.first_page === 'first') {
     let findCriteria = logicLayer.getCriterias(req)
-    console.log('findCriteria', findCriteria)
     dataLayer.pollTemplateaggregateCount(findCriteria)
       .then(pollsCount => {
-        console.log('pollsCount', pollsCount)
         dataLayer.pollTemplateaggregateLimit({findCriteria, req})
           .then(polls => {
-            console.log('polls', polls)
             res.status(200).json({
               status: 'success',
               payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
@@ -187,7 +183,6 @@ exports.createSurvey = function (req, res) {
           .then(question1 => {
           })
           .catch(err => {
-            console.log('error in creating question', err)
           })
       }
       return res.status(201).json({status: 'success', payload: survey})
@@ -270,17 +265,14 @@ exports.editCategory = function (req, res) {
 exports.surveyDetails = function (req, res) {
   dataLayer.findSurveyById(req)
     .then(survey => {
-      console.log('survey', survey)
       if (!survey) {
         return res.status(404).json({
           status: 'failed',
           description: `survey not found.`
         })
       }
-      console.log('end survey')
       dataLayer.findQuestionById(req)
         .then(questions => {
-          console.log('questions', questions)
           return res.status(200).json({status: 'success', payload: {survey, questions}})
         })
         .catch(err => {
@@ -370,7 +362,6 @@ exports.deleteSurvey = function (req, res) {
 }
 
 exports.editSurvey = function (req, res) {
-  console.log('editSurvey')
   dataLayer.surveyId(req)
     .then(survey => {
       if (!survey) {
@@ -386,7 +377,6 @@ exports.editSurvey = function (req, res) {
         .then(success => {
           dataLayer.findQuestionSurveyById(req)
             .then(questions => {
-              console.log('questions')
               for (let i = 0; i < questions.length; i++) {
                 dataLayer.removeQuestion(questions[i]._id)
                   .then(success => {})
@@ -456,14 +446,11 @@ exports.editPoll = function (req, res) {
 exports.createBroadcast = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser', companyUser)
       callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
         .then(planUsage => {
           planUsage = planUsage[0]
           callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
             .then(companyUsage => {
-              console.log('planUsage', planUsage)
-              console.log('companyUsage', companyUsage)
               companyUsage = companyUsage[0]
               // add paid plan check later
               // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
@@ -476,14 +463,11 @@ exports.createBroadcast = function (req, res) {
               if (req.user.isSuperUser) {
                 broadcastPayload.createdBySuperUser = true
               }
-              console.log('broadcastPayload', broadcastPayload)
               dataLayer.createBroadcast(broadcastPayload)
                 .then(broadcastCreated => {
-                  console.log('broadcastCreated')
                   if (!req.user.isSuperUser) {
                     callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
                       .then(update => {
-                        console.log('update company')
                       })
                       .catch(err => {
                         return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
