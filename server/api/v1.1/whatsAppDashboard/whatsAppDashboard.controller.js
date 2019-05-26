@@ -3,7 +3,6 @@ const broadcastDataLayer = require('../whatsAppBroadcasts/whatsAppBroadcasts.dat
 const LogicLayer = require('./whatsAppDashboard.logiclayer')
 
 exports.index = function (req, res) {
-  console.log('inside controller')
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let aggregateQuery = [
@@ -103,7 +102,6 @@ exports.sentSeen = function (req, res) {
         count: {$sum: 1}
       }
       let matchCriteria = LogicLayer.queryForSentSeen(req.body, companyuser)
-      console.log('matchCriteria in sentseen', matchCriteria)
       broadcastDataLayer.aggregateForBroadcasts(matchCriteria, aggregateForSent)
         .then(broadcasts => {
           broadcastDataLayer.aggregateForBroadcasts(matchCriteria, aggregateForGraph)

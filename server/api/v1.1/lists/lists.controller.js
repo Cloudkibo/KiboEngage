@@ -126,7 +126,6 @@ function createTag (req, callback) {
         let tag = req.body.listName
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
-            console.log('label created', label.body)
             if (label.body.error) {
               callback(label.body.error)
             }
@@ -309,10 +308,8 @@ exports.viewList = function (req, res) {
               .then(number => {
                 if (number.length > 0) {
                   let criterias = logicLayer.getSubscriberCriteria(number, companyUser)
-                  console.log('Criterias', criterias)
                   utility.callApi(`subscribers/query`, 'post', criterias, req.headers.authorization)
                     .then(subscribers => {
-                      console.log('Subscribers', subscribers)
                       let content = logicLayer.getContent(subscribers)
                       utility.callApi(`lists/${req.params.id}`, 'put', {
                         content: content

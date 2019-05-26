@@ -69,10 +69,8 @@ exports.twitterwebhook = function (req, res) {
                     }
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
-                        console.log('savedMsg', savedMsg)
                         logicLayer.checkType(req.body, savedMsg)
                           .then(messageData => {
-                            console.log('messageData', messageData)
                             sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
                           })
                           .catch(err => {

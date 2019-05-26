@@ -22,18 +22,14 @@ exports.allPolls = function (req, res) {
 
 exports.getAllPolls = function (req, res) {
   if (req.body.first_page === 'first') {
-    console.log('req.body', req.body)
     let findCriteria = logicLayer.getCriterias(req)
-    console.log('findCriteria', findCriteria)
     dataLayer.pollTemplateaggregateCount([
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
     ])
       .then(pollsCount => {
-        console.log('pollsCount', pollsCount)
         dataLayer.pollTemplateaggregateLimit({findCriteria, req})
           .then(polls => {
-            console.log('polls', polls)
             res.status(200).json({
               status: 'success',
               payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
@@ -306,17 +302,14 @@ exports.editCategory = function (req, res) {
 exports.surveyDetails = function (req, res) {
   dataLayer.findSurveyById(req)
     .then(survey => {
-      console.log('survey')
       if (!survey) {
         return res.status(404).json({
           status: 'failed',
           description: `survey not found.`
         })
       }
-      console.log('end survey')
       dataLayer.findQuestionById(req)
         .then(questions => {
-          console.log('questions')
           return res.status(200).json({status: 'success', payload: {survey, questions}})
         })
         .catch(err => {
@@ -406,7 +399,6 @@ exports.deleteSurvey = function (req, res) {
 }
 
 exports.editSurvey = function (req, res) {
-  console.log('editSurvey')
   dataLayer.surveyId(req)
     .then(survey => {
       if (!survey) {
@@ -416,12 +408,10 @@ exports.editSurvey = function (req, res) {
       survey.title = req.body.survey.title
       survey.description = req.body.survey.description
       survey.category = req.body.survey.category
-      console.log('saveSurvey')
       dataLayer.saveSurveys(survey)
         .then(success => {
           dataLayer.findQuestionSurveyById(req)
             .then(questions => {
-              console.log('questions')
               for (let i = 0; i < questions.length; i++) {
                 dataLayer.removeQuestion(questions[i])
                   .then(success => {})
@@ -489,7 +479,6 @@ exports.editPoll = function (req, res) {
 exports.createBroadcast = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser', companyUser)
       callApi.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id}, req.headers.authorization)
         .then(companyProfile => {
           callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyProfile.planId}, req.headers.authorization)
@@ -497,8 +486,6 @@ exports.createBroadcast = function (req, res) {
               planUsage = planUsage[0]
               callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyProfile._id}, req.headers.authorization)
                 .then(companyUsage => {
-                  console.log('planUsage', planUsage)
-                  console.log('companyUsage', companyUsage)
                   companyUsage = companyUsage[0]
                   if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                     return res.status(500).json({
@@ -510,15 +497,12 @@ exports.createBroadcast = function (req, res) {
                   if (req.user.isSuperUser) {
                     broadcastPayload.createdBySuperUser = true
                   }
-                  console.log('broadcastPayload', broadcastPayload)
                   const broadcast = new TemplateBroadcasts(broadcastPayload)
                   dataLayer.saveBroadcast(broadcast)
                     .then(broadcastCreated => {
-                      console.log('broadcastCreated')
                       if (!req.user.isSuperUser) {
                         callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
                           .then(update => {
-                            console.log('update company')
                           })
                           .catch(err => {
                             return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
@@ -664,16 +648,13 @@ exports.getAllBroadcasts = function (req, res) {
       }
       if (req.body.first_page === 'first') {
         let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
-        console.log('findCriteria', JSON.stringify(findCriteria))
         dataLayer.broadcastTemplateaggregateCount([
           { $match: findCriteria },
           { $group: { _id: null, count: { $sum: 1 } } }
         ])
           .then(broadcastsCount => {
-            console.log('broadcastsCount', JSON.stringify(broadcastsCount))
             dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
               .then(broadcasts => {
-                console.log('broadcasts', JSON.stringify(broadcasts))
                 res.status(200).json({
                   status: 'success',
                   payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}

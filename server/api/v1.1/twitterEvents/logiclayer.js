@@ -76,7 +76,6 @@ exports.checkType = function (body, savedMsg) {
           }
         })
         .catch(err => {
-          console.log(`Error in creating Autoposting message object ${err}`)
         })
     } else {
       //  attachment only
