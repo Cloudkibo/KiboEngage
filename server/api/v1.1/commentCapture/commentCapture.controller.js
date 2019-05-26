@@ -85,7 +85,6 @@ exports.create = function (req, res) {
                     logger.serverLog(TAG,
                       `Page accesstoken from graph api Error${JSON.stringify(err)}`, 'error')
                   }
-                  console.log('response from pageaccesstoken', respp.body)
                   let messageData = logicLayer.setMessage(req.body.payload)
                   if (messageData.image) {
                     needle.post(

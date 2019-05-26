@@ -25,7 +25,6 @@ exports.index = function (req, res) {
 exports.create = function (req, res) {
   AutomationQueue.createAutomationQueueObject(req.body.payload)
     .then(result => {
-      console.log('Automation Queue Object Create', result)
       res.status(200).json({
         status: 'success',
         payload: result

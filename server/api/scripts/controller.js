@@ -12,24 +12,18 @@ const request = require('request')
 exports.normalizeDataForDelivery = function (req, res) {
   BroadcastPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
     .then(result => {
-      console.log(TAG, 'Broadcast sent normalized successfully!')
     })
     .catch(err => {
-      console.log(TAG, `Broadcast sent normalized failed ${err}`)
     })
   PollPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
     .then(result => {
-      console.log(TAG, 'Poll sent normalized successfully!')
     })
     .catch(err => {
-      console.log(TAG, `Poll sent normalized failed ${err}`)
     })
   SurveyPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
     .then(result => {
-      console.log(TAG, 'Survey sent normalized successfully!')
     })
     .catch(err => {
-      console.log(TAG, `Survey sent normalized failed ${err}`)
     })
   return res.status(200).json({status: 'success', payload: 'Data has been normalized successfully!'})
 }
@@ -37,7 +31,6 @@ exports.normalizeDataForDelivery = function (req, res) {
 exports.addWhitelistDomain = function (req, res) {
   utility.callApi(`pages/query`, 'post', {connected: true}, req.headers.authorization) // fetch connected pages
     .then(pages => {
-      console.log('pages fetched in script', pages[0])
       for (let i = 0; i < pages.length; i++) {
         if (pages[i].userId && pages[i].userId._id) {
           utility.callApi(`user/query`, 'post', {_id: pages[i].userId._id}, req.headers.authorization)
@@ -47,12 +40,10 @@ exports.addWhitelistDomain = function (req, res) {
                 needle.get(`https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${connectedUser.facebookInfo.fbToken}`,
                   (err, resp) => {
                     if (err) {
-                      console.log('error in getting page access token', err)
                     }
                     var accessToken = resp.body.access_token
                     needle.get(`https://graph.facebook.com/v2.6/me/messenger_profile?fields=whitelisted_domains&access_token=${accessToken}`, function (err, resp) {
                       if (err) {
-                        console.log('error in whitelisted_domains', err)
                       }
                       var body = JSON.parse(JSON.stringify(resp.body))
                       let temp = []
@@ -66,22 +57,18 @@ exports.addWhitelistDomain = function (req, res) {
                       let requesturl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${accessToken}`
                       needle.request('post', requesturl, whitelistedDomains, {json: true}, function (err, resp) {
                         if (err) {
-                          console.log('error in whitelisted_domains', err)
                         }
-                        console.log('response from whitelisted_domains', resp.body)
                       })
                     })
                   })
               }
             })
             .catch(error => {
-              console.log('Failed to fetch user', error)
             })
         }
       }
     })
     .catch(error => {
-      console.log('error in fetching pages', error)
     })
   return res.status(200).json({status: 'success', payload: 'Domain has been whitelisted'})
 }
@@ -105,7 +92,6 @@ exports.performanceTestBroadcast = function (req, res) {
 
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-    console.log('Send Response Broadcast', body)
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
       return res.status(500).json({

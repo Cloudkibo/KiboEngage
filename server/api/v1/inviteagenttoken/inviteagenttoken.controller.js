@@ -8,7 +8,6 @@ const callApi = require('../utility')
 exports.verify = function (req, res) {
   callApi.callApi(`invite_verification/${req.params.id}`, 'get', {}, req.headers.authorization)
     .then(result => {
-      console.log('Result', result)
       res.status(200).json({
         status: 'success',
         payload: 'Verify Token Success'

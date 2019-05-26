@@ -109,11 +109,9 @@ exports.create = function (req, res) {
           // }
           async.parallelLimit([
             function (callback) {
-              console.log('sendWebhook called')
               sendWebhook(req.user, req.body, req.headers.authorization, callback)
             },
             function (callback) {
-              console.log('createPoll called')
               createPoll(req.user, req.body, callback)
             }
           ], 10, function (err, results) {
@@ -123,7 +121,6 @@ exports.create = function (req, res) {
                 payload: `Failed to create poll ${JSON.stringify(err)}`
               })
             }
-            console.log('create results', util.inspect(results))
             res.status(200).json({status: 'success', payload: results[1]})
           })
         })
@@ -372,7 +369,6 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
 function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort) {
   utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
     .then(subscribers => {
-      console.log('subscribers in subFindCriteria', subscribers)
       if (subscribers.length === 0) {
         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
       }
@@ -406,7 +402,6 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                       if (err) {
                         logger.serverLog(TAG, err, 'error')
                       }
-                      console.log('pollsend response', util.inspect(resp.body))
                       messageData.componentType = 'poll'
                       let message = preparePayload(req.user, subscribers[j], page, messageData)
                       saveLiveChat(message)

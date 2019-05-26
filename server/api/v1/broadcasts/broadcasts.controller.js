@@ -80,9 +80,7 @@ exports.addButton = function (req, res) {
     type: req.body.type
   }
   if (req.body.type === 'web_url') {
-    console.log('inisde web_url')
     if (req.body.messenger_extensions || req.body.webview_height_ratio) {
-      console.log('inisde webview')
       if (!broadcastUtility.isWebView(broadcastUtility.isWebView)) {
         return res.status(500).json({status: 'failed', payload: `parameters are missing`})
       }
@@ -337,7 +335,6 @@ exports.sendConversation = function (req, res) {
                 sendTestBroadcast(companyUser, page, payload, req, res)
               })
               .catch(err => {
-                console.log(JSON.stringify(err))
               })
           } else {
             BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, companyUser.companyId))
@@ -355,7 +352,6 @@ exports.sendConversation = function (req, res) {
                 })
                 updatePayload(req.body.self, payloadData, broadcast, page)
                   .then(payload => {
-                    console.log('payload: ', JSON.stringify(payload))
                     broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
                     if (req.body.isList === true) {
                       utility.callApi(`lists/query`, 'post', BroadcastDataLayer.ListFindCriteria(req.body), req.headers.authorization)
@@ -372,7 +368,6 @@ exports.sendConversation = function (req, res) {
                     }
                   })
                   .catch(err => {
-                    console.log(JSON.stringify(err))
                   })
               })
               .catch(error => {
@@ -418,7 +413,6 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
 }
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-    console.log('Response Send Broadcast', body)
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
       return res.status(500).json({
@@ -479,48 +473,38 @@ const updatePayload = (self, payload, broadcast, page) => {
         })
       } else if (payload[j].componentType === 'text') {
         if (videoRegex.test(payload[j].text)) {
-          console.log(`answer is url`)
           // Check if youtube url
           if (YouTubeRegex.test(payload[j].text)) {
-            console.log(`answer is YouTube video`)
             utility.downloadVideo({url: payload[j].text})
               .then(path => {
                 payload[j].componentType = 'video'
                 payload[j].fileurl = { name: path }
                 utility.uploadOnFacebook(payload[j], page.accessToken)
                   .then(data => {
-                    console.log('in uploadOnFacebook then')
                     payload[j] = data
                     utility.deleteVideo()
                       .then(result => {
-                        console.log('in deleteVideo then', j)
                         shouldReturn = operation(j, payload.length - 1)
-                        console.log('shouldReturn ', shouldReturn)
                         if (shouldReturn) {
                           resolve(payload)
                         }
                       })
                       .catch(err => {
-                        console.log(JSON.stringify(err))
                       })
                   })
                   .catch(err => {
-                    console.log(JSON.stringify(err))
                   })
               })
               .catch(err => {
-                console.log(JSON.stringify(err))
               })
           } else {
             shouldReturn = operation(j, payload.length - 1)
-            console.log('shouldReturn ', shouldReturn)
             if (shouldReturn) {
               resolve(payload)
             }
           }
         } else {
           shouldReturn = operation(j, payload.length - 1)
-          console.log('shouldReturn ', shouldReturn)
           if (shouldReturn) {
             resolve(payload)
           }
