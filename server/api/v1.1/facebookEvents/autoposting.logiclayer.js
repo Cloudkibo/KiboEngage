@@ -143,7 +143,7 @@ function prepareElements (event, newURL) {
       'title': (event.value.message)
         ? event.value.message
         : event.value.sender_name,
-      'image_url': event.value.image,
+      'image_url': event.value.link,
       'subtitle': 'kibopush.com',
       'buttons': [
         {
