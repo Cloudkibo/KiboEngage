@@ -114,7 +114,7 @@ exports.twitterwebhook = function (req, res) {
   })
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
-      logger.serverLog(TAG, `autoposting found ${JSON.stringify(autopostings)}`, 'debug')
+      logger.serverLog(TAG, `autoposting found ${JSON.stringify(req.body)}`, 'debug')
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
           companyId: postingItem.companyId,
