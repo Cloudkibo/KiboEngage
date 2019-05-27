@@ -101,7 +101,9 @@ const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, pa
     let button = !(tweet && tweet.media && tweet.media.length > 0)
     let payload = []
     let twitterUrls = urls.map((url) => url.url)
-    let textArray = text.split(' ')
+    let separators = [' ', '\n']
+    let textArray = text.split(new RegExp('[' + separators.join('') + ']', 'g'))
+    // let textArray = text.split(' \n')
     text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
     payload.push(prepareFacbookPayloadForText('text', {text}, savedMsg, tweetId, button))
     if (tweet && tweet.media && tweet.media.length > 0) {
@@ -275,6 +277,7 @@ const prepareFacbookPayloadForText = (type, body, savedMsg, tweetId, showButton)
 }
 
 const prepareText = (twitterUrls, textArray, urls) => {
+  console.log('textArray', textArray)
   for (let i = 0; i < textArray.length; i++) {
     let index = twitterUrls.indexOf(textArray[i])
     if (index > -1) {
