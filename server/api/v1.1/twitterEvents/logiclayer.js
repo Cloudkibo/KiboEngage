@@ -277,7 +277,6 @@ const prepareFacbookPayloadForText = (type, body, savedMsg, tweetId, showButton)
 }
 
 const prepareText = (twitterUrls, textArray, urls) => {
-  console.log('textArray', textArray)
   for (let i = 0; i < textArray.length; i++) {
     let index = twitterUrls.indexOf(textArray[i])
     if (index > -1) {
