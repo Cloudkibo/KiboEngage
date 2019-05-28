@@ -58,6 +58,7 @@
     "needle": "^2.2.4",
     "node-cron": "^2.0.3",
     "open-graph": "^0.2.3",
+    "open-graph-scraper": "^3.6.1",
     "passport": "^0.4.0",
     "passport-facebook": "^2.1.1",
     "passport-facebook-extension": "0.0.7",

@@ -10,7 +10,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
     if (req.quote) {
       let originalUser = req.retweet.user
       let twitterUrls = req.urls.map((url) => url.url)
-      let textArray = req.quote.split(' ')
+      let separators = [' ', '\n']
+      let textArray = req.quote.split(new RegExp('[' + separators.join('') + ']', 'g'))
+      // let textArray = req.quote.split(' ')
       tagline = `@${req.tweetUser.screen_name} retweeted @${originalUser.screen_name}:${prepareText(twitterUrls, textArray, req.urls)}\n\n@${originalUser.screen_name}'s tweet:`
       if (req.retweet.truncated) {
         handleTweet(
