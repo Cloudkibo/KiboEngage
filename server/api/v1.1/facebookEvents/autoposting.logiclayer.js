@@ -65,7 +65,6 @@ exports.handleFacebookPayload = function (body, savedMsg) {
     let tagline = ''
     if (body.item === 'share' && !body.link.includes('http')) {
       let originalPage = body.link.split('/')
-      console.log('originalPage', originalPage)
       let query = { $or: [ { pageId: originalPage[1] }, { pageUserName: originalPage[1] } ] }
       utility.callApi(`pages/query`, 'post', query)
         .then(pages => {
@@ -162,12 +161,10 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
     let options
     for (let i = 0; i < urls.length; i++) {
       options = {'url': urls[i]}
-      console.log('url meta', urls[i])
       ogs(options, (err, meta) => {
         if (err) {
           console.log('error in fetching metdata')
         }
-        console.log('metadata', meta)
         if (meta !== {} && meta.data && meta.data.ogTitle && meta.data.ogDescription && meta.data.ogImage) {
           gallery.push({
             'title': meta.data.ogTitle,

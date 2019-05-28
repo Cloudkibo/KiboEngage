@@ -38,7 +38,6 @@ exports.autoposting = function (req, res) {
                       .then(savedMsg => {
                         autopostingLogicLayer.handleFacebookPayload(req.body.entry[0].changes[0].value, savedMsg, page)
                           .then(messageData => {
-                            console.log('final payload length', messageData.length)
                             sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
                           })
                           .catch(err => {
