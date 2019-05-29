@@ -54,8 +54,6 @@ exports.createDataPolls = function (req) {
   return pollPayload
 }
 exports.createDataSurvey = function (req) {
-  console.log('req', req)
-  console.log('description', req.body.survey.description)
   let surveyPayload = {
     title: req.body.survey.title,
     description: req.body.survey.description,
@@ -85,7 +83,6 @@ exports.createDataBots = function (req) {
 }
 
 exports.createDataBroadcast = function (req, companyUser) {
-  console.log()
   let broadcastPayload = {
     title: req.body.title,
     category: req.body.category,

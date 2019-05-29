@@ -481,7 +481,6 @@ function applyPollFilterIfNecessary (req, subscribers, fn) {
 function prepareMessageData (subscriberId, body, fname, lname) {
   let payload = {}
   let text = body.text
-  console.log(body.buttons)
   if (body.componentType === 'text' && !body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
       text = text.replace(
@@ -678,10 +677,8 @@ function addModuleIdIfNecessary (payload, broadcastId) {
               let module = URLObject.module
               module.id = broadcastId
               URLObject.module = module
-              console.log('URLObject', URLObject)
               URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
                 .then(savedurl => {
-                  console.log('savedurl', savedurl)
                 })
                 .catch(err => {
                   logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`)
@@ -746,9 +743,6 @@ const downloadVideo = (data) => {
     // let stream
 
     video.on('info', (info) => {
-      console.log('Download started')
-      console.log('filename: ' + info.filename)
-      console.log('size: ' + info.size)
       // let size = info.size
       // if (size < 25000000) {
       //   stream = video.pipe(fs.createWriteStream(`${dir}/bot-video.mp4`))
@@ -766,7 +760,6 @@ const downloadVideo = (data) => {
     let stream = video.pipe(fs.createWriteStream(`${dir}/bot-video.mp4`))
     video.on('data', (chunk) => {
       downloaded += chunk.length
-      console.log(`Downloaded ${downloaded / 1000000}MB`)
       if (downloaded > 5000000) {
         stream.end()
         resolve(`bot-video.mp4`)
@@ -799,14 +792,11 @@ function isWhiteListedDomain (domain, pageId, user) {
   needle.get(`https://graph.facebook.com/v2.10/${pageId}?fields=access_token&access_token=${user.facebookInfo.fbToken}`,
     (err, resp) => {
       if (err) {
-        console.log('error in getting page access token', err)
       }
       needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
         (err, resp) => {
           if (err) {
-            console.log('error in getting whitelisted_domains', err)
           }
-          console.log('reponse from whitelisted_domains', resp.body)
           if (resp.body.data && resp.body.data[0].whitelisted_domains.includes(domain)) {
             return true
           } else {

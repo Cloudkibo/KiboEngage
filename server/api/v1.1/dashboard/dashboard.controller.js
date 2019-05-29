@@ -77,7 +77,7 @@ exports.sentVsSeen = function (req, res) {
                                               let responsesCount = []
                                               logger.serverLog(TAG,
                                                 `counts for dashboard poll response ${JSON.stringify(
-                                                  pollResponseCount)}`)
+                                                  pollResponseCount)}`, 'debug')
                                               for (let a = 0; a < polls.length; a++) {
                                                 for (let b = 0; b < pollResponseCount.length; b++) {
                                                   if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
@@ -163,7 +163,7 @@ exports.sentVsSeen = function (req, res) {
                                     })
                                     .catch(err => {
                                       if (err) {
-                                        logger.serverLog(TAG, `Error: ${err}`)
+                                        logger.serverLog(TAG, `Error: ${err}`, 'error')
                                         return res.status(500).json({
                                           status: 'failed',
                                           description: `Internal Server Error${JSON.stringify(
@@ -313,7 +313,7 @@ exports.sentVsSeenNew = function (req, res) {
                                                     let responsesCount = []
                                                     logger.serverLog(TAG,
                                                       `counts for dashboard poll response ${JSON.stringify(
-                                                        pollResponseCount)}`)
+                                                        pollResponseCount)}`, 'debug')
                                                     for (let a = 0; a < polls.length; a++) {
                                                       for (let b = 0; b < pollResponseCount.length; b++) {
                                                         if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
@@ -373,7 +373,7 @@ exports.sentVsSeenNew = function (req, res) {
                                                         datacounts.poll.pollResponseCount = sum
                                                       }
                                                     }
-                                                    logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`)
+                                                    logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`, 'debug')
                                                     graphDataNew(req.body, companyUser, result.pageIds)
                                                       .then(result => {
                                                         return res.status(200).json({
@@ -404,7 +404,7 @@ exports.sentVsSeenNew = function (req, res) {
                                               })
                                               .catch(err => {
                                                 if (err) {
-                                                  logger.serverLog(TAG, `Error: ${err}`)
+                                                  logger.serverLog(TAG, `Error: ${err}`, 'error')
                                                   return res.status(500).json({
                                                     status: 'failed',
                                                     description: `Internal Server Error${JSON.stringify(
@@ -415,7 +415,7 @@ exports.sentVsSeenNew = function (req, res) {
                                           })
                                           .catch(err => {
                                             if (err) {
-                                              logger.serverLog(TAG, `Error: ${err}`)
+                                              logger.serverLog(TAG, `Error: ${err}`, 'error')
                                               return res.status(500).json({
                                                 status: 'failed',
                                                 description: `Internal Server Error${JSON.stringify(
@@ -594,7 +594,7 @@ exports.otherPages = function (req, res) {
       res.status(200).json(pages)
     })
     .catch(err => {
-      logger.serverLog(TAG, `Error: ${err}`)
+      logger.serverLog(TAG, `Error: ${err}`, 'error')
     })
 }
 
@@ -627,7 +627,7 @@ exports.stats = function (req, res) {
                 payload.totalPages = allPagesWithoutDuplicates.length
                 callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isSubscribed: true, pageId: {$in: result.pageIds}}, req.headers.authorization)
                   .then(subscribers => {
-                    logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`)
+                    logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
                     payload.subscribers = subscribers.length
                     BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
                       .then(recentBroadcasts => {
@@ -830,17 +830,14 @@ exports.graphData = function (req, res) {
 }
 function graphDataNew (body, companyUser, pageIds) {
   return new Promise(function (resolve, reject) {
-    logger.serverLog(TAG, `graphDataNew`, body.days)
     let groupAggregate = {
       _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
       count: {$sum: 1}}
     PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
       .then(broadcastsgraphdata => {
-        logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`)
-        logger.serverLog(TAG, `aggregateForPolls`, JSON.stringify(LogicLayer.getCriterias(body, companyUser, false, pageIds)))
+        logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`, 'debug')
         PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
           .then(pollsgraphdata => {
-            console.log('polls found', pollsgraphdata)
             PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
               .then(surveysgraphdata => {
                 resolve({
@@ -882,8 +879,8 @@ exports.toppages = function (req, res) {
               }
             }], req.headers.authorization)
             .then(gotSubscribersCount => {
-              logger.serverLog(TAG, `pages: ${pages}`)
-              logger.serverLog(TAG, `gotSubscribersCount ${gotSubscribersCount}`)
+              logger.serverLog(TAG, `pages: ${pages}`, 'debug')
+              logger.serverLog(TAG, `gotSubscribersCount ${gotSubscribersCount}`, 'debug')
               let pagesPayload = []
               for (let i = 0; i < pages.length; i++) {
                 pagesPayload.push({
@@ -898,7 +895,7 @@ exports.toppages = function (req, res) {
                   subscribers: 0
                 })
               }
-              logger.serverLog(TAG, `pagesPayload: ${pagesPayload}`)
+              logger.serverLog(TAG, `pagesPayload: ${pagesPayload}`, 'debug')
               for (let i = 0; i < pagesPayload.length; i++) {
                 for (let j = 0; j < gotSubscribersCount.length; j++) {
                   if (pagesPayload[i]._id.toString() ===
@@ -1049,7 +1046,7 @@ exports.updateSubscriptionPermission = function (req, res) {
             if (err) {
               logger.serverLog(TAG,
                 `Page access token from graph api error ${JSON.stringify(
-                  err)}`)
+                  err)}`, 'error')
             }
             if (resp && resp.body && resp.body.access_token) {
               needle.get(
@@ -1058,7 +1055,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                   if (err) {
                     logger.serverLog(TAG,
                       `Page access token from graph api error ${JSON.stringify(
-                        err)}`)
+                        err)}`, 'error')
                   }
                   if (respp && respp.body && respp.body.data && respp.body.data.length > 0) {
                     for (let a = 0; a < respp.body.data.length; a++) {
@@ -1067,7 +1064,6 @@ exports.updateSubscriptionPermission = function (req, res) {
                           .then(updated => {
                           })
                           .catch(err => {
-                            console.log('failed to update page', err)
                           })
                       }
                     }

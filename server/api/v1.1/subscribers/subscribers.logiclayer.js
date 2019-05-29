@@ -32,7 +32,7 @@ exports.getFinalPayload = (subscribers, customFields, customFieldSubscribers) =>
   }
   return subscribersPayload
 }
-exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
+exports.getSusbscribersPayload = function (subscribers, tags, tagIds, tagValue) {
   let subscribersPayload = subscribers
   let filteredTagSubscribers = []
   for (let i = 0; i < subscribers.length; i++) {
@@ -41,7 +41,7 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
     for (let j = 0; j < tags.length; j++) {
       if (tags[j].tagId) {
         if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
-          if (tagValue === tags[j].tagId._id.toString()) {
+          if (tagIds && tagIds.length !== 0 && tagIds.includes(tags[j].tagId._id.toString())) {
             isTaggedSubscriber = true
           }
           subscribersPayload[i].tags.push(tags[j].tagId.tag)
@@ -58,8 +58,7 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
   return subscribersPayload
 }
 
-exports.getCriterias = function (req) {
-  console.log('getting criterias')
+exports.getCriterias = function (req, tagIDs) {
   let search = ''
   let findCriteria = {}
   let finalCriteria = {}
@@ -69,7 +68,6 @@ exports.getCriterias = function (req) {
       companyId: req.user.companyId
     }
   } else {
-    console.log('filter_criteria', req.body.filter_criteria)
     search = '.*' + req.body.filter_criteria.search_value + '.*'
     findCriteria = {
       fullName: {$regex: search, $options: 'i'},
@@ -79,10 +77,8 @@ exports.getCriterias = function (req) {
       pageId: req.body.filter_criteria.page_value !== '' ? req.body.filter_criteria.page_value : {$exists: true}
     }
     if (req.body.filter_criteria.tag_value) {
-      console.log('tag_value', req.body.filter_criteria.tag_value)
-      findCriteria['tags_subscriber'] = {$elemMatch: {tagId: req.body.filter_criteria.tag_value}}
+      findCriteria['tags_subscriber.tagId'] = { $in: tagIDs }
     }
-    console.log(`findCriteria  ${JSON.stringify(findCriteria)}`)
   }
   let temp = JSON.parse(JSON.stringify(findCriteria))
   temp['pageId._id'] = temp.pageId
@@ -119,7 +115,6 @@ exports.getCriterias = function (req) {
     if (req.body.current_page) {
       recordsToSkip = Math.abs(req.body.current_page * req.body.number_of_records)
     }
-    console.log('temp match', temp)
     finalCriteria = [
       { $match: {companyId: req.user.companyId} },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
@@ -146,7 +141,6 @@ exports.getCriterias = function (req) {
       { $skip: recordsToSkip },
       { $limit: req.body.number_of_records }
     ]
-    console.log(`finalCriteria ${JSON.stringify(finalCriteria)}`)
   } else if (req.body.first_page === 'next') {
     recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     finalCriteria = [

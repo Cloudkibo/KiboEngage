@@ -80,7 +80,6 @@ exports.create = function (req, res) {
                 .then(companyUsage => {
                   AutopostingDataLayer.countAutopostingDocuments({companyId: companyUser.companyId, subscriptionType: req.body.subscriptionType})
                     .then(gotCount => {
-                      console.log('Got count', gotCount)
                       if (gotCount > 0 && !companyUser.enableMoreAutoPostingIntegration) {
                         return res.status(403).json({
                           status: 'Failed',
@@ -89,7 +88,6 @@ exports.create = function (req, res) {
                       }
                       AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId, subscriptionUrl: req.body.subscriptionUrl})
                         .then(data => {
-                          console.log('data', data)
                           if (data.length > 0) {
                             return res.status(403).json({
                               status: 'Failed',
@@ -97,9 +95,7 @@ exports.create = function (req, res) {
                             })
                           }
                           let autoPostingPayload = AutoPostingLogicLayer.prepareAutopostingPayload(req, companyUser)
-                          console.log('AutoPosting Payload', autoPostingPayload)
                           let hasLimit = AutoPostingLogicLayer.checkPlanLimit(req.body.subscriptionType, planUsage, companyUsage)
-                          console.log('AutoPosting Limit', hasLimit)
                           if (!hasLimit) {
                             return res.status(500).json({
                               status: 'failed',
@@ -112,7 +108,6 @@ exports.create = function (req, res) {
                             let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
                             if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
                             AutoPostingLogicLayer.findUser(screenName, (err, data) => {
-                              console.log('Find User', err, data)
                               if (err) {
                                 logger.serverLog(`Twitter URL parse Error ${err}`)
                               }
@@ -166,7 +161,6 @@ exports.create = function (req, res) {
                           }
                           if (req.body.subscriptionType === 'facebook') {
                             let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
-                            console.log('autoPostingPayload', autoPostingPayload)
                             utility.callApi(`pages/query`, 'post', {userId: req.user._id, $or: [{pageId: screenName}, {pageUserName: screenName}]}, req.headers.authorization)
                               .then(pageInfo => {
                                 if (!pageInfo) {

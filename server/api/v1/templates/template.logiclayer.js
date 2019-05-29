@@ -24,7 +24,6 @@ exports.getCriterias = function (req) {
   }
 }
 exports.getCriteriasBroadcast = (object) => {
-  console.log('getCriteriasBroadcast object', JSON.stringify(object))
   if (object.req.body.first_page === 'first') {
     let search = new RegExp('.*' + object.req.body.filter_criteria.search_value + '.*', 'i')
     let findCriteria = {
@@ -61,8 +60,6 @@ exports.createDataPolls = function (req) {
   return pollPayload
 }
 exports.createDataSurvey = function (req) {
-  console.log('req', req)
-  console.log('description', req.body.survey.description)
   let surveyPayload = {
     title: req.body.survey.title,
     description: req.body.survey.description,
@@ -92,7 +89,6 @@ exports.createDataBots = function (req) {
 }
 
 exports.createDataBroadcast = function (req, companyUser) {
-  console.log()
   let broadcastPayload = {
     title: req.body.title,
     category: req.body.category,

@@ -6,6 +6,7 @@ const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const {callApi} = require('../utility')
 const notificationsUtility = require('../notifications/notifications.utility')
+const { saveLiveChat, preparePayloadFacebook } = require('../../global/livechat')
 
 exports.surveyResponse = function (req, res) {
   logger.serverLog(TAG, `in surveyResponse ${JSON.stringify(req.body)}`)
@@ -18,9 +19,11 @@ exports.surveyResponse = function (req, res) {
           .then(subscribers => {
             let subscriber = subscribers[0]
             if (subscriber) {
+              let message = preparePayloadFacebook(subscriber, subscriber.pageId, {componentType: 'text', text: event.postback.title})
+              saveLiveChat(message)
               savesurvey(event, subscriber)
                 .then(response => {
-                  logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`)
+                  logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`, 'debug')
                   //  sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_survey', value: resp.poll_id })
                   res.status(200).json({
                     status: 'success',
@@ -35,7 +38,7 @@ exports.surveyResponse = function (req, res) {
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+            logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
             return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
           })
       })
@@ -62,7 +65,7 @@ function savesurvey (req, subscriber) {
       if (webhook && webhook.isEnabled) {
         needle.get(webhook.webhook_url, (err, r) => {
           if (err) {
-            logger.serverLog(TAG, err)
+            logger.serverLog(TAG, err, 'error')
           } else if (r.statusCode === 200) {
             if (webhook && webhook.optIn.SURVEY_RESPONSE) {
               var data = {
@@ -71,7 +74,7 @@ function savesurvey (req, subscriber) {
               }
               needle.post(webhook.webhook_url, data,
                 (error, response) => {
-                  if (error) logger.serverLog(TAG, err)
+                  if (error) logger.serverLog(TAG, err, 'error')
                 })
             }
           } else {
@@ -81,7 +84,7 @@ function savesurvey (req, subscriber) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, err)
+      logger.serverLog(TAG, err, 'error')
     })
   SurveyResponseDataLayer.genericUpdateForResponse({
     surveyId: resp.survey_id,
@@ -90,7 +93,7 @@ function savesurvey (req, subscriber) {
   }, { response: resp.option, datetime: Date.now() }, { upsert: true })
     .then(surveyresponse => {
       logger.serverLog(TAG,
-        `Raw${JSON.stringify(surveyresponse)}`)
+        `Raw${JSON.stringify(surveyresponse)}`, 'debug')
       // send the next question
       SurveyQuestionDataLayer.genericfindForSurveyQuestions({surveyId: resp.survey_id, _id: { $gt: resp.question_id }})
         .then(questions => {
@@ -120,7 +123,7 @@ function savesurvey (req, subscriber) {
               `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
                 if (err3) {
-                  logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`)
+                  logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
                 }
                 const messageData = {
                   attachment: {
@@ -148,12 +151,12 @@ function savesurvey (req, subscriber) {
               .then(updated => {
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to update survey ${JSON.stringify(err)}`)
+                logger.serverLog(TAG, `Failed to update survey ${JSON.stringify(err)}`, 'error')
               })
             needle.get(
               `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
-                if (err3) logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`)
+                if (err3) logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
                 const messageData = {
                   text: 'Thank you. Response submitted successfully.'
                 }
@@ -172,10 +175,10 @@ function savesurvey (req, subscriber) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch questions ${JSON.stringify(err)}`)
+          logger.serverLog(TAG, `Failed to fetch questions ${JSON.stringify(err)}`, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update survey response ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Failed to update survey response ${JSON.stringify(err)}`, 'error')
     })
 }

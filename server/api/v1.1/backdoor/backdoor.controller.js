@@ -13,29 +13,22 @@ const config = require('./../../../config/environment/index')
 const { parse } = require('json2csv')
 
 exports.getAllUsers = function (req, res) {
-  console.log('in getAllUsers')
   let criterias = LogicLayer.getCriterias(req.body)
-  console.log('criterias.findCriteria in users', JSON.stringify(criterias.findCriteria))
-  console.log('criterias.finalCriteria in users', JSON.stringify(criterias.finalCriteria))
   utility.callApi(`user/query`, 'post', criterias.findCriteria, req.headers.authorization)
     .then(usersData => {
-      console.log('usersData in users', usersData)
       utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria, req.headers.authorization)
         .then(users => {
-          console.log('users fetched in users', users.length)
           let usersPayload = []
           if (users.length > 0) {
             users.forEach((user) => {
               let pageIds = []
               utility.callApi(`pages/query`, 'post', {userId: user._id, connected: true}, req.headers.authorization)
                 .then(pages => {
-                  console.log('pages fetched in', pages)
                   for (let i = 0; i < pages.length; i++) {
                     pageIds.push(pages[i]._id)
                   }
                   utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true, isEnabledByPage: true}, req.headers.authorization)
                     .then(subscribers => {
-                      console.log('subscribers fetched in', subscribers)
                       usersPayload.push({
                         _id: user._id,
                         name: user.name,
@@ -47,7 +40,6 @@ exports.getAllUsers = function (req, res) {
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
-                        console.log('sorted.length', sorted.length)
                         res.status(200).json({
                           status: 'success',
                           payload: {users: sorted.reverse(), count: usersData.length}
@@ -55,11 +47,11 @@ exports.getAllUsers = function (req, res) {
                       }
                     })
                     .catch(error => {
-                      logger.serverLog(TAG, `ERROR in fetching subscribers ${JSON.stringify(error)}`)
+                      logger.serverLog(TAG, `ERROR in fetching subscribers ${JSON.stringify(error)}`, 'error')
                     })
                 })
                 .catch(error => {
-                  logger.serverLog(TAG, `ERROR in fetching pages ${JSON.stringify(error)}`)
+                  logger.serverLog(TAG, `ERROR in fetching pages ${JSON.stringify(error)}`, 'error')
                 })
             })
           } else {
@@ -79,18 +71,10 @@ exports.getAllUsers = function (req, res) {
 }
 exports.getAllPages = function (req, res) {
   let criterias = LogicLayer.getAllPagesCriteria(req.params.userid, req.body)
-  console.log('criterias.countCriteria', JSON.stringify(criterias.countCriteria))
-  console.log('criterias.finalCriteria', JSON.stringify(criterias.finalCriteria))
-  console.log('Miliseconds before call api-1', new Date().getMilliseconds)
   utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch connected pages count
     .then(count => {
-      console.log('Miliseconds after call api-1', new Date().getMilliseconds)
-      console.log('pagesCount', count)
-      console.log('Miliseconds before call api-2', new Date().getMilliseconds)
       utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, req.headers.authorization) // fetch connected pages
         .then(pages => {
-          console.log('Miliseconds after call api-2', new Date().getMilliseconds)
-          console.log('fetched pages', pages)
           let pagesPayload = []
           for (let i = 0; i < pages.length; i++) {
             pagesPayload.push({
@@ -157,14 +141,12 @@ exports.allUserPolls = function (req, res) {
   let criteria = LogicLayer.allUserPollsCriteria(req.params.userid, req.body)
   DataLayer.countPolls(criteria.countCriteria[0].$match)
     .then(pollsCount => {
-      console.log('pollsCount', pollsCount)
       let aggregateMatch = criteria.finalCriteria[0].$match
       let aggregateSort = criteria.finalCriteria[1].$sort
       let aggregateSkip = criteria.finalCriteria[2].$skip
       let aggregateLimit = criteria.finalCriteria[3].$limit
       DataLayer.aggregateForPolls(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
         .then(polls => {
-          console.log('polls fetched', polls)
           res.status(200).json({
             status: 'success',
             payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
@@ -199,7 +181,6 @@ exports.getAllBroadcasts = function (req, res) {
   let criteria = LogicLayer.getAllBroadcastsCriteria(req.body)
   DataLayer.countBroadcasts(criteria.countCriteria[0].$match)
     .then(broadcastsCount => {
-      console.log('broadcastsCount fetched', broadcastsCount)
       let aggregateLookup = criteria.finalCriteria[0].$lookup
       let aggregateMatch = criteria.finalCriteria[1].$match
       let aggregateSort = criteria.finalCriteria[2].$sort
@@ -210,7 +191,6 @@ exports.getAllBroadcasts = function (req, res) {
           if (broadcasts.length > 0) {
             prepareDataToSend(broadcasts, req)
               .then(result => {
-                console.log('data fetched', result)
                 return res.status(200)
                   .json({
                     status: 'success',
@@ -270,7 +250,6 @@ exports.getAllSurveys = function (req, res) {
   let criteria = LogicLayer.getAllSurveysCriteria(req.body)
   DataLayer.countSurveys(criteria.countCriteria[0].$match)
     .then(surveysCount => {
-      console.log('surveysCount fetched', surveysCount)
       let aggregateLookup = criteria.finalCriteria[0].$lookup
       let aggregateMatch = criteria.finalCriteria[1].$match
       let aggregateSort = criteria.finalCriteria[2].$sort
@@ -280,7 +259,6 @@ exports.getAllSurveys = function (req, res) {
       DataLayer.aggregateForSurveys(aggregateMatch, undefined, aggregateLookup, aggregateLimit, aggregateSort, aggregateSkip, aggregateLookup1)
         .then(surveys => {
           if (surveys.length > 0) {
-            console.log('surveysAggregate fetched', surveys)
             prepareSurveyDataToSend(surveys, req)
               .then(result => {
                 return res.status(200)
@@ -329,9 +307,8 @@ function prepareSurveyDataToSend (surveys, req) {
                 sent: surveys[j].surveyPages.length,
                 seen: pagesurveyTapped.length,
                 responded: surveys[j].surveyResponses.length})
-              console.log('data in surveys', data)
               if (data.length === surveys.length) {
-                data.sort(function (a, b) { 
+                data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
                 resolve({data: data})
@@ -373,7 +350,7 @@ function preparePollDataToSend (polls, req) {
                 responded: polls[j].pollResponses.length
               })
               if (data.length === polls.length) {
-                data.sort(function (a, b) { 
+                data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
                 resolve({data: data})
@@ -393,7 +370,6 @@ function prepareDataToSend (broadcasts, req) {
         .then(user => {
           utility.callApi(`pages/query`, 'post', {companyId: broadcasts[j].companyId}, req.headers.authorization)
             .then(pages => {
-              console.log('pages fetched in', pages.length)
               let pageSend = []
               if (pages.length > 0) {
                 if (broadcasts[j].segmentationPageIds && broadcasts[j].segmentationPageIds.length > 0) {
@@ -420,7 +396,7 @@ function prepareDataToSend (broadcasts, req) {
                 seen: pagebroadcastTapped.length
               })
               if (data.length === broadcasts.length) {
-                data.sort(function (a, b) { 
+                data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
                 resolve({data: data})
@@ -607,14 +583,10 @@ exports.surveyDetails = function (req, res) {
 exports.uploadFile = function (req, res) {
   utility.callApi(`user/query`, 'post', {}, req.headers.authorization)
     .then(users => {
-      console.log('users.length', users.length)
       utility.callApi(`pages/query`, 'post', {}, req.headers.authorization)
         .then(pages => {
-          console.log('pages.length', pages.length)
-          console.log('page[0]', pages[0])
           downloadCSV(pages, req)
             .then(result => {
-              console.log('result returned', result)
               res.status(200).json({
                 status: 'success',
                 payload: result.data
@@ -639,10 +611,8 @@ function downloadCSV (pages, req) {
           .then(subscribers => {
             DataLayer.findBroadcasts({pageIds: pages[i].pageId})
               .then(broadcasts => {
-                console.log('broadcasts fetched', broadcasts.length)
                 DataLayer.findSurvey({pageIds: pages[i].pageId})
                   .then(surveys => {
-                    console.log('surveys fetched', broadcasts.length)
                     DataLayer.findPolls({pageIds: pages[i].pageId})
                       .then(polls => {
                         usersPayload.push({
@@ -660,7 +630,6 @@ function downloadCSV (pages, req) {
                           Polls: polls && polls.length > 0 ? polls.length : 0
                         })
                         if (i === pages.length - 1) {
-                          console.log('usersPayload', usersPayload)
                           var info = usersPayload
                           var keys = []
                           var val = info[0]
@@ -669,12 +638,9 @@ function downloadCSV (pages, req) {
                             var subKey = k
                             keys.push(subKey)
                           }
-                          console.log('info', info)
-                          console.log('keys', keys)
                           const opts = { keys }
                           try {
                             const csv = parse(info, opts)
-                            console.log('csv data', csv)
                             resolve({data: csv})
                           } catch (err) {
                             console.error('error at parse', err)
@@ -682,7 +648,7 @@ function downloadCSV (pages, req) {
                           // json2csv({ data: info, fields: keys }, function (err, csv) {
                           //   if (err) {
                           //     console.log('error at exporting', err)
-                          //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`)
+                          //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`, 'error')
                           //   }
                           //   console.log('csv in', csv)
                           //   resolve({data: csv})
@@ -690,19 +656,19 @@ function downloadCSV (pages, req) {
                         }
                       })
                       .catch(error => {
-                        logger.serverLog(TAG, `Failed to fetch polls ${JSON.stringify(error)}`)
+                        logger.serverLog(TAG, `Failed to fetch polls ${JSON.stringify(error)}`, 'error')
                       })
                   })
                   .catch(error => {
-                    logger.serverLog(TAG, `Failed to fetch surveys ${JSON.stringify(error)}`)
+                    logger.serverLog(TAG, `Failed to fetch surveys ${JSON.stringify(error)}`, 'error')
                   })
               })
               .catch(error => {
-                logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
+                logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`, 'error')
               })
           })
           .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+            logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
           })
       }
     }
@@ -794,28 +760,28 @@ exports.sendEmail = function (req, res) {
                             if (err) {
                               logger.serverLog(TAG,
                                 `Internal Server Error on sending email : ${JSON.stringify(
-                                  err)}`)
+                                  err)}`, 'error')
                             }
                           })
                         // }
                         })
                     })
                     .catch(error => {
-                      logger.serverLog(TAG, `Failed to aggregate subscribers ${JSON.stringify(error)}`)
+                      logger.serverLog(TAG, `Failed to aggregate subscribers ${JSON.stringify(error)}`, 'error')
                     })
                 }
               })
               .catch(error => {
-                logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+                logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
               })
           })
           .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch company user ${JSON.stringify(error)}`)
+            logger.serverLog(TAG, `Failed to fetch company user ${JSON.stringify(error)}`, 'error')
           })
       })
     })
     .catch(error => {
-      logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(error)}`)
+      logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(error)}`, 'error')
     })
   return res.status(200)
     .json({status: 'success'})

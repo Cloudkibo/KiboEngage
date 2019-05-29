@@ -2,6 +2,7 @@ const AutopostingDataLayer = require('./autoposting.datalayer')
 const AutoPostingLogicLayer = require('./autoposting.logiclayer')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
+const TAG = 'api/autoposting/autoposting.controller'
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -43,7 +44,6 @@ exports.create = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      console.log('companyUser fetched', companyUser)
       // calling accounts feature usage for this
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
         .then(planUsage => {
@@ -51,7 +51,6 @@ exports.create = function (req, res) {
             .then(companyUsage => {
               AutopostingDataLayer.countAutopostingDocuments({companyId: companyUser.companyId._id, subscriptionType: req.body.subscriptionType})
                 .then(gotCount => {
-                  console.log('Got count', gotCount)
                   if (gotCount > 0 && !companyUser.enableMoreAutoPostingIntegration) {
                     return res.status(403).json({
                       status: 'Failed',
@@ -61,16 +60,13 @@ exports.create = function (req, res) {
                   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId._id, subscriptionUrl: req.body.subscriptionUrl})
                     .then(data => {
                       if (data && data.length > 0) {
-                        console.log('data', data)
                         return res.status(403).json({
                           status: 'Failed',
                           description: 'Cannot add duplicate accounts.'
                         })
                       }
                       let autoPostingPayload = AutoPostingLogicLayer.prepareAutopostingPayload(req, companyUser)
-                      console.log('AutoPosting Payload', autoPostingPayload)
                       let hasLimit = AutoPostingLogicLayer.checkPlanLimit(req.body.subscriptionType, planUsage, companyUsage)
-                      console.log('AutoPosting Limit', hasLimit)
                       // add paid plan check later
                       // if (!hasLimit) {
                       //   return res.status(500).json({
@@ -84,14 +80,11 @@ exports.create = function (req, res) {
                         let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
                         if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
                         AutoPostingLogicLayer.findUser(screenName, (err, data) => {
-                          console.log('Find User', err, data)
                           if (err) {
-                            logger.serverLog(`Twitter URL parse Error ${err}`)
+                            logger.serverLog(TAG, `Twitter URL parse Error ${err}`, 'error')
                           }
                           let payload
-                          console.log('data', data)
                           if (data && !data.errors) {
-                            console.log('data-errors', data)
                             autoPostingPayload.accountUniqueName = data.screen_name
                             payload = {
                               id: data.id_str,
@@ -102,10 +95,9 @@ exports.create = function (req, res) {
                             autoPostingPayload.payload = payload
                             AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                               .then(result => {
-                                console.log('result from create', result)
                                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}}, req.headers.authorization)
                                   .then(result => {
-                                    logger.serverLog('Company Usage updated')
+                                    logger.serverLog(TAG, 'Company Usage updated', 'debug')
                                   })
                                   .catch(err => {
                                     return res.status(500).json({
@@ -158,7 +150,7 @@ exports.create = function (req, res) {
                                 .then(result => {
                                   utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} }, req.headers.authorization)
                                     .then(result => {
-                                      logger.serverLog('Company Usage Updated')
+                                      logger.serverLog(TAG, 'Company Usage Updated', 'debug')
                                     })
                                     .catch(err => {
                                       return res.status(500).json({

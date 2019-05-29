@@ -2,7 +2,6 @@ const TAG = 'api/pages/dashboard.controller.js'
 const logger = require('../../../components/logger')
 
 exports.getCriterias = function (body, companyUser, seen, pageIds) {
-  console.log('pageIds', pageIds)
   let matchAggregate = { companyId: companyUser.companyId.toString(),
     'pageId': body.pageId === 'all' ? {$in: pageIds} : body.pageId,
     'datetime': body.days === 'all' ? { $exists: true } : {
@@ -13,7 +12,6 @@ exports.getCriterias = function (body, companyUser, seen, pageIds) {
     },
     'seen': seen ? true : { $exists: true }
   }
-  console.log('matchAggregate', JSON.stringify(matchAggregate))
   return matchAggregate
 }
 
@@ -35,7 +33,6 @@ exports.queryForSubscribers = function (body, companyUser, isSubscribed, pageIds
       count: {$sum: 1}}
     }
   ]
-  console.log('final query', query)
   return query
 }
 
@@ -59,6 +56,6 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
   ]
   logger.serverLog(TAG,
     `final query ${JSON.stringify(
-      query)}`)
+      query)}`, 'debug')
   return query
 }

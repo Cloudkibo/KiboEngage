@@ -8,7 +8,6 @@ let request = require('request')
 
 exports.upload = function (req, res) {
   let directory = logicLayer.directory(req)
-  console.log('Directory Phone', directory)
   if (req.files.file.size === 0) {
     return res.status(400).json({
       status: 'failed',
@@ -58,7 +57,6 @@ exports.upload = function (req, res) {
                           utility.callApi(`phone/query`, 'post', {
                             number: result, userId: req.user._id, companyId: companyUser.companyId._id, pageId: req.body._id}, req.headers.authorization)
                             .then(phone => {
-                              console.log('Phone', phone)
                               if (phone.length === 0) {
                                 // add paid plan check later
                                 // if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
@@ -83,15 +81,14 @@ exports.upload = function (req, res) {
                                     }, req.headers.authorization)
                                       .then(updated => {})
                                       .catch(error => {
-                                        logger.serverLog(TAG, `Failed to update company usage ${JSON.stringify(error)}`)
+                                        logger.serverLog(TAG, `Failed to update company usage ${JSON.stringify(error)}`, 'error')
                                       })
                                   })
                                   .catch(error => {
-                                    logger.serverLog(TAG, `Failed to save phone number ${JSON.stringify(error)}`)
+                                    logger.serverLog(TAG, `Failed to save phone number ${JSON.stringify(error)}`, 'error')
                                   })
                               } else {
                                 let filename = logicLayer.getFiles(phone[0], req, newFileName)
-                                console.log('Files', filename)
                                 let query = {number: result, userId: req.user._id, companyId: companyUser.companyId._id, pageId: req.body._id}
                                 let update = { name: data[`${nameColumn}`],
                                   number: result,
@@ -115,25 +112,25 @@ exports.upload = function (req, res) {
                                                 .then(savedList => {
                                                 })
                                                 .catch(error => {
-                                                  logger.serverLog(TAG, `Failed to update list ${JSON.stringify(error)}`)
+                                                  logger.serverLog(TAG, `Failed to update list ${JSON.stringify(error)}`, 'error')
                                                 })
                                             })
                                             .catch(error => {
-                                              logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+                                              logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
                                             })
                                         }
                                       })
                                       .catch(error => {
-                                        logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`)
+                                        logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`, 'error')
                                       })
                                   })
                                   .catch(error => {
-                                    logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`)
+                                    logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`, 'error')
                                   })
                               }
                             })
                             .catch(error => {
-                              logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`)
+                              logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`, 'error')
                             })
                           utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId}, req.headers.authorization)
                             .then(pages => {
@@ -157,17 +154,16 @@ exports.upload = function (req, res) {
                                     page.accessToken
                                   },
                                   function (err, res) {
-                                    console.log('Response from facebook', res)
                                     if (err) {
                                       return logger.serverLog(TAG,
                                         `At invite to messenger using phone ${JSON.stringify(
-                                          err)}`)
+                                          err)}`, 'error')
                                     }
                                   })
                               })
                             })
                             .catch(error => {
-                              logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(error)}`)
+                              logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(error)}`, 'error')
                             })
                           if (respSent === false) {
                             respSent = true
@@ -240,7 +236,7 @@ exports.sendNumbers = function (req, res) {
               }
               utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                 .then(savedList => {
-                  logger.serverLog('List - Other Saved', savedList)
+                  logger.serverLog('List - Other Saved', savedList, 'debug')
                 })
                 .catch(error => {
                   return res.status(500).json({
@@ -254,7 +250,6 @@ exports.sendNumbers = function (req, res) {
                   .then(pages => {
                     utility.callApi(`phone/query`, 'post', {number: result, userId: req.user._id, companyId: companyUser.companyId._id, pageId: req.body._id}, req.headers.authorization)
                       .then(found => {
-                        console.log('Found', found)
                         if (found.length === 0) {
                           // add paid plan check later
                           // if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
@@ -299,13 +294,10 @@ exports.sendNumbers = function (req, res) {
                             pageId: req.body._id,
                             fileName: filename
                           }
-                          console.log('update', update)
                           utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                             .then(phonenumbersaved => {
-                              console.log('phonenumbersaved', phonenumbersaved)
                               utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId._id, hasSubscribed: true, fileName: { $all: ['Other'] }}, req.headers.authorization)
                                 .then(number => {
-                                  console.log('number', number)
                                   if (number.length > 0) {
                                     let subscriberFindCriteria = logicLayer.subscriberFindCriteria(number, companyUser)
                                     utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
@@ -371,11 +363,10 @@ exports.sendNumbers = function (req, res) {
                           page.accessToken
                         },
                         function (err, res) {
-                          console.log('Response from facebook', res.body)
                           if (err) {
                             return logger.serverLog(TAG,
                               `Error At invite to messenger using phone ${JSON.stringify(
-                                err)}`)
+                                err)}`, 'error')
                           }
                         })
                     })
@@ -420,7 +411,6 @@ exports.pendingSubscription = function (req, res) {
       utility.callApi(`phone/query`, 'post', {
         companyId: companyUser.companyId, hasSubscribed: false, fileName: { $all: [req.params.name] }, pageId: { $exists: true, $ne: null }}, req.headers.authorization)
         .then(phonenumbers => {
-          console.log('Phone numbers', phonenumbers)
           return res.status(200)
             .json({status: 'success', payload: phonenumbers})
         })

@@ -149,7 +149,6 @@ exports.getAllBroadcastsCriteria = function (body) {
       $gte: startDate
     } : { $exists: true }
   }
-  console.log('findCriteria', findCriteria)
   if (body.first_page === 'first') {
     finalCriteria = [
       { $lookup: { from: 'page_broadcasts', localField: '_id', foreignField: 'broadcastId', as: 'broadcastPages' } },
@@ -335,7 +334,6 @@ exports.allUserPollsCriteria = function (userid, body, survey) {
   } else {
     findCriteria.statement = body.filter_criteria.search_value !== '' ? { $regex: '.*' + body.filter_criteria.search_value + '.*', $options: 'i' } : { $exists: true }
   }
-  console.log('findCriteria', findCriteria)
   if (body.first_page === 'first') {
     finalCriteria = [
       { $match: findCriteria },
@@ -434,7 +432,6 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
-    console.log(`finalCriteria ${JSON.stringify(finalCriteria)}`)
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [

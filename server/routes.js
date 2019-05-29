@@ -58,6 +58,7 @@ module.exports = function (app) {
   app.use('/api/smsDashboard', require('./api/v1.1/smsDashboard'))
   app.use('/api/whatsAppDashboard', require('./api/v1.1/whatsAppDashboard'))
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
+  app.use('/api/webhooks', require('./api/v1.1/webhooks'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))

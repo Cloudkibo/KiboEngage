@@ -126,7 +126,6 @@ function createTag (req, callback) {
         let tag = req.body.listName
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
-            console.log('label created', label.body)
             if (label.body.error) {
               callback(label.body.error)
             }
@@ -142,11 +141,11 @@ function createTag (req, callback) {
               .then(newTag => {
                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
                   .then(updated => {
-                    logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`)
+                    logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
                   })
                   .catch(err => {
                     if (err) {
-                      logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`)
+                      logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
                     }
                   })
                 if (i === pages.length - 1) {
@@ -309,10 +308,8 @@ exports.viewList = function (req, res) {
               .then(number => {
                 if (number.length > 0) {
                   let criterias = logicLayer.getSubscriberCriteria(number, companyUser)
-                  console.log('Criterias', criterias)
                   utility.callApi(`subscribers/query`, 'post', criterias, req.headers.authorization)
                     .then(subscribers => {
-                      console.log('Subscribers', subscribers)
                       let content = logicLayer.getContent(subscribers)
                       utility.callApi(`lists/${req.params.id}`, 'put', {
                         content: content
@@ -387,12 +384,12 @@ exports.deleteList = function (req, res) {
                   .then(result => {
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`)
+                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
                   })
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`)
+              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
             })
         })
         async.parallelLimit([
