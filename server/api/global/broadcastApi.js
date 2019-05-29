@@ -18,6 +18,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
     }
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
+        console.log('response from facebookApiCaller', JSON.stringify(response.body))
         if (response.body.broadcast_id) {
           resolve({status: 'success', broadcast_id: response.body.broadcast_id})
         } else {
