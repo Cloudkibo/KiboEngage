@@ -64,7 +64,6 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
       resolve({payload})
     } else if (['image', 'audio', 'file', 'video'].indexOf(
       body.componentType) > -1) {
-      console.log('body.fileurl', body)
       let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
       let fileToStore = ''
       if (body.componentType === 'file') {
@@ -74,10 +73,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
       }
       var stream = request(`${config.api_urls['accounts']}/files/download/${body.fileurl.id}`).pipe(fs.createWriteStream(fileToStore))
       stream.on('finish', function () {
-        console.log('finished')
         let fileReaderStream = fs.createReadStream(fileToStore)
         stream.on('close', function () {
-          console.log('finished reading')
           payload = {
             'messaging_type': messageType,
             'recipient': JSON.stringify({
@@ -91,7 +88,6 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
             }),
             'filedata': fileReaderStream
           }
-          console.log('in filedata', payload)
           fs.unlink(fileToStore)
           resolve({payload})
         })

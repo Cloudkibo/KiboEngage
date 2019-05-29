@@ -585,7 +585,6 @@ exports.subscribeToSequence = function (req, res) {
           }
           SequenceDatalayer.createForSequenceSubcriber(sequenceSubscriberPayload)
             .then(subscriberCreated => {
-              console.log('subscriberCreated', JSON.stringify(subscriberCreated))
               messages.forEach(message => {
                 if (message.trigger.event === 'none') {
                   let utcDate = SequenceUtility.setScheduleDate(message.schedule)

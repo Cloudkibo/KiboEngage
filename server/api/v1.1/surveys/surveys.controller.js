@@ -398,13 +398,10 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                       }
                       broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'survey')
                         .then(messageCreative => {
-                          console.log('messageCreative')
                           if (messageCreative.status === 'success') {
                             const messageCreativeId = messageCreative.message_creative_id
-                            console.log('before pagetags', req.user.companyId)
                             callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
                               .then(pageTags => {
-                                console.log('pageTags')
                                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                                 for (let i = 0; i < limit; i++) {
                                   let labels = []
@@ -484,7 +481,6 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                           }
                         })
                         .catch(err => {
-                          console.log('error 5')
                           return res.status(500).json({
                             status: 'failed',
                             description: `Failed to send survey ${JSON.stringify(err)}`

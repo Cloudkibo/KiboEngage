@@ -24,27 +24,21 @@ const util = require('util')
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
-      console.log('criteria', criteria)
       BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
         .then(broadcastsCount => {
-          console.log('broadcastsCount', broadcastsCount)
           let aggregateMatch = criteria.finalCriteria[0].$match
           let aggregateSort = criteria.finalCriteria[1].$sort
           let aggregateSkip = criteria.finalCriteria[2].$skip
           let aggregateLimit = criteria.finalCriteria[3].$limit
           BroadcastDataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(broadcasts => {
-              console.log('broadcasts', broadcasts)
               BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
                 .then(broadcastpages => {
-                  console.log('broadcastpages', broadcastpages)
                   res.status(200).json({
                     status: 'success',
                     payload: { broadcasts: broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
                   })
-                  console.log('sent successfully')
                 })
                 .catch(error => {
                   return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts pages ${JSON.stringify(error)}`})
@@ -181,7 +175,6 @@ exports.editButton = function (req, res) {
       let id = temp[temp.length - 1]
       URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
         .then(savedurl => {
-          console.log('Saved Url', savedurl)
           let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
           buttonPayload.newUrl = newURL
           buttonPayload.url = req.body.newUrl
@@ -401,11 +394,9 @@ exports.upload = function (req, res) {
 
 exports.uploadForTemplate = function (req, res) {
   let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
-  console.log('req.body', req.body)
   if (req.body.pages && req.body.pages.length > 0) {
     utility.callApi(`pages/${req.body.pages[0]}`)
       .then(page => {
-        console.log('page fetched', page)
         needle.get(
           `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
           (err, resp2) => {
@@ -428,7 +419,6 @@ exports.uploadForTemplate = function (req, res) {
               }),
               'filedata': fileReaderStream
             }
-            console.log('messageData', messageData)
             request(
               {
                 'method': 'POST',
@@ -438,7 +428,6 @@ exports.uploadForTemplate = function (req, res) {
               },
               function (err, resp) {
                 if (err) {
-                  console.log('error in uploading', err)
                   return res.status(500).json({
                     status: 'failed',
                     description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
@@ -861,13 +850,11 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                   broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                     .then(response => {
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
-                      console.log('current is', current)
                       if (i === limit - 1) {
                         if (response.status === 'success') {
                           utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
                             .then(updated => {
                               current++
-                              console.log('current updated', current)
                             })
                             .catch(err => {
                               return res.status(500).json({

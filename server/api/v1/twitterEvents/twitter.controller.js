@@ -340,7 +340,6 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
       page.accessToken
     },
     function (err, res) {
-      console.log('Response from facebook', res)
       if (err) {
         return logger.serverLog(TAG,
           `At send tweet broadcast ${JSON.stringify(

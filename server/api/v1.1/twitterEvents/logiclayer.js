@@ -10,7 +10,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
     if (req.quote) {
       let originalUser = req.retweet.user
       let twitterUrls = req.urls.map((url) => url.url)
-      let textArray = req.quote.split(' ')
+      let separators = [' ', '\n']
+      let textArray = req.quote.split(new RegExp('[' + separators.join('') + ']', 'g'))
+      // let textArray = req.quote.split(' ')
       tagline = `@${req.tweetUser.screen_name} retweeted @${originalUser.screen_name}:${prepareText(twitterUrls, textArray, req.urls)}\n\n@${originalUser.screen_name}'s tweet:`
       if (req.retweet.truncated) {
         handleTweet(
@@ -101,7 +103,9 @@ const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, pa
     let button = !(tweet && tweet.media && tweet.media.length > 0)
     let payload = []
     let twitterUrls = urls.map((url) => url.url)
-    let textArray = text.split(' ')
+    let separators = [' ', '\n']
+    let textArray = text.split(new RegExp('[' + separators.join('') + ']', 'g'))
+    // let textArray = text.split(' \n')
     text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
     payload.push(prepareFacbookPayloadForText('text', {text}, savedMsg, tweetId, button))
     if (tweet && tweet.media && tweet.media.length > 0) {

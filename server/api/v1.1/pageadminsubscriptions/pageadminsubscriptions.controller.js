@@ -8,7 +8,6 @@ const logger = require('../../../components/logger')
 exports.index = function (req, res) {
   PageAdminSubscriptionsDataLayer.genericFind({userId: req.user._id, companyId: req.user.companyId})
     .then(subscriptionInfo => {
-      console.log('subscriptionInfo', subscriptionInfo)
       if (subscriptionInfo.length > 0) {
         for (let i = 0; i < subscriptionInfo.length; i++) {
           utility.callApi(`user/query`, 'post', { _id: subscriptionInfo[i].userId }, req.headers.authorization)
