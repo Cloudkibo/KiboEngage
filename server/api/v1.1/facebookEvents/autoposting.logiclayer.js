@@ -102,15 +102,31 @@ const handlePost = (tagline, body, savedMsg) => {
         getUrls(body.message).then(urls => {
           prepareFacbookPayloadForLink(urls, savedMsg, body.post_id, body.sender_name).then(result => {
             payload.push(result.messageData)
-            resolve(payload)
+            if (!result.showButton && button) { // remove button from text
+              payload[0] = {
+                'text': payload[0].attachment.payload.text
+              }
+              resolve(payload)
+            } else {
+              resolve(payload)
+            }
           })
         })
       } else { //  shared post
         prepareFacbookPayloadForLink([`https://facebook.com${body.link}`], savedMsg, body.post_id, body.sender_name).then(result => {
           payload.push(result.messageData)
-          resolve(payload)
+          if (!result.showButton && button) { // remove button from text
+            payload[0] = {
+              'text': payload[0].attachment.payload.text
+            }
+            resolve(payload)
+          } else {
+            resolve(payload)
+          }
         })
       }
+    } else {
+      resolve(payload)
     }
   })
 }
