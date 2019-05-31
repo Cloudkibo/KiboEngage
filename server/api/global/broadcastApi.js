@@ -9,12 +9,12 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
       'notification_type': 'REGULAR',
       'messaging_type': 'MESSAGE_TAG',
       'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
-      'targeting': {
-        'labels': {
-          'operator': 'NOT',
-          'values': notlabels
-        }
-      }
+      // 'targeting': {
+      //   'labels': {
+      //     'operator': 'NOT',
+      //     'values': notlabels
+      //   }
+      // }
     }
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
