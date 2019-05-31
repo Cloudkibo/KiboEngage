@@ -24,7 +24,7 @@ module.exports = {
   },
 
   api_urls: {
-    webhook: 'https://swebhook.cloudkibo.com',
+    webhook: 'https://swebhook.cloudkibo.com/api',
     kibopush: 'https://staging.kibopush.com/api',
     accounts: 'https://saccounts.cloudkibo.com/api/v1',
     chat: 'https://skibochat.cloudkibo.com/api',
