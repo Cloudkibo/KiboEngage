@@ -1,4 +1,3 @@
-
 'use strict'
 
 const express = require('express')
@@ -69,5 +68,9 @@ router.post('/subscriberSummary',
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.subscriberSummary)
+
+router.post('/fetchAutopostingDetails',
+  auth.isAuthenticated(),
+  controller.fetchAutopostingDetails)
 
 module.exports = router
