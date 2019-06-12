@@ -96,6 +96,5 @@ exports.findAutopostingUsingAggregate = (match, group, lookup, limit, sort, skip
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
-  console.log('finalQuery', query)
   return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
 }

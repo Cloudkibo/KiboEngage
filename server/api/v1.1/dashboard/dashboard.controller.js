@@ -1161,7 +1161,6 @@ exports.fetchAutopostingDetails = function (req, res) {
       let criteriaForFacebook = LogicLayer.getCriteriasForAutopostingByType(req.body, companyUser, 'facebook')
       let criteriaForTwitter = LogicLayer.getCriteriasForAutopostingByType(req.body, companyUser, 'twitter')
       let criteriaForWordpress = LogicLayer.getCriteriasForAutopostingByType(req.body, companyUser, 'wordpress')
-      console.log('criteriaForTwitter', JSON.stringify(criteriaForTwitter))
       AutopostingDataLayer.findAutopostingUsingAggregate(criteriaForFacebook.matchAggregate, criteriaForFacebook.groupAggregate)
         .then(facebookAutoposting => {
           AutopostingDataLayer.findAutopostingUsingAggregate(criteriaForTwitter.matchAggregate, criteriaForTwitter.groupAggregate)
