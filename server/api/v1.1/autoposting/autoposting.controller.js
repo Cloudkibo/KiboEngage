@@ -7,7 +7,6 @@ const TAG = 'api/autoposting/autoposting.controller'
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser fetched', companyUser)
       if (!companyUser) {
         return res.status(404).json({
           status: 'failed',
@@ -16,7 +15,6 @@ exports.index = function (req, res) {
       }
       AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId}, req.headers.authorization)
         .then(autoposting => {
-          console.log('autopostings found', autoposting)
           return res.status(200).json({
             status: 'success',
             payload: autoposting
