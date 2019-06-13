@@ -86,6 +86,7 @@ const prepareEditPayload = (req) => {
   autoposting.segmentationLocale = req.body.segmentationLocale
   autoposting.segmentationTags = req.body.segmentationTags
   autoposting.isActive = req.body.isActive
+  autoposting.actionType = req.body.actionType
   return autoposting
 }
 
