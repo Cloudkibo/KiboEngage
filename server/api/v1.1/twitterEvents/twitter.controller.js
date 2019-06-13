@@ -5,8 +5,8 @@ const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.d
 const utility = require('../utility')
 const _ = require('lodash')
 const logicLayer = require('./logiclayer')
-const broadcastApi = require('../../global/broadcastApi')
 const {sentUsinInterval} = require('../facebookEvents/utility')
+const { facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.findAutoposting = function (req, res) {
   logger.serverLog(TAG, `in findAutoposting ${JSON.stringify(req.body)}`)
@@ -50,43 +50,14 @@ exports.twitterwebhook = function (req, res) {
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
             pages.forEach(page => {
-              let subscribersData = [
-                {$match: {pageId: page._id, companyId: page.companyId, isSubscribed: true}},
-                {$group: {_id: null, count: {$sum: 1}}}
-              ]
-              utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
-                .then(subscribersCount => {
-                  if (subscribersCount.length > 0) {
-                    let newMsg = {
-                      pageId: page._id,
-                      companyId: postingItem.companyId,
-                      autoposting_type: 'twitter',
-                      autopostingId: postingItem._id,
-                      sent: subscribersCount[0].count,
-                      message_id: req.body.id.toString(),
-                      seen: 0,
-                      clicked: 0
-                    }
-                    AutoPostingMessage.createAutopostingMessage(newMsg)
-                      .then(savedMsg => {
-                        console.log('savedMsg', savedMsg)
-                        logicLayer.handleTwitterPayload(req, savedMsg, page)
-                          .then(messageData => {
-                            console.log('final payload length', messageData.length)
-                            sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
-                          })
-                          .catch(err => {
-                            logger.serverLog(`Failed to prepare data`, err)
-                          })
-                      })
-                      .catch(err => {
-                        logger.serverLog(`Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
-                      })
-                  }
-                })
-                .catch(err => {
-                  logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`, 'error')
-                })
+              if (postingItem.actionType === 'messenger') {
+                sendToMessenger(postingItem, page, req)
+              } else if (postingItem.actionType === 'facebook') {
+                postOnFacebook(postingItem, page, req)
+              } else if (postingItem.actionType === 'both') {
+                sendToMessenger(postingItem, page, req)
+                postOnFacebook(postingItem, page, req)
+              }
             })
           })
           .catch(err => {
@@ -96,5 +67,118 @@ exports.twitterwebhook = function (req, res) {
     })
     .catch(err => {
       logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`, 'error')
+    })
+}
+
+const sendToMessenger = (postingItem, page, req) => {
+  let subscribersData = [
+    {$match: {pageId: page._id, companyId: page.companyId, isSubscribed: true}},
+    {$group: {_id: null, count: {$sum: 1}}}
+  ]
+  utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
+    .then(subscribersCount => {
+      if (subscribersCount.length > 0) {
+        let newMsg = {
+          pageId: page._id,
+          companyId: postingItem.companyId,
+          autoposting_type: 'twitter',
+          autopostingId: postingItem._id,
+          sent: subscribersCount[0].count,
+          message_id: req.body.id.toString(),
+          seen: 0,
+          clicked: 0
+        }
+        AutoPostingMessage.createAutopostingMessage(newMsg)
+          .then(savedMsg => {
+            logicLayer.handleTwitterPayload(req, savedMsg, page, 'messenger')
+              .then(messageData => {
+                sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to prepare data ${err}`, 'error')
+              })
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch subscriber count ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+const postOnFacebook = (postingItem, page, req) => {
+  logicLayer.handleTwitterPayload(req, {}, page, 'facebook')
+    .then(messageData => {
+      let newPost = {
+        pageId: page._id,
+        companyId: postingItem.companyId,
+        autopostingType: 'twitter',
+        autopostingId: postingItem._id,
+        messageId: req.body.id.toString(),
+        post: messageData,
+        likes: 0,
+        clicked: 0
+      }
+      utility.callApi(`autoposting_fb_post`, 'post', newPost, '', 'kiboengage')
+        .then(created => {
+          logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to create post object ${err}`, 'error')
+        })
+      if (messageData.type === 'text') {
+        facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
+          .then(response => {
+            if (response.body.error) {
+              logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+            } else {
+              logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+          })
+      } else if (messageData.type === 'image') {
+        facebookApiCaller('v3.3', `${page.pageId}/photos?access_token=${page.accessToken}`, 'post', messageData.payload)
+          .then(response => {
+            if (response.body.error) {
+              logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+            } else {
+              logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+          })
+      } else if (messageData.type === 'images') {
+        facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
+          .then(response => {
+            if (response.body.error) {
+              logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+            } else {
+              logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+          })
+      } else if (messageData.type === 'video') {
+        facebookApiCaller('v3.3', `${page.pageId}/videos?access_token=${page.accessToken}`, 'post', messageData.payload)
+          .then(response => {
+            if (response.body.error) {
+              logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+            } else {
+              logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to prepare data ${err}`, 'error')
     })
 }
