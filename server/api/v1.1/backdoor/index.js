@@ -78,4 +78,8 @@ router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.sendEmail)
 
 router.get('/uploadFile', auth.isAuthorizedSuperUser(), controller.uploadFile)
 
+router.post('/fetchAutopostingDetails',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchAutopostingDetails)
+
 module.exports = router

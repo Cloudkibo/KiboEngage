@@ -84,8 +84,5 @@ exports.getCriteriasForAutopostingByTypethatCame = function (body, companyUser, 
     },
     autoposting_type: type
   }
-  let groupAggregate = {
-    _id: null,
-    count: {$sum: 1}}
-  return {matchAggregate, groupAggregate}
+  return {matchAggregate}
 }
