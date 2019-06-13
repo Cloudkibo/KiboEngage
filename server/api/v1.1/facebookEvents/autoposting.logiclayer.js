@@ -202,7 +202,6 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
 }
 
 const prepareFacbookPayloadForVideo = (media) => {
-  console.log('media', media)
   let messageData = {
     'attachment': {
       'type': 'video',
