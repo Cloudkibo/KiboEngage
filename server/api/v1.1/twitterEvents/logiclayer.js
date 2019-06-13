@@ -3,9 +3,6 @@ const config = require('../../../config/environment/index')
 const needle = require('needle')
 let request = require('request')
 const og = require('open-graph')
-var remote = require('remote-file-size')
-const fs = require('fs')
-const http = require('http')
 
 exports.handleTwitterPayload = function (req, savedMsg, page) {
   return new Promise((resolve, reject) => {
@@ -116,10 +113,8 @@ const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, pa
         payload.push(prepareFacbookPayloadForImage(tweet, savedMsg, tweetId, userName))
         resolve(payload)
       } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
-        prepareFacbookPayloadForVideo(tweet, savedMsg, tweetId, userName, page).then(result => {
-          payload.push(result)
-          resolve(payload)
-        })
+        payload.push(prepareFacbookPayloadForVideo(tweet, savedMsg, tweetId, userName, page))
+        resolve(payload)
       }
     } else if (urls.length > 0 && button) {
       prepareFacbookPayloadForLink(urls, savedMsg, tweetId, userName).then(linkpayload => {
@@ -162,27 +157,15 @@ const prepareFacbookPayloadForVideo = (tweet, savedMsg, tweetId, userName, page)
   //     resolve(messageData)
   //   })
   // })
-  return new Promise((resolve, reject) => {
-    getVideoURL(tweet.media[0].video_info.variants).then(url => {
-      remote(url, function (err, size) {
-        if (err) console.log('err')
-        let sizeInMb = (size / 1000) / 1000
-        console.log('video size', sizeInMb)
-        if (sizeInMb > 25) {
-          chopVideo(url)
-        }
-        let messageData = {
-          'attachment': {
-            'type': 'video',
-            'payload': {
-              'url': url
-            }
-          }
-        }
-        resolve(messageData)
-      })
-    })
-  })
+  let messageData = {
+    'attachment': {
+      'type': 'video',
+      'payload': {
+        'url': getVideoURL(tweet.media[0].video_info.variants)
+      }
+    }
+  }
+  return messageData
 }
 
 const prepareFacbookPayloadForLink = (urls, savedMsg, tweetId, userName) => {
@@ -361,15 +344,14 @@ const prepareShareButton = (savedMsg, tweetId, body, type) => {
 }
 
 function getVideoURL (variants) {
-  return new Promise((resolve, reject) => {
-    let url = ''
-    for (let i = 0; i < variants.length; i++) {
-      if (variants[i].content_type === 'video/mp4' && (variants[i].bitrate === 2176000 || variants[i].bitrate === 0)) {
-        url = variants[i].url
-        resolve(url)
-      }
+  let url = ''
+  for (let i = 0; i < variants.length; i++) {
+    if (variants[i].content_type === 'video/mp4' && (variants[i].bitrate === 2176000 || variants[i].bitrate === 0)) {
+      url = variants[i].url
+      break
     }
-  })
+  }
+  return url
 }
 
 function uploadOnFaceBook (url, page) {
@@ -412,26 +394,5 @@ function uploadOnFaceBook (url, page) {
             }
           })
       })
-  })
-}
-function chopVideo (url) {
-  const request = http.get('http://i3.ytimg.com/vi/J---aiyznGQ/mqdefault.jpg', function (response) {
-    let file = fs.createWriteStream('largeFile.mp4')
-    // let stream = response.pipe(file)
-    // stream.on('error', (error) => {
-    //   if (error) {
-    //     stream.end()
-    //   }
-    // })
-    // stream.on('write', function (chunk) {
-    //   console.log('file.byteswritten in stream', file.bytesWritten)
-    // })
-    response.pipe(file).on('data', function (data) {
-      console.log('file.byteswritten in stream', file.bytesWritten)
-    })
-    // stream.on('finish', () => {
-    //   console.log('file.byteswritten after finish', file.bytesWritten)
-    //   console.log('finished writing')
-    // })
   })
 }

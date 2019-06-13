@@ -5,6 +5,7 @@ const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.d
 const utility = require('../utility')
 const _ = require('lodash')
 const logicLayer = require('./logiclayer')
+const broadcastApi = require('../../global/broadcastApi')
 const {sentUsinInterval} = require('../facebookEvents/utility')
 
 exports.findAutoposting = function (req, res) {
@@ -31,7 +32,7 @@ exports.twitterwebhook = function (req, res) {
   })
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
-      logger.serverLog(TAG, `autoposting found ${JSON.stringify(autopostings)}`, 'debug')
+      logger.serverLog(TAG, `autoposting found ${JSON.stringify(req.body)}`, 'debug')
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = {
           companyId: postingItem.companyId,
@@ -68,6 +69,7 @@ exports.twitterwebhook = function (req, res) {
                     }
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
+                        console.log('savedMsg', savedMsg)
                         logicLayer.handleTwitterPayload(req, savedMsg, page)
                           .then(messageData => {
                             console.log('final payload length', messageData.length)
