@@ -2,21 +2,20 @@ const prepareMessageData = require('./prepareMessageData')
 const { facebookApiCaller } = require('./facebookApiCaller')
 const util = require('util')
 
-exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessToken) => {
+exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken) => {
   return new Promise((resolve, reject) => {
     let data = {
       'message_creative_id': messageCreativeId,
       'notification_type': 'REGULAR',
       'messaging_type': 'MESSAGE_TAG',
       'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
-      'targetting': {
+      'targeting': {
         'labels': {
-          'operator': 'AND',
-          'values': labels
+          'operator': 'NOT',
+          'values': notlabels
         }
       }
     }
-    console.log('braodcast data to be sent', util.inspect(data))
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
         console.log('response from facebookApiCaller', JSON.stringify(response.body))
@@ -34,12 +33,10 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, pageAccessTo
 
 exports.callMessageCreativesEndpoint = (data, pageAccessToken, module = 'broadcast') => {
   return new Promise((resolve, reject) => {
-    console.log('message_creatives data', util.inspect(data))
     getMessagesData(data, module).then(messages => {
       let dataToSend = {
         'messages': messages
       }
-      console.log('dataToSend in message_creatives', JSON.stringify(dataToSend))
       facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', dataToSend)
         .then(response => {
           if (response.body.message_creative_id) {
@@ -60,7 +57,6 @@ const getMessagesData = (payload, module) => {
     if (module === 'broadcast') {
       let messages = []
       messages.push(prepareMessageData.facebook(payload, '{{first_name}}', '{{last_name}}'))
-      console.log('messages', util.inspect(messages))
       resolve(messages)
     } else {
       resolve([JSON.stringify(payload)])

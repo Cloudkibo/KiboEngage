@@ -13,6 +13,7 @@ const notificationsUtility = require('../notifications/notifications.utility')
 const async = require('async')
 const broadcastApi = require('../../global/broadcastApi')
 const util = require('util')
+const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -108,11 +109,9 @@ exports.create = function (req, res) {
           // }
           async.parallelLimit([
             function (callback) {
-              console.log('sendWebhook called')
               sendWebhook(req.user, req.body, req.headers.authorization, callback)
             },
             function (callback) {
-              console.log('createPoll called')
               createPoll(req.user, req.body, callback)
             }
           ], 10, function (err, results) {
@@ -122,7 +121,6 @@ exports.create = function (req, res) {
                 payload: `Failed to create poll ${JSON.stringify(err)}`
               })
             }
-            console.log('create results', util.inspect(results))
             res.status(200).json({status: 'success', payload: results[1]})
           })
         })
@@ -265,7 +263,10 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                   const limit = Math.ceil(req.body.subscribersCount / 10000)
                   for (let i = 0; i < limit; i++) {
                     let labels = []
-                    labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                    let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
+                    let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
+                    let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
+                    pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                     if (req.body.isList) {
                       utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
                         .then(lists => {
@@ -293,7 +294,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                         labels = labels.concat(temp)
                       }
                     }
-                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                       .then(response => {
                         if (i === limit - 1) {
                           if (response.status === 'success') {
@@ -368,7 +369,6 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
 function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort) {
   utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
     .then(subscribers => {
-      console.log('subscribers in subFindCriteria', subscribers)
       if (subscribers.length === 0) {
         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
       }
@@ -394,15 +394,17 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
               // checks the age of function using callback
               compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                 if (err) {
-                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err), 'error')
                 }
                 if (isLastMessage) {
                   needle.post(
                     `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`, data, (err, resp) => {
                       if (err) {
-                        logger.serverLog(TAG, err)
+                        logger.serverLog(TAG, err, 'error')
                       }
-                      console.log('pollsend response', util.inspect(resp.body))
+                      messageData.componentType = 'poll'
+                      let message = preparePayload(req.user, subscribers[j], page, messageData)
+                      saveLiveChat(message)
                       let pollBroadcast = PollLogicLayer.preparePollPagePayload(page, req.user, req.body, subscribers[j], req.body._id)
                       PollPageDataLayer.createForPollPage(pollBroadcast)
                         .then(pollCreated => {
@@ -425,7 +427,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                         })
                     })
                 } else {
-                  logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                  logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ', 'debug')
                   let timeNow = new Date()
                   AutomationQueueDataLayer.createAutomationQueueObject({
                     automatedMessageId: req.body._id,

@@ -1,193 +1,187 @@
-const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
-const config = require('../../../config/environment/index')
+const MessengerPayload = require('./messengerPayload')
+const FacebookPayload = require('./facebookPayload')
 
-exports.checkType = function (body, savedMsg) {
-  return new Promise(function (resolve, reject) {
-    let messageData = {}
-    let text = ''
-    let button = true
-    if (body.truncated) {
-      text = body.extended_tweet.full_text.split('https://t.co/')
-    } else {
-      text = body.text.split('https://t.co/')
-    }
-    if (body.entities.urls && body.entities.urls.length > 0) {
-      for (let i = 0; i < body.entities.urls.length; i++) {
-        text[0] = text[0] + `\n${body.entities.urls[i].expanded_url}`
-      }
-    }
-    if (text[0] && !text[1]) {
-      // text only
-      let URLObject = {
-        originalURL: `https://twitter.com/${body.user.screen_name}`,
-        module: {
-          id: savedMsg._id,
-          type: 'autoposting'
-        }
-      }
-      URLDataLayer.createURLObject(URLObject)
-        .then(savedurl => {
-          let newURL = config.domain + '/api/URL/' + savedurl._id
-          messageData = preparePaylod(body, newURL, 'text', text[0], button)
-          resolve(messageData)
+exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
+  return new Promise((resolve, reject) => {
+    let tagline = ''
+    if (req.quote) {
+      let originalUser = req.retweet.user
+      let twitterUrls = req.urls.map((url) => url.url)
+      let separators = [' ', '\n']
+      let textArray = req.quote.split(new RegExp('[' + separators.join('') + ']', 'g'))
+      // let textArray = req.quote.split(' ')
+      tagline = `@${req.tweetUser.screen_name} retweeted @${originalUser.screen_name}:${prepareText(twitterUrls, textArray, req.urls)}\n\n@${originalUser.screen_name}'s tweet:`
+      if (req.retweet.truncated) {
+        handleTweet(
+          tagline,
+          req.retweet.extended_tweet.full_text,
+          req.retweet.extended_tweet.extended_entities,
+          req.retweet.extended_tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page,
+          actionType
+        ).then(result => {
+          resolve(result)
         })
-    } else if (text[0] && text[1]) {
-      // text with attachment
-      let originalURL
-      if (body.truncated) {
-        if (body.extended_tweet.entities.media) {
-          originalURL = body.extended_tweet.entities.media[0].url
-        } else {
-          originalURL = `https://twitter.com/${body.user.screen_name}`
-        }
       } else {
-        if (body.entities.media) {
-          originalURL = body.entities.media[0].url
-        } else {
-          originalURL = `https://twitter.com/${body.user.screen_name}`
-        }
-      }
-      let URLObject = {
-        originalURL: originalURL,
-        module: {
-          id: savedMsg._id,
-          type: 'autoposting'
-        }
-      }
-      URLDataLayer.createURLObject(URLObject)
-        .then(savedurl => {
-          let newURL = config.domain + '/api/URL/' + savedurl._id
-          if ((body.extended_entities && body.extended_entities.media[0].type === 'photo') || (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'photo')) {
-            button = false
-            let otherMessage = preparePaylod(body, newURL, 'text', text[0], button)
-            messageData = preparePaylod(body, newURL, 'photo', text[1])
-            resolve(otherMessage.concat(messageData))
-          } else {
-            if ((body.extended_entities && body.extended_entities.media[0].type === 'video') ||
-            (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'video') ||
-            (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'animated_gif') ||
-            (body.truncated && body.extended_tweet.extended_entities.media[0].type === 'animated_gif')
-            ) {
-              button = false
-              messageData = preparePaylod(body, '', 'video', text[1])
-            }
-            let otherMessage = preparePaylod(body, newURL, 'text', text[0], button)
-            resolve(otherMessage.concat(messageData))
-          }
+        handleTweet(
+          tagline,
+          req.retweet.text,
+          req.retweet.extended_entities,
+          req.retweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page,
+          actionType
+        ).then(result => {
+          resolve(result)
         })
-        .catch(err => {
-          console.log(`Error in creating Autoposting message object ${err}`)
+      }
+    } else if (req.retweet) {
+      let originalUser = req.retweet.user
+      tagline = `@${req.tweetUser.screen_name} retweeted @${originalUser.screen_name}:`
+      if (req.retweet.truncated) {
+        handleTweet(
+          tagline,
+          req.retweet.extended_tweet.full_text,
+          req.retweet.extended_tweet.extended_entities,
+          req.retweet.extended_tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page,
+          actionType
+        ).then(result => {
+          resolve(result)
         })
-    } else {
-      //  attachment only
-      if (body.extended_entities.media[0].type === 'photo') {
-        let URLObject = {
-          originalURL: body.entities.media[0].url,
-          module: {
-            id: savedMsg._id,
-            type: 'autoposting'
-          }
-        }
-        URLDataLayer.createURLObject(URLObject)
-          .then(savedurl => {
-            let newURL = config.domain + '/api/URL/' + savedurl._id
-            messageData = preparePaylod(body, newURL, 'photo', text[1])
-            resolve(messageData)
-          })
       } else {
-        messageData = preparePaylod(body, '', 'video')
-        resolve(messageData)
+        handleTweet(
+          tagline,
+          req.retweet.text,
+          req.retweet.extended_entities,
+          req.retweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page,
+          actionType
+        ).then(result => {
+          resolve(result)
+        })
+      }
+    } else if (req.tweet) {
+      tagline = `@${req.tweetUser.screen_name} tweeted:`
+      if (req.tweet.truncated) {
+        handleTweet(
+          tagline,
+          req.tweet.extended_tweet.full_text,
+          req.tweet.extended_tweet.extended_entities,
+          req.tweet.extended_tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page,
+          actionType
+        ).then(result => {
+          resolve(result)
+        })
+      } else {
+        handleTweet(
+          tagline,
+          req.tweet.text,
+          req.tweet.extended_entities,
+          req.tweet.entities.urls,
+          savedMsg,
+          req.body.id_str,
+          req.body.user.name,
+          page,
+          actionType
+        ).then(result => {
+          resolve(result)
+        })
       }
     }
   })
 }
-function preparePaylod (body, newURL, type, text, button) {
-  let messageData = {}
-  if (type === 'text') {
-    if (button) {
-      messageData = {
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'button',
-            'text': text,
-            'buttons': [
-              {
-                'type': 'web_url',
-                'url': newURL,
-                'title': 'View Tweet'
-              }
-            ]
+
+const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, actionType) => {
+  return new Promise((resolve, reject) => {
+    if (actionType === 'messenger') {
+      resolve(handleTweetForMessenger(tagline, text, tweet, urls, savedMsg, tweetId, userName, page))
+    } else if (actionType === 'facebook') {
+      resolve(handleTweetForFacebook(tagline, text, tweet, urls, tweetId, userName, page))
+    }
+  })
+}
+
+const handleTweetForFacebook = (tagline, text, tweet, urls, tweetId, userName, page) => {
+  return new Promise((resolve, reject) => {
+    let twitterUrls = urls.map((url) => url.url)
+    let separators = [' ', '\n']
+    let textArray = text.split(new RegExp('[' + separators.join('') + ']', 'g'))
+    text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
+    if (tweet && tweet.media && tweet.media.length > 0) {
+      if (tweet.media[0].type === 'photo') {
+        resolve(FacebookPayload.prepareFacebookPayloadForImage(text, tweet, tweetId))
+      } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
+        resolve(FacebookPayload.prepareFacebookPayloadForVideo(text, tweet, tweetId))
+      }
+    } else if (urls.length > 0) {
+      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId, urls))
+    } else {
+      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId))
+    }
+  })
+}
+
+const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page) => {
+  return new Promise((resolve, reject) => {
+    let button = !(tweet && tweet.media && tweet.media.length > 0)
+    let payload = []
+    let twitterUrls = urls.map((url) => url.url)
+    let separators = [' ', '\n']
+    let textArray = text.split(new RegExp('[' + separators.join('') + ']', 'g'))
+    // let textArray = text.split(' \n')
+    text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
+    payload.push(MessengerPayload.prepareMessengerPayloadForText('text', {text}, savedMsg, tweetId, button))
+    if (tweet && tweet.media && tweet.media.length > 0) {
+      if (tweet.media[0].type === 'photo') {
+        payload.push(MessengerPayload.prepareMessengerPayloadForImage(tweet, savedMsg, tweetId, userName))
+        resolve(payload)
+      } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
+        payload.push(MessengerPayload.prepareMessengerPayloadForVideo(tweet, savedMsg, tweetId, userName, page))
+        resolve(payload)
+      }
+    } else if (urls.length > 0 && button) {
+      MessengerPayload.prepareMessengerPayloadForLink(urls, savedMsg, tweetId, userName).then(linkpayload => {
+        payload.push(linkpayload.messageData)
+        if (!linkpayload.showButton) { // remove button from text
+          payload[0] = {
+            'text': payload[0].attachment.payload.text
           }
+          resolve(payload)
+        } else {
+          resolve(payload)
         }
-      }
-      return [messageData]
+      })
     } else {
-      messageData = {
-        'text': text
-      }
-      return [messageData]
+      resolve(payload)
     }
-  } else if (type === 'photo') {
-    let gallery
-    if (body.truncated) {
-      gallery = prepareGallery(body.extended_tweet.extended_entities.media, text, newURL)
-    } else {
-      gallery = prepareGallery(body.extended_entities.media, text, newURL)
-    }
-    messageData = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'generic',
-          'elements': gallery
-        }
-      }
-    }
-    return [messageData]
-  } else {
-    let videoUrl
-    if (body.truncated) {
-      videoUrl = getVideoURL(body.extended_tweet.extended_entities.media[0].video_info.variants)
-    } else {
-      videoUrl = getVideoURL(body.extended_entities.media[0].video_info.variants)
-    }
-    messageData = {
-      'attachment': {
-        'type': 'video',
-        'payload': {
-          'url': videoUrl
-        }
-      }
-    }
-    return [messageData]
-  }
+  })
 }
-function prepareGallery (media, text, newURL) {
-  let length = media.length <= 10 ? media.length : 10
-  let elements = []
-  for (let i = 0; i < length; i++) {
-    elements.push({
-      'title': 'www.kiboengage.cloudkibo.com',
-      'image_url': media[i].media_url,
-      'buttons': [
-        {
-          'type': 'web_url',
-          'url': newURL,
-          'title': 'View Tweet'
-        }
-      ]
-    })
-  }
-  return elements
-}
-function getVideoURL (variants) {
-  let url = ''
-  for (let i = 0; i < variants.length; i++) {
-    if (variants[i].content_type === 'video/mp4' && (variants[i].bitrate === 2176000 || variants[i].bitrate === 0)) {
-      url = variants[i].url
-      break
+
+const prepareText = (twitterUrls, textArray, urls) => {
+  for (let i = 0; i < textArray.length; i++) {
+    let index = twitterUrls.indexOf(textArray[i])
+    if (index > -1) {
+      textArray[i] = urls[index].expanded_url
+    } else if (textArray[i].startsWith('http')) {
+      textArray[i] = ''
     }
   }
-  return url
+  let text = textArray.join(' ')
+  return text !== '' ? `\n${text}` : text
 }

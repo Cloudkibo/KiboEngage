@@ -19,6 +19,7 @@ const broadcastApi = require('../../global/broadcastApi')
 const needle = require('needle')
 const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
+const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -397,17 +398,17 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                       }
                       broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'survey')
                         .then(messageCreative => {
-                          console.log('messageCreative')
                           if (messageCreative.status === 'success') {
                             const messageCreativeId = messageCreative.message_creative_id
-                            console.log('before pagetags', req.user.companyId)
                             callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
                               .then(pageTags => {
-                                console.log('pageTags')
                                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                                 for (let i = 0; i < limit; i++) {
                                   let labels = []
-                                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
+                                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
+                                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
+                                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                                   if (req.body.isList) {
                                     callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
                                       .then(lists => {
@@ -435,7 +436,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                       labels = labels.concat(temp)
                                     }
                                   }
-                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                                     .then(response => {
                                       if (i === limit - 1) {
                                         if (response.status === 'success') {
@@ -480,7 +481,6 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                           }
                         })
                         .catch(err => {
-                          console.log('error 5')
                           return res.status(500).json({
                             status: 'failed',
                             description: `Failed to send survey ${JSON.stringify(err)}`
@@ -599,7 +599,8 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                       text: `${surveyData.survey.description}\n${surveyData.first_question.statement}`,
                       buttons: surveyData.buttons
                     }
-                  }
+                  },
+                  metadata: 'SENT_FROM_KIBOPUSH'
                 }
                 const data = {
                   messaging_type: 'MESSAGE_TAG',
@@ -611,11 +612,10 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                 // checks the age of function using callback
                 compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
                   if (err) {
-                    logger.serverLog(TAG, 'inside error')
-                    return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                    return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err), 'error')
                   }
                   if (isLastMessage) {
-                    logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data))
+                    logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data), 'debug')
                     needle.post(
                       `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
                       data, (err, resp) => {
@@ -625,6 +625,9 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                             description: JSON.stringify(err)
                           })
                         }
+                        messageData.componentType = 'survey'
+                        let message = preparePayload(req.user, subscribers[j], page, messageData)
+                        saveLiveChat(message)
                         let surveyPage = {
                           pageId: page.pageId,
                           userId: req.user._id,
@@ -658,7 +661,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                           })
                       })
                   } else {
-                    logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
+                    logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ', 'debug')
                     let timeNow = new Date()
                     let automatedQueueMessage = {
                       automatedMessageId: req.body._id,

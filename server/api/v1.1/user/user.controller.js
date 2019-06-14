@@ -12,7 +12,7 @@ exports.index = function (req, res) {
         payload: user
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while fetching user details ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while fetching user details ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to fetching user details ${JSON.stringify(error)}`
@@ -28,7 +28,7 @@ exports.updateChecks = function (req, res) {
         payload: user
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while updating checks ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while updating checks ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to update checks ${JSON.stringify(error)}`
@@ -44,7 +44,7 @@ exports.updateSkipConnect = function (req, res) {
         payload: user
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error at updateSkipConnect  ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error at updateSkipConnect  ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to updateSkipConnect ${JSON.stringify(error)}`
@@ -60,7 +60,7 @@ exports.updateMode = function (req, res) {
         payload: user
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while updating mode ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while updating mode ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to update mode ${JSON.stringify(error)}`
@@ -71,13 +71,12 @@ exports.updateMode = function (req, res) {
 exports.fbAppId = function (req, res) {
   utility.callApi(`user/fbAppId`, 'get', {}, req.headers.authorization)
     .then(facebookClientId => {
-      console.log('facebookClientId', facebookClientId)
       return res.status(200).json({
         status: 'success',
         payload: facebookClientId
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while getting fbAppId ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while getting fbAppId ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to fetch fbAppId ${JSON.stringify(error)}`
@@ -86,7 +85,6 @@ exports.fbAppId = function (req, res) {
 }
 
 exports.authenticatePassword = function (req, res) {
-  console.log('in authenticatePassword', req.body)
   utility.callApi(`user/authenticatePassword`, 'post', req.body, req.headers.authorization)
     .then(status => {
       return res.status(200).json({
@@ -94,7 +92,7 @@ exports.authenticatePassword = function (req, res) {
         payload: status
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while authenticating password ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while authenticating password ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to authenticate password ${JSON.stringify(error)}`
@@ -110,7 +108,7 @@ exports.addAccountType = function (req, res) {
         payload: status
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while adding account type ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while adding account type ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to add account type ${JSON.stringify(error)}`
@@ -126,7 +124,7 @@ exports.enableDelete = function (req, res) {
         payload: updatedUser
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while enabling GDPR delete ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while enabling GDPR delete ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to enable GDPR delete ${JSON.stringify(error)}`
@@ -142,7 +140,7 @@ exports.cancelDeletion = function (req, res) {
         payload: updatedUser
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while disabling GDPR delete ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while disabling GDPR delete ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to disable GDPR delete ${JSON.stringify(error)}`
@@ -207,7 +205,6 @@ exports.updatePlatform = function (req, res) {
 }
 
 exports.updatePicture = function (req, res) {
-  console.log('hit the updatePicture endpoint for user')
   utility.callApi(`user/updatePicture`, 'get', {}, req.headers.authorization)
     .then(updatedUser => {
       return res.status(200).json({
@@ -215,7 +212,7 @@ exports.updatePicture = function (req, res) {
         payload: updatedUser
       })
     }).catch(error => {
-      logger.serverLog(TAG, `Error while retrieving profile picture for user ${util.inspect(error)}`)
+      logger.serverLog(TAG, `Error while retrieving profile picture for user ${util.inspect(error)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: `Failed to retrieve profile picture of user ${JSON.stringify(error)}`

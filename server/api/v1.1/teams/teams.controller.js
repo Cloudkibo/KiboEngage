@@ -73,20 +73,20 @@ exports.createTeam = function (req, res) {
             let teamAgentsPayload = logicLayer.getTeamAgentsPayload(createdTeam, companyuser, agentId)
             utility.callApi(`teams/agents`, 'post', teamAgentsPayload, req.headers.authorization) // create team agent
               .then(createdAgent => {
-                logger.serverLog(TAG, 'Team agent created successfully!')
+                logger.serverLog(TAG, 'Team agent created successfully!', 'debug')
               })
               .catch(error => {
-                logger.serverLog(TAG, `Failed to create agent ${JSON.stringify(error)}`)
+                logger.serverLog(TAG, `Failed to create agent ${JSON.stringify(error)}`, 'error')
               })
           })
           pageIds.forEach(pageId => {
             let teamPagesPayload = logicLayer.getTeamPagesPayload(createdTeam, companyuser, pageId)
             utility.callApi(`teams/pages`, 'post', teamPagesPayload, req.headers.authorization) // create team page
               .then(createdPage => {
-                logger.serverLog(TAG, 'Team page created successfully!')
+                logger.serverLog(TAG, 'Team page created successfully!', 'debug')
               })
               .catch(error => {
-                logger.serverLog(TAG, `Failed to create page ${JSON.stringify(error)}`)
+                logger.serverLog(TAG, `Failed to create page ${JSON.stringify(error)}`, 'error')
               })
           })
           return res.status(200).json({

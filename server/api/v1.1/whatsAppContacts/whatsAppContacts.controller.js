@@ -2,7 +2,6 @@ const logicLayer = require('./logiclayer')
 const utility = require('../utility')
 
 exports.index = function (req, res) {
-  console.log('inside controller')
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
     .then(companyuser => {
       let criterias = logicLayer.getCriterias(req.body, companyuser)
@@ -28,6 +27,26 @@ exports.index = function (req, res) {
             payload: `Failed to fetch subscriber count ${JSON.stringify(error)}`
           })
         })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to fetch company user ${JSON.stringify(error)}`
+      })
+    })
+}
+exports.update = function (req, res) {
+  let subsriberData = {
+    query: {_id: req.params.id},
+    newPayload: req.body,
+    options: {}
+  }
+  utility.callApi(`whatsAppContacts/update`, 'put', subsriberData, req.headers.authorization)
+    .then(updated => {
+      res.status(200).json({
+        status: 'success',
+        payload: updated
+      })
     })
     .catch(error => {
       return res.status(500).json({

@@ -32,7 +32,7 @@ exports.getFinalPayload = (subscribers, customFields, customFieldSubscribers) =>
   }
   return subscribersPayload
 }
-exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
+exports.getSusbscribersPayload = function (subscribers, tags, tagIds, tagValue) {
   let subscribersPayload = subscribers
   let filteredTagSubscribers = []
   for (let i = 0; i < subscribers.length; i++) {
@@ -41,7 +41,7 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
     for (let j = 0; j < tags.length; j++) {
       if (tags[j].tagId) {
         if (subscribers[i]._id.toString() === tags[j].subscriberId._id.toString()) {
-          if (tagValue === tags[j].tagId._id.toString()) {
+          if (tagIds && tagIds.length !== 0 && tagIds.includes(tags[j].tagId._id.toString())) {
             isTaggedSubscriber = true
           }
           subscribersPayload[i].tags.push(tags[j].tagId.tag)
@@ -58,39 +58,34 @@ exports.getSusbscribersPayload = function (subscribers, tags, tagValue) {
   return subscribersPayload
 }
 
-exports.getCriterias = function (body, companyUser) {
-  console.log('getting criterias')
+exports.getCriterias = function (req, tagIDs) {
   let search = ''
   let findCriteria = {}
   let finalCriteria = {}
   let recordsToSkip = 0
-  if (!body.filter) {
+  if (!req.body.filter) {
     findCriteria = {
-      companyId: companyUser.companyId
+      companyId: req.user.companyId
     }
   } else {
-    console.log('filter_criteria', body.filter_criteria)
-    search = '.*' + body.filter_criteria.search_value + '.*'
+    search = '.*' + req.body.filter_criteria.search_value + '.*'
     findCriteria = {
-      companyId: companyUser.companyId,
       fullName: {$regex: search, $options: 'i'},
-      gender: body.filter_criteria.gender_value !== '' ? body.filter_criteria.gender_value : {$exists: true},
-      locale: body.filter_criteria.locale_value !== '' ? body.filter_criteria.locale_value : {$exists: true},
-      isSubscribed: body.filter_criteria.status_value !== '' ? body.filter_criteria.status_value : {$exists: true},
-      pageId: body.filter_criteria.page_value !== '' ? body.filter_criteria.page_value : {$exists: true}
-      // 'tags_subscriber.tagId': body.filter_criteria.tag_value
+      gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
+      locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
+      isSubscribed: req.body.filter_criteria.status_value !== '' ? req.body.filter_criteria.status_value : {$exists: true},
+      pageId: req.body.filter_criteria.page_value !== '' ? req.body.filter_criteria.page_value : {$exists: true}
     }
-    if (body.filter_criteria.tag_value) {
-      console.log('tag_value', body.filter_criteria.tag_value)
-      findCriteria['tags_subscriber'] = {$elemMatch: {tagId: body.filter_criteria.tag_value}}
+    if (req.body.filter_criteria.tag_value) {
+      findCriteria['tags_subscriber.tagId'] = { $in: tagIDs }
     }
-    console.log(`findCriteria  ${JSON.stringify(findCriteria)}`)
   }
   let temp = JSON.parse(JSON.stringify(findCriteria))
   temp['pageId._id'] = temp.pageId
   temp['pageId.connected'] = true
 
   let countCriteria = [
+    { $match: {companyId: req.user.companyId} },
     { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
     { $unwind: '$pageId' },
     { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
@@ -98,6 +93,7 @@ exports.getCriterias = function (body, companyUser) {
       'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
       'firstName': 1,
       'lastName': 1,
+      'source': 1,
       'profilePic': 1,
       'companyId': 1,
       'gender': 1,
@@ -116,12 +112,12 @@ exports.getCriterias = function (body, companyUser) {
   // findCriteria is for the count
   // here temp is the findcriteria for Payload
   delete temp.pageId
-  if (body.first_page === 'first') {
-    if (body.current_page) {
-      recordsToSkip = Math.abs(body.current_page * body.number_of_records)
+  if (req.body.first_page === 'first') {
+    if (req.body.current_page) {
+      recordsToSkip = Math.abs(req.body.current_page * req.body.number_of_records)
     }
-    console.log('temp match', temp)
     finalCriteria = [
+      { $match: {companyId: req.user.companyId} },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
       { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
@@ -129,6 +125,7 @@ exports.getCriterias = function (body, companyUser) {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
         'lastName': 1,
+        'source': 1,
         'profilePic': 1,
         'companyId': 1,
         'gender': 1,
@@ -144,11 +141,10 @@ exports.getCriterias = function (body, companyUser) {
       { $match: temp },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
-      { $limit: body.number_of_records }
+      { $limit: req.body.number_of_records }
     ]
-    console.log(`finalCriteria ${JSON.stringify(finalCriteria)}`)
-  } else if (body.first_page === 'next') {
-    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+  } else if (req.body.first_page === 'next') {
+    recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     finalCriteria = [
       { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
@@ -158,6 +154,7 @@ exports.getCriterias = function (body, companyUser) {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
         'lastName': 1,
+        'source': 1,
         'profilePic': 1,
         'companyId': 1,
         'gender': 1,
@@ -170,13 +167,13 @@ exports.getCriterias = function (body, companyUser) {
         '_id': 1,
         'tags_subscriber': 1
       }},
-      { $match: { $and: [temp, { _id: { $lt: body.last_id } }] } },
+      { $match: { $and: [temp, { _id: { $lt: req.body.last_id } }] } },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
-      { $limit: body.number_of_records }
+      { $limit: req.body.number_of_records }
     ]
-  } else if (body.first_page === 'previous') {
-    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+  } else if (req.body.first_page === 'previous') {
+    recordsToSkip = Math.abs(req.body.requested_page * req.body.number_of_records)
     finalCriteria = [
       { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
@@ -186,6 +183,7 @@ exports.getCriterias = function (body, companyUser) {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
         'lastName': 1,
+        'source': 1,
         'profilePic': 1,
         'companyId': 1,
         'gender': 1,
@@ -198,10 +196,10 @@ exports.getCriterias = function (body, companyUser) {
         '_id': 1,
         'tags_subscriber': 1
       }},
-      { $match: { $and: [temp, { _id: { $gt: body.last_id } }] } },
+      { $match: { $and: [temp, { _id: { $gt: req.body.last_id } }] } },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
-      { $limit: body.number_of_records }
+      { $limit: req.body.number_of_records }
     ]
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }

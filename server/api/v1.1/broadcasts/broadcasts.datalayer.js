@@ -18,8 +18,7 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  logger.serverLog(TAG, `query ${JSON.stringify(query)}`)
-  console.log('query', JSON.stringify(query))
+  logger.serverLog(TAG, `query ${JSON.stringify(query)}`, 'debug')
   return callApi(`broadcasts/query`, 'post', query, '', 'kiboengage')
 }
 exports.deleteForBroadcasts = (id) => {

@@ -24,27 +24,21 @@ const util = require('util')
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
     .then(companyUser => {
-      console.log('companyUser', companyUser)
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
-      console.log('criteria', criteria)
       BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
         .then(broadcastsCount => {
-          console.log('broadcastsCount', broadcastsCount)
           let aggregateMatch = criteria.finalCriteria[0].$match
           let aggregateSort = criteria.finalCriteria[1].$sort
           let aggregateSkip = criteria.finalCriteria[2].$skip
           let aggregateLimit = criteria.finalCriteria[3].$limit
           BroadcastDataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(broadcasts => {
-              console.log('broadcasts', broadcasts)
               BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
                 .then(broadcastpages => {
-                  console.log('broadcastpages', broadcastpages)
                   res.status(200).json({
                     status: 'success',
                     payload: { broadcasts: broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
                   })
-                  console.log('sent successfully')
                 })
                 .catch(error => {
                   return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts pages ${JSON.stringify(error)}`})
@@ -67,7 +61,7 @@ exports.delete = function (req, res) {
   // unlink file
   fs.unlink(dir + '/' + req.params.id, function (err) {
     if (err) {
-      logger.serverLog(TAG, err)
+      logger.serverLog(TAG, err, 'error')
       return res.status(404)
         .json({status: 'failed', description: 'File not found'})
     } else {
@@ -181,7 +175,6 @@ exports.editButton = function (req, res) {
       let id = temp[temp.length - 1]
       URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
         .then(savedurl => {
-          console.log('Saved Url', savedurl)
           let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
           buttonPayload.newUrl = newURL
           buttonPayload.url = req.body.newUrl
@@ -274,7 +267,7 @@ exports.download = function (req, res) {
     res.sendfile(req.params.id, {root: dir})
   } catch (err) {
     logger.serverLog(TAG,
-      `Inside Download file, err = ${JSON.stringify(err)}`)
+      `Inside Download file, err = ${JSON.stringify(err)}`, 'error')
     res.status(404)
       .json({status: 'success', payload: 'Not Found ' + JSON.stringify(err)})
   }
@@ -299,13 +292,13 @@ exports.upload = function (req, res) {
     })
   }
   logger.serverLog(TAG,
-    `req.files.file ${JSON.stringify(req.files.file.path)}`)
+    `req.files.file ${JSON.stringify(req.files.file.path)}`, 'debug')
   logger.serverLog(TAG,
-    `req.files.file ${JSON.stringify(req.files.file.name)}`)
+    `req.files.file ${JSON.stringify(req.files.file.name)}`, 'debug')
   logger.serverLog(TAG,
-    `dir ${JSON.stringify(dir)}`)
+    `dir ${JSON.stringify(dir)}`, 'debug')
   logger.serverLog(TAG,
-    `serverPath ${JSON.stringify(serverPath)}`)
+    `serverPath ${JSON.stringify(serverPath)}`, 'debug')
   fs.rename(
     req.files.file.path,
     dir + '/userfiles/' + serverPath,
@@ -328,7 +321,7 @@ exports.upload = function (req, res) {
         })}`)
       if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
         let pages = JSON.parse(req.body.pages)
-        logger.serverLog(TAG, `Pages in upload file ${pages}`)
+        logger.serverLog(TAG, `Pages in upload file ${pages}`, 'debug')
         utility.callApi(`pages/${pages[0]}`)
           .then(page => {
             needle.get(
@@ -401,11 +394,9 @@ exports.upload = function (req, res) {
 
 exports.uploadForTemplate = function (req, res) {
   let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
-  console.log('req.body', req.body)
   if (req.body.pages && req.body.pages.length > 0) {
     utility.callApi(`pages/${req.body.pages[0]}`)
       .then(page => {
-        console.log('page fetched', page)
         needle.get(
           `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
           (err, resp2) => {
@@ -428,7 +419,6 @@ exports.uploadForTemplate = function (req, res) {
               }),
               'filedata': fileReaderStream
             }
-            console.log('messageData', messageData)
             request(
               {
                 'method': 'POST',
@@ -438,7 +428,6 @@ exports.uploadForTemplate = function (req, res) {
               },
               function (err, resp) {
                 if (err) {
-                  console.log('error in uploading', err)
                   return res.status(500).json({
                     status: 'failed',
                     description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
@@ -468,10 +457,10 @@ exports.uploadForTemplate = function (req, res) {
 }
 
 exports.sendConversation = function (req, res) {
-  logger.serverLog(TAG, `Sending Broadcast ${JSON.stringify(req.body)}`)
+  logger.serverLog(TAG, `Sending Broadcast ${JSON.stringify(req.body)}`, 'debug')
   // validate braodcast
   if (!validateInput.facebookBroadcast(req.body)) {
-    logger.serverLog(TAG, 'Parameters are missing.')
+    logger.serverLog(TAG, 'Parameters are missing.', 'error')
     return res.status(400)
       .json({status: 'failed', description: 'Please fill all the required fields'})
   }
@@ -559,7 +548,6 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
-          // update broadcast sent field
           BroadcastPageDataLayer.createForBroadcastPage({
             pageId: page.pageId,
             userId: req.user._id,
@@ -586,7 +574,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
     if (err) {
-      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to send broadcast ${JSON.stringify(err)}`
@@ -609,7 +597,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
 }
 const updatePayload = (self, payload, broadcast) => {
   let shouldReturn = false
-  logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`)
+  logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`, 'debug')
   for (let j = 0; j < payload.length; j++) {
     if (!self && payload[j].componentType === 'list') {
       payload[j].listItems.forEach((element, lindex) => {
@@ -626,7 +614,7 @@ const updatePayload = (self, payload, broadcast) => {
               payload[j].listItems[lindex].default_action.url = newURL
             })
             .catch(error => {
-              logger.serverLog(TAG, error)
+              logger.serverLog(TAG, error, 'error')
             })
         }
         if (lindex === (payload[j].listItems.length - 1)) {
@@ -648,12 +636,12 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
-        `subscriptionUser ${subscriptionUser}`)
+        `subscriptionUser ${subscriptionUser}`, 'debug')
       utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId}, req.headers.authorization)
         .then(user => {
           user = user[0]
           logger.serverLog(TAG,
-            `user ${JSON.stringify(user)}`)
+            `user ${JSON.stringify(user)}`, 'debug')
           let temp = user.facebookInfo.name.split(' ')
           let fname = temp[0]
           let lname = temp[1] ? temp[1] : ''
@@ -828,7 +816,10 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                 for (let i = 0; i < limit; i++) {
                   let labels = []
-                  labels.push(pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)[0].labelFbId)
+                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
+                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
+                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
+                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                   if (req.body.isList) {
                     utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
                       .then(lists => {
@@ -856,16 +847,14 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                       labels = labels.concat(temp)
                     }
                   }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, page.accessToken)
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                     .then(response => {
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
-                      console.log('current is', current)
                       if (i === limit - 1) {
                         if (response.status === 'success') {
                           utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
                             .then(updated => {
                               current++
-                              console.log('current updated', current)
                             })
                             .catch(err => {
                               return res.status(500).json({

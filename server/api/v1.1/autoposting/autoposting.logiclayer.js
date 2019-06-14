@@ -86,14 +86,13 @@ const prepareEditPayload = (req) => {
   autoposting.segmentationLocale = req.body.segmentationLocale
   autoposting.segmentationTags = req.body.segmentationTags
   autoposting.isActive = req.body.isActive
+  autoposting.actionType = req.body.actionType
   return autoposting
 }
 
 const findUser = (screenName, fn) => {
-  console.log('Twitter Config', config.twitter)
   twitterClient.get('users/show', {screen_name: screenName},
     (err, data, response) => {
-      console.log('Inside Find User')
       fn(err, data)
       /* if (err) {
         fn(err)

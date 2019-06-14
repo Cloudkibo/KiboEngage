@@ -14,6 +14,7 @@ const profilePicController = require('./profilePic.controller')
 const policyController = require('./policy.controller')
 const menuController = require('./menu.controller')
 const welcomeMessageController = require('./welcomeMessage.controller')
+const messengerAdsController = require('./messengerAds.controller')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
@@ -27,5 +28,7 @@ router.post('/updateProfilePic', auth.isItWebhookServer(), profilePicController.
 router.post('/policyNotification', auth.isItWebhookServer(), policyController.policyNotification)
 router.post('/menuReply', auth.isItWebhookServer(), menuController.index)
 router.post('/welcomeMessage', auth.isItWebhookServer(), welcomeMessageController.index)
+router.post('/messengerAdsReply', auth.isItWebhookServer(), messengerAdsController.index)
+
 
 module.exports = router

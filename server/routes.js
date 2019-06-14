@@ -4,6 +4,9 @@ const logger = require('./components/logger')
 const TAG = 'LandingPage'
 const Raven = require('raven')
 const path = require('path')
+const multiparty = require('connect-multiparty')
+const multipartyMiddleware = multiparty()
+const fs = require('fs')
 
 module.exports = function (app) {
   const env = app.get('env')
@@ -52,8 +55,11 @@ module.exports = function (app) {
   app.use('/api/whatsAppContacts', require('./api/v1.1/whatsAppContacts'))
   app.use('/api/whatsAppBroadcasts', require('./api/v1.1/whatsAppBroadcasts'))
   app.use('/api/smsBroadcasts', require('./api/v1.1/smsBroadcasts'))
+  app.use('/api/smsDashboard', require('./api/v1.1/smsDashboard'))
+  app.use('/api/whatsAppDashboard', require('./api/v1.1/whatsAppDashboard'))
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
   app.use('/api/sponsoredmessaging', require('./api/v1.1/sponsoredMessaging'))
+  app.use('/api/webhooks', require('./api/v1.1/webhooks'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
@@ -67,9 +73,28 @@ module.exports = function (app) {
       {expires: new Date(Date.now() + 900000)})
     res.cookie('url_development', 'http://localhost:3021',
       {expires: new Date(Date.now() + 900000)})
-    // res.sendFile(path.join(config.root, 'client/index.html'))
-    res.render('main', { environment: env })
+    res.sendFile(path.join(config.root, 'client/index.html'))
   })
+
+  app.post('/uploadHtml',
+    multipartyMiddleware,
+    (req, res) => {
+      let dir = path.resolve(__dirname, '../client/', req.files.bundle.name)
+
+      fs.rename(
+        req.files.bundle.path,
+        dir,
+        err => {
+          if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: 'internal server error' + JSON.stringify(err)
+            })
+          }
+          return res.status(201).json({status: 'success', description: 'HTML uploaded'})
+        }
+      )
+    })
 
   app.get('/react-bundle', (req, res) => {
     res.sendFile(path.join(__dirname, '../../KiboPush/client/public/js', 'bundle.js'))

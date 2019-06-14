@@ -60,7 +60,6 @@ exports.upload = function (req, res) {
                               utility.callApi(`phone/query`, 'post', {
                                 number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}, req.headers.authorization)
                                 .then(phone => {
-                                  console.log('Phone', phone)
                                   if (phone.length === 0) {
                                     if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                                       if (!abort) {
@@ -93,7 +92,6 @@ exports.upload = function (req, res) {
                                     }
                                   } else {
                                     let filename = logicLayer.getFiles(phone[0], req, newFileName)
-                                    console.log('Files', filename)
                                     let query = {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}
                                     let update = { name: data[`${nameColumn}`],
                                       number: result,
@@ -159,7 +157,6 @@ exports.upload = function (req, res) {
                                         page.accessToken
                                       },
                                       function (err, res) {
-                                        console.log('Response from facebook', res)
                                         if (err) {
                                           return logger.serverLog(TAG,
                                             `At invite to messenger using phone ${JSON.stringify(
@@ -266,7 +263,6 @@ exports.sendNumbers = function (req, res) {
                       .then(pages => {
                         utility.callApi(`phone/query`, 'post', {number: result, userId: req.user._id, companyId: companyUser.companyId, pageId: req.body._id}, req.headers.authorization)
                           .then(found => {
-                            console.log('Found', found)
                             if (found.length === 0) {
                               if (planUsage.phone_invitation !== -1 && companyUsage.phone_invitation >= planUsage.phone_invitation) {
                                 abort = true
@@ -311,13 +307,10 @@ exports.sendNumbers = function (req, res) {
                                 pageId: req.body._id,
                                 fileName: filename
                               }
-                              console.log('update', update)
                               utility.callApi(`phone/update`, 'post', {query: query, newPayload: update, options: {upsert: true}}, req.headers.authorization)
                                 .then(phonenumbersaved => {
-                                  console.log('phonenumbersaved', phonenumbersaved)
                                   utility.callApi(`phone/query`, 'post', {companyId: companyUser.companyId, hasSubscribed: true, fileName: { $all: ['Other'] }}, req.headers.authorization)
                                     .then(number => {
-                                      console.log('number', number)
                                       if (number.length > 0) {
                                         let subscriberFindCriteria = logicLayer.subscriberFindCriteria(number, companyUser)
                                         utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
@@ -383,7 +376,6 @@ exports.sendNumbers = function (req, res) {
                               page.accessToken
                             },
                             function (err, res) {
-                              console.log('Response from facebook', res.body)
                               if (err) {
                                 return logger.serverLog(TAG,
                                   `Error At invite to messenger using phone ${JSON.stringify(
@@ -439,7 +431,6 @@ exports.pendingSubscription = function (req, res) {
       utility.callApi(`phone/query`, 'post', {
         companyId: companyUser.companyId, hasSubscribed: false, fileName: { $all: [req.params.name] }, pageId: { $exists: true, $ne: null }}, req.headers.authorization)
         .then(phonenumbers => {
-          console.log('Phone numbers', phonenumbers)
           return res.status(200)
             .json({status: 'success', payload: phonenumbers})
         })

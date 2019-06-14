@@ -64,7 +64,6 @@ exports.genericUpdateAutopostingMessage = (queryObject, updated, options) => {
   return callApi(`autoposting_messages`, 'put', query, '', 'kiboengage')
 }
 exports.createAutopostingMessage = (payload) => {
-  console.log('in createAutopostingMessage')
   return callApi(`autoposting_messages`, 'post', payload, '', 'kiboengage')
 }
 exports.updateOneAutopostingMessage = (id, payload) => {
@@ -102,6 +101,19 @@ exports.findAutopostingMessageUsingAggregate = (match, group, lookup, limit, sor
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  console.log('query', JSON.stringify(query))
   return callApi(`autoposting_messages/query`, 'post', query, '', 'kiboengage')
+}
+
+exports.findAutopostingMessageUsingAggregateForKiboDash = (match, group, lookup, limit, sort, skip) => {
+  let query = {
+    purpose: 'aggregate',
+    match: match
+  }
+  if (group) query.group = group
+  if (lookup) query.lookup = lookup
+  if (limit) query.limit = limit
+  if (sort) query.sort = sort
+  if (skip) query.skip = skip
+
+  return callApi(`autoposting_messages/kiboDashQuery`, 'post', query, '', 'kiboengage')
 }
