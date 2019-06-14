@@ -59,3 +59,30 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
       query)}`, 'debug')
   return query
 }
+exports.getCriteriasForAutopostingByType = function (body, companyUser, type) {
+  let matchAggregate = { companyId: companyUser.companyId.toString(),
+    'datetime': body.days === 'all' ? { $exists: true } : {
+      $gte: new Date(
+        (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
+      $lt: new Date(
+        (new Date().getTime()))
+    },
+    subscriptionType: type
+  }
+  let groupAggregate = {
+    _id: null,
+    count: {$sum: 1}}
+  return {matchAggregate, groupAggregate}
+}
+exports.getCriteriasForAutopostingByTypethatCame = function (body, companyUser, type) {
+  let matchAggregate = { companyId: companyUser.companyId.toString(),
+    'datetime': body.days === 'all' ? { $exists: true } : {
+      $gte: new Date(
+        (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
+      $lt: new Date(
+        (new Date().getTime()))
+    },
+    autoposting_type: type
+  }
+  return {matchAggregate}
+}
