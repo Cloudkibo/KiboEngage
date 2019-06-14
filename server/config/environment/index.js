@@ -32,6 +32,11 @@ const all = {
     consumer_token_secret: process.env.TWITTER_TOKEN_SECRET || 'HvdJuX3jZ4bWIURLJvNNETvY8AVvmSwtFE8hn6251XUp3',
     callbackUrl: 'https://swebhooks.cloudkibo.com/api/twitter'
   },
+  shopify: {
+    app_key: '10128033d2dc6948f383edf548c2aa87',
+    app_host: 'https://kibopush-sojharo.ngrok.io',
+    app_secret: 'f41a001b86c700915c9cedc52b955d35'
+  },
   sendgrid: {
     username: 'cloudkibo',
     password: 'cl0udk1b0'
