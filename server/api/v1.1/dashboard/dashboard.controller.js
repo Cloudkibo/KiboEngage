@@ -9,6 +9,8 @@ const PageBroadcastDataLayer = require('../page_broadcast/page_broadcast.datalay
 const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
 const PagePollDataLayer = require('../page_poll/page_poll.datalayer')
 const SequenceDataLayer = require('../sequenceMessaging/sequence.datalayer')
+const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
+const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const TAG = 'api/pages/dashboard.controller.js'
 const sortBy = require('sort-array')
 const callApi = require('../utility')
@@ -1144,6 +1146,139 @@ exports.subscriberSummary = function (req, res) {
       return res.status(500).json({
         status: 'failed',
         description: `Internal Server Error ${JSON.stringify(err)}`
+      })
+    })
+}
+exports.fetchAutopostingDetails = function (req, res) {
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      let criteriaForFacebook = LogicLayer.getCriteriasForAutopostingByType(req.body, companyUser, 'facebook')
+      let criteriaForTwitter = LogicLayer.getCriteriasForAutopostingByType(req.body, companyUser, 'twitter')
+      let criteriaForWordpress = LogicLayer.getCriteriasForAutopostingByType(req.body, companyUser, 'wordpress')
+      AutopostingDataLayer.findAutopostingUsingAggregate(criteriaForFacebook.matchAggregate, criteriaForFacebook.groupAggregate)
+        .then(facebookAutoposting => {
+          AutopostingDataLayer.findAutopostingUsingAggregate(criteriaForTwitter.matchAggregate, criteriaForTwitter.groupAggregate)
+            .then(twitterAutoposting => {
+              AutopostingDataLayer.findAutopostingUsingAggregate(criteriaForWordpress.matchAggregate, criteriaForWordpress.groupAggregate)
+                .then(wordpressAutoposting => {
+                  let groupAggregate = {
+                    _id: '$message_id',
+                    count: {$sum: 1},
+                    sent: {$sum: '$sent'}
+                  }
+                  criteriaForFacebook = LogicLayer.getCriteriasForAutopostingByTypethatCame(req.body, companyUser, 'facebook')
+                  criteriaForTwitter = LogicLayer.getCriteriasForAutopostingByTypethatCame(req.body, companyUser, 'twitter')
+                  criteriaForWordpress = LogicLayer.getCriteriasForAutopostingByTypethatCame(req.body, companyUser, 'wordpress')
+                  AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(criteriaForFacebook.matchAggregate, groupAggregate)
+                    .then(facebookAutopostingsCame => {
+                      let facebookAutopostingsSent = facebookAutopostingsCame.length > 0 ? facebookAutopostingsCame.reduce((a, b) => a + b.sent, 0) : 0
+                      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(criteriaForTwitter.matchAggregate, groupAggregate)
+                        .then(twitterAutopostingsCame => {
+                          let twitterAutopostingsSent = twitterAutopostingsCame.length > 0 ? twitterAutopostingsCame.reduce((a, b) => a + b.sent, 0) : 0
+                          AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(criteriaForWordpress.matchAggregate, groupAggregate)
+                            .then(wordpressAutopostingsCame => {
+                              let wordpressAutopostingsSent = wordpressAutopostingsCame.length > 0 ? wordpressAutopostingsCame.reduce((a, b) => a + b.sent, 0) : 0
+                              groupAggregate = {
+                                _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+                                count: {$sum: '$sent'}}
+                              AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(criteriaForFacebook.matchAggregate, groupAggregate)
+                                .then(facebookAutopostingGraph => {
+                                  AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(criteriaForTwitter.matchAggregate, groupAggregate)
+                                    .then(twitterAutopostingGraph => {
+                                      let twitterAutopostingsSent = twitterAutopostingsCame.length > 0 ? twitterAutopostingsCame.reduce((a, b) => a + b.sent, 0) : 0
+                                      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(criteriaForWordpress.matchAggregate, groupAggregate)
+                                        .then(wordpressAutopostingGraph => {
+                                          return res.status(200).json({
+                                            status: 'success',
+                                            payload: {
+                                              facebookAutoposting: facebookAutoposting.length > 0 ? facebookAutoposting[0].count : 0,
+                                              twitterAutoposting: twitterAutoposting.length > 0 ? twitterAutoposting[0].count : 0,
+                                              wordpressAutoposting: wordpressAutoposting.length > 0 ? wordpressAutoposting[0].count : 0,
+                                              facebookAutopostingsCame: facebookAutopostingsCame.length > 0 ? facebookAutopostingsCame.length : 0,
+                                              twitterAutopostingsCame: twitterAutopostingsCame.length > 0 ? twitterAutopostingsCame.length : 0,
+                                              wordpressAutopostingsCame: wordpressAutopostingsCame.length > 0 ? wordpressAutopostingsCame.length : 0,
+                                              facebookAutopostingsSent,
+                                              twitterAutopostingsSent,
+                                              wordpressAutopostingsSent,
+                                              facebookAutopostingGraph,
+                                              twitterAutopostingGraph,
+                                              wordpressAutopostingGraph
+                                            }
+                                          })
+                                        })
+                                        .catch(err => {
+                                          return res.status(500).json({
+                                            status: 'failed',
+                                            description: `Failed to fetch wordpressAutopostingsCame ${err}`
+                                          })
+                                        })
+                                    })
+                                    .catch(err => {
+                                      return res.status(500).json({
+                                        status: 'failed',
+                                        description: `Failed to fetch twitterAutopostingsCame ${err}`
+                                      })
+                                    })
+                                })
+                                .catch(err => {
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `Failed to fetch facebookAutopostingsCame ${err}`
+                                  })
+                                })
+                            })
+                            .catch(err => {
+                              return res.status(500).json({
+                                status: 'failed',
+                                description: `Failed to fetch wordpressAutopostingsCame ${err}`
+                              })
+                            })
+                        })
+                        .catch(err => {
+                          return res.status(500).json({
+                            status: 'failed',
+                            description: `Failed to fetch twitterAutopostingsCame ${err}`
+                          })
+                        })
+                    })
+                    .catch(err => {
+                      return res.status(500).json({
+                        status: 'failed',
+                        description: `Failed to fetch facebookAutopostingsCame ${err}`
+                      })
+                    })
+                })
+                .catch(err => {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Failed to fetch wordpressAutoposting ${err}`
+                  })
+                })
+            })
+            .catch(err => {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Failed to fetch twitterAutoposting ${err}`
+              })
+            })
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Failed to fetch facebookAutoposting ${err}`
+          })
+        })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch companyuser ${err}`
       })
     })
 }
