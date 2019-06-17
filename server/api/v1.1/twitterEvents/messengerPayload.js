@@ -219,11 +219,11 @@ function chopVideo (url) {
           stream.end()
         }
       })
-      // stream.on('error', (error) => {
-      //   console.log('error while writing', error)
-      //   stream.end()
-      //   reject(error)
-      // })
+      stream.on('error', (error) => {
+        console.log('error while writing', error)
+        stream.end()
+        // reject(error)
+      })
       stream.on('finish', () => {
         console.log('finished writing')
         resolve(`${config.domain}/api/broadcasts/download/${filename}`)
