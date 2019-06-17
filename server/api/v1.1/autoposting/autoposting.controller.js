@@ -66,7 +66,7 @@ exports.create = function (req, res) {
                         })
                       }
                       let autoPostingPayload = AutoPostingLogicLayer.prepareAutopostingPayload(req, companyUser)
-                      let hasLimit = AutoPostingLogicLayer.checkPlanLimit(req.body.subscriptionType, planUsage, companyUsage)
+                      // let hasLimit = AutoPostingLogicLayer.checkPlanLimit(req.body.subscriptionType, planUsage, companyUsage)
                       // add paid plan check later
                       // if (!hasLimit) {
                       //   return res.status(500).json({
