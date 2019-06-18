@@ -1,17 +1,35 @@
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const config = require('../../../config/environment/index')
 const og = require('open-graph')
+const remote = require('remote-file-size')
+const fs = require('fs')
+const https = require('https')
+const path = require('path')
 
 const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, page) => {
-  let messageData = {
-    'attachment': {
-      'type': 'video',
-      'payload': {
-        'url': getVideoURL(tweet.media[0].video_info.variants)
+  return new Promise((resolve, reject) => {
+    let url = getVideoURL(tweet.media[0].video_info.variants)
+    let messageData = {
+      'attachment': {
+        'type': 'video',
+        'payload': {
+          'url': url
+        }
       }
     }
-  }
-  return messageData
+    remote(url, function (err, size) {
+      if (err) console.log('err')
+      let sizeInMb = (size / 1000) / 1000
+      if (sizeInMb > 25) {
+        chopVideo(url).then(result => {
+          messageData.attachment.payload['url'] = result
+          resolve(messageData)
+        })
+      } else {
+        resolve(messageData)
+      }
+    })
+  })
 }
 
 const prepareMessengerPayloadForLink = (urls, savedMsg, tweetId, userName) => {
@@ -185,6 +203,33 @@ const getVideoURL = (variants) => {
     }
   }
   return url
+}
+
+function chopVideo (url) {
+  return new Promise((resolve, reject) => {
+    let filename = url.split('?')[0].split('/')[url.split('?')[0].split('/').length - 1]
+    let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
+    https.get(url, function (response) {
+      let file = fs.createWriteStream(dir + '/userfiles/' + filename)
+      let stream = response.pipe(file)
+      let size = 0
+      response.on('data', function (data) {
+        size += data.length
+        if (size >= 20000000) {
+          stream.end()
+        }
+      })
+      stream.on('error', (error) => {
+        console.log('error while writing', error)
+        stream.end()
+        // reject(error)
+      })
+      stream.on('finish', () => {
+        console.log('finished writing')
+        resolve(`${config.domain}/api/broadcasts/download/${filename}`)
+      })
+    })
+  })
 }
 
 exports.prepareMessengerPayloadForVideo = prepareMessengerPayloadForVideo

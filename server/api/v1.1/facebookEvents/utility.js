@@ -2,6 +2,8 @@ const logger = require('../../../components/logger')
 const TAG = 'api/twitterEvents/twitter.controller.js'
 const utility = require('../utility')
 const broadcastApi = require('../../global/broadcastApi')
+const path = require('path')
+const fs = require('fs')
 
 exports.sentUsinInterval = function (messageData, page, postingItem, subscribersCount, req, delay) {
   let current = 0
@@ -41,6 +43,19 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                     broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                       .then(response => {
                         console.log('response from callBroadcastMessagesEndpoint', response)
+                        if (messageData[current].attachment && messageData[current].attachment.type === 'video' &&
+                        messageData[current].attachment.payload.url.includes('kiboengage.cloudkibo.com')) {
+                          let url = messageData[current].attachment.payload.url
+                          let filename = url.split('/')[url.split('/').length - 1]
+                          let dir = path.resolve(__dirname, '../../../../broadcastFiles/userfiles')
+                          fs.unlink(dir + '/' + filename, function (err) {
+                            if (err) {
+                              logger.serverLog(TAG, err, 'error')
+                            } else {
+                              console.log('unlinked')
+                            }
+                          })
+                        }
                         if (i === limit - 1) {
                           if (response.status === 'success') {
                             utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
