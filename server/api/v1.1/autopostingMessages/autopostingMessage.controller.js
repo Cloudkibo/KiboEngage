@@ -1,5 +1,6 @@
 const AutopostingMessages = require('./autopostingMessages.datalayer')
 const utility = require('../utility')
+const mongoose = require('mongoose')
 
 exports.getMessages = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -41,7 +42,7 @@ exports.getMessages = function (req, res) {
         )
           .then(messagesCount => {
             let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id, _id: { $lt: req.body.last_id }}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
+            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id, _id: { $lt: mongoose.Types.ObjectId(req.body.last_id) }}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
               .then(autopostingMessages => {
                 populatePages(autopostingMessages, req)
                   .then(result => {
@@ -66,7 +67,7 @@ exports.getMessages = function (req, res) {
         )
           .then(messagesCount => {
             let recordsToSkip = Math.abs(req.body.requested_page * req.body.number_of_records)
-            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id, _id: { $gt: req.body.last_id }}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
+            AutopostingMessages.findAutopostingMessageUsingAggregate({companyId: companyUser.companyId, autopostingId: req.params.id, _id: { $gt: mongoose.Types.ObjectId(req.body.last_id) }}, undefined, undefined, req.body.number_of_records, { datetime: -1 }, recordsToSkip)
               .then(autopostingMessages => {
                 populatePages(autopostingMessages, req)
                   .then(result => {
