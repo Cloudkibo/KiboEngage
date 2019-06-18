@@ -34,35 +34,37 @@ exports.twitterwebhook = function (req, res) {
     .then(autopostings => {
       logger.serverLog(TAG, `autoposting found ${JSON.stringify(req.body)}`, 'debug')
       autopostings.forEach(postingItem => {
-        let pagesFindCriteria = {
-          companyId: postingItem.companyId,
-          connected: true
-        }
-        if (postingItem.isSegmented) {
-          if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
-            pagesFindCriteria = _.merge(pagesFindCriteria, {
-              pageId: {
-                $in: postingItem.segmentationPageIds
-              }
-            })
+        if (logicLayer.checkFilterStatus(postingItem, req)) {
+          let pagesFindCriteria = {
+            companyId: postingItem.companyId,
+            connected: true
           }
-        }
-        utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
-          .then(pages => {
-            pages.forEach(page => {
-              if (postingItem.actionType === 'messenger') {
-                sendToMessenger(postingItem, page, req)
-              } else if (postingItem.actionType === 'facebook') {
-                postOnFacebook(postingItem, page, req)
-              } else if (postingItem.actionType === 'both') {
-                sendToMessenger(postingItem, page, req)
-                postOnFacebook(postingItem, page, req)
-              }
+          if (postingItem.isSegmented) {
+            if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
+              pagesFindCriteria = _.merge(pagesFindCriteria, {
+                pageId: {
+                  $in: postingItem.segmentationPageIds
+                }
+              })
+            }
+          }
+          utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
+            .then(pages => {
+              pages.forEach(page => {
+                if (postingItem.actionType === 'messenger') {
+                  sendToMessenger(postingItem, page, req)
+                } else if (postingItem.actionType === 'facebook') {
+                  postOnFacebook(postingItem, page, req)
+                } else if (postingItem.actionType === 'both') {
+                  sendToMessenger(postingItem, page, req)
+                  postOnFacebook(postingItem, page, req)
+                }
+              })
             })
-          })
-          .catch(err => {
-            if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
-          })
+            .catch(err => {
+              if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
+            })
+        }
       })
     })
     .catch(err => {

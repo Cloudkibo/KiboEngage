@@ -107,6 +107,41 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
   })
 }
 
+exports.checkFilterStatus = function (postingItem, req) {
+  if (postingItem.filterTweets) {
+    let filter = false
+    let text = ''
+    if (req.quote) {
+      text = req.quote + ' ' + getText(req.retweet)
+    } else if (req.retweet) {
+      text = getText(req.retweet)
+    } else if (req.tweet) {
+      text = getText(req.tweet)
+    }
+    for (let i = 0; i < postingItem.filterTags.length; i++) {
+      if (text.toLowerCase().includes(postingItem.filterTags[i].toLowerCase())) {
+        filter = true
+        break
+      }
+    }
+    if (filter) {
+      return true
+    } else {
+      return false
+    }
+  } else {
+    return true
+  }
+}
+
+const getText = (tweet) => {
+  if (tweet.truncated) {
+    return tweet.extended_tweet.full_text
+  } else {
+    return tweet.text
+  }
+}
+
 const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, actionType) => {
   return new Promise((resolve, reject) => {
     if (actionType === 'messenger') {
