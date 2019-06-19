@@ -35,35 +35,72 @@ exports.twitterwebhook = function (req, res) {
       logger.serverLog(TAG, `autoposting found ${JSON.stringify(req.body)}`, 'debug')
       autopostings.forEach(postingItem => {
         if (logicLayer.checkFilterStatus(postingItem, req)) {
-          let pagesFindCriteria = {
-            companyId: postingItem.companyId,
-            connected: true
-          }
-          if (postingItem.isSegmented) {
-            if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
-              pagesFindCriteria = _.merge(pagesFindCriteria, {
-                pageId: {
-                  $in: postingItem.segmentationPageIds
+          if (postingItem.moderateTweets) {
+            utility.callApi('pageadminsubscriptions/query', 'post', {purpose: 'findOne', match: {companyId: postingItem.companyId, pageId: postingItem.approvalChannel.pageId}}, '', 'kiboengage')
+              .then(pageadminsubscription => {
+                let messageData = logicLayer.prepareApprovalMessage(
+                  pageadminsubscription.subscriberId,
+                  postingItem,
+                  req
+                )
+                facebookApiCaller('v3.3', `me/messages?access_token=${postingItem.approvalChannel.pageAccessToken}`, 'post', messageData)
+                  .then(response => {
+                    if (response.body.error) {
+                      logger.serverLog(TAG, `Failed to send approval message ${JSON.stringify(response.body.error)}`, 'error')
+                    } else {
+                      logger.serverLog(TAG, `Approval message send successfully!`)
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to send approval message ${err}`, 'error')
+                  })
+                let tweetData = {
+                  autopostingId: postingItem._id,
+                  tweet: req.body,
+                  expiryTime: new Date(new Date().getTime() + 60 * 60 * 24 * 1000)
                 }
+                utility.callApi('tweets_queue', 'post', tweetData, '', 'kiboengage')
+                  .then(created => {
+                    logger.serverLog(TAG, 'Tweet has been pushed in queue', 'debug')
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to push tweet in queue ${err}`, 'error')
+                  })
               })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch page admin subscription ${err}`, 'error')
+              })
+          } else {
+            let pagesFindCriteria = {
+              companyId: postingItem.companyId,
+              connected: true
             }
-          }
-          utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
-            .then(pages => {
-              pages.forEach(page => {
-                if (postingItem.actionType === 'messenger') {
-                  sendToMessenger(postingItem, page, req)
-                } else if (postingItem.actionType === 'facebook') {
-                  postOnFacebook(postingItem, page, req)
-                } else if (postingItem.actionType === 'both') {
-                  sendToMessenger(postingItem, page, req)
-                  postOnFacebook(postingItem, page, req)
-                }
+            if (postingItem.isSegmented) {
+              if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
+                pagesFindCriteria = _.merge(pagesFindCriteria, {
+                  pageId: {
+                    $in: postingItem.segmentationPageIds
+                  }
+                })
+              }
+            }
+            utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
+              .then(pages => {
+                pages.forEach(page => {
+                  if (postingItem.actionType === 'messenger') {
+                    sendToMessenger(postingItem, page, req)
+                  } else if (postingItem.actionType === 'facebook') {
+                    postOnFacebook(postingItem, page, req)
+                  } else if (postingItem.actionType === 'both') {
+                    sendToMessenger(postingItem, page, req)
+                    postOnFacebook(postingItem, page, req)
+                  }
+                })
               })
-            })
-            .catch(err => {
-              if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
-            })
+              .catch(err => {
+                if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
+              })
+          }
         }
       })
     })

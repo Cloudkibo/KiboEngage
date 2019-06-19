@@ -134,6 +134,53 @@ exports.checkFilterStatus = function (postingItem, req) {
   }
 }
 
+exports.prepareApprovalMessage = function (recipientId, postingItem, req) {
+  let username = `@${req.tweetUser.screen_name}`
+  let tweetUrl = `https://twitter.com/statuses/${req.body.id_str}`
+  let forwardPayload = {
+    autopostingId: postingItem._id,
+    tweetId: req.body.id_str,
+    action: 'send_tweet'
+  }
+  let dontForwardPayload = {
+    autopostingId: postingItem._id,
+    tweetId: req.body.id_str,
+    action: 'do_not_send_tweet'
+  }
+  let messageData = {
+    'recipient': {
+      'id': recipientId
+    },
+    'message': JSON.stringify({
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'button',
+          'text': `A new tweet has come from ${username}. Would you like to forward this to your subscribers?`,
+          'buttons': [
+            {
+              'type': 'web_url',
+              'title': 'View Tweet',
+              'url': tweetUrl
+            },
+            {
+              'type': 'postback',
+              'title': 'Forward',
+              'payload': JSON.stringify(forwardPayload)
+            },
+            {
+              'type': 'postback',
+              'title': 'Don\'t Forward',
+              'payload': JSON.stringify(dontForwardPayload)
+            }
+          ]
+        }
+      }
+    })
+  }
+  return messageData
+}
+
 const getText = (tweet) => {
   if (tweet.truncated) {
     return tweet.extended_tweet.full_text
