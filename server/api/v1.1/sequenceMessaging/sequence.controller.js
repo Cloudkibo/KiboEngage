@@ -79,7 +79,7 @@ exports.allSequences = function (req, res) {
 }
 
 exports.subscriberSequences = function (req, res) {
-  SequenceDatalayer.genericFindForSequenceSubscribers({ subscriberId: req.params.id, status: 'subscribed' })
+  SequenceDatalayer.genericFindForSequenceSubscribers({ subscriberId: req.params.id, status: 'subscribed', populate: 'sequenceId' })
     .then(subscribers => {
       return res.status(200).json({ status: 'success', payload: subscribers })
     })
@@ -635,11 +635,13 @@ exports.unsubscribeToSequence = function (req, res) {
       req.body.subscriberIds.forEach(subscriberId => {
         SequenceDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
           .then(result => {
+            console.log('removed', result)
             SequenceMessageQueueDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
               .then(result => {
                 utility.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
                   .then(subscriber => {
                     if (subscriber) {
+                      console.log('subscriber in remove', subscriber)
                       SequenceDatalayer.genericFindForSequence({companyId: subscriber.companyId, 'trigger.event': 'unsubscribes_from_other_sequence', 'trigger.value': req.body.sequenceId})
                         .then(sequences => {
                           if (sequences.length > 0) {
@@ -675,12 +677,16 @@ exports.unsubscribeToSequence = function (req, res) {
                                       .catch(err => {
                                         logger.serverLog(TAG, `Failed to create sequence subscriber ${err}`, 'error')
                                       })
+                                  } else {
+                                    return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
                                   }
                                 })
                                 .catch(err => {
                                   logger.serverLog(TAG, `Failed to fecth sequence messages ${err}`, 'error')
                                 })
                             })
+                          } else {
+                            return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
                           }
                         })
                         .catch(err => {
