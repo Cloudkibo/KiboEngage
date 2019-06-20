@@ -71,41 +71,46 @@ exports.twitterwebhook = function (req, res) {
                 logger.serverLog(TAG, `Failed to fetch page admin subscription ${err}`, 'error')
               })
           } else {
-            let pagesFindCriteria = {
-              companyId: postingItem.companyId,
-              connected: true
-            }
-            if (postingItem.isSegmented) {
-              if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
-                pagesFindCriteria = _.merge(pagesFindCriteria, {
-                  pageId: {
-                    $in: postingItem.segmentationPageIds
-                  }
-                })
-              }
-            }
-            utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
-              .then(pages => {
-                pages.forEach(page => {
-                  if (postingItem.actionType === 'messenger') {
-                    sendToMessenger(postingItem, page, req)
-                  } else if (postingItem.actionType === 'facebook') {
-                    postOnFacebook(postingItem, page, req)
-                  } else if (postingItem.actionType === 'both') {
-                    sendToMessenger(postingItem, page, req)
-                    postOnFacebook(postingItem, page, req)
-                  }
-                })
-              })
-              .catch(err => {
-                if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
-              })
+            sendTweet(postingItem, req)
           }
         }
       })
     })
     .catch(err => {
       logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`, 'error')
+    })
+}
+
+const sendTweet = (postingItem, req) => {
+  console.log('in sendTweet')
+  let pagesFindCriteria = {
+    companyId: postingItem.companyId,
+    connected: true
+  }
+  if (postingItem.isSegmented) {
+    if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
+      pagesFindCriteria = _.merge(pagesFindCriteria, {
+        pageId: {
+          $in: postingItem.segmentationPageIds
+        }
+      })
+    }
+  }
+  utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
+    .then(pages => {
+      pages.forEach(page => {
+        if (postingItem.actionType === 'messenger') {
+          sendToMessenger(postingItem, page, req)
+        } else if (postingItem.actionType === 'facebook') {
+          postOnFacebook(postingItem, page, req)
+        } else if (postingItem.actionType === 'both') {
+          sendToMessenger(postingItem, page, req)
+          postOnFacebook(postingItem, page, req)
+        }
+      })
+    })
+    .catch(err => {
+      if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
     })
 }
 
@@ -150,6 +155,7 @@ const sendToMessenger = (postingItem, page, req) => {
 const postOnFacebook = (postingItem, page, req) => {
   logicLayer.handleTwitterPayload(req, {}, page, 'facebook')
     .then(messageData => {
+      console.log('response from handleTwitterPayload')
       let newPost = {
         pageId: page._id,
         companyId: postingItem.companyId,
@@ -221,3 +227,5 @@ const postOnFacebook = (postingItem, page, req) => {
       logger.serverLog(TAG, `Failed to prepare data ${err}`, 'error')
     })
 }
+
+exports.sendTweet = sendTweet

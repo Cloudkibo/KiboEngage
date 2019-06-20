@@ -35,4 +35,7 @@ router.delete('/:id',
   // auth.doesRolePermitsThisAction('autopostingPermission'),
   controller.destroy)
 
+// endpoints to call from Webhook
+router.post('/handleTweetModeration', auth.isItWebhookServer(), controller.handleTweetModeration)
+
 module.exports = router
