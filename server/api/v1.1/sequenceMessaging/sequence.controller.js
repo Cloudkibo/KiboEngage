@@ -635,13 +635,11 @@ exports.unsubscribeToSequence = function (req, res) {
       req.body.subscriberIds.forEach(subscriberId => {
         SequenceDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
           .then(result => {
-            console.log('removed', result)
             SequenceMessageQueueDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
               .then(result => {
                 utility.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
                   .then(subscriber => {
                     if (subscriber) {
-                      console.log('subscriber in remove', subscriber)
                       SequenceDatalayer.genericFindForSequence({companyId: subscriber.companyId, 'trigger.event': 'unsubscribes_from_other_sequence', 'trigger.value': req.body.sequenceId})
                         .then(sequences => {
                           if (sequences.length > 0) {

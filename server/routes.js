@@ -12,6 +12,7 @@ module.exports = function (app) {
   const env = app.get('env')
   // API middlewares go here
   app.use('/api/v1/test', require('./api/v1/test'))
+  app.use('/api/email_verification', require('./api/v1.1/verificationtoken'))
   app.use('/api/api_settings', require('./api/v1.1/api_settings'))
   app.use('/api/messengerEvents', require('./api/v1.1/messengerEvents'))
   app.use('/api/automationQueue', require('./api/v1.1/automationQueue'))
