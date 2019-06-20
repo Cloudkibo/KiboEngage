@@ -76,6 +76,7 @@ exports.fetch = function(req, res) {
         for (let i = 0; i < subscriptionInfo.length; i++) {
           utility.callApi(`user/query`, 'post', { _id: subscriptionInfo[i].userId }, req.headers.authorization)
             .then(user => {
+              //checking
               subscriptionInfo[i].userId = user
               if (i === subscriptionInfo.length - 1) {
                 return res.status(200)
