@@ -79,7 +79,7 @@ exports.allSequences = function (req, res) {
 }
 
 exports.subscriberSequences = function (req, res) {
-  SequenceDatalayer.genericFindForSequenceSubscribers({ subscriberId: req.params.id, status: 'subscribed' })
+  SequenceDatalayer.genericFindForSequenceSubscribers({ subscriberId: req.params.id, status: 'subscribed', populate: 'sequenceId' })
     .then(subscribers => {
       return res.status(200).json({ status: 'success', payload: subscribers })
     })
@@ -675,12 +675,16 @@ exports.unsubscribeToSequence = function (req, res) {
                                       .catch(err => {
                                         logger.serverLog(TAG, `Failed to create sequence subscriber ${err}`, 'error')
                                       })
+                                  } else {
+                                    return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
                                   }
                                 })
                                 .catch(err => {
                                   logger.serverLog(TAG, `Failed to fecth sequence messages ${err}`, 'error')
                                 })
                             })
+                          } else {
+                            return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
                           }
                         })
                         .catch(err => {
