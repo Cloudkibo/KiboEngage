@@ -527,6 +527,12 @@ exports.AllSubscribers = function (req, res) {
         .then(subscribers => {
           console.log('subscribers in All subscribers', subscribers)
           downloadSubscribersData(subscribers)
+            .then(result => {
+              res.status(200).json({
+                status: 'success',
+                payload: result.data
+              })
+            })
         }) 
         .catch(error => {
           return res.status(500).json({
@@ -630,12 +636,34 @@ exports.uploadFile = function (req, res) {
 }
 
 function downloadSubscribersData (subscribers) {
-  console.log('download subscribers Data')
+  let subscriberPayload = []
   return new Promise(function (resolve, reject) { 
-    for (let i = 0; i < pages.length; i++) {
+    for (let i = 0; i < subscribers.length; i++) {
+      subscriberPayload.push({
+        Name: subscribers[i].firstName + ' ' + subscribers[i].lastName,
+        Gender: subscribers[i].gender,
+        Locale: subscribers[i].locale,
+        PageName: subscribers[i].pageId.pageName
+      })
 
+      if (i === subscribers.length - 1) {
+        var info = subscriberPayload
+        var keys = []
+        var val = info[0]
+
+        for (var k in val) {
+          var subKey = k
+          keys.push(subKey)
+        }
+        const opts = { keys }
+        try {
+          const csv = parse(info, opts)
+          resolve({data: csv})
+        } catch (err) {
+          console.error('error at parse', err)
+        }
+      }
     }
-
   })
 }
 
