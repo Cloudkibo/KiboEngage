@@ -1,3 +1,4 @@
+// TODO REMOVE THIS - SOJHARO
 let mongoose = require('mongoose')
 let Schema = mongoose.Schema
 const storeAnalyticsSchema = new Schema({
