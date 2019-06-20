@@ -519,6 +519,29 @@ exports.sessionsGraph = function (req, res) {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch sessions ${JSON.stringify(error)}`})
     })
 }
+
+exports.AllSubscribers = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+    .then(companyuser => {
+      utility.callApi(`subscribers/query`, 'post', {pageId: req.params.pageid}, req.headers.authorization) // fetch subscribers of company
+        .then(subscribers => {
+          console.log('subscribers in All subscribers', subscribers)
+          downloadSubscribersData(subscribers)
+        }) 
+        .catch(error => {
+          return res.status(500).json({
+            status: 'failed',
+            payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
+          })
+        })
+    })
+    .catch(error => {
+      return res.status(500).json({
+        status: 'failed',
+        payload: `Failed to fetch company user ${JSON.stringify(error)}`
+      })
+    })
+}
 exports.getAllSubscribers = function (req, res) {
   let criteria = LogicLayer.getAllSubscribersCriteria(req.params.pageid, req.body)
   utility.callApi(`subscribers/aggregate`, 'post', criteria.countCriteria, req.headers.authorization)
@@ -583,10 +606,12 @@ exports.surveyDetails = function (req, res) {
     })
 }
 exports.uploadFile = function (req, res) {
+  console.log('upload file function')
   utility.callApi(`user/query`, 'post', {}, req.headers.authorization)
     .then(users => {
       utility.callApi(`pages/query`, 'post', {}, req.headers.authorization)
         .then(pages => {
+          console.log('upload file function in Pages')
           downloadCSV(pages, req)
             .then(result => {
               res.status(200).json({
@@ -604,7 +629,18 @@ exports.uploadFile = function (req, res) {
     })
 }
 
+function downloadSubscribersData (subscribers) {
+  console.log('download subscribers Data')
+  return new Promise(function (resolve, reject) { 
+    for (let i = 0; i < pages.length; i++) {
+
+    }
+
+  })
+}
+
 function downloadCSV (pages, req) {
+  console.log('download csv function')
   return new Promise(function (resolve, reject) {
     let usersPayload = []
     for (let i = 0; i < pages.length; i++) {
@@ -642,6 +678,7 @@ function downloadCSV (pages, req) {
                           }
                           const opts = { keys }
                           try {
+                            console.log('opts in backdoor', opts)
                             const csv = parse(info, opts)
                             resolve({data: csv})
                           } catch (err) {
