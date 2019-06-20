@@ -152,8 +152,10 @@ const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, 
         payload.push(MessengerPayload.prepareMessengerPayloadForImage(tweet, savedMsg, tweetId, userName))
         resolve(payload)
       } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
-        payload.push(MessengerPayload.prepareMessengerPayloadForVideo(tweet, savedMsg, tweetId, userName, page))
-        resolve(payload)
+        MessengerPayload.prepareMessengerPayloadForVideo(tweet, savedMsg, tweetId, userName, page).then(result => {
+          payload.push(result)
+          resolve(payload)
+        })
       }
     } else if (urls.length > 0 && button) {
       MessengerPayload.prepareMessengerPayloadForLink(urls, savedMsg, tweetId, userName).then(linkpayload => {
