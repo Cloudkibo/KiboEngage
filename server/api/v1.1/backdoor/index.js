@@ -28,6 +28,10 @@ router.post('/getAllSubscribers/:pageid',
   auth.isAuthorizedSuperUser(),
   controller.getAllSubscribers) // pagination
 
+router.get('/allsubscribers/:pageid',
+  auth.isAuthorizedSuperUser(),
+  controller.AllSubscribers)
+
 router.post('/allUserBroadcasts/:userid',
   validate({body: validationSchema.allUserBroadcastsPayload}),
   auth.isAuthorizedSuperUser(),
@@ -77,5 +81,9 @@ router.get('/allLocales',
 router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.sendEmail)
 
 router.get('/uploadFile', auth.isAuthorizedSuperUser(), controller.uploadFile)
+
+router.post('/fetchAutopostingDetails',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchAutopostingDetails)
 
 module.exports = router

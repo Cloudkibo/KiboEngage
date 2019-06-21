@@ -86,3 +86,27 @@ exports.countAutopostingDocuments = (filter) => {
   }
   return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
 }
+exports.findAutopostingUsingAggregate = (match, group, lookup, limit, sort, skip) => {
+  let query = {
+    purpose: 'aggregate',
+    match: match
+  }
+  if (group) query.group = group
+  if (lookup) query.lookup = lookup
+  if (limit) query.limit = limit
+  if (sort) query.sort = sort
+  if (skip) query.skip = skip
+  return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
+}
+exports.findAutopostingUsingAggregateForKiboDash = (match, group, lookup, limit, sort, skip) => {
+  let query = {
+    purpose: 'aggregate',
+    match: match
+  }
+  if (group) query.group = group
+  if (lookup) query.lookup = lookup
+  if (limit) query.limit = limit
+  if (sort) query.sort = sort
+  if (skip) query.skip = skip
+  return callApi(`autoposting/kiboDashQuery`, 'post', query, '', 'kiboengage')
+}

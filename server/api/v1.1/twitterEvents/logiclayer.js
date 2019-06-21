@@ -1,10 +1,7 @@
-const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
-const config = require('../../../config/environment/index')
-const needle = require('needle')
-let request = require('request')
-const og = require('open-graph')
+const MessengerPayload = require('./messengerPayload')
+const FacebookPayload = require('./facebookPayload')
 
-exports.handleTwitterPayload = function (req, savedMsg, page) {
+exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
   return new Promise((resolve, reject) => {
     let tagline = ''
     if (req.quote) {
@@ -23,7 +20,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
           savedMsg,
           req.body.id_str,
           req.body.user.name,
-          page).then(result => {
+          page,
+          actionType
+        ).then(result => {
           resolve(result)
         })
       } else {
@@ -35,7 +34,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
           savedMsg,
           req.body.id_str,
           req.body.user.name,
-          page).then(result => {
+          page,
+          actionType
+        ).then(result => {
           resolve(result)
         })
       }
@@ -51,7 +52,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
           savedMsg,
           req.body.id_str,
           req.body.user.name,
-          page).then(result => {
+          page,
+          actionType
+        ).then(result => {
           resolve(result)
         })
       } else {
@@ -63,7 +66,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
           savedMsg,
           req.body.id_str,
           req.body.user.name,
-          page).then(result => {
+          page,
+          actionType
+        ).then(result => {
           resolve(result)
         })
       }
@@ -78,7 +83,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
           savedMsg,
           req.body.id_str,
           req.body.user.name,
-          page).then(result => {
+          page,
+          actionType
+        ).then(result => {
           resolve(result)
         })
       } else {
@@ -90,7 +97,9 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
           savedMsg,
           req.body.id_str,
           req.body.user.name,
-          page).then(result => {
+          page,
+          actionType
+        ).then(result => {
           resolve(result)
         })
       }
@@ -98,7 +107,37 @@ exports.handleTwitterPayload = function (req, savedMsg, page) {
   })
 }
 
-const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page) => {
+const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, actionType) => {
+  return new Promise((resolve, reject) => {
+    if (actionType === 'messenger') {
+      resolve(handleTweetForMessenger(tagline, text, tweet, urls, savedMsg, tweetId, userName, page))
+    } else if (actionType === 'facebook') {
+      resolve(handleTweetForFacebook(tagline, text, tweet, urls, tweetId, userName, page))
+    }
+  })
+}
+
+const handleTweetForFacebook = (tagline, text, tweet, urls, tweetId, userName, page) => {
+  return new Promise((resolve, reject) => {
+    let twitterUrls = urls.map((url) => url.url)
+    let separators = [' ', '\n']
+    let textArray = text.split(new RegExp('[' + separators.join('') + ']', 'g'))
+    text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
+    if (tweet && tweet.media && tweet.media.length > 0) {
+      if (tweet.media[0].type === 'photo') {
+        resolve(FacebookPayload.prepareFacebookPayloadForImage(text, tweet, tweetId))
+      } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
+        resolve(FacebookPayload.prepareFacebookPayloadForVideo(text, tweet, tweetId))
+      }
+    } else if (urls.length > 0) {
+      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId, urls))
+    } else {
+      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId))
+    }
+  })
+}
+
+const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page) => {
   return new Promise((resolve, reject) => {
     let button = !(tweet && tweet.media && tweet.media.length > 0)
     let payload = []
@@ -107,18 +146,19 @@ const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, pa
     let textArray = text.split(new RegExp('[' + separators.join('') + ']', 'g'))
     // let textArray = text.split(' \n')
     text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
-    payload.push(prepareFacbookPayloadForText('text', {text}, savedMsg, tweetId, button))
+    payload.push(MessengerPayload.prepareMessengerPayloadForText('text', {text}, savedMsg, tweetId, button))
     if (tweet && tweet.media && tweet.media.length > 0) {
       if (tweet.media[0].type === 'photo') {
-        payload.push(prepareFacbookPayloadForImage(tweet, savedMsg, tweetId, userName))
+        payload.push(MessengerPayload.prepareMessengerPayloadForImage(tweet, savedMsg, tweetId, userName))
         resolve(payload)
       } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
-        payload.push(prepareFacbookPayloadForVideo(tweet, savedMsg, tweetId, userName, page))
-        resolve(payload)
+        MessengerPayload.prepareMessengerPayloadForVideo(tweet, savedMsg, tweetId, userName, page).then(result => {
+          payload.push(result)
+          resolve(payload)
+        })
       }
     } else if (urls.length > 0 && button) {
-      prepareFacbookPayloadForLink(urls, savedMsg, tweetId, userName).then(linkpayload => {
-        console.log('linkpayload', linkpayload)
+      MessengerPayload.prepareMessengerPayloadForLink(urls, savedMsg, tweetId, userName).then(linkpayload => {
         payload.push(linkpayload.messageData)
         if (!linkpayload.showButton) { // remove button from text
           payload[0] = {
@@ -135,149 +175,6 @@ const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, pa
   })
 }
 
-const prepareFacbookPayloadForVideo = (tweet, savedMsg, tweetId, userName, page) => {
-  // return new Promise((resolve, reject) => {
-  //   let url = getVideoURL(tweet.media[0].video_info.variants)
-  //   uploadOnFaceBook(url, page).then(attachmentId => {
-  //     let messageData = {
-  //       'attachment': {
-  //         'type': 'template',
-  //         'payload': {
-  //           'template_type': 'media',
-  //           'elements': [
-  //             {
-  //               'attachment_id': attachmentId,
-  //               'media_type': 'video',
-  //               'buttons': body.buttons
-  //             }
-  //           ]
-  //         }
-  //       }
-  //     }
-  //     resolve(messageData)
-  //   })
-  // })
-  let messageData = {
-    'attachment': {
-      'type': 'video',
-      'payload': {
-        'url': getVideoURL(tweet.media[0].video_info.variants)
-      }
-    }
-  }
-  return messageData
-}
-
-const prepareFacbookPayloadForLink = (urls, savedMsg, tweetId, userName) => {
-  return new Promise(function (resolve, reject) {
-    prepareGalleryForLink(urls, savedMsg, tweetId).then(gallery => {
-      let messageData = {
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'generic',
-            'elements': gallery
-          }
-        }
-      }
-      resolve({messageData: messageData, showButton: !(gallery.length > 0)})
-    })
-  })
-}
-
-const prepareGalleryForLink = (urls, savedMsg, tweetId) => {
-  return new Promise(function (resolve, reject) {
-    let gallery = []
-    let buttons = []
-    prepareViewTweetButton(savedMsg, tweetId).then(button => {
-      buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
-    })
-    for (let i = 0; i < urls.length; i++) {
-      og(urls[i].expanded_url, (err, meta) => {
-        if (err) {
-          console.log('error in fetching metdata')
-        }
-        if (meta !== {} && meta.image && meta.title) {
-          console.log('metadata', meta)
-          gallery.push({
-            'title': meta.title,
-            'subtitle': 'kibopush.com',
-            'image_url': meta.image.url,
-            'buttons': buttons
-          })
-          if (i === urls.length - 1) {
-            resolve(gallery)
-          }
-        } else {
-          if (i === urls.length - 1) {
-            resolve(gallery)
-          }
-        }
-      })
-    }
-  })
-}
-
-const prepareFacbookPayloadForImage = (tweet, savedMsg, tweetId, userName) => {
-  let gallery = prepareGallery(tweet.media, savedMsg, tweetId, userName)
-  let messageData = {
-    'attachment': {
-      'type': 'template',
-      'payload': {
-        'template_type': 'generic',
-        'elements': gallery
-      }
-    }
-  }
-  return messageData
-}
-
-function prepareGallery (media, savedMsg, tweetId, userName) {
-  let length = media.length <= 10 ? media.length : 10
-  let elements = []
-  let buttons = []
-  prepareViewTweetButton(savedMsg, tweetId).then(button => {
-    buttons.push(button)
-    buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
-  })
-  for (let i = 0; i < length; i++) {
-    elements.push({
-      'title': userName,
-      'subtitle': 'kibopush.com',
-      'image_url': media[i].media_url,
-      'buttons': buttons
-    })
-  }
-  return elements
-}
-
-const prepareFacbookPayloadForText = (type, body, savedMsg, tweetId, showButton) => {
-  let messageData = {}
-  let buttons = []
-  if (showButton) {
-    prepareViewTweetButton(savedMsg, tweetId).then(button => {
-      buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, tweetId, body))
-    })
-    messageData = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'button',
-          'text': body.text,
-          'buttons': buttons
-        }
-      }
-    }
-  } else {
-    messageData = {
-      'text': body.text
-    }
-  }
-  return messageData
-}
-
 const prepareText = (twitterUrls, textArray, urls) => {
   for (let i = 0; i < textArray.length; i++) {
     let index = twitterUrls.indexOf(textArray[i])
@@ -289,110 +186,4 @@ const prepareText = (twitterUrls, textArray, urls) => {
   }
   let text = textArray.join(' ')
   return text !== '' ? `\n${text}` : text
-}
-
-const prepareViewTweetButton = (savedMsg, tweetId) => {
-  return new Promise(function (resolve, reject) {
-    let URLObject = {
-      originalURL: `https://twitter.com/statuses/${tweetId}`,
-      module: {
-        id: savedMsg._id,
-        type: 'autoposting'
-      }
-    }
-    URLDataLayer.createURLObject(URLObject)
-      .then(savedurl => {
-        let newURL = config.domain + '/api/URL/' + savedurl._id
-        let button = {
-          'type': 'web_url',
-          'url': newURL,
-          'title': 'View Tweet'
-        }
-        resolve(button)
-      })
-  })
-}
-const prepareShareButton = (savedMsg, tweetId, body, type) => {
-  let button
-  if (type && type === 'card') {
-    button = {
-      'type': 'element_share'
-    }
-  } else {
-    button = {
-      'type': 'element_share',
-      'share_contents': {
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'generic',
-            'elements': [{
-              'title': body.text,
-              'subtitle': 'kibopush.com',
-              'default_action': {
-                'type': 'web_url',
-                'url': `https://twitter.com/statuses/${tweetId}`
-              },
-              'buttons': []
-            }]
-          }
-        }
-      }
-    }
-  }
-  return button
-}
-
-function getVideoURL (variants) {
-  let url = ''
-  for (let i = 0; i < variants.length; i++) {
-    if (variants[i].content_type === 'video/mp4' && (variants[i].bitrate === 2176000 || variants[i].bitrate === 0)) {
-      url = variants[i].url
-      break
-    }
-  }
-  return url
-}
-
-function uploadOnFaceBook (url, page) {
-  return new Promise((resolve, reject) => {
-    needle.get(
-      `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
-      (err, resp2) => {
-        if (err) {
-          console.log('error in fetching page access_token', JSON.stringify(err))
-        }
-        let pageAccessToken = resp2.body.access_token
-        // let fileReaderStream = fs.createReadStream(payload.fileurl)
-        const messageData = {
-          'message': JSON.stringify({
-            'attachment': {
-              'type': 'video',
-              'payload': {
-                'is_reusable': true,
-                'url': url
-              }
-            }
-          })
-        }
-        request(
-          {
-            'method': 'POST',
-            'json': true,
-            'formData': messageData,
-            'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
-          },
-          function (err, resp) {
-            console.log('response from uploading attachment', JSON.stringify(resp.body))
-            if (err) {
-              console.log('error in uploading attachment on facebook', JSON.stringify(err))
-              reject(err)
-            } else if (resp.statusCode !== 200) {
-              reject(resp)
-            } else {
-              resolve(resp.body.attachment_id)
-            }
-          })
-      })
-  })
 }

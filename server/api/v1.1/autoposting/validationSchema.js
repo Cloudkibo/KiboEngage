@@ -38,6 +38,9 @@ exports.editPayload = {
     isActive: {
       type: 'boolean'
     },
+    actionType: {
+      type: 'string'
+    },
     isSegmented: {
       type: 'boolean'
     },
