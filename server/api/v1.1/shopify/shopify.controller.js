@@ -9,14 +9,10 @@ const nonce = require('nonce')()
 const querystring = require('querystring')
 const crypto = require('crypto')
 const request = require('request-promise')
-const StoreInfo = require('./../abandoned_carts/StoreInfo.model')
 const Shopify = require('shopify-api-node')
-const StoreAnalytics = require('./../abandoned_carts/StoreAnalytics.model')
 const TAG = 'api/shopify/shopify.controller.js'
 const utility = require('../utility')
-// const Users = require('./../user/Users.model')
-// const needle = require('needle')
-// const Subscribers = require('../subscribers/Subscribers.model')
+const dataLayer = require('./shopify.datalayer')
 
 function registerWebhooks (shop, token) {
   const shopify = new Shopify({
@@ -170,27 +166,27 @@ exports.callback = function (req, res) {
           event: 'onload',
           src: config.domain + '/api/shopify/serveScript'
         })
-        const store = new StoreInfo({
+        const store = {
           userId: userId,
           pageId: pageId,
           shopUrl: shop,
           shopToken: accessToken,
           companyId: companyId
-        })
-        store.save((err, savedStore) => {
-          if (err) {
-            return res.status(500).json({ status: 'failed', error: err })
-          }
-          const storeAnalytics = new StoreAnalytics({
-            storeId: savedStore._id
-          })
-          storeAnalytics.save((err) => {
-            if (err) {
-              return res.status(500).json({ status: 'failed', error: err })
+        }
+        dataLayer.createStoreInfo(store)
+          .then(savedStore => {
+            const storeAnalytics = {
+              storeId: savedStore._id
             }
+            return dataLayer.createStoreAnalytics(storeAnalytics)
+          })
+          .then(storeAnalytics => {
+            logger.serverLog(TAG, `Store analytics created ${storeAnalytics}`)
             return res.redirect('/')
-          }) // store analytics save
-        })
+          })
+          .catch(err => {
+            return res.status(500).json({ status: 'failed', error: err })
+          })
       })
       .catch((error) => {
         res.status(error.statusCode >= 100 && error.statusCode < 600 ? error.statusCode : 500).send(error.error_description)
