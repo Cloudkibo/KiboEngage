@@ -70,6 +70,7 @@
     "request-promise": "^4.2.2",
     "sendgrid": "1.0.1",
     "serve-favicon": "^2.5.0",
+    "shopify-api-node": "^2.20.1",
     "socket.io": "^2.1.1",
     "socket.io-client": "^2.1.1",
     "socketio-jwt": "^4.5.0",
