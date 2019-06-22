@@ -16,9 +16,9 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	      if (e.event == 'rendered') {
 	        console.log("Plugin was rendered");
 	      } else if (e.event == 'checkbox') {
-	    	var checkboxState = e.state;
-	    	let subscribeButton = document.getElementById("kiboSubscribeButton")
-	    	subscribeButton.dataset.checkState = e.state
+	    	  var checkboxState = e.state;
+	    	  let subscribeButton = document.getElementById("kiboSubscribeButton")
+	    	  subscribeButton.dataset.checkState = e.state
 	        console.log("Checkbox state: " + checkboxState);
 	      } else if (e.event == 'not_you') {
 	        console.log("User clicked 'not you'");
@@ -64,9 +64,9 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	      'ref': 'SHOPIFY',
 	      'user_ref': userRef.value
 	    });
-		let kiboBox = document.getElementById("kiboBox")
-		kiboBox.innerHTML = '<p style="padding: 10px; margin: 10px;"> Thank you for subscribing! </p>'
-		setCookie('kibopushCartValue', userRef.value.split('-')[0])
+		  let kiboBox = document.getElementById("kiboBox")
+		  kiboBox.innerHTML = '<p style="padding: 10px; margin: 10px;"> Thank you for subscribing! </p>'
+		  setCookie('kibopushCartValue', userRef.value.split('-')[0])
 	  }
 
 	  const uniqueString = Math.floor(new Date().valueOf() * Math.random())
