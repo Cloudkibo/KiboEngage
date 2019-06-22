@@ -1,4 +1,4 @@
-const shopifyWebhook = require('../../v1/shopify/webhook.controller')
+const shopifyWebhook = require('../../v1.1/shopify/webhook.controller')
 const logger = require('../../../components/logger')
 const TAG = 'api/messengerEvents/shopify.controller.js'
 
