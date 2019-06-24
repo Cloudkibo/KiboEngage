@@ -239,11 +239,39 @@ exports.getAllResponses = function (req, res) {
 exports.getresponses = function (req, res) {
   PollResponseDataLayer.genericFindForPollResponse({pollId: req.params.id})
     .then(pollresponses => {
-      return res.status(200).json({status: 'success', payload: pollresponses})
+      if (pollresponses.length > 0) {
+        populateResponses(pollresponses, req)
+          .then(result => {
+            return res.status(200).json({status: 'success', payload: result})
+          })
+      } else {
+        return res.status(200).json({status: 'success', payload: pollresponses})
+      }
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch responses ${JSON.stringify(error)}`})
     })
+}
+
+function populateResponses (responses, req) {
+  return new Promise(function (resolve, reject) {
+    let payload = []
+    for (let i = 0; i < responses.length; i++) {
+      utility.callApi(`subscribers/query`, 'post', {_id: responses[i].subscriberId}, req.headers.authorization)
+        .then(subscribers => {
+          payload.push({
+            _id: responses[i]._id,
+            datetime: responses[i].datetime,
+            pollId: responses[i].pollId,
+            response: responses[i].response,
+            subscriberId: subscribers[0]
+          })
+          if (payload.length === responses.length) {
+            resolve(payload)
+          }
+        })
+    }
+  })
 }
 
 function sendPoll (req, res, planUsage, companyUsage, abort) {
