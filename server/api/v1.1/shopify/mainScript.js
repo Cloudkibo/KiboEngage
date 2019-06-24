@@ -5,7 +5,7 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	      appId            : ${appId},
 	      autoLogAppEvents : true,
 	      xfbml            : true,
-	      version          : 'v3.1'
+	      version          : 'v3.3'
 	    });
 		
 
