@@ -156,23 +156,6 @@ const postOnFacebook = (postingItem, page, req) => {
   logicLayer.handleTwitterPayload(req, {}, page, 'facebook')
     .then(messageData => {
       console.log('response from handleTwitterPayload')
-      let newPost = {
-        pageId: page._id,
-        companyId: postingItem.companyId,
-        autopostingType: 'twitter',
-        autopostingId: postingItem._id,
-        messageId: req.body.id.toString(),
-        post: messageData,
-        likes: 0,
-        clicked: 0
-      }
-      utility.callApi(`autoposting_fb_post`, 'post', newPost, '', 'kiboengage')
-        .then(created => {
-          logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `Failed to create post object ${err}`, 'error')
-        })
       if (messageData.type === 'text') {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
@@ -180,6 +163,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, response.body.post_id)
             }
           })
           .catch(err => {
@@ -192,6 +176,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, response.body.post_id)
             }
           })
           .catch(err => {
@@ -204,6 +189,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, response.body.post_id)
             }
           })
           .catch(err => {
@@ -216,6 +202,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, `${page.pageId}_${response.body.id}`)
             }
           })
           .catch(err => {
@@ -225,6 +212,27 @@ const postOnFacebook = (postingItem, page, req) => {
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to prepare data ${err}`, 'error')
+    })
+}
+
+const savePostObject = (postingItem, page, req, messageData, postId) => {
+  let newPost = {
+    pageId: page._id,
+    companyId: postingItem.companyId,
+    autopostingType: 'twitter',
+    autopostingId: postingItem._id,
+    messageId: req.body.id.toString(),
+    post: messageData,
+    postId: postId,
+    likes: 0,
+    comments: 0
+  }
+  utility.callApi(`autoposting_fb_post`, 'post', newPost, '', 'kiboengage')
+    .then(created => {
+      logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to create post object ${err}`, 'error')
     })
 }
 
