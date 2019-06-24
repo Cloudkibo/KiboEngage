@@ -159,6 +159,7 @@ exports.serveScript = function (req, res) {
   dataLayer.findOneStoreInfoGeneric({ shopUrl: shopUrl })
     .then(results => {
       const pageId = results.pageId
+      res.set('Content-Type', 'text/javascript')
       res.send(mainScript.renderJS(pageId, config.facebook.clientID, results.shopUrl))
     })
     .catch(err => res.status(500).json({ status: 'failed', error: err }))
