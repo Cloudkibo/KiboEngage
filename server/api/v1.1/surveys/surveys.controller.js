@@ -170,8 +170,15 @@ exports.show = function (req, res) {
         .then(questions => {
           surveyResponseDataLayer.genericFind({'surveyId': survey._id})
             .then(responses => {
-              return res.status(200)
-                .json({status: 'success', payload: {survey, questions, responses}})
+              if (responses.length > 0) {
+                populateResponses(responses, req).then(result => {
+                  return res.status(200)
+                    .json({status: 'success', payload: {survey, questions, responses: result}})
+                })
+              } else {
+                return res.status(200)
+                  .json({status: 'success', payload: {survey, questions, responses}})
+              }
             })
             .catch(error => {
               return res.status(500).json({status: `failed du to survey ${error}`, payload: error})
@@ -184,6 +191,28 @@ exports.show = function (req, res) {
     .catch(error => {
       return res.status(500).json({status: `failed due to response ${error}`, payload: error})
     })
+}
+
+function populateResponses (responses, req) {
+  return new Promise(function (resolve, reject) {
+    let payload = []
+    for (let i = 0; i < responses.length; i++) {
+      callApi.callApi(`subscribers/query`, 'post', {_id: responses[i].subscriberId}, req.headers.authorization)
+        .then(subscribers => {
+          payload.push({
+            questionId: responses[i].questionId,
+            surveyId: responses[i].surveyId,
+            _id: responses[i]._id,
+            datetime: responses[i].datetime,
+            response: responses[i].response,
+            subscriberId: subscribers[0]
+          })
+          if (payload.length === responses.length) {
+            resolve(payload)
+          }
+        })
+    }
+  })
 }
 
 // Get a single survey
