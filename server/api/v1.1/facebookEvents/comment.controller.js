@@ -12,6 +12,8 @@ exports.sendCommentReply = function (req, res) {
   logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`, 'debug')
   let send = true
   let postId = req.body.entry[0].changes[0].value.post_id
+  let verb = req.body.entry[0].changes[0].value.verb
+  // comment_capture work
   utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
     .then(post => {
       post = post[0]
@@ -49,5 +51,21 @@ exports.sendCommentReply = function (req, res) {
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch facebook posts ${JSON.stringify(err)}`, 'error')
+    })
+  // increment comment count for tweet post
+  let updateData = {
+    purpose: 'updateAll',
+    query: {
+      postId: postId
+    },
+    updated: verb === 'add' ? {$inc: { comments: 1 }} : {$inc: { comments: -1 }},
+    options: {}
+  }
+  utility.callApi('autoposting_fb_post', 'put', updateData, '', 'kiboengage')
+    .then(updated => {
+      logger.serverLog(TAG, 'Likes count updated successfully!')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update likes count ${err}`, 'error')
     })
 }
