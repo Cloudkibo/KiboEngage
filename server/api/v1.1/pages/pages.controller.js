@@ -190,6 +190,7 @@ exports.enable = function (req, res) {
                 .then(page => {
                   needle('get', `https://graph.facebook.com/v2.6/me?access_token=${page.accessToken}`)
                     .then(response => {
+                      console.log('get page access token response', response.body)
                       if (response.body.error) {
                         return res.status(400).json({status: 'failed', payload: response.body.error.message, type: 'invalid_permissions'})
                       } else {
@@ -267,6 +268,7 @@ exports.enable = function (req, res) {
                                                   method: 'POST'
                                                 }
                                                 needle.post(options.url, options, (error, response) => {
+                                                  console.log('response.body', response.body)
                                                   if (error) {
                                                     return res.status(500).json({
                                                       status: 'failed',
