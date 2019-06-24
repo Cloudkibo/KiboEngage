@@ -92,8 +92,8 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	  	console.log("User Ref before rendering", userRef)
 	  	messengerComponent.setAttribute('user_ref', userRef);
 	  	messengerComponent.setAttribute('ref', 'SHOPIFY');
-	  	messengerComponent.setAttribute('center_align', true);
-			messengerComponent.setAttribute('allow_login', true);
+	  	messengerComponent.setAttribute('center_align', 'true');
+			messengerComponent.setAttribute('allow_login', 'true');
 			messengerComponent.setAttribute("size", "large")
 			messengerComponent.setAttribute("skin", "light")
 	  	element.innerHTML = '<button onclick="confirmOptIn(this)" value=' + userRef + ' id="kiboSubscribeButton"  style="display:block; margin-left: 30px; margin-bottom:15px; color: white; background: skyblue; border: 0; padding: 5px;">Subscribe to get discount offers</button>'
