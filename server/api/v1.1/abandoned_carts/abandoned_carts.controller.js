@@ -4,6 +4,7 @@
 
 const logger = require('../../../components/logger')
 const utility = require('./utility_abandoned')
+const utilityApi = require('../utility')
 const dataLayer = require('./abandoned_carts.datalayer')
 const TAG = 'api/abandonedCarts/abandoned_carts.controller.js'
 // const Users = require('./../user/Users.model')
@@ -13,7 +14,7 @@ const TAG = 'api/abandonedCarts/abandoned_carts.controller.js'
 const _ = require('lodash')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -168,7 +169,7 @@ exports.deleteCheckoutInfo = function (req, res) {
 }
 
 exports.deleteAllInfo = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -233,7 +234,7 @@ exports.sendCheckout = function (req, res) {
 }
 
 exports.sendAnalytics = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -257,7 +258,7 @@ exports.sendAnalytics = function (req, res) {
 }
 
 exports.abandonedCheckouts = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
