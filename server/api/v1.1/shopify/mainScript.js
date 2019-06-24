@@ -2,7 +2,7 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
   return  `
 		window.fbAsyncInit = function() {
 	    FB.init({
-	      appId            : ${appId},
+	      appId            : '${appId}',
 	      autoLogAppEvents : true,
 	      xfbml            : true,
 	      version          : 'v3.3'
@@ -59,8 +59,8 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	  		return
 	  	}
 	    FB.AppEvents.logEvent('MessengerCheckboxUserConfirmation', null, {
-	      'app_id': ${appId},
-	      'page_id':  ${pageId},
+	      'app_id': '${appId}',
+	      'page_id':  '${pageId}',
 	      'ref': 'SHOPIFY',
 	      'user_ref': userRef.value
 	    });
@@ -82,13 +82,13 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 
 	  	let element = document.createElement('div')
 	  	element.id = 'kiboBox'
-	  	const pageId = ${pageId}
+	  	const pageId = '${pageId}'
 	  	let text = document.createTextNode('Hello From KiboPush: ' + pageId)
 	  	let messengerComponent = document.createElement('div')
 	  	messengerComponent.classList.add("fb-messenger-checkbox");
 	  	messengerComponent.setAttribute('origin', 'https://${shopUrl}/');
 	  	messengerComponent.setAttribute('page_id',  pageId);
-	  	messengerComponent.setAttribute('messenger_app_id',  ${appId});
+	  	messengerComponent.setAttribute('messenger_app_id',  '${appId}');
 	  	console.log("User Ref before rendering", userRef)
 	  	messengerComponent.setAttribute('user_ref', userRef);
 	  	messengerComponent.setAttribute('ref', 'SHOPIFY');
