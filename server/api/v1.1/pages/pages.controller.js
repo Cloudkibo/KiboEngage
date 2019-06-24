@@ -263,11 +263,12 @@ exports.enable = function (req, res) {
                                             utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}, req.headers.authorization) // update subscribers
                                               .then(updatedSubscriber => {
                                                 const options = {
-                                                  url: `https://graph.facebook.com/v2.6/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
+                                                  url: `https://graph.facebook.com/v3.3/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
                                                   qs: {access_token: page.accessToken},
                                                   method: 'POST'
                                                 }
-                                                needle.post(options.url, options, (error, response) => {
+                                                let body = {subscribed_fields: ['email', 'public_profile', 'pages_show_list', 'pages_messaging_subscriptions', 'manage_pages', 'pages_messaging', 'pages_messaging_phone_number']}
+                                                needle.post(options.url, body, (error, response) => {
                                                   console.log('response.body', response.body)
                                                   if (error) {
                                                     return res.status(500).json({
