@@ -15,6 +15,7 @@ const policyController = require('./policy.controller')
 const menuController = require('./menu.controller')
 const welcomeMessageController = require('./welcomeMessage.controller')
 const messengerAdsController = require('./messengerAds.controller')
+const shopifyController = require('./shopify.controller')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
@@ -29,6 +30,7 @@ router.post('/policyNotification', auth.isItWebhookServer(), policyController.po
 router.post('/menuReply', auth.isItWebhookServer(), menuController.index)
 router.post('/welcomeMessage', auth.isItWebhookServer(), welcomeMessageController.index)
 router.post('/messengerAdsReply', auth.isItWebhookServer(), messengerAdsController.index)
+router.post('/shopify', auth.isItWebhookServer(), shopifyController.shopify)
 
 
 module.exports = router

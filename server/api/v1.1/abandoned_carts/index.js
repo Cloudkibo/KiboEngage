@@ -60,7 +60,7 @@ router.post('/sendCheckout',
   controller.sendCheckout)
 
 router.get('/sendAnalytics',
- auth.isAuthenticated(),
- controller.sendAnalytics)
+  auth.isAuthenticated(),
+  controller.sendAnalytics)
 
 module.exports = router
