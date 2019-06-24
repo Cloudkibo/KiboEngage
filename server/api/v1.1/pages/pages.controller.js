@@ -267,7 +267,7 @@ exports.enable = function (req, res) {
                                                   qs: {access_token: page.accessToken},
                                                   method: 'POST'
                                                 }
-                                                let body = {subscribed_fields: ['email', 'public_profile', 'pages_show_list', 'pages_messaging_subscriptions', 'manage_pages', 'pages_messaging', 'pages_messaging_phone_number']}
+                                                let body = {subscribed_fields: ['email', 'pages_show_list', 'pages_messaging_subscriptions', 'manage_pages', 'pages_messaging', 'pages_messaging_phone_number']}
                                                 needle.post(options.url, body, (error, response) => {
                                                   console.log('response.body', response.body)
                                                   if (error) {
