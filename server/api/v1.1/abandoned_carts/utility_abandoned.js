@@ -111,6 +111,7 @@ const sendCheckout = (id, cb) => {
             fetchProductDetails(checkout.productIds, store, (err, details) => {
               if (err) {
                 logger.serverLog(TAG, `Error in fetching product details ${JSON.stringify(err)}`)
+                logger.serverLog(TAG, `Error in fetching product details ${err}`)
                 return cb(err, null)
               }
               logger.serverLog(TAG, 'Product Details: ' + details)
@@ -133,7 +134,7 @@ const sendCheckout = (id, cb) => {
         return cb(null, { status: 'Not Found', payload: 'Checkout not found' })
       }
     })
-    .catch(err => logger.serverLog(TAG, `Cannot find the checkout ${JSON.stringify(err)}`))
+    .catch(err => cb(err, null))
 }
 
 exports.sendCheckout = sendCheckout
