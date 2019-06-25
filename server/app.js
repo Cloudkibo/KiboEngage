@@ -5,6 +5,7 @@ const config = require('./config/environment/index')
 
 const cron = require('node-cron')
 const SequenceScript = require('../scripts/sequenceMessageQueueScript.js')
+const abandonedCartScript = require('../scripts/abandonedScript')
 
 const app = express()
 const httpApp = express()
@@ -21,6 +22,7 @@ if (config.env === 'production' || config.env === 'staging') {
 }
 
 cron.schedule('* * * * *', SequenceScript.runSequenceMessageQueueScript)
+cron.schedule('* * * * *', abandonedCartScript.runScript)
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
