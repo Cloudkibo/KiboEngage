@@ -34,7 +34,7 @@ function fetchProductDetails (productIds, store, callBack) {
 }
 
 function sendToFacebook (checkout, store, details) {
-  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId }, '')
+  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true }, '')
     .then(page => {
       logger.serverLog(TAG, `SHOPIFY Got the page info ${JSON.stringify(page)}`)
       page = page[0]
@@ -77,7 +77,7 @@ function sendToFacebook (checkout, store, details) {
           'recipient': {
             'user_ref': checkout.userRef
           },
-          'message': utility.prepareMessageData(page, checkout.userRef, payload, 'f_name', 'l_name')
+          'message': utility.prepareMessageData(checkout.userRef, payload, 'f_name', 'l_name')
         }
       }
       logger.serverLog(TAG, `SHOPIFY Sending the following info ${JSON.stringify(options)}`)
