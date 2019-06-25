@@ -78,13 +78,13 @@ function sendToFacebook (checkout, store, details) {
           'message': utility.prepareMessageData(page, checkout.userRef, payload, 'f_name', 'l_name')
         }
       }
-      logger.serverLog(TAG, `Sending the following info ${JSON.stringify(options)}`)
+      logger.serverLog(TAG, `SHOPIFY Sending the following info ${JSON.stringify(options)}`)
       request(options, function (error, response, body) {
-        logger.serverLog(TAG, `Sent the abandoned cart successfully ${JSON.stringify(response)} ${JSON.stringify(body)} ${JSON.stringify(error)}`)
+        logger.serverLog(TAG, `SHOPIFY Sent the abandoned cart successfully ${JSON.stringify(response)} ${JSON.stringify(body)} ${JSON.stringify(error)}`)
         if (!error && response.statusCode == 200) {
-          return logger.serverLog(TAG, `Sent the abandoned cart successfully`)
+          return logger.serverLog(TAG, `SHOPIFY Sent the abandoned cart successfully`)
         } else {
-          return logger.serverLog(TAG, `Batch send error ${JSON.stringify(response)}`)
+          return logger.serverLog(TAG, `SHOPIFY Batch send error ${JSON.stringify(response)}`)
         }
       })
     })
