@@ -266,7 +266,7 @@ exports.abandonedCheckouts = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      return dataLayer.findOneCheckOutInfo({ companyId: companyUser.companyId, isPurchased: false })
+      return dataLayer.findAllCheckoutInfo({ companyId: companyUser.companyId, isPurchased: false })
     })
     .then(result => res.status(200).json({ status: 'success', payload: result }))
     .catch(err => res.status(500).json({ status: 'failed', error: err }))
