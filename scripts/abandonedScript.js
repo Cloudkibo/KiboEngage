@@ -1,5 +1,5 @@
 const logger = require('../server/components/logger')
-const DataLayer = require('../server/api/v1.1/abandoned_carts.datalayer')
+const DataLayer = require('../server/api/v1.1/abandoned_carts/abandoned_carts.datalayer')
 const utility = require('../server/api/v1.1/abandoned_carts/utility_abandoned')
 const TAG = 'scripts/abandoned-script.js'
 
