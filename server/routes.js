@@ -18,6 +18,7 @@ module.exports = function (app) {
   app.use('/api/automationQueue', require('./api/v1.1/automationQueue'))
   app.use('/api/autoposting', require('./api/v1.1/autoposting'))
   app.use('/api/autoposting_messages', require('./api/v1.1/autopostingMessages'))
+  app.use('/api/autoposting_fb_posts', require('./api/v1.1/autopostingFbPosts'))
   app.use('/api/broadcasts', require('./api/v1.1/broadcasts'))
   app.use('/api/facebookEvents', require('./api/v1.1/facebookEvents'))
   app.use('/api/twitterEvents', require('./api/v1.1/twitterEvents'))
