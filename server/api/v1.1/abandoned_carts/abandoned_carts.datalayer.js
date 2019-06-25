@@ -29,7 +29,7 @@ exports.findAllCheckoutInfo = (payload) => {
     purpose: 'findAll',
     match: payload
   }
-  return callApi(`abandoned_cart/checkout/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/checkoutinfo/query`, 'post', query, '', 'kiboengage')
 }
 
 exports.findOneStoreInfo = (companyId) => {
