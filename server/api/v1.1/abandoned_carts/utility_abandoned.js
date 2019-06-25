@@ -27,13 +27,14 @@ function fetchProductDetails (productIds, store, callBack) {
         }
       })
       .catch((err) => {
+
         return callBack(err, null)
       })
   }
 }
 
 function sendToFacebook (checkout, store, details) {
-  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId }, req.headers.authorization)
+  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId }, '')
     .then(page => {
       let obj
       let gallery = []
@@ -111,7 +112,6 @@ const sendCheckout = (id, cb) => {
             fetchProductDetails(checkout.productIds, store, (err, details) => {
               if (err) {
                 logger.serverLog(TAG, `Error in fetching product details ${JSON.stringify(err)}`)
-                logger.serverLog(TAG, `Error in fetching product details ${err}`)
                 return cb(err, null)
               }
               logger.serverLog(TAG, 'Product Details: ' + details)
