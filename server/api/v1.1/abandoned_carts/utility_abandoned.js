@@ -36,6 +36,8 @@ function fetchProductDetails (productIds, store, callBack) {
 function sendToFacebook (checkout, store, details) {
   utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId }, '')
     .then(page => {
+      logger.serverLog(TAG, `SHOPIFY Got the page info ${JSON.stringify(page)}`)
+      page = page[0]
       let obj
       let gallery = []
       let payload = {}
