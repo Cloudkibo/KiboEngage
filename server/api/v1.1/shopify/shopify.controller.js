@@ -115,7 +115,10 @@ exports.index = function (req, res) {
 }
 
 exports.install = function (req, res) {
-  const { shop, hmac } = req.query
+  let { shop, hmac } = req.query
+  if (shop.indexOf('https://') < 0) {
+    shop = 'https://' + shop
+  }
   // DONE: Validate request is from Shopify
   const map = Object.assign({}, req.query)
   delete map['signature']
