@@ -96,5 +96,5 @@ exports.getCriteriasForAutopostingByTypethatCame = function (req, type) {
     },
     autoposting_type: type
   }
-  return {matchAggregate}
+  return matchAggregate
 }

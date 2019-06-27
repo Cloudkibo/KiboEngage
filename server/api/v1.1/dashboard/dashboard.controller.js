@@ -1184,7 +1184,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.facebook.matchAggregate, groupCriteriaMessages)
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.facebook, groupCriteriaMessages)
         .then(facebookAutopostingsCame => {
           callback(null, facebookAutopostingsCame)
         })
@@ -1193,7 +1193,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.twitter.matchAggregate, groupCriteriaMessages)
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.twitter, groupCriteriaMessages)
         .then(twitterAutopostingsCame => {
           callback(null, twitterAutopostingsCame)
         })
@@ -1202,7 +1202,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.wordpress.matchAggregate, groupCriteriaMessages)
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.wordpress, groupCriteriaMessages)
         .then(wordpressAutopostingsCame => {
           callback(null, wordpressAutopostingsCame)
         })
@@ -1211,7 +1211,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.facebook.matchAggregate, groupCriteriaGraph)
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.facebook, groupCriteriaGraph)
         .then(facebookAutopostingGraph => {
           callback(null, facebookAutopostingGraph)
         })
@@ -1220,7 +1220,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.twitter.matchAggregate, groupCriteriaGraph)
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.twitter, groupCriteriaGraph)
         .then(twitterAutopostingGraph => {
           callback(null, twitterAutopostingGraph)
         })
@@ -1229,7 +1229,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.wordpress.matchAggregate, groupCriteriaGraph)
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.wordpress, groupCriteriaGraph)
         .then(wordpressAutopostingGraph => {
           callback(null, wordpressAutopostingGraph)
         })
