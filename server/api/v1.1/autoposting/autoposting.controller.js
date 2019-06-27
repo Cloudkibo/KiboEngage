@@ -414,8 +414,10 @@ exports.handleTweetModeration = function (req, res) {
             }
             sendTweet(postingItem, req)
             deleteTweetQueue(query)
+            AutopostingDataLayer.findOneAutopostingObjectAndUpdate({_id: postingItem._id}, {$inc: {tweetsForwarded: 1}}, {})
           } else if (payload.action === 'do_not_send_tweet') {
             deleteTweetQueue(query)
+            AutopostingDataLayer.findOneAutopostingObjectAndUpdate({_id: postingItem._id}, {$inc: {tweetsIgnored: -1}}, {})
           }
         })
         .catch(err => {
