@@ -59,26 +59,38 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
       query)}`, 'debug')
   return query
 }
-exports.getCriteriasForAutopostingByType = function (body, companyUser, type) {
-  let matchAggregate = { companyId: companyUser.companyId.toString(),
-    'datetime': body.days === 'all' ? { $exists: true } : {
+exports.getCriteriasForAutopostingByType = function (req) {
+  let matchAggregate = { companyId: req.user.companyId,
+    'datetime': req.body.days === 'all' ? { $exists: true } : {
       $gte: new Date(
-        (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
+        (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
       $lt: new Date(
         (new Date().getTime()))
-    },
-    subscriptionType: type
+    }
   }
-  let groupAggregate = {
-    _id: null,
-    count: {$sum: 1}}
-  return {matchAggregate, groupAggregate}
+  return matchAggregate
 }
-exports.getCriteriasForAutopostingByTypethatCame = function (body, companyUser, type) {
-  let matchAggregate = { companyId: companyUser.companyId.toString(),
-    'datetime': body.days === 'all' ? { $exists: true } : {
+exports.getFbPostsCriteria = function (req) {
+  let criteria = {
+    purpose: 'aggregate',
+    match: {
+      companyId: req.user.companyId,
+      'datetime': req.body.days === 'all' ? { $exists: true } : {
+        $gte: new Date(
+          (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
+        $lt: new Date(
+          (new Date().getTime()))
+      }
+    },
+    group: {_id: null, count: {$sum: 1}, likes: {$sum: '$likes'}, comments: {$sum: '$comments'}}
+  }
+  return criteria
+}
+exports.getCriteriasForAutopostingByTypethatCame = function (req, type) {
+  let matchAggregate = { companyId: req.user.companyId,
+    'datetime': req.body.days === 'all' ? { $exists: true } : {
       $gte: new Date(
-        (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
+        (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
       $lt: new Date(
         (new Date().getTime()))
     },
