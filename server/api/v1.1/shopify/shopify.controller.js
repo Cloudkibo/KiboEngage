@@ -114,6 +114,37 @@ exports.index = function (req, res) {
   }
 }
 
+exports.install = function (req, res) {
+  const { shop, hmac } = req.query
+  // DONE: Validate request is from Shopify
+  const map = Object.assign({}, req.query)
+  delete map['signature']
+  delete map['hmac']
+  const message = querystring.stringify(map)
+  const providedHmac = Buffer.from(hmac, 'utf-8')
+  const generatedHash = Buffer.from(
+    crypto
+      .createHmac('sha256', config.shopify.app_secret)
+      .update(message)
+      .digest('hex'),
+    'utf-8'
+  )
+  let hashEquals = false
+
+  try {
+    hashEquals = crypto.timingSafeEqual(generatedHash, providedHmac)
+  } catch (e) {
+    hashEquals = false
+  };
+
+  if (!hashEquals) {
+    return res.status(400).send('HMAC validation failed')
+  }
+
+  res.cookie('installByShopifyStore', shop)
+  res.redirect('/')
+}
+
 exports.callback = function (req, res) {
   const { shop, hmac, code, state } = req.query
   const stateCookie = cookie.parse(req.headers.cookie).state
