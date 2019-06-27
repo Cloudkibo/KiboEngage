@@ -485,11 +485,11 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   }
   return { countCriteria: countCriteria, finalCriteria: finalCriteria }
 }
-exports.getCriteriasForAutopostingByType = function (body, type) {
+exports.getCriteriasForAutopostingByType = function (req) {
   let matchAggregate = {
-    'datetime': body.days === 'all' ? { $exists: true } : {
+    'datetime': req.body.days === 'all' ? { $exists: true } : {
       $gte: new Date(
-        (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
+        (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
       $lt: new Date(
         (new Date().getTime()))
     }
@@ -512,11 +512,11 @@ exports.getFbPostsCriteria = function (req) {
   }
   return criteria
 }
-exports.getCriteriasForAutopostingByTypethatCame = function (body, type) {
+exports.getCriteriasForAutopostingByTypethatCame = function (req, type) {
   let matchAggregate = {
-    'datetime': body.days === 'all' ? { $exists: true } : {
+    'datetime': req.body.days === 'all' ? { $exists: true } : {
       $gte: new Date(
-        (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
+        (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
       $lt: new Date(
         (new Date().getTime()))
     },
