@@ -62,7 +62,7 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId) => {
         if (err) {
           console.log('error in fetching metdata')
         }
-        if (meta !== {} && meta.image && meta.title) {
+        if (meta && meta !== {} && meta.image && meta.title) {
           console.log('metadata', meta)
           gallery.push({
             'title': meta.title,
@@ -197,7 +197,7 @@ const prepareShareButton = (savedMsg, tweetId, body, type) => {
 const getVideoURL = (variants) => {
   let url = ''
   for (let i = 0; i < variants.length; i++) {
-    if (variants[i].content_type === 'video/mp4' && (variants[i].bitrate === 2176000 || variants[i].bitrate === 0)) {
+    if (variants[i].content_type === 'video/mp4' && (variants[i].bitrate === 256000 || variants[i].bitrate === 2176000 || variants[i].bitrate === 0)) {
       url = variants[i].url
       break
     }

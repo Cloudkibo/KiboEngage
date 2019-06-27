@@ -62,6 +62,8 @@ module.exports = function (app) {
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
   app.use('/api/webhooks', require('./api/v1.1/webhooks'))
   app.use('/api/rss', require('./api/v1.1/rss'))
+  app.use('/api/abandonedCarts', require('./api/v1.1/abandoned_carts'))
+  app.use('/api/shopify', require('./api/v1.1/shopify'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))

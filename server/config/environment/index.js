@@ -34,7 +34,7 @@ const all = {
   },
   shopify: {
     app_key: '10128033d2dc6948f383edf548c2aa87',
-    app_host: 'https://kibopush-sojharo.ngrok.io',
+    app_host: 'https://skiboengage.cloudkibo.com',
     app_secret: 'f41a001b86c700915c9cedc52b955d35'
   },
   sendgrid: {
