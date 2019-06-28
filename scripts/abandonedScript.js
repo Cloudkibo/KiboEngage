@@ -4,9 +4,9 @@ const utility = require('../server/api/v1.1/abandoned_carts/utility_abandoned')
 const TAG = 'scripts/abandoned-script.js'
 
 var https = require('https')
-https.get('https://cronhub.io/ping/65f023a0-9976-11e9-804f-135aa1b0e11c')
 
 exports.runScript = function () {
+  https.get('https://cronhub.io/ping/65f023a0-9976-11e9-804f-135aa1b0e11c')
   /*
   { isPurchased: false,
   scheduled_at: { '$lt': Date.now() }
@@ -25,11 +25,13 @@ exports.runScript = function () {
             if (err) {
               logger.serverLog(TAG, `Error in sending checkout ${JSON.stringify(err)}`)
             }
+            if (i === data.length - 1) https.get('https://cronhub.io/finish/65f023a0-9976-11e9-804f-135aa1b0e11c')
           })
         }
       }
     })
     .catch(err => {
+      https.get('https://cronhub.io/finish/65f023a0-9976-11e9-804f-135aa1b0e11c')
       logger.serverLog(TAG, `No Checkout found ${JSON.stringify(err)}`)
     })
 }
