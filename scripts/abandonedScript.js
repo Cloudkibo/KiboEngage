@@ -4,9 +4,9 @@ const utility = require('../server/api/v1.1/abandoned_carts/utility_abandoned')
 const TAG = 'scripts/abandoned-script.js'
 
 var https = require('https')
-https.get('https://cronhub.io/ping/65f023a0-9976-11e9-804f-135aa1b0e11c')
 
 exports.runScript = function () {
+  https.get('https://cronhub.io/ping/65f023a0-9976-11e9-804f-135aa1b0e11c')
   /*
   { isPurchased: false,
   scheduled_at: { '$lt': Date.now() }
