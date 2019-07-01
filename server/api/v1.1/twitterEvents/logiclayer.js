@@ -3,6 +3,7 @@ const FacebookPayload = require('./facebookPayload')
 
 exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
   return new Promise((resolve, reject) => {
+    console.log('in handleTwitterPayload', JSON.stringify(req.body))
     let tagline = ''
     if (req.quote) {
       let originalUser = req.retweet.user
@@ -105,6 +106,88 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
       }
     }
   })
+}
+
+exports.checkFilterStatus = function (postingItem, req) {
+  if (postingItem.filterTweets) {
+    let filter = false
+    let text = ''
+    if (req.quote) {
+      text = req.quote + ' ' + getText(req.retweet)
+    } else if (req.retweet) {
+      text = getText(req.retweet)
+    } else if (req.tweet) {
+      text = getText(req.tweet)
+    }
+    for (let i = 0; i < postingItem.filterTags.length; i++) {
+      if (text.toLowerCase().includes(postingItem.filterTags[i].toLowerCase())) {
+        filter = true
+        break
+      }
+    }
+    if (filter) {
+      return true
+    } else {
+      return false
+    }
+  } else {
+    return true
+  }
+}
+
+exports.prepareApprovalMessage = function (recipientId, postingItem, req) {
+  let username = `@${req.tweetUser.screen_name}`
+  let tweetUrl = `https://twitter.com/statuses/${req.body.id_str}`
+  let forwardPayload = {
+    autopostingId: postingItem._id,
+    tweetId: req.body.id_str,
+    action: 'send_tweet'
+  }
+  let dontForwardPayload = {
+    autopostingId: postingItem._id,
+    tweetId: req.body.id_str,
+    action: 'do_not_send_tweet'
+  }
+  let messageData = {
+    'recipient': {
+      'id': recipientId
+    },
+    'message': JSON.stringify({
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'button',
+          'text': `A new tweet has come from ${username}. Would you like to forward this to your subscribers?`,
+          'buttons': [
+            {
+              'type': 'web_url',
+              'title': 'View Tweet',
+              'url': tweetUrl
+            },
+            {
+              'type': 'postback',
+              'title': 'Forward',
+              'payload': JSON.stringify(forwardPayload)
+            },
+            {
+              'type': 'postback',
+              'title': 'Don\'t Forward',
+              'payload': JSON.stringify(dontForwardPayload)
+            }
+          ]
+        }
+      }
+    })
+  }
+  return messageData
+}
+
+const getText = (tweet) => {
+  if (tweet.truncated) {
+    return tweet.extended_tweet.full_text
+  } else {
+    return tweet.text
+  }
 }
 
 const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, actionType) => {
