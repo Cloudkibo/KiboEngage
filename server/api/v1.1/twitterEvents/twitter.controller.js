@@ -121,6 +121,7 @@ const sendToMessenger = (postingItem, page, req) => {
   ]
   utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
     .then(subscribersCount => {
+      console.log('subscribersCount', subscribersCount)
       if (subscribersCount.length > 0) {
         let newMsg = {
           pageId: page._id,
@@ -136,6 +137,7 @@ const sendToMessenger = (postingItem, page, req) => {
           .then(savedMsg => {
             logicLayer.handleTwitterPayload(req, savedMsg, page, 'messenger')
               .then(messageData => {
+                console.log('messageData', messageData)
                 sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
               })
               .catch(err => {
