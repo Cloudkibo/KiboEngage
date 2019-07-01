@@ -21,6 +21,7 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
               const messageCreativeId = messageCreative.message_creative_id
               utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
                 .then(pageTags => {
+                  console.log('pageTags', pageTags)
                   const limit = Math.ceil(subscribersCount[0].count / 10000)
                   for (let i = 0; i < limit; i++) {
                     let labels = []
@@ -40,6 +41,7 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                       let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                       labels = labels.concat(temp)
                     }
+                    console.log('labels', labels)
                     broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                       .then(response => {
                         console.log('response from callBroadcastMessagesEndpoint', response)
