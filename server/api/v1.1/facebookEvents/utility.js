@@ -40,7 +40,6 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                       let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                       labels = labels.concat(temp)
                     }
-                    console.log('labels', labels)
                     broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                       .then(response => {
                         console.log('response from callBroadcastMessagesEndpoint', response)

@@ -50,7 +50,6 @@ exports.twitterwebhook = function (req, res) {
         utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
           .then(pages => {
             pages.forEach(page => {
-              console.log('page found', page)
               if (postingItem.actionType === 'messenger') {
                 sendToMessenger(postingItem, page, req)
               } else if (postingItem.actionType === 'facebook') {
@@ -78,7 +77,6 @@ const sendToMessenger = (postingItem, page, req) => {
   ]
   utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
     .then(subscribersCount => {
-      console.log('subscribersCount', subscribersCount)
       if (subscribersCount.length > 0) {
         let newMsg = {
           pageId: page._id,
@@ -94,7 +92,6 @@ const sendToMessenger = (postingItem, page, req) => {
           .then(savedMsg => {
             logicLayer.handleTwitterPayload(req, savedMsg, page, 'messenger')
               .then(messageData => {
-                console.log('messageData', messageData)
                 sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
               })
               .catch(err => {
