@@ -15,6 +15,9 @@ router.post('/',
   auth.isAuthenticated(),
   controller.index) // this id will be userid
 
+router.get('/install', // handle installing of app from shopify app store
+  controller.install)
+
 router.get('/callback',
   controller.callback) // this id will be userid
 

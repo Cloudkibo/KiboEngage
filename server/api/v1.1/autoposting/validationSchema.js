@@ -44,6 +44,18 @@ exports.editPayload = {
     isSegmented: {
       type: 'boolean'
     },
+    filterTweets: {
+      'type': 'boolean'
+    },
+    filterTags: {
+      'type': 'array'
+    },
+    moderateTweets: {
+      'type': 'boolean'
+    },
+    approvalChannel: {
+      'type': 'object'
+    },
     segmentationPageIds: {
       type: 'array',
       items: {

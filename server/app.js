@@ -5,6 +5,8 @@ const config = require('./config/environment/index')
 
 const cron = require('node-cron')
 const SequenceScript = require('../scripts/sequenceMessageQueueScript.js')
+const TweetsQueueScript = require('../scripts/tweets_queue_script.js')
+const abandonedCartScript = require('../scripts/abandonedScript')
 
 const app = express()
 const httpApp = express()
@@ -20,7 +22,9 @@ if (config.env === 'production' || config.env === 'staging') {
   appObj.use(Raven.requestHandler())
 }
 
-cron.schedule('* * * * *', SequenceScript.runSequenceMessageQueueScript)
+cron.schedule('* * * * *', SequenceScript.runSequenceMessageQueueScript) // after every one minute
+cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midnight
+cron.schedule('* * * * *', abandonedCartScript.runScript)
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
