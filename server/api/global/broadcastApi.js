@@ -1,20 +1,22 @@
 const prepareMessageData = require('./prepareMessageData')
 const { facebookApiCaller } = require('./facebookApiCaller')
-const util = require('util')
+// const util = require('util')
 
 exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken) => {
   return new Promise((resolve, reject) => {
+    let labelValues = labels
+    labelValues.push({operator: 'NOT', values: notlabels})
     let data = {
       'message_creative_id': messageCreativeId,
       'notification_type': 'REGULAR',
       'messaging_type': 'MESSAGE_TAG',
       'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
-      'targeting': {
-        'labels': {
-          'operator': 'NOT',
-          'values': notlabels
+      'targeting': JSON.stringify({
+        labels: {
+          operator: 'AND',
+          values: labelValues
         }
-      }
+      })
     }
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
