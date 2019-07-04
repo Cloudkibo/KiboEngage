@@ -54,8 +54,8 @@ exports.create = function (req, res) {
         userId: req.user._id,
         reply: req.body.reply,
         payload: req.body.payload,
-        includedKeywords: req.body.includeKeywords,
-        excludedKeywords: req.body.excludedKeywords
+        excludedKeywords: req.body.excludedKeywords,
+        includedKeywords: req.body.includedKeywords
       }, req.headers.authorization)
         .then(postCreated => {
           require('./../../../config/socketio').sendMessageToClient({
