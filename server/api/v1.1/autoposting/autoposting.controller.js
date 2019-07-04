@@ -218,10 +218,9 @@ exports.create = function (req, res) {
                             })
                           })
                       } else if (req.body.subscriptionType === 'rss') {
-                        // rss work here
+                        autoPostingPayload.scheduledTime = '6 hours'
                         feedparser.parse(req.body.subscriptionUrl)
                           .then(feed => {
-                            console.log('feed parse response', JSON.stringify(feed))
                             if (feed) {
                               AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                                 .then(result => {
@@ -243,7 +242,7 @@ exports.create = function (req, res) {
                           })
                           .catch(err => {
                             logger.serverLog(TAG, `Problem occured while parsing the feed url ${err}`, 'error')
-                            return res.status(500).json({status: 'failed', description: 'Problem occured while parsing the feed url'})
+                            return res.status(500).json({status: 'failed', description: 'Invalid feed url provided'})
                           })
                       } else if (req.body.subscriptionType === 'wordpress') {
                         let url = req.body.subscriptionUrl
