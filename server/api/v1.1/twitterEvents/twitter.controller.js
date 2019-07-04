@@ -74,25 +74,6 @@ exports.twitterwebhook = function (req, res) {
             sendTweet(postingItem, req)
           }
         }
-<<<<<<< HEAD
-        utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
-          .then(pages => {
-            pages.forEach(page => {
-              if (postingItem.actionType === 'messenger') {
-                sendToMessenger(postingItem, page, req)
-              } else if (postingItem.actionType === 'facebook') {
-                postOnFacebook(postingItem, page, req)
-              } else if (postingItem.actionType === 'both') {
-                sendToMessenger(postingItem, page, req)
-                postOnFacebook(postingItem, page, req)
-              }
-            })
-          })
-          .catch(err => {
-            if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
-          })
-=======
->>>>>>> 57342429aa1d900edb235489c7e449cb3ecfc7dc
       })
     })
     .catch(err => {

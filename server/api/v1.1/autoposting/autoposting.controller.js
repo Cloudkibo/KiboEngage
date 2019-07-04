@@ -5,6 +5,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/autoposting/autoposting.controller'
 const { sendTweet } = require('../twitterEvents/twitter.controller')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const feedparser = require('feedparser-promised')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -102,9 +103,10 @@ exports.create = function (req, res) {
                                     logger.serverLog(TAG, 'Company Usage updated', 'debug')
                                   })
                                   .catch(err => {
+                                    logger.serverLog(TAG, err, 'error')
                                     return res.status(500).json({
                                       status: 'failed',
-                                      description: `Internal server error in updating plan usage ${err}`
+                                      description: `An unexpected error occured. Please try again later.`
                                     })
                                   })
                                 utility.callApi('twitter/restart', 'get', {}, req.headers.authorization, 'webhook')
@@ -123,9 +125,10 @@ exports.create = function (req, res) {
                                 return res.status(201).json({status: 'success', payload: result})
                               })
                               .catch(err => {
+                                logger.serverLog(TAG, err, 'error')
                                 return res.status(500).json({
                                   status: 'failed',
-                                  description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
+                                  description: `An unexpected error occured. Please try again later.`
                                 })
                               })
                           } else {
@@ -155,9 +158,10 @@ exports.create = function (req, res) {
                                       logger.serverLog(TAG, 'Company Usage Updated', 'debug')
                                     })
                                     .catch(err => {
+                                      logger.serverLog(TAG, err, 'error')
                                       return res.status(500).json({
                                         status: 'failed',
-                                        description: `Internal server error in updating plan usage ${err}`
+                                        description: `An unexpected error occured. Please try again later.`
                                       })
                                     })
                                   require('./../../../config/socketio').sendMessageToClient({
@@ -176,22 +180,24 @@ exports.create = function (req, res) {
                                     .json({ status: 'success', payload: result })
                                 })
                                 .catch(err => {
+                                  logger.serverLog(TAG, err, 'error')
                                   return res.status(500).json({
                                     status: 'failed',
-                                    description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
+                                    description: `An unexpected error occured. Please try again later.`
                                   })
                                 })
                             })
                             .catch(err => {
+                              logger.serverLog(TAG, err, 'error')
                               return res.status(403).json({
                                 status: 'Failed',
-                                description: `Error while fetching facebook page in autoposting${err}`
+                                description: `An enexpected error occured. Please try again later.`
                               })
                             })
                         } else {
                           return res.status(403).json({
                             status: 'Failed',
-                            description: 'Invalid url'
+                            description: 'Invalid url provided. Please provide correct url.'
                           })
                         }
                       } else if (req.body.subscriptionType === 'youtube') {
@@ -199,16 +205,45 @@ exports.create = function (req, res) {
                         autoPostingPayload.accountUniqueName = channelName
                         AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                           .then(result => {
-                            return res.status(500).json({
+                            return res.status(200).json({
                               status: 'success',
                               description: result
                             })
                           })
                           .catch(err => {
+                            logger.serverLog(TAG, err, 'error')
                             return res.status(500).json({
                               status: 'failed',
-                              description: `Internal Server Error while Creating Autoposting Objects ${JSON.stringify(err)}`
+                              description: `An unexpected error occured. Please try again later.`
                             })
+                          })
+                      } else if (req.body.subscriptionType === 'rss') {
+                        // rss work here
+                        feedparser.parse(req.body.subscriptionUrl)
+                          .then(feed => {
+                            console.log('feed parse response', JSON.stringify(feed))
+                            if (feed) {
+                              AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+                                .then(result => {
+                                  return res.status(200).json({
+                                    status: 'success',
+                                    description: result
+                                  })
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, err, 'error')
+                                  return res.status(500).json({
+                                    status: 'failed',
+                                    description: `An unexpected error occured. Please try again later.`
+                                  })
+                                })
+                            } else {
+                              return res.status(500).json({status: 'failed', description: 'Invalid feed url provided'})
+                            }
+                          })
+                          .catch(err => {
+                            logger.serverLog(TAG, `Problem occured while parsing the feed url ${err}`, 'error')
+                            return res.status(500).json({status: 'failed', description: 'Problem occured while parsing the feed url'})
                           })
                       } else if (req.body.subscriptionType === 'wordpress') {
                         let url = req.body.subscriptionUrl
@@ -234,46 +269,52 @@ exports.create = function (req, res) {
                                   .json({status: 'success', payload: result})
                               })
                               .catch(err => {
+                                logger.serverLog(TAG, err, 'error')
                                 return res.status(500).json({
                                   status: 'failed',
-                                  description: `Internal server error in updating plan usage ${err}`
+                                  description: `An unexpected error occured. Please try again later.`
                                 })
                               })
                           })
                       }
                     })
                     .catch(err => {
+                      logger.serverLog(TAG, err, 'error')
                       return res.status(500).json({
                         status: 'failed',
-                        description: `Internal Server Error while fetching Autoposting Objects ${JSON.stringify(err)}`
+                        description: `An unexpected error occured. Please try again later.`
                       })
                     })
                 })
                 .catch(err => {
+                  logger.serverLog(TAG, err, 'error')
                   return res.status(500).json({
                     status: 'failed',
-                    description: `Internal Server Error while fetching count for autoposting ${JSON.stringify(err)}`
+                    description: `An unexpected error occured. Please try again later.`
                   })
                 })
             })
             .catch(err => {
+              logger.serverLog(TAG, err, 'error')
               return res.status(500).json({
                 status: 'failed',
-                description: `Internal Server Error while fetching company usage ${JSON.stringify(err)}`
+                description: `An unexpected error occured. Please try again later.`
               })
             })
         })
         .catch(err => {
+          logger.serverLog(TAG, err, 'error')
           return res.status(500).json({
             status: 'failed',
-            description: `Internal Server Error while fetching plan usage ${JSON.stringify(err)}`
+            description: `An unexpected error occured. Please try again later.`
           })
         })
     })
     .catch(err => {
+      logger.serverLog(TAG, err, 'error')
       return res.status(500).json({
         status: 'failed',
-        description: `Internal Server Error while fetching company user ${JSON.stringify(err)}`
+        description: `An unexpected error occured. Please try again later.`
       })
     })
 }
