@@ -373,15 +373,19 @@ exports.viewList = function (req, res) {
     })
 }
 exports.deleteList = function (req, res) {
+  console.log('request received in deletelist', req.body)
   utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
     .then(tags => {
+      console.log('tags resp', tags)
       if (tags.length > 0) {
         tags.forEach((tag, i) => {
           utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id}, req.headers.authorization)
             .then(tagsSubscriber => {
+              console.log('tagsSubscriber',tagsSubscriber)
               for (let i = 0; i < tagsSubscriber.length; i++) {
                 utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {}, req.headers.authorization)
                   .then(result => {
+                    console.log('result',result)
                   })
                   .catch(err => {
                     logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
@@ -400,6 +404,7 @@ exports.deleteList = function (req, res) {
             deleteListFromFacebook(req, tags, callback)
           }
         ], 10, function (err, results) {
+          console.log('results in delete', results)
           if (err) {
             return res.status(404).json({
               status: 'failed',
@@ -424,14 +429,17 @@ exports.deleteList = function (req, res) {
 }
 
 function deleteListFromLocal (req, callback) {
+  console.log('inside deleteListfromLocal')
   utility.callApi(`lists/${req.params.id}`, 'delete', {}, req.headers.authorization)
     .then(result => {
+      console.log('deletelistfromlocal result1', result)
       utility.callApi(`featureUsage/updateCompany`, 'put', {
         query: {companyId: req.user.companyId},
         newPayload: { $inc: { segmentation_lists: -1 } },
         options: {}
       }, req.headers.authorization)
         .then(updated => {
+          console.log('deletelistfromlocal updated',updated)
           callback(null, {status: 'success', payload: result})
         })
         .catch(error => {
@@ -444,12 +452,15 @@ function deleteListFromLocal (req, callback) {
 }
 
 function deleteListFromFacebook (req, tags, callback) {
+  console.log('inside deletefromfacebook', tags)
   tags.forEach((tag, i) => {
     utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
       .then(pages => {
+        console.log('deletefromfacebook pages',pages)
         let page = pages[0]
         facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
+            console.log('deletefromfacebook label from fb', label)
             if (label.error) {
               callback(label.error)
             }
