@@ -647,7 +647,7 @@ exports.stats = function (req, res) {
                                     }
                                     SequenceDataLayer.countSequences({companyId: companyUser.companyId})
                                       .then(sequences => {
-                                        payload.sequences = sequences.length
+                                        payload.sequences = sequences.length > 0 ? sequences[0].count : 0
                                         res.status(200).json({
                                           status: 'success',
                                           payload
