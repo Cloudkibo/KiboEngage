@@ -12,11 +12,13 @@ module.exports = function (app) {
   const env = app.get('env')
   // API middlewares go here
   app.use('/api/v1/test', require('./api/v1/test'))
+  app.use('/api/email_verification', require('./api/v1.1/verificationtoken'))
   app.use('/api/api_settings', require('./api/v1.1/api_settings'))
   app.use('/api/messengerEvents', require('./api/v1.1/messengerEvents'))
   app.use('/api/automationQueue', require('./api/v1.1/automationQueue'))
   app.use('/api/autoposting', require('./api/v1.1/autoposting'))
   app.use('/api/autoposting_messages', require('./api/v1.1/autopostingMessages'))
+  app.use('/api/autoposting_fb_posts', require('./api/v1.1/autopostingFbPosts'))
   app.use('/api/broadcasts', require('./api/v1.1/broadcasts'))
   app.use('/api/facebookEvents', require('./api/v1.1/facebookEvents'))
   app.use('/api/twitterEvents', require('./api/v1.1/twitterEvents'))
@@ -60,6 +62,9 @@ module.exports = function (app) {
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
   app.use('/api/sponsoredmessaging', require('./api/v1.1/sponsoredMessaging'))
   app.use('/api/webhooks', require('./api/v1.1/webhooks'))
+  app.use('/api/rss', require('./api/v1.1/rss'))
+  app.use('/api/abandonedCarts', require('./api/v1.1/abandoned_carts'))
+  app.use('/api/shopify', require('./api/v1.1/shopify'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))

@@ -2,10 +2,10 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
   return  `
 		window.fbAsyncInit = function() {
 	    FB.init({
-	      appId            : ${appId},
+	      appId            : '${appId}',
 	      autoLogAppEvents : true,
 	      xfbml            : true,
-	      version          : 'v3.1'
+	      version          : 'v3.3'
 	    });
 		
 
@@ -16,9 +16,9 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	      if (e.event == 'rendered') {
 	        console.log("Plugin was rendered");
 	      } else if (e.event == 'checkbox') {
-	    	var checkboxState = e.state;
-	    	let subscribeButton = document.getElementById("kiboSubscribeButton")
-	    	subscribeButton.dataset.checkState = e.state
+	    	  var checkboxState = e.state;
+	    	  let subscribeButton = document.getElementById("kiboSubscribeButton")
+	    	  subscribeButton.dataset.checkState = e.state
 	        console.log("Checkbox state: " + checkboxState);
 	      } else if (e.event == 'not_you') {
 	        console.log("User clicked 'not you'");
@@ -40,7 +40,7 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	      var name = cname + "=";
 	      var decodedCookie = decodeURIComponent(document.cookie);
 	      var ca = decodedCookie.split(';');
-	      for(var i = 0; i <ca.length; i++) {
+	      for(var i = 0; i < ca.length; i++) {
 	          var c = ca[i];
 	          while (c.charAt(0) == ' ') {
 	              c = c.substring(1);
@@ -59,14 +59,14 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 	  		return
 	  	}
 	    FB.AppEvents.logEvent('MessengerCheckboxUserConfirmation', null, {
-	      'app_id': ${appId},
-	      'page_id':  ${pageId},
+	      'app_id': '${appId}',
+	      'page_id':  '${pageId}',
 	      'ref': 'SHOPIFY',
 	      'user_ref': userRef.value
 	    });
-		let kiboBox = document.getElementById("kiboBox")
-		kiboBox.innerHTML = '<p style="padding: 10px; margin: 10px;"> Thank you for subscribing! </p>'
-		setCookie('kibopushCartValue', userRef.value.split('-')[0])
+		  let kiboBox = document.getElementById("kiboBox")
+		  kiboBox.innerHTML = '<p style="padding: 10px; margin: 10px;"> Thank you for subscribing! </p>'
+		  setCookie('kibopushCartValue', userRef.value.split('-')[0])
 	  }
 
 	  const uniqueString = Math.floor(new Date().valueOf() * Math.random())
@@ -75,25 +75,28 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 		(function(d, s, id){
 		   var js, fjs = d.getElementsByTagName(s)[0];
 		   if (d.getElementById(id)) {return;}
-		   js = d.createElement(s); js.id = id;
+			 js = d.createElement(s); js.id = id;
+			 js.async = true; js.defer = true;
 		   js.src = "https://connect.facebook.net/en_US/sdk.js";
 		   fjs.parentNode.insertBefore(js, fjs);
 		 }(d, s, id));		
 
 	  	let element = document.createElement('div')
 	  	element.id = 'kiboBox'
-	  	const pageId = ${pageId}
+	  	const pageId = '${pageId}'
 	  	let text = document.createTextNode('Hello From KiboPush: ' + pageId)
 	  	let messengerComponent = document.createElement('div')
 	  	messengerComponent.classList.add("fb-messenger-checkbox");
 	  	messengerComponent.setAttribute('origin', 'https://${shopUrl}/');
 	  	messengerComponent.setAttribute('page_id',  pageId);
-	  	messengerComponent.setAttribute('messenger_app_id',  ${appId});
+	  	messengerComponent.setAttribute('messenger_app_id',  '${appId}');
 	  	console.log("User Ref before rendering", userRef)
 	  	messengerComponent.setAttribute('user_ref', userRef);
 	  	messengerComponent.setAttribute('ref', 'SHOPIFY');
-	  	messengerComponent.setAttribute('center_align', true);
-	  	messengerComponent.setAttribute('allow_login', true);
+	  	messengerComponent.setAttribute('center_align', 'true');
+			messengerComponent.setAttribute('allow_login', 'true');
+			messengerComponent.setAttribute("size", "large")
+			messengerComponent.setAttribute("skin", "light")
 	  	element.innerHTML = '<button onclick="confirmOptIn(this)" value=' + userRef + ' id="kiboSubscribeButton"  style="display:block; margin-left: 30px; margin-bottom:15px; color: white; background: skyblue; border: 0; padding: 5px;">Subscribe to get discount offers</button>'
 	  	element.prepend(messengerComponent)
 	  	element.style['background'] = '#EEEEEE'

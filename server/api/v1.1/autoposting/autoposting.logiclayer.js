@@ -87,6 +87,11 @@ const prepareEditPayload = (req) => {
   autoposting.segmentationTags = req.body.segmentationTags
   autoposting.isActive = req.body.isActive
   autoposting.actionType = req.body.actionType
+  autoposting.filterTweets = req.body.filterTweets
+  autoposting.filterTags = req.body.filterTags
+  autoposting.moderateTweets = req.body.moderateTweets
+  autoposting.approvalChannel = req.body.approvalChannel
+  autoposting.scheduledTime = req.body.scheduledTime
   return autoposting
 }
 

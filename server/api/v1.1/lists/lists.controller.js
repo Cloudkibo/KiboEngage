@@ -372,9 +372,14 @@ exports.viewList = function (req, res) {
       })
     })
 }
+
 exports.deleteList = function (req, res) {
-  utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
+  utility.callApi(`lists/${req.params.id}`, 'get', {}, req.headers.authorization)
+  .then(list => {
+    console.log('list',list)
+  utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName}, req.headers.authorization)
     .then(tags => {
+      console.log('tags resp', tags)
       if (tags.length > 0) {
         tags.forEach((tag, i) => {
           utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id}, req.headers.authorization)
@@ -421,6 +426,13 @@ exports.deleteList = function (req, res) {
         description: `Failed to find tags ${err}`
       })
     })
+  })
+  .catch(err => {
+    return res.status(404).json({
+      status: 'failed',
+      description: `Failed to find list ${err}`
+    })
+  })
 }
 
 function deleteListFromLocal (req, callback) {
