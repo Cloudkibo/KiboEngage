@@ -268,7 +268,15 @@ exports.enable = function (req, res) {
                                                   qs: {access_token: page.accessToken},
                                                   method: 'POST'
                                                 }
-                                                needle.post(options.url, options, (error, response) => {
+                                                let bodyToSend = {
+                                                  subscribed_fields: [
+                                                    'feed', 'mention', 'name', 'picture', 'category', 'description', 'conversations', 'feature_access_list',
+                                                    'messages', 'messaging_account_linking', 'messaging_checkout_updates',
+                                                    'message_echoes', 'message_deliveries', 'messaging_optins',
+                                                    'messaging_optouts', 'messaging_payments', 'messaging_postbacks', 'message_reads', 'messaging_referrals', 'messaging_policy_enforcement',
+                                                    'messaging_page_feedback', 'messaging_appointments', 'founded', 'general_info', 'leadgen', 'phone', 'email', 'website', 'product_review', 'videos', 'live_videos', 'registration']
+                                                }
+                                                needle.post(`https://graph.facebook.com/v3.3/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`, bodyToSend, (error, response) => {
                                                   console.log('response.body', response.body)
                                                   if (error) {
                                                     console.log('error in subscribed_apps', error)
