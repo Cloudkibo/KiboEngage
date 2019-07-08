@@ -681,10 +681,10 @@ function createTag (user, page, tag, req) {
             logger.serverLog(TAG, `Error at save tag ${err}`, 'error')
           })
       } else {
-        logger.serverLog(TAG, `Error at create tag on Facebook ${label.body.error}`, 'error')
+        logger.serverLog(TAG, `Error at create tag on Facebook ${JSON.stringify(label.body.error)}`, 'error')
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Error at create tag on Facebook ${err}`, 'error')
+      logger.serverLog(TAG, `Error at create tag on Facebook ${JSON.stringify(err)}`, 'error')
     })
 }
