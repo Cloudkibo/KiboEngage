@@ -223,6 +223,7 @@ function validateApiKeys (req, res, next) {
 */
 function fbConnectDone (req, res) {
   let fbPayload = req.user
+  console.log('fbPayload', fbPayload)
   let userid = req.cookies.userid
   if (!req.user) {
     logger.serverLog(TAG, '404: Something went wrong, please try again')
