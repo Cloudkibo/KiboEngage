@@ -270,7 +270,7 @@ exports.enable = function (req, res) {
                                                 }
                                                 let bodyToSend = {
                                                   subscribed_fields: [
-                                                    'feed']
+                                                    'feed', 'conversations', 'mention']
                                                 }
                                                 needle.post(`https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=${page.accessToken}`, bodyToSend, (error, response) => {
                                                   console.log('response.body', response.body)
