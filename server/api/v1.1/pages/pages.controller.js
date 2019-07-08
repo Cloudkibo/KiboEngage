@@ -235,6 +235,7 @@ exports.enable = function (req, res) {
                                   // initiate reach estimation
                                   needle('post', `https://graph.facebook.com/v2.11/me/broadcast_reach_estimations?access_token=${page.accessToken}`)
                                     .then(reachEstimation => {
+                                      console.log('reachEstimation response', reachEstimation.body)
                                       if (reachEstimation.body.reach_estimation_id) {
                                         query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                         utility.callApi(`pages/${req.body._id}`, 'put', query, req.headers.authorization) // connect page
@@ -259,6 +260,7 @@ exports.enable = function (req, res) {
                                                   payload: `Failed to update company usage ${JSON.stringify(error)}`
                                                 })
                                               })
+                                            console.log('page.pageId', page.pageId)
                                             utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}, req.headers.authorization) // update subscribers
                                               .then(updatedSubscriber => {
                                                 const options = {
@@ -267,7 +269,9 @@ exports.enable = function (req, res) {
                                                   method: 'POST'
                                                 }
                                                 needle.post(options.url, options, (error, response) => {
+                                                  console.log('response.body', response.body)
                                                   if (error) {
+                                                    console.log('error in subscribed_apps', error)
                                                     return res.status(500).json({
                                                       status: 'failed',
                                                       payload: JSON.stringify(error)
