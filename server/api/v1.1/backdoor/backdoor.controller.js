@@ -959,9 +959,9 @@ exports.fetchAutopostingDetails = function (req, res) {
       let twitterIndex = types.indexOf('twitter')
       let wordpressIndex = types.indexOf('wordpress')
       let payload = {
-        facebookAutoposting: results[0].length > 0 ? results[0][facebookIndex].count : 0,
-        twitterAutoposting: results[0].length > 0 ? results[0][twitterIndex].count : 0,
-        wordpressAutoposting: results[0].length > 0 ? results[0][wordpressIndex].count : 0,
+        facebookAutoposting: results[0].length > 0 && facebookIndex !== -1 ? results[0][facebookIndex].count : 0,
+        twitterAutoposting: results[0].length > 0 && twitterIndex !== -1 ? results[0][twitterIndex].count : 0,
+        wordpressAutoposting: results[0].length > 0 && wordpressIndex !== -1 ? results[0][wordpressIndex].count : 0,
         facebookAutopostingsCame: results[1].length > 0 ? results[1].length : 0,
         twitterAutopostingsCame: results[2].length > 0 ? results[2].length : 0,
         wordpressAutopostingsCame: results[3].length > 0 ? results[3].length : 0,
