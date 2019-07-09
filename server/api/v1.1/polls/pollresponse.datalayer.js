@@ -10,7 +10,7 @@ exports.genericFindForPollResponse = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`polls/response/query`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/response/query`, 'post', query, 'kiboengage')
 }
 exports.aggregateForPollResponse = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -23,17 +23,17 @@ exports.aggregateForPollResponse = (match, group, lookup, limit, sort, skip) => 
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`polls/response/query`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/response/query`, 'post', query, 'kiboengage')
 }
 exports.createForPollResponse = (payload) => {
-  return callApi(`polls/response`, 'post', payload, '', 'kiboengage')
+  return callApi(`polls/response`, 'post', payload, 'kiboengage')
 }
 exports.deleteForPollResponse = (queryObject) => {
   let query = {
     purpose: 'deleteMany',
     match: queryObject
   }
-  return callApi(`polls/response`, 'delete', query, '', 'kiboengage')
+  return callApi(`polls/response`, 'delete', query, 'kiboengage')
 }
 
 exports.countDocuments = (filter) => {
@@ -42,5 +42,5 @@ exports.countDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`polls/response/query`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/response/query`, 'post', query, 'kiboengage')
 }

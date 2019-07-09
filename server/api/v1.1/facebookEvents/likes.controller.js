@@ -18,7 +18,7 @@ exports.handleLikeEvent = function (req, res) {
     updated: verb === 'add' ? {$inc: { likes: 1 }} : {$inc: { likes: -1 }},
     options: {}
   }
-  utility.callApi('autoposting_fb_post', 'put', updateData, '', 'kiboengage')
+  utility.callApi('autoposting_fb_post', 'put', updateData, 'kiboengage')
     .then(updated => {
       logger.serverLog(TAG, 'Likes count updated successfully!')
     })

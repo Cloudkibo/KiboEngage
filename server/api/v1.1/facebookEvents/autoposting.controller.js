@@ -15,14 +15,14 @@ exports.autoposting = function (req, res) {
     .then(autopostings => {
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = autopostingLogicLayer.pagesFindCriteria(postingItem)
-        utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+        utility.callApi(`pages/query`, 'post', pagesFindCriteria)
           .then(pages => {
             pages.forEach(page => {
               let subscribersData = [
                 {$match: {pageId: page._id, companyId: page.companyId}},
                 {$group: {_id: null, count: {$sum: 1}}}
               ]
-              utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
+              utility.callApi('subscribers/aggregate', 'post', subscribersData)
                 .then(subscribersCount => {
                   if (subscribersCount.length > 0) {
                     AutopostingMessagesDataLayer.createAutopostingMessage({

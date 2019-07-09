@@ -15,12 +15,12 @@ exports.index = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId }, req.headers.authorization)
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId })
         .then(subscriber => {
           subscriber = subscriber[0]
-          callApi(`jsonAd/jsonAdResponse/${req.body.jsonMessageId}`, 'get', {}, req.headers.authorization)
+          callApi(`jsonAd/jsonAdResponse/${req.body.jsonMessageId}`, 'get', {})
             .then(response => {
-              callApi(`jsonAd/${response.jsonAdId}`, 'get', {}, req.headers.authorization)
+              callApi(`jsonAd/${response.jsonAdId}`, 'get', {})
                 .then(jsonAd => {
                   if (subscriber) {
                     broadcastUtility.getBatchData(response.messageContent, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')

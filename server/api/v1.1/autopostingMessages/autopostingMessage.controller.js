@@ -2,7 +2,7 @@ const AutopostingMessages = require('./autopostingMessages.datalayer')
 const utility = require('../utility')
 
 exports.getMessages = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -99,7 +99,7 @@ function populatePages (messages, req) {
     let sendPayload = []
     if (messages && messages.length > 0) {
       for (let i = 0; i < messages.length; i++) {
-        utility.callApi(`pages/query`, 'post', {_id: messages[i].pageId, companyId: messages[i].companyId}, req.headers.authorization)
+        utility.callApi(`pages/query`, 'post', {_id: messages[i].pageId, companyId: messages[i].companyId})
           .then(page => {
             sendPayload.push({
               _id: messages[i]._id,
