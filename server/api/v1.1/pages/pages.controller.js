@@ -235,6 +235,7 @@ exports.enable = function (req, res) {
                                   // initiate reach estimation
                                   needle('post', `https://graph.facebook.com/v2.11/me/broadcast_reach_estimations?access_token=${page.accessToken}`)
                                     .then(reachEstimation => {
+                                      console.log('reachEstimation response', reachEstimation.body)
                                       if (reachEstimation.body.reach_estimation_id) {
                                         query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                         utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
@@ -266,8 +267,14 @@ exports.enable = function (req, res) {
                                                   qs: {access_token: page.accessToken},
                                                   method: 'POST'
                                                 }
-                                                needle.post(options.url, options, (error, response) => {
+                                                let bodyToSend = {
+                                                  subscribed_fields: [
+                                                    'feed', 'conversations', 'mention', 'messages', 'message_echoes', 'message_deliveries', 'messaging_optins', 'messaging_postbacks', 'message_reads', 'messaging_referrals', 'messaging_policy_enforcement']
+                                                }
+                                                needle.post(`https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=${page.accessToken}`, bodyToSend, (error, response) => {
+                                                  console.log('response.body', response.body)
                                                   if (error) {
+                                                    console.log('error in subscribed_apps', error)
                                                     return res.status(500).json({
                                                       status: 'failed',
                                                       payload: JSON.stringify(error)
@@ -669,10 +676,10 @@ function createTag (user, page, tag, req) {
             logger.serverLog(TAG, `Error at save tag ${err}`, 'error')
           })
       } else {
-        logger.serverLog(TAG, `Error at create tag on Facebook ${label.body.error}`, 'error')
+        logger.serverLog(TAG, `Error at create tag on Facebook ${JSON.stringify(label.body.error)}`, 'error')
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Error at create tag on Facebook ${err}`, 'error')
+      logger.serverLog(TAG, `Error at create tag on Facebook ${JSON.stringify(err)}`, 'error')
     })
 }
