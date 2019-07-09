@@ -10,7 +10,7 @@ exports.genericfindForSurveyQuestions = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`surveys/question/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/question/query`, 'post', query, 'kiboengage')
 }
 
 exports.removeSurvey = (surveyId) => {
@@ -18,7 +18,7 @@ exports.removeSurvey = (surveyId) => {
     purpose: 'deleteOne',
     match: {surveyId: surveyId}
   }
-  return callApi(`surveys/question`, 'delete', query, '', 'kiboengage')
+  return callApi(`surveys/question`, 'delete', query, 'kiboengage')
 }
 
 exports.removeAllSurveyQuestionsQuery = (surveyId) => {
@@ -26,7 +26,7 @@ exports.removeAllSurveyQuestionsQuery = (surveyId) => {
     purpose: 'deleteMany',
     match: {surveyId: surveyId}
   }
-  return callApi(`surveys/question`, 'delete', query, '', 'kiboengage')
+  return callApi(`surveys/question`, 'delete', query, 'kiboengage')
 }
 
 exports.findSurveyWithId = (surveyId) => {
@@ -34,9 +34,9 @@ exports.findSurveyWithId = (surveyId) => {
     purpose: 'findAll',
     match: {surveyId: surveyId}
   }
-  return callApi(`surveys/question/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/question/query`, 'post', query, 'kiboengage')
 }
 
 exports.saveQuestion = (payload) => {
-  return callApi(`surveys/question`, 'post', payload, '', 'kiboengage')
+  return callApi(`surveys/question`, 'post', payload, 'kiboengage')
 }

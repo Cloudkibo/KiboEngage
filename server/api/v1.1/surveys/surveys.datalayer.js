@@ -10,7 +10,7 @@ exports.findOneSurvey = (id) => {
     purpose: 'findOne',
     match: {_id: id}
   }
-  return callApi(`surveys/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/query`, 'post', query, 'kiboengage')
 }
 
 exports.genericFind = (queryObject) => {
@@ -18,7 +18,7 @@ exports.genericFind = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`surveys/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/query`, 'post', query, 'kiboengage')
 }
 
 exports.genericUpdateForSurvey = (queryObject, updated, options) => {
@@ -30,7 +30,7 @@ exports.genericUpdateForSurvey = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`surveys`, 'put', query, '', 'kiboengage')
+  return callApi(`surveys`, 'put', query, 'kiboengage')
 }
 
 exports.genericUpdateOneSurvey = (queryObject, updated, options) => {
@@ -42,7 +42,7 @@ exports.genericUpdateOneSurvey = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`surveys`, 'put', query, '', 'kiboengage')
+  return callApi(`surveys`, 'put', query, 'kiboengage')
 }
 
 exports.aggregateForSurveys = (match, group, lookup, limit, sort, skip) => {
@@ -56,7 +56,7 @@ exports.aggregateForSurveys = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`surveys/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/query`, 'post', query, 'kiboengage')
 }
 
 exports.deleteForSurveys = (id) => {
@@ -64,7 +64,7 @@ exports.deleteForSurveys = (id) => {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`surveys`, 'delete', query, '', 'kiboengage')
+  return callApi(`surveys`, 'delete', query, 'kiboengage')
 }
 
 exports.genericFindForSurvey = (queryObject) => {
@@ -72,7 +72,7 @@ exports.genericFindForSurvey = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`surveys/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/query`, 'post', query, 'kiboengage')
 }
 
 exports.countSurveys = (filter) => {
@@ -81,9 +81,9 @@ exports.countSurveys = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`surveys/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/query`, 'post', query, 'kiboengage')
 }
 
 exports.createSurvey = (payload) => {
-  return callApi(`surveys`, 'post', payload, '', 'kiboengage')
+  return callApi(`surveys`, 'post', payload, 'kiboengage')
 }

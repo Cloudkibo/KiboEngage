@@ -10,8 +10,8 @@ exports.genericFind = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`pageadminsubscriptions/query`, 'post', query, '', 'kiboengage')
+  return callApi(`pageadminsubscriptions/query`, 'post', query, 'kiboengage')
 }
 exports.create = (payload) => {
-  return callApi(`pageadminsubscriptions`, 'post', payload, '', 'kiboengage')
+  return callApi(`pageadminsubscriptions`, 'post', payload, 'kiboengage')
 }

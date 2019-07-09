@@ -61,7 +61,7 @@ exports.sendCommentReply = function (req, res) {
     updated: verb === 'add' ? {$inc: { comments: 1 }} : {$inc: { comments: -1 }},
     options: {}
   }
-  utility.callApi('autoposting_fb_post', 'put', updateData, '', 'kiboengage')
+  utility.callApi('autoposting_fb_post', 'put', updateData, 'kiboengage')
     .then(updated => {
       logger.serverLog(TAG, 'Likes count updated successfully!')
     })

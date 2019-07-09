@@ -27,14 +27,13 @@ function fetchProductDetails (productIds, store, callBack) {
         }
       })
       .catch((err) => {
-
         return callBack(err, null)
       })
   }
 }
 
 function sendToFacebook (checkout, store, details) {
-  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true }, '')
+  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true })
     .then(page => {
       logger.serverLog(TAG, `SHOPIFY Got the page info ${JSON.stringify(page)}`)
       page = page[0]

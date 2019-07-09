@@ -1,7 +1,7 @@
 const requestPromise = require('request-promise')
 const config = require('../../../config/environment/index')
 
-exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => {
+exports.callApi = (endpoint, method = 'get', body, type = 'accounts', token) => {
   let headers
   if (token && token !== '') {
     headers = {
@@ -15,7 +15,6 @@ exports.callApi = (endpoint, method = 'get', body, token, type = 'accounts') => 
     }
   }
   let apiUrl = config.api_urls[type]
-  // console.log('apiUrl: ', apiUrl)
   let options = {
     method: method.toUpperCase(),
     uri: `${apiUrl}/${endpoint}`,

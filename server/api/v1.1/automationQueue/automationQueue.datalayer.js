@@ -10,7 +10,7 @@ exports.findOneAutomationQueueObject = (objectId) => {
     purpose: 'findOne',
     match: {_id: objectId}
   }
-  return callApi(`automation_queue/query`, 'post', query, '', 'kiboengage')
+  return callApi(`automation_queue/query`, 'post', query, 'kiboengage')
 }
 
 exports.findAllAutomationQueueObjects = () => {
@@ -18,7 +18,7 @@ exports.findAllAutomationQueueObjects = () => {
     purpose: 'findAll',
     match: {}
   }
-  return callApi(`automation_queue/query`, 'post', query, '', 'kiboengage')
+  return callApi(`automation_queue/query`, 'post', query, 'kiboengage')
 }
 
 exports.findOneAutomationQueueObjectUsingQuery = (queryObject) => {
@@ -26,7 +26,7 @@ exports.findOneAutomationQueueObjectUsingQuery = (queryObject) => {
     purpose: 'findOne',
     match: queryObject
   }
-  return callApi(`automation_queue/query`, 'post', query, '', 'kiboengage')
+  return callApi(`automation_queue/query`, 'post', query, 'kiboengage')
 }
 
 exports.findAllAutomationQueueObjectsUsingQuery = (queryObject) => {
@@ -34,11 +34,11 @@ exports.findAllAutomationQueueObjectsUsingQuery = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`automation_queue/query`, 'post', query, '', 'kiboengage')
+  return callApi(`automation_queue/query`, 'post', query, 'kiboengage')
 }
 
 exports.createAutomationQueueObject = (payload) => {
-  return callApi(`automation_queue`, 'post', payload, '', 'kiboengage')
+  return callApi(`automation_queue`, 'post', payload, 'kiboengage')
 }
 
 exports.updateAutomationQueueObject = (objectId, payload) => {
@@ -47,7 +47,7 @@ exports.updateAutomationQueueObject = (objectId, payload) => {
     match: {_id: objectId},
     updated: payload
   }
-  return callApi(`automation_queue`, 'put', query, '', 'kiboengage')
+  return callApi(`automation_queue`, 'put', query, 'kiboengage')
 }
 
 exports.deleteAutomationQueueObject = (objectId) => {
@@ -55,7 +55,7 @@ exports.deleteAutomationQueueObject = (objectId) => {
     purpose: 'deleteOne',
     match: {_id: objectId}
   }
-  return callApi(`automation_queue`, 'delete', query, '', 'kiboengage')
+  return callApi(`automation_queue`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteAutomationQueueObjectUsingQuery = (queryObject) => {
@@ -63,5 +63,5 @@ exports.deleteAutomationQueueObjectUsingQuery = (queryObject) => {
     purpose: 'deleteOne',
     match: queryObject
   }
-  return callApi(`automation_queue`, 'delete', query, '', 'kiboengage')
+  return callApi(`automation_queue`, 'delete', query, 'kiboengage')
 }

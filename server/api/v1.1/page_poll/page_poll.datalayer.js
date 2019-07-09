@@ -14,7 +14,7 @@ exports.genericUpdate = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`page_poll`, 'put', query, '', 'kiboengage')
+  return callApi(`page_poll`, 'put', query, 'kiboengage')
 }
 
 exports.aggregate = (query) => {
@@ -28,7 +28,7 @@ exports.countDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`page_poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_poll/query`, 'post', query, 'kiboengage')
 }
 
 exports.find = (queryObject) => {
@@ -36,24 +36,24 @@ exports.find = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`page_poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_poll/query`, 'post', query, 'kiboengage')
 }
 exports.genericFind = (queryObject) => {
   let query = {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`page_poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_poll/query`, 'post', query, 'kiboengage')
 }
 exports.createForPollPage = (payload) => {
-  return callApi(`page_poll`, 'post', payload, '', 'kiboengage')
+  return callApi(`page_poll`, 'post', payload, 'kiboengage')
 }
 exports.deleteForPollPage = (queryObject) => {
   let query = {
     purpose: 'deleteMany',
     match: queryObject
   }
-  return callApi(`page_poll`, 'delete', query, '', 'kiboengage')
+  return callApi(`page_poll`, 'delete', query, 'kiboengage')
 }
 exports.aggregateForPolls = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -66,5 +66,5 @@ exports.aggregateForPolls = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`page_poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_poll/query`, 'post', query, 'kiboengage')
 }

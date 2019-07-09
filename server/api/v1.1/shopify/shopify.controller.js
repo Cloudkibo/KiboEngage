@@ -99,7 +99,7 @@ exports.index = function (req, res) {
     res.cookie('state', state)
     res.cookie('userId', JSON.stringify(req.user._id))
     res.cookie('pageId', req.body.pageId)
-    utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+    utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
       .then(companyuser => {
         res.cookie('companyId', JSON.stringify(companyuser.companyId))
         return res.redirect(installUrl)

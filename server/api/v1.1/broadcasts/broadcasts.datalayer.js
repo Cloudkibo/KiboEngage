@@ -19,17 +19,17 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (skip) query.skip = skip
 
   logger.serverLog(TAG, `query ${JSON.stringify(query)}`, 'debug')
-  return callApi(`broadcasts/query`, 'post', query, '', 'kiboengage')
+  return callApi(`broadcasts/query`, 'post', query, 'kiboengage')
 }
 exports.deleteForBroadcasts = (id) => {
   let query = {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`broadcasts`, 'delete', query, '', 'kiboengage')
+  return callApi(`broadcasts`, 'delete', query, 'kiboengage')
 }
 exports.createForBroadcast = (payload) => {
-  return callApi(`broadcasts`, 'post', payload, '', 'kiboengage')
+  return callApi(`broadcasts`, 'post', payload, 'kiboengage')
 }
 
 exports.countBroadcasts = (filter) => {
@@ -38,7 +38,7 @@ exports.countBroadcasts = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`broadcasts/query`, 'post', query, '', 'kiboengage')
+  return callApi(`broadcasts/query`, 'post', query, 'kiboengage')
 }
 
 exports.updateBroadcast = (queryObject, updated) => {
@@ -47,7 +47,7 @@ exports.updateBroadcast = (queryObject, updated) => {
     match: queryObject,
     updated: updated
   }
-  return callApi(`broadcasts`, 'put', query, '', 'kiboengage')
+  return callApi(`broadcasts`, 'put', query, 'kiboengage')
 }
 
 exports.findBroadcastsWithSortLimit = (queryObject, sort, limit) => {
@@ -58,5 +58,5 @@ exports.findBroadcastsWithSortLimit = (queryObject, sort, limit) => {
   if (sort) query.sort = sort
   if (limit) query.limit = limit
 
-  return callApi(`broadcasts/query`, 'post', query, '', 'kiboengage')
+  return callApi(`broadcasts/query`, 'post', query, 'kiboengage')
 }

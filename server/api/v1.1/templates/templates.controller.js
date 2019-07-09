@@ -444,12 +444,12 @@ exports.editPoll = function (req, res) {
 }
 
 exports.createBroadcast = function (req, res) {
-  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
-      callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+      callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
           planUsage = planUsage[0]
-          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
               companyUsage = companyUsage[0]
               // add paid plan check later
@@ -466,7 +466,7 @@ exports.createBroadcast = function (req, res) {
               dataLayer.createBroadcast(broadcastPayload)
                 .then(broadcastCreated => {
                   if (!req.user.isSuperUser) {
-                    callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}}, req.headers.authorization)
+                    callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}})
                       .then(update => {
                       })
                       .catch(err => {

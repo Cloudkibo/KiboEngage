@@ -371,13 +371,13 @@ function parseUrl (text) {
 
 function applyTagFilterIfNecessary (req, subscribers, fn, res) {
   if (req.body.segmentationTags && req.body.segmentationTags.length > 0) {
-    callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }, req.headers.authorization)
+    callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
       .then(tags => {
         let tagIDs = []
         for (let i = 0; i < tags.length; i++) {
           tagIDs.push(tags[i]._id)
         }
-        callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIDs } }, req.headers.authorization)
+        callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIDs } })
           .then(tagSubscribers => {
             if (tagSubscribers.length === 0) {
               return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
@@ -833,7 +833,7 @@ function isWhiteListedDomain (domain, pageId, user) {
               }
             }
             else {
-              
+
               resolve({returnValue: returnValue})
             }
           })
