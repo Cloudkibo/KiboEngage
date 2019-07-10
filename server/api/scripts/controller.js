@@ -77,35 +77,49 @@ exports.addWhitelistDomain = function (req, res) {
 exports.performanceTestBroadcast = function (req, res) {
   const count = req.body.count
   const senderId = req.body.senderId
-  const pageAccessToken = req.body.accessToken
-  const payload = {
-    messaging_type: 'NON_PROMOTIONAL_SUBSCRIPTION',
-    recipient: {
-      id: senderId
-    },
-    message: JSON.stringify({
-      attachment: {
-        type: 'video',
-        payload: {
-          url: 'https://video.twimg.com/ext_tw_video/1139077917709918209/pu/vid/1280x720/p5VpiXopUZ-UZv-l.mp4?tag=10'
-        }
-      }
-    })
+  const page = {
+    accessToken: req.body.accessToken
   }
-  for (let i = 0; i < count; i++) {
-    facebookApiCaller('v2.11', `me/messages?access_token=${pageAccessToken}`, 'post', payload)
-      .then(response => {
-        if (response.body.error) {
-          return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${response.body.error}`})
-        } else {
-          if (i === count - 1) {
-            return res.status(200).json({status: 'success', description: 'Broadcast has been sent successfully'})
+  if (req.body.apiName === 'send_api') {
+    const payload = {
+      messaging_type: 'NON_PROMOTIONAL_SUBSCRIPTION',
+      recipient: {
+        id: senderId
+      },
+      message: JSON.stringify({
+        attachment: {
+          type: 'video',
+          payload: {
+            url: 'https://video.twimg.com/ext_tw_video/1139077917709918209/pu/vid/1280x720/p5VpiXopUZ-UZv-l.mp4?tag=10'
           }
         }
       })
-      .catch(err => {
-        return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${err}`})
-      })
+    }
+    for (let i = 0; i < count; i++) {
+      facebookApiCaller('v2.11', `me/messages?access_token=${page.AccessToken}`, 'post', payload)
+        .then(response => {
+          if (response.body.error) {
+            return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${response.body.error}`})
+          } else {
+            if (i === count - 1) {
+              return res.status(200).json({status: 'success', description: 'Broadcast has been sent successfully'})
+            }
+          }
+        })
+        .catch(err => {
+          return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${err}`})
+        })
+    }
+  } else if (req.body.apiName === 'batch_api') {
+    const payload = [{
+      componentType: 'video',
+      fileurl: {
+        attachment_id: req.body.attachment_id
+      }
+    }]
+    for (let i = 0; i < count; i++) {
+      BroadcastUtility.getBatchData(payload, senderId, page, sendBroadcast, 'Imran', 'Shoukat', res, i, count, 'NON_PROMOTIONAL_SUBSCRIPTION')
+    }
   }
 }
 
