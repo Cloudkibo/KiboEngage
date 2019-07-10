@@ -14,7 +14,7 @@ exports.genericUpdate = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`page_survey`, 'put', query, '', 'kiboengage')
+  return callApi(`page_survey`, 'put', query, 'kiboengage')
 }
 
 exports.genericFind = (queryObject) => {
@@ -22,7 +22,7 @@ exports.genericFind = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`page_survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_survey/query`, 'post', query, 'kiboengage')
 }
 
 exports.findSurveyPagesById = (req) => {
@@ -30,7 +30,7 @@ exports.findSurveyPagesById = (req) => {
     purpose: 'findAll',
     match: {surveyId: req.params.id}
   }
-  return callApi(`page_survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_survey/query`, 'post', query, 'kiboengage')
 }
 
 exports.removeSurvey = (surveypage) => {
@@ -38,7 +38,7 @@ exports.removeSurvey = (surveypage) => {
 }
 
 exports.createForSurveyPage = (payload) => {
-  return callApi(`page_survey`, 'post', payload, '', 'kiboengage')
+  return callApi(`page_survey`, 'post', payload, 'kiboengage')
 }
 
 exports.aggregate = (query) => {
@@ -51,7 +51,7 @@ exports.deleteSurveyPage = (queryObject) => {
     purpose: 'deleteMany',
     match: queryObject
   }
-  return callApi(`page_survey`, 'delete', query, '', 'kiboengage')
+  return callApi(`page_survey`, 'delete', query, 'kiboengage')
 }
 
 exports.countDocuments = (filter) => {
@@ -60,7 +60,7 @@ exports.countDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`page_survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_survey/query`, 'post', query, 'kiboengage')
 }
 exports.aggregateForSurveys = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -73,5 +73,5 @@ exports.aggregateForSurveys = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`page_survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`page_survey/query`, 'post', query, 'kiboengage')
 }

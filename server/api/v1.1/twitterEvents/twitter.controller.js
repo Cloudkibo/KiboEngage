@@ -36,7 +36,7 @@ exports.twitterwebhook = function (req, res) {
       autopostings.forEach(postingItem => {
         if (logicLayer.checkFilterStatus(postingItem, req)) {
           if (postingItem.moderateTweets) {
-            utility.callApi('pageadminsubscriptions/query', 'post', {purpose: 'findOne', match: {companyId: postingItem.companyId, pageId: postingItem.approvalChannel.pageId}}, '', 'kiboengage')
+            utility.callApi('pageadminsubscriptions/query', 'post', {purpose: 'findOne', match: {companyId: postingItem.companyId, pageId: postingItem.approvalChannel.pageId}}, 'kiboengage')
               .then(pageadminsubscription => {
                 let messageData = logicLayer.prepareApprovalMessage(
                   pageadminsubscription.subscriberId,
@@ -59,7 +59,7 @@ exports.twitterwebhook = function (req, res) {
                   tweet: req.body,
                   expiryTime: new Date(new Date().getTime() + 60 * 60 * 24 * 1000)
                 }
-                utility.callApi('tweets_queue', 'post', tweetData, '', 'kiboengage')
+                utility.callApi('tweets_queue', 'post', tweetData, 'kiboengage')
                   .then(created => {
                     logger.serverLog(TAG, 'Tweet has been pushed in queue', 'debug')
                   })
@@ -96,7 +96,7 @@ const sendTweet = (postingItem, req) => {
       })
     }
   }
-  utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
+  utility.callApi('pages/query', 'post', pagesFindCriteria)
     .then(pages => {
       pages.forEach(page => {
         if (postingItem.actionType === 'messenger') {
@@ -119,7 +119,7 @@ const sendToMessenger = (postingItem, page, req) => {
     {$match: {pageId: page._id, companyId: page.companyId, isSubscribed: true}},
     {$group: {_id: null, count: {$sum: 1}}}
   ]
-  utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
+  utility.callApi('subscribers/aggregate', 'post', subscribersData)
     .then(subscribersCount => {
       if (subscribersCount.length > 0) {
         let newMsg = {
@@ -227,7 +227,7 @@ const savePostObject = (postingItem, page, req, messageData, postId) => {
     likes: 0,
     comments: 0
   }
-  utility.callApi(`autoposting_fb_post`, 'post', newPost, '', 'kiboengage')
+  utility.callApi(`autoposting_fb_post`, 'post', newPost, 'kiboengage')
     .then(created => {
       logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
     })

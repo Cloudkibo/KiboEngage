@@ -8,7 +8,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const feedparser = require('feedparser-promised')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -39,7 +39,7 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -48,9 +48,9 @@ exports.create = function (req, res) {
         })
       }
       // calling accounts feature usage for this
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
-          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
               AutopostingDataLayer.countAutopostingDocuments({companyId: companyUser.companyId._id, subscriptionType: req.body.subscriptionType})
                 .then(gotCount => {
@@ -98,7 +98,7 @@ exports.create = function (req, res) {
                             autoPostingPayload.payload = payload
                             AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                               .then(result => {
-                                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}}, req.headers.authorization)
+                                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}})
                                   .then(result => {
                                     logger.serverLog(TAG, 'Company Usage updated', 'debug')
                                   })
@@ -109,7 +109,7 @@ exports.create = function (req, res) {
                                       description: `An unexpected error occured. Please try again later.`
                                     })
                                   })
-                                utility.callApi('twitter/restart', 'get', {}, req.headers.authorization, 'webhook')
+                                utility.callApi('twitter/restart', 'get', {}, 'webhook')
                                 require('./../../../config/socketio').sendMessageToClient({
                                   room_id: companyUser.companyId._id,
                                   body: {
@@ -141,7 +141,7 @@ exports.create = function (req, res) {
                       } else if (req.body.subscriptionType === 'facebook') {
                         let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
                         if (screenName) {
-                          utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, $or: [{ pageId: screenName }, { pageUserName: screenName }] }, req.headers.authorization)
+                          utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, $or: [{ pageId: screenName }, { pageUserName: screenName }] })
                             .then(pagesInfo => {
                               let pageInfo = pagesInfo[0]
                               if (!pageInfo) {
@@ -153,7 +153,7 @@ exports.create = function (req, res) {
                               autoPostingPayload.accountUniqueName = pageInfo.pageId
                               AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                                 .then(result => {
-                                  utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} }, req.headers.authorization)
+                                  utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} })
                                     .then(result => {
                                       logger.serverLog(TAG, 'Company Usage Updated', 'debug')
                                     })
@@ -250,7 +250,7 @@ exports.create = function (req, res) {
                         autoPostingPayload.accountUniqueName = wordpressUniqueId
                         AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
                           .then(result => {
-                            utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { wordpress_autoposting: 1 }}, options: {}}, req.headers.authorization)
+                            utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { wordpress_autoposting: 1 }}, options: {}})
                               .then(result => {
                                 require('./../../../config/socketio').sendMessageToClient({
                                   room_id: companyUser.companyId._id,
@@ -318,7 +318,7 @@ exports.create = function (req, res) {
     })
 }
 exports.edit = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -374,7 +374,7 @@ exports.destroy = function (req, res) {
       }
       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
         .then(result => {
-          utility.callApi('twitter/restart', 'get', {}, req.headers.authorization, 'webhook')
+          utility.callApi('twitter/restart', 'get', {}, 'webhook')
           require('./../../../config/socketio').sendMessageToClient({
             room_id: autoposting.companyId,
             body: {
@@ -438,7 +438,7 @@ exports.handleTweetModeration = function (req, res) {
           logger.serverLog(TAG, `Failed to send approval message ${err}`, 'error')
         })
 
-      utility.callApi('tweets_queue/query', 'post', query, '', 'kiboengage')
+      utility.callApi('tweets_queue/query', 'post', query, 'kiboengage')
         .then(tweet => {
           if (payload.action === 'send_tweet') {
             req.body = tweet.tweet
@@ -471,7 +471,7 @@ exports.handleTweetModeration = function (req, res) {
 
 const deleteTweetQueue = (query) => {
   query.purpose = 'deleteOne'
-  utility.callApi('tweets_queue', 'delete', query, '', 'kiboengage')
+  utility.callApi('tweets_queue', 'delete', query, 'kiboengage')
     .then(deleted => {
       logger.serverLog(TAG, 'Tweet delete succssfully from queue')
     })

@@ -19,7 +19,7 @@ const async = require('async')
 let _ = require('lodash')
 
 exports.index = function (req, res) {
-  callApi.callApi('pages/aggregate', 'post', [], req.headers.authorization)
+  callApi.callApi('pages/aggregate', 'post', [])
     .then(pages => {
       const data = {}
       let c = pages.length
@@ -37,7 +37,7 @@ exports.index = function (req, res) {
 exports.sentVsSeen = function (req, res) {
   let pageId = req.params.pageId
 
-  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -270,7 +270,7 @@ function populateIds (pages, subscriber) {
 }
 
 exports.sentVsSeenNew = function (req, res) {
-  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -278,7 +278,7 @@ exports.sentVsSeenNew = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}, req.headers.authorization) // fetch connected pages
+      callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}) // fetch connected pages
         .then(pages => {
           populateIds(pages).then(result => {
           // We should call the count function when we switch to v1.1
@@ -517,7 +517,7 @@ exports.sentVsSeenNew = function (req, res) {
 }
 
 exports.likesVsSubscribers = function (req, res) {
-  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: true}, req.headers.authorization)
+  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: true})
     .then(pages => {
       callApi.callApi('subscribers/aggregate', 'post', [
         {
@@ -529,7 +529,7 @@ exports.likesVsSubscribers = function (req, res) {
             _id: {pageId: '$pageId'},
             count: {$sum: 1}
           }
-        }], req.headers.authorization)
+        }])
         .then(gotSubscribersCount => {
           let pagesPayload = []
           for (let i = 0; i < pages.length; i++) {
@@ -591,7 +591,7 @@ exports.enable = function (req, res) {
 // }
 
 exports.otherPages = function (req, res) {
-  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: false}, req.headers.authorization)
+  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: false})
     .then(pages => {
       res.status(200).json(pages)
     })
@@ -606,7 +606,7 @@ exports.stats = function (req, res) {
     username: req.user.name
   }
 
-  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -614,11 +614,11 @@ exports.stats = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId}, req.headers.authorization)
+      callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId})
         .then((pages) => {
           populateIds(pages, true).then(result => {
             payload.pages = pages.length
-            callApi.callApi('pages/query', 'post', {companyId: companyUser.companyId}, req.headers.authorization)
+            callApi.callApi('pages/query', 'post', {companyId: companyUser.companyId})
               .then(allPages => {
                 let removeDuplicates = (myArr, prop) => {
                   return myArr.filter((obj, pos, arr) => {
@@ -627,7 +627,7 @@ exports.stats = function (req, res) {
                 }
                 let allPagesWithoutDuplicates = removeDuplicates(allPages, 'pageId')
                 payload.totalPages = allPagesWithoutDuplicates.length
-                callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isSubscribed: true, pageId: {$in: result.pageIds}}, req.headers.authorization)
+                callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isSubscribed: true, pageId: {$in: result.pageIds}})
                   .then(subscribers => {
                     logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
                     payload.subscribers = subscribers.length
@@ -735,7 +735,7 @@ exports.graphData = function (req, res) {
     days = req.params.days
   }
 
-  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -863,7 +863,7 @@ function graphDataNew (body, companyUser, pageIds) {
 }
 
 exports.toppages = function (req, res) {
-  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -879,7 +879,7 @@ exports.toppages = function (req, res) {
                 _id: {pageId: '$pageId'},
                 count: {$sum: 1}
               }
-            }], req.headers.authorization)
+            }])
             .then(gotSubscribersCount => {
               logger.serverLog(TAG, `pages: ${pages}`, 'debug')
               logger.serverLog(TAG, `gotSubscribersCount ${gotSubscribersCount}`, 'debug')
@@ -956,9 +956,9 @@ exports.getAllSubscribers = function (req, res) {
     callApi.callApi('subscribers/aggregate', 'post', [
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
-    ], req.headers.authorization)
+    ])
       .then(subscribersCount => {
-        callApi.callApi('subscribers/query', 'post', findCriteria, req.headers.authorization)
+        callApi.callApi('subscribers/query', 'post', findCriteria)
           .then(subscribers => {
             res.status(200).json({
               status: 'success',
@@ -984,9 +984,9 @@ exports.getAllSubscribers = function (req, res) {
     callApi.callApi('subscribers/aggregate', 'post', [
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
-    ], req.headers.authorization)
+    ])
       .then(subscribersCount => {
-        callApi.callApi('subscribers/query', 'post', Object.assign(findCriteria, {_id: {$gt: req.body.last_id}}, req.headers.authorization))
+        callApi.callApi('subscribers/query', 'post', Object.assign(findCriteria, {_id: {$gt: req.body.last_id}}))
           .then(subscribers => {
             res.status(200).json({
               status: 'success',
@@ -1012,9 +1012,9 @@ exports.getAllSubscribers = function (req, res) {
     callApi.callApi('subscribers/query', 'post', [
       { $match: findCriteria },
       { $group: { _id: null, count: { $sum: 1 } } }
-    ], req.headers.authorization)
+    ])
       .then(subscribersCount => {
-        callApi.callApi('subscribers/query', Object.assign(findCriteria, {_id: {$lt: req.body.last_id}}, req.headers.authorization))
+        callApi.callApi('subscribers/query', Object.assign(findCriteria, {_id: {$lt: req.body.last_id}}))
           .then(subscribers => {
             res.status(200).json({
               status: 'success',
@@ -1062,7 +1062,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                   if (respp && respp.body && respp.body.data && respp.body.data.length > 0) {
                     for (let a = 0; a < respp.body.data.length; a++) {
                       if (respp.body.data[a].feature === 'subscription_messaging' && respp.body.data[a].status === 'approved') {
-                        callApi.callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}, req.headers.authorization) // disconnect page
+                        callApi.callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}) // disconnect page
                           .then(updated => {
                           })
                           .catch(err => {
@@ -1086,7 +1086,7 @@ exports.updateSubscriptionPermission = function (req, res) {
     })
 }
 exports.subscriberSummary = function (req, res) {
-  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -1094,14 +1094,14 @@ exports.subscriberSummary = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}, req.headers.authorization) // fetch connected pages
+      callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}) // fetch connected pages
         .then(pages => {
           populateIds(pages, true).then(result => {
-            callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true, result.pageIds), req.headers.authorization)
+            callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true, result.pageIds))
               .then(subscribers => {
-                callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false, result.pageIds), req.headers.authorization)
+                callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, false, result.pageIds))
                   .then(unsubscribes => {
-                    callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true, result.pageIds), req.headers.authorization)
+                    callApi.callApi('subscribers/aggregate', 'post', LogicLayer.queryForSubscribersGraph(req.body, companyUser, true, result.pageIds))
                       .then(graphdata => {
                         let data = {
                           subscribes: subscribers.length > 0 ? subscribers[0].count : 0,
@@ -1238,7 +1238,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      callApi.callApi('autoposting_fb_post/query', 'post', postCriteria, '', 'kiboengage')
+      callApi.callApi('autoposting_fb_post/query', 'post', postCriteria, 'kiboengage')
         .then(postsInfo => {
           callback(null, postsInfo)
         })
@@ -1258,9 +1258,9 @@ exports.fetchAutopostingDetails = function (req, res) {
       let twitterIndex = types.indexOf('twitter')
       let wordpressIndex = types.indexOf('wordpress')
       let payload = {
-        facebookAutoposting: results[0].length > 0 ? results[0][facebookIndex].count : 0,
-        twitterAutoposting: results[0].length > 0 ? results[0][twitterIndex].count : 0,
-        wordpressAutoposting: results[0].length > 0 ? results[0][wordpressIndex].count : 0,
+        facebookAutoposting: results[0].length > 0 && facebookIndex !== -1 ? results[0][facebookIndex].count : 0,
+        twitterAutoposting: results[0].length > 0 && twitterIndex !== -1 ? results[0][twitterIndex].count : 0,
+        wordpressAutoposting: results[0].length > 0 && wordpressIndex !== -1 ? results[0][wordpressIndex].count : 0,
         facebookAutopostingsCame: results[1].length > 0 ? results[1].length : 0,
         twitterAutopostingsCame: results[2].length > 0 ? results[2].length : 0,
         wordpressAutopostingsCame: results[3].length > 0 ? results[3].length : 0,

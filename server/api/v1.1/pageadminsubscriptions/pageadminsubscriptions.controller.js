@@ -11,7 +11,7 @@ exports.index = function (req, res) {
     .then(subscriptionInfo => {
       if (subscriptionInfo.length > 0) {
         for (let i = 0; i < subscriptionInfo.length; i++) {
-          utility.callApi(`user/query`, 'post', { _id: subscriptionInfo[i].userId }, req.headers.authorization)
+          utility.callApi(`user/query`, 'post', { _id: subscriptionInfo[i].userId })
             .then(user => {
               subscriptionInfo[i].userId = user
               if (i === subscriptionInfo.length - 1) {
@@ -47,7 +47,7 @@ exports.create = function (req, res) {
       pageId: req.body.pageId
     }
   }
-  utility.callApi(`pageadminsubscriptions/query`, 'post', query, '', 'kiboengage')
+  utility.callApi(`pageadminsubscriptions/query`, 'post', query, 'kiboengage')
     .then(pageadminsubscription => {
       if (pageadminsubscription) {
         let updatedData = {
@@ -62,7 +62,7 @@ exports.create = function (req, res) {
           },
           options: {}
         }
-        utility.callApi('pageadminsubscriptions', 'put', updatedData, '', 'kiboengage')
+        utility.callApi('pageadminsubscriptions', 'put', updatedData, 'kiboengage')
           .then(updated => {
             logger.serverLog(TAG, 'pageadminsubscription updated successfuly')
           })
@@ -111,12 +111,12 @@ exports.create = function (req, res) {
     })
 }
 
-exports.fetch = function(req, res) {
+exports.fetch = function (req, res) {
   PageAdminSubscriptionsDataLayer.genericFind({userId: req.user._id, companyId: req.user.companyId, pageId: req.body.pageId})
     .then(subscriptionInfo => {
       if (subscriptionInfo.length > 0) {
         for (let i = 0; i < subscriptionInfo.length; i++) {
-          utility.callApi(`user/query`, 'post', { _id: subscriptionInfo[i].userId }, req.headers.authorization)
+          utility.callApi(`user/query`, 'post', { _id: subscriptionInfo[i].userId })
             .then(user => {
               subscriptionInfo[i].userId = user
               if (i === subscriptionInfo.length - 1) {

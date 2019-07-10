@@ -1,11 +1,11 @@
 const { callApi } = require('../utility')
 
 exports.createStoreInfo = (payload) => {
-  return callApi(`abandoned_cart/storeinfo`, 'post', payload, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeinfo`, 'post', payload, 'kiboengage')
 }
 
 exports.createStoreAnalytics = (payload) => {
-  return callApi(`abandoned_cart/storeanalytics`, 'post', payload, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeanalytics`, 'post', payload, 'kiboengage')
 }
 
 exports.findOneStoreAnalytics = (storeId) => {
@@ -13,7 +13,7 @@ exports.findOneStoreAnalytics = (storeId) => {
     purpose: 'findOne',
     match: {storeId}
   }
-  return callApi(`abandoned_cart/storeanalytics/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeanalytics/query`, 'post', query, 'kiboengage')
 }
 
 exports.findAllStoreInfo = (companyId) => {
@@ -21,7 +21,7 @@ exports.findAllStoreInfo = (companyId) => {
     purpose: 'findAll',
     match: {companyId}
   }
-  return callApi(`abandoned_cart/storeinfo/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeinfo/query`, 'post', query, 'kiboengage')
 }
 
 exports.findAllCheckoutInfo = (payload) => {
@@ -29,7 +29,7 @@ exports.findAllCheckoutInfo = (payload) => {
     purpose: 'findAll',
     match: payload
   }
-  return callApi(`abandoned_cart/checkoutinfo/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/checkoutinfo/query`, 'post', query, 'kiboengage')
 }
 
 exports.findOneStoreInfo = (companyId) => {
@@ -37,7 +37,7 @@ exports.findOneStoreInfo = (companyId) => {
     purpose: 'findOne',
     match: {companyId}
   }
-  return callApi(`abandoned_cart/storeinfo/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeinfo/query`, 'post', query, 'kiboengage')
 }
 
 exports.findOneStoreInfoGeneric = (payload) => {
@@ -45,11 +45,11 @@ exports.findOneStoreInfoGeneric = (payload) => {
     purpose: 'findOne',
     match: payload
   }
-  return callApi(`abandoned_cart/storeinfo/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeinfo/query`, 'post', query, 'kiboengage')
 }
 
 exports.createCartInfo = (payload) => {
-  return callApi(`abandoned_cart/cartinfo`, 'post', payload, '', 'kiboengage')
+  return callApi(`abandoned_cart/cartinfo`, 'post', payload, 'kiboengage')
 }
 
 exports.findOneCartInfo = (payload) => {
@@ -57,11 +57,11 @@ exports.findOneCartInfo = (payload) => {
     purpose: 'findOne',
     match: payload
   }
-  return callApi(`abandoned_cart/cartinfo/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/cartinfo/query`, 'post', query, 'kiboengage')
 }
 
 exports.createCheckOutInfo = (payload) => {
-  return callApi(`abandoned_cart/checkoutinfo`, 'post', payload, '', 'kiboengage')
+  return callApi(`abandoned_cart/checkoutinfo`, 'post', payload, 'kiboengage')
 }
 
 exports.findOneCheckOutInfo = (payload) => {
@@ -69,7 +69,7 @@ exports.findOneCheckOutInfo = (payload) => {
     purpose: 'findOne',
     match: payload
   }
-  return callApi(`abandoned_cart/checkoutinfo/query`, 'post', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/checkoutinfo/query`, 'post', query, 'kiboengage')
 }
 
 exports.findOneStoreInfoObjectAndUpdate = (queryObject, update) => {
@@ -78,7 +78,7 @@ exports.findOneStoreInfoObjectAndUpdate = (queryObject, update) => {
     match: queryObject,
     updated: update
   }
-  return callApi(`abandoned_cart/storeinfo`, 'put', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeinfo`, 'put', query, 'kiboengage')
 }
 
 exports.findOneCartInfoObjectAndUpdate = (queryObject, update) => {
@@ -87,7 +87,7 @@ exports.findOneCartInfoObjectAndUpdate = (queryObject, update) => {
     match: queryObject,
     updated: update
   }
-  return callApi(`abandoned_cart/cartinfo`, 'put', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/cartinfo`, 'put', query, 'kiboengage')
 }
 
 exports.findOneStoreAnalyticsObjectAndUpdate = (queryObject, update) => {
@@ -96,7 +96,7 @@ exports.findOneStoreAnalyticsObjectAndUpdate = (queryObject, update) => {
     match: queryObject,
     updated: update
   }
-  return callApi(`abandoned_cart/storeanalytics`, 'put', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeanalytics`, 'put', query, 'kiboengage')
 }
 
 exports.findOneCheckOutInfoObjectAndUpdate = (queryObject, update) => {
@@ -105,7 +105,7 @@ exports.findOneCheckOutInfoObjectAndUpdate = (queryObject, update) => {
     match: queryObject,
     updated: update
   }
-  return callApi(`abandoned_cart/checkoutinfo`, 'put', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/checkoutinfo`, 'put', query, 'kiboengage')
 }
 
 exports.deleteAllCartInfoObjects = (storeId) => {
@@ -113,7 +113,7 @@ exports.deleteAllCartInfoObjects = (storeId) => {
     purpose: 'deleteAll',
     match: {storeId}
   }
-  return callApi(`abandoned_cart/cartinfo`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/cartinfo`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteAllCartInfoObjectsGeneric = (payload) => {
@@ -121,7 +121,7 @@ exports.deleteAllCartInfoObjectsGeneric = (payload) => {
     purpose: 'deleteAll',
     match: payload
   }
-  return callApi(`abandoned_cart/cartinfo`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/cartinfo`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteOneCartInfoObject = (payload) => {
@@ -129,7 +129,7 @@ exports.deleteOneCartInfoObject = (payload) => {
     purpose: 'deleteOne',
     match: payload
   }
-  return callApi(`abandoned_cart/cartinfo`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/cartinfo`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteOneCheckOutInfoObject = (checkoutInfoId) => {
@@ -137,7 +137,7 @@ exports.deleteOneCheckOutInfoObject = (checkoutInfoId) => {
     purpose: 'deleteOne',
     match: {_id: checkoutInfoId}
   }
-  return callApi(`abandoned_cart/checkoutinfo`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/checkoutinfo`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteAllCheckoutInfoObjects = (storeId) => {
@@ -145,7 +145,7 @@ exports.deleteAllCheckoutInfoObjects = (storeId) => {
     purpose: 'deleteAll',
     match: {storeId}
   }
-  return callApi(`abandoned_cart/checkoutinfo`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/checkoutinfo`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteAllStoreAnalyticsObjects = (payload) => {
@@ -153,7 +153,7 @@ exports.deleteAllStoreAnalyticsObjects = (payload) => {
     purpose: 'deleteAll',
     match: payload
   }
-  return callApi(`abandoned_cart/storeanalytics`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeanalytics`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteOneStoreInfoObject = (payload) => {
@@ -161,7 +161,7 @@ exports.deleteOneStoreInfoObject = (payload) => {
     purpose: 'deleteOne',
     match: payload
   }
-  return callApi(`abandoned_cart/storeinfo`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeinfo`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteAllStoreInfoObject = (payload) => {
@@ -169,5 +169,5 @@ exports.deleteAllStoreInfoObject = (payload) => {
     purpose: 'deleteAll',
     match: payload
   }
-  return callApi(`abandoned_cart/storeinfo`, 'delete', query, '', 'kiboengage')
+  return callApi(`abandoned_cart/storeinfo`, 'delete', query, 'kiboengage')
 }

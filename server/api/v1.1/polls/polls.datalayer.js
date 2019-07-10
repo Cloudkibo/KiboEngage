@@ -10,7 +10,7 @@ exports.findOnePoll = (id) => {
     purpose: 'findOne',
     match: {_id: id}
   }
-  return callApi(`polls/query`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/query`, 'post', query, 'kiboengage')
 }
 
 exports.genericFindForPolls = (queryObject) => {
@@ -18,10 +18,10 @@ exports.genericFindForPolls = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`polls/query`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/query`, 'post', query, 'kiboengage')
 }
 exports.createForPoll = (payload) => {
-  return callApi(`polls`, 'post', payload, '', 'kiboengage')
+  return callApi(`polls`, 'post', payload, 'kiboengage')
 }
 
 exports.aggregateForPolls = (match, group, lookup, limit, sort, skip) => {
@@ -35,14 +35,14 @@ exports.aggregateForPolls = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`polls/query`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/query`, 'post', query, 'kiboengage')
 }
 exports.deleteForPolls = (id) => {
   let query = {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`polls`, 'delete', query, '', 'kiboengage')
+  return callApi(`polls`, 'delete', query, 'kiboengage')
 }
 
 exports.countPolls = (filter) => {
@@ -51,5 +51,5 @@ exports.countPolls = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`polls/query`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/query`, 'post', query, 'kiboengage')
 }

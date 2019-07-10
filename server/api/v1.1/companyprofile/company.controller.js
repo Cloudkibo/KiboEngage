@@ -6,7 +6,7 @@ const config = require('../../../config/environment/index')
 const logicLayer = require('./company.logiclayer.js')
 
 exports.members = function (req, res) {
-  utility.callApi(`companyprofile/members`, 'get', {}, req.headers.authorization)
+  utility.callApi(`companyprofile/members`, 'get', {}, 'accounts', req.headers.authorization)
     .then(members => {
       res.status(200).json({status: 'success', payload: members})
     })
@@ -15,7 +15,7 @@ exports.members = function (req, res) {
     })
 }
 exports.getAutomatedOptions = function (req, res) {
-  utility.callApi(`companyprofile/getAutomatedOptions`, 'get', {}, req.headers.authorization)
+  utility.callApi(`companyprofile/getAutomatedOptions`, 'get', {}, 'accounts', req.headers.authorization)
     .then(payload => {
       res.status(200).json({status: 'success', payload: payload})
     })
@@ -25,7 +25,7 @@ exports.getAutomatedOptions = function (req, res) {
 }
 
 exports.invite = function (req, res) {
-  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, req.headers.authorization)
+  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role})
     .then((result) => {
       logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
       logger.serverLog(TAG, result, 'debug')
@@ -39,7 +39,7 @@ exports.invite = function (req, res) {
 }
 
 exports.updateRole = function (req, res) {
-  utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email}, req.headers.authorization)
+  utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email})
     .then((result) => {
       logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
       logger.serverLog(TAG, result, 'debug')
@@ -51,7 +51,7 @@ exports.updateRole = function (req, res) {
 }
 
 exports.updateAutomatedOptions = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -59,7 +59,7 @@ exports.updateAutomatedOptions = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {automated_options: req.body.automated_options}, options: {}}, req.headers.authorization)
+      utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {automated_options: req.body.automated_options}, options: {}})
         .then(updatedProfile => {
           return res.status(200).json({status: 'success', payload: updatedProfile})
         })
@@ -73,7 +73,7 @@ exports.updateAutomatedOptions = function (req, res) {
     })
 }
 exports.updatePlatform = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -91,7 +91,7 @@ exports.updatePlatform = function (req, res) {
             })
           }
           if (resp.statusCode === 200) {
-            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}}, req.headers.authorization)
+            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}})
               .then(updatedProfile => {
                 if (req.body.twilio.platform) {
                   utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.twilio.platform}, options: {}})
@@ -135,7 +135,7 @@ exports.updatePlatform = function (req, res) {
     })
 }
 exports.updatePlatformWhatsApp = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -159,7 +159,7 @@ exports.updatePlatformWhatsApp = function (req, res) {
               sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
               sandboxCode: req.body.sandboxCode
             }}
-            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}}, req.headers.authorization)
+            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}})
               .then(updatedProfile => {
                 if (req.body.platform) {
                   utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.platform}, options: {}})
@@ -188,7 +188,7 @@ exports.updatePlatformWhatsApp = function (req, res) {
     })
 }
 exports.disconnect = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -203,7 +203,7 @@ exports.disconnect = function (req, res) {
         updated = {$unset: {twilioWhatsApp: 1}}
       }
       let userUpdated = logicLayer.getPlatform(companyUser, req.body)
-      utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: updated, options: {}}, req.headers.authorization)
+      utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: updated, options: {}})
         .then(updatedProfile => {
           utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: userUpdated, options: {}})
             .then(updated => {
