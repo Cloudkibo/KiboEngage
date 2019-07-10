@@ -8,7 +8,7 @@ const needle = require('needle')
 const BroadcastUtility = require('../v1.1/broadcasts/broadcasts.utility')
 const logger = require('../../components/logger')
 const request = require('request')
-const facebookApiCaller = require('../global/facebookApiCaller.js')
+const { facebookApiCaller } = require('../global/facebookApiCaller.js')
 
 exports.normalizeDataForDelivery = function (req, res) {
   BroadcastPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
@@ -85,15 +85,15 @@ exports.performanceTestBroadcast = function (req, res) {
     },
     message: JSON.stringify({
       attachment: {
-        componentType: 'video',
-        fileurl: {
+        type: 'video',
+        payload: {
           url: 'https://video.twimg.com/ext_tw_video/1139077917709918209/pu/vid/1280x720/p5VpiXopUZ-UZv-l.mp4?tag=10'
         }
       }
     })
   }
   for (let i = 0; i < count; i++) {
-    facebookApiCaller('v2.11', `https://graph.facebook.com/v3.3/me/messages?access_token=${pageAccessToken}`, 'post', payload)
+    facebookApiCaller('v2.11', `me/messages?access_token=${pageAccessToken}`, 'post', payload)
       .then(response => {
         if (response.body.error) {
           return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${response.body.error}`})
