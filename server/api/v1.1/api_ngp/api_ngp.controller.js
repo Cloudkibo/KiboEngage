@@ -41,7 +41,7 @@ exports.enable = function (req, res) {
     return res.status(400)
       .json({status: 'failed', description: 'Parameters are missing. company_id is required'})
   }
-  utility.callApi(`api_ngp/query`, 'post', { company_id: req.body.company_id }, req.headers.authorization)
+  utility.callApi(`api_ngp/query`, 'post', { company_id: req.body.company_id })
     .then(savedSettings => {
       res.status(201).json({
         status: 'success',

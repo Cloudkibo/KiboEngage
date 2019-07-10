@@ -6,7 +6,7 @@ exports.countBroadcasts = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`broadcasts/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`broadcasts/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.countPolls = (filter) => {
   let query = {
@@ -14,7 +14,7 @@ exports.countPolls = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`polls/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.countSurveys = (filter) => {
   let query = {
@@ -22,7 +22,7 @@ exports.countSurveys = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`surveys/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -35,7 +35,7 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`broadcasts/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`broadcasts/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.aggregateForPolls = (match, group, lookup, limit, sort, skip, lookup1) => {
   let query = {
@@ -49,7 +49,7 @@ exports.aggregateForPolls = (match, group, lookup, limit, sort, skip, lookup1) =
   if (skip) query.skip = skip
   if (lookup1) query.lookup1 = lookup1
 
-  return callApi(`polls/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.aggregateForSurveys = (match, group, lookup, limit, sort, skip, lookup1) => {
   let query = {
@@ -63,7 +63,7 @@ exports.aggregateForSurveys = (match, group, lookup, limit, sort, skip, lookup1)
   if (skip) query.skip = skip
   if (lookup1) query.lookup1 = lookup1
 
-  return callApi(`surveys/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.aggregateForSessions = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -76,33 +76,33 @@ exports.aggregateForSessions = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`broadcasts/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`broadcasts/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.findOnePoll = (id) => {
   let query = {
     purpose: 'findOne',
     match: {_id: id}
   }
-  return callApi(`polls/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.findSurvey = (queryObject) => {
   let query = {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`surveys/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.findBroadcasts = (queryObject) => {
   let query = {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`surveys/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.findPolls = (queryObject) => {
   let query = {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`polls/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`polls/kiboDashQuery`, 'post', query, 'kiboengage')
 }

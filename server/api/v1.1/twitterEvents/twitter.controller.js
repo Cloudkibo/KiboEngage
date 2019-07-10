@@ -34,39 +34,83 @@ exports.twitterwebhook = function (req, res) {
     .then(autopostings => {
       logger.serverLog(TAG, `autoposting found ${JSON.stringify(req.body)}`, 'debug')
       autopostings.forEach(postingItem => {
-        let pagesFindCriteria = {
-          companyId: postingItem.companyId,
-          connected: true
-        }
-        if (postingItem.isSegmented) {
-          if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
-            pagesFindCriteria = _.merge(pagesFindCriteria, {
-              pageId: {
-                $in: postingItem.segmentationPageIds
-              }
-            })
+        if (logicLayer.checkFilterStatus(postingItem, req)) {
+          if (postingItem.moderateTweets) {
+            utility.callApi('pageadminsubscriptions/query', 'post', {purpose: 'findOne', match: {companyId: postingItem.companyId, pageId: postingItem.approvalChannel.pageId}}, 'kiboengage')
+              .then(pageadminsubscription => {
+                let messageData = logicLayer.prepareApprovalMessage(
+                  pageadminsubscription.subscriberId,
+                  postingItem,
+                  req
+                )
+                facebookApiCaller('v3.3', `me/messages?access_token=${postingItem.approvalChannel.pageAccessToken}`, 'post', messageData)
+                  .then(response => {
+                    if (response.body.error) {
+                      logger.serverLog(TAG, `Failed to send approval message ${JSON.stringify(response.body.error)}`, 'error')
+                    } else {
+                      logger.serverLog(TAG, `Approval message send successfully!`)
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to send approval message ${err}`, 'error')
+                  })
+                let tweetData = {
+                  autopostingId: postingItem._id,
+                  tweet: req.body,
+                  expiryTime: new Date(new Date().getTime() + 60 * 60 * 24 * 1000)
+                }
+                utility.callApi('tweets_queue', 'post', tweetData, 'kiboengage')
+                  .then(created => {
+                    logger.serverLog(TAG, 'Tweet has been pushed in queue', 'debug')
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to push tweet in queue ${err}`, 'error')
+                  })
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch page admin subscription ${err}`, 'error')
+              })
+          } else {
+            sendTweet(postingItem, req)
           }
         }
-        utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
-          .then(pages => {
-            pages.forEach(page => {
-              if (postingItem.actionType === 'messenger') {
-                sendToMessenger(postingItem, page, req)
-              } else if (postingItem.actionType === 'facebook') {
-                postOnFacebook(postingItem, page, req)
-              } else if (postingItem.actionType === 'both') {
-                sendToMessenger(postingItem, page, req)
-                postOnFacebook(postingItem, page, req)
-              }
-            })
-          })
-          .catch(err => {
-            if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
-          })
       })
     })
     .catch(err => {
       logger.serverLog(TAG, `Internal server error while fetching autoposts ${err}`, 'error')
+    })
+}
+
+const sendTweet = (postingItem, req) => {
+  console.log('in sendTweet')
+  let pagesFindCriteria = {
+    companyId: postingItem.companyId,
+    connected: true
+  }
+  if (postingItem.isSegmented) {
+    if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
+      pagesFindCriteria = _.merge(pagesFindCriteria, {
+        pageId: {
+          $in: postingItem.segmentationPageIds
+        }
+      })
+    }
+  }
+  utility.callApi('pages/query', 'post', pagesFindCriteria)
+    .then(pages => {
+      pages.forEach(page => {
+        if (postingItem.actionType === 'messenger') {
+          sendToMessenger(postingItem, page, req)
+        } else if (postingItem.actionType === 'facebook') {
+          postOnFacebook(postingItem, page, req)
+        } else if (postingItem.actionType === 'both') {
+          sendToMessenger(postingItem, page, req)
+          postOnFacebook(postingItem, page, req)
+        }
+      })
+    })
+    .catch(err => {
+      if (err) logger.serverLog(TAG, `Internal server error while fetching pages ${err}`, 'error')
     })
 }
 
@@ -75,7 +119,7 @@ const sendToMessenger = (postingItem, page, req) => {
     {$match: {pageId: page._id, companyId: page.companyId, isSubscribed: true}},
     {$group: {_id: null, count: {$sum: 1}}}
   ]
-  utility.callApi('subscribers/aggregate', 'post', subscribersData, req.headers.authorization)
+  utility.callApi('subscribers/aggregate', 'post', subscribersData)
     .then(subscribersCount => {
       if (subscribersCount.length > 0) {
         let newMsg = {
@@ -111,23 +155,7 @@ const sendToMessenger = (postingItem, page, req) => {
 const postOnFacebook = (postingItem, page, req) => {
   logicLayer.handleTwitterPayload(req, {}, page, 'facebook')
     .then(messageData => {
-      let newPost = {
-        pageId: page._id,
-        companyId: postingItem.companyId,
-        autopostingType: 'twitter',
-        autopostingId: postingItem._id,
-        messageId: req.body.id.toString(),
-        post: messageData,
-        likes: 0,
-        clicked: 0
-      }
-      utility.callApi(`autoposting_fb_post`, 'post', newPost, '', 'kiboengage')
-        .then(created => {
-          logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `Failed to create post object ${err}`, 'error')
-        })
+      console.log('response from handleTwitterPayload')
       if (messageData.type === 'text') {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
@@ -135,6 +163,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, response.body.post_id)
             }
           })
           .catch(err => {
@@ -147,6 +176,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, response.body.post_id)
             }
           })
           .catch(err => {
@@ -159,6 +189,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, response.body.post_id)
             }
           })
           .catch(err => {
@@ -171,6 +202,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+              savePostObject(postingItem, page, req, messageData, `${page.pageId}_${response.body.id}`)
             }
           })
           .catch(err => {
@@ -182,3 +214,26 @@ const postOnFacebook = (postingItem, page, req) => {
       logger.serverLog(TAG, `Failed to prepare data ${err}`, 'error')
     })
 }
+
+const savePostObject = (postingItem, page, req, messageData, postId) => {
+  let newPost = {
+    pageId: page._id,
+    companyId: postingItem.companyId,
+    autopostingType: 'twitter',
+    autopostingId: postingItem._id,
+    messageId: req.body.id.toString(),
+    post: messageData,
+    postId: postId,
+    likes: 0,
+    comments: 0
+  }
+  utility.callApi(`autoposting_fb_post`, 'post', newPost, 'kiboengage')
+    .then(created => {
+      logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to create post object ${err}`, 'error')
+    })
+}
+
+exports.sendTweet = sendTweet

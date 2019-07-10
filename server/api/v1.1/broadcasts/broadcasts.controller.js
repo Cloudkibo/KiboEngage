@@ -22,7 +22,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const util = require('util')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
       BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
@@ -322,7 +322,7 @@ exports.upload = function (req, res) {
       if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
         let pages = JSON.parse(req.body.pages)
         logger.serverLog(TAG, `Pages in upload file ${pages}`, 'debug')
-        utility.callApi(`pages/${pages[0]}`)
+        utility.callApi(`pages/${pages[0]}`, 'get', {})
           .then(page => {
             needle.get(
               `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
@@ -395,7 +395,7 @@ exports.upload = function (req, res) {
 exports.uploadForTemplate = function (req, res) {
   let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
   if (req.body.pages && req.body.pages.length > 0) {
-    utility.callApi(`pages/${req.body.pages[0]}`)
+    utility.callApi(`pages/${req.body.pages[0]}`, 'get', {})
       .then(page => {
         needle.get(
           `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
@@ -469,7 +469,7 @@ exports.sendConversation = function (req, res) {
     return res.status(400)
       .json({status: 'failed', description: 'Please select only one page'})
   }
-  utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]}, req.headers.authorization)
+  utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
     .then(page => {
       page = page[0]
       let payloadData = req.body.payload
@@ -507,7 +507,7 @@ exports.sendConversation = function (req, res) {
               }, 3000)
             } else {
               if (req.body.isList === true) {
-                utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
+                utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
                   .then(lists => {
                     let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
                     let interval = setInterval(() => {
@@ -541,7 +541,7 @@ exports.sendConversation = function (req, res) {
     })
 }
 const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
-  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
+  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
     .then(subscribers => {
       if (subscribers.length < 1) {
         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
@@ -637,7 +637,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
         `subscriptionUser ${subscriptionUser}`, 'debug')
-      utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId}, req.headers.authorization)
+      utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId})
         .then(user => {
           user = user[0]
           logger.serverLog(TAG,
@@ -776,7 +776,7 @@ exports.addListAction = function (req, res) {
 }
 
 exports.retrieveReachEstimation = (req, res) => {
-  utility.callApi('pages/query', 'post', {_id: req.params.page_id}, req.headers.authorization)
+  utility.callApi('pages/query', 'post', {_id: req.params.page_id})
     .then(pages => {
       let page = pages[0]
       facebookApiCaller('v2.11', `${page.reachEstimationId}?access_token=${page.pageAccessToken}`, 'get', {})
@@ -811,7 +811,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
           logger.serverLog(TAG, `messageCreative ${util.inspect(messageCreative)}`)
           if (messageCreative.status === 'success') {
             const messageCreativeId = messageCreative.message_creative_id
-            utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
+            utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id})
               .then(pageTags => {
                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                 for (let i = 0; i < limit; i++) {
@@ -821,7 +821,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                   let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
                   pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                   if (req.body.isList) {
-                    utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
+                    utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
                       .then(lists => {
                         lists = lists.map((l) => l.listName)
                         let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
@@ -852,7 +852,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                       if (i === limit - 1) {
                         if (response.status === 'success') {
-                          utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                          utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                             .then(updated => {
                               current++
                             })

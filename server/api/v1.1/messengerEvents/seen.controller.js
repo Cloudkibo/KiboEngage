@@ -127,7 +127,7 @@ function updateSequenceSeen (req) {
                 //   match: {seen: true, companyId: page.companyId},
                 //   group: {_id: '$messageId', count: {$sum: 1}}
                 // }
-                // utility.callApi(`sequence_subscribers/message`, 'put', query, '', 'kiboengage')
+                // utility.callApi(`sequence_subscribers/message`, 'put', query, 'kiboengage')
                 //   .then(messagesSeenCounts => {
                 //     messagesSeenCounts.forEach((message) => {
                 //       SequencesDataLayer.genericUpdateForSequenceMessages({ _id: message._id }, { seen: message.count }, {multi: true})

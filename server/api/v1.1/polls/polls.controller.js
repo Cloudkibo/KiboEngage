@@ -16,7 +16,7 @@ const util = require('util')
 const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       PollDataLayer.genericFindForPolls({companyId: companyUser.companyId})
         .then(polls => {
@@ -49,7 +49,7 @@ exports.index = function (req, res) {
     })
 }
 exports.allPolls = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       let criterias = PollLogicLayer.getCriterias(req.body, companyUser)
       PollDataLayer.countPolls(criterias.countCriteria[0].$match)
@@ -94,10 +94,10 @@ exports.allPolls = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
-      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId}, req.headers.authorization)
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
           // add paid plan check later
@@ -141,10 +141,10 @@ exports.create = function (req, res) {
 
 exports.send = function (req, res) {
   let abort = false
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
-      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId._id}, req.headers.authorization)
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId._id})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
           // add paid plan check later
@@ -169,10 +169,10 @@ exports.send = function (req, res) {
 }
 exports.sendPollDirectly = function (req, res) {
   let abort = false
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
-      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId}, req.headers.authorization)
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
           // add paid plan check later
@@ -239,16 +239,44 @@ exports.getAllResponses = function (req, res) {
 exports.getresponses = function (req, res) {
   PollResponseDataLayer.genericFindForPollResponse({pollId: req.params.id})
     .then(pollresponses => {
-      return res.status(200).json({status: 'success', payload: pollresponses})
+      if (pollresponses.length > 0) {
+        populateResponses(pollresponses, req)
+          .then(result => {
+            return res.status(200).json({status: 'success', payload: result})
+          })
+      } else {
+        return res.status(200).json({status: 'success', payload: pollresponses})
+      }
     })
     .catch(error => {
       return res.status(500).json({status: 'failed', payload: `Failed to fetch responses ${JSON.stringify(error)}`})
     })
 }
 
+function populateResponses (responses, req) {
+  return new Promise(function (resolve, reject) {
+    let payload = []
+    for (let i = 0; i < responses.length; i++) {
+      utility.callApi(`subscribers/query`, 'post', {_id: responses[i].subscriberId})
+        .then(subscribers => {
+          payload.push({
+            _id: responses[i]._id,
+            datetime: responses[i].datetime,
+            pollId: responses[i].pollId,
+            response: responses[i].response,
+            subscriberId: subscribers[0]
+          })
+          if (payload.length === responses.length) {
+            resolve(payload)
+          }
+        })
+    }
+  })
+}
+
 function sendPoll (req, res, planUsage, companyUsage, abort) {
   let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(req.user, req.body)
-  utility.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+  utility.callApi(`pages/query`, 'post', pagesFindCriteria)
     .then(pages => {
       let page = pages[0]
       const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
@@ -258,7 +286,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
           .then(messageCreative => {
             if (messageCreative.status === 'success') {
               const messageCreativeId = messageCreative.message_creative_id
-              utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
+              utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id})
                 .then(pageTags => {
                   const limit = Math.ceil(req.body.subscribersCount / 10000)
                   for (let i = 0; i < limit; i++) {
@@ -268,7 +296,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                     let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
                     pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                     if (req.body.isList) {
-                      utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user), req.headers.authorization)
+                      utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user))
                         .then(lists => {
                           lists = lists.map((l) => l.listName)
                           let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
@@ -298,7 +326,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                       .then(response => {
                         if (i === limit - 1) {
                           if (response.status === 'success') {
-                            utility.callApi('polls', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                            utility.callApi('polls', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                               .then(updated => {
                                 return res.status(200)
                                   .json({status: 'success', description: 'Poll sent successfully!'})
@@ -347,7 +375,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
       } else {
         if (req.body.isList) {
           let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body, req.user)
-          utility.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
+          utility.callApi(`lists/query`, 'post', ListFindCriteria)
             .then(lists => {
               subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, page)
               sendToSubscribers(req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort)
@@ -367,7 +395,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
 }
 
 function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort) {
-  utility.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
+  utility.callApi(`subscribers/query`, 'post', subsFindCriteria)
     .then(subscribers => {
       if (subscribers.length === 0) {
         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
@@ -379,7 +407,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
             query: {companyId: req.user.companyId},
             newPayload: { $inc: { polls: 1 } },
             options: {}
-          }, req.headers.authorization)
+          })
             .then(updated => {
               if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
                 abort = true
@@ -482,10 +510,10 @@ function createPoll (user, body, callback) {
 
 function sendWebhook (user, body, token, callback) {
   let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(user, body)
-  utility.callApi(`pages/query`, 'post', pagesFindCriteria, token)
+  utility.callApi(`pages/query`, 'post', pagesFindCriteria)
     .then(pages => {
       pages.forEach((page) => {
-        utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, token)
+        utility.callApi(`webhooks/query`, 'post', {pageId: page.pageId})
           .then(webhook => {
             webhook = webhook[0]
             if (webhook && webhook.isEnabled) {

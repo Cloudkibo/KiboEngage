@@ -6,7 +6,7 @@ const TAG = 'api/inviteagenttoken/inviteagenttoken.controller.js'
 const callApi = require('../utility')
 
 exports.verify = function (req, res) {
-  callApi.callApi(`invite_verification/${req.params.id}`, 'get', {}, req.headers.authorization)
+  callApi.callApi(`invite_verification/${req.params.id}`, 'get', {})
     .then(result => {
       res.status(200).json({
         status: 'success',

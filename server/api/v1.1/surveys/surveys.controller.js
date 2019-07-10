@@ -22,7 +22,7 @@ const compUtility = require('../../../components/utility')
 const { saveLiveChat, preparePayload } = require('../../global/livechat')
 
 exports.allSurveys = function (req, res) {
-  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -70,10 +70,10 @@ exports.allSurveys = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
-      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId}, req.headers.authorization)
+      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
           // add paid plan check later
@@ -170,8 +170,15 @@ exports.show = function (req, res) {
         .then(questions => {
           surveyResponseDataLayer.genericFind({'surveyId': survey._id})
             .then(responses => {
-              return res.status(200)
-                .json({status: 'success', payload: {survey, questions, responses}})
+              if (responses.length > 0) {
+                populateResponses(responses, req).then(result => {
+                  return res.status(200)
+                    .json({status: 'success', payload: {survey, questions, responses: result}})
+                })
+              } else {
+                return res.status(200)
+                  .json({status: 'success', payload: {survey, questions, responses}})
+              }
             })
             .catch(error => {
               return res.status(500).json({status: `failed du to survey ${error}`, payload: error})
@@ -184,6 +191,28 @@ exports.show = function (req, res) {
     .catch(error => {
       return res.status(500).json({status: `failed due to response ${error}`, payload: error})
     })
+}
+
+function populateResponses (responses, req) {
+  return new Promise(function (resolve, reject) {
+    let payload = []
+    for (let i = 0; i < responses.length; i++) {
+      callApi.callApi(`subscribers/query`, 'post', {_id: responses[i].subscriberId})
+        .then(subscribers => {
+          payload.push({
+            questionId: responses[i].questionId,
+            surveyId: responses[i].surveyId,
+            _id: responses[i]._id,
+            datetime: responses[i].datetime,
+            response: responses[i].response,
+            subscriberId: subscribers[0]
+          })
+          if (payload.length === responses.length) {
+            resolve(payload)
+          }
+        })
+    }
+  })
 }
 
 // Get a single survey
@@ -250,10 +279,10 @@ function exists (list, content) {
 }
 exports.send = function (req, res) {
   let abort = false
-  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
-      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId}, req.headers.authorization)
+      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
           // add paid plan check later
@@ -275,10 +304,10 @@ exports.send = function (req, res) {
 }
 exports.sendSurveyDirectly = function (req, res) {
   let abort = false
-  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
-      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId}, req.headers.authorization)
+      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
           // add paid plan check later
@@ -338,10 +367,10 @@ exports.deleteSurvey = function (req, res) {
 
 function sendSurvey (req, res, planUsage, companyUsage, abort) {
   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req)
-  callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+  callApi.callApi(`pages/query`, 'post', pagesFindCriteria)
     .then(pages => {
       let page = pages[0]
-      callApi.callApi(`user/query`, 'post', {_id: page.userId}, req.headers.authorization)
+      callApi.callApi(`user/query`, 'post', {_id: page.userId})
         .then(connectedUser => {
           connectedUser = connectedUser[0]
           var currentUser
@@ -400,7 +429,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                         .then(messageCreative => {
                           if (messageCreative.status === 'success') {
                             const messageCreativeId = messageCreative.message_creative_id
-                            callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id}, req.headers.authorization)
+                            callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id})
                               .then(pageTags => {
                                 const limit = Math.ceil(req.body.subscribersCount / 10000)
                                 for (let i = 0; i < limit; i++) {
@@ -410,7 +439,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                   let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
                                   pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
                                   if (req.body.isList) {
-                                    callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
+                                    callApi.callApi(`lists/query`, 'post', ListFindCriteria)
                                       .then(lists => {
                                         lists = lists.map((l) => l.listName)
                                         let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
@@ -440,7 +469,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                     .then(response => {
                                       if (i === limit - 1) {
                                         if (response.status === 'success') {
-                                          callApi.callApi('surveys', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                                          callApi.callApi('surveys', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                                             .then(updated => {
                                               return res.status(200)
                                                 .json({status: 'success', description: 'Survey sent successfully!'})
@@ -488,7 +517,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                         })
                     } else {
                       if (req.body.isList === true) {
-                        callApi.callApi(`lists/query`, 'post', ListFindCriteria, req.headers.authorization)
+                        callApi.callApi(`lists/query`, 'post', ListFindCriteria)
                           .then(lists => {
                             let subsFindCriteria = {pageId: page._id, companyId: page.companyId}
                             let listData = []
@@ -576,7 +605,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
 }
 
 function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUsage, companyUsage, abort) {
-  callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
+  callApi.callApi(`subscribers/query`, 'post', subsFindCriteria)
     .then(subscribers => {
       if (subscribers.length === 0) {
         return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
@@ -586,7 +615,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
         utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
           subscribers = repliedSubscribers
           for (let j = 0; j < subscribers.length && !abort; j++) {
-            callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}}, req.headers.authorization)
+            callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}})
               .then(updated => {
                 if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
                   abort = true
@@ -736,10 +765,10 @@ function createSurvey (req, callback) {
 
 function sendWebhook (req, callback) {
   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req)
-  callApi.callApi(`pages/query`, 'post', pagesFindCriteria, req.headers.authorization)
+  callApi.callApi(`pages/query`, 'post', pagesFindCriteria)
     .then(pages => {
       let page = pages[0]
-      callApi.callApi(`webhooks/query`, 'post', {pageId: page.pageId}, req.headers.authorization)
+      callApi.callApi(`webhooks/query`, 'post', {pageId: page.pageId})
         .then(webhook => {
           webhook = webhook[0]
           if (webhook && webhook.isEnabled) {

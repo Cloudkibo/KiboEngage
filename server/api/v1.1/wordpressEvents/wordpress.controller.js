@@ -29,14 +29,14 @@ exports.postPublish = function (req, res) {
             })
           }
         }
-        utility.callApi('pages/query', 'post', pagesFindCriteria, req.headers.authorization)
+        utility.callApi('pages/query', 'post', pagesFindCriteria)
           .then(pages => {
             pages.forEach(page => {
               let subscribersData = [
                 {$match: {pageId: page._id, companyId: page.companyId}},
                 {$group: {_id: null, count: {$sum: 1}}}
               ]
-              utility.callApi('subscribers/query', 'post', subscribersData, req.headers.authorization)
+              utility.callApi('subscribers/query', 'post', subscribersData)
                 .then(subscribersCount => {
                   if (subscribersCount.length > 0) {
                     let newMsg = {
@@ -127,7 +127,7 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
         .then(messageCreative => {
           if (messageCreative.status === 'success') {
             const messageCreativeId = messageCreative.message_creative_id
-            utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
+            utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id})
               .then(pageTags => {
                 const limit = Math.ceil(subscribersCount[0].count / 10000)
                 for (let i = 0; i < limit; i++) {
@@ -152,7 +152,7 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
                     .then(response => {
                       if (i === limit - 1) {
                         if (response.status === 'success') {
-                          utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                          utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                             .then(updated => {
                               current++
                             })

@@ -14,14 +14,14 @@ exports.genericUpdateForResponse = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`surveys/response`, 'put', query, '', 'kiboengage')
+  return callApi(`surveys/response`, 'put', query, 'kiboengage')
 }
 exports.genericFind = (queryObject) => {
   let query = {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`surveys/response/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/response/query`, 'post', query, 'kiboengage')
 }
 
 exports.aggregateForSurveyResponse = (query) => {
@@ -34,7 +34,7 @@ exports.findSurveyResponseById = (surveyId) => {
     purpose: 'findAll',
     match: {surveyId: surveyId}
   }
-  return callApi(`surveys/response/query`, 'post', query, '', 'kiboengage')
+  return callApi(`surveys/response/query`, 'post', query, 'kiboengage')
 }
 
 exports.removeAllSurveyResponse = (surveyId) => {
@@ -42,9 +42,9 @@ exports.removeAllSurveyResponse = (surveyId) => {
     purpose: 'deleteMany',
     match: {surveyId: surveyId}
   }
-  return callApi(`surveys/response`, 'delete', query, '', 'kiboengage')
+  return callApi(`surveys/response`, 'delete', query, 'kiboengage')
 }
 
 exports.saveResponse = (payload) => {
-  return callApi(`surveys/response`, 'post', payload, '', 'kiboengage')
+  return callApi(`surveys/response`, 'post', payload, 'kiboengage')
 }

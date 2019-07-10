@@ -9,14 +9,10 @@ const nonce = require('nonce')()
 const querystring = require('querystring')
 const crypto = require('crypto')
 const request = require('request-promise')
-const StoreInfo = require('./../abandoned_carts/StoreInfo.model')
 const Shopify = require('shopify-api-node')
-const CompanyUsers = require('./../companyuser/companyuser.model')
-const StoreAnalytics = require('./../abandoned_carts/StoreAnalytics.model')
 const TAG = 'api/shopify/shopify.controller.js'
-// const Users = require('./../user/Users.model')
-// const needle = require('needle')
-// const Subscribers = require('../subscribers/Subscribers.model')
+const utility = require('../utility')
+const dataLayer = require('./shopify.datalayer')
 
 function registerWebhooks (shop, token) {
   const shopify = new Shopify({
@@ -95,24 +91,61 @@ exports.index = function (req, res) {
     const state = nonce()
     const redirectUri = config.domain + '/api/shopify/callback'
     const installUrl = 'https://' + shop +
-        '/admin/oauth/authorize?client_id=' + config.shopify.app_key +
-        '&scope=' + scopes +
-        '&state=' + state +
-        '&redirect_uri=' + redirectUri
+      '/admin/oauth/authorize?client_id=' + config.shopify.app_key +
+      '&scope=' + scopes +
+      '&state=' + state +
+      '&redirect_uri=' + redirectUri
 
     res.cookie('state', state)
     res.cookie('userId', JSON.stringify(req.user._id))
     res.cookie('pageId', req.body.pageId)
-    CompanyUsers.findOne({domain_email: req.user.domain_email}, (err, companyUser) => {
-      if (err) {
-        return res.status(500).send('Error in finding companyuser')
-      }
-      res.cookie('companyId', JSON.stringify(companyUser.companyId))
-      return res.redirect(installUrl)
-    })
+    utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
+      .then(companyuser => {
+        res.cookie('companyId', JSON.stringify(companyuser.companyId))
+        return res.redirect(installUrl)
+      })
+      .catch(err => {
+        if (err) {
+          return res.status(500).send('Error in finding companyuser for shopify')
+        }
+      })
   } else {
     return res.status(400).send('Missing shop parameter. Please add ?shop=your-development-shop.myshopify.com to your request')
   }
+}
+
+exports.install = function (req, res) {
+  let { shop, hmac } = req.query
+  if (shop.indexOf('https://') < 0) {
+    shop = 'https://' + shop
+  }
+  // DONE: Validate request is from Shopify
+  const map = Object.assign({}, req.query)
+  delete map['signature']
+  delete map['hmac']
+  const message = querystring.stringify(map)
+  const providedHmac = Buffer.from(hmac, 'utf-8')
+  const generatedHash = Buffer.from(
+    crypto
+      .createHmac('sha256', config.shopify.app_secret)
+      .update(message)
+      .digest('hex'),
+    'utf-8'
+  )
+  let hashEquals = false
+
+  try {
+    hashEquals = crypto.timingSafeEqual(generatedHash, providedHmac)
+  } catch (e) {
+    hashEquals = false
+  };
+
+  if (!hashEquals) {
+    return res.status(400).send('HMAC validation failed')
+  }
+
+  res.cookie('installByShopifyStore', shop)
+  res.redirect('/')
 }
 
 exports.callback = function (req, res) {
@@ -126,17 +159,17 @@ exports.callback = function (req, res) {
   }
 
   if (shop && hmac && code) {
-  // DONE: Validate request is from Shopify
+    // DONE: Validate request is from Shopify
     const map = Object.assign({}, req.query)
     delete map['signature']
     delete map['hmac']
     const message = querystring.stringify(map)
     const providedHmac = Buffer.from(hmac, 'utf-8')
     const generatedHash = Buffer.from(
-    crypto
-      .createHmac('sha256', config.shopify.app_secret)
-      .update(message)
-      .digest('hex'),
+      crypto
+        .createHmac('sha256', config.shopify.app_secret)
+        .update(message)
+        .digest('hex'),
       'utf-8'
     )
     let hashEquals = false
@@ -151,7 +184,7 @@ exports.callback = function (req, res) {
       return res.status(400).send('HMAC validation failed')
     }
 
-  // DONE: Exchange temporary code for a permanent access token
+    // DONE: Exchange temporary code for a permanent access token
     const accessTokenRequestUrl = 'https://' + shop + '/admin/oauth/access_token'
     const accessTokenPayload = {
       client_id: config.shopify.app_key,
@@ -160,38 +193,38 @@ exports.callback = function (req, res) {
     }
 
     request.post(accessTokenRequestUrl, { json: accessTokenPayload })
-  .then((accessTokenResponse) => {
-    const accessToken = accessTokenResponse.access_token
-    registerWebhooks(shop, accessToken)
-    registerScript(shop, accessToken, {
-      event: 'onload',
-      src: config.domain + '/api/shopify/serveScript'
-    })
-    const store = new StoreInfo({
-      userId: userId,
-      pageId: pageId,
-      shopUrl: shop,
-      shopToken: accessToken,
-      companyId: companyId
-    })
-    store.save((err, savedStore) => {
-      if (err) {
-        return res.status(500).json({ status: 'failed', error: err })
-      }
-      const storeAnalytics = new StoreAnalytics({
-        storeId: savedStore._id
-      })
-      storeAnalytics.save((err) => {
-        if (err) {
-          return res.status(500).json({ status: 'failed', error: err })
+      .then((accessTokenResponse) => {
+        const accessToken = accessTokenResponse.access_token
+        registerWebhooks(shop, accessToken)
+        registerScript(shop, accessToken, {
+          event: 'onload',
+          src: config.domain + '/api/shopify/serveScript'
+        })
+        const store = {
+          userId: userId,
+          pageId: pageId,
+          shopUrl: shop,
+          shopToken: accessToken,
+          companyId: companyId
         }
-        return res.redirect('/')
-      }) // store analytics save
-    })
-  })
-  .catch((error) => {
-    res.status(error.statusCode >= 100 && error.statusCode < 600 ? error.statusCode : 500).send(error.error_description)
-  })
+        dataLayer.createStoreInfo(store)
+          .then(savedStore => {
+            const storeAnalytics = {
+              storeId: savedStore._id
+            }
+            return dataLayer.createStoreAnalytics(storeAnalytics)
+          })
+          .then(storeAnalytics => {
+            logger.serverLog(TAG, `Store analytics created ${storeAnalytics}`)
+            return res.redirect('/')
+          })
+          .catch(err => {
+            return res.status(500).json({ status: 'failed', error: err })
+          })
+      })
+      .catch((error) => {
+        res.status(error.statusCode >= 100 && error.statusCode < 600 ? error.statusCode : 500).send(error.error_description)
+      })
   } else {
     res.status(400).send('Required parameters missing')
   }

@@ -28,7 +28,7 @@ router.post('/getAllSubscribers/:pageid',
   auth.isAuthorizedSuperUser(),
   controller.getAllSubscribers) // pagination
 
-  router.get('/allsubscribers/:pageid',
+router.get('/allsubscribers/:pageid',
   auth.isAuthorizedSuperUser(),
   controller.AllSubscribers)
 

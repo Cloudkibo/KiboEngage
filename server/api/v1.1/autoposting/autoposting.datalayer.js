@@ -10,7 +10,7 @@ exports.findOneAutopostingObject = (objectId, companyId) => {
     purpose: 'findOne',
     match: {_id: objectId, companyId}
   }
-  return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
+  return callApi(`autoposting/query`, 'post', query, 'kiboengage')
 }
 
 exports.findOneAutopostingObjectUsingQuery = (queryObject) => {
@@ -18,7 +18,7 @@ exports.findOneAutopostingObjectUsingQuery = (queryObject) => {
     purpose: 'findOne',
     match: queryObject
   }
-  return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
+  return callApi(`autoposting/query`, 'post', query, 'kiboengage')
 }
 
 exports.findAllAutopostingObjectsUsingQuery = (queryObject) => {
@@ -26,7 +26,7 @@ exports.findAllAutopostingObjectsUsingQuery = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
+  return callApi(`autoposting/query`, 'post', query, 'kiboengage')
 }
 
 exports.findAutopostingObjectUsingAggregate = (aggregateObject) => {
@@ -35,7 +35,7 @@ exports.findAutopostingObjectUsingAggregate = (aggregateObject) => {
 }
 
 exports.createAutopostingObject = (payload) => {
-  return callApi(`autoposting`, 'post', payload, '', 'kiboengage')
+  return callApi(`autoposting`, 'post', payload, 'kiboengage')
 }
 
 exports.findOneAutopostingObjectAndUpdate = (queryObject, update, options) => {
@@ -46,7 +46,7 @@ exports.findOneAutopostingObjectAndUpdate = (queryObject, update, options) => {
   }
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
-  return callApi(`autoposting`, 'put', query, '', 'kiboengage')
+  return callApi(`autoposting`, 'put', query, 'kiboengage')
 }
 
 exports.genericFindByIdAndUpdate = (queryObject, updated) => {
@@ -56,7 +56,7 @@ exports.genericFindByIdAndUpdate = (queryObject, updated) => {
     updated: updated,
     new: true
   }
-  return callApi(`autoposting`, 'put', query, '', 'kiboengage')
+  return callApi(`autoposting`, 'put', query, 'kiboengage')
 }
 exports.genericUpdateAutopostingObject = (queryObject, updated, options) => {
   let query = {
@@ -67,7 +67,7 @@ exports.genericUpdateAutopostingObject = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`autoposting`, 'put', query, '', 'kiboengage')
+  return callApi(`autoposting`, 'put', query, 'kiboengage')
 }
 
 exports.deleteAutopostingObject = (objectId) => {
@@ -75,7 +75,7 @@ exports.deleteAutopostingObject = (objectId) => {
     purpose: 'deleteOne',
     match: {_id: objectId}
   }
-  return callApi(`autoposting`, 'delete', query, '', 'kiboengage')
+  return callApi(`autoposting`, 'delete', query, 'kiboengage')
 }
 
 exports.countAutopostingDocuments = (filter) => {
@@ -84,7 +84,7 @@ exports.countAutopostingDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
+  return callApi(`autoposting/query`, 'post', query, 'kiboengage')
 }
 exports.findAutopostingUsingAggregate = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -96,7 +96,7 @@ exports.findAutopostingUsingAggregate = (match, group, lookup, limit, sort, skip
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
-  return callApi(`autoposting/query`, 'post', query, '', 'kiboengage')
+  return callApi(`autoposting/query`, 'post', query, 'kiboengage')
 }
 exports.findAutopostingUsingAggregateForKiboDash = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -108,5 +108,5 @@ exports.findAutopostingUsingAggregateForKiboDash = (match, group, lookup, limit,
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
-  return callApi(`autoposting/kiboDashQuery`, 'post', query, '', 'kiboengage')
+  return callApi(`autoposting/kiboDashQuery`, 'post', query, 'kiboengage')
 }
