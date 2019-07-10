@@ -79,3 +79,56 @@ exports.setCustomFieldValue = function (req, res) {
       })
     })
 }
+
+exports.getCustomFieldSubscriber = function (req, res) {
+  callApi.callApi('custom_field_subscribers/query', 'post',
+    { purpose: 'findAll', match: {subscriberId: req.params.subscriberId} },
+    req.headers.authorization
+  )
+    .then(foundCustomFieldSubscriber => {
+      return res.status(200).json({
+        status: 'success',
+        payload: foundCustomFieldSubscriber
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'Failed',
+        description: `Internal Server ${(err)}`
+      })
+    })
+}
+
+exports.getCustomFieldSubscribers = function (req, res) {
+  console.log('getCustomFieldSubscribers called')
+
+  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      callApi.callApi('custom_field_subscribers/query', 'post', { purpose: 'findAll', match: { } })
+        .then(foundCustomFieldSubscribers => {
+          res.status(200).json({ status: 'success', payload: foundCustomFieldSubscribers })
+        })
+        .catch(err => {
+          if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Internal Server Error in fetching customFields${JSON.stringify(err)}`
+            })
+          }
+        })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error in fetching customer${JSON.stringify(err)}`
+        })
+      }
+    })
+}
