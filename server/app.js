@@ -7,6 +7,7 @@ const cron = require('node-cron')
 const SequenceScript = require('../scripts/sequenceMessageQueueScript.js')
 const TweetsQueueScript = require('../scripts/tweets_queue_script.js')
 const abandonedCartScript = require('../scripts/abandonedScript')
+const rssScript = require('../scripts/rssScript')
 
 const app = express()
 const httpApp = express()
@@ -25,6 +26,7 @@ if (config.env === 'production' || config.env === 'staging') {
 cron.schedule('* * * * *', SequenceScript.runSequenceMessageQueueScript) // after every one minute
 cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midnight
 cron.schedule('* * * * *', abandonedCartScript.runScript)
+cron.schedule('0 */1 * * *', rssScript.runRSSScript) // after 1 hour
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)

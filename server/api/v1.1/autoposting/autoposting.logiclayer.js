@@ -91,7 +91,7 @@ const prepareEditPayload = (req) => {
   autoposting.filterTags = req.body.filterTags
   autoposting.moderateTweets = req.body.moderateTweets
   autoposting.approvalChannel = req.body.approvalChannel
-  autoposting.scheduledTime = req.body.scheduledTime
+  autoposting.scheduledInterval = req.body.subscriptionType === 'rss' && req.body.scheduledInterval
   return autoposting
 }
 
