@@ -8,6 +8,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const feedparser = require('feedparser-promised')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const { getScheduledTime } = require('../../global/utility')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -226,7 +227,8 @@ const _addYouTubeAccount = (data, next) => {
 
 const _addRSSFeed = (data, next) => {
   let autoPostingPayload = data.autoPostingPayload
-  autoPostingPayload.scheduledTime = '6 hours'
+  autoPostingPayload.scheduledInterval = '24 hours'
+  autoPostingPayload.scheduledTime = getScheduledTime('24 hours')
   feedparser.parse(data.subscriptionUrl)
     .then(feed => {
       if (feed) {
@@ -326,6 +328,9 @@ exports.edit = function (req, res) {
         })
       }
       var autoposting = AutoPostingLogicLayer.prepareEditPayload(req)
+      if (req.body.subscriptionType === 'rss') {
+        autoposting.scheduledTime = getScheduledTime(autoposting.scheduledInterval)
+      }
       AutopostingDataLayer.genericFindByIdAndUpdate({_id: req.body._id}, autoposting)
         .then(autopostingUpdated => {
           if (!autoposting) {
