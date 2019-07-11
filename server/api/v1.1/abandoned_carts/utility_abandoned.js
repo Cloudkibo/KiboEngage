@@ -1,4 +1,3 @@
-const utility = require('../broadcasts/broadcasts.utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/abandoned_checkouts/utility_abandoned.js'
 const Shopify = require('shopify-api-node')
