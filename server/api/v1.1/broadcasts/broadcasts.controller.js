@@ -20,42 +20,75 @@ const broadcastApi = require('../../global/broadcastApi')
 const validateInput = require('../../global/validateInput')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const util = require('util')
+const async = require('async')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
-    .then(companyUser => {
-      let criteria = BroadcastLogicLayer.getCriterias(req.body, companyUser)
-      BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
-        .then(broadcastsCount => {
-          let aggregateMatch = criteria.finalCriteria[0].$match
-          let aggregateSort = criteria.finalCriteria[1].$sort
-          let aggregateSkip = criteria.finalCriteria[2].$skip
-          let aggregateLimit = criteria.finalCriteria[3].$limit
-          BroadcastDataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
-            .then(broadcasts => {
-              BroadcastPageDataLayer.genericFind({ companyId: companyUser.companyId })
-                .then(broadcastpages => {
-                  res.status(200).json({
-                    status: 'success',
-                    payload: { broadcasts: broadcasts, count: broadcastsCount && broadcastsCount.length > 0 ? broadcastsCount[0].count : 0, broadcastpages: broadcastpages }
-                  })
-                })
-                .catch(error => {
-                  return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts pages ${JSON.stringify(error)}`})
-                })
-            })
-            .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts ${JSON.stringify(error)}`})
-            })
-        })
-        .catch(error => {
-          return res.status(500).json({status: `failed ${error}`, payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
-        })
+  let criteria = BroadcastLogicLayer.getCriterias(req)
+  let aggregateData = {
+    match: criteria.finalCriteria[0].$match,
+    sort: criteria.finalCriteria[1].$sort,
+    skip: criteria.finalCriteria[2].$skip,
+    limit: criteria.finalCriteria[3].$limit
+  }
+  async.parallelLimit([
+    _getBroadcastsCount.bind(null, criteria),
+    _getBroadcastsData.bind(null, aggregateData),
+    _getBroadcastPagesData.bind(null, req)
+  ], 10, function (err, results) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(err)}`, 'error')
+      sendErrorResponse(res, 500, `Failed to fetch broadcasts. See server logs for more info`)
+    } else {
+      const broadcasts = results[1]
+      const broadcastsCount = results[0]
+      const broadcastpages = results[2]
+      const payload = {
+        broadcasts,
+        count: broadcastsCount.length > 0 ? broadcastsCount[0].count : 0,
+        broadcastpages
+      }
+      sendSuccessResponse(res, 200, payload)
+    }
+  })
+}
+
+const _getBroadcastsCount = (criteria, next) => {
+  BroadcastDataLayer.countBroadcasts(criteria.countCriteria[0].$match)
+    .then(broadcastsCount => {
+      next(null, broadcastsCount)
     })
-    .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch company user ${JSON.stringify(error)}`})
+    .catch(err => {
+      next(err)
     })
 }
+
+const _getBroadcastsData = (aggregateData, next) => {
+  BroadcastDataLayer.aggregateForBroadcasts(aggregateData.match,
+    undefined,
+    undefined,
+    aggregateData.limit,
+    aggregateData.sort,
+    aggregateData.skip
+  )
+    .then(broadcasts => {
+      next(null, broadcasts)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _getBroadcastPagesData = (req, next) => {
+  BroadcastPageDataLayer.genericFind({ companyId: req.user.companyId })
+    .then(broadcastpages => {
+      next(null, broadcastpages)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
 exports.delete = function (req, res) {
   let dir = path.resolve(__dirname, '../../../broadcastFiles/userfiles')
   // unlink file
@@ -274,186 +307,168 @@ exports.download = function (req, res) {
 }
 
 exports.upload = function (req, res) {
-  var today = new Date()
-  var uid = crypto.randomBytes(5).toString('hex')
-  var serverPath = 'f' + uid + '' + today.getFullYear() + '' +
-    (today.getMonth() + 1) + '' + today.getDate()
-  serverPath += '' + today.getHours() + '' + today.getMinutes() + '' +
-    today.getSeconds()
+  let today = new Date()
+  let uid = crypto.randomBytes(5).toString('hex')
+  let serverPath = 'f' + uid + '' + today.getFullYear() + '' + (today.getMonth() + 1) + '' + today.getDate()
+  serverPath += '' + today.getHours() + '' + today.getMinutes() + '' + today.getSeconds()
   let fext = req.files.file.name.split('.')
   serverPath += '.' + fext[fext.length - 1].toLowerCase()
-
   let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
 
   if (req.files.file.size === 0) {
-    return res.status(400).json({
-      status: 'failed',
-      description: 'No file submitted'
-    })
+    sendErrorResponse(res, 400, '', 'No file submitted')
   }
-  logger.serverLog(TAG,
-    `req.files.file ${JSON.stringify(req.files.file.path)}`, 'debug')
-  logger.serverLog(TAG,
-    `req.files.file ${JSON.stringify(req.files.file.name)}`, 'debug')
-  logger.serverLog(TAG,
-    `dir ${JSON.stringify(dir)}`, 'debug')
-  logger.serverLog(TAG,
-    `serverPath ${JSON.stringify(serverPath)}`, 'debug')
-  fs.rename(
-    req.files.file.path,
-    dir + '/userfiles/' + serverPath,
-    err => {
-      if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: 'internal server error' + JSON.stringify(err)
-        })
+  logger.serverLog(TAG, `req.files.file ${JSON.stringify(req.files.file.path)}`, 'debug')
+  logger.serverLog(TAG, `req.files.file ${JSON.stringify(req.files.file.name)}`, 'debug')
+  logger.serverLog(TAG, `dir ${JSON.stringify(dir)}`, 'debug')
+  logger.serverLog(TAG, `serverPath ${JSON.stringify(serverPath)}`, 'debug')
+
+  let filedata = {
+    filePath: req.files.file.path,
+    serverPath: dir + '/userfiles/' + serverPath,
+    serverPathWithFileName: dir + '/userfiles/' + req.files.file.name,
+    pages: req.body.pages,
+    componentType: req.body.componentType
+  }
+  async.series([
+    _renameFile(null, filedata),
+    _writeFileStream(null, filedata),
+    _fetchPage(null, filedata),
+    _refreshPageAccessToken(null, filedata),
+    _uploadOnFacebook(null, filedata)
+  ], function (err) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to upload file ${JSON.stringify(err)}`)
+      sendErrorResponse(res, 500, '', 'An expexted error occured while uploading the file. See server logs for more info.')
+    } else {
+      let payload = {
+        id: serverPath,
+        attachment_id: filedata.attachment_id,
+        url: `${config.domain}/api/broadcasts/download/${serverPath}`,
+        name: req.files.file.name
       }
-      // saving this file to send files with its original name
-      // it will be deleted once it is successfully sent
-      let readData = fs.createReadStream(dir + '/userfiles/' + serverPath)
-      let writeData = fs.createWriteStream(dir + '/userfiles/' + req.files.file.name)
-      readData.pipe(writeData)
-      logger.serverLog(TAG,
-        `file uploaded on KiboPush, uploading it on Facebook: ${JSON.stringify({
-          id: serverPath,
-          url: `${config.domain}/api/broadcasts/download/${serverPath}`
-        })}`)
-      if (req.body.pages && req.body.pages !== 'undefined' && req.body.pages.length > 0) {
-        let pages = JSON.parse(req.body.pages)
-        logger.serverLog(TAG, `Pages in upload file ${pages}`, 'debug')
-        utility.callApi(`pages/${pages[0]}`, 'get', {})
-          .then(page => {
-            needle.get(
-              `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
-              (err, resp2) => {
-                if (err) {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: 'unable to get page access_token: ' + JSON.stringify(err)
-                  })
-                }
-                let pageAccessToken = resp2.body.access_token
-                let fileReaderStream = fs.createReadStream(dir + '/userfiles/' + req.files.file.name)
-                const messageData = {
-                  'message': JSON.stringify({
-                    'attachment': {
-                      'type': req.body.componentType,
-                      'payload': {
-                        'is_reusable': true
-                      }
-                    }
-                  }),
-                  'filedata': fileReaderStream
-                }
-                request(
-                  {
-                    'method': 'POST',
-                    'json': true,
-                    'formData': messageData,
-                    'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
-                  },
-                  function (err, resp) {
-                    if (err) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
-                      })
-                    } else {
-                      logger.serverLog(TAG,
-                        `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
-                      return res.status(201).json({
-                        status: 'success',
-                        payload: {
-                          id: serverPath,
-                          attachment_id: resp.body.attachment_id,
-                          name: req.files.file.name,
-                          url: `${config.domain}/api/broadcasts/download/${serverPath}`
-                        }
-                      })
-                    }
-                  })
-              })
-          })
-          .catch(error => {
-            return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
-          })
-      } else {
-        return res.status(201).json({
-          status: 'success',
-          payload: {
-            id: serverPath,
-            name: req.files.file.name,
-            url: `${config.domain}/api/broadcasts/download/${serverPath}`
-          }
-        })
-      }
+      sendSuccessResponse(res, 200, payload)
     }
-  )
+  })
+}
+
+const _renameFile = (filedata, next) => {
+  fs.rename(filedata.filePath, filedata.serverPath, err => {
+    if (err) {
+      next(err)
+    } else {
+      next(null)
+    }
+  })
+}
+
+const _writeFileStream = (filedata, next) => {
+  try {
+    let readData = fs.createReadStream(filedata.serverPath)
+    let writeData = fs.createWriteStream(filedata.serverPathWithFileName)
+    readData.pipe(writeData)
+    next(null)
+  } catch (err) {
+    next(err)
+  }
+}
+
+const _fetchPage = (filedata, next) => {
+  if (filedata.pages && filedata.pages !== 'undefined' && filedata.pages.length > 0) {
+    let pages = JSON.parse(filedata.pages)
+    utility.callApi(`pages/${pages[0]}`, 'get', {})
+      .then(page => {
+        filedata.page = page
+        next(null, filedata)
+      })
+      .catch(err => {
+        next(err)
+      })
+  } else {
+    next(null)
+  }
+}
+
+const _refreshPageAccessToken = (filedata, next) => {
+  if (filedata.pages && filedata.pages !== 'undefined' && filedata.pages.length > 0) {
+    needle('get', `https://graph.facebook.com/v2.10/${filedata.page.pageId}?fields=access_token&access_token=${filedata.page.userId.facebookInfo.fbToken}`)
+      .then(response => {
+        if (response.body.error) {
+          next(response.body.error)
+        } else {
+          filedata.pageAccessToken = response.body.access_token
+          next(null, filedata)
+        }
+      })
+      .catch(err => {
+        next(err)
+      })
+  } else {
+    next(null)
+  }
+}
+
+const _uploadOnFacebook = (filedata, next) => {
+  if (filedata.pages && filedata.pages !== 'undefined' && filedata.pages.length > 0) {
+    let fileReaderStream = fs.createReadStream(filedata.serverPathWithFileName)
+    const messageData = {
+      'message': JSON.stringify({
+        'attachment': {
+          'type': filedata.componentType,
+          'payload': {
+            'is_reusable': true
+          }
+        }
+      }),
+      'filedata': fileReaderStream
+    }
+    request(
+      {
+        'method': 'POST',
+        'json': true,
+        'formData': messageData,
+        'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + filedata.pageAccessToken
+      },
+      function (err, resp) {
+        if (err) {
+          next(err)
+        } else if (resp.body.error) {
+          next(resp.body.error)
+        } else {
+          logger.serverLog(TAG, `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
+          filedata.attachment_id = resp.body.attachment_id
+          next(null, filedata)
+        }
+      })
+  } else {
+    next(null)
+  }
 }
 
 exports.uploadForTemplate = function (req, res) {
   let dir = path.resolve(__dirname, '../../../../broadcastFiles/')
-  if (req.body.pages && req.body.pages.length > 0) {
-    utility.callApi(`pages/${req.body.pages[0]}`, 'get', {})
-      .then(page => {
-        needle.get(
-          `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
-          (err, resp2) => {
-            if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                description: 'unable to get page access_token: ' + JSON.stringify(err)
-              })
-            }
-            let pageAccessToken = resp2.body.access_token
-            let fileReaderStream = fs.createReadStream(dir + '/userfiles/' + req.body.name)
-            const messageData = {
-              'message': JSON.stringify({
-                'attachment': {
-                  'type': req.body.componentType,
-                  'payload': {
-                    'is_reusable': true
-                  }
-                }
-              }),
-              'filedata': fileReaderStream
-            }
-            request(
-              {
-                'method': 'POST',
-                'json': true,
-                'formData': messageData,
-                'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
-              },
-              function (err, resp) {
-                if (err) {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
-                  })
-                } else {
-                  logger.serverLog(TAG,
-                    `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
-                  return res.status(201).json({
-                    status: 'success',
-                    payload: {
-                      id: req.body.id,
-                      attachment_id: resp.body.attachment_id,
-                      name: req.body.name,
-                      url: req.body.url
-                    }
-                  })
-                }
-              })
-          })
-      })
-      .catch(error => {
-        return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
-      })
-  } else {
-    return res.status(500).json({status: 'failed', payload: `Failed to upload`})
+  let filedata = {
+    pages: req.body.pages,
+    serverPathWithFileName: dir + '/userfiles/' + req.body.name
   }
+  async.series([
+    _fetchPage(null, filedata),
+    _refreshPageAccessToken(null, filedata),
+    _uploadOnFacebook(null, filedata)
+  ], function (err) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to upload file ${JSON.stringify(err)}`)
+      sendErrorResponse(res, 500, '', 'An expexted error occured while uploading the file. See server logs for more info.')
+    } else {
+      let payload = {
+        id: req.body.id,
+        attachment_id: filedata.attachment_id,
+        name: req.body.name,
+        url: req.body.url
+      }
+      sendSuccessResponse(res, 200, payload)
+    }
+  })
 }
 
 exports.sendConversation = function (req, res) {

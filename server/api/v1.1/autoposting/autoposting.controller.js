@@ -6,6 +6,8 @@ const TAG = 'api/autoposting/autoposting.controller'
 const { sendTweet } = require('../twitterEvents/twitter.controller')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const feedparser = require('feedparser-promised')
+const async = require('async')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -38,285 +40,282 @@ exports.index = function (req, res) {
     })
 }
 
-exports.create = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
+const _fetchCompanyUser = (data, next) => {
+  utility.callApi(`companyUser/query`, 'post', { domain_email: data.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        next('No account found')
+      } else {
+        data.companyUser = companyUser
+        next(null, data)
       }
-      // calling accounts feature usage for this
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
-        .then(planUsage => {
-          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id})
-            .then(companyUsage => {
-              AutopostingDataLayer.countAutopostingDocuments({companyId: companyUser.companyId._id, subscriptionType: req.body.subscriptionType})
-                .then(gotCount => {
-                  if (gotCount > 0 && !companyUser.enableMoreAutoPostingIntegration) {
-                    return res.status(403).json({
-                      status: 'Failed',
-                      description: 'Cannot add more integrations. Please contact support or remove existing ones'
-                    })
-                  }
-                  AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId._id, subscriptionUrl: req.body.subscriptionUrl})
-                    .then(data => {
-                      if (data && data.length > 0) {
-                        return res.status(403).json({
-                          status: 'Failed',
-                          description: 'Cannot add duplicate accounts.'
-                        })
-                      }
-                      let autoPostingPayload = AutoPostingLogicLayer.prepareAutopostingPayload(req, companyUser)
-                      // let hasLimit = AutoPostingLogicLayer.checkPlanLimit(req.body.subscriptionType, planUsage, companyUsage)
-                      // add paid plan check later
-                      // if (!hasLimit) {
-                      //   return res.status(500).json({
-                      //     status: 'failed',
-                      //     description: `Your ${req.body.subscriptionType} autopostings limit has reached. Please upgrade your plan to premium in order to add more feeds`
-                      //   })
-                      // }
-                      if (req.body.subscriptionType === 'twitter') {
-                        let url = req.body.subscriptionUrl
-                        let urlAfterDot = url.substring(url.indexOf('.') + 1)
-                        let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
-                        if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
-                        AutoPostingLogicLayer.findUser(screenName, (err, data) => {
-                          if (err) {
-                            logger.serverLog(TAG, `Twitter URL parse Error ${err}`, 'error')
-                          }
-                          let payload
-                          if (data && !data.errors) {
-                            autoPostingPayload.accountUniqueName = data.screen_name
-                            payload = {
-                              id: data.id_str,
-                              name: data.name,
-                              screen_name: data.screen_name,
-                              profile_image_url: data.profile_image_url_https
-                            }
-                            autoPostingPayload.payload = payload
-                            AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-                              .then(result => {
-                                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}})
-                                  .then(result => {
-                                    logger.serverLog(TAG, 'Company Usage updated', 'debug')
-                                  })
-                                  .catch(err => {
-                                    logger.serverLog(TAG, err, 'error')
-                                    return res.status(500).json({
-                                      status: 'failed',
-                                      description: `An unexpected error occured. Please try again later.`
-                                    })
-                                  })
-                                utility.callApi('twitter/restart', 'get', {}, 'webhook')
-                                require('./../../../config/socketio').sendMessageToClient({
-                                  room_id: companyUser.companyId._id,
-                                  body: {
-                                    action: 'autoposting_created',
-                                    payload: {
-                                      autoposting_id: result._id,
-                                      user_id: req.user._id,
-                                      user_name: req.user.name,
-                                      payload: result
-                                    }
-                                  }
-                                })
-                                return res.status(201).json({status: 'success', payload: result})
-                              })
-                              .catch(err => {
-                                logger.serverLog(TAG, err, 'error')
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `An unexpected error occured. Please try again later.`
-                                })
-                              })
-                          } else {
-                            return res.status(404).json({
-                              status: 'Failed',
-                              description: 'Cannot add this account or account not found'
-                            })
-                          }
-                        })
-                      } else if (req.body.subscriptionType === 'facebook') {
-                        let screenName = AutoPostingLogicLayer.getFacebookScreenName(req.body.subscriptionUrl)
-                        if (screenName) {
-                          utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, $or: [{ pageId: screenName }, { pageUserName: screenName }] })
-                            .then(pagesInfo => {
-                              let pageInfo = pagesInfo[0]
-                              if (!pageInfo) {
-                                return res.status(404).json({
-                                  status: 'Failed',
-                                  description: 'Cannot add this page or page not found'
-                                })
-                              }
-                              autoPostingPayload.accountUniqueName = pageInfo.pageId
-                              AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-                                .then(result => {
-                                  utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} })
-                                    .then(result => {
-                                      logger.serverLog(TAG, 'Company Usage Updated', 'debug')
-                                    })
-                                    .catch(err => {
-                                      logger.serverLog(TAG, err, 'error')
-                                      return res.status(500).json({
-                                        status: 'failed',
-                                        description: `An unexpected error occured. Please try again later.`
-                                      })
-                                    })
-                                  require('./../../../config/socketio').sendMessageToClient({
-                                    room_id: companyUser.companyId._id,
-                                    body: {
-                                      action: 'autoposting_created',
-                                      payload: {
-                                        autoposting_id: result._id,
-                                        user_id: req.user._id,
-                                        user_name: req.user.name,
-                                        payload: result
-                                      }
-                                    }
-                                  })
-                                  return res.status(201)
-                                    .json({ status: 'success', payload: result })
-                                })
-                                .catch(err => {
-                                  logger.serverLog(TAG, err, 'error')
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    description: `An unexpected error occured. Please try again later.`
-                                  })
-                                })
-                            })
-                            .catch(err => {
-                              logger.serverLog(TAG, err, 'error')
-                              return res.status(403).json({
-                                status: 'Failed',
-                                description: `An enexpected error occured. Please try again later.`
-                              })
-                            })
-                        } else {
-                          return res.status(403).json({
-                            status: 'Failed',
-                            description: 'Invalid url provided. Please provide correct url.'
-                          })
-                        }
-                      } else if (req.body.subscriptionType === 'youtube') {
-                        let channelName = AutoPostingLogicLayer.getChannelName(req.body.subscriptionUrl)
-                        autoPostingPayload.accountUniqueName = channelName
-                        AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-                          .then(result => {
-                            return res.status(200).json({
-                              status: 'success',
-                              description: result
-                            })
-                          })
-                          .catch(err => {
-                            logger.serverLog(TAG, err, 'error')
-                            return res.status(500).json({
-                              status: 'failed',
-                              description: `An unexpected error occured. Please try again later.`
-                            })
-                          })
-                      } else if (req.body.subscriptionType === 'rss') {
-                        autoPostingPayload.scheduledTime = '6 hours'
-                        feedparser.parse(req.body.subscriptionUrl)
-                          .then(feed => {
-                            if (feed) {
-                              AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-                                .then(result => {
-                                  return res.status(200).json({
-                                    status: 'success',
-                                    description: result
-                                  })
-                                })
-                                .catch(err => {
-                                  logger.serverLog(TAG, err, 'error')
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    description: `An unexpected error occured. Please try again later.`
-                                  })
-                                })
-                            } else {
-                              return res.status(500).json({status: 'failed', description: 'Invalid feed url provided'})
-                            }
-                          })
-                          .catch(err => {
-                            logger.serverLog(TAG, `Problem occured while parsing the feed url ${err}`, 'error')
-                            return res.status(500).json({status: 'failed', description: 'Invalid feed url provided'})
-                          })
-                      } else if (req.body.subscriptionType === 'wordpress') {
-                        let url = req.body.subscriptionUrl
-                        let wordpressUniqueId = url.split('/')[0] + url.split('/')[1] + '//' + url.split('/')[2]
-                        autoPostingPayload.accountUniqueName = wordpressUniqueId
-                        AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-                          .then(result => {
-                            utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { wordpress_autoposting: 1 }}, options: {}})
-                              .then(result => {
-                                require('./../../../config/socketio').sendMessageToClient({
-                                  room_id: companyUser.companyId._id,
-                                  body: {
-                                    action: 'autoposting_created',
-                                    payload: {
-                                      autoposting_id: result._id,
-                                      user_id: req.user._id,
-                                      user_name: req.user.name,
-                                      payload: result
-                                    }
-                                  }
-                                })
-                                return res.status(201)
-                                  .json({status: 'success', payload: result})
-                              })
-                              .catch(err => {
-                                logger.serverLog(TAG, err, 'error')
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `An unexpected error occured. Please try again later.`
-                                })
-                              })
-                          })
-                      }
-                    })
-                    .catch(err => {
-                      logger.serverLog(TAG, err, 'error')
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `An unexpected error occured. Please try again later.`
-                      })
-                    })
-                })
-                .catch(err => {
-                  logger.serverLog(TAG, err, 'error')
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `An unexpected error occured. Please try again later.`
-                  })
-                })
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _fetchPlanUsage = (data, next) => {
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: data.companyUser.companyId.planId})
+    .then(planUsage => {
+      data.planUsage = planUsage
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _fetchCompanyUsage = (data, next) => {
+  utility.callApi('featureUsage/companyQuery', 'post', {companyId: data.companyUser.companyId._id})
+    .then(companyUsage => {
+      data.companyUsage = companyUsage
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _countAutoposting = (data, next) => {
+  AutopostingDataLayer.countAutopostingDocuments({companyId: data.companyUser.companyId._id, subscriptionType: data.subscriptionType})
+    .then(gotCount => {
+      if (gotCount > 0 && !data.companyUser.enableMoreAutoPostingIntegration) {
+        next('Cannot add more integrations. Please contact support or remove existing ones')
+      } else {
+        next()
+      }
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _checkAutopostingExistStatus = (data, next) => {
+  AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: data.companyUser.companyId._id, subscriptionUrl: data.subscriptionUrl})
+    .then(autoposting => {
+      if (autoposting && autoposting.length > 0) {
+        next('Cannot add duplicate accounts.')
+      } else {
+        next()
+      }
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _addTwitterAccount = (data, next) => {
+  let autoPostingPayload = data.autoPostingPayload
+  let url = data.subscriptionUrl
+  let urlAfterDot = url.substring(url.indexOf('.') + 1)
+  let screenName = urlAfterDot.substring(urlAfterDot.indexOf('/') + 1)
+  if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
+  AutoPostingLogicLayer.findUser(screenName, (err, twitter) => {
+    if (err) {
+      logger.serverLog(TAG, `Twitter URL parse Error ${err}`, 'error')
+    }
+    let payload
+    if (twitter && !twitter.errors) {
+      autoPostingPayload.accountUniqueName = twitter.screen_name
+      payload = {
+        id: twitter.id_str,
+        name: twitter.name,
+        screen_name: twitter.screen_name,
+        profile_image_url: twitter.profile_image_url_https
+      }
+      autoPostingPayload.payload = payload
+      AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+        .then(result => {
+          utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: data.companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}})
+            .then(updated => {
+              data.result = result
+              next()
             })
             .catch(err => {
               logger.serverLog(TAG, err, 'error')
-              return res.status(500).json({
-                status: 'failed',
-                description: `An unexpected error occured. Please try again later.`
-              })
+              next(err)
             })
+          utility.callApi('twitter/restart', 'get', {}, 'webhook')
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: data.companyUser.companyId._id,
+            body: {
+              action: 'autoposting_created',
+              payload: {
+                autoposting_id: result._id,
+                user_id: data.user._id,
+                user_name: data.user.name,
+                payload: result
+              }
+            }
+          })
         })
         .catch(err => {
           logger.serverLog(TAG, err, 'error')
-          return res.status(500).json({
-            status: 'failed',
-            description: `An unexpected error occured. Please try again later.`
-          })
+          next(err)
         })
+    } else {
+      next('Twitter account not found.')
+    }
+  })
+}
+
+const _addFacebookAccount = (data, next) => {
+  let autoPostingPayload = data.autoPostingPayload
+  let screenName = AutoPostingLogicLayer.getFacebookScreenName(data.subscriptionUrl)
+  if (screenName) {
+    utility.callApi(`pages/query`, 'post', { companyId: data.user.companyId, $or: [{ pageId: screenName }, { pageUserName: screenName }] })
+      .then(pagesInfo => {
+        let pageInfo = pagesInfo[0]
+        if (!pageInfo) {
+          next('Facebook page not found.')
+        }
+        autoPostingPayload.accountUniqueName = pageInfo.pageId
+        AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+          .then(result => {
+            utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} })
+              .then(updated => {
+                data.result = result
+                next()
+              })
+              .catch(err => {
+                logger.serverLog(TAG, err, 'error')
+                next(err)
+              })
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: data.companyUser.companyId._id,
+              body: {
+                action: 'autoposting_created',
+                payload: {
+                  autoposting_id: result._id,
+                  user_id: data.user._id,
+                  user_name: data.user.name,
+                  payload: result
+                }
+              }
+            })
+          })
+          .catch(err => {
+            logger.serverLog(TAG, err, 'error')
+            next(err)
+          })
+      })
+      .catch(err => {
+        logger.serverLog(TAG, err, 'error')
+        next(err)
+      })
+  } else {
+    next('Invalid url provided.')
+  }
+}
+
+const _addYouTubeAccount = (data, next) => {
+  let autoPostingPayload = data.autoPostingPayload
+  let channelName = AutoPostingLogicLayer.getChannelName(data.subscriptionUrl)
+  autoPostingPayload.accountUniqueName = channelName
+  AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+    .then(result => {
+      data.result = result
+      next()
     })
     .catch(err => {
       logger.serverLog(TAG, err, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        description: `An unexpected error occured. Please try again later.`
-      })
+      next(err)
     })
 }
+
+const _addRSSFeed = (data, next) => {
+  let autoPostingPayload = data.autoPostingPayload
+  autoPostingPayload.scheduledTime = '6 hours'
+  feedparser.parse(data.subscriptionUrl)
+    .then(feed => {
+      if (feed) {
+        AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+          .then(result => {
+            data.result = result
+            next()
+          })
+          .catch(err => {
+            logger.serverLog(TAG, err, 'error')
+            next(err)
+          })
+      } else {
+        next('Invalid feed url provided.')
+      }
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _addWordpressAccount = (data, next) => {
+  let autoPostingPayload = data.autoPostingPayload
+  let url = data.subscriptionUrl
+  let wordpressUniqueId = url.split('/')[0] + url.split('/')[1] + '//' + url.split('/')[2]
+  autoPostingPayload.accountUniqueName = wordpressUniqueId
+  AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+    .then(result => {
+      utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: data.companyUser.companyId._id}, newPayload: {$inc: { wordpress_autoposting: 1 }}, options: {}})
+        .then(result => {
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: data.companyUser.companyId._id,
+            body: {
+              action: 'autoposting_created',
+              payload: {
+                autoposting_id: result._id,
+                user_id: data.user._id,
+                user_name: data.user.name,
+                payload: result
+              }
+            }
+          })
+          data.result = result
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
+    })
+}
+
+const _createAutoposting = (data, next) => {
+  if (data.subscriptionType === 'twitter') {
+    _addTwitterAccount(data, next)
+  } else if (data.subscriptionType === 'facebook') {
+    _addFacebookAccount(data, next)
+  } else if (data.subscriptionType === 'youtube') {
+    _addYouTubeAccount(data, next)
+  } else if (data.subscriptionType === 'rss') {
+    _addRSSFeed(data, next)
+  } else if (data.subscriptionType === 'wordpress') {
+    _addWordpressAccount(data, next)
+  }
+}
+
+exports.create = function (req, res) {
+  let data = {
+    user: req.user,
+    subscriptionType: req.body.subscriptionType,
+    subscriptionUrl: req.body.subscriptionUrl,
+    autoPostingPayload: AutoPostingLogicLayer.prepareAutopostingPayload(req)
+  }
+  async.series([
+    _fetchCompanyUser.bind(null, data),
+    _fetchPlanUsage.bind(null, data),
+    _fetchCompanyUsage.bind(null, data),
+    _countAutoposting.bind(null, data),
+    _checkAutopostingExistStatus.bind(null, data),
+    _createAutoposting.bind(null, data)
+  ], function (err) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
+      sendErrorResponse(res, 500, '', 'Failed to craete autoposting')
+    } else {
+      sendSuccessResponse(res, 200, data.result)
+    }
+  })
+}
+
 exports.edit = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
