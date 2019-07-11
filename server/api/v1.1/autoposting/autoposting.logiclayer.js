@@ -8,10 +8,10 @@ let twitterClient = new Twit({
   access_token_secret: config.twitter.consumer_token_secret
 })
 
-const prepareAutopostingPayload = (req, companyUser) => {
+const prepareAutopostingPayload = (req) => {
   let autoPostingPayload = {
     userId: req.user._id,
-    companyId: companyUser.companyId._id,
+    companyId: req.user.companyId,
     subscriptionUrl: req.body.subscriptionUrl,
     subscriptionType: req.body.subscriptionType,
     accountTitle: req.body.accountTitle

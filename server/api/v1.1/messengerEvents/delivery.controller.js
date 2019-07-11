@@ -7,6 +7,7 @@ const SequenceUtility = require('../sequenceMessaging/utility')
 const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
 const utility = require('../utility')
+const async = require('async')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -14,28 +15,40 @@ exports.index = function (req, res) {
     description: `received the payload`
   })
   logger.serverLog(TAG, `in delivery' ${JSON.stringify(req.body)}`)
-  updateBroadcastSent(req.body.entry[0].messaging[0])
-  updatePollSent(req.body.entry[0].messaging[0])
-  updateSurveySent(req.body.entry[0].messaging[0])
-  updateSequenceSubscriberMessage(req.body.entry[0].messaging[0])
+  let data = {
+    recipientId: req.body.entry[0].messaging[0].recipient.id,
+    senderId: req.body.entry[0].messaging[0].sender.id,
+    delivery: req.body.entry[0].messaging[0].delivery
+  }
+  async.parallelLimit([
+    _updateBroadcastSent.bind(null, data),
+    _updatePollSent.bind(null, data),
+    _updateSurveySent.bind(null, data),
+    _updateSequenceSubscriberMessage.bind(null, data)
+  ], 10, function (err) {
+    if (err) {
+      logger.serverLog(TAG, `ERROR at delivery controller ${JSON.stringify(err)}`, 'error')
+    } else {
+      logger.serverLog(TAG, 'delivery controller updated the send count successfully!')
+    }
+  })
 }
 
-function updateBroadcastSent (req) {
-  BroadcastPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
+function _updateBroadcastSent (data, next) {
+  BroadcastPageDataLayer.genericUpdate({ pageId: data.recipientId, subscriberId: data.senderId, sent: false }, { sent: true }, { multi: true })
     .then(updated => {
-      logger.serverLog(TAG, `Broadcast sent updated successfully`)
+      next(null)
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR at updating broadcast sent ${JSON.stringify(err)}`, 'error')
+      next(err)
     })
 }
 
-function updatePollSent (req) {
-  PollPageDataLayer.genericFind({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false })
+function _updatePollSent (data, next) {
+  PollPageDataLayer.genericFind({ pageId: data.recipientId, subscriberId: data.senderId, sent: false })
     .then(pollPages => {
-      PollPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
+      PollPageDataLayer.genericUpdate({ pageId: data.recipientId, subscriberId: data.senderId, sent: false }, { sent: true }, { multi: true })
         .then(updated => {
-          logger.serverLog(TAG, `Poll sent updated successfully`)
           if (pollPages.length > 0) {
             require('./../../../config/socketio').sendMessageToClient({
               room_id: pollPages[0].companyId,
@@ -44,22 +57,22 @@ function updatePollSent (req) {
               }
             })
           }
+          next(null)
         })
         .catch(err => {
-          logger.serverLog(TAG, `ERROR at updating poll sent ${JSON.stringify(err)}`, 'error')
+          next(err)
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR in fetching poll pages ${JSON.stringify(err)}`, 'error')
+      next(err)
     })
 }
 
-function updateSurveySent (req) {
-  SurveyPageDataLayer.genericFind({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false })
+function _updateSurveySent (data, next) {
+  SurveyPageDataLayer.genericFind({ pageId: data.recipientId, subscriberId: data.senderId, sent: false })
     .then(surveyPages => {
-      SurveyPageDataLayer.genericUpdate({ pageId: req.recipient.id, subscriberId: req.sender.id, sent: false }, { sent: true }, { multi: true })
+      SurveyPageDataLayer.genericUpdate({ pageId: data.recipientId, subscriberId: data.senderId, sent: false }, { sent: true }, { multi: true })
         .then(updated => {
-          logger.serverLog(TAG, `survey sent updated successfully`)
           if (surveyPages.length > 0) {
             require('./../../../config/socketio').sendMessageToClient({
               room_id: surveyPages[0].companyId,
@@ -68,29 +81,29 @@ function updateSurveySent (req) {
               }
             })
           }
+          next(null)
         })
         .catch(err => {
-          logger.serverLog(TAG, `ERROR at updating survey sent ${JSON.stringify(err)}`, 'error')
+          next(err)
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR in fetching survey pages ${JSON.stringify(err)}`, 'error')
+      next(err)
     })
 }
 
-function updateSequenceSubscriberMessage (req) {
-  utility.callApi(`pages/query`, 'post', {pageId: req.recipient.id, connected: true})
+function _updateSequenceSubscriberMessage (data, next) {
+  utility.callApi(`pages/query`, 'post', {pageId: data.recipientId, connected: true})
     .then(pages => {
       const page = pages[0]
       if (page) {
-        utility.callApi(`subscribers/query`, 'post', { senderId: req.sender.id, companyId: page.companyId })
+        utility.callApi(`subscribers/query`, 'post', { senderId: data.senderId, companyId: page.companyId })
           .then(subscribers => {
             const subscriber = subscribers[0]
             if (subscriber) {
-              SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(req.delivery.watermark) }})
+              SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(data.delivery.watermark) }})
                 .then(seqSubMsg => {
-                  logger.serverLog('DateTime', `${JSON.stringify(new Date(req.delivery.watermark))}`, 'debug')
-                  SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(req.delivery.watermark) }},
+                  SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, received: false, datetime: { $lte: new Date(data.delivery.watermark) }},
                     { received: true }, { multi: true })
                     .then(updated => {
                       for (let k = 0; k < seqSubMsg.length; k++) {
@@ -103,35 +116,35 @@ function updateSequenceSubscriberMessage (req) {
                                   let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
                                   SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
                                     .then(updated => {
-                                      logger.serverLog(TAG, `queueScheduledTime updated successfully for record _id ${seqQueue[i]._id}`, 'error')
+                                      next(null)
                                     })
                                     .catch(err => {
-                                      logger.serverLog(TAG, `ERROR in updating sequence message queue ${JSON.stringify(err)}`, 'error')
+                                      next(err)
                                     })
                                 }
                               }
                             }
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`, 'error')
+                            next(err)
                           })
                       }
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `ERROR in updating sequence subscriber messages ${JSON.stringify(err)}`, 'error')
+                      next(err)
                     })
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `ERROR in retrieving sequence message queue ${JSON.stringify(err)}`, 'error')
+                  next(err)
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `ERROR in retrieving subscriber ${JSON.stringify(err)}`, 'error')
+            next(err)
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `ERROR in retrieving page ${JSON.stringify(err)}`, 'error')
+      next(err)
     })
 }
