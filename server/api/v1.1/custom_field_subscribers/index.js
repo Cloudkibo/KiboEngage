@@ -15,4 +15,12 @@ router.post('/set_custom_field_value',
   validate({body: validationSchema.setCustomFieldValue}),
   controller.setCustomFieldValue)
 
+router.get('/get_custom_field_subscriber/:subscriberId',
+  auth.isAuthenticated(),
+  controller.getCustomFieldSubscriber)
+
+router.get('/get_custom_field_subscribers',
+  auth.isAuthenticated(),
+  controller.getCustomFieldSubscribers)
+
 module.exports = router
