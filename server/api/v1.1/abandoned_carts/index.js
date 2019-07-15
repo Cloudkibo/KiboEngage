@@ -49,6 +49,7 @@ router.post('/updateStatusStore',
 
 router.post('updateStoreInfo/:id',
   auth.isAuthenticated(),
+  validate({body: validationSchema.updateStoreSchema}),
   controller.updateStoreInfo)
 
 router.post('/deleteAllCartInfo',
