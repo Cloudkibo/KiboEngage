@@ -36,7 +36,6 @@ exports.index = function (req, res) {
       }
     })
 }
-
 exports.updateStoreInfo = function (req, res) {
   dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.params.id }, req.body)
     .then(result => res.status(200).json({ status: 'success', payload: result }))
@@ -138,12 +137,6 @@ exports.updateStatusStore = function (req, res) {
       .json({ status: 'Failed', description: 'Parameters are missing' })
   }
   dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.body.shopId }, { isActive: req.body.isActive })
-    .then(result => res.status(200).json({ status: 'success', payload: result }))
-    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
-}
-
-exports.updateStoreInfo = function (req, res) {
-  dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.params.id }, req.body)
     .then(result => res.status(200).json({ status: 'success', payload: result }))
     .catch(err => res.status(500).json({ status: 'Failed', error: err }))
 }

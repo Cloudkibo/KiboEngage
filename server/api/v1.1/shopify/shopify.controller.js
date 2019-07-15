@@ -233,14 +233,12 @@ exports.callback = function (req, res) {
           event: 'onload',
           src: config.domain + '/api/shopify/serveScript'
         })
-        let alertMessage = shop.split('.myshopify')
         const store = {
           userId: userId,
           pageId: pageId,
           shopUrl: shop,
           shopToken: accessToken,
-          companyId: companyId,
-          alertMessage: `You forgot to checkout. Vendor: ${alertMessage[0]}`
+          companyId: companyId
         }
         dataLayer.createStoreInfo(store)
           .then(savedStore => {
