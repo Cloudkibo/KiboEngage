@@ -54,6 +54,39 @@ function registerWebhooks (shop, token) {
   })
 
   shopify.webhook.create({
+    topic: 'fulfillments/create',
+    address: `${config.domain}/api/shopify/fulfillments-create`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'Fulfillment webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating Fulfillment Webhook', err)
+    throw err
+  })
+
+  shopify.webhook.create({
+    topic: 'fulfillments/update',
+    address: `${config.domain}/api/shopify/fulfillments-update`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'Fulfillment update webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating Fulfillment update Webhook', err)
+    throw err
+  })
+
+  shopify.webhook.create({
+    topic: 'orders/updated',
+    address: `${config.domain}/api/shopify/orders-updated`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'orders update webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating orders update Webhook', err)
+    throw err
+  })
+
+  shopify.webhook.create({
     topic: 'app/uninstalled',
     address: `${config.domain}/api/shopify/app-uninstall`,
     format: 'json'

@@ -48,6 +48,22 @@ exports.findOneStoreInfoGeneric = (payload) => {
   return callApi(`abandoned_cart/storeinfo/query`, 'post', query, 'kiboengage')
 }
 
+exports.findAllOrderInfo = (payload) => {
+  let query = {
+    purpose: 'findAll',
+    match: payload
+  }
+  return callApi(`abandoned_cart/orderinfo/query`, 'post', query, 'kiboengage')
+}
+
+exports.findOneOrderInfoGeneric = (payload) => {
+  let query = {
+    purpose: 'findOne',
+    match: payload
+  }
+  return callApi(`abandoned_cart/orderinfo/query`, 'post', query, 'kiboengage')
+}
+
 exports.createCartInfo = (payload) => {
   return callApi(`abandoned_cart/cartinfo`, 'post', payload, 'kiboengage')
 }

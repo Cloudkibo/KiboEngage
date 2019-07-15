@@ -20,6 +20,14 @@ router.get('/abandonedCheckouts',
   auth.isAuthenticated(),
   controller.abandonedCheckouts) // this id will be userid
 
+router.get('/getOrders',
+  auth.isAuthenticated(),
+  controller.getOrders)
+
+router.get('/getOrders/:id',
+  auth.isAuthenticated(),
+  controller.getOrder)
+
 router.post('/saveStoreInfo',
   auth.isAuthenticated(),
   validate({body: validationSchema.storeInfoSchema}),
@@ -43,6 +51,10 @@ router.post('/saveCheckoutInfo',
 router.post('/updateStatusStore',
   auth.isAuthenticated(),
   controller.updateStatusStore)
+
+router.post('updateStoreInfo/:id',
+  auth.isAuthenticated(),
+  controller.updateStoreInfo)
 
 router.post('/deleteAllCartInfo',
   auth.isAuthenticated(),
