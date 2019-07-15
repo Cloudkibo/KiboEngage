@@ -42,4 +42,13 @@ router.get('/serveScript',
 router.get('/clickCount',
   webhook.clickCount) // this id will be userid
 
+router.get('/fulfillments-create',
+  webhook.fulfillmentCreate)
+
+router.get('/fulfillments-update',
+  webhook.fulfillmentUpdate)
+
+router.get('/orders-updated',
+  webhook.orderUpdate)
+
 module.exports = router
