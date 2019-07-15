@@ -98,6 +98,12 @@ exports.updateStatusStore = function (req, res) {
     .catch(err => res.status(500).json({ status: 'Failed', error: err }))
 }
 
+exports.updateStoreInfo = function (req, res) {
+  dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.params.id }, req.body)
+    .then(result => res.status(200).json({ status: 'success', payload: result }))
+    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+}
+
 exports.deleteAllCartInfo = function (req, res) {
   let parametersMissing = false
 

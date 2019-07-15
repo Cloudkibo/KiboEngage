@@ -39,6 +39,10 @@ router.post('/updateStatusStore',
   auth.isAuthenticated(),
   controller.updateStatusStore)
 
+router.post('updateStoreInfo/:id',
+  auth.isAuthenticated(),
+  controller.updateStoreInfo)
+
 router.post('/deleteAllCartInfo',
   auth.isAuthenticated(),
   controller.deleteAllCartInfo)

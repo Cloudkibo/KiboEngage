@@ -44,7 +44,7 @@ function sendToFacebook (checkout, store, details) {
           let temp = {
             title: item.title,
             buttons: [{ 'type': 'web_url', 'url': `${config.domain}/api/shopify/clickCount?checkoutId=${checkout._id}`, 'title': 'Visit Product' }],
-            subtitle: 'You forgot to checkout this product' + '. Vendor: ' + item.vendor,
+            subtitle: store.alertMessage, // 'You forgot to checkout this product' + '. Vendor: ' + item.vendor,
             image_url: (item.image && item.image.src) ? item.image.src : 'https://cdn.shopify.com/assets/images/logos/shopify-bag.png'
           }
           gallery.push(temp)
