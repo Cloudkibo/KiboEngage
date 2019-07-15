@@ -30,6 +30,11 @@ router.post('/saveCartInfo',
   validate({body: validationSchema.cartInfoSchema}),
   controller.saveCartInfo)
 
+router.post('/updateStoreInfo/:id',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.updateStoreSchema}),
+  controller.updateStoreInfo)
+
 router.post('/saveCheckoutInfo',
   auth.isAuthenticated(),
   validate({body: validationSchema.checkoutInfoSchema}),

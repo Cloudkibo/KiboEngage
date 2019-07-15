@@ -20,6 +20,28 @@ exports.storeInfoSchema = {
   }
 }
 
+exports.updateStoreSchema = {
+  type: 'object',
+  properties: {
+    cartAlertEnabled: {
+      type: 'boolean',
+      required: true
+    },
+    sendOrderUpdates: {
+      type: 'boolean',
+      required: true
+    },
+    alertMessage: {
+      type: 'string',
+      required: true
+    },
+    schedule: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+
 exports.cartInfoSchema = {
   type: 'object',
   properties: {

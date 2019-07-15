@@ -37,6 +37,12 @@ exports.index = function (req, res) {
     })
 }
 
+exports.updateStoreInfo = function (req, res) {
+  dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.params.id }, req.body)
+    .then(result => res.status(200).json({ status: 'success', payload: result }))
+    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+}
+
 // Right now we are not using this API but later on we will use it once we move the webhooks
 // to a separate droplet
 exports.saveStoreInfo = function (req, res) {
