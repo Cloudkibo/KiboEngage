@@ -106,6 +106,8 @@ exports.create = function (req, res) {
                                 payload: `Failed to create post ${JSON.stringify(error)}`
                               })
                             })
+                        } else {
+                          res.status(500).json({status: 'failed', description: resp.body})
                         }
                       })
                   } else if (messageData.video) {
@@ -157,6 +159,8 @@ exports.create = function (req, res) {
                                 payload: `Failed to create post ${JSON.stringify(error)}`
                               })
                             })
+                        } else {
+                          res.status(500).json({status: 'failed', description: resp.body})
                         }
                       })
                   }
