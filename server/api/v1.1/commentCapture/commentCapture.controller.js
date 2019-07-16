@@ -97,7 +97,7 @@ exports.create = function (req, res) {
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
                         utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
                           .then(result => {
-                            res.status(201).json({status: 'success', payload: postCreated})
+                            res.status(201).json({status: 'success', payload: postId})
                           })
                           .catch(error => {
                             return res.status(500).json({
@@ -124,7 +124,7 @@ exports.create = function (req, res) {
                               logger.serverLog(TAG, `postId ${postId}`, 'debug')
                               utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
                                 .then(result => {
-                                  res.status(201).json({status: 'success', payload: postCreated})
+                                  res.status(201).json({status: 'success', payload: postId})
                                 })
                                 .catch(error => {
                                   return res.status(500).json({
@@ -146,7 +146,7 @@ exports.create = function (req, res) {
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
                         utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
                           .then(result => {
-                            res.status(201).json({status: 'success', payload: postCreated})
+                            res.status(201).json({status: 'success', payload: postId})
                           })
                           .catch(error => {
                             return res.status(500).json({
