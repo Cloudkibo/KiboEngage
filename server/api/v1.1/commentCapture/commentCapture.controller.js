@@ -137,12 +137,12 @@ exports.create = function (req, res) {
                       })
                   } else {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${respp.body.access_token}`,
+                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${page.accessToken}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err, 'error')
                         }
-                        logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
+                        logger.serverLog(TAG, `response from post in text ${JSON.stringify(resp.body)}`)
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
                         utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
                           .then(result => {
