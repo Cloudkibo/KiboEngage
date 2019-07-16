@@ -94,17 +94,19 @@ exports.create = function (req, res) {
                           logger.serverLog(TAG, err, 'error')
                         }
                         logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
-                        let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
-                        utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
-                          .then(result => {
-                            res.status(201).json({status: 'success', payload: postId})
-                          })
-                          .catch(error => {
-                            return res.status(500).json({
-                              status: 'failed',
-                              payload: `Failed to create post ${JSON.stringify(error)}`
+                        if (resp.body && !resp.body.error) {
+                          let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
+                          utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
+                            .then(result => {
+                              res.status(201).json({status: 'success', payload: postId})
                             })
-                          })
+                            .catch(error => {
+                              return res.status(500).json({
+                                status: 'failed',
+                                payload: `Failed to create post ${JSON.stringify(error)}`
+                              })
+                            })
+                        }
                       })
                   } else if (messageData.video) {
                     needle.post(
@@ -143,17 +145,19 @@ exports.create = function (req, res) {
                           logger.serverLog(TAG, err, 'error')
                         }
                         logger.serverLog(TAG, `response from post in text ${JSON.stringify(resp.body)}`)
-                        let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
-                        utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
-                          .then(result => {
-                            res.status(201).json({status: 'success', payload: postId})
-                          })
-                          .catch(error => {
-                            return res.status(500).json({
-                              status: 'failed',
-                              payload: `Failed to create post ${JSON.stringify(error)}`
+                        if (resp.body && !resp.body.error) {
+                          let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
+                          utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
+                            .then(result => {
+                              res.status(201).json({status: 'success', payload: postId})
                             })
-                          })
+                            .catch(error => {
+                              return res.status(500).json({
+                                status: 'failed',
+                                payload: `Failed to create post ${JSON.stringify(error)}`
+                              })
+                            })
+                        }
                       })
                   }
                 })
