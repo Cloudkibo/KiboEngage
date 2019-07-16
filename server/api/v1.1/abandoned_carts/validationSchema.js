@@ -36,7 +36,7 @@ exports.updateStoreSchema = {
       required: true
     },
     schedule: {
-      type: 'string',
+      type: 'object',
       required: true
     }
   }
