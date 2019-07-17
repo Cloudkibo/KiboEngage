@@ -53,6 +53,7 @@ function registerWebhooks (shop, token) {
     throw err
   })
 
+  logger.serverLog(TAG, config.domain)
   shopify.webhook.create({
     topic: 'fulfillments/create',
     address: `${config.domain}/api/shopify/fulfillments-create`,
@@ -60,7 +61,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'Fulfillment webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Fulfillment Webhook', err)
+    logger.serverLog(TAG, 'Error Creating Fulfillment Webhook' + JSON.stringify(err))
     throw err
   })
 
@@ -71,7 +72,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'Fulfillment update webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Fulfillment update Webhook', err)
+    logger.serverLog(TAG, 'Error Creating Fulfillment update Webhook' + JSON.stringify(err))
     throw err
   })
 
@@ -82,7 +83,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'orders update webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating orders update Webhook', err)
+    logger.serverLog(TAG, 'Error Creating orders update Webhook' + err)
     throw err
   })
 
