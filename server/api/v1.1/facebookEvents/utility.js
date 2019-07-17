@@ -19,7 +19,7 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
           .then(messageCreative => {
             if (messageCreative.status === 'success') {
               const messageCreativeId = messageCreative.message_creative_id
-              utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id}, req.headers.authorization)
+              utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id})
                 .then(pageTags => {
                   console.log('pageTags', pageTags)
                   const limit = Math.ceil(subscribersCount[0].count / 10000)
@@ -60,7 +60,7 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                         }
                         if (i === limit - 1) {
                           if (response.status === 'success') {
-                            utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, '', 'kiboengage')
+                            utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                               .then(updated => {
                                 current++
                                 send = true

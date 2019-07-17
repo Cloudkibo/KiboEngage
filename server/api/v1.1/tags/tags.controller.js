@@ -9,7 +9,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 
 exports.index = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
+  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -21,7 +21,7 @@ exports.index = function (req, res) {
         {$match: {companyId: companyUser.companyId, defaultTag: false, isList: false}},
         {$group: {_id: '$tag', doc: {$first: '$$ROOT'}}}
       ]
-      callApi.callApi('tags/aggregate', 'post', aggregateData, req.headers.authorization)
+      callApi.callApi('tags/aggregate', 'post', aggregateData)
         .then(tags => {
           tags = tags.map((t) => t.doc)
           res.status(200).json({status: 'success', payload: tags})
@@ -46,9 +46,9 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
-      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId}, req.headers.authorization)
+      callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           // add paid plan check later
           // if (planUsage.labels !== -1 && companyUsage.labels >= planUsage.labels) {
@@ -57,7 +57,7 @@ exports.create = function (req, res) {
           //     description: `Your tags limit has reached. Please upgrade your plan to premium in order to create more tags.`
           //   })
           // }
-          callApi.callApi('pages/query', 'post', {companyId: req.user.companyId}, req.headers.authorization)
+          callApi.callApi('pages/query', 'post', {companyId: req.user.companyId})
             .then(pages => {
               pages.forEach((page, i) => {
                 facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
@@ -75,9 +75,9 @@ exports.create = function (req, res) {
                       pageId: page._id,
                       labelFbId: label.body.id
                     }
-                    callApi.callApi('tags/', 'post', tagPayload, req.headers.authorization)
+                    callApi.callApi('tags/', 'post', tagPayload)
                       .then(newTag => {
-                        callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
+                        callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}})
                           .then(updated => {
                             logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
                           })
@@ -142,11 +142,11 @@ exports.create = function (req, res) {
 }
 
 exports.rename = function (req, res) {
-  callApi.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.tag}, req.headers.authorization)
+  callApi.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.tag})
     .then(tags => {
       if (tags.length > 0) {
         tags.forEach((tag, i) => {
-          callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+          callApi.callApi('pages/query', 'post', {_id: tag.pageId})
             .then(pages => {
               let page = pages[0]
               facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
@@ -181,7 +181,7 @@ exports.rename = function (req, res) {
                       updateTag(tag, data, req, callback)
                     },
                     function (callback) {
-                      callApi.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tagId: tag._id}, req.headers.authorization)
+                      callApi.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tagId: tag._id})
                         .then(tagSubscribers => {
                           let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
                           if (subscribers.length > 0) {
@@ -230,7 +230,7 @@ exports.rename = function (req, res) {
 }
 
 function updateTag (tag, data, req, callback) {
-  callApi.callApi('tags/update', 'put', {query: {_id: tag._id}, newPayload: data, options: {}}, req.headers.authorization)
+  callApi.callApi('tags/update', 'put', {query: {_id: tag._id}, newPayload: data, options: {}})
     .then(newTag => {
       require('./../../../config/socketio').sendMessageToClient({
         room_id: req.user.companyId,
@@ -250,15 +250,15 @@ function updateTag (tag, data, req, callback) {
 }
 
 exports.delete = function (req, res) {
-  callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: req.body.tag}, req.headers.authorization)
+  callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: req.body.tag})
     .then(tags => {
       if (tags.length > 0) {
         tags.forEach((tag, i) => {
-          callApi.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id}, req.headers.authorization)
+          callApi.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id})
             .then(tagsSubscriber => {
               if (tagsSubscriber.length > 0) {
                 for (let i = 0; i < tagsSubscriber.length; i++) {
-                  callApi.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {}, req.headers.authorization)
+                  callApi.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {})
                     .then(result => {
                     })
                     .catch(err => {
@@ -303,7 +303,7 @@ exports.delete = function (req, res) {
 }
 
 function deleteTagsFromLocal (req, label, callback) {
-  callApi.callApi(`tags/deleteMany`, 'post', {tag: label.tag, companyId: req.user.companyId}, req.headers.authorization)
+  callApi.callApi(`tags/deleteMany`, 'post', {tag: label.tag, companyId: req.user.companyId})
     .then(tagPayload => {
       require('./../../../config/socketio').sendMessageToClient({
         room_id: req.user.companyId,
@@ -323,7 +323,7 @@ function deleteTagsFromLocal (req, label, callback) {
 
 function deleteTagsFromFacebook (req, tags, callback) {
   tags.forEach((tag, i) => {
-    callApi.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+    callApi.callApi('pages/query', 'post', {_id: tag.pageId})
       .then(pages => {
         let page = pages[0]
         facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
@@ -358,7 +358,7 @@ function isTagExists (pageId, tags) {
 function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
   let tags = []
   subscribers.forEach((subscriberId, i) => {
-    callApi.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
+    callApi.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
@@ -372,7 +372,7 @@ function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
                 companyId: req.user.companyId
               }
               if (flag) {
-                callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
+                callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
                   .then(newRecord => {
                     if (i === subscribers.length - 1) {
                       callback(null, 'success')
@@ -383,7 +383,7 @@ function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
             })
             .catch(err => callback(err))
         } else {
-          callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId}, req.headers.authorization)
+          callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
             .then(tagPayload => {
               tagPayload = tagPayload[0]
               tags.push(tagPayload)
@@ -396,7 +396,7 @@ function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
                     companyId: req.user.companyId
                   }
                   if (flag) {
-                    callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
+                    callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
                       .then(newRecord => {
                         if (i === subscribers.length - 1) {
                           callback(null, 'success')
@@ -448,7 +448,7 @@ exports.assign = function (req, res) {
 function unassignTagFromSubscribers (subscribers, tag, req, callback) {
   let tags = []
   subscribers.forEach((subscriberId, i) => {
-    callApi.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
+    callApi.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
@@ -456,7 +456,7 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.accessToken}`, 'delete', {})
             .then(unassignedLabel => {
               if (unassignedLabel.body.error) callback(unassignedLabel.body.error)
-              callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
+              callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id})
                 .then(deleteRecord => {
                   if (i === subscribers.length - 1) {
                     callback(null, 'success')
@@ -466,14 +466,14 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
             })
             .catch(err => callback(err))
         } else {
-          callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId}, req.headers.authorization)
+          callApi.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
             .then(tagPayload => {
               tagPayload = tagPayload[0]
               tags.push(tagPayload)
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.accessToken}`, 'delete', {})
                 .then(unassignedLabel => {
                   if (unassignedLabel.body.error) callback(unassignedLabel.body.error)
-                  callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id}, req.headers.authorization)
+                  callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id})
                     .then(deleteRecord => {
                       if (i === subscribers.length - 1) {
                         callback(null, 'success')
@@ -524,7 +524,7 @@ exports.unassign = function (req, res) {
 }
 
 exports.subscribertags = function (req, res) {
-  callApi.callApi(`tags_subscriber/query`, 'post', {subscriberId: req.body.subscriberId}, req.headers.authorization)
+  callApi.callApi(`tags_subscriber/query`, 'post', {subscriberId: req.body.subscriberId})
     .then(tagsSubscriber => {
       let payload = []
       for (let i = 0; i < tagsSubscriber.length; i++) {

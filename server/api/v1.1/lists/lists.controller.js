@@ -11,7 +11,7 @@ const TAG = 'api/lists/lists.controller.js'
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.allLists = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -19,7 +19,7 @@ exports.allLists = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      utility.callApi(`lists/query`, 'post', { companyId: companyUser.companyId }, req.headers.authorization)
+      utility.callApi(`lists/query`, 'post', { companyId: companyUser.companyId })
         .then(lists => {
           return res.status(201).json({status: 'success', payload: lists})
         })
@@ -39,12 +39,12 @@ exports.allLists = function (req, res) {
 }
 
 exports.getAll = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyuser => {
       let criterias = logicLayer.getCriterias(req.body, companyuser)
-      utility.callApi(`lists/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch lists count
+      utility.callApi(`lists/aggregate`, 'post', criterias.countCriteria) // fetch lists count
         .then(count => {
-          utility.callApi(`lists/aggregate`, 'post', criterias.fetchCriteria, req.headers.authorization) // fetch lists
+          utility.callApi(`lists/aggregate`, 'post', criterias.fetchCriteria) // fetch lists
             .then(lists => {
               res.status(200).json({
                 status: 'success',
@@ -74,10 +74,10 @@ exports.getAll = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id}, req.headers.authorization)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
-      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId}, req.headers.authorization)
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
           // add paid plan check later
@@ -120,7 +120,7 @@ exports.create = function (req, res) {
 }
 
 function createTag (req, callback) {
-  utility.callApi('pages/query', 'post', {companyId: req.user.companyId}, req.headers.authorization)
+  utility.callApi('pages/query', 'post', {companyId: req.user.companyId})
     .then(pages => {
       pages.forEach((page, i) => {
         let tag = req.body.listName
@@ -137,9 +137,9 @@ function createTag (req, callback) {
               labelFbId: label.body.id,
               isList: true
             }
-            utility.callApi('tags/', 'post', tagPayload, req.headers.authorization)
+            utility.callApi('tags/', 'post', tagPayload)
               .then(newTag => {
-                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}}, req.headers.authorization)
+                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}})
                   .then(updated => {
                     logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
                   })
@@ -170,13 +170,13 @@ function createList (req, callback) {
     parentList: req.body.parentListId,
     parentListName: req.body.parentListName,
     joiningCondition: req.body.joiningCondition
-  }, req.headers.authorization)
+  })
     .then(listCreated => {
       utility.callApi(`featureUsage/updateCompany`, 'put', {
         query: {companyId: req.body.companyId},
         newPayload: { $inc: { segmentation_lists: 1 } },
         options: {}
-      }, req.headers.authorization)
+      })
         .then(updated => {
           callback(null, 'success')
         })
@@ -187,10 +187,10 @@ function createList (req, callback) {
 
 exports.editList = function (req, res) {
   if (req.body.newListName !== req.body.listName) {
-    utility.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
+    utility.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.listName})
       .then(tags => {
         tags.forEach((tag, i) => {
-          utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+          utility.callApi('pages/query', 'post', {_id: tag.pageId})
             .then(pages => {
               let page = pages[0]
               let label = req.body.newListName
@@ -220,7 +220,7 @@ exports.editList = function (req, res) {
                       })
                     }
                     if (i === tags.length - 1) {
-                      utility.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.listName}, req.headers.authorization)
+                      utility.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.listName})
                         .then(tagSubscribers => {
                           let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
                           if (subscribers.length > 0) {
@@ -284,7 +284,7 @@ exports.editList = function (req, res) {
 }
 
 function updateList (data, req, callback) {
-  utility.callApi(`lists/update`, 'post', {query: {companyId: req.user.companyId, listName: req.body.listName}, newPayload: data, options: {}}, req.headers.authorization)
+  utility.callApi(`lists/update`, 'post', {query: {companyId: req.user.companyId, listName: req.body.listName}, newPayload: data, options: {}})
     .then(savedList => {
       callback(null, savedList)
     })
@@ -294,9 +294,9 @@ function updateList (data, req, callback) {
 }
 
 exports.viewList = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
-      utility.callApi(`lists/${req.params.id}`, 'get', {}, req.headers.authorization)
+      utility.callApi(`lists/${req.params.id}`, 'get', {})
         .then(list => {
           if (list.initialList === true) {
             utility.callApi(`phone/query`, 'post', {
@@ -304,16 +304,16 @@ exports.viewList = function (req, res) {
               hasSubscribed: true,
               fileName: { $all: [list.listName] },
               pageId: { $exists: true, $ne: null }
-            }, req.headers.authorization)
+            })
               .then(number => {
                 if (number.length > 0) {
                   let criterias = logicLayer.getSubscriberCriteria(number, companyUser)
-                  utility.callApi(`subscribers/query`, 'post', criterias, req.headers.authorization)
+                  utility.callApi(`subscribers/query`, 'post', criterias)
                     .then(subscribers => {
                       let content = logicLayer.getContent(subscribers)
                       utility.callApi(`lists/${req.params.id}`, 'put', {
                         content: content
-                      }, req.headers.authorization)
+                      })
                         .then(savedList => {
                           return res.status(201).json({status: 'success', payload: subscribers})
                         })
@@ -345,7 +345,7 @@ exports.viewList = function (req, res) {
               })
           } else {
             utility.callApi(`subscribers/query`, 'post', {
-              isSubscribed: true, companyId: companyUser.companyId, _id: {$in: list.content}}, req.headers.authorization)
+              isSubscribed: true, companyId: companyUser.companyId, _id: {$in: list.content}})
               .then(subscribers => {
                 return res.status(201)
                   .json({status: 'success', payload: subscribers})
@@ -374,18 +374,18 @@ exports.viewList = function (req, res) {
 }
 
 exports.deleteList = function (req, res) {
-  utility.callApi(`lists/${req.params.id}`, 'get', {}, req.headers.authorization)
+  utility.callApi(`lists/${req.params.id}`, 'get', {})
   .then(list => {
     console.log('list',list)
-  utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName}, req.headers.authorization)
+  utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName})
     .then(tags => {
       console.log('tags resp', tags)
       if (tags.length > 0) {
         tags.forEach((tag, i) => {
-          utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id}, req.headers.authorization)
+          utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id})
             .then(tagsSubscriber => {
               for (let i = 0; i < tagsSubscriber.length; i++) {
-                utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {}, req.headers.authorization)
+                utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {})
                   .then(result => {
                   })
                   .catch(err => {
@@ -436,13 +436,13 @@ exports.deleteList = function (req, res) {
 }
 
 function deleteListFromLocal (req, callback) {
-  utility.callApi(`lists/${req.params.id}`, 'delete', {}, req.headers.authorization)
+  utility.callApi(`lists/${req.params.id}`, 'delete', {})
     .then(result => {
       utility.callApi(`featureUsage/updateCompany`, 'put', {
         query: {companyId: req.user.companyId},
         newPayload: { $inc: { segmentation_lists: -1 } },
         options: {}
-      }, req.headers.authorization)
+      })
         .then(updated => {
           callback(null, {status: 'success', payload: result})
         })
@@ -457,7 +457,7 @@ function deleteListFromLocal (req, callback) {
 
 function deleteListFromFacebook (req, tags, callback) {
   tags.forEach((tag, i) => {
-    utility.callApi('pages/query', 'post', {_id: tag.pageId}, req.headers.authorization)
+    utility.callApi('pages/query', 'post', {_id: tag.pageId})
       .then(pages => {
         let page = pages[0]
         facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
@@ -480,7 +480,7 @@ function deleteListFromFacebook (req, tags, callback) {
 }
 
 exports.repliedPollSubscribers = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       PollDataLayer.genericFindForPolls({companyId: companyUser.companyId})
         .then(polls => {
@@ -488,7 +488,7 @@ exports.repliedPollSubscribers = function (req, res) {
           PollResponseDataLayer.genericFindForPollResponse(criteria)
             .then(responses => {
               let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses, companyUser.companyId)
-              utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
+              utility.callApi(`subscribers/query`, 'post', subscriberCriteria)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
                   return res.status(200).json({status: 'success', payload: subscribersPayload})
@@ -522,7 +522,7 @@ exports.repliedPollSubscribers = function (req, res) {
     })
 }
 exports.repliedSurveySubscribers = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       SurveyDataLayer.genericFind({companyId: companyUser.companyId})
         .then(surveys => {
@@ -530,7 +530,7 @@ exports.repliedSurveySubscribers = function (req, res) {
           SurveyResponseDataLayer.genericFind(criteria)
             .then(responses => {
               let subscriberCriteria = logicLayer.respondedSubscribersCriteria(responses, companyUser.companyId)
-              utility.callApi(`subscribers/query`, 'post', subscriberCriteria, req.headers.authorization)
+              utility.callApi(`subscribers/query`, 'post', subscriberCriteria)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
                   return res.status(200).json({status: 'success', payload: subscribersPayload})
@@ -577,7 +577,7 @@ function isTagExists (pageId, tags) {
 function assignTagToSubscribers (subscribers, tag, req, res) {
   let tags = []
   subscribers.forEach((subscriberId, i) => {
-    utility.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
+    utility.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
@@ -592,7 +592,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
                 subscriberId: subscriber._id,
                 companyId: req.user.companyId
               }
-              utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
+              utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
                 .then(newRecord => {
                   if (i === subscribers.length - 1) {
                     res.status(200).json({status: 'success', payload: 'List created successfully!'})
@@ -606,7 +606,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${err}`})
             })
         } else {
-          utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId}, req.headers.authorization)
+          utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
             .then(tagPayload => {
               tagPayload = tagPayload[0]
               tags.push(tagPayload)
@@ -620,7 +620,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
                     subscriberId: subscriber._id,
                     companyId: req.user.companyId
                   }
-                  utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload, req.headers.authorization)
+                  utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
                     .then(newRecord => {
                       if (i === subscribers.length - 1) {
                         res.status(200).json({status: 'success', payload: 'List created successfully!'})

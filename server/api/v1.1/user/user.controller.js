@@ -6,7 +6,7 @@ const needle = require('needle')
 const config = require('./../../../config/environment/index')
 
 exports.index = function (req, res) {
-  utility.callApi(`user`, 'get', {}, req.headers.authorization)
+  utility.callApi(`user`, 'get', {}, 'accounts', req.headers.authorization)
     .then(user => {
       return res.status(200).json({
         status: 'success',
@@ -22,7 +22,7 @@ exports.index = function (req, res) {
 }
 
 exports.updateChecks = function (req, res) {
-  utility.callApi(`user/updateChecks`, 'post', req.body, req.headers.authorization) // call updateChecks in accounts
+  utility.callApi(`user/updateChecks`, 'post', req.body, 'accounts', req.headers.authorization) // call updateChecks in accounts
     .then(user => {
       return res.status(200).json({
         status: 'success',
@@ -38,7 +38,7 @@ exports.updateChecks = function (req, res) {
 }
 
 exports.updateSkipConnect = function (req, res) {
-  utility.callApi(`user/updateSkipConnect`, 'get', req.headers.authorization)
+  utility.callApi(`user/updateSkipConnect`, 'get', 'accounts', req.headers.authorization)
     .then(user => {
       return res.status(200).json({
         status: 'success',
@@ -54,7 +54,7 @@ exports.updateSkipConnect = function (req, res) {
 }
 
 exports.updateMode = function (req, res) {
-  utility.callApi(`user/updateMode`, 'post', req.body, req.headers.authorization)
+  utility.callApi(`user/updateMode`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(user => {
       return res.status(200).json({
         status: 'success',
@@ -70,7 +70,7 @@ exports.updateMode = function (req, res) {
 }
 
 exports.fbAppId = function (req, res) {
-  // utility.callApi(`user/fbAppId`, 'get', {}, req.headers.authorization)
+  // utility.callApi(`user/fbAppId`, 'get', {})
   //   .then(facebookClientId => {
   //     return res.status(200).json({
   //       status: 'success',
@@ -90,7 +90,7 @@ exports.fbAppId = function (req, res) {
 }
 
 exports.authenticatePassword = function (req, res) {
-  utility.callApi(`user/authenticatePassword`, 'post', req.body, req.headers.authorization)
+  utility.callApi(`user/authenticatePassword`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(status => {
       return res.status(200).json({
         status: 'success',
@@ -106,7 +106,7 @@ exports.authenticatePassword = function (req, res) {
 }
 
 exports.addAccountType = function (req, res) {
-  utility.callApi(`user/addAccountType`, 'get', {}, req.headers.authorization)
+  utility.callApi(`user/addAccountType`, 'get', {}, 'accounts', req.headers.authorization)
     .then(status => {
       return res.status(200).json({
         status: 'success',
@@ -122,7 +122,7 @@ exports.addAccountType = function (req, res) {
 }
 
 exports.enableDelete = function (req, res) {
-  utility.callApi(`user/gdpr`, 'post', req.body, req.headers.authorization)
+  utility.callApi(`user/gdpr`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(updatedUser => {
       return res.status(200).json({
         status: 'success',
@@ -138,7 +138,7 @@ exports.enableDelete = function (req, res) {
 }
 
 exports.cancelDeletion = function (req, res) {
-  utility.callApi(`user/gdpr`, 'get', {}, req.headers.authorization)
+  utility.callApi(`user/gdpr`, 'get', {}, 'accounts', req.headers.authorization)
     .then(updatedUser => {
       return res.status(200).json({
         status: 'success',
@@ -210,7 +210,7 @@ exports.updatePlatform = function (req, res) {
 }
 
 exports.updatePicture = function (req, res) {
-  utility.callApi(`user/updatePicture`, 'get', {}, req.headers.authorization)
+  utility.callApi(`user/updatePicture`, 'get', {})
     .then(updatedUser => {
       return res.status(200).json({
         status: 'success',

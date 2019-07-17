@@ -1,4 +1,3 @@
-const utility = require('../broadcasts/broadcasts.utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/abandoned_checkouts/utility_abandoned.js'
 const Shopify = require('shopify-api-node')
@@ -27,48 +26,38 @@ function fetchProductDetails (productIds, store, callBack) {
         }
       })
       .catch((err) => {
-
         return callBack(err, null)
       })
   }
 }
 
 function sendToFacebook (checkout, store, details) {
-  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true }, '')
+  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true })
     .then(page => {
       logger.serverLog(TAG, `SHOPIFY Got the page info ${JSON.stringify(page)}`)
       page = page[0]
-      let obj
       let gallery = []
       let payload = {}
-      if (details.length <= 1) {
-        // Send one card
-        obj = {
-          fileurl: {
-            url: (details[0].image && details[0].image.src) ? details[0].image.src : 'https://cdn.shopify.com/assets/images/logos/shopify-bag.png'
-          },
-          componentType: 'card',
-          title: details[0].title,
-          buttons: [{ 'type': 'web_url', 'url': `${config.domain}/api/shopify/clickCount?checkoutId=${checkout._id}`, 'title': 'Visit Product' }],
-          description: 'You forgot to checkout this product' + '. Vendor: ' + details[0].vendor
-        }
-        payload = obj
-      } else {
-        // Send Gallary
+      if (details.length > 0) {
         details.forEach((item) => {
+          console.log('itemdetails', item)
           let temp = {
             title: item.title,
-            buttons: [{ 'type': 'web_url', 'url': `${config.domain}/api/shopify/clickCount?checkoutId=${checkout._id}`, 'title': 'Visit Our Shop' }],
-            subtitle: 'You forgot to checkout this product' + '. Vendor: ' + item.vendor,
+            buttons: [{ 'type': 'web_url', 'url': `${config.domain}/api/shopify/clickCount?checkoutId=${checkout._id}`, 'title': 'Visit Product' }],
+            subtitle: store.alertMessage, // 'You forgot to checkout this product' + '. Vendor: ' + item.vendor,
             image_url: (item.image && item.image.src) ? item.image.src : 'https://cdn.shopify.com/assets/images/logos/shopify-bag.png'
           }
           gallery.push(temp)
         })
-        obj = {
-          componentType: 'gallery',
-          cards: gallery
+        payload = {
+          'attachment': {
+            'type': 'template',
+            'payload': {
+              'template_type': 'generic',
+              'elements': gallery
+            }
+          }
         }
-        payload = obj
       }
       let options = {
         uri: 'https://graph.facebook.com/v2.6/me/messages?access_token=' + page.accessToken,
@@ -77,13 +66,13 @@ function sendToFacebook (checkout, store, details) {
           'recipient': {
             'user_ref': checkout.userRef
           },
-          'message': utility.prepareMessageData(checkout.userRef, payload, 'f_name', 'l_name')
+          'message': payload
         }
       }
       logger.serverLog(TAG, `SHOPIFY Sending the following info ${JSON.stringify(options)}`)
       request(options, function (error, response, body) {
         logger.serverLog(TAG, `SHOPIFY Sent the abandoned cart successfully ${JSON.stringify(response)} ${JSON.stringify(body)} ${JSON.stringify(error)}`)
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
           return logger.serverLog(TAG, `SHOPIFY Sent the abandoned cart successfully`)
         } else {
           return logger.serverLog(TAG, `SHOPIFY Batch send error ${JSON.stringify(response)}`)
@@ -93,17 +82,17 @@ function sendToFacebook (checkout, store, details) {
     .catch(err => logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`))
 }
 
-const send = (batchMessages, page) => {
-  const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-    if (err) {
-      return logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
-    }
-    logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
-  })
-  const form = r.form()
-  form.append('access_token', page.accessToken)
-  form.append('batch', batchMessages)
-}
+// const send = (batchMessages, page) => {
+//   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
+//     if (err) {
+//       return logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
+//     }
+//     logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
+//   })
+//   const form = r.form()
+//   form.append('access_token', page.accessToken)
+//   form.append('batch', batchMessages)
+// }
 
 const sendCheckout = (id, cb) => {
   dataLayer.findOneCheckOutInfo({ _id: id, sentCount: { '$lt': 3 } })

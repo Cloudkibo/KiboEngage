@@ -1,7 +1,7 @@
 const { callApi } = require('../utility')
 
 exports.createBroadcast = (payload) => {
-  return callApi(`smsBroadcasts`, 'post', payload, '', 'kiboengage')
+  return callApi(`smsBroadcasts`, 'post', payload, 'kiboengage')
 }
 exports.countBroadcasts = (filter) => {
   let query = {
@@ -9,7 +9,7 @@ exports.countBroadcasts = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`smsBroadcasts/query`, 'post', query, '', 'kiboengage')
+  return callApi(`smsBroadcasts/query`, 'post', query, 'kiboengage')
 }
 exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -22,5 +22,5 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`smsBroadcasts/query`, 'post', query, '', 'kiboengage')
+  return callApi(`smsBroadcasts/query`, 'post', query, 'kiboengage')
 }

@@ -202,3 +202,18 @@ exports.clickCount = function (req, res) {
       return res.status(500).json({ status: 'failed', description: 'Failed to find the checkout' })
     })
 }
+
+exports.fulfillmentCreate = function (req, res) {
+  logger.serverLog(TAG, `FulFillment CREATE Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
+exports.fulfillmentUpdate = function (req, res) {
+  logger.serverLog(TAG, `FulFillment UPDATE Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
+exports.orderUpdate = function (req, res) {
+  logger.serverLog(TAG, `ORDER UPDATE Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}

@@ -14,7 +14,7 @@ const TAG = 'api/abandonedCarts/abandoned_carts.controller.js'
 const _ = require('lodash')
 
 exports.index = function (req, res) {
-  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -26,6 +26,49 @@ exports.index = function (req, res) {
     })
     .then(storeInfoFound => {
       return res.status(200).json({ status: 'success', payload: storeInfoFound })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
+        })
+      }
+    })
+}
+exports.updateStoreInfo = function (req, res) {
+  dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.params.id }, req.body)
+    .then(result => res.status(200).json({ status: 'success', payload: result }))
+    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+}
+exports.getOrders = function (req, res) {
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      return dataLayer.findAllOrderInfo({companyId: companyUser.companyId})
+    })
+    .then(orderInfoFound => {
+      return res.status(200).json({ status: 'success', payload: orderInfoFound })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
+        })
+      }
+    })
+}
+
+exports.getOrder = function (req, res) {
+  dataLayer.findOneOrderInfoGeneric({_id: req.params.id})
+    .then(orderInfoFound => {
+      return res.status(200).json({ status: 'success', payload: orderInfoFound })
     })
     .catch(err => {
       if (err) {
@@ -169,7 +212,7 @@ exports.deleteCheckoutInfo = function (req, res) {
 }
 
 exports.deleteAllInfo = function (req, res) {
-  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -234,7 +277,7 @@ exports.sendCheckout = function (req, res) {
 }
 
 exports.sendAnalytics = function (req, res) {
-  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -258,7 +301,7 @@ exports.sendAnalytics = function (req, res) {
 }
 
 exports.abandonedCheckouts = function (req, res) {
-  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({

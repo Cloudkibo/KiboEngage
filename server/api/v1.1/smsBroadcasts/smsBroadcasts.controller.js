@@ -6,7 +6,7 @@ const logger = require('../../../components/logger')
 const TAG = 'smsBroadcasts.controller.js'
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
       let criteria = logicLayer.getCriterias(req.body, companyuser)
       dataLayer.countBroadcasts(criteria.countCriteria[0].$match)
@@ -45,11 +45,11 @@ exports.index = function (req, res) {
 }
 
 exports.sendBroadcast = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
     .then(companyUser => {
       dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
         .then(broadcast => {
-          utility.callApi(`contacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}, req.headers.authorization) // fetch company user
+          utility.callApi(`contacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}) // fetch company user
             .then(contacts => {
               let accountSid = companyUser.companyId.twilio.accountSID
               let authToken = companyUser.companyId.twilio.authToken
@@ -100,7 +100,7 @@ exports.sendBroadcast = function (req, res) {
 }
 exports.getTwilioNumbers = function (req, res) {
   let numbers = []
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }) // fetch company user
     .then(companyuser => {
       let accountSid = companyuser.companyId.twilio.accountSID
       let authToken = companyuser.companyId.twilio.authToken

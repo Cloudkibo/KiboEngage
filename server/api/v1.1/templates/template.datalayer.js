@@ -1,7 +1,7 @@
 const { callApi } = require('../utility')
 
 exports.allPolls = () => {
-  return callApi(`templates/poll`, 'get', {}, '', 'kiboengage')
+  return callApi(`templates/poll`, 'get', {}, 'kiboengage')
 }
 
 exports.pollTemplateaggregateCount = (filter) => {
@@ -10,7 +10,7 @@ exports.pollTemplateaggregateCount = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/poll/query`, 'post', query, 'kiboengage')
 }
 exports.pollTemplateaggregateLimit = (aggregateObject) => {
   let query = {
@@ -19,7 +19,7 @@ exports.pollTemplateaggregateLimit = (aggregateObject) => {
     sort: {datetime: -1},
     limit: aggregateObject.req.body.number_of_records
   }
-  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/poll/query`, 'post', query, 'kiboengage')
 }
 exports.pollTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
@@ -29,11 +29,11 @@ exports.pollTemplateaggregateLimitNextPrevious = (aggregateObject) => {
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records
   }
-  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/poll/query`, 'post', query, 'kiboengage')
 }
 
 exports.allSurvey = () => {
-  return callApi(`templates/survey`, 'get', {}, '', 'kiboengage')
+  return callApi(`templates/survey`, 'get', {}, 'kiboengage')
 }
 
 exports.surveyTemplateaggregateCount = (filter) => {
@@ -42,7 +42,7 @@ exports.surveyTemplateaggregateCount = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/query`, 'post', query, 'kiboengage')
 }
 
 exports.surveyTemplateaggregateLimit = (aggregateObject) => {
@@ -52,7 +52,7 @@ exports.surveyTemplateaggregateLimit = (aggregateObject) => {
     sort: {datetime: -1},
     limit: aggregateObject.req.body.number_of_records
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/query`, 'post', query, 'kiboengage')
 }
 exports.surveyTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
@@ -62,10 +62,10 @@ exports.surveyTemplateaggregateLimitNextPrevious = (aggregateObject) => {
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/query`, 'post', query, 'kiboengage')
 }
 exports.createPoll = (payload) => {
-  return callApi(`templates/poll`, 'post', payload, '', 'kiboengage')
+  return callApi(`templates/poll`, 'post', payload, 'kiboengage')
 }
 
 exports.editPoll = (queryObject, updated) => {
@@ -74,7 +74,7 @@ exports.editPoll = (queryObject, updated) => {
     match: queryObject,
     updated: updated
   }
-  return callApi(`templates/poll`, 'put', query, '', 'kiboengage')
+  return callApi(`templates/poll`, 'put', query, 'kiboengage')
 }
 
 exports.editSurvey = (queryObject, updated) => {
@@ -83,11 +83,11 @@ exports.editSurvey = (queryObject, updated) => {
     match: queryObject,
     updated: updated
   }
-  return callApi(`templates/survey`, 'put', query, '', 'kiboengage')
+  return callApi(`templates/survey`, 'put', query, 'kiboengage')
 }
 
 exports.createSurveys = (payload) => {
-  return callApi(`templates/survey`, 'post', payload, '', 'kiboengage')
+  return callApi(`templates/survey`, 'post', payload, 'kiboengage')
 }
 
 exports.CategoryFind = (companyUser) => {
@@ -95,10 +95,10 @@ exports.CategoryFind = (companyUser) => {
     purpose: 'findAll',
     match: {'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]}
   }
-  return callApi(`templates/category/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/category/query`, 'post', query, 'kiboengage')
 }
 exports.createCategory = (payload) => {
-  return callApi(`templates/category`, 'post', payload, '', 'kiboengage')
+  return callApi(`templates/category`, 'post', payload, 'kiboengage')
 }
 exports.editCategory = (queryObject, updated) => {
   let query = {
@@ -106,7 +106,7 @@ exports.editCategory = (queryObject, updated) => {
     match: queryObject,
     updated: updated
   }
-  return callApi(`templates/category`, 'put', query, '', 'kiboengage')
+  return callApi(`templates/category`, 'put', query, 'kiboengage')
 }
 
 exports.findCategroryById = (req) => {
@@ -114,7 +114,7 @@ exports.findCategroryById = (req) => {
     purpose: 'findOne',
     match: {_id: req.body._id}
   }
-  return callApi(`templates/category/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/category/query`, 'post', query, 'kiboengage')
 }
 
 exports.findSurveyById = (req) => {
@@ -122,7 +122,7 @@ exports.findSurveyById = (req) => {
     purpose: 'findOne',
     match: {_id: req.params.surveyid}
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/query`, 'post', query, 'kiboengage')
 }
 
 exports.findQuestionById = (req) => {
@@ -130,7 +130,7 @@ exports.findQuestionById = (req) => {
     purpose: 'findAll',
     match: {surveyId: req.params.surveyid}
   }
-  return callApi(`templates/survey/question/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/question/query`, 'post', query, 'kiboengage')
 }
 
 exports.findPollById = (id) => {
@@ -138,7 +138,7 @@ exports.findPollById = (id) => {
     purpose: 'findOne',
     match: {_id: id}
   }
-  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/poll/query`, 'post', query, 'kiboengage')
 }
 
 exports.removePoll = (id) => {
@@ -146,7 +146,7 @@ exports.removePoll = (id) => {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`templates/poll`, 'delete', query, '', 'kiboengage')
+  return callApi(`templates/poll`, 'delete', query, 'kiboengage')
 }
 
 exports.pollCategoryById = (req) => {
@@ -154,7 +154,7 @@ exports.pollCategoryById = (req) => {
     purpose: 'findOne',
     match: {_id: req.params.id}
   }
-  return callApi(`templates/category/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/category/query`, 'post', query, 'kiboengage')
 }
 
 exports.removeCategory = (id) => {
@@ -162,7 +162,7 @@ exports.removeCategory = (id) => {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`templates/category`, 'delete', query, '', 'kiboengage')
+  return callApi(`templates/category`, 'delete', query, 'kiboengage')
 }
 
 exports.surveyFindById = (req) => {
@@ -170,7 +170,7 @@ exports.surveyFindById = (req) => {
     purpose: 'findOne',
     match: {_id: req.body._id}
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/query`, 'post', query, 'kiboengage')
 }
 
 exports.removeSurvey = (id) => {
@@ -178,7 +178,7 @@ exports.removeSurvey = (id) => {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`templates/survey`, 'delete', query, '', 'kiboengage')
+  return callApi(`templates/survey`, 'delete', query, 'kiboengage')
 }
 
 exports.BroadcastFindById = (req) => {
@@ -186,7 +186,7 @@ exports.BroadcastFindById = (req) => {
     purpose: 'findOne',
     match: {_id: req.params.id}
   }
-  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
 }
 
 exports.broadcastFindbyId = (req) => {
@@ -194,7 +194,7 @@ exports.broadcastFindbyId = (req) => {
     purpose: 'findOne',
     match: {_id: req.body._id}
   }
-  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
 }
 
 exports.removeBroadcast = (id) => {
@@ -202,11 +202,11 @@ exports.removeBroadcast = (id) => {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`templates/broadcast`, 'delete', query, '', 'kiboengage')
+  return callApi(`templates/broadcast`, 'delete', query, 'kiboengage')
 }
 
 exports.createBroadcast = (payload) => {
-  return callApi(`templates/broadcast`, 'post', payload, '', 'kiboengage')
+  return callApi(`templates/broadcast`, 'post', payload, 'kiboengage')
 }
 
 exports.saveBroadcast = (queryObject, updated) => {
@@ -215,7 +215,7 @@ exports.saveBroadcast = (queryObject, updated) => {
     match: queryObject,
     updated: updated
   }
-  return callApi(`templates/broadcast`, 'put', query, '', 'kiboengage')
+  return callApi(`templates/broadcast`, 'put', query, 'kiboengage')
 }
 
 exports.findBroadcastById = (req) => {
@@ -223,7 +223,7 @@ exports.findBroadcastById = (req) => {
     purpose: 'findOne',
     match: {_id: req.params.broadcastid}
   }
-  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
 }
 
 exports.findBotById = (req) => {
@@ -231,17 +231,17 @@ exports.findBotById = (req) => {
     purpose: 'findOne',
     match: {_id: req.params.botid, companyId: req.user.companyId}
   }
-  return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/bot/query`, 'post', query, 'kiboengage')
 }
 exports.BotFindById = (req) => {
   let query = {
     purpose: 'findOne',
     match: {_id: req.body._id, companyId: req.user.companyId}
   }
-  return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/bot/query`, 'post', query, 'kiboengage')
 }
 exports.createBot = (payload) => {
-  return callApi(`templates/bot`, 'post', payload, '', 'kiboengage')
+  return callApi(`templates/bot`, 'post', payload, 'kiboengage')
 }
 exports.botSave = (queryObject, updated) => {
   let query = {
@@ -249,28 +249,28 @@ exports.botSave = (queryObject, updated) => {
     match: queryObject,
     updated: updated
   }
-  return callApi(`templates/bot`, 'put', query, '', 'kiboengage')
+  return callApi(`templates/bot`, 'put', query, 'kiboengage')
 }
 exports.removeBot = (id) => {
   let query = {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`templates/bot`, 'delete', query, '', 'kiboengage')
+  return callApi(`templates/bot`, 'delete', query, 'kiboengage')
 }
 exports.botFind = (companyUser) => {
   let query = {
     purpose: 'findAll',
     match: {'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]}
   }
-  return callApi(`templates/bot/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/bot/query`, 'post', query, 'kiboengage')
 }
 exports.broadcastFind = (companyUser) => {
   let query = {
     purpose: 'findAll',
     match: {'$or': [{companyId: companyUser.companyId}, {createdBySuperUser: true}]}
   }
-  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
 }
 
 exports.surveyId = (req) => {
@@ -278,7 +278,7 @@ exports.surveyId = (req) => {
     purpose: 'findOne',
     match: {_id: req.body.survey._id}
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/query`, 'post', query, 'kiboengage')
 }
 
 exports.findQuestionSurveyById = (req) => {
@@ -286,7 +286,7 @@ exports.findQuestionSurveyById = (req) => {
     purpose: 'findOne',
     match: {surveyId: req.body.survey._id}
   }
-  return callApi(`templates/survey/question/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/question/query`, 'post', query, 'kiboengage')
 }
 
 exports.broadcastTemplateaggregateCount = (filter) => {
@@ -295,7 +295,7 @@ exports.broadcastTemplateaggregateCount = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
 }
 exports.broadcastTemplateaggregateLimit = (aggregateObject) => {
   let query = {
@@ -304,7 +304,7 @@ exports.broadcastTemplateaggregateLimit = (aggregateObject) => {
     sort: {datetime: -1},
     limit: aggregateObject.req.body.number_of_records
   }
-  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
 }
 exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
   let query = {
@@ -314,7 +314,7 @@ exports.broadcastTemplateaggregateLimitNextPrevious = (aggregateObject) => {
     skip: aggregateObject.recordsToSkip,
     limit: aggregateObject.req.body.number_of_records
   }
-  return callApi(`templates/broadcast/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
 }
 
 exports.removeQuestion = (id) => {
@@ -322,7 +322,7 @@ exports.removeQuestion = (id) => {
     purpose: 'deleteOne',
     match: {_id: id}
   }
-  return callApi(`templates/survey/question`, 'delete', query, '', 'kiboengage')
+  return callApi(`templates/survey/question`, 'delete', query, 'kiboengage')
 }
 
 exports.surveyFindId = (req) => {
@@ -330,12 +330,12 @@ exports.surveyFindId = (req) => {
     purpose: 'findOne',
     match: {_id: req.params.id}
   }
-  return callApi(`templates/survey/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/survey/query`, 'post', query, 'kiboengage')
 }
 exports.FindByIdPoll = (req) => {
   let query = {
     purpose: 'findOne',
     match: {_id: req.params.id}
   }
-  return callApi(`templates/poll/query`, 'post', query, '', 'kiboengage')
+  return callApi(`templates/poll/query`, 'post', query, 'kiboengage')
 }

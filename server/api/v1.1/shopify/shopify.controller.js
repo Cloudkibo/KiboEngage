@@ -54,6 +54,39 @@ function registerWebhooks (shop, token) {
   })
 
   shopify.webhook.create({
+    topic: 'fulfillments/create',
+    address: `${config.domain}/api/shopify/fulfillments-create`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'Fulfillment webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating Fulfillment Webhook', err)
+    throw err
+  })
+
+  shopify.webhook.create({
+    topic: 'fulfillments/update',
+    address: `${config.domain}/api/shopify/fulfillments-update`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'Fulfillment update webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating Fulfillment update Webhook', err)
+    throw err
+  })
+
+  shopify.webhook.create({
+    topic: 'orders/updated',
+    address: `${config.domain}/api/shopify/orders-updated`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'orders update webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating orders update Webhook', err)
+    throw err
+  })
+
+  shopify.webhook.create({
     topic: 'app/uninstalled',
     address: `${config.domain}/api/shopify/app-uninstall`,
     format: 'json'
@@ -99,7 +132,7 @@ exports.index = function (req, res) {
     res.cookie('state', state)
     res.cookie('userId', JSON.stringify(req.user._id))
     res.cookie('pageId', req.body.pageId)
-    utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+    utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
       .then(companyuser => {
         res.cookie('companyId', JSON.stringify(companyuser.companyId))
         return res.redirect(installUrl)

@@ -1,72 +1,71 @@
 let _ = require('lodash')
 
-exports.getCriterias = function (body, companyUser) {
-  let search = ''
+exports.getCriterias = function (req) {
   let findCriteria = {}
   let startDate = new Date() // Current date
-  startDate.setDate(startDate.getDate() - body.filter_criteria.days)
+  startDate.setDate(startDate.getDate() - req.body.filter_criteria.days)
   startDate.setHours(0) // Set the hour, minute and second components to 0
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let finalCriteria = {}
   let countCriteria = {}
   let recordsToSkip = 0
-  if (body.filter_criteria.search_value === '' && body.filter_criteria.type_value === '') {
+  if (req.body.filter_criteria.search_value === '' && req.body.filter_criteria.type_value === '') {
     findCriteria = {
-      companyId: companyUser.companyId,
-      'datetime': body.filter_criteria.days !== '0' ? {
+      companyId: req.user.companyId,
+      'datetime': req.body.filter_criteria.days !== '0' ? {
         $gte: startDate
       } : { $exists: true }
     }
   } else {
-    if (body.filter_criteria.type_value === 'miscellaneous') {
+    if (req.body.filter_criteria.type_value === 'miscellaneous') {
       findCriteria = {
-        companyId: companyUser.companyId,
+        companyId: req.user.companyId,
         'payload.1': { $exists: true },
-        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
-        'datetime': body.filter_criteria.days !== '0' ? {
+        title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
+        'datetime': req.body.filter_criteria.days !== '0' ? {
           $gte: startDate
         } : { $exists: true }
       }
     } else {
       findCriteria = {
-        companyId: companyUser.companyId,
-        $and: [{'payload.0.componentType': body.filter_criteria.type_value !== '' ? body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
-        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
-        'datetime': body.filter_criteria.days !== '0' ? {
+        companyId: req.user.companyId,
+        $and: [{'payload.0.componentType': req.body.filter_criteria.type_value !== '' ? req.body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
+        title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
+        'datetime': req.body.filter_criteria.days !== '0' ? {
           $gte: startDate
         } : { $exists: true }
       }
     }
   }
-  if (body.first_page === 'first') {
+  if (req.body.first_page === 'first') {
     finalCriteria = [
       { $match: findCriteria },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
-      { $limit: body.number_of_records }
+      { $limit: req.body.number_of_records }
     ]
-  } else if (body.first_page === 'next') {
-    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+  } else if (req.body.first_page === 'next') {
+    recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     let finalFindCriteria = {}
     Object.assign(finalFindCriteria, findCriteria)
-    finalFindCriteria._id = { $lt: body.last_id }
+    finalFindCriteria._id = { $lt: req.body.last_id }
     finalCriteria = [
       { $match: finalFindCriteria },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
-      { $limit: body.number_of_records }
+      { $limit: req.body.number_of_records }
     ]
-  } else if (body.first_page === 'previous') {
-    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+  } else if (req.body.first_page === 'previous') {
+    recordsToSkip = Math.abs(req.body.requested_page * req.body.number_of_records)
     let finalFindCriteria = {}
     Object.assign(finalFindCriteria, findCriteria)
-    finalFindCriteria._id = { $gt: body.last_id }
+    finalFindCriteria._id = { $gt: req.body.last_id }
     finalCriteria = [
       { $match: finalFindCriteria },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
-      { $limit: body.number_of_records }
+      { $limit: req.body.number_of_records }
     ]
   }
   countCriteria = [

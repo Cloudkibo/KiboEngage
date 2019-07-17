@@ -92,7 +92,7 @@ exports.subscriberSequences = function (req, res) {
 }
 
 exports.deleteMessage = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -202,7 +202,7 @@ exports.deleteSequence = function (req, res) {
 }
 
 exports.createSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -211,9 +211,9 @@ exports.createSequence = function (req, res) {
         })
       }
       // calling accounts feature usage for this
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
-          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
               // add paid plan check later
               // if (planUsage.broadcast_sequences !== -1 && companyUsage.broadcast_sequences >= planUsage.broadcast_sequences) {
@@ -229,7 +229,7 @@ exports.createSequence = function (req, res) {
               }
               SequenceDatalayer.createSequence(sequencePayload)
                 .then(sequenceCreated => {
-                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}}, req.headers.authorization)
+                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}})
                     .then(result => {
                       require('./../../../config/socketio').sendMessageToClient({
                         room_id: companyUser.companyId._id,
@@ -279,7 +279,7 @@ exports.createSequence = function (req, res) {
 }
 
 exports.editSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -316,7 +316,7 @@ exports.editSequence = function (req, res) {
 }
 
 exports.createMessage = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -325,9 +325,9 @@ exports.createMessage = function (req, res) {
         })
       }
       // calling accounts feature usage for this
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId}, req.headers.authorization)
+      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
-          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id}, req.headers.authorization)
+          utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
               // add paid plan check later
               // if (planUsage.messages_per_sequence !== -1 && companyUsage.messages_per_sequence >= planUsage.messages_per_sequence) {
@@ -344,7 +344,7 @@ exports.createMessage = function (req, res) {
               }
               SequenceDatalayer.createMessage(messagePayload)
                 .then(messageCreated => {
-                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}}, req.headers.authorization)
+                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}})
                     .then(result => {
                       logger.serverLog('Message Created:', messageCreated, 'debug')
                       if (messageCreated.trigger.event === 'none') {
@@ -401,7 +401,7 @@ exports.createMessage = function (req, res) {
 }
 
 exports.editMessage = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -438,7 +438,7 @@ exports.editMessage = function (req, res) {
 }
 
 exports.setSchedule = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -624,7 +624,7 @@ exports.subscribeToSequence = function (req, res) {
 }
 
 exports.unsubscribeToSequence = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         return res.status(404).json({
@@ -637,7 +637,7 @@ exports.unsubscribeToSequence = function (req, res) {
           .then(result => {
             SequenceMessageQueueDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
               .then(result => {
-                utility.callApi(`subscribers/${subscriberId}`, 'get', {}, req.headers.authorization)
+                utility.callApi(`subscribers/${subscriberId}`, 'get', {})
                   .then(subscriber => {
                     if (subscriber) {
                       SequenceDatalayer.genericFindForSequence({companyId: subscriber.companyId, 'trigger.event': 'unsubscribes_from_other_sequence', 'trigger.value': req.body.sequenceId})

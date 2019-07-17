@@ -7,7 +7,7 @@ exports.getPosts = function (req, res) {
   let matchCriteria = LogicLayer.matchCriteria
   async.parallelLimit([
     function (callback) {
-      utility.callApi('autoposting_fb_post/query', 'post', countCriteria, '', 'kiboengage')
+      utility.callApi('autoposting_fb_post/query', 'post', countCriteria, 'kiboengage')
         .then(countData => {
           callback(countData)
         })
@@ -16,7 +16,7 @@ exports.getPosts = function (req, res) {
         })
     },
     function (callback) {
-      utility.callApi('autoposting_fb_post/query', 'post', matchCriteria, '', 'kiboengage')
+      utility.callApi('autoposting_fb_post/query', 'post', matchCriteria, 'kiboengage')
         .then(posts => {
           callback(posts)
         })
@@ -56,7 +56,7 @@ function populatePages (posts, req) {
     let sendPayload = []
     if (posts && posts.length > 0) {
       for (let i = 0; i < posts.length; i++) {
-        utility.callApi(`pages/query`, 'post', {_id: posts[i].pageId, companyId: posts[i].companyId}, req.headers.authorization)
+        utility.callApi(`pages/query`, 'post', {_id: posts[i].pageId, companyId: posts[i].companyId})
           .then(pages => {
             let post = posts[i]
             post.pageId = pages[0]

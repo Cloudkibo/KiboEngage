@@ -17,20 +17,20 @@ const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
-  utility.callApi(`user/query`, 'post', criterias.findCriteria, req.headers.authorization)
+  utility.callApi(`user/query`, 'post', criterias.findCriteria)
     .then(usersData => {
-      utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria, req.headers.authorization)
+      utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria)
         .then(users => {
           let usersPayload = []
           if (users.length > 0) {
             users.forEach((user) => {
               let pageIds = []
-              utility.callApi(`pages/query`, 'post', {userId: user._id, connected: true}, req.headers.authorization)
+              utility.callApi(`pages/query`, 'post', {userId: user._id, connected: true})
                 .then(pages => {
                   for (let i = 0; i < pages.length; i++) {
                     pageIds.push(pages[i]._id)
                   }
-                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true, isEnabledByPage: true}, req.headers.authorization)
+                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true, isEnabledByPage: true})
                     .then(subscribers => {
                       usersPayload.push({
                         _id: user._id,
@@ -74,9 +74,9 @@ exports.getAllUsers = function (req, res) {
 }
 exports.getAllPages = function (req, res) {
   let criterias = LogicLayer.getAllPagesCriteria(req.params.userid, req.body)
-  utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, req.headers.authorization) // fetch connected pages count
+  utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria) // fetch connected pages count
     .then(count => {
-      utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, req.headers.authorization) // fetch connected pages
+      utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria) // fetch connected pages
         .then(pages => {
           let pagesPayload = []
           for (let i = 0; i < pages.length; i++) {
@@ -106,7 +106,7 @@ exports.getAllPages = function (req, res) {
     })
 }
 exports.allLocales = function (req, res) {
-  utility.callApi(`user/distinct`, 'post', {distinct: 'facebookInfo.locale'}, req.headers.authorization)
+  utility.callApi(`user/distinct`, 'post', {distinct: 'facebookInfo.locale'})
     .then(locales => {
       res.status(200).json({
         status: 'success',
@@ -286,9 +286,9 @@ function prepareSurveyDataToSend (surveys, req) {
     let data = []
     for (let j = 0; j < surveys.length; j++) {
       let pagesurveyTapped = surveys[j].surveyPages.filter((c) => c.seen === true)
-      utility.callApi(`user/query`, 'post', {_id: surveys[j].userId}, req.headers.authorization)
+      utility.callApi(`user/query`, 'post', {_id: surveys[j].userId})
         .then(user => {
-          utility.callApi(`pages/query`, 'post', {companyId: surveys[j].companyId}, req.headers.authorization)
+          utility.callApi(`pages/query`, 'post', {companyId: surveys[j].companyId})
             .then(pages => {
               let pageSend = []
               if (surveys[j].segmentationPageIds && surveys[j].segmentationPageIds.length > 0) {
@@ -327,9 +327,9 @@ function preparePollDataToSend (polls, req) {
     let data = []
     for (let j = 0; j < polls.length; j++) {
       let pagepollTapped = polls[j].pollPages.filter((c) => c.seen === true)
-      utility.callApi(`user/query`, 'post', {_id: polls[j].userId}, req.headers.authorization)
+      utility.callApi(`user/query`, 'post', {_id: polls[j].userId})
         .then(user => {
-          utility.callApi(`pages/query`, 'post', {companyId: polls[j].companyId}, req.headers.authorization)
+          utility.callApi(`pages/query`, 'post', {companyId: polls[j].companyId})
             .then(pages => {
               let pageSend = []
               if (polls[j].segmentationPageIds && polls[j].segmentationPageIds.length > 0) {
@@ -369,9 +369,9 @@ function prepareDataToSend (broadcasts, req) {
     let data = []
     for (let j = 0; j < broadcasts.length; j++) {
       let pagebroadcastTapped = broadcasts[j].broadcastPages.filter((c) => c.seen === true)
-      utility.callApi(`user/query`, 'post', {_id: broadcasts[j].userId}, req.headers.authorization)
+      utility.callApi(`user/query`, 'post', {_id: broadcasts[j].userId})
         .then(user => {
-          utility.callApi(`pages/query`, 'post', {companyId: broadcasts[j].companyId}, req.headers.authorization)
+          utility.callApi(`pages/query`, 'post', {companyId: broadcasts[j].companyId})
             .then(pages => {
               let pageSend = []
               if (pages.length > 0) {
@@ -511,7 +511,7 @@ exports.sessionsGraph = function (req, res) {
         _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
         count: {$sum: 1}}
     }]
-  utility.callApi(`subscribers/aggregate`, 'post', body, req.headers.authorization)
+  utility.callApi(`subscribers/aggregate`, 'post', body)
     .then(sessionsgraphdata => {
       return res.status(200)
         .json({status: 'success', payload: {sessionsgraphdata}})
@@ -522,9 +522,9 @@ exports.sessionsGraph = function (req, res) {
 }
 exports.getAllSubscribers = function (req, res) {
   let criteria = LogicLayer.getAllSubscribersCriteria(req.params.pageid, req.body)
-  utility.callApi(`subscribers/aggregate`, 'post', criteria.countCriteria, req.headers.authorization)
+  utility.callApi(`subscribers/aggregate`, 'post', criteria.countCriteria)
     .then(subscribersCount => {
-      utility.callApi(`subscribers/aggregate`, 'post', criteria.finalCriteria, req.headers.authorization)
+      utility.callApi(`subscribers/aggregate`, 'post', criteria.finalCriteria)
         .then(subscribers => {
           res.status(200).json({
             status: 'success',
@@ -584,9 +584,9 @@ exports.surveyDetails = function (req, res) {
     })
 }
 exports.uploadFile = function (req, res) {
-  utility.callApi(`user/query`, 'post', {}, req.headers.authorization)
+  utility.callApi(`user/query`, 'post', {})
     .then(users => {
-      utility.callApi(`pages/query`, 'post', {}, req.headers.authorization)
+      utility.callApi(`pages/query`, 'post', {})
         .then(pages => {
           downloadCSV(pages, req)
             .then(result => {
@@ -606,9 +606,9 @@ exports.uploadFile = function (req, res) {
 }
 
 exports.AllSubscribers = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      utility.callApi(`subscribers/query`, 'post', {pageId: req.params.pageid}, req.headers.authorization) // fetch subscribers of company
+      utility.callApi(`subscribers/query`, 'post', {pageId: req.params.pageid}) // fetch subscribers of company
         .then(subscribers => {
           console.log('subscribers in All subscribers', subscribers)
           downloadSubscribersData(subscribers)
@@ -671,7 +671,7 @@ function downloadCSV (pages, req) {
     let usersPayload = []
     for (let i = 0; i < pages.length; i++) {
       if (pages[i].userId) {
-        utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization)
+        utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true})
           .then(subscribers => {
             DataLayer.findBroadcasts({pageIds: pages[i].pageId})
               .then(broadcasts => {
@@ -740,7 +740,7 @@ function downloadCSV (pages, req) {
 }
 exports.sendEmail = function (req, res) {
   var days = 7
-  utility.callApi(`user/query`, 'post', {}, req.headers.authorization)
+  utility.callApi(`user/query`, 'post', {})
     .then(users => {
       users.forEach((user) => {
         let data = {
@@ -750,9 +750,9 @@ exports.sendEmail = function (req, res) {
           surveys: 0,
           liveChat: 0
         }
-        utility.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email}, req.headers.authorization)
+        utility.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email})
           .then(companyUser => {
-            utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true}, req.headers.authorization)
+            utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true})
               .then(subs => {
                 if (subs.length > 1) {
                   let subscriberAggregate = [
@@ -769,7 +769,7 @@ exports.sendEmail = function (req, res) {
                           {isEnabledByPage: true}, {isSubscribed: true}]
                       }}
                   ]
-                  utility.callApi(`subscribers/aggregate`, 'post', subscriberAggregate, req.headers.authorization)
+                  utility.callApi(`subscribers/aggregate`, 'post', subscriberAggregate)
                     .then(subscribers => {
                       data.subscribers = subscribers.length
                       // if (subscribers.length > 50) {
@@ -939,7 +939,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         })
     },
     function (callback) {
-      utility.callApi('autoposting_fb_post/query', 'post', postCriteria, '', 'kiboengage')
+      utility.callApi('autoposting_fb_post/query', 'post', postCriteria, 'kiboengage')
         .then(postsInfo => {
           callback(null, postsInfo)
         })
