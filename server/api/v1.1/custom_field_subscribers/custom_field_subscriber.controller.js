@@ -4,6 +4,7 @@ const callApi = require('../utility')
 const logger = require('../../../components/logger')
 const customField = '/api/v1.1/custom_field_subscribers/custom_field_subscriber.controller.js'
 const util = require('util')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.setCustomFieldValue = function (req, res) {
   let customFieldResponse = callApi.callApi(
@@ -57,26 +58,17 @@ exports.setCustomFieldValue = function (req, res) {
               }
             })
             if (index === req.body.subscriberIds.length - 1) {
-              return res.status(200).json({
-                status: 'Success',
-                payload: setCustomFieldValue
-              })
+              sendSuccessResponse(res, 200, setCustomFieldValue)
             }
           })
           .catch(err => {
-            return res.status(500).json({
-              status: 'Failed',
-              description: `Internal Server ${(err)}`
-            })
+            sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
           })
       })
     }
   })
     .catch(err => {
-      return res.status(500).json({
-        status: 'Failed',
-        description: `Internal Server ${(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
     })
 }
 
@@ -86,16 +78,10 @@ exports.getCustomFieldSubscriber = function (req, res) {
     req.headers.authorization
   )
     .then(foundCustomFieldSubscriber => {
-      return res.status(200).json({
-        status: 'success',
-        payload: foundCustomFieldSubscriber
-      })
+      sendSuccessResponse(res, 200, foundCustomFieldSubscriber)
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'Failed',
-        description: `Internal Server ${(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
     })
 }
 
@@ -105,30 +91,21 @@ exports.getCustomFieldSubscribers = function (req, res) {
   callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       callApi.callApi('custom_field_subscribers/query', 'post', { purpose: 'findAll', match: { } })
         .then(foundCustomFieldSubscribers => {
-          res.status(200).json({ status: 'success', payload: foundCustomFieldSubscribers })
+          sendSuccessResponse(res, 200, foundCustomFieldSubscribers)
         })
         .catch(err => {
           if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error in fetching customFields${JSON.stringify(err)}`
-            })
+            sendErrorResponse(res, 500, `Internal Server Error in fetching customFields${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error in fetching customer${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, `Internal Server Error in fetching customer${JSON.stringify(err)}`)
       }
     })
 }

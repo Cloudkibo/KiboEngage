@@ -7,6 +7,7 @@ const utility = require('./utility_abandoned')
 const utilityApi = require('../utility')
 const dataLayer = require('./abandoned_carts.datalayer')
 const TAG = 'api/abandonedCarts/abandoned_carts.controller.js'
+const { sendSuccessResponse, sendErrorResponse } = require('../../global/response')
 // const Users = require('./../user/Users.model')
 // const needle = require('needle')
 // const Subscribers = require('../subscribers/Subscribers.model')
@@ -17,22 +18,16 @@ exports.index = function (req, res) {
   utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       return dataLayer.findAllStoreInfo(companyUser.companyId)
     })
     .then(storeInfoFound => {
-      return res.status(200).json({ status: 'success', payload: storeInfoFound })
+      sendSuccessResponse(res, 200, storeInfoFound)
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, 'Internal server error')
       }
     })
 }
@@ -47,8 +42,8 @@ exports.saveStoreInfo = function (req, res) {
     shopToken: req.body.shopToken
   }
   dataLayer.createStoreInfo(store)
-    .then(storeInfo => res.status(200).json({ status: 'success', payload: storeInfo }))
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .then(storeInfo => sendSuccessResponse(res, 200, storeInfo))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 // Right now we are not using this API but later on we will use it once we move the webhooks
@@ -62,8 +57,8 @@ exports.saveCartInfo = function (req, res) {
     productIds: req.body.productIds
   }
   dataLayer.createCartInfo(cart)
-    .then(cartInfo => res.status(200).json({ status: 'success', payload: cartInfo }))
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .then(cartInfo => sendSuccessResponse(res, 200, cartInfo))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 // Right now we are not using this API but later on we will use it once we move the webhooks
@@ -79,8 +74,8 @@ exports.saveCheckoutInfo = function (req, res) {
     productIds: req.body.productIds
   }
   dataLayer.createCartInfo(checkout)
-    .then(checkoutInfo => res.status(200).json({ status: 'success', payload: checkoutInfo }))
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .then(checkoutInfo => sendSuccessResponse(res, 200, checkoutInfo))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 exports.updateStatusStore = function (req, res) {
@@ -90,12 +85,11 @@ exports.updateStatusStore = function (req, res) {
   if (!_.has(req.body, 'isActive')) parametersMissing = true
 
   if (parametersMissing) {
-    return res.status(400)
-      .json({ status: 'Failed', description: 'Parameters are missing' })
+    sendErrorResponse(res, 400, '', 'Parameters are missing')
   }
   dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.body.shopId }, { isActive: req.body.isActive })
-    .then(result => res.status(200).json({ status: 'success', payload: result }))
-    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+    .then(result => sendSuccessResponse(res, 200, result))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 exports.deleteAllCartInfo = function (req, res) {
@@ -104,21 +98,17 @@ exports.deleteAllCartInfo = function (req, res) {
   if (!_.has(req.body, 'storeId')) parametersMissing = true
 
   if (parametersMissing) {
-    return res.status(400)
-      .json({ status: 'Failed', description: 'Parameters are missing' })
+    sendErrorResponse(res, 400, '', 'Parameters are missing')
   }
   dataLayer.deleteAllCartInfoObjects(req.body.storeId)
     .then(result => {
       if (result) {
-        return res.status(200).json({ status: 'success', payload: result })
+        sendSuccessResponse(res, 200, result)
       } else {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The Cart Info deletion failed'
-        })
+        sendErrorResponse(res, 404, '', 'The Cart Info deletion failed')
       }
     })
-    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 exports.deleteOneCartInfo = function (req, res) {
@@ -128,21 +118,17 @@ exports.deleteOneCartInfo = function (req, res) {
   if (!_.has(req.body, 'cartInfoId')) parametersMissing = true
 
   if (parametersMissing) {
-    return res.status(400)
-      .json({ status: 'Failed', description: 'Parameters are missing' })
+    sendErrorResponse(res, 400, '', 'Parameters are missing')
   }
   dataLayer.deleteOneCartInfoObject({ storeId: req.body.storeId, _id: req.body.cartInfoId })
     .then(result => {
       if (result) {
-        return res.status(200).json({ status: 'success', payload: result })
+        sendSuccessResponse(res, 200, result)
       } else {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The Cart Info deletion failed'
-        })
+        sendErrorResponse(res, 404, '', 'The Cart Info deletion failed')
       }
     })
-    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 exports.deleteCheckoutInfo = function (req, res) {
@@ -151,31 +137,24 @@ exports.deleteCheckoutInfo = function (req, res) {
   if (!_.has(req.body, 'checkoutInfoId')) parametersMissing = true
 
   if (parametersMissing) {
-    return res.status(400)
-      .json({ status: 'Failed', description: 'Parameters are missing' })
+    sendErrorResponse(res, 400, '', 'Parameters are missing')
   }
   dataLayer.deleteOneCheckOutInfoObject(req.body.checkoutInfoId)
     .then(result => {
       if (result) {
-        return res.status(200).json({ status: 'success', payload: result })
+        sendSuccessResponse(res, 200, result)
       } else {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The Checkout Info deletion failed'
-        })
+        sendErrorResponse(res, 404, '', 'The Checkout Info deletion failed')
       }
     })
-    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 exports.deleteAllInfo = function (req, res) {
   utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       return dataLayer.findAllStoreInfo(companyUser.companyId)
     })
@@ -193,21 +172,18 @@ exports.deleteAllInfo = function (req, res) {
             })
             .then(() => {
               if (i === stores.length - 1) {
-                res.status(200).json({ status: 'success', payload: 'All information has been deleted' })
+                sendSuccessResponse(res, 200, 'All information has been deleted')
               }
             })
             .catch(err => {
               if (err) {
-                res.status(404).json({
-                  status: 'failed',
-                  description: 'The All delete Info failed'
-                })
+                sendErrorResponse(res, 404, '', 'The All delete Info failed')
               }
             })
         }
       }
     })
-    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 exports.sendCheckout = function (req, res) {
@@ -216,18 +192,16 @@ exports.sendCheckout = function (req, res) {
   if (!_.has(req.body, 'id')) parametersMissing = true
 
   if (parametersMissing) {
-    return res.status(400)
-      .json({ status: 'Failed', description: 'Parameters are missing' })
+    sendErrorResponse(res, 400, '', 'Parameters are missing')
   } else {
     utility.sendCheckout(req.body.id, (err, result) => {
       if (err) {
         logger.serverLog(TAG, `Error received from send checkout ${JSON.stringify(err)}`)
-        return res.status(500).json({ status: 'Failed', description: err })
+        sendErrorResponse(res, 500, err)
       } else if (result.status === 'Not Found') {
-        return res.status(404)
-          .json(result)
+        sendErrorResponse(res, 404, result)
       } else {
-        return res.status(200).json({ status: 'success', payload: { id: req.body.id } })
+        sendSuccessResponse(res, 200, { id: req.body.id })
       }
     })
   }
@@ -237,37 +211,30 @@ exports.sendAnalytics = function (req, res) {
   utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       return dataLayer.findOneStoreInfo(companyUser.companyId)
     })
     .then(store => {
       if (store) {
         dataLayer.findOneStoreAnalytics(store._id)
-          .then(analytics => res.status(200).json({ status: 'success', payload: analytics }))
-          .catch(err => res.status(500).json({ status: 'failed', error: err }))
+          .then(analytics => sendSuccessResponse(res, 200, analytics))
+          .catch(err => sendErrorResponse(res, 500, err))
       } else {
-        res.status(404)
-          .json({ status: 'failed', description: 'No analytics found against this store' })
+        sendErrorResponse(res, 404, '', 'No analytics found against this store')
       }
     })
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .catch(err => sendErrorResponse(res, 500, err))
 }
 
 exports.abandonedCheckouts = function (req, res) {
   utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       return dataLayer.findAllCheckoutInfo({ companyId: companyUser.companyId, isPurchased: false })
     })
-    .then(result => res.status(200).json({ status: 'success', payload: result }))
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .then(result => sendSuccessResponse(res, 200, result))
+    .catch(err => sendErrorResponse(res, 500, err))
 }

@@ -12,8 +12,9 @@ const compUtility = require('../../../components/utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 const async = require('async')
 const broadcastApi = require('../../global/broadcastApi')
-const util = require('util')
+// const util = require('util')
 const { saveLiveChat, preparePayload } = require('../../global/livechat')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -27,25 +28,22 @@ exports.index = function (req, res) {
                 count: {$sum: 1}})
                 .then(responsesCount1 => {
                   let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
-                  res.status(200).json({
-                    status: 'success',
-                    payload: {polls, pollpages, responsesCount}
-                  })
+                  sendSuccessResponse(res, 200, {polls, pollpages, responsesCount})
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', payload: `Failed to aggregate poll responses ${JSON.stringify(error)}`})
+                  sendErrorResponse(res, 500, `Failed to aggregate poll responses ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch poll pages ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to fetch poll pages ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch polls ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failedto fetch polls ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch company user ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 exports.allPolls = function (req, res) {
@@ -67,29 +65,32 @@ exports.allPolls = function (req, res) {
                     count: {$sum: 1}})
                     .then(responsesCount1 => {
                       let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
-                      res.status(200).json({
-                        status: 'success',
-                        payload: {polls: polls, pollpages: pollpages, responsesCount: responsesCount, count: polls.length > 0 ? pollsCount[0].count : 0}
-                      })
+                      let payload = {
+                        polls: polls,
+                        pollpages: pollpages,
+                        responsesCount: responsesCount,
+                        count: polls.length > 0 ? pollsCount[0].count : 0
+                      }
+                      sendSuccessResponse(res, 200, payload)
                     })
                     .catch(error => {
-                      return res.status(500).json({status: 'failed', payload: `Failed to aggregate poll responses ${JSON.stringify(error)}`})
+                      sendErrorResponse(res, 500, `Failed to aggregate poll responses ${JSON.stringify(error)}`)
                     })
                 })
                 .catch(error => {
-                  return res.status(500).json({status: 'failed', payload: `Failed to fetch poll pages ${JSON.stringify(error)}`})
+                  sendErrorResponse(res, 500, `Failed to fetch poll pages ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch polls ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to fetch polls ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch pollsCount ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch polls count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch company user ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -116,26 +117,17 @@ exports.create = function (req, res) {
             }
           ], 10, function (err, results) {
             if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to create poll ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, `Failed to create poll ${JSON.stringify(err)}`)
             }
-            res.status(200).json({status: 'success', payload: results[1]})
+            sendSuccessResponse(res, 200, results[1])
           })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch company usage ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to plan usage ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
 
@@ -157,14 +149,11 @@ exports.send = function (req, res) {
           sendPoll(req, res, planUsage, companyUsage, abort)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to plan usage ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
 exports.sendPollDirectly = function (req, res) {
@@ -188,7 +177,7 @@ exports.sendPollDirectly = function (req, res) {
             }
           ], 10, function (err, result) {
             if (err) {
-              return res.status(500).json({status: 'failed', payload: `Failed to create poll ${JSON.stringify(err)}`})
+              sendErrorResponse(res, 500, `Failed to create poll ${JSON.stringify(err)}`)
             }
             let pollCreated = result[0]
             req.body._id = pollCreated._id
@@ -196,14 +185,11 @@ exports.sendPollDirectly = function (req, res) {
           })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch company usage ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to plan usage ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
 exports.deletePoll = function (req, res) {
@@ -213,27 +199,27 @@ exports.deletePoll = function (req, res) {
         .then(pollpages => {
           PollResponseDataLayer.deleteForPollResponse({pollId: req.params.id})
             .then(pollresponses => {
-              return res.status(200).json({status: 'success'})
+              sendSuccessResponse(res, 200)
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to delete poll responses ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to delete poll responses ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to delete poll pages ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to delete poll pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to delete poll ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to delete poll ${JSON.stringify(error)}`)
     })
 }
 exports.getAllResponses = function (req, res) {
   PollResponseDataLayer.genericFindForPollResponse({})
     .then(pollresponses => {
-      return res.status(200).json({status: 'success', payload: pollresponses})
+      sendSuccessResponse(res, 200, pollresponses)
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch responses ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch responses ${JSON.stringify(error)}`)
     })
 }
 exports.getresponses = function (req, res) {
@@ -242,14 +228,14 @@ exports.getresponses = function (req, res) {
       if (pollresponses.length > 0) {
         populateResponses(pollresponses, req)
           .then(result => {
-            return res.status(200).json({status: 'success', payload: result})
+            sendSuccessResponse(res, 200, result)
           })
       } else {
-        return res.status(200).json({status: 'success', payload: pollresponses})
+        sendSuccessResponse(res, 200, pollresponses)
       }
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch responses ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch responses ${JSON.stringify(error)}`)
     })
 }
 
@@ -303,10 +289,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                           labels = labels.concat(temp)
                         })
                         .catch(err => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            description: `Failed to apply list segmentation ${JSON.stringify(err)}`
-                          })
+                          sendErrorResponse(res, 500, `Failed to apply list segmentation ${JSON.stringify(err)}`)
                         })
                     } else {
                       if (req.body.segmentationGender.length > 0) {
@@ -328,49 +311,30 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                           if (response.status === 'success') {
                             utility.callApi('polls', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                               .then(updated => {
-                                return res.status(200)
-                                  .json({status: 'success', description: 'Poll sent successfully!'})
+                                sendSuccessResponse(res, 200, 'Poll sent successfully!')
                               })
                               .catch(err => {
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `Failed to send poll ${JSON.stringify(err)}`
-                                })
+                                sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(err)}`)
                               })
                           } else {
-                            return res.status(500).json({
-                              status: 'failed',
-                              description: `Failed to send poll ${JSON.stringify(response.description)}`
-                            })
+                            sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(response.description)}`)
                           }
                         }
                       })
                       .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Failed to send poll ${JSON.stringify(err)}`
-                        })
+                        sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(err)}`)
                       })
                   }
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Failed to find tags ${JSON.stringify(err)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to find tags ${JSON.stringify(err)}`)
                 })
             } else {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Failed to send poll ${JSON.stringify(messageCreative.description)}`
-              })
+              sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(messageCreative.description)}`)
             }
           })
           .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to send poll ${JSON.stringify(err)}`
-            })
+            sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(err)}`)
           })
       } else {
         if (req.body.isList) {
@@ -381,7 +345,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
               sendToSubscribers(req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort)
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
             })
         } else {
           subsFindCriteria = PollLogicLayer.subscriberFindCriteria(page, req.body)
@@ -390,7 +354,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
       }
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${error}`})
+      sendErrorResponse(res, 500, `Failed to fetch page ${error}`)
     })
 }
 
@@ -398,7 +362,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
   utility.callApi(`subscribers/query`, 'post', subsFindCriteria)
     .then(subscribers => {
       if (subscribers.length === 0) {
-        return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+        sendErrorResponse(res, 500, '', `No subscribers match the selected criteria`)
       }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         subscribers = taggedSubscribers
@@ -447,11 +411,11 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                             }
                           })
                           if (j === subscribers.length - 1 || abort) {
-                            return res.status(200).json({status: 'success', payload: 'Polls sent successfully.'})
+                            sendSuccessResponse(res, 200, 'Polls sent successfully.')
                           }
                         })
                         .catch(error => {
-                          return res.status(500).json({status: 'failed', payload: `Failed to create poll page ${JSON.stringify(error)}`})
+                          sendErrorResponse(res, 500, `Failed to create poll page ${JSON.stringify(error)}`)
                         })
                     })
                 } else {
@@ -465,23 +429,23 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                     scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
                   }).then(saved => {
                     if (j === subscribers.length - 1 || abort) {
-                      return res.status(200).json({status: 'success', payload: 'Polls sent successfully.'})
+                      sendSuccessResponse(res, 200, 'Polls sent successfully.')
                     }
                   })
                     .catch(error => {
-                      return res.status(500).json({status: 'failed', payload: `Failed to create automation queue object ${JSON.stringify(error)}`})
+                      sendErrorResponse(res, 500, `Failed to create automation queue object ${JSON.stringify(error)}`)
                     })
                 }
               })
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to update company usage ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
             })
         }
       }, res)
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
     })
 }
 
