@@ -5,14 +5,12 @@ const logicLayer = require('./phoneNumber.logiclayer')
 const fs = require('fs')
 const csv = require('csv-parser')
 let request = require('request')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.upload = function (req, res) {
   let directory = logicLayer.directory(req)
   if (req.files.file.size === 0) {
-    return res.status(400).json({
-      status: 'failed',
-      description: 'No file submitted'
-    })
+    sendErrorResponse(res, 500, '', 'No file submitted')
   }
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
@@ -41,10 +39,7 @@ exports.upload = function (req, res) {
                 .then(savedList => {
                   fs.rename(req.files.file.path, directory.dir + '/userfiles/' + directory.serverPath, err => {
                     if (err) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: 'internal server error' + JSON.stringify(err)
-                      })
+                      sendErrorResponse(res, 500, '', 'internal server error' + JSON.stringify(err))
                     }
                     let respSent = false
                     let phoneColumn = req.body.phoneColumn
@@ -167,15 +162,10 @@ exports.upload = function (req, res) {
                             })
                           if (respSent === false) {
                             respSent = true
-                            return res.status(201)
-                              .json({
-                                status: 'success',
-                                description: 'Contacts were invited to your messenger'
-                              })
+                            sendSuccessResponse(res, 200, '', 'Contacts were invited to your messenger')
                           }
                         } else {
-                          return res.status(404)
-                            .json({status: 'failed', description: 'Incorrect column names'})
+                          sendErrorResponse(res, 500, '', 'Incorrect column names')
                         }
                       })
                       .on('end', function () {
@@ -184,31 +174,19 @@ exports.upload = function (req, res) {
                   })
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch update list ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Failed to fetch update list ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch company usage ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch plan usage ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch plan usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 exports.sendNumbers = function (req, res) {
@@ -239,10 +217,7 @@ exports.sendNumbers = function (req, res) {
                   logger.serverLog('List - Other Saved', savedList, 'debug')
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to update list ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to update list ${JSON.stringify(error)}`)
                 })
               for (let i = 0; i < req.body.numbers.length; i++) {
                 let result = req.body.numbers[i].replace(/[- )(]+_/g, '')
@@ -272,17 +247,11 @@ exports.sendNumbers = function (req, res) {
                                 .then(updated => {
                                 })
                                 .catch(error => {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    payload: `Failed to update company usage ${JSON.stringify(error)}`
-                                  })
+                                  sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
                                 })
                             })
                             .catch(error => {
-                              return res.status(500).json({
-                                status: 'failed',
-                                payload: `Failed to update number ${JSON.stringify(error)}`
-                              })
+                              sendErrorResponse(res, 500, `Failed to update number ${JSON.stringify(error)}`)
                             })
                         } else {
                           let filename = logicLayer.getFilesManual(found[0])
@@ -308,40 +277,25 @@ exports.sendNumbers = function (req, res) {
                                         utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {}})
                                           .then(savedList => {})
                                           .catch(error => {
-                                            return res.status(500).json({
-                                              status: 'failed',
-                                              payload: `Failed to update list ${JSON.stringify(error)}`
-                                            })
+                                            sendErrorResponse(res, 500, `Failed to update list ${JSON.stringify(error)}`)
                                           })
                                       })
                                       .catch(error => {
-                                        return res.status(500).json({
-                                          status: 'failed',
-                                          payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-                                        })
+                                        sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                                       })
                                   }
                                 })
                                 .catch(error => {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    payload: `Failed to fetch number ${JSON.stringify(error)}`
-                                  })
+                                  sendErrorResponse(res, 500, `Failed to fetch number ${JSON.stringify(error)}`)
                                 })
                             })
                             .catch(error => {
-                              return res.status(500).json({
-                                status: 'failed',
-                                payload: `Failed to update phone number ${JSON.stringify(error)}`
-                              })
+                              sendErrorResponse(res, 500, `Failed to update phone number ${JSON.stringify(error)}`)
                             })
                         }
                       })
                       .catch(error => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          payload: `Failed to fetch numbers ${JSON.stringify(error)}`
-                        })
+                        sendErrorResponse(res, 500, `Failed to fetch numbers ${JSON.stringify(error)}`)
                       })
                     pages.forEach(page => {
                       let messageData = {
@@ -372,35 +326,20 @@ exports.sendNumbers = function (req, res) {
                     })
                   })
                   .catch(error => {
-                    return res.status(500).json({
-                      status: 'failed',
-                      payload: `Failed to fetch connected pages ${JSON.stringify(error)}`
-                    })
+                    sendErrorResponse(res, 500, `Failed to fetch connected pages ${JSON.stringify(error)}`)
                   })
               }
-              return res.status(201).json({
-                status: 'success',
-                description: 'Contacts were invited to your messenger'
-              })
+              sendSuccessResponse(res, 201, 'Contacts were invited to your messenger')
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch company usage ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch plan usage ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch plan usage ${JSON.stringify(error)}`)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch company user ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
         })
     })
 }
@@ -411,20 +350,13 @@ exports.pendingSubscription = function (req, res) {
       utility.callApi(`phone/query`, 'post', {
         companyId: companyUser.companyId, hasSubscribed: false, fileName: { $all: [req.params.name] }, pageId: { $exists: true, $ne: null }})
         .then(phonenumbers => {
-          return res.status(200)
-            .json({status: 'success', payload: phonenumbers})
+          sendSuccessResponse(res, 200, phonenumbers)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch numbers ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch numbers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

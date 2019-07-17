@@ -4,6 +4,7 @@ const PageAdminSubscriptionsDataLayer = require('./pageadminsubscriptions.datala
 const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'KiboEngage/api/v1.1/pageadminsubscriptions/pageadminsubscriptions.controller'
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 // Get list of companyprofiles
 exports.index = function (req, res) {
@@ -15,27 +16,19 @@ exports.index = function (req, res) {
             .then(user => {
               subscriptionInfo[i].userId = user
               if (i === subscriptionInfo.length - 1) {
-                return res.status(200)
-                  .json({status: 'success', payload: subscriptionInfo})
+                sendSuccessResponse(res, 200, subscriptionInfo)
               }
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, `Internal Server Error ${JSON.stringify(err)}`)
             })
         }
       } else {
-        return res.status(200)
-          .json({status: 'success', payload: []})
+        sendSuccessResponse(res, 200, [])
       }
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 
@@ -67,10 +60,7 @@ exports.create = function (req, res) {
             logger.serverLog(TAG, 'pageadminsubscription updated successfuly')
           })
           .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `failed to update page admin subscription ${JSON.stringify(err)}`
-            })
+            sendErrorResponse(res, 500, `failed to update page admin subscription ${JSON.stringify(err)}`)
           })
       } else {
         let payload = {
@@ -90,24 +80,15 @@ exports.create = function (req, res) {
                 }
               }
             })
-            return res.status(200).json({
-              status: 'success',
-              payload: updatedRecord
-            })
+            sendSuccessResponse(res, 200, updatedRecord)
           })
           .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error ${JSON.stringify(err)}`
-            })
+            sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
           })
       }
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch page admin subscription ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to fetch page admin subscription ${JSON.stringify(err)}`)
     })
 }
 
@@ -120,26 +101,18 @@ exports.fetch = function (req, res) {
             .then(user => {
               subscriptionInfo[i].userId = user
               if (i === subscriptionInfo.length - 1) {
-                return res.status(200)
-                  .json({status: 'success', payload: subscriptionInfo})
+                sendSuccessResponse(res, 200, subscriptionInfo)
               }
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
             })
         }
       } else {
-        return res.status(200)
-          .json({status: 'success', payload: []})
+        sendSuccessResponse(res, 200, [])
       }
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }

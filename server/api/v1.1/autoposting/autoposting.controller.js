@@ -14,30 +14,18 @@ exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId}, req.headers.authorization)
         .then(autoposting => {
-          return res.status(200).json({
-            status: 'success',
-            payload: autoposting
-          })
+          sendSuccessResponse(res, 200, autoposting)
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error while fetching autoposting${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 
@@ -322,10 +310,7 @@ exports.edit = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       var autoposting = AutoPostingLogicLayer.prepareEditPayload(req)
       if (req.body.subscriptionType === 'rss') {
@@ -334,8 +319,7 @@ exports.edit = function (req, res) {
       AutopostingDataLayer.genericFindByIdAndUpdate({_id: req.body._id}, autoposting)
         .then(autopostingUpdated => {
           if (!autoposting) {
-            return res.status(404)
-              .json({status: 'failed', description: 'Record not found'})
+            sendErrorResponse(res, 404, '', 'Record not found')
           }
           require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
@@ -349,23 +333,14 @@ exports.edit = function (req, res) {
               }
             }
           })
-          return res.status(200).json({
-            status: 'success',
-            payload: autopostingUpdated
-          })
+          sendSuccessResponse(res, 200, autopostingUpdated)
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error while fetching autoposting${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 
@@ -373,8 +348,7 @@ exports.destroy = function (req, res) {
   AutopostingDataLayer.findOneAutopostingObject(req.params.id, req.user.companyId)
     .then(autoposting => {
       if (!autoposting) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
         .then(result => {
@@ -390,27 +364,19 @@ exports.destroy = function (req, res) {
               }
             }
           })
-          return res.status(200).json({
-            status: 'success',
-            okfdescription: 'AutoPosting Deleted'
-          })
+          sendSuccessResponse(res, 200, '', 'AutoPosting deleted successfully!')
         })
         .catch(err => {
-          return res.status(500)
-            .json({status: 'failed', description: `AutoPosting update failed ${err}`})
+          sendErrorResponse(res, 500, '', `AutoPosting update failed ${err}`)
         })
     })
     .catch(err => {
-      return res.status(500)
-        .json({status: 'failed', description: `Internal Server Error in fetching autoposting object  ${err}`})
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching autoposting object  ${err}`)
     })
 }
 
 exports.handleTweetModeration = function (req, res) {
-  res.status(200).json({
-    status: 'success',
-    description: 'Received the event'
-  })
+  sendSuccessResponse(res, 200, 'Received the event')
   const payload = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
   let query = {
     purpose: 'findOne',

@@ -5,6 +5,7 @@ const BroadcastsDataLayer = require('./../broadcasts/broadcasts.datalayer')
 const SequenceMessagesDataLayer = require('./../sequenceMessaging/sequence.datalayer')
 const logger = require('../../../components/logger')
 const sequenceUtility = require('./../sequenceMessaging/utility')
+const { sendErrorResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   URLDataLayer.findOneURL(req.params.id)
@@ -34,25 +35,16 @@ exports.broadcast = function (req, res) {
           })
           .catch(err => {
             if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
             }
           })
       } else {
-        res.status(400).json({
-          status: 'failed',
-          description: 'No URL found with id ' + req.params.id
-        })
+        sendErrorResponse(res, 500, '', 'No URL found with id ' + req.params.id)
       }
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
 }
@@ -74,10 +66,7 @@ exports.sequence = function (req, res) {
                   // find the all the messages of this sequence
                   SequenceMessagesDataLayer.genericFindForSequenceMessages({sequenceId: sequenceId}, (err, seqMessages) => {
                     if (err) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Internal Server Error ${JSON.stringify(err)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
                     }
                     if (seqMessages && seqMessages.length > 0) {
                       // iterate through all the messages of this sequence.
@@ -96,10 +85,7 @@ exports.sequence = function (req, res) {
               })
               .catch(err => {
                 if (err) {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal Server Error ${JSON.stringify(err)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
                 }
               })
             res.writeHead(301, {Location: URLObject.originalURL.startsWith('http') ? URLObject.originalURL : `https://${URLObject.originalURL}`})
@@ -107,25 +93,16 @@ exports.sequence = function (req, res) {
           })
           .catch(err => {
             if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
             }
           })
       } else {
-        return res.status(400).json({
-          status: 'failed',
-          description: 'No URL found with id ' + req.params.id
-        })
+        sendErrorResponse(res, 404, '', 'No URL found with id ' + req.params.id)
       }
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
 }
