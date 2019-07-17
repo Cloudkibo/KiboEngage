@@ -240,7 +240,7 @@ exports.enable = function (req, res) {
                                         query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                         utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
                                           .then(connectPage => {
-                                            utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]})
+                                            utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
                                               .then(whitelistDomains => {
                                               })
                                               .catch(error => {
@@ -594,7 +594,7 @@ exports.otherPages = function (req, res) {
 exports.fetchWhitelistedDomains = function (req, res) {
   const pageId = req.params._id
 
-  utility.callApi(`pages/whitelistDomain/${pageId}`, 'get', {})
+  utility.callApi(`pages/whitelistDomain/${pageId}`, 'get', {}, 'accounts', req.headers.authorization)
     .then(whitelistDomains => {
       return res.status(200).json({
         status: 'success',
@@ -612,7 +612,7 @@ exports.deleteWhitelistDomain = function (req, res) {
   const pageId = req.body.page_id
   const whitelistDomain = req.body.whitelistDomain
 
-  utility.callApi(`pages/deleteWhitelistDomain`, 'post', {page_id: pageId, whitelistDomain: whitelistDomain})
+  utility.callApi(`pages/deleteWhitelistDomain`, 'post', {page_id: pageId, whitelistDomain: whitelistDomain}, 'accounts', req.headers.authorization)
     .then(whitelistDomains => {
       return res.status(200).json({
         status: 'success',
