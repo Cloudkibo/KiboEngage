@@ -5,8 +5,8 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v2/pages/pages.controller.js'
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 let config = require('./../../../config/environment')
-
-const util = require('util')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+// const util = require('util')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
@@ -14,23 +14,14 @@ exports.index = function (req, res) {
       utility.callApi(`pages/query`, 'post', {companyId: companyuser.companyId}) // fetch all pages of company
         .then(pages => {
           let pagesToSend = logicLayer.removeDuplicates(pages)
-          return res.status(200).json({
-            status: 'success',
-            payload: pagesToSend
-          })
+          sendSuccessResponse(res, 200, pagesToSend)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch pages ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -64,37 +55,22 @@ exports.allPages = function (req, res) {
                   let updatedPages = logicLayer.appendSubUnsub(pages)
                   updatedPages = logicLayer.appendSubscribersCount(updatedPages, subscribesCount)
                   updatedPages = logicLayer.appendUnsubscribesCount(updatedPages, unsubscribesCount)
-                  res.status(200).json({
-                    status: 'success',
-                    payload: updatedPages
-                  })
+                  sendSuccessResponse(res, 200, updatedPages)
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch unsubscribes ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to fetch unsubscribes ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch subscribes ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch subscribes ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch connected pages ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch connected pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -131,44 +107,26 @@ exports.connectedPages = function (req, res) {
                       let updatedPages = logicLayer.appendSubUnsub(pages)
                       updatedPages = logicLayer.appendSubscribersCount(updatedPages, subscribesCount)
                       updatedPages = logicLayer.appendUnsubscribesCount(updatedPages, unsubscribesCount)
-                      res.status(200).json({
-                        status: 'success',
-                        payload: {pages: updatedPages, count: count.length > 0 ? count[0].count : 0}
-                      })
+                      sendSuccessResponse(res, 200, {pages: updatedPages, count: count.length > 0 ? count[0].count : 0})
                     })
                     .catch(error => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        payload: `Failed to fetch unsubscribes ${JSON.stringify(error)}`
-                      })
+                      sendErrorResponse(res, 500, `Failed to fetch unsubscribes ${JSON.stringify(error)}`)
                     })
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch subscribes ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to fetch subscribes ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch connected pages ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch connected pages ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch connected pages count ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch connected pages count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -255,10 +213,7 @@ exports.enable = function (req, res) {
                                               .then(updated => {
                                               })
                                               .catch(error => {
-                                                return res.status(500).json({
-                                                  status: 'failed',
-                                                  payload: `Failed to update company usage ${JSON.stringify(error)}`
-                                                })
+                                                sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
                                               })
                                             utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
                                               .then(updatedSubscriber => {
@@ -275,10 +230,7 @@ exports.enable = function (req, res) {
                                                   console.log('response.body', response.body)
                                                   if (error) {
                                                     console.log('error in subscribed_apps', error)
-                                                    return res.status(500).json({
-                                                      status: 'failed',
-                                                      payload: JSON.stringify(error)
-                                                    })
+                                                    sendErrorResponse(res, 5000, JSON.stringify(error))
                                                   }
                                                   var valueForMenu = {
                                                     'get_started': {
@@ -311,24 +263,15 @@ exports.enable = function (req, res) {
                                                   //     }
                                                   //   }
                                                   // })
-                                                  return res.status(200).json({
-                                                    status: 'success',
-                                                    payload: 'Page connected successfully!'
-                                                  })
+                                                  sendSuccessResponse(res, 200, 'Page connected successfully!')
                                                 })
                                               })
                                               .catch(error => {
-                                                return res.status(500).json({
-                                                  status: 'failed',
-                                                  payload: `Failed to update subscriber ${JSON.stringify(error)}`
-                                                })
+                                                sendErrorResponse(res, 500, `Failed to update subscriber ${JSON.stringify(error)}`)
                                               })
                                           })
                                           .catch(error => {
-                                            return res.status(500).json({
-                                              status: 'failed',
-                                              payload: `Failed to connect page ${JSON.stringify(error)}`
-                                            })
+                                            sendErrorResponse(res, 500, `Failed to connect page ${JSON.stringify(error)}`)
                                           })
                                       } else {
                                         logger.serverLog(TAG, `Failed to start reach estimation`, 'error')
@@ -340,50 +283,32 @@ exports.enable = function (req, res) {
                                 })
                                 .catch(err => {
                                   logger.serverLog(TAG, `Error at find page ${err}`, 'error')
-                                  res.status(500).json({status: 'failed', payload: err})
+                                  sendErrorResponse(res, 500, err)
                                 })
                             } else {
-                              res.status(200).json({
-                                status: 'success',
-                                payload: {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name} (${pageConnected[0].userId.email}).`}
-                              })
+                              sendSuccessResponse(res, 200, {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name} (${pageConnected[0].userId.email}).`})
                             }
                           })
                       }
                     })
                     .catch(error => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        payload: `Failed to check page token ${JSON.stringify(error)}`
-                      })
+                      sendErrorResponse(res, 500, `Failed to check page token ${JSON.stringify(error)}`)
                     })
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch page ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch company usage ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch plan usage ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch plan usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -402,10 +327,7 @@ exports.disable = function (req, res) {
               logger.serverLog(TAG, 'company updated successfully', 'debug')
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to update company usage ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
             })
           const options = {
             url: `https://graph.facebook.com/v2.6/${req.body.pageId}/subscribed_apps?access_token=${req.body.accessToken}`,
@@ -414,10 +336,7 @@ exports.disable = function (req, res) {
           }
           needle.delete(options.url, options, (error, response) => {
             if (error) {
-              return res.status(500).json({
-                status: 'failed',
-                payload: JSON.stringify(error)
-              })
+              sendErrorResponse(res, 500, JSON.stringify(error))
             }
             // require('./../../../config/socketio').sendMessageToClient({
             //   room_id: req.body.companyId,
@@ -431,56 +350,35 @@ exports.disable = function (req, res) {
             //     }
             //   }
             // })
-            return res.status(200).json({
-              status: 'success',
-              payload: 'Page disconnected successfully!'
-            })
+            sendSuccessResponse(res, 200, 'Page disconnected successfully!')
           })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to update subscribers ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to update subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch page ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
     })
 }
 
 exports.createWelcomeMessage = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', {welcomeMessage: req.body.welcomeMessage})
     .then(updatedWelcomeMessage => {
-      return res.status(200).json({
-        status: 'success',
-        payload: 'Welcome Message updated successfully!'
-      })
+      sendSuccessResponse(res, 200, 'Welcome Message updated successfully!')
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to update welcome message ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to update welcome message ${JSON.stringify(error)}`)
     })
 }
 
 exports.enableDisableWelcomeMessage = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', {isWelcomeMessageEnabled: req.body.isWelcomeMessageEnabled})
     .then(enabled => {
-      return res.status(200).json({
-        status: 'success',
-        payload: 'Operation completed successfully!'
-      })
+      sendSuccessResponse(res, 200, 'Operation completed successfully!')
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to update welcome message ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to update welcome message ${JSON.stringify(error)}`)
     })
 }
 
@@ -508,10 +406,7 @@ exports.saveGreetingText = function (req, res) {
                 needle.request('post', requesturl, valueForMenu, {json: true},
                   function (err, resp) {
                     if (!err) {
-                      return res.status(200).json({
-                        status: 'success',
-                        payload: 'Operation completed successfully!'
-                      })
+                      sendSuccessResponse(res, 200, 'Operation completed successfully!')
                     }
                     if (err) {
                       logger.serverLog(TAG,
@@ -519,25 +414,16 @@ exports.saveGreetingText = function (req, res) {
                     }
                   })
               } else {
-                return res.status(500).json({
-                  status: 'failed',
-                  payload: `Failed to find page access token to update greeting text message`
-                })
+                sendErrorResponse(res, 500, `Failed to find page access token to update greeting text message`)
               }
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch companyUser ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch companyUser ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to update greeting text message ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to update greeting text message ${JSON.stringify(error)}`)
     })
 }
 
@@ -547,23 +433,14 @@ exports.addPages = function (req, res) {
       utility.callApi(`pages/query`, 'post', {companyId: companyuser.companyId}) // fetch all pages of company
         .then(pages => {
           let pagesToSend = logicLayer.removeDuplicates(pages)
-          return res.status(200).json({
-            status: 'success',
-            payload: pagesToSend
-          })
+          sendSuccessResponse(res, 200, pagesToSend)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch pages ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -572,23 +449,14 @@ exports.otherPages = function (req, res) {
     .then(companyuser => {
       utility.callApi(`pages/query`, 'post', {companyId: companyuser.companyId, connected: false, userId: req.user._id}) // fetch all pages of company
         .then(pages => {
-          return res.status(200).json({
-            status: 'success',
-            payload: pages
-          })
+          sendSuccessResponse(res, 200, pages)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch pages ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 exports.fetchWhitelistedDomains = function (req, res) {
@@ -596,16 +464,10 @@ exports.fetchWhitelistedDomains = function (req, res) {
 
   utility.callApi(`pages/whitelistDomain/${pageId}`, 'get', {}, 'accounts', req.headers.authorization)
     .then(whitelistDomains => {
-      return res.status(200).json({
-        status: 'success',
-        payload: whitelistDomains
-      })
+      sendSuccessResponse(res, 200, whitelistDomains)
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch whitelist domains ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to fetch whitelist domains ${JSON.stringify(error)}`)
     })
 }
 exports.deleteWhitelistDomain = function (req, res) {
@@ -614,16 +476,10 @@ exports.deleteWhitelistDomain = function (req, res) {
 
   utility.callApi(`pages/deleteWhitelistDomain`, 'post', {page_id: pageId, whitelistDomain: whitelistDomain}, 'accounts', req.headers.authorization)
     .then(whitelistDomains => {
-      return res.status(200).json({
-        status: 'success',
-        payload: whitelistDomains
-      })
+      sendSuccessResponse(res, 200, whitelistDomains)
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to delete whitelist domains ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to delete whitelist domains ${JSON.stringify(error)}`)
     })
 }
 
@@ -633,26 +489,17 @@ exports.whitelistDomain = function (req, res) {
 
   utility.callApi(`pages/whitelistDomain`, 'post', {page_id: pageId, whitelistDomains: whitelistDomains}, 'accounts', req.headers.authorization)
     .then(whitelistDomains => {
-      return res.status(200).json({
-        status: 'success',
-        payload: whitelistDomains
-      })
+      sendSuccessResponse(res, 200, whitelistDomains)
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to save whitelist domains ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to save whitelist domains ${JSON.stringify(error)}`)
     })
 }
 
 exports.isWhitelisted = function (req, res) {
   broadcastUtility.isWhiteListedDomain(req.body.domain, req.body.pageId, req.user)
     .then(result => {
-      return res.status(200).json({
-        status: 'success',
-        payload: result.returnValue
-      })
+      sendSuccessResponse(res, 200, result.returnValue)
     })
 }
 

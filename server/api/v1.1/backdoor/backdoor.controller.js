@@ -8,7 +8,7 @@ const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const PollPageDataLayer = require('../page_poll/page_poll.datalayer')
 const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
-// var json2csv = require('json2csv')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const config = require('./../../../config/environment/index')
 const { parse } = require('json2csv')
 const async = require('async')
@@ -43,10 +43,7 @@ exports.getAllUsers = function (req, res) {
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
-                        res.status(200).json({
-                          status: 'success',
-                          payload: {users: sorted.reverse(), count: usersData.length}
-                        })
+                        sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersData.length})
                       }
                     })
                     .catch(error => {
@@ -58,18 +55,15 @@ exports.getAllUsers = function (req, res) {
                 })
             })
           } else {
-            res.status(200).json({
-              status: 'success',
-              payload: {users: [], count: usersData.length}
-            })
+            sendSuccessResponse(res, 200, {users: [], count: usersData.length})
           }
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch users aggregate ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch users aggregate ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch users ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
     })
 }
 exports.getAllPages = function (req, res) {
@@ -92,29 +86,27 @@ exports.getAllPages = function (req, res) {
               subscribers: pages[i].subscribers.length
             })
           }
-          res.status(200).json({
-            status: 'success',
-            payload: {pages: pagesPayload, count: pagesPayload.length > 0 ? count[0].count : ''}
-          })
+          let payload = {
+            pages: pagesPayload,
+            count: pagesPayload.length > 0 ? count[0].count : ''
+          }
+          sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch pages count ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch pages count ${JSON.stringify(error)}`)
     })
 }
 exports.allLocales = function (req, res) {
   utility.callApi(`user/distinct`, 'post', {distinct: 'facebookInfo.locale'})
     .then(locales => {
-      res.status(200).json({
-        status: 'success',
-        payload: locales
-      })
+      sendSuccessResponse(res, 200, locales)
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch locales ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch locales ${JSON.stringify(error)}`)
     })
 }
 exports.allUserBroadcasts = function (req, res) {
@@ -127,17 +119,18 @@ exports.allUserBroadcasts = function (req, res) {
       let aggregateLimit = criteria.finalCriteria[3].$limit
       DataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
         .then(broadcasts => {
-          res.status(200).json({
-            status: 'success',
-            payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
-          })
+          let payload = {
+            broadcasts: broadcasts,
+            count: broadcasts.length > 0 ? broadcastsCount[0].count : ''
+          }
+          sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch broadcasts count ${JSON.stringify(error)}`)
     })
 }
 exports.allUserPolls = function (req, res) {
@@ -150,17 +143,18 @@ exports.allUserPolls = function (req, res) {
       let aggregateLimit = criteria.finalCriteria[3].$limit
       DataLayer.aggregateForPolls(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
         .then(polls => {
-          res.status(200).json({
-            status: 'success',
-            payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
-          })
+          let payload = {
+            polls: polls,
+            count: polls.length > 0 ? pollsCount[0].count : ''
+          }
+          sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to polls ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to polls ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch polls count ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch polls count ${JSON.stringify(error)}`)
     })
 }
 exports.allUserSurveys = function (req, res) {
@@ -173,10 +167,11 @@ exports.allUserSurveys = function (req, res) {
       let aggregateLimit = criteria.finalCriteria[3].$limit
       DataLayer.aggregateForSurveys(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
         .then(surveys => {
-          res.status(200).json({
-            status: 'success',
-            payload: {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : ''}
-          })
+          let payload = {
+            surveys: surveys,
+            count: surveys.length > 0 ? surveysCount[0].count : ''
+          }
+          sendSuccessResponse(res, 200, payload)
         })
     })
 }
@@ -194,26 +189,18 @@ exports.getAllBroadcasts = function (req, res) {
           if (broadcasts.length > 0) {
             prepareDataToSend(broadcasts, req)
               .then(result => {
-                return res.status(200)
-                  .json({
-                    status: 'success',
-                    payload: {broadcasts: result.data, count: result.data.length > 0 ? broadcastsCount[0].count : ''}
-                  })
+                sendSuccessResponse(res, 200, {broadcasts: result.data, count: result.data.length > 0 ? broadcastsCount[0].count : ''})
               })
           } else {
-            return res.status(200)
-              .json({
-                status: 'success',
-                payload: {broadcasts: [], count: ''}
-              })
+            sendSuccessResponse(res, 200, {broadcasts: [], count: ''})
           }
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch broadcasts count ${JSON.stringify(error)}`)
     })
 }
 
@@ -232,18 +219,10 @@ exports.getAllPolls = function (req, res) {
           if (polls.length > 0) {
             preparePollDataToSend(polls, req)
               .then(result => {
-                return res.status(200)
-                  .json({
-                    status: 'success',
-                    payload: {polls: result.data, count: result.data.length > 0 ? pollsCount[0].count : ''}
-                  })
+                sendSuccessResponse(res, 200, {polls: result.data, count: result.data.length > 0 ? pollsCount[0].count : ''})
               })
           } else {
-            return res.status(200)
-              .json({
-                status: 'success',
-                payload: {polls: [], count: ''}
-              })
+            sendSuccessResponse(res, 200, {polls: [], count: ''})
           }
         })
     })
@@ -264,18 +243,10 @@ exports.getAllSurveys = function (req, res) {
           if (surveys.length > 0) {
             prepareSurveyDataToSend(surveys, req)
               .then(result => {
-                return res.status(200)
-                  .json({
-                    status: 'success',
-                    payload: {surveys: result.data, count: result.data.length > 0 ? surveysCount[0].count : ''}
-                  })
+                sendSuccessResponse(res, 200, {surveys: result.data, count: result.data.length > 0 ? surveysCount[0].count : ''})
               })
           } else {
-            return res.status(200)
-              .json({
-                status: 'success',
-                payload: {surveys: [], count: ''}
-              })
+            sendSuccessResponse(res, 200, {surveys: [], count: ''})
           }
         })
     })
@@ -429,11 +400,10 @@ exports.broadcastsGraph = function (req, res) {
     count: {$sum: 1}}
   DataLayer.aggregateForBroadcasts(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
     .then(broadcastsgraphdata => {
-      return res.status(200)
-        .json({status: 'success', payload: {broadcastsgraphdata}})
+      sendSuccessResponse(res, 200, {broadcastsgraphdata})
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch broadcasts ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
     })
 }
 exports.pollsGraph = function (req, res) {
@@ -456,11 +426,10 @@ exports.pollsGraph = function (req, res) {
     count: {$sum: 1}}
   DataLayer.aggregateForPolls(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
     .then(pollsgraphdata => {
-      return res.status(200)
-        .json({status: 'success', payload: {pollsgraphdata}})
+      sendSuccessResponse(res, 200, {pollsgraphdata})
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch polls ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch polls ${JSON.stringify(error)}`)
     })
 }
 exports.surveysGraph = function (req, res) {
@@ -483,11 +452,10 @@ exports.surveysGraph = function (req, res) {
     count: {$sum: 1}}
   DataLayer.aggregateForSurveys(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
     .then(surveysgraphdata => {
-      return res.status(200)
-        .json({status: 'success', payload: {surveysgraphdata}})
+      sendSuccessResponse(res, 200, {surveysgraphdata})
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch surveys ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch surveys ${JSON.stringify(error)}`)
     })
 }
 exports.sessionsGraph = function (req, res) {
@@ -513,11 +481,10 @@ exports.sessionsGraph = function (req, res) {
     }]
   utility.callApi(`subscribers/aggregate`, 'post', body)
     .then(sessionsgraphdata => {
-      return res.status(200)
-        .json({status: 'success', payload: {sessionsgraphdata}})
+      sendSuccessResponse(res, 200, {sessionsgraphdata})
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch sessions ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch sessions ${JSON.stringify(error)}`)
     })
 }
 exports.getAllSubscribers = function (req, res) {
@@ -526,17 +493,18 @@ exports.getAllSubscribers = function (req, res) {
     .then(subscribersCount => {
       utility.callApi(`subscribers/aggregate`, 'post', criteria.finalCriteria)
         .then(subscribers => {
-          res.status(200).json({
-            status: 'success',
-            payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
-          })
+          let payload = {
+            subscribers: subscribers,
+            count: subscribers.length > 0 ? subscribersCount[0].count : ''
+          }
+          sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers count ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch subscribers count ${JSON.stringify(error)}`)
     })
 }
 exports.poll = function (req, res) {
@@ -546,19 +514,18 @@ exports.poll = function (req, res) {
         .then(pollResponses => {
           PollPageDataLayer.genericFind({pollId: req.params.pollid})
             .then(pollpages => {
-              return res.status(200)
-                .json({status: 'success', payload: {pollResponses, poll, pollpages}})
+              sendSuccessResponse(res, 200, {pollResponses, poll, pollpages})
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch poll pages ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to fetch poll pages ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch poll responses ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch poll responses ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch poll ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch poll ${JSON.stringify(error)}`)
     })
 }
 exports.surveyDetails = function (req, res) {
@@ -568,19 +535,18 @@ exports.surveyDetails = function (req, res) {
         .then(questions => {
           SurveyResponseDataLayer.genericFind({surveyId: req.params.surveyid})
             .then(responses => {
-              return res.status(200)
-                .json({status: 'success', payload: {survey, questions, responses}})
+              sendSuccessResponse(res, 200, {survey, questions, responses})
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to fetch survey responses ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to fetch survey responses ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch survey questions ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch survey questions ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch survey ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch survey ${JSON.stringify(error)}`)
     })
 }
 exports.uploadFile = function (req, res) {
@@ -590,18 +556,15 @@ exports.uploadFile = function (req, res) {
         .then(pages => {
           downloadCSV(pages, req)
             .then(result => {
-              res.status(200).json({
-                status: 'success',
-                payload: result.data
-              })
+              sendSuccessResponse(res, 200, result.data)
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch users ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
     })
 }
 
@@ -613,24 +576,15 @@ exports.AllSubscribers = function (req, res) {
           console.log('subscribers in All subscribers', subscribers)
           downloadSubscribersData(subscribers)
             .then(result => {
-              res.status(200).json({
-                status: 'success',
-                payload: result.data
-              })
+              sendSuccessResponse(res, 200, result.data)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
