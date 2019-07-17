@@ -4,17 +4,15 @@ const SequenceUtility = require('./utility')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/sequenceMessaging/sequence.controller.js'
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.allMessages = function (req, res) {
   SequenceDatalayer.genericFindForSequenceMessages({ sequenceId: req.params.id })
     .then(messages => {
-      return res.status(200).json({ status: 'success', payload: messages })
+      sendSuccessResponse(res, 200, messages)
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching sequence messages${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence messages${JSON.stringify(err)}`)
     })
 }
 
@@ -22,10 +20,7 @@ exports.allSequences = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       SequenceDatalayer.genericFindForSequence({ companyId: companyUser.companyId }, {}, { sort: { datetime: 1 } })
         .then(sequences => {
@@ -42,52 +37,37 @@ exports.allSequences = function (req, res) {
                         subscribers: subscribers
                       })
                       if (sequencePayload.length === sequences.length) {
-                        return res.status(200).json({ status: 'success', payload: sequencePayload })
+                        sendSuccessResponse(res, 200, sequencePayload)
                       }
                     })
                     .catch(err => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal Server Error in fetching sequence messages${JSON.stringify(err)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence messages ${JSON.stringify(err)}`)
                 })
             })
           } else {
-            return res.status(200).json({ status: 'success', payload: [] })
+            sendSuccessResponse(res, 200, [])
           }
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in fetching sequences ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequences ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error while fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching companyUser ${JSON.stringify(err)}`)
     })
 }
 
 exports.subscriberSequences = function (req, res) {
   SequenceDatalayer.genericFindForSequenceSubscribers({ subscriberId: req.params.id, status: 'subscribed', populate: 'sequenceId' })
     .then(subscribers => {
-      return res.status(200).json({ status: 'success', payload: subscribers })
+      sendSuccessResponse(res, 200, subscribers)
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching subscriber sequences ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`)
     })
 }
 
@@ -95,10 +75,7 @@ exports.deleteMessage = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       SequenceDatalayer.deleteSequenceMessage(req.params.id)
         .then(result => {
@@ -113,27 +90,18 @@ exports.deleteMessage = function (req, res) {
                   }
                 }
               })
-              return res.status(201).json({ status: 'success', payload: result })
+              sendSuccessResponse(res, 200, result)
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error in deleting sequence message queue${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence message queue${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in deleting sequence message ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence messages ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching companyUser${JSON.stringify(err)}`)
     })
 }
 
@@ -141,10 +109,7 @@ exports.deleteSequence = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       SequenceDatalayer.deleteSequence(req.params.id)
         .then(result => {
@@ -163,41 +128,26 @@ exports.deleteSequence = function (req, res) {
                           }
                         }
                       })
-                      res.status(201).json({ status: 'success', payload: result })
+                      sendSuccessResponse(res, 200, result)
                     })
                     .catch(err => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Internal Server Error in deleting sequence messages ${JSON.stringify(err)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence messages ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal Server Error in deleting sequence message queue ${JSON.stringify(err)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence messages queue ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error in deleting sequence subscribers ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence subscribers ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in deleting sequence ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching companyUser ${JSON.stringify(err)}`)
     })
 }
 
@@ -205,10 +155,7 @@ exports.createSequence = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       // calling accounts feature usage for this
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
@@ -240,41 +187,26 @@ exports.createSequence = function (req, res) {
                           }
                         }
                       })
-                      return res.status(201).json({status: 'success', payload: sequenceCreated})
+                      sendSuccessResponse(res, 200, sequenceCreated)
                     })
                     .catch(err => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Internal Server Error in updating company usage ${JSON.stringify(err)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal Server Error in saving subscriber ${JSON.stringify(err)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
 
@@ -282,10 +214,7 @@ exports.editSequence = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       SequenceDatalayer.genericFindByIdAndUpdateSequence({_id: req.body.sequenceId}, {name: req.body.name}, req.headers.authorization)
         .then(newSequence => {
@@ -298,20 +227,14 @@ exports.editSequence = function (req, res) {
               }
             }
           })
-          res.status(201).json({ status: 'success', payload: newSequence })
+          sendErrorResponse(res, 200, '', newSequence)
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in updating sequence ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in updating sequence ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error while fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error while fetching company user ${JSON.stringify(err)}`)
     })
 }
 
@@ -319,10 +242,7 @@ exports.createMessage = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       // calling accounts feature usage for this
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
@@ -362,41 +282,26 @@ exports.createMessage = function (req, res) {
                           }
                         }
                       })
-                      return res.status(201).json({status: 'success', payload: messageCreated})
+                      sendSuccessResponse(res, 200, messageCreated)
                     })
                     .catch(err => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Internal Server Error in updating company usage ${JSON.stringify(err)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Internal Server Error in saving subscriber ${JSON.stringify(err)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
 
@@ -404,10 +309,7 @@ exports.editMessage = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       SequenceDatalayer.genericFindByIdAndUpdateMessage({_id: req.body._id}, {title: req.body.title, payload: req.body.payload}, req.headers.authorization)
         .then(newMessage => {
@@ -420,20 +322,14 @@ exports.editMessage = function (req, res) {
               }
             }
           })
-          return res.status(201).json({ status: 'success', payload: newMessage })
+          sendSuccessResponse(res, 200, newMessage)
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in updating message ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in updating message ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
 
@@ -441,15 +337,12 @@ exports.setSchedule = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       SequenceDatalayer.genericFindByIdAndUpdateMessage({_id: req.body.messageId}, {schedule: {condition: req.body.condition, days: req.body.days, date: req.body.date}})
         .then(message => {
           if (!message) {
-            return res.status(404).json({ status: 'failed', description: 'Record not found' })
+            sendErrorResponse(res, 404, '', 'Record not found')
           }
           SequenceDatalayer.genericFindForSequenceSubscribers({sequenceId: req.body.sequenceId})
             .then(subscribers => {
@@ -465,37 +358,25 @@ exports.setSchedule = function (req, res) {
               if (subscribers.length > 0) {
                 SequenceMessageQueueDatalayer.genericUpdate({ sequenceMessageId: message._id }, { queueScheduledTime: req.body.date }, { multi: true })
                   .then(result => {
-                    return res.status(201).json({ status: 'success', payload: message })
+                    sendSuccessResponse(res, 200, message)
                   })
                   .catch(err => {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Internal Server Error in updating sequence message schedule ${JSON.stringify(err)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Internal Server Error in updating sequence message schedule ${JSON.stringify(err)}`)
                   })
               } else {
-                return res.status(201).json({ status: 'success', payload: message })
+                sendSuccessResponse(res, 200, message)
               }
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error in getting sequence subscribers ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error in getting sequence subscribers ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in updating schedule ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in updating schedule ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
 
@@ -503,10 +384,7 @@ exports.getAll = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       let search = new RegExp('.*' + req.body.filter_criteria.search_value + '.*', 'i')
       let findCriteria = {
@@ -529,46 +407,28 @@ exports.getAll = function (req, res) {
                           subscribers: subscribers
                         })
                         if (sequencePayload.length === sequences.length) {
-                          res.status(200).json({
-                            status: 'success',
-                            payload: { sequences: sequencePayload, count: sequencePayload.length > 0 ? sequenceCount[0].count : '' }
-                          })
+                          sendSuccessResponse(res, 200, { sequences: sequencePayload, count: sequencePayload.length > 0 ? sequenceCount[0].count : '' })
                         }
                       })
                       .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`
-                        })
+                        sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`)
                       })
                   })
                   .catch(err => {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Internal Server Error in fetching sequence messages ${JSON.stringify(err)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence messages ${JSON.stringify(err)}`)
                   })
               })
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error in fetching sequences ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequences ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error in fetching sequence aggregate object ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence aggregate object ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
 
@@ -603,22 +463,16 @@ exports.subscribeToSequence = function (req, res) {
                     }
                   }
                 })
-                res.status(201).json({ status: 'success', description: 'Subscribers subscribed successfully' })
+                sendSuccessResponse(res, 200, 'Subscribers subscribed successfully')
               }
             })
             .catch(err => {
-              return res.status(404).json({
-                status: 'failed',
-                description: `Internal server error in creating sequence subscriber ${err}`
-              })
+              sendErrorResponse(res, 500, '', `Internal server error in creating sequence subscriber ${err}`)
             })
         }
       })
       .catch(err => {
-        return res.status(404).json({
-          status: 'failed',
-          description: `Internal server error in finding sequence messages ${err}`
-        })
+        sendErrorResponse(res, 500, '', `Internal server error in finding sequence messages ${err}`)
       })
   })
 }
@@ -627,10 +481,7 @@ exports.unsubscribeToSequence = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       req.body.subscriberIds.forEach(subscriberId => {
         SequenceDatalayer.removeForSequenceSubscribers(req.body.sequenceId, subscriberId)
@@ -669,14 +520,14 @@ exports.unsubscribeToSequence = function (req, res) {
                                               }
                                             }
                                           })
-                                          return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
+                                          sendSuccessResponse(res, 200, 'Subscribers unsubscribed successfully')
                                         }
                                       })
                                       .catch(err => {
                                         logger.serverLog(TAG, `Failed to create sequence subscriber ${err}`, 'error')
                                       })
                                   } else {
-                                    return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
+                                    sendSuccessResponse(res, 200, 'Subscribers unsubscribed successfully')
                                   }
                                 })
                                 .catch(err => {
@@ -684,7 +535,7 @@ exports.unsubscribeToSequence = function (req, res) {
                                 })
                             })
                           } else {
-                            return res.status(201).json({ status: 'success', description: 'Subscribers unsubscribed successfully' })
+                            sendSuccessResponse(res, 200, '', 'Subscribers unsubscribed successfully')
                           }
                         })
                         .catch(err => {
@@ -693,32 +544,20 @@ exports.unsubscribeToSequence = function (req, res) {
                     }
                   })
                   .catch(err => {
-                    return res.status(404).json({
-                      status: 'failed',
-                      description: `Error in fetching subscribers ${err}`
-                    })
+                    sendErrorResponse(res, 500, '', `Error in fetching subscribers ${err}`)
                   })
               })
               .catch(err => {
-                return res.status(404).json({
-                  status: 'failed',
-                  description: `Internal server error in creating sequence subscriber ${err}`
-                })
+                sendErrorResponse(res, 500, '', `Internal server error in creating sequence subscriber ${err}`)
               })
           })
           .catch(err => {
-            return res.status(404).json({
-              status: 'failed',
-              description: `Internal server error in finding sequence messages ${err}`
-            })
+            sendErrorResponse(res, 500, '', `Internal server error in finding sequence messages ${err}`)
           })
       })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in fetching company user ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
 
@@ -728,26 +567,20 @@ exports.testScheduler = function (req, res) {
   }
   SequenceDatalayer.createSequence(sequencePayload)
     .then(sequenceCreated => {
-      return res.status(201).json({ status: 'success', payload: sequenceCreated })
+      sendSuccessResponse(res, 200, sequenceCreated)
     })
     .catch(err => {
-      res.status(500).json({
-        status: 'Failed',
-        description: `Failed to insert record ${err}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to insert record ${err}`)
     })
 }
 
 exports.updateSegmentation = function (req, res) {
   SequenceDatalayer.genericFindByIdAndUpdateMessage({ _id: req.body.messageId }, { segmentation: req.body.segmentation, segmentationCondition: req.body.segmentationCondition })
     .then(result => {
-      return res.status(200).json({ status: 'success', payload: result })
+      sendSuccessResponse(res, 200, result)
     })
     .catch(err => {
-      res.status(500).json({
-        status: 'Failed',
-        description: `Failed to update segmentation ${err}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to update segmentation ${err}`)
     })
 }
 
@@ -755,13 +588,10 @@ exports.updateTrigger = function (req, res) {
   if (req.body.type === 'sequence') {
     SequenceDatalayer.genericFindByIdAndUpdateSequence({ _id: req.body.sequenceId }, { trigger: req.body.trigger })
       .then(sequence => {
-        return res.status(200).json({ status: 'success', payload: sequence })
+        sendSuccessResponse(res, 200, sequence)
       })
       .catch(err => {
-        res.status(500).json({
-          status: 'Failed',
-          description: `Failed to update sequence record ${err}`
-        })
+        sendErrorResponse(res, 500, '', `Failed to update sequence record ${err}`)
       })
   } else if (req.body.type === 'message') { // Logic to update the trigger if the type is message
     SequenceDatalayer.genericFindByIdAndUpdateMessage({ _id: req.body.messageId }, { trigger: req.body.trigger })
@@ -772,10 +602,7 @@ exports.updateTrigger = function (req, res) {
             SequenceUtility.addToMessageQueue(message.sequenceId, utcDate, message._id)
           })
           .catch(err => {
-            res.status(500).json({
-              status: 'Failed',
-              description: `Failed to delete sequence message queue ${err}`
-            })
+            sendErrorResponse(res, 500, '', `Failed to delete sequence message queue ${err}`)
           })
         let trigger = req.body.trigger
         if (trigger.event === 'clicks') {
@@ -805,29 +632,20 @@ exports.updateTrigger = function (req, res) {
                 SequenceDatalayer.createMessage(tempPayloadArray)
                   .then(savedMessage => {
                     logger.serverLog('Saved Message:', savedMessage, 'debug')
-                    return res.status(200).json({ status: 'success', payload: savedMessage })
+                    sendSuccessResponse(res, 200, savedMessage)
                   })
                   .catch(err => {
-                    res.status(500).json({
-                      status: 'Failed',
-                      description: `Failed to save message ${err}`
-                    })
+                    sendErrorResponse(res, 500, '', `Failed to save message ${err}`)
                   })
               }
             })
             .catch(err => {
-              res.status(500).json({
-                status: 'Failed',
-                description: `Failed to fetch message ${err}`
-              })
+              sendErrorResponse(res, 500, '', `Failed to fetch message ${err}`)
             })
         }
       })
       .catch(err => {
-        res.status(500).json({
-          status: 'Failed',
-          description: `Failed to update message record ${err}`
-        })
+        sendErrorResponse(res, 500, '', `Failed to update message record ${err}`)
       })
   }
 }

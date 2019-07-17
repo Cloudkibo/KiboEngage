@@ -31,7 +31,6 @@ function isAuthenticated () {
           Authorization: `Bearer ${req.query.access_token}`
         })
       }
-      console.log('Headers from KiboAPI', req.headers)
       if (req.headers.hasOwnProperty('consumer_id') && isAuthorizedKiboAPITrigger(req)) {
         headers = _.merge(headers, {
           consumer_id: req.headers.consumer_id

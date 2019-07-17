@@ -17,6 +17,7 @@ const callApi = require('../utility')
 const needle = require('needle')
 const async = require('async')
 let _ = require('lodash')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   callApi.callApi('pages/aggregate', 'post', [])
@@ -24,12 +25,11 @@ exports.index = function (req, res) {
       const data = {}
       let c = pages.length
       data.pagesCount = c
-      res.status(200).json(data)
+      sendSuccessResponse(res, 200, data)
     })
     .catch(err => {
       if (err) {
-        return res.status(500)
-          .json({status: 'failed', description: JSON.stringify(err)})
+        sendErrorResponse(res, 500, '', JSON.stringify(err))
       }
     })
 }
@@ -40,10 +40,7 @@ exports.sentVsSeen = function (req, res) {
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       // We should call the count function when we switch to v1.1
       PageBroadcastDataLayer.countDocuments({companyId: companyUser.companyId, pageId: pageId})
@@ -139,116 +136,72 @@ exports.sentVsSeen = function (req, res) {
                                                   datacounts.poll.pollResponseCount = sum
                                                 }
                                               }
-                                              res.status(200).json({
-                                                status: 'success',
-                                                payload: datacounts
-                                              })
+                                              sendSuccessResponse(res, 200, datacounts)
                                             })
                                             .catch(err => {
                                               if (err) {
-                                                return res.status(500).json({
-                                                  status: 'failed',
-                                                  description: `Error in getting poll response count ${JSON.stringify(
-                                                    err)}`
-                                                })
+                                                sendErrorResponse(res, 500, '', `Error in getting poll response count ${JSON.stringify(err)}`)
                                               }
                                             })
                                         })
                                         .catch(err => {
                                           if (err) {
-                                            return res.status(500).json({
-                                              status: 'failed',
-                                              description: 'Polls not found'
-                                            })
+                                            sendErrorResponse(res, 500, '', 'Polls not found')
                                           }
                                         })
                                     })
                                     .catch(err => {
                                       if (err) {
                                         logger.serverLog(TAG, `Error: ${err}`, 'error')
-                                        return res.status(500).json({
-                                          status: 'failed',
-                                          description: `Internal Server Error${JSON.stringify(
-                                            err)}`
-                                        })
+                                        sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                       }
                                     })
                                 })
                                 .catch(err => {
                                   if (err) {
-                                    return res.status(500).json({
-                                      status: 'failed',
-                                      description: 'responses count not found'
-                                    })
+                                    sendErrorResponse(res, 500, '', 'responses count not found')
                                   }
                                 })
                             })
                             .catch(err => {
                               if (err) {
-                                return res.status(500).json({
-                                  status: 'failed',
-                                  description: `Error in getting pollSeenCount count ${JSON.stringify(
-                                    err)}`
-                                })
+                                sendErrorResponse(res, 500, '', `Error in getting pollSeenCount count ${JSON.stringify(err)}`)
                               }
                             })
                         })
                         .catch(err => {
                           if (err) {
-                            return res.status(500).json({
-                              status: 'failed',
-                              description: `Error in getting pollSentCount count ${JSON.stringify(
-                                err)}`
-                            })
+                            sendErrorResponse(res, 500, '', `Error in getting pollSentCount count ${JSON.stringify(err)}`)
                           }
                         })
                     })
                     .catch(err => {
                       if (err) {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Error in getting surveytSeenCount count ${JSON.stringify(
-                            err)}`
-                        })
+                        sendErrorResponse(res, 500, '', `Error in getting surveytSeenCount count ${JSON.stringify(err)}`)
                       }
                     })
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Error in getting surveySentCount count ${JSON.stringify(
-                        err)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Error in getting surveySentCount count ${JSON.stringify(err)}`)
                   }
                 })
             })
             .catch(err => {
               if (err) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Error in getting broadcastSeenCount count ${JSON.stringify(
-                    err)}`
-                })
+                sendErrorResponse(res, 500, '', `Error in getting broadcastSeenCount count ${JSON.stringify(err)}`)
               }
             })
         })
         .catch(err => {
           if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Error in getting broadcastSentCount count ${JSON.stringify(
-                err)}`
-            })
+            sendErrorResponse(res, 500, '', `Error in getting broadcastSentCount count ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
 }
@@ -273,10 +226,7 @@ exports.sentVsSeenNew = function (req, res) {
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}) // fetch connected pages
         .then(pages => {
@@ -378,140 +328,84 @@ exports.sentVsSeenNew = function (req, res) {
                                                     logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`, 'debug')
                                                     graphDataNew(req.body, companyUser, result.pageIds)
                                                       .then(result => {
-                                                        return res.status(200).json({
-                                                          status: 'success',
-                                                          payload: {
-                                                            datacounts,
-                                                            graphDatas: result
-                                                          }
-                                                        })
+                                                        sendSuccessResponse(res, 200, {datacounts, graphDatas: result})
                                                       })
                                                       .catch(err => {
-                                                        return res.status(500).json({
-                                                          status: 'failed',
-                                                          description: `Error in getting graphdaya ${JSON.stringify(
-                                                            err)}`
-                                                        })
+                                                        sendErrorResponse(res, 500, '', `Error in getting graphdaya ${JSON.stringify(err)}`)
                                                       })
                                                   })
                                                   .catch(err => {
                                                     if (err) {
-                                                      return res.status(500).json({
-                                                        status: 'failed',
-                                                        description: `Error in getting poll response count ${JSON.stringify(
-                                                          err)}`
-                                                      })
+                                                      sendErrorResponse(res, 500, '', `Error in getting poll response count ${JSON.stringify(err)}`)
                                                     }
                                                   })
                                               })
                                               .catch(err => {
                                                 if (err) {
                                                   logger.serverLog(TAG, `Error: ${err}`, 'error')
-                                                  return res.status(500).json({
-                                                    status: 'failed',
-                                                    description: `Internal Server Error${JSON.stringify(
-                                                      err)}`
-                                                  })
+                                                  sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                                 }
                                               })
                                           })
                                           .catch(err => {
                                             if (err) {
                                               logger.serverLog(TAG, `Error: ${err}`, 'error')
-                                              return res.status(500).json({
-                                                status: 'failed',
-                                                description: `Internal Server Error${JSON.stringify(
-                                                  err)}`
-                                              })
+                                              sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                             }
                                           })
                                       })
                                       .catch(err => {
                                         if (err) {
-                                          return res.status(500).json({
-                                            status: 'failed',
-                                            description: 'responses count not found'
-                                          })
+                                          sendErrorResponse(res, 500, '', 'responses count not found')
                                         }
                                       })
                                   })
                                   .catch(err => {
                                     if (err) {
-                                      return res.status(500).json({
-                                        status: 'failed',
-                                        description: `Error in getting pollSeenCount count ${JSON.stringify(
-                                          err)}`
-                                      })
+                                      sendErrorResponse(res, 500, '', `Error in getting pollSeenCount count ${JSON.stringify(err)}`)
                                     }
                                   })
                               })
                               .catch(err => {
                                 if (err) {
-                                  return res.status(500).json({
-                                    status: 'failed',
-                                    description: `Error in getting pollSentCount count ${JSON.stringify(
-                                      err)}`
-                                  })
+                                  sendErrorResponse(res, 500, '', `Error in getting pollSentCount count ${JSON.stringify(err)}`)
                                 }
                               })
                           })
                           .catch(err => {
                             if (err) {
-                              return res.status(500).json({
-                                status: 'failed',
-                                description: `Error in getting surveytSeenCount count ${JSON.stringify(
-                                  err)}`
-                              })
+                              sendErrorResponse(res, 500, '', `Error in getting surveytSeenCount count ${JSON.stringify(err)}`)
                             }
                           })
                       })
                       .catch(err => {
                         if (err) {
-                          return res.status(500).json({
-                            status: 'failed',
-                            description: `Error in getting surveySentCount count ${JSON.stringify(
-                              err)}`
-                          })
+                          sendErrorResponse(res, 500, '', `Error in getting surveySentCount count ${JSON.stringify(err)}`)
                         }
                       })
                   })
                   .catch(err => {
                     if (err) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Error in getting broadcastSeenCount count ${JSON.stringify(
-                          err)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Error in getting broadcastSeenCount count ${JSON.stringify(err)}`)
                     }
                   })
               })
               .catch(err => {
                 if (err) {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Error in getting broadcastSentCount count ${JSON.stringify(
-                      err)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Error in getting broadcastSentCount count ${JSON.stringify(err)}`)
                 }
               })
           })
         })
         .catch(err => {
           if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Error in getting connected pages ${JSON.stringify(
-                err)}`
-            })
+            sendErrorResponse(res, 500, '', `Error in getting connected pages ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
 }
@@ -553,27 +447,17 @@ exports.likesVsSubscribers = function (req, res) {
               }
             }
           }
-          res.status(200).json({
-            status: 'success',
-            payload: pagesPayload
-          })
+          sendSuccessResponse(res, 200, pagesPayload)
         })
         .catch(err => {
           if (err) {
-            return res.status(404).json({
-              status: 'failed',
-              description: `Error in getting pages subscriber count ${JSON.stringify(
-                err)}`
-            })
+            sendErrorResponse(res, 500, '', `Error in getting pages subscriber count ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(404).json({
-          status: 'failed',
-          description: `Error in getting pages ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Error in getting pages ${JSON.stringify(err)}`)
       }
     })
 }
@@ -593,7 +477,7 @@ exports.enable = function (req, res) {
 exports.otherPages = function (req, res) {
   callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, connected: false})
     .then(pages => {
-      res.status(200).json(pages)
+      sendSuccessResponse(res, 200, pages)
     })
     .catch(err => {
       logger.serverLog(TAG, `Error: ${err}`, 'error')
@@ -609,10 +493,7 @@ exports.stats = function (req, res) {
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId})
         .then((pages) => {
@@ -648,82 +529,58 @@ exports.stats = function (req, res) {
                                     SequenceDataLayer.countSequences({companyId: companyUser.companyId})
                                       .then(sequences => {
                                         payload.sequences = sequences.length > 0 ? sequences[0].count : 0
-                                        res.status(200).json({
-                                          status: 'success',
-                                          payload
-                                        })
+                                        sendSuccessResponse(res, 200, payload)
                                       })
                                       .catch(err => {
-                                        return res.status(500).json({
-                                          status: 'failed',
-                                          description: `failed to retrieve sequences ${err}`
-                                        })
+                                        sendErrorResponse(res, 500, '', `failed to retrieve sequences ${err}`)
                                       })
                                   })
                                   .catch(err => {
                                     if (err) {
-                                      return res.status(500).json({
-                                        status: 'failed to retrieve surveysCount',
-                                        description: JSON.stringify(err)
-                                      })
+                                      sendErrorResponse(res, 500, '', JSON.stringify(err))
                                     }
                                   })
                               })
                               .catch(err => {
                                 if (err) {
-                                  return res.status(500).json({
-                                    status: 'failed to retrieve pollsCount',
-                                    description: JSON.stringify(err)
-                                  })
+                                  sendErrorResponse(res, 500, '', JSON.stringify(err))
                                 }
                               })
                           })
                           .catch(err => {
                             if (err) {
-                              return res.status(500).json({
-                                status: 'failed to retrieve broadcastCount',
-                                description: JSON.stringify(err)
-                              })
+                              sendErrorResponse(res, 500, '', JSON.stringify(err))
                             }
                           })
                       })
                       .catch(err => {
                         if (err) {
-                          return res.status(500).json({
-                            status: 'failed to retrieve recentBroadcast',
-                            description: JSON.stringify(err)
-                          })
+                          sendErrorResponse(res, 500, '', JSON.stringify(err))
                         }
                       })
                   })
                   .catch(err => {
                     if (err) {
-                      return res.status(500).json(
-                        {status: `failed to retrieve subscribers ${err}`, description: err})
+                      sendErrorResponse(res, 500, '', JSON.stringify(err))
                     }
                   })
               })
               .catch(err => {
                 if (err) {
-                  return res.status(500)
-                    .json({status: 'failed to retrieve userPages', description: err})
+                  sendErrorResponse(res, 500, '', JSON.stringify(err))
                 }
               })
           })
         })
         .catch(err => {
           if (err) {
-            return res.status(500)
-              .json({status: 'failed to retrieve pages', description: err})
+            sendErrorResponse(res, 500, '', JSON.stringify(err))
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed to retrieve companyUser',
-          description: `Internal Server Error ${err}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${err}`)
       }
     })
 }
@@ -738,10 +595,7 @@ exports.graphData = function (req, res) {
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 500, '', 'The user account does not belong to any company. Please contact support')
       }
       // We need to use aggregate of v1.1
       let matchBroadcastAggregate = { companyId: companyUser.companyId.toString(),
@@ -785,48 +639,37 @@ exports.graphData = function (req, res) {
                 count: {$sum: 1}}
               SurveysDataLayer.aggregateForSurveys(matchSurveyAggregate, groupSurveyAggregate)
                 .then(surveysgraphdata => {
-                  return res.status(200)
-                    .json({status: 'success', payload: {broadcastsgraphdata: broadcastsgraphdata, pollsgraphdata: pollsgraphdata, surveysgraphdata: surveysgraphdata}})
+                  let payload = {
+                    broadcastsgraphdata: broadcastsgraphdata,
+                    pollsgraphdata: pollsgraphdata,
+                    surveysgraphdata: surveysgraphdata
+                  }
+                  sendSuccessResponse(res, 200, payload)
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Error in getting surveys count ${JSON.stringify(err)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
                   }
                 })
                 .catch(err => {
                   if (err) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Error in getting surveys count ${JSON.stringify(err)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
                   }
                 })
             })
             .catch(err => {
               if (err) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Error in getting surveys count ${JSON.stringify(err)}`
-                })
+                sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
               }
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Error in getting surveys count ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
 }
@@ -866,10 +709,7 @@ exports.toppages = function (req, res) {
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId})
         .then(pages => {
@@ -909,35 +749,23 @@ exports.toppages = function (req, res) {
               let sorted = sortBy(pagesPayload, 'subscribers')
               let top10 = _.takeRight(sorted, 10)
               top10 = top10.reverse()
-              res.status(200).json({
-                status: 'success',
-                payload: top10
-              })
+              sendSuccessResponse(res, 200, top10)
             })
             .catch(err => {
               if (err) {
-                return res.status(404).json({
-                  status: 'failed',
-                  description: `Error in getting pages subscriber count ${err}`
-                })
+                sendErrorResponse(res, 500, '', `Error in getting pages subscriber count ${err}`)
               }
             })
         })
         .catch(err => {
           if (err) {
-            return res.status(404).json({
-              status: 'failed',
-              description: `Error in getting pages ${err}`
-            })
+            sendErrorResponse(res, 500, '', `Error in getting pages ${err}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
 }
@@ -960,24 +788,21 @@ exports.getAllSubscribers = function (req, res) {
       .then(subscribersCount => {
         callApi.callApi('subscribers/query', 'post', findCriteria)
           .then(subscribers => {
-            res.status(200).json({
-              status: 'success',
-              payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
-            })
+            let payload = {
+              subscribers: subscribers,
+              count: subscribers.length > 0 ? subscribersCount[0].count : ''
+            }
+            sendSuccessResponse(res, 200, payload)
           })
           .catch(err => {
             if (err) {
-              return res.status(404).json({
-                status: 'failed',
-                description: `Error in getting subscribers ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
             }
           })
       })
       .catch(err => {
         if (err) {
-          return res.status(404)
-            .json({status: 'failed', description: 'Subscribers not found'})
+          sendErrorResponse(res, 500, '', 'Subscribers not found')
         }
       })
   } else if (req.body.first_page === 'next') {
@@ -988,24 +813,21 @@ exports.getAllSubscribers = function (req, res) {
       .then(subscribersCount => {
         callApi.callApi('subscribers/query', 'post', Object.assign(findCriteria, {_id: {$gt: req.body.last_id}}))
           .then(subscribers => {
-            res.status(200).json({
-              status: 'success',
-              payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
-            })
+            let payload = {
+              subscribers: subscribers,
+              count: subscribers.length > 0 ? subscribersCount[0].count : ''
+            }
+            sendSuccessResponse(res, 200, payload)
           })
           .catch(err => {
             if (err) {
-              return res.status(404).json({
-                status: 'failed',
-                description: `Error in getting subscribers ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
             }
           })
       })
       .catch(err => {
         if (err) {
-          return res.status(404)
-            .json({status: 'failed', description: 'BroadcastsCount not found'})
+          sendErrorResponse(res, 404, '', 'BroadcastsCount not found')
         }
       })
   } else if (req.body.first_page === 'previous') {
@@ -1016,24 +838,21 @@ exports.getAllSubscribers = function (req, res) {
       .then(subscribersCount => {
         callApi.callApi('subscribers/query', Object.assign(findCriteria, {_id: {$lt: req.body.last_id}}))
           .then(subscribers => {
-            res.status(200).json({
-              status: 'success',
-              payload: {subscribers: subscribers, count: subscribers.length > 0 ? subscribersCount[0].count : ''}
-            })
+            let payload = {
+              subscribers: subscribers,
+              count: subscribers.length > 0 ? subscribersCount[0].count : ''
+            }
+            sendSuccessResponse(res, 200, payload)
           })
           .catch(err => {
             if (err) {
-              return res.status(404).json({
-                status: 'failed',
-                description: `Error in getting subscribers ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
             }
           })
       })
       .catch(err => {
         if (err) {
-          return res.status(404)
-            .json({status: 'failed', description: 'BroadcastsCount not found'})
+          sendErrorResponse(res, 404, '', 'BroadcastsCount not found')
         }
       })
   }
@@ -1074,25 +893,17 @@ exports.updateSubscriptionPermission = function (req, res) {
             }
           })
       })
-      return res.status(200).json({
-        status: 'success'
-      })
+      sendSuccessResponse(res, 200)
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed to retrieve connected Pages',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 exports.subscriberSummary = function (req, res) {
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}) // fetch connected pages
         .then(pages => {
@@ -1108,45 +919,27 @@ exports.subscriberSummary = function (req, res) {
                           unsubscribes: unsubscribes.length > 0 ? unsubscribes[0].count : 0,
                           graphdata: graphdata
                         }
-                        return res.status(200).json({
-                          status: 'success',
-                          payload: data
-                        })
+                        sendSuccessResponse(res, 200, data)
                       })
                       .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Error in getting graphdata ${JSON.stringify(err)}`
-                        })
+                        sendErrorResponse(res, 500, '', `Error in getting graphdata ${JSON.stringify(err)}`)
                       })
                   })
                   .catch(err => {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Error in getting unsubscribers ${JSON.stringify(err)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
                   })
               })
               .catch(err => {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Error in getting subscribers ${JSON.stringify(err)}`
-                })
+                sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
               })
           })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Internal Server Error ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 exports.fetchAutopostingDetails = function (req, res) {
@@ -1248,10 +1041,7 @@ exports.fetchAutopostingDetails = function (req, res) {
     }
   ], 10, function (err, results) {
     if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch autoposting analytics ${err}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to fetch autoposting analytics ${err}`)
     } else {
       let types = results[0].map((t) => t._id)
       let facebookIndex = types.indexOf('facebook')
@@ -1276,10 +1066,7 @@ exports.fetchAutopostingDetails = function (req, res) {
         likes: results[7].length > 0 ? results[7][0].likes : 0,
         comments: results[7].length > 0 ? results[7][0].comments : 0
       }
-      return res.status(200).json({
-        status: 'success',
-        payload
-      })
+      sendSuccessResponse(res, 200, payload)
     }
   })
 }

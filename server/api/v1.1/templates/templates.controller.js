@@ -2,16 +2,15 @@ const dataLayer = require('./template.datalayer')
 const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
 const callApi = require('../utility/index')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+
 exports.allPolls = function (req, res) {
   dataLayer.allPolls()
     .then(polls => {
-      return res.status(200).json({
-        status: 'success',
-        payload: polls
-      })
+      sendSuccessResponse(res, 200, polls)
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -22,17 +21,14 @@ exports.getAllPolls = function (req, res) {
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimit({findCriteria, req})
           .then(polls => {
-            res.status(200).json({
-              status: 'success',
-              payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
-            })
+            sendSuccessResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''})
           })
           .catch(err => {
-            return res.status(500).json({status: `failed ${err}`, payload: ` ${JSON.stringify(err)}`})
+            sendErrorResponse(res, 500, JSON.stringify(err))
           })
       })
       .catch(err => {
-        return res.status(500).json({status: `failed ${err}`, payload: ` ${JSON.stringify(err)}`})
+        sendErrorResponse(res, 500, JSON.stringify(err))
       })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
@@ -41,17 +37,14 @@ exports.getAllPolls = function (req, res) {
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(polls => {
-            res.status(200).json({
-              status: 'success',
-              payload: {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''}
-            })
+            sendErrorResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''})
           })
           .catch(error => {
-            return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
+            sendErrorResponse(res, 500, JSON.stringify(error))
           })
       })
       .catch(error => {
-        return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
+        sendErrorResponse(res, 500, JSON.stringify(error))
       })
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
@@ -60,17 +53,14 @@ exports.getAllPolls = function (req, res) {
       .then(pollsCount => {
         dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(polls => {
-            res.status(200).json({
-              status: 'success',
-              payload: {polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : ''}
-            })
+            sendSuccessResponse(res, 200, {polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : ''})
           })
           .catch(error => {
-            return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
+            sendErrorResponse(res, 500, JSON.stringify(error))
           })
       })
       .catch(error => {
-        return res.status(500).json({status: `failed ${error}`, payload: ` ${JSON.stringify(error)}`})
+        sendErrorResponse(res, 500, JSON.stringify(error))
       })
   }
 }
@@ -82,17 +72,14 @@ exports.getAllSurveys = function (req, res) {
       .then(surveysCount => {
         dataLayer.surveyTemplateaggregateLimit({findCriteria, req})
           .then(surveys => {
-            res.status(200).json({
-              status: 'success',
-              payload: {surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0}
-            })
+            sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0})
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            sendErrorResponse(res, 500, err)
           })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        sendErrorResponse(res, 500, err)
       })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
@@ -101,16 +88,14 @@ exports.getAllSurveys = function (req, res) {
       .then(surveysCount => {
         dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(surveys => {
-            res.status(200).json({
-              status: 'success',
-              payload: {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : ''}})
+            sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : ''})
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            sendErrorResponse(res, 500, err)
           })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        sendErrorResponse(res, 500, err)
       })
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
@@ -119,16 +104,14 @@ exports.getAllSurveys = function (req, res) {
       .then(surveysCount => {
         dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
           .then(surveys => {
-            res.status(200).json({
-              status: 'success',
-              payload: {surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : ''} })
+            sendSuccessResponse(res, 200, {surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : ''})
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            sendErrorResponse(res, 500, err)
           })
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: err})
+        sendErrorResponse(res, 500, err)
       })
   }
 }
@@ -136,13 +119,10 @@ exports.getAllSurveys = function (req, res) {
 exports.allSurveys = function (req, res) {
   dataLayer.allSurvey()
     .then(surveys => {
-      return res.status(200).json({
-        status: 'success',
-        payload: surveys
-      })
+      sendSuccessResponse(res, 200, surveys)
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -156,10 +136,10 @@ exports.createPoll = function (req, res) {
   // save model to MongoDB
   dataLayer.createPoll(pollPayload)
     .then(pollCreated => {
-      res.status(201).json({status: 'success', payload: pollCreated})
+      sendSuccessResponse(res, 200, pollCreated)
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: 'failed to saved polls'})
+      sendErrorResponse(res, 500, 'failed to saved polls')
     })
 }
 exports.createSurvey = function (req, res) {
@@ -185,10 +165,10 @@ exports.createSurvey = function (req, res) {
           .catch(err => {
           })
       }
-      return res.status(201).json({status: 'success', payload: survey})
+      sendSuccessResponse(res, 200, survey)
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -196,24 +176,18 @@ exports.allCategories = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       dataLayer.CategoryFind(companyUser)
         .then(categories => {
-          res.status(200).json({
-            status: 'success',
-            payload: categories
-          })
+          sendSuccessResponse(res, 200, categories)
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -221,10 +195,7 @@ exports.createCategory = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       let categoryPayload = logicLayer.createDataCategory({req, companyUser})
       if (req.user.isSuperUser) {
@@ -232,17 +203,14 @@ exports.createCategory = function (req, res) {
       }
       dataLayer.createCategory(categoryPayload)
         .then(categoryCreated => {
-          res.status(201).json({
-            status: 'success',
-            payload: categoryCreated
-          })
+          sendSuccessResponse(res, 200, categoryCreated)
         })
         .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: 'failed due to save category'})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: 'failed due to fetch user'})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -252,13 +220,10 @@ exports.editCategory = function (req, res) {
   }
   dataLayer.editCategory({_id: req.body._id}, payload)
     .then(categoryCreated => {
-      res.status(201).json({
-        status: 'success',
-        payload: categoryCreated
-      })
+      sendSuccessResponse(res, 200, categoryCreated)
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -266,36 +231,30 @@ exports.surveyDetails = function (req, res) {
   dataLayer.findSurveyById(req)
     .then(survey => {
       if (!survey) {
-        return res.status(404).json({
-          status: 'failed',
-          description: `survey not found.`
-        })
+        sendErrorResponse(res, 404, '', 'survey not found')
       }
       dataLayer.findQuestionById(req)
         .then(questions => {
-          return res.status(200).json({status: 'success', payload: {survey, questions}})
+          sendSuccessResponse(res, 200, {survey, questions})
         })
         .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: 'failed due to question'})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: 'failed due to findsurvey'})
+      sendErrorResponse(res, 500, err)
     })
 }
 exports.pollDetails = function (req, res) {
   dataLayer.findPollById(req.params.pollid)
     .then(poll => {
       if (!poll) {
-        return res.status(404).json({
-          status: 'failed',
-          description: `survey not found.`
-        })
+        sendErrorResponse(res, 404, '', 'survey not found')
       }
-      return res.status(200).json({status: 'success', payload: poll})
+      sendSuccessResponse(res, 200, poll)
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -303,21 +262,18 @@ exports.deletePoll = function (req, res) {
   dataLayer.FindByIdPoll(req)
     .then(poll => {
       if (!poll) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       dataLayer.removePoll(req.params.id)
         .then(success => {
-          return res.status(500).json({status: 'success'})
+          sendSuccessResponse(res, 200)
         })
         .catch(err => {
-          return res.status(500)
-            .json({status: `failed ${err}`, description: 'Internal Server Error'})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500)
-        .json({status: `failed ${err}`, description: 'Internal Server Error'})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -325,21 +281,18 @@ exports.deleteCategory = function (req, res) {
   dataLayer.pollCategoryById(req)
     .then(category => {
       if (!category) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       dataLayer.removeCategory(req.params.id)
         .then(success => {
-          return res.status(500).json({status: 'success'})
+          sendSuccessResponse(res, 200)
         })
         .catch(error => {
-          return res.status(500)
-            .json({status: `failed ${error}`, description: 'error in remove category'})
+          sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
-      return res.status(500)
-        .json({status: `failed ${error}`, description: 'error in pollCategoryById'})
+      sendErrorResponse(res, 500, error)
     })
 }
 
@@ -347,17 +300,15 @@ exports.deleteSurvey = function (req, res) {
   dataLayer.surveyFindId(req)
     .then(survey => {
       if (!survey) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       dataLayer.removeSurvey(req.params.id)
         .then(success => {
-          return res.status(500).json({status: 'success'})
+          sendSuccessResponse(res, 200)
         })
     })
     .catch(err => {
-      return res.status(500)
-        .json({status: 'failed', description: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -365,8 +316,7 @@ exports.editSurvey = function (req, res) {
   dataLayer.surveyId(req)
     .then(survey => {
       if (!survey) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       let payload = {
         title: req.body.survey.title,
@@ -381,7 +331,7 @@ exports.editSurvey = function (req, res) {
                 dataLayer.removeQuestion(questions[i]._id)
                   .then(success => {})
                   .catch(err => {
-                    return res.status(500).json({status: `failed ${err}`, payload: 'remove question'})
+                    sendErrorResponse(res, 500, err)
                   })
               }
               for (let question in req.body.questions) {
@@ -396,21 +346,21 @@ exports.editSurvey = function (req, res) {
                   .then(survey => {
                   })
                   .catch(err => {
-                    return res.status(500).json({status: `failed ${err}`, payload: 'save question'})
+                    sendErrorResponse(res, 500, err)
                   })
               }
-              return res.status(201).json({status: 'success', payload: survey})
+              sendSuccessResponse(res, 200, survey)
             })
             .catch(err => {
-              return res.status(500).json({status: `failed ${err}`, payload: 'find question'})
+              sendErrorResponse(res, 500, err)
             })
         })
         .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -418,8 +368,7 @@ exports.editPoll = function (req, res) {
   dataLayer.findPollById(req.body._id)
     .then(poll => {
       if (!poll) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       let payload = {
         title: req.body.title,
@@ -429,17 +378,14 @@ exports.editPoll = function (req, res) {
       }
       dataLayer.editPoll({_id: req.body._id}, payload)
         .then(success => {
-          res.status(201).json({
-            status: 'success',
-            payload: poll
-          })
+          sendSuccessResponse(res, 200)
         })
         .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -470,25 +416,25 @@ exports.createBroadcast = function (req, res) {
                       .then(update => {
                       })
                       .catch(err => {
-                        return res.status(500).json({status: `failed ${err}`, payload: 'failed due to update company'})
+                        sendErrorResponse(res, 500, err)
                       })
                   }
-                  res.status(201).json({status: 'success', payload: broadcastCreated})
+                  sendSuccessResponse(res, 200, broadcastCreated)
                 })
                 .catch(err => {
-                  return res.status(500).json({status: `failed ${err}`, description: 'Failed to insert record'})
+                  sendErrorResponse(res, 500, err)
                 })
             })
             .catch(err => {
-              return res.status(500).json({status: `failed ${err}`, payload: err})
+              sendErrorResponse(res, 500, err)
             })
         })
         .catch(err => {
-          return res.status(500).json({status: `failed ${err}`, payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: `failed ${err}`, payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -496,24 +442,18 @@ exports.allBroadcasts = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       dataLayer.broadcastFind(companyUser)
         .then(broadcasts => {
-          res.status(200).json({
-            status: 'success',
-            payload: broadcasts
-          })
+          sendSuccessResponse(res, 200, broadcasts)
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -533,10 +473,7 @@ exports.getAllBroadcasts = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       if (req.body.first_page === 'first') {
         let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
@@ -544,17 +481,14 @@ exports.getAllBroadcasts = function (req, res) {
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
               .then(broadcasts => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
-                })
+                sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''})
               })
               .catch(err => {
-                return res.status(500).json({status: 'failed', payload: err})
+                sendErrorResponse(res, 500, err)
               })
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            sendErrorResponse(res, 500, err)
           })
       } else if (req.body.first_page === 'next') {
         let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
@@ -563,17 +497,14 @@ exports.getAllBroadcasts = function (req, res) {
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
               .then(broadcasts => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
-                })
+                sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''})
               })
               .catch(err => {
-                return res.status(500).json({status: 'failed', payload: err})
+                sendErrorResponse(res, 500, err)
               })
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            sendErrorResponse(res, 500, err)
           })
       } else if (req.body.first_page === 'previous') {
         let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
@@ -582,17 +513,14 @@ exports.getAllBroadcasts = function (req, res) {
           .then(broadcastsCount => {
             dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
               .then(broadcasts => {
-                res.status(200).json({
-                  status: 'success',
-                  payload: {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''}
-                })
+                sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''})
               })
               .catch(err => {
-                return res.status(500).json({status: 'failed', payload: err})
+                sendErrorResponse(res, 500, err)
               })
           })
           .catch(err => {
-            return res.status(500).json({status: 'failed', payload: err})
+            sendErrorResponse(res, 500, err)
           })
       }
     })
@@ -602,21 +530,18 @@ exports.deleteBroadcast = function (req, res) {
   dataLayer.BroadcastFindById(req)
     .then(broadcast => {
       if (!broadcast) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not fuond')
       }
       dataLayer.removeBroadcast(broadcast)
         .then(success => {
           return res.status(500).json({status: 'success'})
         })
         .catch(error => {
-          return res.status(500)
-            .json({status: `failed ${error}`, description: 'Internal Server Error'})
+          sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
-      return res.status(500)
-        .json({status: `failed ${error}`, description: 'Internal Server Error'})
+      sendErrorResponse(res, 500, error)
     })
 }
 
@@ -624,8 +549,7 @@ exports.editBroadcast = function (req, res) {
   dataLayer.broadcastFindbyId(req)
     .then(broadcast => {
       if (!broadcast) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       let payload = {
         title: req.body.title,
@@ -634,12 +558,11 @@ exports.editBroadcast = function (req, res) {
       }
       dataLayer.saveBroadcast({_id: req.body._id}, payload)
         .then(success => {
-          res.status(201).json({status: 'success', payload: broadcast})
+          sendSuccessResponse(res, 200, broadcast)
         })
     })
     .catch(error => {
-      return res.status(500)
-        .json({status: 'failed', description: error})
+      sendErrorResponse(res, 500, error)
     })
 }
 
@@ -647,15 +570,12 @@ exports.broadcastDetails = function (req, res) {
   dataLayer.findBroadcastById(req)
     .then(broadcast => {
       if (!broadcast) {
-        return res.status(404).json({
-          status: 'failed',
-          description: `broadcast not found.`
-        })
+        sendErrorResponse(res, 404, '', `broadcast not found.`)
       }
-      return res.status(200).json({status: 'success', payload: broadcast})
+      sendSuccessResponse(res, 200, broadcast)
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -663,10 +583,7 @@ exports.createBotTemplate = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       let botTemplatePayload = logicLayer.createDataBots(req)
       if (req.user.isSuperUser) {
@@ -674,17 +591,14 @@ exports.createBotTemplate = function (req, res) {
       }
       dataLayer.createBot(botTemplatePayload)
         .then(botTemplateCreated => {
-          res.status(200).json({
-            status: 'success',
-            payload: botTemplateCreated
-          })
+          sendSuccessResponse(res, 200, botTemplateCreated)
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -692,24 +606,18 @@ exports.allBots = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       dataLayer.botFind(companyUser)
         .then(bots => {
-          res.status(200).json({
-            status: 'success',
-            payload: bots
-          })
+          sendSuccessResponse(res, 200, bots)
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -717,17 +625,15 @@ exports.deleteBot = function (req, res) {
   dataLayer.BotFindById(req)
     .then(botFound => {
       if (!botFound) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       dataLayer.removeBot(req.body._id)
         .then(success => {
-          return res.status(500).json({status: 'success'})
+          sendSuccessResponse(res, 200)
         })
     })
     .catch(err => {
-      return res.status(500)
-        .json({status: 'failed', description: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -735,8 +641,7 @@ exports.editBot = function (req, res) {
   dataLayer.BotFindById(req)
     .then(botTemplateFound => {
       if (!botTemplateFound) {
-        return res.status(404)
-          .json({status: 'failed', description: 'Record not found'})
+        sendErrorResponse(res, 404, '', 'Record not found')
       }
       let payload = {
         title: req.body.title,
@@ -745,17 +650,14 @@ exports.editBot = function (req, res) {
       }
       dataLayer.botSave({_id: req.body._id}, payload)
         .then(success => {
-          res.status(201).json({
-            status: 'success',
-            payload: botTemplateFound
-          })
+          sendSuccessResponse(res, 200, botTemplateFound)
         })
         .catch(err => {
-          return res.status(500).json({status: 'failed', payload: err})
+          sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
@@ -763,20 +665,17 @@ exports.botDetails = function (req, res) {
   dataLayer.findBotById(req)
     .then(bot => {
       if (!bot) {
-        return res.status(404).json({
-          status: 'failed',
-          description: `Bot not found.`
-        })
+        sendErrorResponse(res, 404, '', 'Bot not found')
       }
-      return res.status(200).json({status: 'success', payload: bot})
+      sendSuccessResponse(res, 200, bot)
     })
     .catch(err => {
-      return res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
 // todo temporary bot template for DNC, will be data driven
 exports.getPoliticsBotTemplate = function (req, res) {
   let payload = logicLayer.getPoliticsBotTemplate()
-  return res.status(200).json({status: 'success', payload: payload})
+  sendSuccessResponse(res, 200, payload)
 }

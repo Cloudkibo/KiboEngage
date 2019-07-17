@@ -1,6 +1,7 @@
 const LogicLayer = require('./logiclayer')
 const utility = require('../utility')
 const async = require('async')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.getPosts = function (req, res) {
   let countCriteria = LogicLayer.countCriteria
@@ -26,26 +27,16 @@ exports.getPosts = function (req, res) {
     }
   ], 10, function (err, results) {
     if (err) {
-      console.log(`Failed to fetch facebook posts ${JSON.stringify(err)}`)
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch facebook posts ${err}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to fetch facebook posts ${err}`)
     } else {
       let count = results[0].length > 0 ? results[0].count : 0
       let posts = results[1]
       populatePages(posts, req)
         .then(result => {
-          return res.status(200).json({
-            status: 'success',
-            payload: {posts: result.posts, count}
-          })
+          sendSuccessResponse(res, 200, {posts: result.posts, count})
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch facebook posts ${err}`
-          })
+          sendErrorResponse(res, 500, '', `Failed to fetch facebook posts ${err}`)
         })
     }
   })

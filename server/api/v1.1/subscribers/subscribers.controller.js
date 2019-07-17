@@ -4,6 +4,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
 const util = require('util')
 const needle = require('needle')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -15,30 +16,18 @@ exports.index = function (req, res) {
           utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds } })
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
-              return res.status(200).json({
-                status: 'success',
-                payload: subscribersPayload
-              })
+              sendSuccessResponse(res, 200, subscribersPayload)
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch tags subscribers ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch tags subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -51,30 +40,18 @@ exports.allSubscribers = function (req, res) {
           utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds } })
             .then(tags => {
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
-              return res.status(200).json({
-                status: 'success',
-                payload: subscribersPayload
-              })
+              sendSuccessResponse(res, 200, subscribersPayload)
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch tags subscribers ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch tags subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -84,23 +61,14 @@ exports.allLocales = function (req, res) {
       let aggregateObject = [{ $group: { _id: null, locales: { $addToSet: '$locale' } } }]
       utility.callApi(`subscribers/aggregate`, 'post', aggregateObject) // fetch subscribers locales
         .then(locales => {
-          return res.status(200).json({
-            status: 'success',
-            payload: locales[0].locales
-          })
+          sendSuccessResponse(res, 200, locales[0].locales)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch locales ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch locales ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -138,52 +106,31 @@ exports.getAll = function (req, res) {
                               logger.serverLog(TAG, `customFieldSubscribers: ${util.inspect(customFieldSubscribers)}`, 'debug')
                               let finalPayload = logicLayer.getFinalPayload(subscribersPayload, customFields, customFieldSubscribers)
                               logger.serverLog(TAG, `subscribersFinalPayload: ${util.inspect(finalPayload)}`, 'debug')
-                              return res.status(200).json({
-                                status: 'success',
-                                payload: {subscribers: finalPayload, count: count.length > 0 ? count[0].count : 0}
-                              })
+                              sendSuccessResponse(res, 200, {subscribers: finalPayload, count: count.length > 0 ? count[0].count : 0})
                             })
                             .catch(error => {
-                              return res.status(500).json({
-                                status: 'failed',
-                                payload: `Failed to fetch custom_Field_subscribers ${JSON.stringify(error)}`
-                              })
+                              sendErrorResponse(res, 500, `Failed to fetch custom_Field_subscribers ${JSON.stringify(error)}`)
                             })
                         })
                         .catch(error => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            payload: `Failed to fetch custom_Fields ${JSON.stringify(error)}`
-                          })
+                          sendErrorResponse(res, 500, `Failed to fetch custom_Fields ${JSON.stringify(error)}`)
                         })
                     })
                     // end append custom Fields
                     .catch(error => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        payload: `Failed to fetch tags subscribers ${JSON.stringify(error)}`
-                      })
+                      sendErrorResponse(res, 500, `Failed to fetch tags subscribers ${JSON.stringify(error)}`)
                     })
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch tags ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to fetch tags ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch subscriber count ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch subscriber count ${JSON.stringify(error)}`)
         })
     })
     .catch(err => {
@@ -194,16 +141,10 @@ exports.getAll = function (req, res) {
 exports.subscribeBack = function (req, res) {
   utility.callApi(`subscribers/update`, 'put', { query: { _id: req.params.id, unSubscribedBy: 'agent' }, newPayload: { isSubscribed: true, unSubscribedBy: 'subscriber' }, options: {} }) // fetch single subscriber
     .then(subscriber => {
-      return res.status(200).json({
-        status: 'success',
-        payload: subscriber
-      })
+      sendSuccessResponse(res, 200, subscriber)
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch subscriber ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch subscriber ${JSON.stringify(error)}`)
     })
 }
 
@@ -211,32 +152,20 @@ exports.updatePicture = function (req, res) {
   // console.log('hit the updatePicture endpoint', req.body)
   utility.callApi('subscribers/updatePicture', 'post', req.body)
     .then(update => {
-      return res.status(200).json({
-        status: 'success',
-        payload: update
-      })
+      sendSuccessResponse(res, 200, update)
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to update subscriber data ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, `Failed to update subscriber data ${JSON.stringify(err)}`)
     })
 }
 
 exports.updateData = function (req, res) {
   utility.callApi('subscribers/updateData', 'get', {})
     .then(updatedSubscribers => {
-      return res.status(200).json({
-        status: 'success',
-        payload: updatedSubscribers
-      })
+      sendSuccessResponse(res, 200, updatedSubscribers)
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch subscribers ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(err)}`)
     })
 }
 exports.unSubscribe = function (req, res) {
@@ -298,10 +227,7 @@ exports.unSubscribe = function (req, res) {
             `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
             data, (err, resp) => {
               if (err) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: JSON.stringify(err)
-                })
+                sendErrorResponse(res, 500, '', JSON.stringify(err))
               }
               require('./../../../config/socketio').sendMessageToClient({
                 room_id: companyUser.companyId,
@@ -314,12 +240,12 @@ exports.unSubscribe = function (req, res) {
                   }
                 }
               })
-              res.status(200).json({ status: 'success', payload: updated })
+              sendErrorResponse(res, 20, updated)
             })
         })
     })
     .catch(err => {
-      res.status(500).json({ status: 'failed', payload: `Failed to fetch user ${JSON.stringify(err)}` })
+      sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(err)}`)
     })
 }
 function saveNotifications (companyUser, subscriber, req) {
