@@ -103,7 +103,7 @@ exports.handleOrder = function (req, res) {
           newObj.isPurchased = true
         } else if (result.status === 'sent') {
           newObj.isPurchased = true
-          newObj.isExtraSales = true    // It denotes that the product was bought after we sent abandond cart in messngr
+          newObj.isExtraSales = true // It denotes that the product was bought after we sent abandond cart in messngr
           // We need to update the total purchases in Analytics
           dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: result.storeId },
             { $inc: { totalPurchasedCarts: 1, totalExtraSales: req.body.total_price } })
@@ -168,8 +168,8 @@ exports.serveScript = function (req, res) {
 exports.handleNewSubscriber = function (payload) {
   logger.serverLog(TAG, `Got a new Shopify Subscriber`)
   // TODO: ADD Validation Check for payload
-  // Get Page ID
-  const pageId = payload.recipient.id
+  // Get Page ID, commenting out as not used for now
+  // const pageId = payload.recipient.id
   // Get USER REF (Note USER REF is also the cart TOKEN)
   const userRef = payload.optin.user_ref
 

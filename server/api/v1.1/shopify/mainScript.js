@@ -1,5 +1,5 @@
-exports.renderJS =  (pageId, appId, shopUrl) => {
-  return  `
+exports.renderJS = (pageId, appId, shopUrl) => {
+  return `
 		window.fbAsyncInit = function() {
 	    FB.init({
 	      appId            : '${appId}',
@@ -143,6 +143,4 @@ exports.renderJS =  (pageId, appId, shopUrl) => {
 		  
 		  console.log('Successfully executed KiboPush Script')
 		}(document, 'script', 'facebook-jssdk'))`
-};
-
-
+}
