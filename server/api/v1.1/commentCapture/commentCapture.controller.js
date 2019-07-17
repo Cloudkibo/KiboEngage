@@ -80,14 +80,18 @@ exports.create = function (req, res) {
                           logger.serverLog(TAG, err, 'error')
                         }
                         logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
-                        let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
-                        utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
-                          .then(result => {
-                            sendSuccessResponse(res, 200, postCreated)
-                          })
-                          .catch(error => {
-                            sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
-                          })
+                        if (resp.body && !resp.body.error) {
+                          let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
+                          utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
+                            .then(result => {
+                              sendSuccessResponse(res, 200, postCreated)
+                            })
+                            .catch(error => {
+                              sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
+                            })
+                        } else {
+                          sendErrorResponse(res, 500, '', resp.body)
+                        }
                       })
                   } else if (messageData.video) {
                     needle.post(
@@ -117,20 +121,24 @@ exports.create = function (req, res) {
                       })
                   } else {
                     needle.post(
-                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${respp.body.access_token}`,
+                      `https://graph.facebook.com/${page.pageId}/feed?access_token=${page.accessToken}`,
                       messageData, (err, resp) => {
                         if (err) {
                           logger.serverLog(TAG, err, 'error')
                         }
-                        logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
-                        let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
-                        utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
-                          .then(result => {
-                            sendSuccessResponse(res, 200, postCreated)
-                          })
-                          .catch(error => {
-                            sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
-                          })
+                        if (resp.body && !resp.body.error) {
+                          logger.serverLog(TAG, `response from post in image ${JSON.stringify(resp.body)}`)
+                          let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
+                          utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
+                            .then(result => {
+                              sendSuccessResponse(res, 200, postCreated)
+                            })
+                            .catch(error => {
+                              sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
+                            })
+                        } else {
+                          sendErrorResponse(res, 500, '', resp.body)
+                        }
                       })
                   }
                 })

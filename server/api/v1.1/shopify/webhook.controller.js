@@ -18,10 +18,19 @@ exports.handleCheckout = function (req, res) {
       const shopId = results._id
       const userId = results.userId
       const companyId = results.companyId
+      const schedule = results.schedule
       dataLayer.findOneCartInfo({ cartToken: req.body.cart_token })
         .then(cart => {
           if (cart) {
             if (cart.userRef) {
+              let d1 = new Date()
+              if (schedule.condition === 'hours') {
+                d1.setHours(d1.getHours() + Number(schedule.value))
+              } else if (schedule.condition === 'minutes') {
+                d1.setMinutes(d1.getMinutes() + Number(schedule.value))
+              } else if (schedule.condition === 'days') {
+                d1.setDate(d1.getDate() + Number(schedule.value))
+              }
               const checkout = {
                 shopifyCheckoutId: req.body.id,
                 checkoutToken: req.body.token,
@@ -33,7 +42,8 @@ exports.handleCheckout = function (req, res) {
                 abandonedCheckoutUrl: req.body.abandoned_checkout_url,
                 productIds: productIds,
                 status: 'pending',
-                userRef: cart.userRef
+                userRef: cart.userRef,
+                scheduled_at: d1
               }
               // We need to update the analytics against this store
               dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: shopId }, { $inc: { totalAbandonedCarts: 1 } })
@@ -201,4 +211,19 @@ exports.clickCount = function (req, res) {
       logger.serverLog(TAG, `Error in click count ${JSON.stringify(err)}`)
       return res.status(500).json({ status: 'failed', description: 'Failed to find the checkout' })
     })
+}
+
+exports.fulfillmentCreate = function (req, res) {
+  logger.serverLog(TAG, `FulFillment CREATE Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
+exports.fulfillmentUpdate = function (req, res) {
+  logger.serverLog(TAG, `FulFillment UPDATE Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
+exports.orderUpdate = function (req, res) {
+  logger.serverLog(TAG, `ORDER UPDATE Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
 }

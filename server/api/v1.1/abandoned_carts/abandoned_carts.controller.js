@@ -31,6 +31,49 @@ exports.index = function (req, res) {
       }
     })
 }
+exports.updateStoreInfo = function (req, res) {
+  dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.params.id }, req.body)
+    .then(result => res.status(200).json({ status: 'success', payload: result }))
+    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+}
+exports.getOrders = function (req, res) {
+  utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
+    .then(companyUser => {
+      if (!companyUser) {
+        return res.status(404).json({
+          status: 'failed',
+          description: 'The user account does not belong to any company. Please contact support'
+        })
+      }
+      return dataLayer.findAllOrderInfo({companyId: companyUser.companyId})
+    })
+    .then(orderInfoFound => {
+      return res.status(200).json({ status: 'success', payload: orderInfoFound })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
+        })
+      }
+    })
+}
+
+exports.getOrder = function (req, res) {
+  dataLayer.findOneOrderInfoGeneric({_id: req.params.id})
+    .then(orderInfoFound => {
+      return res.status(200).json({ status: 'success', payload: orderInfoFound })
+    })
+    .catch(err => {
+      if (err) {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Internal Server Error ${JSON.stringify(err)}`
+        })
+      }
+    })
+}
 
 // Right now we are not using this API but later on we will use it once we move the webhooks
 // to a separate droplet
