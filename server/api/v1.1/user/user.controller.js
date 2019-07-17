@@ -4,68 +4,45 @@ const TAG = 'api/v2/user/user.controller.js'
 const util = require('util')
 const needle = require('needle')
 const config = require('./../../../config/environment/index')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`user`, 'get', {}, 'accounts', req.headers.authorization)
     .then(user => {
-      return res.status(200).json({
-        status: 'success',
-        payload: user
-      })
+      sendSuccessResponse(res, 200, user)
     }).catch(error => {
       logger.serverLog(TAG, `Error while fetching user details ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetching user details ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetching user details ${JSON.stringify(error)}`)
     })
 }
 
 exports.updateChecks = function (req, res) {
   utility.callApi(`user/updateChecks`, 'post', req.body, 'accounts', req.headers.authorization) // call updateChecks in accounts
     .then(user => {
-      return res.status(200).json({
-        status: 'success',
-        payload: user
-      })
+      sendSuccessResponse(res, 200, user)
     }).catch(error => {
       logger.serverLog(TAG, `Error while updating checks ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to update checks ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to update checks ${JSON.stringify(error)}`)
     })
 }
 
 exports.updateSkipConnect = function (req, res) {
   utility.callApi(`user/updateSkipConnect`, 'get', 'accounts', req.headers.authorization)
     .then(user => {
-      return res.status(200).json({
-        status: 'success',
-        payload: user
-      })
+      sendSuccessResponse(res, 200, user)
     }).catch(error => {
       logger.serverLog(TAG, `Error at updateSkipConnect  ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to updateSkipConnect ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to updateSkipConnect ${JSON.stringify(error)}`)
     })
 }
 
 exports.updateMode = function (req, res) {
   utility.callApi(`user/updateMode`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(user => {
-      return res.status(200).json({
-        status: 'success',
-        payload: user
-      })
+      sendSuccessResponse(res, 200, user)
     }).catch(error => {
       logger.serverLog(TAG, `Error while updating mode ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to update mode ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to update mode ${JSON.stringify(error)}`)
     })
 }
 
@@ -83,73 +60,46 @@ exports.fbAppId = function (req, res) {
   //       payload: `Failed to fetch fbAppId ${JSON.stringify(error)}`
   //     })
   //   })
-  return res.status(200).json({
-    status: 'success',
-    payload: config.facebook.clientID
-  })
+  sendSuccessResponse(res, 200, config.facebook.clientID)
 }
 
 exports.authenticatePassword = function (req, res) {
   utility.callApi(`user/authenticatePassword`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(status => {
-      return res.status(200).json({
-        status: 'success',
-        payload: status
-      })
+      sendSuccessResponse(res, 200, status)
     }).catch(error => {
       logger.serverLog(TAG, `Error while authenticating password ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to authenticate password ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to authenticate password ${JSON.stringify(error)}`)
     })
 }
 
 exports.addAccountType = function (req, res) {
   utility.callApi(`user/addAccountType`, 'get', {}, 'accounts', req.headers.authorization)
     .then(status => {
-      return res.status(200).json({
-        status: 'success',
-        payload: status
-      })
+      sendSuccessResponse(res, 200, status)
     }).catch(error => {
       logger.serverLog(TAG, `Error while adding account type ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to add account type ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to add account type ${JSON.stringify(error)}`)
     })
 }
 
 exports.enableDelete = function (req, res) {
   utility.callApi(`user/gdpr`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(updatedUser => {
-      return res.status(200).json({
-        status: 'success',
-        payload: updatedUser
-      })
+      sendSuccessResponse(res, 200, updatedUser)
     }).catch(error => {
       logger.serverLog(TAG, `Error while enabling GDPR delete ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to enable GDPR delete ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to enable GDPR delete ${JSON.stringify(error)}`)
     })
 }
 
 exports.cancelDeletion = function (req, res) {
   utility.callApi(`user/gdpr`, 'get', {}, 'accounts', req.headers.authorization)
     .then(updatedUser => {
-      return res.status(200).json({
-        status: 'success',
-        payload: updatedUser
-      })
+      sendSuccessResponse(res, 200, updatedUser)
     }).catch(error => {
       logger.serverLog(TAG, `Error while disabling GDPR delete ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to disable GDPR delete ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to disable GDPR delete ${JSON.stringify(error)}`)
     })
 }
 
@@ -157,15 +107,15 @@ exports.validateUserAccessToken = function (req, res) {
   if (req.user.facebookInfo) {
     needle.get(`https://graph.facebook.com/v2.6/me?access_token=${req.user.facebookInfo.fbToken}`, (err, response) => {
       if (err) {
-        res.status(500).json({status: 'failed', payload: JSON.stringify(err)})
+        sendErrorResponse(res, 500, JSON.stringify(err))
       } else if (response.body.error) {
-        res.status(500).json({status: 'failed', payload: response.body})
+        sendErrorResponse(res, 500, response.body)
       } else {
-        res.status(200).json({status: 'success', payload: 'User Access Token validated successfully!'})
+        sendSuccessResponse(res, 200, 'User Access Token validated successfully!')
       }
     })
   } else {
-    res.status(200).json({status: 'success', payload: 'Facebook account is not connected.'})
+    sendSuccessResponse(res, 200, 'Facebook account is not connected.')
   }
 }
 
@@ -173,54 +123,39 @@ exports.updateShowIntegrations = function (req, res) {
   let showIntegrations = req.body.showIntegrations
   utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {showIntegrations}, options: {}})
     .then(updated => {
-      return res.status(200).json({
-        status: 'success',
-        payload: 'Updated Successfully!'
-      })
+      sendSuccessResponse(res, 200, 'Updated Successfully!')
     })
     .catch(err => {
-      res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
 exports.disconnectFacebook = function (req, res) {
   utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {connectFacebook: false}, options: {}})
     .then(updated => {
-      return res.status(200).json({
-        status: 'success',
-        payload: 'Updated Successfully!'
-      })
+      sendSuccessResponse(res, 200, 'Updated Successfully!')
     })
     .catch(err => {
-      res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
 exports.updatePlatform = function (req, res) {
   utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.platform}, options: {}})
     .then(updated => {
-      return res.status(200).json({
-        status: 'success',
-        payload: 'Updated Successfully!'
-      })
+      sendSuccessResponse(res, 200, 'Updated Successfully!')
     })
     .catch(err => {
-      res.status(500).json({status: 'failed', payload: err})
+      sendErrorResponse(res, 500, err)
     })
 }
 
 exports.updatePicture = function (req, res) {
   utility.callApi(`user/updatePicture`, 'get', {})
     .then(updatedUser => {
-      return res.status(200).json({
-        status: 'success',
-        payload: updatedUser
-      })
+      sendSuccessResponse(res, 200, updatedUser)
     }).catch(error => {
       logger.serverLog(TAG, `Error while retrieving profile picture for user ${util.inspect(error)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to retrieve profile picture of user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to retrieve profile picture of user ${JSON.stringify(error)}`)
     })
 }

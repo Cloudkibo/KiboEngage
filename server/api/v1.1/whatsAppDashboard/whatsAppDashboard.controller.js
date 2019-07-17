@@ -1,6 +1,7 @@
 const utility = require('../utility')
 const broadcastDataLayer = require('../whatsAppBroadcasts/whatsAppBroadcasts.datalayer')
 const LogicLayer = require('./whatsAppDashboard.logiclayer')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -13,41 +14,29 @@ exports.index = function (req, res) {
         .then(contacts => {
           broadcastDataLayer.countBroadcasts({ companyId: companyuser.companyId })
             .then(broadcasts => {
-              res.status(200).json({
-                status: 'success',
-                payload: {subscribers: contacts.length > 0 ? contacts[0].count : 0,
-                  broadcasts: broadcasts.length > 0 ? broadcasts[0].count : 0}
-              })
+              let payload = {
+                subscribers: contacts.length > 0 ? contacts[0].count : 0,
+                broadcasts: broadcasts.length > 0 ? broadcasts[0].count : 0
+              }
+              sendSuccessResponse(res, 200, payload)
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to broadcast count ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to broadcast count ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch subscriber count ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch subscriber count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 exports.subscriberSummary = function (req, res) {
   utility.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       utility.callApi('whatsAppContacts/aggregate', 'post', LogicLayer.queryForSubscribers(req.body, companyUser, true))
         .then(subscribers => {
@@ -60,37 +49,22 @@ exports.subscriberSummary = function (req, res) {
                     unsubscribes: unsubscribes.length > 0 ? unsubscribes[0].count : 0,
                     graphdata: graphdata
                   }
-                  return res.status(200).json({
-                    status: 'success',
-                    payload: data
-                  })
+                  sendSuccessResponse(res, 200, data)
                 })
                 .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Error in getting graphdata ${JSON.stringify(err)}`
-                  })
+                  sendErrorResponse(res, 500, '', `Error in getting graphdata ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Error in getting unsubscribers ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Error in getting subscribers ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 exports.sentSeen = function (req, res) {
@@ -106,31 +80,22 @@ exports.sentSeen = function (req, res) {
         .then(broadcasts => {
           broadcastDataLayer.aggregateForBroadcasts(matchCriteria, aggregateForGraph)
             .then(graphdata => {
-              res.status(200).json({
-                status: 'success',
-                payload: {broadcastsSent: broadcasts.length > 0 ? broadcasts[0].sent : 0,
-                  broadcastsSeen: broadcasts.length > 0 ? broadcasts[0].seen : 0,
-                  graphdata: graphdata }
-              })
+              let payload = {
+                broadcastsSent: broadcasts.length > 0 ? broadcasts[0].sent : 0,
+                broadcastsSeen: broadcasts.length > 0 ? broadcasts[0].seen : 0,
+                graphdata: graphdata
+              }
+              sendSuccessResponse(res, 200, payload)
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch graph ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch graph ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to broadcast count ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to broadcast count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

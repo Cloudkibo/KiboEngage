@@ -2,36 +2,25 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/invitations/invitations.controller.js'
 const callApi = require('../utility')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   callApi.callApi('invitations', 'get', {})
     .then(invitations => {
-      res.status(200).json({
-        status: 'success',
-        payload: invitations
-      })
+      sendSuccessResponse(res, 200, invitations)
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 
 exports.cancel = function (req, res) {
   callApi.callApi('invitations/cancel', 'post', {email: req.body.email})
     .then(result => {
-      res.status(200).json({
-        status: 'success',
-        description: 'Invitation has been cancelled.'
-      })
+      sendErrorResponse(res, 200, '', 'Invitation has been cancelled.')
     })
     .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
 
@@ -40,11 +29,11 @@ exports.invite = function (req, res) {
     .then((result) => {
       logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
       logger.serverLog(TAG, result, 'debug')
-      res.status(200).json(result)
+      sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
       logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
       logger.serverLog(TAG, err, 'debug')
-      res.status(500).json(err)
+      sendErrorResponse(res, 500, err)
     })
 }
