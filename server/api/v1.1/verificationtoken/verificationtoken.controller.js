@@ -6,7 +6,7 @@ const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.resend = function (req, res) {
-  utility.callApi(`verificationtoken/resend`, 'get', {})
+  utility.callApi(`verificationtoken/resend`, 'get', {}, 'accounts', req.headers.authorization)
     .then(response => {
       sendSuccessResponse(res, 200, 'Verification email has been sent')
     })
