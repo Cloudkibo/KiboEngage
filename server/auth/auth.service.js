@@ -36,7 +36,6 @@ function isAuthenticated () {
           consumer_id: req.headers.consumer_id
         })
       }
-      console.log('Headers to Accounts', headers)
       let path = config.api_urls['accounts'].slice(0, config.api_urls['accounts'].length - 7)
       let options = {
         method: 'GET',
