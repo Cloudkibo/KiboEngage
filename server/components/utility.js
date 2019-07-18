@@ -24,7 +24,7 @@ function setProtocolUrl (str) {
 }
 
 function checkLastMessageAge (subscriberId, req, callback) {
-  utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId }, req.headers.authorization)
+  utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId })
     .then(subscribers => {
       var subscriber = subscribers[0]
       logger.serverLog(TAG, `subscribers found ${JSON.stringify(subscribers)}`)
