@@ -84,4 +84,8 @@ router.get('/retrieveReachEstimation/:page_id',
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.retrieveReachEstimation)
 
+router.post('/urlMetaData/',
+  auth.isAuthenticated(),
+  controller.urlMetaData)
+
 module.exports = router

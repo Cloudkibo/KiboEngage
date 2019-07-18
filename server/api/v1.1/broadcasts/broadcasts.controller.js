@@ -22,6 +22,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const util = require('util')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const urlMetadata = require('url-metadata')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -821,6 +822,29 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
         })
     }
   }, delay)
+}
+
+exports.urlMetaData = (req, res) => {
+  let url = req.body.url
+  console.log('urlMetaData req.body', req.body)
+  if (url) {
+    urlMetadata(url).then((metadata) => {
+      return res.status(200).json({
+        status: 'success',
+        payload: metadata
+      })
+    }, (err) => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to retrieve url ${err}`
+      })
+    })
+  } else {
+    res.status(400).json({
+      status: 'failed',
+      description: 'url not given in paramater'
+    })
+  }
 }
 
 exports.sendBroadcast = sendBroadcast
