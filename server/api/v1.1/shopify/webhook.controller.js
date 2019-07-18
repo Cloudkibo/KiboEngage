@@ -104,7 +104,7 @@ exports.handleCart = function (req, res) {
 }
 
 exports.handleOrder = function (req, res) {
-  logger.serverLog(TAG, `Order webhook called ${JSON.stringify(req.body.checkout_id)}`)
+  logger.serverLog(TAG, `Order webhook called ${JSON.stringify(req.body)}`)
   dataLayer.findOneCheckOutInfo({ shopifyCheckoutId: req.body.checkout_id })
     .then(result => {
       if (result) {
