@@ -9,32 +9,24 @@ const async = require('async')
 const logger = require('../../../components/logger')
 const TAG = 'api/lists/lists.controller.js'
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.allLists = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       utility.callApi(`lists/query`, 'post', { companyId: companyUser.companyId })
         .then(lists => {
-          return res.status(201).json({status: 'success', payload: lists})
+          sendSuccessResponse(res, 200, lists)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch lists ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -46,30 +38,18 @@ exports.getAll = function (req, res) {
         .then(count => {
           utility.callApi(`lists/aggregate`, 'post', criterias.fetchCriteria) // fetch lists
             .then(lists => {
-              res.status(200).json({
-                status: 'success',
-                payload: {lists: lists, count: count.length > 0 ? count[0].count : 0}
-              })
+              sendSuccessResponse(res, 200, {lists: lists, count: count.length > 0 ? count[0].count : 0})
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch lists ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch list count ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch list count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -96,26 +76,17 @@ exports.create = function (req, res) {
             }
           ], 10, function (err, results) {
             if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to create list ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
             }
             assignTagToSubscribers(req.body.content, req.body.listName, req, res)
           })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch company usage ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to plan usage ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
 
@@ -197,10 +168,7 @@ exports.editList = function (req, res) {
               facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': label})
                 .then(label => {
                   if (label.body.error) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                   let data = {
                     listName: req.body.newListName,
@@ -214,10 +182,7 @@ exports.editList = function (req, res) {
                     }
                   ], 10, function (err, results) {
                     if (err) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.error)}`)
                     }
                     if (i === tags.length - 1) {
                       utility.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.listName})
@@ -226,38 +191,26 @@ exports.editList = function (req, res) {
                           if (subscribers.length > 0) {
                             assignTagToSubscribers(subscribers, req.body.listName, req, res)
                           } else {
-                            res.status(200).json({status: 'success', payload: 'List updated successfully!'})
+                            sendSuccessResponse(res, 200, 'List updated successfully!')
                           }
                         })
                         .catch(err => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            description: `Failed to create tag on Facebook ${JSON.stringify(err)}`
-                          })
+                          sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(err)}`)
                         })
                     }
                   })
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to create tag on Facebook ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to create tag on Facebook ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch page ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
             })
         })
       })
       .catch(error => {
-        return res.status(500).json({
-          status: 'failed',
-          payload: `Failed to fetch tags ${JSON.stringify(error)}`
-        })
+        sendErrorResponse(res, 500, `Failed to fetch tags ${JSON.stringify(error)}`)
       })
   } else {
     let data = {
@@ -272,12 +225,9 @@ exports.editList = function (req, res) {
       }
     ], 10, function (err, results) {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Failed to update list`
-        })
+        sendErrorResponse(res, 500, '', `Failed to update list`)
       } else {
-        res.status(200).json({status: 'success', payload: 'List updated successfully!'})
+        sendSuccessResponse(res, 200, 'List updated successfully!')
       }
     })
   }
@@ -315,61 +265,39 @@ exports.viewList = function (req, res) {
                         content: content
                       })
                         .then(savedList => {
-                          return res.status(201).json({status: 'success', payload: subscribers})
+                          sendSuccessResponse(res, 200, subscribers)
                         })
                         .catch(error => {
-                          return res.status(500).json({
-                            status: 'failed',
-                            payload: `Failed to fetch list content ${JSON.stringify(error)}`
-                          })
+                          sendErrorResponse(res, 500, `Failed to fetch list content ${JSON.stringify(error)}`)
                         })
                     })
                     .catch(error => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-                      })
+                      sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                     })
                 } else {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: 'No subscribers found'
-                  })
+                  sendErrorResponse(res, 500, 'No subscribers found')
                 }
               })
               .catch(error => {
-                return res.status(500).json({
-                  status: 'failed',
-                  payload: `Failed to fetch numbers ${JSON.stringify(error)}`
-                })
+                sendErrorResponse(res, 500, `Failed to fetch numbers ${JSON.stringify(error)}`)
               })
           } else {
             utility.callApi(`subscribers/query`, 'post', {
               isSubscribed: true, companyId: companyUser.companyId, _id: {$in: list.content}})
               .then(subscribers => {
-                return res.status(201)
-                  .json({status: 'success', payload: subscribers})
+                sendSuccessResponse(res, 200, subscribers)
               })
               .catch(error => {
-                return res.status(500).json({
-                  status: 'failed',
-                  payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-                })
+                sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
               })
           }
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch list ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch list ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -406,32 +334,20 @@ exports.deleteList = function (req, res) {
           }
         ], 10, function (err, results) {
           if (err) {
-            return res.status(404).json({
-              status: 'failed',
-              description: `Failed to find list ${err}`
-            })
+            sendErrorResponse(res, 50, `Failed to find list ${err}`)
           }
-          res.status(200).json({status: 'success', payload: 'List has been deleted successfully!'})
+          sendSuccessResponse(res, 200, 'List has been deleted successfully!')
         })
       } else {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'Tag not found'
-        })
+        sendErrorResponse(res, 404, '', 'Tag not found')
       }
     })
     .catch(err => {
-      return res.status(404).json({
-        status: 'failed',
-        description: `Failed to find tags ${err}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to find tags ${err}`)
     })
   })
   .catch(err => {
-    return res.status(404).json({
-      status: 'failed',
-      description: `Failed to find list ${err}`
-    })
+    sendErrorResponse(res, 500, '', `Failed to find list ${err}`)
   })
 }
 
@@ -491,34 +407,22 @@ exports.repliedPollSubscribers = function (req, res) {
               utility.callApi(`subscribers/query`, 'post', subscriberCriteria)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
-                  return res.status(200).json({status: 'success', payload: subscribersPayload})
+                  sendSuccessResponse(res, 200, subscribersPayload)
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch poll responses ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch poll responses ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch polls ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch polls ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 exports.repliedSurveySubscribers = function (req, res) {
@@ -533,34 +437,22 @@ exports.repliedSurveySubscribers = function (req, res) {
               utility.callApi(`subscribers/query`, 'post', subscriberCriteria)
                 .then(subscribers => {
                   let subscribersPayload = logicLayer.preparePayload(subscribers, responses)
-                  return res.status(200).json({status: 'success', payload: subscribersPayload})
+                  sendSuccessResponse(res, 200, subscribersPayload)
                 })
                 .catch(error => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    payload: `Failed to fetch subscribers ${JSON.stringify(error)}`
-                  })
+                  sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch survey responses ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch survey responses ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch surveys ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch surveys ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -585,7 +477,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
               if (assignedLabel.body.error) {
-                res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${assignedLabel.body.error}`})
+                sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${assignedLabel.body.error}`)
               }
               let subscriberTagsPayload = {
                 tagId: tagPayload._id,
@@ -595,15 +487,15 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
                 .then(newRecord => {
                   if (i === subscribers.length - 1) {
-                    res.status(200).json({status: 'success', payload: 'List created successfully!'})
+                    sendSuccessResponse(res, 200, 'List created successfully!')
                   }
                 })
                 .catch(err => {
-                  res.status(500).json({status: 'failed', payload: `Failed to assign tag to subscriber ${err}`})
+                  sendErrorResponse(res, 500, `Failed to assign tag to subscriber ${err}`)
                 })
             })
             .catch(err => {
-              res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${err}`})
+              sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
             })
         } else {
           utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
@@ -613,7 +505,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
                 .then(assignedLabel => {
                   if (assignedLabel.body.error) {
-                    res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${assignedLabel.body.error}`})
+                    sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${assignedLabel.body.error}`)
                   }
                   let subscriberTagsPayload = {
                     tagId: tagPayload._id,
@@ -623,24 +515,24 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
                   utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
                     .then(newRecord => {
                       if (i === subscribers.length - 1) {
-                        res.status(200).json({status: 'success', payload: 'List created successfully!'})
+                        sendSuccessResponse(res, 200, 'List created successfully!')
                       }
                     })
                     .catch(err => {
-                      res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${err}`})
+                      sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
                     })
                 })
                 .catch(err => {
-                  res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${err}`})
+                  sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
                 })
             })
             .catch(err => {
-              res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${err}`})
+              sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
             })
         }
       })
       .catch(err => {
-        res.status(500).json({status: 'failed', payload: `Failed to associate tag to subscriber ${err}`})
+        sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
       })
   })
 }

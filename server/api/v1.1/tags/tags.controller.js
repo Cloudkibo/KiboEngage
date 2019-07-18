@@ -7,15 +7,13 @@ const TAG = 'api/tags/tags.controller.js'
 const callApi = require('../utility')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       let aggregateData = [
         {$match: {companyId: companyUser.companyId, defaultTag: false, isList: false}},
@@ -24,23 +22,17 @@ exports.index = function (req, res) {
       callApi.callApi('tags/aggregate', 'post', aggregateData)
         .then(tags => {
           tags = tags.map((t) => t.doc)
-          res.status(200).json({status: 'success', payload: tags})
+          sendSuccessResponse(res, 200, tags)
         })
         .catch(err => {
           if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error in fetching tags${JSON.stringify(err)}`
-            })
+            sendErrorResponse(res, 500, '', `Internal Server Error in fetching tags${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error in fetching customer${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error in fetching customer${JSON.stringify(err)}`)
       }
     })
 }
@@ -63,10 +55,7 @@ exports.create = function (req, res) {
                 facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
                   .then(label => {
                     if (label.body.error) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                     }
                     let tagPayload = {
                       tag: req.body.tag,
@@ -97,46 +86,31 @@ exports.create = function (req, res) {
                           }
                         })
                         if (i === pages.length - 1) {
-                          return res.status(201).json({status: 'success', payload: newTag})
+                          sendSuccessResponse(res, 200, newTag)
                         }
                       })
                       .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Internal Server Error in saving tag${JSON.stringify(err)}`
-                        })
+                        sendErrorResponse(res, 500, '', `Internal Server Error in saving tag${JSON.stringify(err)}`)
                       })
                   })
                   .catch(err => {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Internal Server Error in saving tag${JSON.stringify(err)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Internal Server Error in saving tag${JSON.stringify(err)}`)
                   })
               })
             })
             .catch(err => {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Failed to fetch connected pages ${JSON.stringify(err)}`
-              })
+              sendErrorResponse(res, 500, '', `Failed to fetch connected pages ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
           if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error in fetching company usage ${JSON.stringify(err)}`
-            })
+            sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error in fetching plan usage{JSON.stringify(err)}`
-        })
+        sendErrorResponse(`Internal Server Error in fetching plan usage ${JSON.stringify(err)}`)
       }
     })
 }
@@ -152,25 +126,16 @@ exports.rename = function (req, res) {
               facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
                 .then(label => {
                   if (label.body.error) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to delete tag on Facebook ${JSON.stringify(label.body.error)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Failed to delete tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                 })
                 .catch(err => {
-                  return res.status(404).json({
-                    status: 'failed',
-                    description: `Failed to fetch page ${err}`
-                  })
+                  sendErrorResponse(res, 500, '', `Failed to fetch page ${err}`)
                 })
               facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.newTag})
                 .then(label => {
                   if (label.body.error) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`
-                    })
+                    sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                   let data = {
                     tag: req.body.newTag,
@@ -194,37 +159,25 @@ exports.rename = function (req, res) {
                     }
                   ], 10, function (err, results) {
                     if (err) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Failed to create tag on Facebook ${JSON.stringify(label.error)}`
-                      })
+                      sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.error)}`)
                     }
                     if (i === tags.length - 1) {
-                      return res.status(200).json({status: 'success', payload: 'Tag updated successfully!'})
+                      sendSuccessResponse(res, 200, 'Tag updated successfully!')
                     }
                   })
                 })
                 .catch(err => {
-                  return res.status(404).json({
-                    status: 'failed',
-                    description: `Failed to fetch page ${err}`
-                  })
+                  sendErrorResponse(res, 500, '', `Failed to fetch page ${err}`)
                 })
             })
         })
       } else {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'Tag not found'
-        })
+        sendErrorResponse(res, 404, '', 'Tag not found')
       }
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error ${JSON.stringify(err)}`
-        })
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
 }
@@ -280,25 +233,16 @@ exports.delete = function (req, res) {
           }
         ], 10, function (err, results) {
           if (err) {
-            return res.status(404).json({
-              status: 'failed',
-              description: `Failed to find tagSubscriber ${err}`
-            })
+            sendErrorResponse(res, 500, '', `Failed to find tagSubscriber ${err}`)
           }
-          res.status(200).json({status: 'success', payload: 'Tag has been deleted successfully!'})
+          sendSuccessResponse(res, 200, 'Tag has been deleted successfully!')
         })
       } else {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'Tag not found'
-        })
+        sendErrorResponse(res, 404, '', 'Tag not found')
       }
     })
     .catch(err => {
-      return res.status(404).json({
-        status: 'failed',
-        description: `Failed to find tags ${err}`
-      })
+      sendErrorResponse(res, 500, '', `Failed to find tags ${err}`)
     })
 }
 
@@ -423,10 +367,7 @@ exports.assign = function (req, res) {
     }
   ], 10, function (err, results) {
     if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in Assigning tag ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in Assigning tag ${JSON.stringify(err)}`)
     }
     require('./../../../config/socketio').sendMessageToClient({
       room_id: req.user.companyId,
@@ -438,10 +379,7 @@ exports.assign = function (req, res) {
         }
       }
     })
-    return res.status(200).json({
-      status: 'success',
-      description: 'Tag assigned successfully'
-    })
+    sendSuccessResponse(res, 200, '', 'Tag assigned successfully')
   })
 }
 
@@ -501,10 +439,7 @@ exports.unassign = function (req, res) {
     }
   ], 10, function (err, results) {
     if (err) {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Internal Server Error in unassigning tag ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, '', `Internal Server Error in unassigning tag ${JSON.stringify(err)}`)
     }
     require('./../../../config/socketio').sendMessageToClient({
       room_id: req.user.companyId,
@@ -516,10 +451,7 @@ exports.unassign = function (req, res) {
         }
       }
     })
-    return res.status(201).json({
-      status: 'success',
-      description: 'Tags unassigned successfully'
-    })
+    sendSuccessResponse(res, 200, '', 'Tags unassigned successfully')
   })
 }
 
@@ -534,15 +466,9 @@ exports.subscribertags = function (req, res) {
           subscriberId: tagsSubscriber[i].subscriberId
         })
       }
-      res.status(200).json({
-        status: 'success',
-        payload: payload
-      })
+      sendSuccessResponse(res, 200, payload)
     })
     .catch(err => {
-      return res.status(500)({
-        status: 'failed',
-        description: `Internal server error in fetching tag subscribers. ${err}`
-      })
+      sendErrorResponse(res, 500, '', `Internal server error in fetching tag subscribers. ${err}`)
     })
 }

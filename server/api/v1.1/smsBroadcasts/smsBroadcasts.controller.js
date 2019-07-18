@@ -4,6 +4,7 @@ const utility = require('../utility')
 let config = require('./../../../config/environment')
 const logger = require('../../../components/logger')
 const TAG = 'smsBroadcasts.controller.js'
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -17,30 +18,18 @@ exports.index = function (req, res) {
           let aggregateLimit = criteria.fetchCriteria[3].$limit
           dataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
             .then(broadcasts => {
-              return res.status(200).json({
-                status: 'success',
-                payload: {broadcasts: broadcasts, count: count.length > 0 ? count[0].count : 0}
-              })
+              sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: count.length > 0 ? count[0].count : 0})
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch broadcasts ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch broadcasts count ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch broadcasts count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -72,29 +61,19 @@ exports.sendBroadcast = function (req, res) {
                     })
                 }
                 if (i === contacts.length - 1) {
-                  return res.status(200)
-                    .json({status: 'success', description: 'Conversation sent successfully!'})
+                  sendSuccessResponse(res, 200, 'Conversation sent successfully!')
                 }
               }
             })
             .catch(error => {
-              return res.status(500).json({
-                status: 'failed',
-                payload: `Failed to fetch contacts ${JSON.stringify(error)}`
-              })
+              sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to create broadcast ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
         })
         .catch(error => {
-          return res.status(500).json({
-            status: 'failed',
-            payload: `Failed to fetch company user ${JSON.stringify(error)}`
-          })
+          sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
         })
     })
 }
@@ -110,18 +89,12 @@ exports.getTwilioNumbers = function (req, res) {
           for (let i = 0; i < incomingPhoneNumbers.length; i++) {
             numbers.push(incomingPhoneNumbers[i].phoneNumber)
             if (i === incomingPhoneNumbers.length - 1) {
-              return res.status(200).json({
-                status: 'success',
-                payload: numbers
-              })
+              sendSuccessResponse(res, 200, numbers)
             }
           }
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

@@ -1,28 +1,23 @@
 const utility = require('../utility')
 const logicLayer = require('./landingPage.logiclayer')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       utility.callApi(`landingPage/query`, 'post', {companyId: companyUser.companyId})
         .then(landingPages => {
-          return res.status(200).json({status: 'success', payload: landingPages})
+          sendSuccessResponse(res, 200, landingPages)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch landingPages ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch landingPages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -42,14 +37,14 @@ exports.update = function (req, res) {
       // }
       utility.callApi(`landingPage/landingPageState/${req.body.initialState._id}`, 'put', req.body.initialState)
         .then(landingPage => {
-          return res.status(201).json({status: 'success', payload: landingPage})
+          sendSuccessResponse(res, 200, landingPage)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to create landingPage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to create landingPageState ${(error)}`})
+      sendErrorResponse(res, 500, `Failed to create landingPageState ${(error)}`)
     })
 }
 
@@ -57,10 +52,7 @@ exports.create = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       utility.callApi(`landingPage/landingPageState`, 'post', req.body.initialState)
         .then(landingPageState => {
@@ -84,23 +76,20 @@ exports.create = function (req, res) {
           let payload = logicLayer.preparePayload(req.body, landingPageState, companyUser)
           utility.callApi(`landingPage`, 'post', payload)
             .then(landingPage => {
-              return res.status(201).json({status: 'success', payload: landingPage})
+              sendSuccessResponse(res, 200, landingPage)
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to create landingPage ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to create landingPage ${JSON.stringify(error)}`)
             })
         }
         // }
         )
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to create landingPageState ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to create landingPageState ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
 
@@ -115,22 +104,22 @@ exports.delete = function (req, res) {
               .then(result => {
               })
               .catch(error => {
-                return res.status(500).json({status: 'failed', payload: `Failed to delete landingPageState ${JSON.stringify(error)}`})
+                sendErrorResponse(res, 500, `Failed to delete landingPageState ${JSON.stringify(error)}`)
               })
           }
           utility.callApi(`landingPage/${req.params.id}`, 'delete', {})
             .then(result => {
-              return res.status(200).json({status: 'success', payload: result})
+              sendSuccessResponse(res, 200, result)
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to delete landingPage ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to delete landingPage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to delete landingPageState ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to delete landingPageState ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch landingPage ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to delete landingPageState ${JSON.stringify(error)}`)
     })
 }

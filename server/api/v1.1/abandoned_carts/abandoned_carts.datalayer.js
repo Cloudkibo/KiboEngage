@@ -124,6 +124,15 @@ exports.findOneCheckOutInfoObjectAndUpdate = (queryObject, update) => {
   return callApi(`abandoned_cart/checkoutinfo`, 'put', query, 'kiboengage')
 }
 
+exports.findOneOrderInfoObjectAndUpdate = (queryObject, update) => {
+  let query = {
+    purpose: 'updateOne',
+    match: queryObject,
+    updated: update
+  }
+  return callApi(`abandoned_cart/orderinfo`, 'put', query, 'kiboengage')
+}
+
 exports.deleteAllCartInfoObjects = (storeId) => {
   let query = {
     purpose: 'deleteAll',

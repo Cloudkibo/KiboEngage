@@ -31,13 +31,11 @@ function isAuthenticated () {
           Authorization: `Bearer ${req.query.access_token}`
         })
       }
-      console.log('Headers from KiboAPI', req.headers)
       if (req.headers.hasOwnProperty('consumer_id') && isAuthorizedKiboAPITrigger(req)) {
         headers = _.merge(headers, {
           consumer_id: req.headers.consumer_id
         })
       }
-      console.log('Headers to Accounts', headers)
       let path = config.api_urls['accounts'].slice(0, config.api_urls['accounts'].length - 7)
       let options = {
         method: 'GET',

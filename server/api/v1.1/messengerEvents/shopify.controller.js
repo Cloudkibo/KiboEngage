@@ -8,5 +8,14 @@ exports.shopify = function (req, res) {
     description: `received the payload`
   })
   logger.serverLog(TAG, `in shopify ${JSON.stringify(req.body)}`)
-  shopifyWebhook.handleNewSubscriber(req.body.entry[0].messaging[0])
+  shopifyWebhook.handleNewCustomerRefId(req.body.entry[0].messaging[0])
+}
+
+exports.shopifyNewSubscriber = function (req, res) {
+  res.status(200).json({
+    status: 'success',
+    description: `received the payload`
+  })
+  logger.serverLog(TAG, `in shopify ${JSON.stringify(req.body)}`)
+  shopifyWebhook.handleNewSubscriber(req.body)
 }

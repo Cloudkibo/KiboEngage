@@ -18,10 +18,19 @@ exports.handleCheckout = function (req, res) {
       const shopId = results._id
       const userId = results.userId
       const companyId = results.companyId
+      const schedule = results.schedule
       dataLayer.findOneCartInfo({ cartToken: req.body.cart_token })
         .then(cart => {
           if (cart) {
             if (cart.userRef) {
+              let d1 = new Date()
+              if (schedule.condition === 'hours') {
+                d1.setHours(d1.getHours() + Number(schedule.value))
+              } else if (schedule.condition === 'minutes') {
+                d1.setMinutes(d1.getMinutes() + Number(schedule.value))
+              } else if (schedule.condition === 'days') {
+                d1.setDate(d1.getDate() + Number(schedule.value))
+              }
               const checkout = {
                 shopifyCheckoutId: req.body.id,
                 checkoutToken: req.body.token,
@@ -33,7 +42,8 @@ exports.handleCheckout = function (req, res) {
                 abandonedCheckoutUrl: req.body.abandoned_checkout_url,
                 productIds: productIds,
                 status: 'pending',
-                userRef: cart.userRef
+                userRef: cart.userRef,
+                scheduled_at: d1
               }
               // We need to update the analytics against this store
               dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: shopId }, { $inc: { totalAbandonedCarts: 1 } })
@@ -103,7 +113,7 @@ exports.handleOrder = function (req, res) {
           newObj.isPurchased = true
         } else if (result.status === 'sent') {
           newObj.isPurchased = true
-          newObj.isExtraSales = true    // It denotes that the product was bought after we sent abandond cart in messngr
+          newObj.isExtraSales = true // It denotes that the product was bought after we sent abandond cart in messngr
           // We need to update the total purchases in Analytics
           dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: result.storeId },
             { $inc: { totalPurchasedCarts: 1, totalExtraSales: req.body.total_price } })
@@ -165,11 +175,11 @@ exports.serveScript = function (req, res) {
     .catch(err => res.status(500).json({ status: 'failed', error: err }))
 }
 
-exports.handleNewSubscriber = function (payload) {
-  logger.serverLog(TAG, `Got a new Shopify Subscriber`)
+exports.handleNewCustomerRefId = function (payload) {
+  logger.serverLog(TAG, `Got a new Shopify Customer using Ref ID`)
   // TODO: ADD Validation Check for payload
-  // Get Page ID
-  const pageId = payload.recipient.id
+  // Get Page ID, commenting out as not used for now
+  // const pageId = payload.recipient.id
   // Get USER REF (Note USER REF is also the cart TOKEN)
   const userRef = payload.optin.user_ref
 
@@ -183,6 +193,26 @@ exports.handleNewSubscriber = function (payload) {
       return dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: cart.storeId }, { $inc: { totalSubscribers: 1 } })
     })
     .then(updated => logger.serverLog(TAG, `Updated Store analytics ${JSON.stringify(updated)}`))
+    .catch(err => logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`))
+}
+
+exports.handleNewSubscriber = function (payload) {
+  const userRef = payload.identifier
+
+  const cartToken = userRef.split('-')[0]
+
+  dataLayer.findOneCartInfoObjectAndUpdate({ cartToken, userRef }, { subscriberId: payload.senderId })
+    .then(updated => {
+      logger.serverLog(TAG, `Updated cart info on New Subscriber ${JSON.stringify(updated)}`)
+      return dataLayer.findOneCheckOutInfoObjectAndUpdate({ cartToken, userRef }, { subscriberId: payload.senderId })
+    })
+    .then(updated => {
+      logger.serverLog(TAG, `Updated checkout info on New Subscriber ${JSON.stringify(updated)}`)
+      return dataLayer.findOneOrderInfoObjectAndUpdate({ cartToken, userRef }, { subscriberId: payload.senderId })
+    })
+    .then(updated => {
+      logger.serverLog(TAG, `Updated order info on New Subscriber ${JSON.stringify(updated)}`)
+    })
     .catch(err => logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`))
 }
 

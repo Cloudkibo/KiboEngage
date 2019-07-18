@@ -31,6 +31,6 @@ router.post('/menuReply', auth.isItWebhookServer(), menuController.index)
 router.post('/welcomeMessage', auth.isItWebhookServer(), welcomeMessageController.index)
 router.post('/messengerAdsReply', auth.isItWebhookServer(), messengerAdsController.index)
 router.post('/shopify', auth.isItWebhookServer(), shopifyController.shopify)
-
+router.post('/shopifyNewSubscriber', auth.isItWebhookServer(), shopifyController.shopifyNewSubscriber)
 
 module.exports = router

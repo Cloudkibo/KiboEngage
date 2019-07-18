@@ -95,26 +95,18 @@ exports.delete = function (req, res) {
   fs.unlink(dir + '/' + req.params.id, function (err) {
     if (err) {
       logger.serverLog(TAG, err, 'error')
-      return res.status(404)
-        .json({status: 'failed', description: 'File not found'})
+      sendErrorResponse(res, 404, '', 'File not found')
     } else {
-      return res.status(200)
-        .json({status: 'success', payload: 'File deleted successfully'})
+      sendSuccessResponse(res, 200, 'File deleted successfully')
     }
   })
 }
 exports.addButton = function (req, res) {
   if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
-    return res.status(500).json({
-      status: 'failed',
-      description: 'Url is required for type web_url.'
-    })
+    sendErrorResponse(res, 500, '', 'Url is required for type web_url.')
   }
   if (req.body.type === 'postback' && !(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) {
-    return res.status(500).json({
-      status: 'failed',
-      description: 'SequenceId & action are required for type postback'
-    })
+    sendErrorResponse(res, 500, '', 'SequenceId & action are required for type postback')
   }
   let buttonPayload = {
     title: req.body.title,
@@ -123,7 +115,7 @@ exports.addButton = function (req, res) {
   if (req.body.type === 'web_url') {
     if (req.body.messenger_extensions || req.body.webview_height_ratio) {
       if (!broadcastUtility.isWebView(req.body)) {
-        return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+        sendErrorResponse(res, 400, `parameters are missing`)
       }
       broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
         .then(result => {
@@ -135,12 +127,9 @@ exports.addButton = function (req, res) {
               messenger_extensions: req.body.messenger_extensions,
               webview_height_ratio: req.body.webview_height_ratio
             }
-            return res.status(200).json({
-              status: 'success',
-              payload: webViewPayload
-            })
+            sendSuccessResponse(res, 200, webViewPayload)
           } else {
-            return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+            sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
           }
         })
     } else {
@@ -154,20 +143,14 @@ exports.addButton = function (req, res) {
           let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
           buttonPayload.newUrl = newURL
           buttonPayload.url = req.body.url
-          return res.status(200).json({
-            status: 'success',
-            payload: buttonPayload
-          })
+          sendSuccessResponse(res, 200, buttonPayload)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
         })
     }
   } else if (req.body.type === 'element_share') {
-    return res.status(200).json({
-      status: 'success',
-      payload: {type: req.body.type}
-    })
+    sendSuccessResponse(res, 200, {type: req.body.type})
   } else {
     if (req.body.module.type === 'sequenceMessaging') {
       let buttonId = uniqid()
@@ -177,25 +160,16 @@ exports.addButton = function (req, res) {
         buttonId: buttonId
       })
       buttonPayload.sequenceValue = req.body.sequenceId
-      return res.status(200).json({
-        status: 'success',
-        payload: buttonPayload
-      })
+      sendSuccessResponse(res, 200, buttonPayload)
     }
   }
 }
 exports.editButton = function (req, res) {
   if (req.body.type === 'web_url' && !req.body.messenger_extensions && !(_.has(req.body, 'newUrl'))) {
-    return res.status(500).json({
-      status: 'failed',
-      description: 'Url is required for type web_url.'
-    })
+    sendErrorResponse(res, 400, '', 'Url is required for type web_url.')
   }
   if (req.body.type === 'postback' && !(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) {
-    return res.status(500).json({
-      status: 'failed',
-      description: 'SequenceId & action are required for type postback'
-    })
+    sendErrorResponse(res, 400, '', 'SequenceId & action are required for type postback')
   }
   let buttonPayload = {
     title: req.body.title,
@@ -211,13 +185,10 @@ exports.editButton = function (req, res) {
           let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
           buttonPayload.newUrl = newURL
           buttonPayload.url = req.body.newUrl
-          return res.status(200).json({
-            status: 'success',
-            payload: { id: req.body.id, button: buttonPayload }
-          })
+          sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
         })
     } else {
       URLDataLayer.createURLObject({
@@ -230,18 +201,15 @@ exports.editButton = function (req, res) {
           let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
           buttonPayload.newUrl = newURL
           buttonPayload.url = req.body.newUrl
-          return res.status(200).json({
-            status: 'success',
-            payload: { id: req.body.id, button: buttonPayload }
-          })
+          sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
         })
     }
   } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
     if (!broadcastUtility.isWebView(req.body)) {
-      return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+      sendErrorResponse(res, 400, `parameters are missing`)
     }
     broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
       .then(result => {
@@ -253,44 +221,32 @@ exports.editButton = function (req, res) {
             messenger_extensions: req.body.messenger_extensions,
             webview_height_ratio: req.body.webview_height_ratio
           }
-          return res.status(200).json({
-            status: 'success',
-            payload: {id: req.body.id, button: webViewPayload}
-          })
+          sendSuccessResponse(res, 200, {id: req.body.id, button: webViewPayload})
         } else {
-          return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+          sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
         }
       })
   } else if (req.body.type === 'element_share') {
     buttonPayload = {
       type: req.body.type
     }
-    return res.status(200).json({
-      status: 'success',
-      payload: {id: req.body.id, button: buttonPayload}
-    })
+    sendSuccessResponse(res, 200, {id: req.body.id, button: buttonPayload})
   } else {
     buttonPayload.payload = JSON.stringify({
       sequenceId: req.body.sequenceId,
       action: req.body.action
     })
     buttonPayload.sequenceValue = req.body.sequenceId
-    return res.status(200).json({
-      status: 'success',
-      payload: { id: req.body.id, button: buttonPayload }
-    })
+    sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
   }
 }
 exports.deleteButton = function (req, res) {
   URLDataLayer.deleteOneURL(req.params.id)
     .then(deleted => {
-      return res.status(200).json({
-        status: 'success',
-        description: 'Url deleted successfully!'
-      })
+      sendSuccessResponse(res, 200, '', 'Url deleted successfully!')
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to delete url ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to delete url ${JSON.stringify(error)}`)
     })
 }
 
@@ -301,8 +257,7 @@ exports.download = function (req, res) {
   } catch (err) {
     logger.serverLog(TAG,
       `Inside Download file, err = ${JSON.stringify(err)}`, 'error')
-    res.status(404)
-      .json({status: 'success', payload: 'Not Found ' + JSON.stringify(err)})
+    sendErrorResponse(res, 404, 'Not Found ' + JSON.stringify(err))
   }
 }
 
@@ -476,13 +431,11 @@ exports.sendConversation = function (req, res) {
   // validate braodcast
   if (!validateInput.facebookBroadcast(req.body)) {
     logger.serverLog(TAG, 'Parameters are missing.', 'error')
-    return res.status(400)
-      .json({status: 'failed', description: 'Please fill all the required fields'})
+    sendErrorResponse(res, 400, '', 'Please fill all the required fields')
   }
   // restrict to one page
   if (req.body.segmentationPageIds.length !== 1) {
-    return res.status(400)
-      .json({status: 'failed', description: 'Please select only one page'})
+    sendErrorResponse(res, 400, '', 'Please select only one page')
   }
   utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
     .then(page => {
@@ -533,7 +486,7 @@ exports.sendConversation = function (req, res) {
                     }, 3000)
                   })
                   .catch(error => {
-                    return res.status(500).json({status: 'failed', payload: `Failed to fetch lists ${JSON.stringify(error)}`})
+                    sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
                   })
               } else {
                 let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
@@ -547,19 +500,19 @@ exports.sendConversation = function (req, res) {
             }
           })
           .catch(error => {
-            return res.status(500).json({status: 'failed', payload: `Failed to create broadcast ${JSON.stringify(error)}`})
+            sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
           })
       }
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch pages ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
     })
 }
 const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
     .then(subscribers => {
       if (subscribers.length < 1) {
-        return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
+        sendErrorResponse(res, 500, '', `No subscribers match the selected criteria`)
       }
       broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         taggedSubscribers.forEach((subscriber, index) => {
@@ -576,13 +529,13 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
               batchApi(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag)
             })
             .catch(error => {
-              return res.status(500).json({status: 'failed', payload: `Failed to create page_broadcast ${JSON.stringify(error)}`})
+              sendErrorResponse(res, 500, `Failed to create page_broadcast ${JSON.stringify(error)}`)
             })
         })
       }, res)
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch subscribers ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
     })
 }
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
@@ -590,10 +543,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to send broadcast ${JSON.stringify(err)}`
-      })
+      sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
     }
     // Following change is to incorporate persistant menu
 
@@ -601,8 +551,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       // we don't need to send res for persistant menu
     } else {
       if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
-        return res.status(200)
-          .json({status: 'success', description: 'Conversation sent successfully!'})
+        sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
       }
     }
   })
@@ -663,11 +612,11 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
           broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to fetch user ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch adminsubscription ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
 }
 const operation = (index, length) => {
@@ -680,10 +629,7 @@ const operation = (index, length) => {
 
 exports.addCardAction = function (req, res) {
   if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
-    return res.status(500).json({
-      status: 'failed',
-      description: 'Url is required for type web_url.'
-    })
+    sendErrorResponse(res, 400, '', 'Url is required for type web_url.')
   }
   let buttonPayload = {
     type: req.body.type
@@ -701,16 +647,13 @@ exports.addCardAction = function (req, res) {
             messenger_extensions: req.body.messenger_extensions,
             webview_height_ratio: req.body.webview_height_ratio
           }
-          return res.status(200).json({
-            status: 'success',
-            payload: webViewPayload
-          })
+          sendSuccessResponse(res, 200, webViewPayload)
         } else {
-          return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+          sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
         }
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: `Error at checking whitelist domain ${err}`})
+        sendErrorResponse(res, 500, `Error at checking whitelist domain ${err}`)
       })
   } else {
     URLDataLayer.createURLObject({
@@ -723,30 +666,24 @@ exports.addCardAction = function (req, res) {
         let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
         buttonPayload.newUrl = newURL
         buttonPayload.url = req.body.url
-        return res.status(200).json({
-          status: 'success',
-          payload: buttonPayload
-        })
+        sendSuccessResponse(res, 200, buttonPayload)
       })
       .catch(error => {
-        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
       })
   }
 }
 
 exports.addListAction = function (req, res) {
   if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
-    return res.status(500).json({
-      status: 'failed',
-      description: 'Url is required for type web_url.'
-    })
+    sendErrorResponse(res, 400, 'Url is required for type web_url.')
   }
   let buttonPayload = {
     type: req.body.type
   }
   if (req.body.messenger_extensions || req.body.webview_height_ratio) {
     if (!broadcastUtility.isWebView(req.body)) {
-      return res.status(500).json({status: 'failed', payload: `parameters are missing`})
+      sendErrorResponse(res, 400, `parameters are missing`)
     }
     broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
       .then(result => {
@@ -757,16 +694,13 @@ exports.addListAction = function (req, res) {
             messenger_extensions: req.body.messenger_extensions,
             webview_height_ratio: req.body.webview_height_ratio
           }
-          return res.status(200).json({
-            status: 'success',
-            payload: webViewPayload
-          })
+          sendSuccessResponse(res, 200, webViewPayload)
         } else {
-          return res.status(500).json({status: 'failed', payload: `The given domain is not whitelisted. Please add it to whitelisted domains.`})
+          sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
         }
       })
       .catch(err => {
-        return res.status(500).json({status: 'failed', payload: `Error at checking whitelist domain ${err}`})
+        sendErrorResponse(res, 500, `Error at checking whitelist domain ${err}`)
       })
   } else {
     URLDataLayer.createURLObject({
@@ -779,13 +713,10 @@ exports.addListAction = function (req, res) {
         let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
         buttonPayload.newUrl = newURL
         buttonPayload.url = req.body.url
-        return res.status(200).json({
-          status: 'success',
-          payload: buttonPayload
-        })
+        sendSuccessResponse(res, 200, buttonPayload)
       })
       .catch(error => {
-        return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
+        sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
       })
   }
 }
@@ -797,20 +728,17 @@ exports.retrieveReachEstimation = (req, res) => {
       facebookApiCaller('v2.11', `${page.reachEstimationId}?access_token=${page.pageAccessToken}`, 'get', {})
         .then(reachEstimation => {
           if (reachEstimation.error) {
-            return res.status(500).json({status: 'failed', payload: `Failed to retrieve reach estimation ${JSON.stringify(reachEstimation.error)}`})
+            sendErrorResponse(res, 500, `Failed to retrieve reach estimation ${JSON.stringify(reachEstimation.error)}`)
           } else {
-            return res.status(200).json({
-              status: 'success',
-              payload: reachEstimation
-            })
+            sendSuccessResponse(res, 200, reachEstimation)
           }
         })
         .catch(error => {
-          return res.status(500).json({status: 'failed', payload: `Failed to retrieve reach estimation ${JSON.stringify(error)}`})
+          sendErrorResponse(res, 500, `Failed to retrieve reach estimation ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      return res.status(500).json({status: 'failed', payload: `Failed to fetch page ${JSON.stringify(error)}`})
+      sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
     })
 }
 
@@ -819,7 +747,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
   let interval = setInterval(() => {
     if (current === payload.length) {
       clearInterval(interval)
-      return res.status(200).json({status: 'success', description: 'Conversation sent successfully!'})
+      sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
     } else {
       broadcastApi.callMessageCreativesEndpoint(payload[current], page.accessToken)
         .then(messageCreative => {
@@ -843,10 +771,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                         labels = labels.concat(temp)
                       })
                       .catch(err => {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Failed to apply list segmentation ${JSON.stringify(err)}`
-                        })
+                        sendErrorResponse(res, 500, `Failed to apply list segmentation ${JSON.stringify(err)}`)
                       })
                   } else {
                     if (req.body.segmentationGender.length > 0) {
@@ -872,45 +797,27 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                               current++
                             })
                             .catch(err => {
-                              return res.status(500).json({
-                                status: 'failed',
-                                description: `Failed to send broadcast ${JSON.stringify(err)}`
-                              })
+                              sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
                             })
                         } else {
-                          return res.status(500).json({
-                            status: 'failed',
-                            description: `Failed to send broadcast ${JSON.stringify(response.description)}`
-                          })
+                          sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(response.description)}`)
                         }
                       }
                     })
                     .catch(err => {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Failed to send broadcast ${JSON.stringify(err)}`
-                      })
+                      sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
                     })
                 }
               })
               .catch(err => {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Failed to find tags ${JSON.stringify(err)}`
-                })
+                sendErrorResponse(res, 500, `Failed to find tags ${JSON.stringify(err)}`)
               })
           } else {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`
-            })
+            sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
           }
         })
         .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to send broadcast ${JSON.stringify(err)}`
-          })
+          sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
         })
     }
   }, delay)
