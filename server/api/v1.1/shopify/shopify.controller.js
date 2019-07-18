@@ -53,17 +53,16 @@ function registerWebhooks (shop, token) {
     throw err
   })
 
-  logger.serverLog(TAG, config.domain)
-  shopify.webhook.create({
-    topic: 'fulfillment_events/create',
-    address: `${config.domain}/api/shopify/fulfillments-create`,
-    format: 'json'
-  }).then((response) => {
-    logger.serverLog(TAG, 'Fulfillment event webhook created')
-  }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Fulfillment event Webhook' + JSON.stringify(err))
-    throw err
-  })
+  // shopify.webhook.create({
+  //   topic: 'fulfillment_events/create',
+  //   address: `${config.domain}/api/shopify/fulfillments-create`,
+  //   format: 'json'
+  // }).then((response) => {
+  //   logger.serverLog(TAG, 'Fulfillment event webhook created')
+  // }).catch((err) => {
+  //   logger.serverLog(TAG, 'Error Creating Fulfillment event Webhook' + JSON.stringify(err))
+  //   throw err
+  // })
 
   shopify.webhook.create({
     topic: 'orders/cancelled',
