@@ -545,10 +545,11 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         'payload': {
           'template_type': 'button',
           'text': text,
-          'buttons': body.buttons
+          'buttons': removeOldUrlFromButton(body.buttons)
         }
       }
     }
+    return payload
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
     payload = {
@@ -584,13 +585,14 @@ function prepareMessageData (subscriberId, body, fname, lname) {
                 'title': body.title,
                 'image_url': body.image_url,
                 'subtitle': body.description,
-                'buttons': body.buttons,
+                'buttons': removeOldUrlFromButton(body.buttons),
                 'default_action': body.default_action
               }
             ]
           }
         }
       }
+      return payload
     } else {
       payload = {
         'attachment': {
@@ -602,12 +604,13 @@ function prepareMessageData (subscriberId, body, fname, lname) {
                 'title': body.title,
                 'image_url': body.image_url,
                 'subtitle': body.description,
-                'buttons': body.buttons
+                'buttons': removeOldUrlFromButton(body.buttons)
               }
             ]
           }
         }
       }
+      return payload
     }
   } else if (body.componentType === 'gallery') {
     var galleryCards = []
@@ -617,7 +620,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         var galleryCard = {}
         galleryCard.image_url = card.image_url
         galleryCard.title = card.title
-        galleryCard.buttons = card.buttons
+        galleryCard.buttons = removeOldUrlFromButton(card.buttons)
         galleryCard.subtitle = card.subtitle
         if (card.default_action) {
           galleryCard.default_action = card.default_action
@@ -634,6 +637,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         }
       }
     }
+    return payload
   } else if (body.componentType === 'list') {
     var listElements = []
     for (let i = 0; i < body.listItems.length; i++) {
@@ -641,7 +645,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       element.title = body.listItems[i].title
       element.subtitle = body.listItems[i].subtitle
       element.image_url = body.listItems[i].image_url
-      element.buttons = body.listItems[i].buttons
+      element.buttons = removeOldUrlFromButton(body.listItems[i].buttons)
       if (body.listItems.default_action) {
         element.default_action = body.listItems[i].default_action
       }
@@ -654,10 +658,11 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'template_type': 'list',
           'top_element_style': body.topElementStyle,
           'elements': listElements,
-          'buttons': body.buttons
+          'buttons': removeOldUrlFromButton(card.buttons)
         }
       }
     }
+    return payload
   } else if (body.componentType === 'media') {
     payload = {
       'attachment': {
@@ -674,10 +679,10 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         }
       }
     }
+    return payload
   }
   logger.serverLog(TAG,
     `Return Payload ${JSON.stringify(payload)}`, 'debug')
-  return payload
 }
 
 /* eslint-disable */
@@ -689,6 +694,8 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
   payload.forEach((item, index) => {
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
     let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData(recipientId, item, fname, lname)))
+    // let message = "message=" + JSON.stringify(prepareMessageData(recipientId, item, fname, lname))
+    console.log('message got again', message)
     if (index === 0) {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
 
@@ -855,6 +862,25 @@ function getHostName (url) {
     return match[2]
   } else {
     return null
+  }
+}
+function removeOldUrlFromButton (buttons) {
+  if (buttons.length > 0) {
+    for (let i = 0; i < buttons.length; i++) {
+      if (buttons[i].type === 'web_url' && buttons[i].newUrl) {
+        buttons[i].url = buttons[i].newUrl
+        delete buttons[i].newUrl
+        if (i === buttons.length - 1) {
+          return buttons
+        }
+      } else {
+        if (i === buttons.length - 1) {
+          return buttons
+        }
+      }
+    }
+  } else {
+    return buttons
   }
 }
 exports.prepareSendAPIPayload = prepareSendAPIPayload
