@@ -8,6 +8,10 @@ exports.createStoreAnalytics = (payload) => {
   return callApi(`abandoned_cart/storeanalytics`, 'post', payload, 'kiboengage')
 }
 
+exports.createOrderInfo = (payload) => {
+  return callApi(`abandoned_cart/orderinfo`, 'post', payload, 'kiboengage')
+}
+
 exports.findOneStoreAnalytics = (storeId) => {
   let query = {
     purpose: 'findOne',
@@ -147,6 +151,14 @@ exports.deleteAllCartInfoObjectsGeneric = (payload) => {
     match: payload
   }
   return callApi(`abandoned_cart/cartinfo`, 'delete', query, 'kiboengage')
+}
+
+exports.deleteAllOrderInfoObjectsGeneric = (payload) => {
+  let query = {
+    purpose: 'deleteAll',
+    match: payload
+  }
+  return callApi(`abandoned_cart/orderinfo`, 'delete', query, 'kiboengage')
 }
 
 exports.deleteOneCartInfoObject = (payload) => {
