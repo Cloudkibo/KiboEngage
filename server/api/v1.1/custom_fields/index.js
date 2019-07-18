@@ -21,12 +21,12 @@ router.post('/',
 
 router.post('/update',
   auth.isAuthenticated(),
-  validate({body: validationSchema.updatePayload}),
+  validate({ body: validationSchema.updatePayload }),
   controller.update)
 
 router.post('/delete',
   auth.isAuthenticated(),
-  validate({body: validationSchema.deletePayload}),
+  validate({ body: validationSchema.deletePayload }),
   controller.delete)
 
 module.exports = router
