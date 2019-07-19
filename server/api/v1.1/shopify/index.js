@@ -45,8 +45,14 @@ router.get('/clickCount',
 router.get('/fulfillments-create',
   webhook.fulfillmentCreate)
 
-router.get('/fulfillments-update',
-  webhook.fulfillmentUpdate)
+router.get('/orders-cancelled',
+  webhook.ordersCancelled)
+
+router.get('/orders-fulfilled',
+  webhook.ordersFulfilled)
+
+router.get('/orders-paid',
+  webhook.ordersPaid)
 
 router.get('/orders-updated',
   webhook.orderUpdate)

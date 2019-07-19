@@ -104,7 +104,7 @@ exports.handleCart = function (req, res) {
 }
 
 exports.handleOrder = function (req, res) {
-  logger.serverLog(TAG, `Order webhook called ${JSON.stringify(req.body.checkout_id)}`)
+  logger.serverLog(TAG, `Order webhook called ${JSON.stringify(req.body)}`)
   dataLayer.findOneCheckOutInfo({ shopifyCheckoutId: req.body.checkout_id })
     .then(result => {
       if (result) {
@@ -117,13 +117,21 @@ exports.handleOrder = function (req, res) {
           // We need to update the total purchases in Analytics
           dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: result.storeId },
             { $inc: { totalPurchasedCarts: 1, totalExtraSales: req.body.total_price } })
-            .then(updated => logger.serverLog(TAG, `Done deleting checkout ${JSON.stringify(updated)}`))
-            .catch(err => logger.serverLog(TAG, `Error in deleting checkout ${JSON.stringify(err)}`))
+            .then(updated => logger.serverLog(TAG, `Done updating checkout on new order ${JSON.stringify(updated)}`))
+            .catch(err => logger.serverLog(TAG, `Error in updating checkout on new order ${JSON.stringify(err)}`))
         }
         // Saving the updated info
         dataLayer.findOneCheckOutInfoObjectAndUpdate({ shopifyCheckoutId: req.body.checkout_id }, newObj)
           .then(updated => res.status(200).json({ status: 'success', payload: updated }))
           .catch(err => res.status(500).json({ status: 'failed', error: err }))
+        let order = result
+        order.orderId = req.body.id
+        order.number = req.body.number
+        order.status = req.body.fulfillment_status
+        order.order_status_url = req.body.order_status_url
+        dataLayer.createOrderInfo(order)
+          .then(updated => logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`))
+          .catch(err => logger.serverLog(TAG, `Error in creating order on new order ${JSON.stringify(err)}`))
       } else {
         return res.status(200).json({ status: 'failed' })
       }
@@ -137,10 +145,11 @@ exports.handleAppUninstall = function (req, res) {
     .then(results => {
       const shopId = results._id
       const deleteCart = dataLayer.deleteAllCartInfoObjectsGeneric({ storeId: shopId })
+      const deleteOrder = dataLayer.deleteAllOrderInfoObjectsGeneric({ storeId: shopId })
       const deleteCheckout = dataLayer.deleteAllCheckoutInfoObjects(shopId)
       const deleteStoreAnalytics = dataLayer.deleteAllStoreAnalyticsObjects({ storeId: shopId })
       const deleteStoreInfo = dataLayer.deleteAllStoreInfoObject({ shopUrl: shopUrl })
-      Promise.all([deleteCart, deleteCheckout, deleteStoreAnalytics, deleteStoreInfo])
+      Promise.all([deleteCart, deleteOrder, deleteCheckout, deleteStoreAnalytics, deleteStoreInfo])
         .then(result => {
           res.status(200).json({ status: 'success' })
         })
@@ -238,8 +247,18 @@ exports.fulfillmentCreate = function (req, res) {
   return res.status(200).json({ status: 'success' })
 }
 
-exports.fulfillmentUpdate = function (req, res) {
-  logger.serverLog(TAG, `FulFillment UPDATE Called ${JSON.stringify(req.body)}`)
+exports.ordersCancelled = function (req, res) {
+  logger.serverLog(TAG, `Orders CANCELLED Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
+exports.ordersFulfilled = function (req, res) {
+  logger.serverLog(TAG, `Orders Fulfilled Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
+exports.ordersPaid = function (req, res) {
+  logger.serverLog(TAG, `Orders Paid Called ${JSON.stringify(req.body)}`)
   return res.status(200).json({ status: 'success' })
 }
 
