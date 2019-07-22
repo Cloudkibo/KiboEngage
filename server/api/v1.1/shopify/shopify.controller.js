@@ -27,8 +27,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'Carts webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Carts Webhook', err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating Carts Webhook' + JSON.stringify(err))
   })
 
   shopify.webhook.create({
@@ -38,8 +37,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'Checkout webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Checkout Webhook', err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating Checkout Webhook' + JSON.stringify(err))
   })
 
   shopify.webhook.create({
@@ -49,8 +47,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'Order webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Order Webhook', err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating Order Webhook' + JSON.stringify(err))
   })
 
   // shopify.webhook.create({
@@ -72,7 +69,6 @@ function registerWebhooks (shop, token) {
     logger.serverLog(TAG, 'Orders Cancelled webhook created')
   }).catch((err) => {
     logger.serverLog(TAG, 'Error Creating Orders Cancelled Webhook' + JSON.stringify(err))
-    throw err
   })
 
   shopify.webhook.create({
@@ -82,8 +78,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'orders fullfilled webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating orders fulfilled Webhook' + err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating orders fulfilled Webhook' + JSON.stringify(err))
   })
 
   shopify.webhook.create({
@@ -93,8 +88,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'orders paid webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating orders paid Webhook' + err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating orders paid Webhook' + JSON.stringify(err))
   })
 
   shopify.webhook.create({
@@ -104,8 +98,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'orders update webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating orders update Webhook' + err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating orders update Webhook' + JSON.stringify(err))
   })
 
   shopify.webhook.create({
@@ -115,8 +108,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'App Uninstall webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating App Uninstall Webhook', err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating App Uninstall Webhook' + JSON.stringify(err))
   })
 
   shopify.webhook.create({
@@ -126,8 +118,7 @@ function registerWebhooks (shop, token) {
   }).then((response) => {
     logger.serverLog(TAG, 'Theme Publish webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Theme Publish Webhook', err)
-    throw err
+    logger.serverLog(TAG, 'Error Creating Theme Publish Webhook' + JSON.stringify(err))
   })
 }
 
