@@ -32,7 +32,6 @@ exports.twitterwebhook = function (req, res) {
   })
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
-      logger.serverLog(TAG, `autoposting found ${JSON.stringify(req.body)}`, 'debug')
       autopostings.forEach(postingItem => {
         if (logicLayer.checkFilterStatus(postingItem, req)) {
           if (postingItem.moderateTweets) {
@@ -82,7 +81,6 @@ exports.twitterwebhook = function (req, res) {
 }
 
 const sendTweet = (postingItem, req) => {
-  console.log('in sendTweet')
   let pagesFindCriteria = {
     companyId: postingItem.companyId,
     connected: true
@@ -155,7 +153,6 @@ const sendToMessenger = (postingItem, page, req) => {
 const postOnFacebook = (postingItem, page, req) => {
   logicLayer.handleTwitterPayload(req, {}, page, 'facebook')
     .then(messageData => {
-      console.log('response from handleTwitterPayload')
       if (messageData.type === 'text') {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {

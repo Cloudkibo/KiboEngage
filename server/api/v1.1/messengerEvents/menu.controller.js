@@ -11,6 +11,7 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
+  console.log('req.body in menu controller', req.body)
   let replyPayload = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
