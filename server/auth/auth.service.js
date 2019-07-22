@@ -443,10 +443,10 @@ function fetchPages (url, user, req, token) {
 function isAuthorizedKiboAPITrigger (req) {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
     req.socket.remoteAddress || req.connection.socket.remoteAddress
-  logger.serverLog(TAG, req.ip)
-  logger.serverLog(TAG, ip)
-  logger.serverLog(TAG, 'This call is from KIBOAPI')
-  logger.serverLog(TAG, req.body)
+  // logger.serverLog(TAG, req.ip)
+  // logger.serverLog(TAG, ip)
+  // logger.serverLog(TAG, 'This call is from KIBOAPI')
+  // logger.serverLog(TAG, req.body)
   // We need to change it to based on the requestee app
   if (config.kiboAPIIP.indexOf(ip) > -1) return true
   else return false
