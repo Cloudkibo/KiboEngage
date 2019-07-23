@@ -55,7 +55,7 @@ exports.sendCommentReply = function (req, res) {
   // increment comment count for tweet post
   let updateData = {
     purpose: 'updateAll',
-    query: {
+    match: {
       postId: postId
     },
     updated: verb === 'add' ? {$inc: { comments: 1 }} : {$inc: { comments: -1 }},

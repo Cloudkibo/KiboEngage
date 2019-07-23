@@ -12,7 +12,7 @@ exports.handleLikeEvent = function (req, res) {
   let verb = req.body.entry[0].changes[0].value.verb
   let updateData = {
     purpose: 'updateAll',
-    query: {
+    match: {
       postId: postId
     },
     updated: verb === 'add' ? {$inc: { likes: 1 }} : {$inc: { likes: -1 }},
