@@ -61,7 +61,7 @@ exports.sendCommentReply = function (req, res) {
     updated: verb === 'add' ? {$inc: { comments: 1 }} : {$inc: { comments: -1 }},
     options: {}
   }
-  conosle.log('updateData', updateData)
+  console.log('updateData', updateData)
   utility.callApi('autoposting_fb_post', 'put', updateData, 'kiboengage')
     .then(updated => {
       console.log('comments updated successfully')
