@@ -224,6 +224,7 @@ const savePostObject = (postingItem, page, req, messageData, postId) => {
     likes: 0,
     comments: 0
   }
+  console.log('newPost', newPost)
   utility.callApi(`autoposting_fb_post`, 'post', newPost, 'kiboengage')
     .then(created => {
       logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
