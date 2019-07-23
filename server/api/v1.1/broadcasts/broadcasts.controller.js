@@ -826,7 +826,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
 
 exports.urlMetaData = (req, res) => {
   let url = req.body.url
-  console.log('urlMetaData req.body', req.body)
+  // console.log('urlMetaData req.body', req.body)
   if (url) {
     urlMetadata(url).then((metadata) => {
       return res.status(200).json({
