@@ -3,7 +3,7 @@ const logger = require('../../components/logger')
 const TAG = 'api/global/livechat.js'
 
 exports.saveLiveChat = function (message) {
-  callApi('livechat', 'post', message, '', 'kibochat')
+  callApi('livechat', 'post', message, 'kibochat', '')
     .then(saved => {
       logger.serverLog('Live chat saved successfully!')
     })

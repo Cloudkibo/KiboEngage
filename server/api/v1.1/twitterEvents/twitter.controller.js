@@ -160,7 +160,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
-              savePostObject(postingItem, page, req, messageData, response.body.post_id)
+              savePostObject(postingItem, page, req, messageData, response.body.post_id ? response.body.post_id : response.body.id)
             }
           })
           .catch(err => {
@@ -173,7 +173,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
-              savePostObject(postingItem, page, req, messageData, response.body.post_id)
+              savePostObject(postingItem, page, req, messageData, response.body.post_id ? response.body.post_id : response.body.id)
             }
           })
           .catch(err => {
@@ -186,7 +186,7 @@ const postOnFacebook = (postingItem, page, req) => {
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
-              savePostObject(postingItem, page, req, messageData, response.body.post_id)
+              savePostObject(postingItem, page, req, messageData, response.body.post_id ? response.body.post_id : response.body.id)
             }
           })
           .catch(err => {
