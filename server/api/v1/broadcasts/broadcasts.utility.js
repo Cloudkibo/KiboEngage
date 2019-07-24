@@ -21,6 +21,7 @@ function validateInput (body) {
   if (!_.has(body, 'platform')) return false
   if (!_.has(body, 'payload')) return false
   if (!_.has(body, 'title')) return false
+  console.log('broadcast validateInput body.payload', body.payload)
 
   if (body.payload.length === 0) {
     return false
