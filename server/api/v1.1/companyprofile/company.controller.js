@@ -1,10 +1,9 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/companyprofile/company.controller.js'
 const utility = require('../utility')
-const needle = require('needle')
-const config = require('../../../config/environment/index')
-const logicLayer = require('./company.logiclayer.js')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const helperApiCalls = require('./helperApiCalls')
+const async = require('async')
 
 exports.members = function (req, res) {
   utility.callApi(`companyprofile/members`, 'get', {}, 'accounts', req.headers.authorization)
@@ -70,129 +69,109 @@ exports.updateAutomatedOptions = function (req, res) {
     })
 }
 exports.updatePlatform = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
-    .then(companyUser => {
-      if (!companyUser) {
-        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
-      }
-      needle.get(
-        `https://${req.body.twilio.accountSID}:${req.body.twilio.authToken}@api.twilio.com/2010-04-01/Accounts`,
-        (err, resp) => {
-          if (err) {
-            sendErrorResponse(res, 401, '', 'unable to authenticate twilio account')
-          }
-          if (resp.statusCode === 200) {
-            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}})
-              .then(updatedProfile => {
-                if (req.body.twilio.platform) {
-                  utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.twilio.platform}, options: {}})
-                    .then(updated => {
-                    })
-                    .catch(err => {
-                      sendErrorResponse(res, 500, err)
-                    })
-                }
-                let accountSid = req.body.twilio.accountSID
-                let authToken = req.body.twilio.authToken
-                let client = require('twilio')(accountSid, authToken)
-                client.incomingPhoneNumbers
-                  .list().then((incomingPhoneNumbers) => {
-                    for (let i = 0; i < incomingPhoneNumbers.length; i++) {
-                      client.incomingPhoneNumbers(incomingPhoneNumbers[i].sid)
-                        .update({
-                          accountSid: req.body.twilio.accountSID,
-                          smsUrl: `${config.api_urls['webhook']}/webhooks/twilio/receiveSms`
-                        })
-                        .then(result => {
-                        })
-                    }
-                  })
-                sendSuccessResponse(res, 200, updatedProfile)
-              })
-              .catch(err => {
-                sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
-              })
-          } else {
-            sendErrorResponse(res, 404, 'Twilio account not found. Please enter correct details')
-          }
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
-    })
+  let data = {
+    companyUserCriteria: {domain_email: req.user.domain_email},
+    twillioAccountSID: req.body.twilio.accountSID,
+    twillioAuthToken: req.body.twilio.authToken,
+    twillioPlatform: req.body.twilio.platform,
+    updateCompanyProfileCriteria: {
+      query: {_id: req.user.companyId},
+      newPayload: {
+        twilio: {
+          accountSID: req.body.twilio.accountSID,
+          authToken: req.body.twilio.platform
+        }
+      },
+      options: {}
+    },
+    userUpdateCriteria: {
+      query: {_id: req.user._id},
+      newPayload: {platform: req.body.twilio.platform},
+      options: {}
+    }
+  }
+  async.series([
+    helperApiCalls._getCompanyUser.bind(null, data),
+    helperApiCalls._authenticateTwillioAccount.bind(null, data),
+    helperApiCalls._updateCompanyProfile.bind(null, data),
+    helperApiCalls._updateUser.bind(null, data),
+    helperApiCalls._updateTwillioPhoneNumbers.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200, data.updatedProfile)
+    }
+  })
 }
+
 exports.updatePlatformWhatsApp = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
-    .then(companyUser => {
-      if (!companyUser) {
-        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
-      }
-      needle.get(
-        `https://${req.body.accountSID}:${req.body.authToken}@api.twilio.com/2010-04-01/Accounts`,
-        (err, resp) => {
-          if (err) {
-            sendErrorResponse(res, 401, '', 'unable to authenticate twilio account')
-          }
-          if (resp.statusCode === 200) {
-            let newPayload = {twilioWhatsApp: {
-              accountSID: req.body.accountSID,
-              authToken: req.body.authToken,
-              sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
-              sandboxCode: req.body.sandboxCode
-            }}
-            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: newPayload, options: {}})
-              .then(updatedProfile => {
-                if (req.body.platform) {
-                  utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.platform}, options: {}})
-                    .then(updated => {
-                    })
-                    .catch(err => {
-                      sendErrorResponse(res, 500, err)
-                    })
-                }
-                sendSuccessResponse(res, 200, updatedProfile)
-              })
-              .catch(err => {
-                sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
-              })
-          } else {
-            sendErrorResponse(res, 404, 'Twilio account not found. Please enter correct details')
-          }
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
-    })
+  let data = {
+    companyUserCriteria: {domain_email: req.user.domain_email},
+    twillioAccountSID: req.body.accountSID,
+    twillioAuthToken: req.body.authToken,
+    twillioPlatform: req.body.platform,
+    updateCompanyProfileCriteria: {
+      query: {_id: req.user.companyId},
+      newPayload: {
+        twilioWhatsApp: {
+          accountSID: req.body.accountSID,
+          authToken: req.body.platform,
+          sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
+          sandboxCode: req.body.sandboxCode
+        }
+      },
+      options: {}
+    },
+    userUpdateCriteria: {
+      query: {_id: req.user._id},
+      newPayload: {platform: req.body.platform},
+      options: {}
+    }
+  }
+  async.series([
+    helperApiCalls._getCompanyUser.bind(null, data),
+    helperApiCalls._authenticateTwillioAccount.bind(null, data),
+    helperApiCalls._updateCompanyProfile.bind(null, data),
+    helperApiCalls._updateUser.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200, data.updatedProfile)
+    }
+  })
 }
+
 exports.disconnect = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
-    .then(companyUser => {
-      if (!companyUser) {
-        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
-      }
-      let updated = {}
-      if (req.body.type === 'sms') {
-        updated = {$unset: {twilio: 1}}
-      } else {
-        updated = {$unset: {twilioWhatsApp: 1}}
-      }
-      let userUpdated = logicLayer.getPlatform(companyUser, req.body)
-      utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: updated, options: {}})
-        .then(updatedProfile => {
-          utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: userUpdated, options: {}})
-            .then(updated => {
-              sendSuccessResponse(res, 200, updatedProfile)
-            })
-            .catch(err => {
-              sendErrorResponse(res, 500, err)
-            })
-          sendSuccessResponse(res, 200, updatedProfile)
-        })
-        .catch(err => {
-          sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
-    })
+  let data = {
+    companyUserCriteria: {domain_email: req.user.domain_email},
+    twillioPlatform: true,
+    twillioResponse: {statusCode: 200},
+    updateCompanyProfileCriteria: {
+      query: {_id: req.user.companyId},
+      newPayload: req.body.type === 'sms' ? {$unset: {twilio: 1}}
+        : {$unset: {twilioWhatsApp: 1}},
+      options: {}
+    },
+    userUpdateCriteria: {
+      query: {_id: req.user._id},
+      options: {}
+    },
+    body: {
+      type: req.body.type
+    },
+    method: 'disconnect'
+  }
+  async.series([
+    helperApiCalls._getCompanyUser.bind(null, data),
+    helperApiCalls._updateCompanyProfile.bind(null, data),
+    helperApiCalls._updateUser.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200, data.updatedProfile)
+    }
+  })
 }
