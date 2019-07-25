@@ -17,7 +17,7 @@ exports.index = function (req, res) {
 exports.cancel = function (req, res) {
   callApi.callApi('invitations/cancel', 'post', {email: req.body.email}, 'accounts', req.headers.authorization)
     .then(result => {
-      sendErrorResponse(res, 200, '', 'Invitation has been cancelled.')
+      sendSuccessResponse(res, 200, '', 'Invitation has been cancelled.')
     })
     .catch(err => {
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)

@@ -26,8 +26,6 @@ exports.facebookBroadcast = (body) => {
       if (body.payload[i].componentType === 'card') {
         if (body.payload[i].title === undefined ||
           body.payload[i].title === '') return false
-        if (body.payload[i].fileurl === undefined ||
-          body.payload[i].fileurl === '') return false
         if (body.payload[i].image_url === undefined ||
           body.payload[i].image_url === '') return false
         if (body.payload[i].description === undefined ||
