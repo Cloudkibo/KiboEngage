@@ -25,32 +25,32 @@ exports.index = function (req, res) {
           logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
           if (page.isWelcomeMessageEnabled) {
             payloadToSend = page.welcomeMessage
-          }
-          if (subscriber) {
-            broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-          } else {
-            needle.get(
-              `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.accessToken}`,
-              (err, resp2) => {
-                if (err) {
-                  logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
-                }
-                logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
-                let pageAccessToken = resp2.body.access_token
-                const options = {
-                  url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
-                  qs: { access_token: page.accessToken },
-                  method: 'GET'
-
-                }
-                logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
-                needle.get(options.url, options, (error, response) => {
-                  if (error) {
-                  } else {
-                    broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+            if (subscriber) {
+              broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+            } else {
+              needle.get(
+                `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.accessToken}`,
+                (err, resp2) => {
+                  if (err) {
+                    logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                   }
+                  logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
+                  let pageAccessToken = resp2.body.access_token
+                  const options = {
+                    url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
+                    qs: { access_token: page.accessToken },
+                    method: 'GET'
+
+                  }
+                  logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
+                  needle.get(options.url, options, (error, response) => {
+                    if (error) {
+                    } else {
+                      broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                    }
+                  })
                 })
-              })
+            }
           }
         })
         .catch(err => {
