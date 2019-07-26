@@ -407,7 +407,8 @@ function fetchPages (url, user, req, token) {
                       let updatedPayload = {
                         likes: fanCount.body.fan_count,
                         pagePic: `https://graph.facebook.com/v2.10/${item.id}/picture`,
-                        accessToken: item.access_token
+                        accessToken: item.access_token,
+                        isApproved: true
                       }
                       if (fanCount.body.username) {
                         updatedPayload['pageUserName'] = fanCount.body.username
@@ -446,14 +447,19 @@ function fetchPages (url, user, req, token) {
 }
 
 function deleteUnapprovedPages (facebookPages, user, companyUser) {
+  console.log('in deleteUnapprovedPages')
   if (facebookPages.length > 0) {
     let fbPages = facebookPages.map(item => item.id)
+    console.log('fbPages', fbPages)
     apiCaller.callApi(`pages/query`, 'post', {userId: user._id, companyId: companyUser.companyId})
       .then(localPages => {
         for (let i = 0; i < localPages.length; i++) {
           if (!fbPages.includes(localPages[i].pageId)) {
-            apiCaller.callApi(`pages/delete/${localPages[i]._id}`, 'delete', {})
-              .then(deleted => {})
+            console.log('in if')
+            apiCaller.callApi(`pages/update`, 'put', {query: {_id: localPages[i]._id}, newPayload: {isApproved: false}})
+              .then(updated => {
+                console.log('updated isApproved', updated)
+              })
           }
         }
       })
