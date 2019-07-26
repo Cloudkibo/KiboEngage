@@ -415,7 +415,7 @@ function fetchPages (url, user, req, token) {
                       }
                       console.log('page._id', page._id)
                       console.log('newPayload', updatedPayload)
-                      apiCaller.callApi(`pages/update`, 'put', {query: {_id: page._id}, newPayload: updatedPayload, options: {}})
+                      apiCaller.callApi(`pages/${page._id}`, 'put', updatedPayload)
                         .then(updated => {
                           console.log('updated up', updated)
                           logger.serverLog(TAG,
@@ -457,7 +457,7 @@ function updateUnapprovedPages (facebookPages, user, companyUser) {
         for (let i = 0; i < localPages.length; i++) {
           if (!fbPages.includes(localPages[i].pageId)) {
             console.log('in if')
-            apiCaller.callApi(`pages/update`, 'put', {query: {_id: localPages[i]._id}, newPayload: {isApproved: false}, options: {}})
+            apiCaller.callApi(`pages/${localPages[i]._id}`, 'put', {isApproved: false})
               .then(updated => {
                 console.log('updated isApproved', updated)
               })
