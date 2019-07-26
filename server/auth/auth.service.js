@@ -360,7 +360,6 @@ function fetchPages (url, user, req, token) {
           console.log('item.name', item.name)
           console.log('error in connect', error)
           console.log('fancount body', fanCount.body)
-          console.log('fancount', fanCount)
           if (error !== null) {
             return logger.serverLog(TAG, `Error occurred ${error}`)
           } else {
