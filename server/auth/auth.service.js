@@ -355,7 +355,7 @@ function fetchPages (url, user, req, token) {
             description: 'The user account does not belong to any company. Please contact support'
           })
         }
-        deleteUnapprovedPages(data, user, companyUser)
+        updateUnapprovedPages(data, user, companyUser)
         if (data) {
           data.forEach((item) => {
             // logger.serverLog(TAG,
@@ -415,8 +415,9 @@ function fetchPages (url, user, req, token) {
                       }
                       console.log('page._id', page._id)
                       console.log('newPayload', updatedPayload)
-                      apiCaller.callApi(`pages/update`, 'put', {query: {_id: page._id}, newPayload: updatedPayload})
+                      apiCaller.callApi(`pages/update`, 'put', {query: {_id: page._id}, newPayload: updatedPayload, options: {}})
                         .then(updated => {
+                          console.log('updated up', updated)
                           logger.serverLog(TAG,
                             `page updated successfuly ${JSON.stringify(updated)}`)
                           // logger.serverLog(TAG, `Likes updated for ${page.pageName}`)
@@ -446,7 +447,7 @@ function fetchPages (url, user, req, token) {
   })
 }
 
-function deleteUnapprovedPages (facebookPages, user, companyUser) {
+function updateUnapprovedPages (facebookPages, user, companyUser) {
   console.log('in deleteUnapprovedPages')
   if (facebookPages.length > 0) {
     let fbPages = facebookPages.map(item => item.id)
@@ -456,7 +457,7 @@ function deleteUnapprovedPages (facebookPages, user, companyUser) {
         for (let i = 0; i < localPages.length; i++) {
           if (!fbPages.includes(localPages[i].pageId)) {
             console.log('in if')
-            apiCaller.callApi(`pages/update`, 'put', {query: {_id: localPages[i]._id}, newPayload: {isApproved: false}})
+            apiCaller.callApi(`pages/update`, 'put', {query: {_id: localPages[i]._id}, newPayload: {isApproved: false}, options: {}})
               .then(updated => {
                 console.log('updated isApproved', updated)
               })
