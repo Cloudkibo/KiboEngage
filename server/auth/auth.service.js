@@ -357,6 +357,9 @@ function fetchPages (url, user, req, token) {
           method: 'GET'
         }
         needle.get(options2.url, options2, (error, fanCount) => {
+          console.log('error in connect', error)
+          console.log('fancount body', fanCount.body)
+          console.log('fancount', fanCount)
           if (error !== null) {
             return logger.serverLog(TAG, `Error occurred ${error}`)
           } else {
