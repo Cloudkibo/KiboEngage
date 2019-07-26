@@ -21,6 +21,7 @@ function validateInput (body) {
   if (!_.has(body, 'platform')) return false
   if (!_.has(body, 'payload')) return false
   if (!_.has(body, 'title')) return false
+  console.log('broadcast validateInput body.payload', body.payload)
 
   if (body.payload.length === 0) {
     return false
@@ -42,8 +43,6 @@ function validateInput (body) {
       if (body.payload[i].componentType === 'card') {
         if (body.payload[i].title === undefined ||
           body.payload[i].title === '') return false
-        if (body.payload[i].fileurl === undefined ||
-          body.payload[i].fileurl === '') return false
         if (body.payload[i].image_url === undefined ||
           body.payload[i].image_url === '') return false
         if (body.payload[i].description === undefined ||

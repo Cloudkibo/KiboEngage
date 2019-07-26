@@ -4,13 +4,13 @@ const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.getPosts = function (req, res) {
-  let countCriteria = LogicLayer.countCriteria
-  let matchCriteria = LogicLayer.matchCriteria
+  let countCriteria = LogicLayer.getCountCriteria(req)
+  let matchCriteria = LogicLayer.getMatchCriteria(req)
   async.parallelLimit([
     function (callback) {
       utility.callApi('autoposting_fb_post/query', 'post', countCriteria, 'kiboengage')
         .then(countData => {
-          callback(countData)
+          callback(null, countData)
         })
         .catch(err => {
           callback(err)
@@ -19,7 +19,7 @@ exports.getPosts = function (req, res) {
     function (callback) {
       utility.callApi('autoposting_fb_post/query', 'post', matchCriteria, 'kiboengage')
         .then(posts => {
-          callback(posts)
+          callback(null, posts)
         })
         .catch(err => {
           callback(err)
