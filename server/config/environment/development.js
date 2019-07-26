@@ -32,5 +32,6 @@ module.exports = {
     kiboengage: `http://localhost:3031/api/v1`,
     kibodash: `http://localhost:5050/api/v1`
   },
-  webhook_ip: 'http://localhost:3020'
+  webhook_ip: 'http://localhost:3020',
+  marketingApiAccessToken: 'EAAB4wFi3BuIBAIZC1zrUcVU4jMH0B16E4qcsgZBw8pKyQF5yBO1xyZAZBsh1tzDmwON6ypZBMbUyFWQgtKu1m8Odprb5SopXyxnvNWigd0dQb6TbNXkPRg8I3mV50QrRBcZAre56lYaPHzWwaSFOZBP5d9ZBCRuolHWIOp81lBZCqqlDGqZAzBZBZCmUBbGu1fkbw0UZD'
 }
