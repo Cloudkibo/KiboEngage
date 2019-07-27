@@ -60,6 +60,7 @@ module.exports = function (app) {
   app.use('/api/smsDashboard', require('./api/v1.1/smsDashboard'))
   app.use('/api/whatsAppDashboard', require('./api/v1.1/whatsAppDashboard'))
   app.use('/api/backdoor', require('./api/v1.1/backdoor'))
+  app.use('/api/sponsoredmessaging', require('./api/v1.1/sponsoredMessaging'))
   app.use('/api/webhooks', require('./api/v1.1/webhooks'))
   app.use('/api/rss', require('./api/v1.1/rss'))
   app.use('/api/abandonedCarts', require('./api/v1.1/abandoned_carts'))
