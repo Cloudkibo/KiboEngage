@@ -45,6 +45,12 @@ router.get('/clickCount',
 router.post('/fulfillments-create',
   webhook.fulfillmentCreate)
 
+router.post('/fulfillments-update',
+  webhook.fulfillmentUpdate)
+
+router.post('/fulfillment-events-create',
+  webhook.fulfillmentEventsCreate)
+
 router.post('/orders-cancelled',
   webhook.ordersCancelled)
 

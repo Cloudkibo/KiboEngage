@@ -82,6 +82,38 @@ function sendToFacebook (checkout, store, details) {
     .catch(err => logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`))
 }
 
+function sendOrderStatusToFacebook (order, statusMessage, store) {
+  utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true })
+    .then(page => {
+      logger.serverLog(TAG, `SHOPIFY Got the page info ${JSON.stringify(page)}`)
+      page = page[0]
+      let payload = {}
+      payload = {
+        'text': statusMessage
+      }
+      let options = {
+        uri: 'https://graph.facebook.com/v2.6/me/messages?access_token=' + page.accessToken,
+        method: 'POST',
+        json: {
+          'recipient': {
+            'user_ref': order.userRef
+          },
+          'message': payload
+        }
+      }
+      logger.serverLog(TAG, `SHOPIFY Sending the following info ${JSON.stringify(options)}`)
+      request(options, function (error, response, body) {
+        logger.serverLog(TAG, `SHOPIFY Sent the order status successfully ${JSON.stringify(response)} ${JSON.stringify(body)} ${JSON.stringify(error)}`)
+        if (!error && response.statusCode === 200) {
+          return logger.serverLog(TAG, `SHOPIFY Sent the order status successfully`)
+        } else {
+          return logger.serverLog(TAG, `SHOPIFY Batch send error ${JSON.stringify(response)}`)
+        }
+      })
+    })
+    .catch(err => logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`))
+}
+
 // const send = (batchMessages, page) => {
 //   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
 //     if (err) {
@@ -93,6 +125,22 @@ function sendToFacebook (checkout, store, details) {
 //   form.append('access_token', page.accessToken)
 //   form.append('batch', batchMessages)
 // }
+
+const sendOrderStatus = (id, statusMessage, cb) => {
+  dataLayer.findOneOrderInfoGeneric({ orderId: id })
+    .then(order => {
+      if (order) {
+        dataLayer.findOneStoreInfoGeneric({ _id: order.storeId })
+          .then(store => {
+            sendOrderStatusToFacebook(order, statusMessage, store)
+          })
+          .catch(err => cb(err, null))
+      } else {
+        return cb(null, { status: 'Not Found', payload: 'Order not found' })
+      }
+    })
+    .catch(err => cb(err, null))
+}
 
 const sendCheckout = (id, cb) => {
   dataLayer.findOneCheckOutInfo({ _id: id, sentCount: { '$lt': 3 } })
@@ -131,3 +179,5 @@ const sendCheckout = (id, cb) => {
 exports.sendCheckout = sendCheckout
 exports.fetchProductDetails = fetchProductDetails
 exports.sendToFacebook = sendToFacebook
+exports.sendOrderStatusToFacebook = sendOrderStatusToFacebook
+exports.sendOrderStatus = sendOrderStatus

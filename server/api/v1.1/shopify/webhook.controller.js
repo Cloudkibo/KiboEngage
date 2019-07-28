@@ -7,6 +7,7 @@ const TAG = 'api/shopify/webhook.controller.js'
 const mainScript = require('./mainScript')
 const config = require('./../../../config/environment/index')
 const dataLayer = require('./../abandoned_carts/abandoned_carts.datalayer')
+const utilityAbandonedCart = require('./../abandoned_carts/utility_abandoned')
 
 exports.handleCheckout = function (req, res) {
   const productIds = req.body.line_items.map((item) => {
@@ -247,22 +248,72 @@ exports.fulfillmentCreate = function (req, res) {
   return res.status(200).json({ status: 'success' })
 }
 
+exports.fulfillmentUpdate = function (req, res) {
+  logger.serverLog(TAG, `FulFillment Update Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
+exports.fulfillmentEventsCreate = function (req, res) {
+  logger.serverLog(TAG, `FulFillment Event Create Called ${JSON.stringify(req.body)}`)
+  return res.status(200).json({ status: 'success' })
+}
+
 exports.ordersCancelled = function (req, res) {
   logger.serverLog(TAG, `Orders CANCELLED Called ${JSON.stringify(req.body)}`)
+  let orderId = req.body.id
+  let totalPrice = req.body.total_price
+  let message = `Your order with id ${orderId} has been cancelled. The total price of order is ${totalPrice}`
+  utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
+    if (err) {
+      return logger.serverLog(TAG, `Error in sending orde cancel status ${JSON.stringify(err)}`)
+    }
+    logger.serverLog(TAG, `Response from sending order cancel status ${JSON.stringify(status)}`)
+  })
   return res.status(200).json({ status: 'success' })
 }
 
 exports.ordersFulfilled = function (req, res) {
   logger.serverLog(TAG, `Orders Fulfilled Called ${JSON.stringify(req.body)}`)
+  let orderId = req.body.id
+  let totalPrice = req.body.total_price
+  let message = `Your order with id ${orderId} has been confirmed. The total price of order is ${totalPrice}`
+  utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
+    if (err) {
+      return logger.serverLog(TAG, `Error in sending orde confirmed status ${JSON.stringify(err)}`)
+    }
+    logger.serverLog(TAG, `Response from sending order confirmed status ${JSON.stringify(status)}`)
+  })
   return res.status(200).json({ status: 'success' })
 }
 
 exports.ordersPaid = function (req, res) {
   logger.serverLog(TAG, `Orders Paid Called ${JSON.stringify(req.body)}`)
+  let orderId = req.body.id
+  let gateway = req.body.gateway
+  let status = req.body.financial_status
+  let totalPrice = req.body.total_price
+  let message = `Payment for your order with id ${orderId} has been confirmed as ${status} using payment method ${gateway}. The total price of order is ${totalPrice}`
+  utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
+    if (err) {
+      return logger.serverLog(TAG, `Error in sending order status ${JSON.stringify(err)}`)
+    }
+    logger.serverLog(TAG, `Response from sending order status ${JSON.stringify(status)}`)
+  })
   return res.status(200).json({ status: 'success' })
 }
 
 exports.orderUpdate = function (req, res) {
   logger.serverLog(TAG, `ORDER UPDATE Called ${JSON.stringify(req.body)}`)
+  if (req.body.financial_status === 'refunded') {
+    let orderId = req.body.id
+    let totalPrice = req.body.total_price
+    let message = `Your order with id ${orderId} has been refunded. The total price of order is ${totalPrice}`
+    utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
+      if (err) {
+        return logger.serverLog(TAG, `Error in sending orde cancel status ${JSON.stringify(err)}`)
+      }
+      logger.serverLog(TAG, `Response from sending order cancel status ${JSON.stringify(status)}`)
+    })
+  }
   return res.status(200).json({ status: 'success' })
 }
