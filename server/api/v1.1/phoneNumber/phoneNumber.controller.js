@@ -298,6 +298,7 @@ exports.sendNumbers = function (req, res) {
                         sendErrorResponse(res, 500, `Failed to fetch numbers ${JSON.stringify(error)}`)
                       })
                     pages.forEach(page => {
+                      require('../../global/messageStatistics').record('inviteusingphone')
                       let messageData = {
                         'messaging_type': 'UPDATE',
                         'recipient': JSON.stringify({

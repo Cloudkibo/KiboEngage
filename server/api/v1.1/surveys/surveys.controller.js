@@ -628,6 +628,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                         messageData.componentType = 'survey'
                         let message = preparePayload(req.user, subscribers[j], page, messageData)
                         saveLiveChat(message)
+                        require('../../global/messageStatistics').record('surveys')
                         let surveyPage = {
                           pageId: page.pageId,
                           userId: req.user._id,
