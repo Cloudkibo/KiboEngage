@@ -24,10 +24,12 @@ exports.index = function (req, res) {
               sendSuccessResponse(res, 200, subscribersPayload)
             })
             .catch(error => {
+              console.log('failed to fetch subscriber tags', error)
               sendErrorResponse(res, 500, `Failed to fetch tags subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          console.log('failed to fetch subscribers', error)
           sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
         })
     })
