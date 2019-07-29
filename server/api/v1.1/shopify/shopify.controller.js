@@ -50,16 +50,38 @@ function registerWebhooks (shop, token) {
     logger.serverLog(TAG, 'Error Creating Order Webhook' + JSON.stringify(err))
   })
 
-  // shopify.webhook.create({
-  //   topic: 'fulfillment_events/create',
-  //   address: `${config.domain}/api/shopify/fulfillments-create`,
-  //   format: 'json'
-  // }).then((response) => {
-  //   logger.serverLog(TAG, 'Fulfillment event webhook created')
-  // }).catch((err) => {
-  //   logger.serverLog(TAG, 'Error Creating Fulfillment event Webhook' + JSON.stringify(err))
-  //   throw err
-  // })
+  shopify.webhook.create({
+    topic: 'fulfillments/create',
+    address: `${config.domain}/api/shopify/fulfillments-create`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'Fulfillment webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating Fulfillment Webhook' + JSON.stringify(err))
+    throw err
+  })
+
+  shopify.webhook.create({
+    topic: 'fulfillments/update',
+    address: `${config.domain}/api/shopify/fulfillments-update`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'Fulfillment update webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating Fulfillment update Webhook' + JSON.stringify(err))
+    throw err
+  })
+
+  shopify.webhook.create({
+    topic: 'fulfillment_events/create',
+    address: `${config.domain}/api/shopify/fulfillment-events-create`,
+    format: 'json'
+  }).then((response) => {
+    logger.serverLog(TAG, 'Fulfillment event webhook created')
+  }).catch((err) => {
+    logger.serverLog(TAG, 'Error Creating Fulfillment event Webhook' + JSON.stringify(err))
+    throw err
+  })
 
   shopify.webhook.create({
     topic: 'orders/cancelled',
