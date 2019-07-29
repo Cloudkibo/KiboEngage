@@ -9,13 +9,18 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
+      console.log('companyuser fetched', companyuser)
       utility.callApi(`subscribers/query`, 'post', { companyId: companyuser.companyId, isSubscribed: true }) // fetch subscribers of company
         .then(subscribers => {
+          console.log('subscribers fetched', subscribers)
           subscribers = subscribers.filter((subscriber) => subscriber.pageId.connected === true)
           let subscriberIds = logicLayer.getSubscriberIds(subscribers)
+          console.log('subscriberIds', subscriberIds)
           utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds } })
             .then(tags => {
+              console.log('tags fetched', tags)
               let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tags)
+              console.log('tagged subscribers', subscribersPayload)
               sendSuccessResponse(res, 200, subscribersPayload)
             })
             .catch(error => {
