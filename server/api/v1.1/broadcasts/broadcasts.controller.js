@@ -527,6 +527,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
             companyId: companyUser.companyId
           })
             .then(savedpagebroadcast => {
+              require('../../global/messageStatistics').record('broadcast')
               batchApi(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag)
             })
             .catch(error => {
@@ -546,7 +547,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
     }
-    require('../../global/messageStatistics').record('broadcast')
+    
     // Following change is to incorporate persistant menu
 
     if (res === 'menu') {
