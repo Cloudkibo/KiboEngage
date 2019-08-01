@@ -201,12 +201,12 @@ const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, pa
     if (actionType === 'messenger') {
       resolve(handleTweetForMessenger(tagline, text, tweet, urls, savedMsg, tweetId, userName, page, screenName))
     } else if (actionType === 'facebook') {
-      resolve(handleTweetForFacebook(tagline, text, tweet, urls, tweetId, userName, page))
+      resolve(handleTweetForFacebook(tagline, text, tweet, urls, tweetId, userName, page, screenName))
     }
   })
 }
 
-const handleTweetForFacebook = (tagline, text, tweet, urls, tweetId, userName, page) => {
+const handleTweetForFacebook = (tagline, text, tweet, urls, tweetId, userName, page, screenName) => {
   return new Promise((resolve, reject) => {
     let twitterUrls = urls.map((url) => url.url)
     let separators = [' ', '\n']
@@ -214,14 +214,14 @@ const handleTweetForFacebook = (tagline, text, tweet, urls, tweetId, userName, p
     text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
     if (tweet && tweet.media && tweet.media.length > 0) {
       if (tweet.media[0].type === 'photo') {
-        resolve(FacebookPayload.prepareFacebookPayloadForImage(text, tweet, tweetId))
+        resolve(FacebookPayload.prepareFacebookPayloadForImage(text, tweet, tweetId, screenName))
       } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
-        resolve(FacebookPayload.prepareFacebookPayloadForVideo(text, tweet, tweetId))
+        resolve(FacebookPayload.prepareFacebookPayloadForVideo(text, tweet, tweetId, screenName))
       }
     } else if (urls.length > 0) {
-      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId, urls))
+      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId, urls, screenName))
     } else {
-      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId))
+      resolve(FacebookPayload.prepareFacebookPayloadForText(text, tweetId, null, screenName))
     }
   })
 }
