@@ -303,52 +303,52 @@ exports.viewList = function (req, res) {
 
 exports.deleteList = function (req, res) {
   utility.callApi(`lists/${req.params.id}`, 'get', {})
-  .then(list => {
-    console.log('list',list)
-  utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName})
-    .then(tags => {
-      console.log('tags resp', tags)
-      if (tags.length > 0) {
-        tags.forEach((tag, i) => {
-          utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id})
-            .then(tagsSubscriber => {
-              for (let i = 0; i < tagsSubscriber.length; i++) {
-                utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {})
-                  .then(result => {
-                  })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
-                  })
+    .then(list => {
+      console.log('list', list)
+      utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName})
+        .then(tags => {
+          console.log('tags resp', tags)
+          if (tags.length > 0) {
+            tags.forEach((tag, i) => {
+              utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id})
+                .then(tagsSubscriber => {
+                  for (let i = 0; i < tagsSubscriber.length; i++) {
+                    utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {})
+                      .then(result => {
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
+                      })
+                  }
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
+                })
+            })
+            async.parallelLimit([
+              function (callback) {
+                deleteListFromLocal(req, callback)
+              },
+              function (callback) {
+                deleteListFromFacebook(req, tags, callback)
               }
+            ], 10, function (err, results) {
+              if (err) {
+                sendErrorResponse(res, 50, `Failed to find list ${err}`)
+              }
+              sendSuccessResponse(res, 200, 'List has been deleted successfully!')
             })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
-            })
-        })
-        async.parallelLimit([
-          function (callback) {
-            deleteListFromLocal(req, callback)
-          },
-          function (callback) {
-            deleteListFromFacebook(req, tags, callback)
+          } else {
+            sendErrorResponse(res, 404, '', 'Tag not found')
           }
-        ], 10, function (err, results) {
-          if (err) {
-            sendErrorResponse(res, 50, `Failed to find list ${err}`)
-          }
-          sendSuccessResponse(res, 200, 'List has been deleted successfully!')
         })
-      } else {
-        sendErrorResponse(res, 404, '', 'Tag not found')
-      }
+        .catch(err => {
+          sendErrorResponse(res, 500, '', `Failed to find tags ${err}`)
+        })
     })
     .catch(err => {
-      sendErrorResponse(res, 500, '', `Failed to find tags ${err}`)
+      sendErrorResponse(res, 500, '', `Failed to find list ${err}`)
     })
-  })
-  .catch(err => {
-    sendErrorResponse(res, 500, '', `Failed to find list ${err}`)
-  })
 }
 
 function deleteListFromLocal (req, callback) {
@@ -498,8 +498,10 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
             })
         } else {
+          console.log('tags/query', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
           utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
             .then(tagPayload => {
+              console.log('tagPayload', tagPayload)
               tagPayload = tagPayload[0]
               tags.push(tagPayload)
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
