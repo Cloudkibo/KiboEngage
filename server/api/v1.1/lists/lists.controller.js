@@ -467,12 +467,14 @@ function isTagExists (pageId, tags) {
 }
 
 function assignTagToSubscribers (subscribers, tag, req, res) {
+  console.log('assignTagToSubscribers')
   let tags = []
   subscribers.forEach((subscriberId, i) => {
     utility.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
+          console.log('existsTag.status')
           let tagPayload = tags[existsTag.index]
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
