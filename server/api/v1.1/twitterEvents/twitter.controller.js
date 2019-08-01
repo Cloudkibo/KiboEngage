@@ -32,7 +32,6 @@ exports.twitterwebhook = function (req, res) {
   })
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
-      console.log('autoposting found', req.body)
       autopostings.forEach(postingItem => {
         if (logicLayer.checkFilterStatus(postingItem, req)) {
           if (postingItem.moderateTweets) {

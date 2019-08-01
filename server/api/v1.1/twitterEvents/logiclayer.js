@@ -227,7 +227,6 @@ const handleTweetForFacebook = (tagline, text, tweet, urls, tweetId, userName, p
 }
 
 const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, screenName) => {
-  console.log('userName inside', userName)
   return new Promise((resolve, reject) => {
     let button = !(tweet && tweet.media && tweet.media.length > 0)
     let payload = []
