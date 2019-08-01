@@ -197,7 +197,7 @@ const prepareShareButton = (savedMsg, tweetId, body, type, screenName) => {
 const getVideoURL = (variants) => {
   let url = ''
   for (let i = 0; i < variants.length; i++) {
-    if (variants[i].content_type === 'video/mp4' && variants[i].bitrate) {
+    if (variants[i].content_type === 'video/mp4' && (variants[i].bitrate || variants[i].bitrate === 0)) {
       url = variants[i].url
       break
     }
