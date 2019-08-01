@@ -467,14 +467,14 @@ function isTagExists (pageId, tags) {
 }
 
 function assignTagToSubscribers (subscribers, tag, req, res) {
-  console.log('assignTagToSubscribers')
+  logger.serverLog(TAG, `assignTagToSubscribers`, 'debug')
   let tags = []
   subscribers.forEach((subscriberId, i) => {
     utility.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
-          console.log('existsTag.status')
+          logger.serverLog(TAG, 'existsTag.status', 'debug')
           let tagPayload = tags[existsTag.index]
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
@@ -500,10 +500,10 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
             })
         } else {
-          console.log('tags/query', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
+          logger.serverLog(TAG, `tags/query ${{tag, pageId: subscriber.pageId._id, companyId: req.user.companyId}}`, 'debug')
           utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
             .then(tagPayload => {
-              console.log('tagPayload', tagPayload)
+              logger.serverLog(TAG, `tagPayload ${tagPayload}`)
               tagPayload = tagPayload[0]
               tags.push(tagPayload)
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
