@@ -22,7 +22,8 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
           req.body.id_str,
           req.body.user.name,
           page,
-          actionType
+          actionType,
+          req.tweetUser.screen_name
         ).then(result => {
           resolve(result)
         })
@@ -36,7 +37,8 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
           req.body.id_str,
           req.body.user.name,
           page,
-          actionType
+          actionType,
+          req.tweetUser.screen_name
         ).then(result => {
           resolve(result)
         })
@@ -54,7 +56,8 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
           req.body.id_str,
           req.body.user.name,
           page,
-          actionType
+          actionType,
+          req.tweetUser.screen_name
         ).then(result => {
           resolve(result)
         })
@@ -68,7 +71,8 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
           req.body.id_str,
           req.body.user.name,
           page,
-          actionType
+          actionType,
+          req.tweetUser.screen_name
         ).then(result => {
           resolve(result)
         })
@@ -85,7 +89,8 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
           req.body.id_str,
           req.body.user.name,
           page,
-          actionType
+          actionType,
+          req.tweetUser.screen_name
         ).then(result => {
           resolve(result)
         })
@@ -99,7 +104,8 @@ exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
           req.body.id_str,
           req.body.user.name,
           page,
-          actionType
+          actionType,
+          req.tweetUser.screen_name
         ).then(result => {
           resolve(result)
         })
@@ -137,7 +143,7 @@ exports.checkFilterStatus = function (postingItem, req) {
 
 exports.prepareApprovalMessage = function (recipientId, postingItem, req) {
   let username = `@${req.tweetUser.screen_name}`
-  let tweetUrl = `https://twitter.com/statuses/${req.body.id_str}`
+  let tweetUrl = `https://twitter.com/${req.tweetUser.screen_name}/status/${req.body.id_str}`
   let forwardPayload = {
     autopostingId: postingItem._id,
     tweetId: req.body.id_str,
@@ -190,10 +196,10 @@ const getText = (tweet) => {
   }
 }
 
-const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, actionType) => {
+const handleTweet = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, actionType, screenName) => {
   return new Promise((resolve, reject) => {
     if (actionType === 'messenger') {
-      resolve(handleTweetForMessenger(tagline, text, tweet, urls, savedMsg, tweetId, userName, page))
+      resolve(handleTweetForMessenger(tagline, text, tweet, urls, savedMsg, tweetId, userName, page, screenName))
     } else if (actionType === 'facebook') {
       resolve(handleTweetForFacebook(tagline, text, tweet, urls, tweetId, userName, page))
     }
@@ -220,7 +226,8 @@ const handleTweetForFacebook = (tagline, text, tweet, urls, tweetId, userName, p
   })
 }
 
-const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page) => {
+const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, userName, page, screenName) => {
+  console.log('userName inside', userName)
   return new Promise((resolve, reject) => {
     let button = !(tweet && tweet.media && tweet.media.length > 0)
     let payload = []
@@ -229,19 +236,19 @@ const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, 
     let textArray = text.split(new RegExp('[' + separators.join('') + ']', 'g'))
     // let textArray = text.split(' \n')
     text = `${tagline}${prepareText(twitterUrls, textArray, urls)}`
-    payload.push(MessengerPayload.prepareMessengerPayloadForText('text', {text}, savedMsg, tweetId, button))
+    payload.push(MessengerPayload.prepareMessengerPayloadForText('text', {text}, savedMsg, tweetId, button, screenName))
     if (tweet && tweet.media && tweet.media.length > 0) {
       if (tweet.media[0].type === 'photo') {
-        payload.push(MessengerPayload.prepareMessengerPayloadForImage(tweet, savedMsg, tweetId, userName))
+        payload.push(MessengerPayload.prepareMessengerPayloadForImage(tweet, savedMsg, tweetId, userName, screenName))
         resolve(payload)
       } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
-        MessengerPayload.prepareMessengerPayloadForVideo(tweet, savedMsg, tweetId, userName, page).then(result => {
+        MessengerPayload.prepareMessengerPayloadForVideo(tweet, savedMsg, tweetId, userName, page, screenName).then(result => {
           payload.push(result)
           resolve(payload)
         })
       }
     } else if (urls.length > 0 && button) {
-      MessengerPayload.prepareMessengerPayloadForLink(urls, savedMsg, tweetId, userName).then(linkpayload => {
+      MessengerPayload.prepareMessengerPayloadForLink(urls, savedMsg, tweetId, userName, screenName).then(linkpayload => {
         payload.push(linkpayload.messageData)
         if (!linkpayload.showButton) { // remove button from text
           payload[0] = {

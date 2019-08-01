@@ -32,9 +32,9 @@ const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, pag
   })
 }
 
-const prepareMessengerPayloadForLink = (urls, savedMsg, tweetId, userName) => {
+const prepareMessengerPayloadForLink = (urls, savedMsg, tweetId, userName, screenName) => {
   return new Promise(function (resolve, reject) {
-    prepareGalleryForLink(urls, savedMsg, tweetId).then(gallery => {
+    prepareGalleryForLink(urls, savedMsg, tweetId, screenName).then(gallery => {
       let messageData = {
         'attachment': {
           'type': 'template',
@@ -49,13 +49,13 @@ const prepareMessengerPayloadForLink = (urls, savedMsg, tweetId, userName) => {
   })
 }
 
-const prepareGalleryForLink = (urls, savedMsg, tweetId) => {
+const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
   return new Promise(function (resolve, reject) {
     let gallery = []
     let buttons = []
-    prepareViewTweetButton(savedMsg, tweetId).then(button => {
+    prepareViewTweetButton(savedMsg, tweetId, screenName).then(button => {
       buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
+      buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card', screenName))
     })
     for (let i = 0; i < urls.length; i++) {
       og(urls[i].expanded_url, (err, meta) => {
@@ -83,8 +83,8 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId) => {
   })
 }
 
-const prepareMessengerPayloadForImage = (tweet, savedMsg, tweetId, userName) => {
-  let gallery = prepareGallery(tweet.media, savedMsg, tweetId, userName)
+const prepareMessengerPayloadForImage = (tweet, savedMsg, tweetId, userName, screenName) => {
+  let gallery = prepareGallery(tweet.media, savedMsg, tweetId, userName, screenName)
   let messageData = {
     'attachment': {
       'type': 'template',
@@ -97,13 +97,13 @@ const prepareMessengerPayloadForImage = (tweet, savedMsg, tweetId, userName) => 
   return messageData
 }
 
-function prepareGallery (media, savedMsg, tweetId, userName) {
+function prepareGallery (media, savedMsg, tweetId, userName, screenName) {
   let length = media.length <= 10 ? media.length : 10
   let elements = []
   let buttons = []
-  prepareViewTweetButton(savedMsg, tweetId).then(button => {
+  prepareViewTweetButton(savedMsg, tweetId, screenName).then(button => {
     buttons.push(button)
-    buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card'))
+    buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card', screenName))
   })
   for (let i = 0; i < length; i++) {
     elements.push({
@@ -116,13 +116,13 @@ function prepareGallery (media, savedMsg, tweetId, userName) {
   return elements
 }
 
-const prepareMessengerPayloadForText = (type, body, savedMsg, tweetId, showButton) => {
+const prepareMessengerPayloadForText = (type, body, savedMsg, tweetId, showButton, screenName) => {
   let messageData = {}
   let buttons = []
   if (showButton) {
-    prepareViewTweetButton(savedMsg, tweetId).then(button => {
+    prepareViewTweetButton(savedMsg, tweetId, screenName).then(button => {
       buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, tweetId, body))
+      buttons.push(prepareShareButton(savedMsg, tweetId, body, null, screenName))
     })
     messageData = {
       'attachment': {
@@ -142,10 +142,10 @@ const prepareMessengerPayloadForText = (type, body, savedMsg, tweetId, showButto
   return messageData
 }
 
-const prepareViewTweetButton = (savedMsg, tweetId) => {
+const prepareViewTweetButton = (savedMsg, tweetId, screenName) => {
   return new Promise(function (resolve, reject) {
     let URLObject = {
-      originalURL: `https://twitter.com/statuses/${tweetId}`,
+      originalURL: `https://twitter.com/${screenName}/status/${tweetId}`,
       module: {
         id: savedMsg._id,
         type: 'autoposting'
@@ -163,7 +163,7 @@ const prepareViewTweetButton = (savedMsg, tweetId) => {
       })
   })
 }
-const prepareShareButton = (savedMsg, tweetId, body, type) => {
+const prepareShareButton = (savedMsg, tweetId, body, type, screenName) => {
   let button
   if (type && type === 'card') {
     button = {
@@ -182,7 +182,7 @@ const prepareShareButton = (savedMsg, tweetId, body, type) => {
               'subtitle': 'kibopush.com',
               'default_action': {
                 'type': 'web_url',
-                'url': `https://twitter.com/statuses/${tweetId}`
+                'url': `https://twitter.com/${screenName}/status/${tweetId}`
               },
               'buttons': []
             }]
