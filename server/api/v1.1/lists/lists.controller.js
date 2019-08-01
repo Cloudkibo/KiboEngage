@@ -467,7 +467,7 @@ function isTagExists (pageId, tags) {
 }
 
 function assignTagToSubscribers (subscribers, tag, req, res) {
-  logger.serverLog(TAG, assignTagToSubscribers``, 'debug')
+  logger.serverLog(TAG, `assignTagToSubscribers`, 'debug')
   let tags = []
   subscribers.forEach((subscriberId, i) => {
     utility.callApi(`subscribers/${subscriberId}`, 'get', {})
