@@ -78,7 +78,10 @@ exports.create = function (req, res) {
             if (err) {
               sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
             }
-            assignTagToSubscribers(req.body.content, req.body.listName, req, res)
+            if (newTagCreated) {
+              assignTagToSubscribers(req.body.content, req.body.listName, req, res)
+              newTagCreated = false
+            }
           })
         })
         .catch(error => {
@@ -89,7 +92,7 @@ exports.create = function (req, res) {
       sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
-
+let newTagCreated = false
 function createTag (req, callback) {
   utility.callApi('pages/query', 'post', {companyId: req.user.companyId})
     .then(pages => {
@@ -120,6 +123,7 @@ function createTag (req, callback) {
                     }
                   })
                 if (i === pages.length - 1) {
+                  newTagCreated = true
                   callback(null, newTag)
                 }
               })
