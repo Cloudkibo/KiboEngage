@@ -155,7 +155,7 @@ function createList (req, callback) {
         options: {}
       })
         .then(updated => {
-          callback(null, 'success')
+          // callback(null, 'success')
         })
         .catch(error => callback(error))
     })
