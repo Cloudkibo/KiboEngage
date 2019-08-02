@@ -97,6 +97,7 @@ let newTagCreated = false
 function createTag (req, callback) {
   utility.callApi('pages/query', 'post', {companyId: req.user.companyId})
     .then(pages => {
+      let tagsCreated = 0
       pages.forEach((page, i) => {
         let tag = req.body.listName
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
@@ -116,6 +117,7 @@ function createTag (req, callback) {
               .then(newTag => {
                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}})
                   .then(updated => {
+                    tagsCreated++
                     logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
                   })
                   .catch(err => {
@@ -123,7 +125,7 @@ function createTag (req, callback) {
                       logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
                     }
                   })
-                if (i === pages.length - 1) {
+                if (tagsCreated === pages.length - 1) {
                   newTagCreated = true
                   logger.serverLog(TAG, 'new tag created', 'debug')
                   return callback(null, newTag)
