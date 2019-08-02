@@ -79,6 +79,7 @@ exports.create = function (req, res) {
               sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
             }
             if (newTagCreated) {
+              logger.serverLog(TAG, 'assigning tag to subscribers', 'debug')
               assignTagToSubscribers(req.body.content, req.body.listName, req, res)
               newTagCreated = false
             }
@@ -124,6 +125,7 @@ function createTag (req, callback) {
                   })
                 if (i === pages.length - 1) {
                   newTagCreated = true
+                  logger.serverLog(TAG, 'new tag created', 'debug')
                   callback(null, newTag)
                 }
               })
