@@ -102,7 +102,7 @@ function createTag (req, callback) {
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
             if (label.body.error) {
-              callback(label.body.error)
+              return callback(label.body.error)
             }
             let tagPayload = {
               tag: req.body.listName,
@@ -126,7 +126,7 @@ function createTag (req, callback) {
                 if (i === pages.length - 1) {
                   newTagCreated = true
                   logger.serverLog(TAG, 'new tag created', 'debug')
-                  callback(null, newTag)
+                  return callback(null, newTag)
                 }
               })
               .catch(err => callback(err))
@@ -155,7 +155,7 @@ function createList (req, callback) {
         options: {}
       })
         .then(updated => {
-          // callback(null, 'success')
+          callback(null, 'success')
         })
         .catch(error => callback(error))
     })
