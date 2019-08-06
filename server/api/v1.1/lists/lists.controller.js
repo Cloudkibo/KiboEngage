@@ -78,7 +78,11 @@ exports.create = function (req, res) {
             if (err) {
               sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
             }
-            assignTagToSubscribers(req.body.content, req.body.listName, req, res)
+            if (newTagCreated) {
+              logger.serverLog(TAG, 'assigning tag to subscribers', 'debug')
+              assignTagToSubscribers(req.body.content, req.body.listName, req, res)
+              newTagCreated = false
+            }
           })
         })
         .catch(error => {
@@ -89,16 +93,17 @@ exports.create = function (req, res) {
       sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
-
+let newTagCreated = false
 function createTag (req, callback) {
   utility.callApi('pages/query', 'post', {companyId: req.user.companyId})
     .then(pages => {
+      let tagsCreated = 0
       pages.forEach((page, i) => {
         let tag = req.body.listName
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
             if (label.body.error) {
-              callback(label.body.error)
+              return callback(label.body.error)
             }
             let tagPayload = {
               tag: req.body.listName,
@@ -112,6 +117,7 @@ function createTag (req, callback) {
               .then(newTag => {
                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}})
                   .then(updated => {
+                    tagsCreated++
                     logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
                   })
                   .catch(err => {
@@ -119,8 +125,10 @@ function createTag (req, callback) {
                       logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
                     }
                   })
-                if (i === pages.length - 1) {
-                  callback(null, newTag)
+                if (tagsCreated === pages.length - 1) {
+                  newTagCreated = true
+                  logger.serverLog(TAG, 'new tag created', 'debug')
+                  return callback(null, newTag)
                 }
               })
               .catch(err => callback(err))
@@ -303,52 +311,52 @@ exports.viewList = function (req, res) {
 
 exports.deleteList = function (req, res) {
   utility.callApi(`lists/${req.params.id}`, 'get', {})
-  .then(list => {
-    console.log('list',list)
-  utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName})
-    .then(tags => {
-      console.log('tags resp', tags)
-      if (tags.length > 0) {
-        tags.forEach((tag, i) => {
-          utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id})
-            .then(tagsSubscriber => {
-              for (let i = 0; i < tagsSubscriber.length; i++) {
-                utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {})
-                  .then(result => {
-                  })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
-                  })
+    .then(list => {
+      console.log('list', list)
+      utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName})
+        .then(tags => {
+          console.log('tags resp', tags)
+          if (tags.length > 0) {
+            tags.forEach((tag, i) => {
+              utility.callApi(`tags_subscriber/query`, 'post', {tagId: tag._id})
+                .then(tagsSubscriber => {
+                  for (let i = 0; i < tagsSubscriber.length; i++) {
+                    utility.callApi(`tags_subscriber/${tagsSubscriber[i]._id}`, 'delete', {})
+                      .then(result => {
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
+                      })
+                  }
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
+                })
+            })
+            async.parallelLimit([
+              function (callback) {
+                deleteListFromLocal(req, callback)
+              },
+              function (callback) {
+                deleteListFromFacebook(req, tags, callback)
               }
+            ], 10, function (err, results) {
+              if (err) {
+                sendErrorResponse(res, 50, `Failed to find list ${err}`)
+              }
+              sendSuccessResponse(res, 200, 'List has been deleted successfully!')
             })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
-            })
-        })
-        async.parallelLimit([
-          function (callback) {
-            deleteListFromLocal(req, callback)
-          },
-          function (callback) {
-            deleteListFromFacebook(req, tags, callback)
+          } else {
+            sendErrorResponse(res, 404, '', 'Tag not found')
           }
-        ], 10, function (err, results) {
-          if (err) {
-            sendErrorResponse(res, 50, `Failed to find list ${err}`)
-          }
-          sendSuccessResponse(res, 200, 'List has been deleted successfully!')
         })
-      } else {
-        sendErrorResponse(res, 404, '', 'Tag not found')
-      }
+        .catch(err => {
+          sendErrorResponse(res, 500, '', `Failed to find tags ${err}`)
+        })
     })
     .catch(err => {
-      sendErrorResponse(res, 500, '', `Failed to find tags ${err}`)
+      sendErrorResponse(res, 500, '', `Failed to find list ${err}`)
     })
-  })
-  .catch(err => {
-    sendErrorResponse(res, 500, '', `Failed to find list ${err}`)
-  })
 }
 
 function deleteListFromLocal (req, callback) {
@@ -467,12 +475,14 @@ function isTagExists (pageId, tags) {
 }
 
 function assignTagToSubscribers (subscribers, tag, req, res) {
+  logger.serverLog(TAG, `assignTagToSubscribers`, 'debug')
   let tags = []
   subscribers.forEach((subscriberId, i) => {
     utility.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
         if (existsTag.status) {
+          logger.serverLog(TAG, 'existsTag.status', 'debug')
           let tagPayload = tags[existsTag.index]
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
@@ -498,8 +508,10 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
             })
         } else {
+          logger.serverLog(TAG, `tags/query ${JSON.stringify({tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})}`, 'debug')
           utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
             .then(tagPayload => {
+              logger.serverLog(TAG, `tagPayload ${JSON.stringify(tagPayload)}`)
               tagPayload = tagPayload[0]
               tags.push(tagPayload)
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})

@@ -346,7 +346,6 @@ function fetchPages (url, user, req, token) {
     // logger.serverLogF(TAG, JSON.stringify(resp.body))
     const data = resp.body.data
     const cursor = resp.body.paging
-    console.log('pages got', data)
     apiCaller.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email})
       .then(companyUser => {
         if (!companyUser) {
@@ -367,9 +366,6 @@ function fetchPages (url, user, req, token) {
               method: 'GET'
             }
             needle.get(options2.url, options2, (error, fanCount) => {
-              console.log('item.name', item.name)
-              console.log('error in connect', error)
-              console.log('fancount body', fanCount.body)
               if (error !== null) {
                 return logger.serverLog(TAG, `Error occurred ${error}`)
               } else {
@@ -413,11 +409,8 @@ function fetchPages (url, user, req, token) {
                       if (fanCount.body.username) {
                         updatedPayload['pageUserName'] = fanCount.body.username
                       }
-                      console.log('page._id', page._id)
-                      console.log('newPayload', updatedPayload)
-                      apiCaller.callApi(`pages/update`, 'put', {query: {_id: page._id}, newPayload: updatedPayload, options: {}})
+                      apiCaller.callApi(`pages/${page._id}`, 'put', updatedPayload)
                         .then(updated => {
-                          console.log('updated up', updated)
                           logger.serverLog(TAG,
                             `page updated successfuly ${JSON.stringify(updated)}`)
                           // logger.serverLog(TAG, `Likes updated for ${page.pageName}`)
@@ -448,18 +441,14 @@ function fetchPages (url, user, req, token) {
 }
 
 function updateUnapprovedPages (facebookPages, user, companyUser) {
-  console.log('in deleteUnapprovedPages')
   if (facebookPages.length > 0) {
     let fbPages = facebookPages.map(item => item.id)
-    console.log('fbPages', fbPages)
     apiCaller.callApi(`pages/query`, 'post', {userId: user._id, companyId: companyUser.companyId})
       .then(localPages => {
         for (let i = 0; i < localPages.length; i++) {
           if (!fbPages.includes(localPages[i].pageId)) {
-            console.log('in if')
-            apiCaller.callApi(`pages/update`, 'put', {query: {_id: localPages[i]._id}, newPayload: {isApproved: false}, options: {}})
+            apiCaller.callApi(`pages/${localPages[i]._id}`, 'put', {isApproved: false, connected: false})
               .then(updated => {
-                console.log('updated isApproved', updated)
               })
           }
         }
