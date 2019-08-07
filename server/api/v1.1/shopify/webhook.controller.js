@@ -269,13 +269,13 @@ exports.ordersCancelled = function (req, res) {
     }
     logger.serverLog(TAG, `Response from sending order cancel status ${JSON.stringify(status)}`)
   })
-  dataLayer.findOneOrderInfoObjectAndUpdate({orderId: orderId}, {status: 'cancelled'})
-      .then(() => {
-        logger.serverLog(TAG, 'Order status updated for cancelled')
-      })
-      .catch((err) => {
-        logger.serverLog(TAG, 'Order status updated for cancelled failed ' + JSON.stringify(err))
-      })
+  dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'cancelled' })
+    .then(() => {
+      logger.serverLog(TAG, 'Order status updated for cancelled')
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, 'Order status updated for cancelled failed ' + JSON.stringify(err))
+    })
   return res.status(200).json({ status: 'success' })
 }
 
