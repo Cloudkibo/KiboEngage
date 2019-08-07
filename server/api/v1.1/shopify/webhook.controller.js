@@ -269,6 +269,13 @@ exports.ordersCancelled = function (req, res) {
     }
     logger.serverLog(TAG, `Response from sending order cancel status ${JSON.stringify(status)}`)
   })
+  dataLayer.findOneOrderInfoObjectAndUpdate({orderId: orderId}, {status: 'cancelled'})
+      .then(() => {
+        logger.serverLog(TAG, 'Order status updated for cancelled')
+      })
+      .catch((err) => {
+        logger.serverLog(TAG, 'Order status updated for cancelled failed ' + JSON.stringify(err))
+      })
   return res.status(200).json({ status: 'success' })
 }
 
@@ -283,6 +290,13 @@ exports.ordersFulfilled = function (req, res) {
     }
     logger.serverLog(TAG, `Response from sending order confirmed status ${JSON.stringify(status)}`)
   })
+  dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'confirmed' })
+    .then(() => {
+      logger.serverLog(TAG, 'Order status updated for confirmed')
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, 'Order status updated for confirmed failed ' + JSON.stringify(err))
+    })
   return res.status(200).json({ status: 'success' })
 }
 
@@ -299,6 +313,13 @@ exports.ordersPaid = function (req, res) {
     }
     logger.serverLog(TAG, `Response from sending order status ${JSON.stringify(status)}`)
   })
+  dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'paid' })
+    .then(() => {
+      logger.serverLog(TAG, 'Order status updated for paid')
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, 'Order status updated for paid failed ' + JSON.stringify(err))
+    })
   return res.status(200).json({ status: 'success' })
 }
 
@@ -307,13 +328,21 @@ exports.orderUpdate = function (req, res) {
   if (req.body.financial_status === 'refunded') {
     let orderId = req.body.id
     let totalPrice = req.body.total_price
-    let message = `Your order with id ${orderId} has been refunded. The total price of order is ${totalPrice}`
+    let amountRefunded = req.body.refunds[0].transactions[0].amount
+    let message = `Your order with id ${orderId} has been refunded and amount refunded is ${amountRefunded}. The total price of order is ${totalPrice}`
     utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
       if (err) {
         return logger.serverLog(TAG, `Error in sending orde cancel status ${JSON.stringify(err)}`)
       }
       logger.serverLog(TAG, `Response from sending order cancel status ${JSON.stringify(status)}`)
     })
+    dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'refunded' })
+      .then(() => {
+        logger.serverLog(TAG, 'Order status updated for refund')
+      })
+      .catch((err) => {
+        logger.serverLog(TAG, 'Order status updated for refund failed ' + JSON.stringify(err))
+      })
   }
   return res.status(200).json({ status: 'success' })
 }
