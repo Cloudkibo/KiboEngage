@@ -129,7 +129,7 @@ exports.handleOrder = function (req, res) {
             let order = result
             order.orderId = req.body.id
             order.number = req.body.number
-            order.status = req.body.result.status
+            order.status = result.status
             order.order_status_url = req.body.order_status_url
             dataLayer.createOrderInfo(order)
               .then(updated => {
