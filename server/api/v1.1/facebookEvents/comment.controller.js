@@ -9,7 +9,7 @@ exports.sendCommentReply = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`, 'debug')
+ // logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`, 'debug')
   let send = true
   let postId = req.body.entry[0].changes[0].value.post_id
   let verb = req.body.entry[0].changes[0].value.verb
