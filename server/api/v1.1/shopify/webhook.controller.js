@@ -132,11 +132,16 @@ exports.handleOrder = function (req, res) {
             order.status = req.body.result.status
             order.order_status_url = req.body.order_status_url
             dataLayer.createOrderInfo(order)
-              .then(updated => logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`))
-              .catch(err => logger.serverLog(TAG, `Error in creating order on new order ${JSON.stringify(err)}`))
+              .then(updated => {
+                logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`)
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Error in creating order on new order ${JSON.stringify(err)}`)
+              })
             return res.status(200).json({ status: 'failed' })
           })
           .catch(err => {
+            console.log(err)
             logger.serverLog(TAG, `failed to update the checkout obj for new order ${JSON.stringify(err)}`)
             // res.status(500).json({ status: 'failed', error: err })
           })
