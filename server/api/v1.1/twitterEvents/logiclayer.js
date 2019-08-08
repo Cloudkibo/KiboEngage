@@ -3,7 +3,7 @@ const FacebookPayload = require('./facebookPayload')
 
 exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
   return new Promise((resolve, reject) => {
-    console.log('in handleTwitterPayload', JSON.stringify(req.body))
+    // console.log('in handleTwitterPayload', JSON.stringify(req.body))
     let tagline = ''
     if (req.quote) {
       let originalUser = req.retweet.user
