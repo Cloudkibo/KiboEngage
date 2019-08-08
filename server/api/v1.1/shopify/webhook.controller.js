@@ -125,11 +125,11 @@ exports.handleOrder = function (req, res) {
         dataLayer.findOneCheckOutInfoObjectAndUpdate({ shopifyCheckoutId: req.body.checkout_id }, newObj)
           .then(updated => {
             logger.serverLog(TAG, `updated the checkout obj for new order`)
-            res.status(200).json({ status: 'success', payload: updated })
+            // res.status(200).json({ status: 'success', payload: updated })
           })
           .catch(err => {
             logger.serverLog(TAG, `failed to update the checkout obj for new order ${JSON.stringify(err)}`)
-            res.status(500).json({ status: 'failed', error: err })
+            // res.status(500).json({ status: 'failed', error: err })
           })
 
         let order = result
@@ -140,6 +140,7 @@ exports.handleOrder = function (req, res) {
         dataLayer.createOrderInfo(order)
           .then(updated => logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`))
           .catch(err => logger.serverLog(TAG, `Error in creating order on new order ${JSON.stringify(err)}`))
+        return res.status(200).json({ status: 'failed' })
       } else {
         logger.serverLog(TAG, `inside else of the updated the checkout obj for new order`)
         return res.status(200).json({ status: 'failed' })
