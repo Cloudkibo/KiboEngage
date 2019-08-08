@@ -128,7 +128,7 @@ exports.handleOrder = function (req, res) {
         let order = result
         order.orderId = req.body.id
         order.number = req.body.number
-        order.status = req.body.fulfillment_status
+        order.status = req.body.result.status
         order.order_status_url = req.body.order_status_url
         dataLayer.createOrderInfo(order)
           .then(updated => logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`))
@@ -325,7 +325,7 @@ exports.ordersPaid = function (req, res) {
 
 exports.orderUpdate = function (req, res) {
   logger.serverLog(TAG, `ORDER UPDATE Called ${JSON.stringify(req.body)}`)
-  if (req.body.financial_status === 'refunded') {
+  if (req.body.financial_status === 'refunded' || req.body.financial_status === 'partially_refunded') {
     let orderId = req.body.id
     let totalPrice = req.body.total_price
     let amountRefunded = req.body.refunds[0].transactions[0].amount
