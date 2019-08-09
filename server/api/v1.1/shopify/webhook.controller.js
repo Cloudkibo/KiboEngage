@@ -123,17 +123,30 @@ exports.handleOrder = function (req, res) {
         }
         // Saving the updated info
         dataLayer.findOneCheckOutInfoObjectAndUpdate({ shopifyCheckoutId: req.body.checkout_id }, newObj)
-          .then(updated => res.status(200).json({ status: 'success', payload: updated }))
-          .catch(err => res.status(500).json({ status: 'failed', error: err }))
-        let order = result
-        order.orderId = req.body.id
-        order.number = req.body.number
-        order.status = req.body.fulfillment_status
-        order.order_status_url = req.body.order_status_url
-        dataLayer.createOrderInfo(order)
-          .then(updated => logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`))
-          .catch(err => logger.serverLog(TAG, `Error in creating order on new order ${JSON.stringify(err)}`))
+          .then(updated => {
+            logger.serverLog(TAG, `updated the checkout obj for new order`)
+            // res.status(200).json({ status: 'success', payload: updated })
+            let order = result
+            order.orderId = req.body.id
+            order.number = req.body.number
+            order.status = result.status
+            order.order_status_url = req.body.order_status_url
+            dataLayer.createOrderInfo(order)
+              .then(updated => {
+                logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`)
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Error in creating order on new order ${JSON.stringify(err)}`)
+              })
+            return res.status(200).json({ status: 'failed' })
+          })
+          .catch(err => {
+            console.log(err)
+            logger.serverLog(TAG, `failed to update the checkout obj for new order ${JSON.stringify(err)}`)
+            // res.status(500).json({ status: 'failed', error: err })
+          })
       } else {
+        logger.serverLog(TAG, `inside else of the updated the checkout obj for new order`)
         return res.status(200).json({ status: 'failed' })
       }
     })
@@ -269,6 +282,13 @@ exports.ordersCancelled = function (req, res) {
     }
     logger.serverLog(TAG, `Response from sending order cancel status ${JSON.stringify(status)}`)
   })
+  dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'cancelled' })
+    .then(() => {
+      logger.serverLog(TAG, 'Order status updated for cancelled')
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, 'Order status updated for cancelled failed ' + JSON.stringify(err))
+    })
   return res.status(200).json({ status: 'success' })
 }
 
@@ -283,6 +303,13 @@ exports.ordersFulfilled = function (req, res) {
     }
     logger.serverLog(TAG, `Response from sending order confirmed status ${JSON.stringify(status)}`)
   })
+  dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'confirmed' })
+    .then(() => {
+      logger.serverLog(TAG, 'Order status updated for confirmed')
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, 'Order status updated for confirmed failed ' + JSON.stringify(err))
+    })
   return res.status(200).json({ status: 'success' })
 }
 
@@ -299,21 +326,36 @@ exports.ordersPaid = function (req, res) {
     }
     logger.serverLog(TAG, `Response from sending order status ${JSON.stringify(status)}`)
   })
+  dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'paid' })
+    .then(() => {
+      logger.serverLog(TAG, 'Order status updated for paid')
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, 'Order status updated for paid failed ' + JSON.stringify(err))
+    })
   return res.status(200).json({ status: 'success' })
 }
 
 exports.orderUpdate = function (req, res) {
   logger.serverLog(TAG, `ORDER UPDATE Called ${JSON.stringify(req.body)}`)
-  if (req.body.financial_status === 'refunded') {
+  if (req.body.financial_status === 'refunded' || req.body.financial_status === 'partially_refunded') {
     let orderId = req.body.id
     let totalPrice = req.body.total_price
-    let message = `Your order with id ${orderId} has been refunded. The total price of order is ${totalPrice}`
+    let amountRefunded = req.body.refunds[0].transactions[0].amount
+    let message = `Your order with id ${orderId} has been refunded and amount refunded is ${amountRefunded}. The total price of order is ${totalPrice}`
     utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
       if (err) {
         return logger.serverLog(TAG, `Error in sending orde cancel status ${JSON.stringify(err)}`)
       }
       logger.serverLog(TAG, `Response from sending order cancel status ${JSON.stringify(status)}`)
     })
+    dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'refunded' })
+      .then(() => {
+        logger.serverLog(TAG, 'Order status updated for refund')
+      })
+      .catch((err) => {
+        logger.serverLog(TAG, 'Order status updated for refund failed ' + JSON.stringify(err))
+      })
   }
   return res.status(200).json({ status: 'success' })
 }

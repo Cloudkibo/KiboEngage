@@ -118,6 +118,7 @@ exports.getCriterias = function (req, tagIDs) {
     }
     finalCriteria = [
       { $match: {companyId: req.user.companyId} },
+      { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
       { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
@@ -139,7 +140,6 @@ exports.getCriterias = function (req, tagIDs) {
         'tags_subscriber': 1
       }},
       { $match: temp },
-      { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: req.body.number_of_records }
     ]
@@ -169,7 +169,6 @@ exports.getCriterias = function (req, tagIDs) {
         'tags_subscriber': 1
       }},
       { $match: { $and: [temp, { _id: { $lt: req.body.last_id } }] } },
-      { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: req.body.number_of_records }
     ]
@@ -199,7 +198,6 @@ exports.getCriterias = function (req, tagIDs) {
         'tags_subscriber': 1
       }},
       { $match: { $and: [temp, { _id: { $gt: req.body.last_id } }] } },
-      { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: req.body.number_of_records }
     ]

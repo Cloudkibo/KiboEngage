@@ -15,12 +15,10 @@ exports.runSequenceMessageQueueScript = function () {
         for (let i = 0; i < data.length; i++) {
           let message = data[i]
           if (message.queueScheduledTime && new Date(message.queueScheduledTime).getTime() < new Date().getTime()) {
-            logger.serverLog(TAG, `queueScheduledTime arrived for ${JSON.stringify(message)}`)
             SequenceDataLayer.genericFindForSequence({ _id: message.sequenceId })
               .then(sequence => {
                 sequence = sequence[0]
                 let sequenceMessage = message.sequenceMessageId
-                logger.serverLog(TAG, `sequenceMessage found ${JSON.stringify(sequenceMessage)}`)
                 if (sequenceMessage.trigger.event === 'none') {
                   sendSequenceMessage(message, sequence, sequenceMessage)
                 } else if (sequenceMessage.trigger.event === 'sees') {
