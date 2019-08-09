@@ -591,32 +591,43 @@ exports.AllSubscribers = function (req, res) {
 function downloadSubscribersData (subscribers) {
   let subscriberPayload = []
   return new Promise(function (resolve, reject) {
-    for (let i = 0; i < subscribers.length; i++) {
-      subscriberPayload.push({
-        Name: subscribers[i].firstName + ' ' + subscribers[i].lastName,
-        Gender: subscribers[i].gender,
-        Locale: subscribers[i].locale,
-        PageName: subscribers[i].pageId.pageName
-      })
+    if (subscribers.length > 0) {
+      for (let i = 0; i < subscribers.length; i++) {
+        subscriberPayload.push({
+          Name: subscribers[i].firstName + ' ' + subscribers[i].lastName,
+          Gender: subscribers[i].gender,
+          Locale: subscribers[i].locale,
+          PageName: subscribers[i].pageId.pageName
+        })
 
-      if (i === subscribers.length - 1) {
-        var info = subscriberPayload
-        var keys = []
-        var val = info[0]
+        if (i === subscribers.length - 1) {
+          var info = subscriberPayload
+          var keys = []
+          var val = info[0]
 
-        for (var k in val) {
-          var subKey = k
-          keys.push(subKey)
+          for (var k in val) {
+            var subKey = k
+            keys.push(subKey)
+          }
+          const opts = { keys }
+          try {
+            const csv = parse(info, opts)
+            resolve({data: csv})
+          } catch (err) {
+            console.error('error at parse', err)
+          }
         }
-        const opts = { keys }
-        try {
-          const csv = parse(info, opts)
-          resolve({data: csv})
-        } catch (err) {
-          console.error('error at parse', err)
-        }
-      }
+      }  
     }
+    else {
+      const opts = ['Name', 'Gender', 'Locale', 'PageName']
+      try {
+        const csv = parse([], opts)
+        resolve({data: csv})
+      } catch (err) {
+        console.error('error at parse', err)
+      }
+    }  
   })
 }
 
