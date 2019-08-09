@@ -22,18 +22,18 @@ exports.setCustomFieldValue = function (req, res) {
   )
 
   customFieldResponse.then(foundCustomField => {
-    logger.serverLog(customField, `Custom Field ${util.inspect(foundCustomField)}`, 'debug')
+  //  logger.serverLog(customField, `Custom Field ${util.inspect(foundCustomField)}`, 'debug')
     if (!foundCustomField) return new Promise((resolve, reject) => { reject(new Error('Custom Field Not Found With Given ID')) })
     else {
       req.body.subscriberIds.forEach((subscriberId, index) => {
         foundSubscriberResponse(subscriberId)
           .then(foundSubscriber => {
-            logger.serverLog(customField, `found subscriber of a page ${util.inspect(foundSubscriber)}`, 'debug')
+            // logger.serverLog(customField, `found subscriber of a page ${util.inspect(foundSubscriber)}`, 'debug')
             if (!foundSubscriber) return new Promise((resolve, reject) => { reject(new Error('Subscriber Not Found With Given ID')) })
             else return customFieldSubscribersRespons(subscriberId)
           })
           .then(foundCustomFieldSubscriber => {
-            logger.serverLog(customField, `Custom Field subscriber ${util.inspect(foundCustomFieldSubscriber)}`, 'debug')
+            // logger.serverLog(customField, `Custom Field subscriber ${util.inspect(foundCustomFieldSubscriber)}`, 'debug')
             let subscribepayload = {
               customFieldId: req.body.customFieldId,
               subscriberId: subscriberId,
@@ -47,7 +47,7 @@ exports.setCustomFieldValue = function (req, res) {
             }
           })
           .then(setCustomFieldValue => {
-            logger.serverLog(customField, `set custom field value for subscriber ${util.inspect(setCustomFieldValue)}`, 'debug')
+            // logger.serverLog(customField, `set custom field value for subscriber ${util.inspect(setCustomFieldValue)}`, 'debug')
             require('./../../../config/socketio').sendMessageToClient({
               room_id: req.user.companyId,
               body: {

@@ -100,9 +100,9 @@ exports.sentVsSeen = function (req, res) {
                                             }])
                                             .then(pollResponseCount => {
                                               let responsesCount = []
-                                              logger.serverLog(TAG,
-                                                `counts for dashboard poll response ${JSON.stringify(
-                                                  pollResponseCount)}`)
+                                              // logger.serverLog(TAG,
+                                              //   `counts for dashboard poll response ${JSON.stringify(
+                                              //     pollResponseCount)}`)
                                               for (let a = 0; a < polls.length; a++) {
                                                 for (let b = 0; b < pollResponseCount.length; b++) {
                                                   if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
@@ -449,7 +449,7 @@ exports.stats = function (req, res) {
                   })
                   callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization)
                     .then(subscribers => {
-                      logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`)
+                      //logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`)
                       let subscribersCount = subscribers.length
 
                       payload.subscribers = subscribersCount

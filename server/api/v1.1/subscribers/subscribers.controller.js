@@ -93,13 +93,13 @@ exports.getAll = function (req, res) {
                   let tagIds = tags.map((t) => t._id)
                   utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds }, tagId: {$in: tagIds} })
                     .then(tagSubscribers => {
-                      logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`, 'debug')
+                    //  logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`, 'debug')
                       let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, tagIds, req.body.filter_criteria.tag_value)
-                      logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
+                      //logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
                       // start append custom Fields
                       utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
                         .then(customFields => {
-                          logger.serverLog(TAG, `customFields: ${util.inspect(customFields)}`, 'debug')
+                         // logger.serverLog(TAG, `customFields: ${util.inspect(customFields)}`, 'debug')
                           let customFieldIds = customFields.map((cf) => cf._id)
                           utility.callApi('custom_field_subscribers/query', 'post', {purpose: 'findAll', match: {subscriberId: {$in: subscriberIds}, customFieldId: {$in: customFieldIds}}})
                             .then(customFieldSubscribers => {

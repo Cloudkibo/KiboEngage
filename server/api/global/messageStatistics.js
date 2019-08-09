@@ -26,7 +26,7 @@ function createNewRecord (featureName) {
     .then(saved => {
       logger.serverLog(TAG, 'Message Statistics created successfully!')
     })
-    .catch(err => logger.serverLog(TAG, `error in message statistics create ${JSON.stringify(err)}`))
+    .catch(err => console.log(TAG, `error in message statistics create ${JSON.stringify(err)}`))
 }
 
 function incrementRecord (featureName) {
