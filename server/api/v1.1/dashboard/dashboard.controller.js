@@ -74,9 +74,9 @@ exports.sentVsSeen = function (req, res) {
                                           PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
                                             .then(pollResponseCount => {
                                               let responsesCount = []
-                                              logger.serverLog(TAG,
-                                                `counts for dashboard poll response ${JSON.stringify(
-                                                  pollResponseCount)}`, 'debug')
+                                              // logger.serverLog(TAG,
+                                              //   `counts for dashboard poll response ${JSON.stringify(
+                                              //     pollResponseCount)}`, 'debug')
                                               for (let a = 0; a < polls.length; a++) {
                                                 for (let b = 0; b < pollResponseCount.length; b++) {
                                                   if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
@@ -263,9 +263,9 @@ exports.sentVsSeenNew = function (req, res) {
                                                 PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
                                                   .then(pollResponseCount => {
                                                     let responsesCount = []
-                                                    logger.serverLog(TAG,
-                                                      `counts for dashboard poll response ${JSON.stringify(
-                                                        pollResponseCount)}`, 'debug')
+                                                    // logger.serverLog(TAG,
+                                                    //   `counts for dashboard poll response ${JSON.stringify(
+                                                    //     pollResponseCount)}`, 'debug')
                                                     for (let a = 0; a < polls.length; a++) {
                                                       for (let b = 0; b < pollResponseCount.length; b++) {
                                                         if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
@@ -325,7 +325,7 @@ exports.sentVsSeenNew = function (req, res) {
                                                         datacounts.poll.pollResponseCount = sum
                                                       }
                                                     }
-                                                    logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`, 'debug')
+                                                    // logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`, 'debug')
                                                     graphDataNew(req.body, companyUser, result.pageIds)
                                                       .then(result => {
                                                         sendSuccessResponse(res, 200, {datacounts, graphDatas: result})
@@ -510,7 +510,7 @@ exports.stats = function (req, res) {
                 payload.totalPages = allPagesWithoutDuplicates.length
                 callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isSubscribed: true, pageId: {$in: result.pageIds}})
                   .then(subscribers => {
-                    logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
+                    //logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
                     payload.subscribers = subscribers.length
                     BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
                       .then(recentBroadcasts => {
