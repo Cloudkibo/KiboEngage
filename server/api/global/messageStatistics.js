@@ -4,16 +4,14 @@ const TAG = 'api/global/messageStatistics.js'
 let redis = require('redis')
 let client
 
-client.on('connect', () => {
-  logger.serverLog(TAG, 'connected to redis', 'info')
-})
-
-client.on('error', (err) => {
-  logger.serverLog(TAG, 'unable connected to redis ' + JSON.stringify(err), 'info')
-})
-
 exports.connectRedis = function () {
   client = redis.createClient()
+  client.on('connect', () => {
+    logger.serverLog(TAG, 'connected to redis', 'info')
+  })
+  client.on('error', (err) => {
+    logger.serverLog(TAG, 'unable connected to redis ' + JSON.stringify(err), 'info')
+  })
 }
 
 exports.recordRedis = function (featureName) {
