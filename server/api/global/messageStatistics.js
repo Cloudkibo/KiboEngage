@@ -29,7 +29,7 @@ exports.recordRedis = function (featureName) {
 
 function createRedisObject (featureName) {
   let today = new Date()
-  let minutes = today.getMinutes
+  let minutes = today.getMinutes()
   let hours = today.getHours()
   let day = today.getDate()
   let month = (today.getMonth() + 1)
@@ -40,7 +40,7 @@ function createRedisObject (featureName) {
 
 function incrementRedisObject (featureName) {
   let today = new Date()
-  let minutes = today.getMinutes
+  let minutes = today.getMinutes()
   let hours = today.getHours()
   let day = today.getDate()
   let month = (today.getMonth() + 1)
@@ -51,7 +51,7 @@ function incrementRedisObject (featureName) {
 
 function findRedisObject (featureName, cb) {
   let today = new Date()
-  let minutes = today.getMinutes
+  let minutes = today.getMinutes()
   let hours = today.getHours()
   let day = today.getDate()
   let month = (today.getMonth() + 1)
