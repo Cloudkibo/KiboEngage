@@ -1,7 +1,73 @@
 const { callApi } = require('../v1.1/utility')
 const logger = require('../../components/logger')
 const TAG = 'api/global/messageStatistics.js'
+let redis = require('redis')
+let client
 
+client.on('connect', () => {
+  logger.serverLog(TAG, 'connected to redis', 'info')
+})
+
+client.on('error', (err) => {
+  logger.serverLog(TAG, 'unable connected to redis ' + JSON.stringify(err), 'info')
+})
+
+exports.connectRedis = function () {
+  client = redis.createClient()
+}
+
+exports.recordRedis = function (featureName) {
+  findRedisObject(featureName, (err, record) => {
+    if (err) {
+      return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
+    }
+    if (!record) {
+      createRedisObject(featureName)
+    } else {
+      incrementRedisObject(featureName)
+    }
+  })
+}
+
+function createRedisObject (featureName) {
+  let today = new Date()
+  let minutes = today.getMinutes
+  let hours = today.getHours()
+  let day = today.getDate()
+  let month = (today.getMonth() + 1)
+  let year = today.getFullYear()
+  let key = featureName + '-' + year + ':' + month + ':' + day + ':' + hours + ':' + minutes
+  client.set(key, 0)
+}
+
+function incrementRedisObject (featureName) {
+  let today = new Date()
+  let minutes = today.getMinutes
+  let hours = today.getHours()
+  let day = today.getDate()
+  let month = (today.getMonth() + 1)
+  let year = today.getFullYear()
+  let key = featureName + '-' + year + ':' + month + ':' + day + ':' + hours + ':' + minutes
+  client.incr(key)
+}
+
+function findRedisObject (featureName, cb) {
+  let today = new Date()
+  let minutes = today.getMinutes
+  let hours = today.getHours()
+  let day = today.getDate()
+  let month = (today.getMonth() + 1)
+  let year = today.getFullYear()
+  let key = featureName + '-' + year + ':' + month + ':' + day + ':' + hours + ':' + minutes
+  client.get(key, (err, obj) => {
+    if (err) {
+      return cb(err)
+    }
+    cb(null, obj)
+  })
+}
+
+// todo will remove this part
 exports.record = function (featureName) {
   findRecord(featureName, (err, record) => {
     if (err) {
