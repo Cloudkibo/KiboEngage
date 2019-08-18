@@ -167,3 +167,7 @@ User crontab files are stored by the login names in different locations in diffe
 
     AIX, Red Hat Linux, CentOS, Ferdora
     /var/spool/cron/
+
+## Install Redis
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-redis-on-ubuntu-16-04
