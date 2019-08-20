@@ -559,7 +559,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
-      if (testBroadcast || (successfullySent === (subscribersLength - 1))) {
+      if (testBroadcast || (successfullySent === (subscribersLength))) {
         successfullySent = 0
         logger.serverLog(TAG, `Conversation sent successfully ${JSON.stringify(body)}`, 'debug')
         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
