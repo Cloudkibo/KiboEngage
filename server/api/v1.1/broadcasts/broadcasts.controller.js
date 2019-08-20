@@ -564,7 +564,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
         successfullySent = 0
         logger.serverLog(TAG, `Conversation sent successfully ${JSON.stringify(body)}`, 'debug')
         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-      } else {
+      } else if (subscriberNumber === (subscribersLength - 1)) {
         sendErrorResponse(res, 500, `Failed to send broadcast to all subscribers ${JSON.stringify(err)}`)
       }
     }
