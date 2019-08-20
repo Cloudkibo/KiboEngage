@@ -545,8 +545,9 @@ let successfullySent = 0
 
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-    logger.serverLog(TAG, `sendBroadcast Batch send response ${JSON.stringify(JSON.parse(body[0]))}`, 'debug')
-    if (JSON.parse(body)[0].code === 200) {
+    body = JSON.parse(body)
+    logger.serverLog(TAG, `sendBroadcast Batch send response ${JSON.stringify(body)}`, 'debug')
+    if (body[0].code === 200) {
       successfullySent += 1
     }
     if (err) {
