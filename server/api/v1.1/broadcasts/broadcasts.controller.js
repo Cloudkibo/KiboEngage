@@ -554,6 +554,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       // we don't need to send res for persistant menu
     } else {
       if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
+        logger.serverLog(TAG, `Conversation sent successfully ${JSON.stringify(body)}`, 'debug')
         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
       }
     }
@@ -750,6 +751,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
   let interval = setInterval(() => {
     if (current === payload.length) {
       clearInterval(interval)
+      logger.serverLog(TAG, `Conversation sent successfully using interval ${JSON.stringify(payload)}`, 'debug')
       sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
     } else {
       broadcastApi.callMessageCreativesEndpoint(payload[current], page.accessToken)
