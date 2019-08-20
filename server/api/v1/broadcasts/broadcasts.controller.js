@@ -425,7 +425,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
-      logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
+     // logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
       if (body.error && body.error.code === 190 && body.error.error_subcode === 460) {
         return res.status(200)
           .json({status: 'INVALID_SESSION', description: body.error.message})

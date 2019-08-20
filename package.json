@@ -68,6 +68,7 @@
     "pidusage": "^2.0.17",
     "pug": "^2.0.3",
     "raven": "^2.6.4",
+    "redis": "^2.8.0",
     "remote-file-size": "^3.0.5",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",

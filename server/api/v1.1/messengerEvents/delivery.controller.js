@@ -14,7 +14,7 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  logger.serverLog(TAG, `in delivery' ${JSON.stringify(req.body)}`)
+  //logger.serverLog(TAG, `in delivery' ${JSON.stringify(req.body)}`)
   let data = {
     recipientId: req.body.entry[0].messaging[0].recipient.id,
     senderId: req.body.entry[0].messaging[0].sender.id,

@@ -65,7 +65,7 @@ exports.sendCommentReply = function (req, res) {
   utility.callApi('autoposting_fb_post', 'put', updateData, 'kiboengage')
     .then(updated => {
       console.log('comments updated successfully')
-      logger.serverLog(TAG, 'Likes count updated successfully!')
+      //logger.serverLog(TAG, 'Likes count updated successfully!')
     })
     .catch(err => {
       console.log('comments not  updated', err)

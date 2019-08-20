@@ -31,4 +31,5 @@ cron.schedule('0 */1 * * *', rssScript.runRSSScript) // after 1 hour
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
 require('./routes')(appObj)
+require('./api/global/messageStatistics').connectRedis()
 require('./api/scripts/cpuProfiler')()

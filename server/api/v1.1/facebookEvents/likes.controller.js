@@ -20,7 +20,7 @@ exports.handleLikeEvent = function (req, res) {
   }
   utility.callApi('autoposting_fb_post', 'put', updateData, 'kiboengage')
     .then(updated => {
-      logger.serverLog(TAG, 'Likes count updated successfully!')
+      console.log(TAG, 'Likes count updated successfully!')
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to update likes count ${err}`, 'error')
