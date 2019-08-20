@@ -542,12 +542,12 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
 }
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-   // logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
+    logger.serverLog(TAG, `sendBroadcast Batch send response ${JSON.stringify(body)}`, 'debug')
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
     }
-    
+
     // Following change is to incorporate persistant menu
 
     if (res === 'menu') {
