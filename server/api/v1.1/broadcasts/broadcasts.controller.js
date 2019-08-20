@@ -540,9 +540,15 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
     })
 }
+
+let successfullySent = 0
+
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     logger.serverLog(TAG, `sendBroadcast Batch send response ${JSON.stringify(body)}`, 'debug')
+    if (body[0].body.code === 200) {
+      successfullySent += 1
+    }
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
@@ -553,7 +559,8 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
-      if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
+      if (testBroadcast || (successfullySent === (subscribersLength - 1))) {
+        successfullySent = 0
         logger.serverLog(TAG, `Conversation sent successfully ${JSON.stringify(body)}`, 'debug')
         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
       }
