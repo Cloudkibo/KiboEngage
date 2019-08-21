@@ -86,4 +86,8 @@ router.post('/fetchAutopostingDetails',
   auth.isAuthorizedSuperUser(),
   controller.fetchAutopostingDetails)
 
+router.get('/fetchUniquePages',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchUniquePages)
+
 module.exports = router
