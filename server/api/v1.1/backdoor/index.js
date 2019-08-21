@@ -87,7 +87,7 @@ router.post('/fetchAutopostingDetails',
   controller.fetchAutopostingDetails)
 
 router.get('/getPagePermissions/:id',
-  // auth.isAuthorizedSuperUser(),
+  auth.isAuthorizedSuperUser(),
   controller.getPagePermissions)
 
 module.exports = router
