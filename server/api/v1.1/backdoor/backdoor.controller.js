@@ -617,9 +617,8 @@ function downloadSubscribersData (subscribers) {
             console.error('error at parse', err)
           }
         }
-      }  
-    }
-    else {
+      }
+    } else {
       const opts = ['Name', 'Gender', 'Locale', 'PageName']
       try {
         const csv = parse([], opts)
@@ -627,7 +626,7 @@ function downloadSubscribersData (subscribers) {
       } catch (err) {
         console.error('error at parse', err)
       }
-    }  
+    }
   })
 }
 
@@ -948,4 +947,70 @@ exports.fetchAutopostingDetails = function (req, res) {
       })
     }
   })
+}
+
+exports.fetchUniquePages = (req, res) => {
+  let aggregation = [
+    {
+      '$lookup': {
+        from: 'tags',
+        localField: '_id',
+        foreignField: 'pageId',
+        as: 'tag'
+      }
+    },
+    {
+      '$lookup': {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      '$unwind': '$user'
+    },
+    {
+      '$group': {
+        '_id': '$pageId',
+        'count': { '$sum': 1 },
+        'pageName': {'$first': '$pageName'},
+        'page_ids': {'$push': '$_id'},
+        'users': {'$push': '$user'},
+        'tags': {'$push': '$tag'}
+      }
+    },
+    {
+      '$sort': {'count': -1}
+    },
+    {
+      '$project': {
+        '_id': 0,
+        'pageId': '$_id',
+        'count': '$count',
+        'pageName': 1,
+        'page_ids': 1,
+        'users': 1,
+        'tags': 1
+      }
+    }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
+    .then(uniquePages => {
+      console.log('uniquePages', uniquePages)
+      for (let i = 0; i < uniquePages; i++) {
+        uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
+      }
+      return res.status(200).json({
+        status: 'success',
+        payload: uniquePages
+      })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch unique pages ${err}`
+      })
+    })
 }
