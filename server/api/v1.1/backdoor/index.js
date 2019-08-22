@@ -94,4 +94,9 @@ router.get('/getPagePermissions/:id',
   auth.isAuthorizedSuperUser(),
   controller.getPagePermissions)
 
+router.post('/fetchPageUsers',
+  validate({body: validationSchema.getPageUsersPayload}),
+  auth.isAuthorizedSuperUser(),
+  controller.fetchPageUsers)
+
 module.exports = router
