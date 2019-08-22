@@ -1103,7 +1103,6 @@ exports.fetchUniquePages = (req, res) => {
 }
 exports.fetchPageUsers = (req, res) => {
   let criterias = LogicLayer.getPageUsersCriteria(req.body)
-  console.log('criterias', criterias)
   utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
     .then(pagesCount => {
       utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
@@ -1115,7 +1114,6 @@ exports.fetchPageUsers = (req, res) => {
         })
     })
     .catch(err => {
-      console.log('error', err)
       sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
     })
 }
