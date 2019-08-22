@@ -964,7 +964,7 @@ exports.getPagePermissions = function (req, res) {
         public_profile: false
       }
       let pageLevelPermissions = {
-        subscription_messaging: 'not applied'
+        subscription_messaging: 'Not Applied'
       }
       async.parallelLimit([
         function (callback) {
@@ -992,9 +992,7 @@ exports.getPagePermissions = function (req, res) {
         function (callback) {
           facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
             .then(response => {
-              console.log('response from facebook for subscription', response.body)
               if (response.body && response.body.data) {
-                console.log('inside first condition')
                 if (response.body.data.length > 0) {
                   for (let i = 0; i < response.body.data.length; i++) {
                     pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
@@ -1003,11 +1001,9 @@ exports.getPagePermissions = function (req, res) {
                     }
                   }
                 } else {
-                  console.log('in else of second condition.', pageLevelPermissions)
                   callback(null, pageLevelPermissions)
                 }
               } else {
-                console.log('in else of first condition ')
                 callback(response.body.error)
               }
             })
@@ -1022,8 +1018,6 @@ exports.getPagePermissions = function (req, res) {
             description: `Failed to fetch page permissions ${err}`
           })
         } else {
-          console.log('results[0]...', results[0])
-          console.log('results[1]', results[1])
           sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
         }
       })
@@ -1105,5 +1099,23 @@ exports.fetchUniquePages = (req, res) => {
         status: 'failed',
         description: `Failed to fetch unique pages ${err}`
       })
+    })
+}
+exports.fetchPageUsers = (req, res) => {
+  let criterias = LogicLayer.getPageUsersCriteria(req.body)
+  console.log('criterias', criterias)
+  utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
+    .then(pagesCount => {
+      utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
+        .then(pageUsers => {
+          sendSuccessResponse(res, 200, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(err => {
+      console.log('error', err)
+      sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
     })
 }
