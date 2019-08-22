@@ -1091,13 +1091,28 @@ exports.fetchUniquePages = (req, res) => {
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
       // console.log('uniquePages', uniquePages)
+      let pageOwnersFound = 0
       for (let i = 0; i < uniquePages.length; i++) {
         uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
+        utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
+          .then(page => {
+            // console.log('found page owner', page[0].userId)
+            uniquePages[i].connectedBy = page[0].userId
+            pageOwnersFound += 1
+            if (pageOwnersFound === uniquePages.length) {
+              return res.status(200).json({
+                status: 'success',
+                payload: uniquePages
+              })
+            }
+          })
+          .catch(err => {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch connected page ${err}`
+            })
+          })
       }
-      return res.status(200).json({
-        status: 'success',
-        payload: uniquePages
-      })
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
