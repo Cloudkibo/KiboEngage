@@ -87,7 +87,7 @@ router.post('/fetchAutopostingDetails',
   controller.fetchAutopostingDetails)
 
 router.get('/fetchUniquePages',
-  // auth.isAuthorizedSuperUser(),
+  auth.isAuthorizedSuperUser(),
   controller.fetchUniquePages)
 
 router.get('/getPagePermissions/:id',
