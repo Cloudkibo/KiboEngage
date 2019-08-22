@@ -1090,8 +1090,8 @@ exports.fetchUniquePages = (req, res) => {
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
-      console.log('uniquePages', uniquePages)
-      for (let i = 0; i < uniquePages; i++) {
+      // console.log('uniquePages', uniquePages)
+      for (let i = 0; i < uniquePages.length; i++) {
         uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
       }
       return res.status(200).json({
