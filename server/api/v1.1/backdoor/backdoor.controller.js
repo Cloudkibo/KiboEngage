@@ -1091,8 +1091,10 @@ exports.fetchUniquePages = (req, res) => {
         utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
           .then(page => {
             // console.log('found page owner', page[0].userId)
-            uniquePages[i].connectedBy = page[0].userId
             pageOwnersFound += 1
+            if (page) {
+              uniquePages[i].connectedBy = page[0].userId
+            }
             if (pageOwnersFound === uniquePages.length) {
               return res.status(200).json({
                 status: 'success',
