@@ -134,6 +134,10 @@ exports.handleOrder = function (req, res) {
             dataLayer.createOrderInfo(order)
               .then(updated => {
                 logger.serverLog(TAG, `Done creating order on new order ${JSON.stringify(updated)}`)
+                dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: result.storeId },
+                  { $inc: { totalAbandonedCarts: -1 } })
+                  .then(updated => logger.serverLog(TAG, `Done updating checkout on new order ${JSON.stringify(updated)}`))
+                  .catch(err => logger.serverLog(TAG, `Error in updating checkout on new order ${JSON.stringify(err)}`))
               })
               .catch(err => {
                 logger.serverLog(TAG, `Error in creating order on new order ${JSON.stringify(err)}`)

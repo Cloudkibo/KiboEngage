@@ -14,6 +14,7 @@ const { parse } = require('json2csv')
 const async = require('async')
 const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
+const { facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
@@ -617,9 +618,8 @@ function downloadSubscribersData (subscribers) {
             console.error('error at parse', err)
           }
         }
-      }  
-    }
-    else {
+      }
+    } else {
       const opts = ['Name', 'Gender', 'Locale', 'PageName']
       try {
         const csv = parse([], opts)
@@ -627,7 +627,7 @@ function downloadSubscribersData (subscribers) {
       } catch (err) {
         console.error('error at parse', err)
       }
-    }  
+    }
   })
 }
 
@@ -948,4 +948,189 @@ exports.fetchAutopostingDetails = function (req, res) {
       })
     }
   })
+}
+exports.getPagePermissions = function (req, res) {
+  utility.callApi(`pages/query`, 'post', { _id: req.params.id })
+    .then(page => {
+      page = page[0]
+      let appLevelPermissions = {
+        email: false,
+        manage_pages: false,
+        pages_show_list: false,
+        publish_pages: false,
+        pages_messaging: false,
+        pages_messaging_phone_number: false,
+        pages_messaging_subscriptions: false,
+        public_profile: false
+      }
+      let pageLevelPermissions = {
+        subscription_messaging: 'Not Applied'
+      }
+      async.parallelLimit([
+        function (callback) {
+          facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${page.accessToken}`, 'get', {})
+            .then(response => {
+              if (response.body && response.body.data && response.body.data.scopes) {
+                if (response.body.data.scopes.length > 0) {
+                  for (let i = 0; i < response.body.data.scopes.length; i++) {
+                    appLevelPermissions[`${response.body.data.scopes[i]}`] = true
+                    if (i === response.body.data.scopes.length - 1) {
+                      callback(null, appLevelPermissions)
+                    }
+                  }
+                } else {
+                  callback(null, appLevelPermissions)
+                }
+              } else {
+                callback(response.body.error)
+              }
+            })
+            .catch(err => {
+              callback(err)
+            })
+        },
+        function (callback) {
+          facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
+            .then(response => {
+              if (response.body && response.body.data) {
+                if (response.body.data.length > 0) {
+                  for (let i = 0; i < response.body.data.length; i++) {
+                    pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
+                    if (i === response.body.data.length - 1) {
+                      callback(null, pageLevelPermissions)
+                    }
+                  }
+                } else {
+                  callback(null, pageLevelPermissions)
+                }
+              } else {
+                callback(response.body.error)
+              }
+            })
+            .catch(err => {
+              callback(err)
+            })
+        }
+      ], 10, function (err, results) {
+        if (err) {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Failed to fetch page permissions ${err}`
+          })
+        } else {
+          sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
+        }
+      })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
+    })
+}
+
+exports.fetchUniquePages = (req, res) => {
+  let aggregation = [
+    {
+      '$lookup': {
+        from: 'tags',
+        localField: '_id',
+        foreignField: 'pageId',
+        as: 'tag'
+      }
+    },
+    {
+      '$lookup': {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      '$unwind': '$user'
+    },
+    {
+      '$group': {
+        '_id': '$pageId',
+        'count': { '$sum': 1 },
+        'pageName': {'$first': '$pageName'},
+        'page_ids': {'$push': '$_id'},
+        'users': {'$push': '$user'},
+        'tags': {'$push': '$tag'}
+      }
+    },
+    {
+      '$sort': {'count': -1}
+    },
+    {
+      '$project': {
+        '_id': 0,
+        'pageId': '$_id',
+        'count': '$count',
+        'pageName': 1,
+        'page_ids': 1,
+        'users': 1,
+        'tags': 1
+      }
+    },
+    {
+      '$match': req.body.pageName ? {'pageName': req.body.pageName} : {}
+    },
+    {
+      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
+    },
+    {
+      '$limit': 10
+    }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
+    .then(uniquePages => {
+      // console.log('uniquePages', uniquePages)
+      let pageOwnersFound = 0
+      for (let i = 0; i < uniquePages.length; i++) {
+        uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
+        utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
+          .then(page => {
+            // console.log('found page owner', page[0].userId)
+            pageOwnersFound += 1
+            if (page[0]) {
+              uniquePages[i].connectedBy = page[0].userId
+            }
+            if (pageOwnersFound === uniquePages.length) {
+              return res.status(200).json({
+                status: 'success',
+                payload: uniquePages
+              })
+            }
+          })
+          .catch(err => {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch connected page ${err}`
+            })
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch unique pages ${err}`
+      })
+    })
+}
+exports.fetchPageUsers = (req, res) => {
+  let criterias = LogicLayer.getPageUsersCriteria(req.body)
+  utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
+    .then(pagesCount => {
+      utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
+        .then(pageUsers => {
+          sendSuccessResponse(res, 200, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
+    })
 }

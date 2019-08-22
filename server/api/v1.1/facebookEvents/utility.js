@@ -70,6 +70,8 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                                 send = true
                               })
                           } else {
+                            logger.serverLog(`user domain email in sentUsinInterval function ${req.user.domain_email}`, 'error')
+                            logger.serverLog(`user name in sentUsinInterval function ${req.user.name}`, 'error')
                             logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`, 'error')
                             current++
                             send = true
@@ -77,6 +79,8 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                         }
                       })
                       .catch(err => {
+                        logger.serverLog(`user domain email in sentUsinInterval function ${req.user.domain_email}`, 'info')
+                        logger.serverLog(`user name in sentUsinInterval function ${req.user.name}`, 'info')
                         logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
                         current++
                         send = true
