@@ -151,7 +151,7 @@ exports.updatePlatform = function (req, res) {
 }
 
 exports.updatePicture = function (req, res) {
-  utility.callApi(`user/updatePicture`, 'get', 'accounts', req.headers.authorization)
+  utility.callApi(`user/updatePicture`, 'get', {}, 'accounts', req.headers.authorization)
     .then(updatedUser => {
       sendSuccessResponse(res, 200, updatedUser)
     }).catch(error => {
