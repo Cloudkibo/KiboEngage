@@ -1092,7 +1092,7 @@ exports.fetchUniquePages = (req, res) => {
           .then(page => {
             // console.log('found page owner', page[0].userId)
             pageOwnersFound += 1
-            if (page) {
+            if (page[0]) {
               uniquePages[i].connectedBy = page[0].userId
             }
             if (pageOwnersFound === uniquePages.length) {
