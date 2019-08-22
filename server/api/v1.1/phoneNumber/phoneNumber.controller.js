@@ -6,6 +6,7 @@ const fs = require('fs')
 const csv = require('csv-parser')
 let request = require('request')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.upload = function (req, res) {
   let directory = logicLayer.directory(req)
@@ -153,6 +154,9 @@ exports.upload = function (req, res) {
                                       return logger.serverLog(TAG,
                                         `At invite to messenger using phone ${JSON.stringify(
                                           err)}`, 'error')
+                                    }
+                                    if (res.body.error) {
+                                      sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage')
                                     }
                                   })
                               })
@@ -322,6 +326,9 @@ exports.sendNumbers = function (req, res) {
                             return logger.serverLog(TAG,
                               `Error At invite to messenger using phone ${JSON.stringify(
                                 err)}`, 'error')
+                          }
+                          if (res.body.error) {
+                            sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage')
                           }
                         })
                     })

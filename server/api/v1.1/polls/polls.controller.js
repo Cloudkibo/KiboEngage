@@ -15,6 +15,7 @@ const broadcastApi = require('../../global/broadcastApi')
 // const util = require('util')
 const { saveLiveChat, preparePayload } = require('../../global/livechat')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -393,6 +394,9 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                     `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`, data, (err, resp) => {
                       if (err) {
                         logger.serverLog(TAG, err, 'error')
+                      }
+                      if (resp.body.error) {
+                        sendOpAlert(resp.body.error, 'polls controller in kiboengage')
                       }
                       messageData.componentType = 'poll'
                       let message = preparePayload(req.user, subscribers[j], page, messageData)

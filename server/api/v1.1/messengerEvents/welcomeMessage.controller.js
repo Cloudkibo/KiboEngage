@@ -4,6 +4,7 @@ const {callApi} = require('../utility')
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const messengerEventsUtility = require('./utility')
 const needle = require('needle')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -34,6 +35,9 @@ exports.index = function (req, res) {
                   if (err) {
                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                   }
+                  if (resp2.body.error) {
+                    sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage')
+                  }
                   logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
                   let pageAccessToken = resp2.body.access_token
                   const options = {
@@ -46,6 +50,9 @@ exports.index = function (req, res) {
                   needle.get(options.url, options, (error, response) => {
                     if (error) {
                     } else {
+                      if (response.body.error) {
+                        sendOpAlert(response.body.error, 'welcome message controller in kiboengage')
+                      }
                       broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                     }
                   })

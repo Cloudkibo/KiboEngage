@@ -3,6 +3,7 @@ const needle = require('needle')
 const TAG = 'api/commentCapture/commentCapture.controller.js'
 const utility = require('../utility/index.js')
 const logicLayer = require('./commentCapture.logiclayer')
+const { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization)
@@ -85,12 +86,16 @@ exports.create = function (req, res) {
                     logger.serverLog(TAG,
                       `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                   }
+                  if (resp.body.error) {
+                    sendOpAlert(resp.body.error, 'commentCapture controller.js')
+                  }
                   let messageData = logicLayer.setMessage(req.body.payload)
                   if (messageData.image) {
                     needle.post(
                       `https://graph.facebook.com/${page.pageId}/photos?access_token=${resp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
+                          sendOpAlert(err)
                           logger.serverLog(TAG, err)
                         }
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
@@ -110,6 +115,7 @@ exports.create = function (req, res) {
                       `https://graph.facebook.com/${page.pageId}/videos?access_token=${resp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
+                          sendOpAlert(err)
                           logger.serverLog(TAG, err)
                         }
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
@@ -129,6 +135,7 @@ exports.create = function (req, res) {
                       `https://graph.facebook.com/${page.pageId}/feed?access_token=${resp.body.access_token}`,
                       messageData, (err, resp) => {
                         if (err) {
+                          sendOpAlert(err)
                           logger.serverLog(TAG, err)
                         }
                         let postId = resp.body.post_id ? resp.body.post_id : resp.body.id

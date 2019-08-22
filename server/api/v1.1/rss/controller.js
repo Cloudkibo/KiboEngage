@@ -3,6 +3,7 @@
 const feedparser = require('feedparser-promised')
 const LogicLayer = require('./logiclayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.fetchRssFeed = function (req, res) {
   let url = req.body.url
@@ -18,6 +19,7 @@ exports.fetchRssFeed = function (req, res) {
           )
             .then(response => {
               if (response.body.error) {
+                sendOpAlert(response.body.error, 'rss controller in kiboengage')
                 return res.status(500).json({
                   status: 'failed',
                   payload: JSON.stringify(response.body.error)

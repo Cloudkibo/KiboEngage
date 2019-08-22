@@ -4,6 +4,7 @@ const needle = require('needle')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/pages/pages.controller.js'
 // const util = require('util')
+const { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}, req.headers.authorization) // fetch company user
@@ -191,6 +192,9 @@ exports.enable = function (req, res) {
                         logger.serverLog(TAG,
                           `Graph api error at getting page publish status ${JSON.stringify(err)}`)
                       }
+                      if (resp.body.error) {
+                        sendOpAlert(resp.body.error, 'pages controller')
+                      }
                       if (resp.body.is_published === false) {
                         return res.status(404).json({
                           status: 'failed',
@@ -238,6 +242,9 @@ exports.enable = function (req, res) {
                                             status: 'failed',
                                             payload: JSON.stringify(error)
                                           })
+                                        }
+                                        if (response.body.error) {
+                                          sendOpAlert(response.body.error, 'pages controller')
                                         }
                                         // require('./../../../config/socketio').sendMessageToClient({
                                         //   room_id: req.body.companyId,
@@ -347,6 +354,9 @@ exports.disable = function (req, res) {
                 payload: JSON.stringify(error)
               })
             }
+            if (response.body.error) {
+              sendOpAlert(response.body.error, 'pages controller')
+            }
             // require('./../../../config/socketio').sendMessageToClient({
             //   room_id: req.body.companyId,
             //   body: {
@@ -444,6 +454,9 @@ exports.saveGreetingText = function (req, res) {
                     if (err) {
                       logger.serverLog(TAG,
                         `Internal Server Error ${JSON.stringify(err)}`)
+                    }
+                    if (resp.body.error) {
+                      sendOpAlert(resp.body.error, 'pages controller')
                     }
                   })
               } else {

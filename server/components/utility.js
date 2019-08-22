@@ -52,6 +52,14 @@ function checkLastMessageAge (subscriberId, req, callback) {
     })
 }
 
+function getSendGridObject () {
+  let sendgrid = require('sendgrid')(config.sendgrid.username,
+    config.sendgrid.password)
+
+  return sendgrid
+}
+
 exports.validateUrl = validateUrl
 exports.checkLastMessageAge = checkLastMessageAge
 exports.setProtocolUrl = setProtocolUrl
+exports.getSendGridObject = getSendGridObject

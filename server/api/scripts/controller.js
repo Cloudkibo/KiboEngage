@@ -9,6 +9,7 @@ const BroadcastUtility = require('../v1.1/broadcasts/broadcasts.utility')
 const logger = require('../../components/logger')
 const request = require('request')
 const { facebookApiCaller } = require('../global/facebookApiCaller.js')
+const { sendOpAlert } = require('./../global/operationalAlert')
 
 exports.normalizeDataForDelivery = function (req, res) {
   BroadcastPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
@@ -42,9 +43,15 @@ exports.addWhitelistDomain = function (req, res) {
                   (err, resp) => {
                     if (err) {
                     }
+                    if (resp.body.error) {
+                      sendOpAlert(resp.body.error, 'scripts in kiboengage')
+                    }
                     var accessToken = resp.body.access_token
                     needle.get(`https://graph.facebook.com/v2.6/me/messenger_profile?fields=whitelisted_domains&access_token=${accessToken}`, function (err, resp) {
                       if (err) {
+                      }
+                      if (resp.body.error) {
+                        sendOpAlert(resp.body.error, 'scripts in kiboengage')
                       }
                       var body = JSON.parse(JSON.stringify(resp.body))
                       let temp = []
@@ -58,6 +65,9 @@ exports.addWhitelistDomain = function (req, res) {
                       let requesturl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${accessToken}`
                       needle.request('post', requesturl, whitelistedDomains, {json: true}, function (err, resp) {
                         if (err) {
+                        }
+                        if (resp.body.error) {
+                          sendOpAlert(resp.body.error, 'scripts in kiboengage')
                         }
                       })
                     })
@@ -99,6 +109,7 @@ exports.performanceTestBroadcast = function (req, res) {
       facebookApiCaller('v2.11', `me/messages?access_token=${page.AccessToken}`, 'post', payload)
         .then(response => {
           if (response.body.error) {
+            sendOpAlert(response.body.error, 'scripts controller in kiboengage')
             return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${response.body.error}`})
           } else {
             if (i === count - 1) {
@@ -131,6 +142,9 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
         status: 'failed',
         description: `Failed to send broadcast ${JSON.stringify(err)}`
       })
+    }
+    if (body.error) {
+      sendOpAlert(body.error, 'scripts controller in kiboengage')
     }
     // Following change is to incorporate persistant menu
 

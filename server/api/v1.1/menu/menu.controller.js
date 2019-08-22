@@ -7,6 +7,7 @@ const needle = require('needle')
 const callApi = require('../utility')
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 // Get list of menu items
 exports.index = function (req, res) {
@@ -111,7 +112,8 @@ exports.create = function (req, res) {
                         }
                         if (!err) {
                         }
-                        if (JSON.stringify(resp.body.error)) {
+                        if (resp.body.error) {
+                          sendOpAlert(resp.body.error, 'menu controller in kiboengage')
                           sendErrorResponse(res, 500, '', JSON.stringify(resp.body.error))
                         } else {
                           res.status(201).json({status: 'success', payload: savedMenu})
@@ -151,7 +153,8 @@ exports.create = function (req, res) {
                           logger.serverLog(TAG,
                             `Internal Server Error ${JSON.stringify(err)}`, 'error')
                         }
-                        if (JSON.stringify(resp.body.error)) {
+                        if (resp.body.error) {
+                          sendOpAlert(resp.body.error, 'menu controller in kiboengage')
                           logger.serverLog(TAG, `Error from facebook graph api: ${JSON.stringify(resp.body.error)}`, 'error')
                           sendErrorResponse(res, 500, '', JSON.stringify(resp.body.error))
                         } else {

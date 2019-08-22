@@ -13,6 +13,7 @@ const PollResponsesDataLayer = require('./../polls/pollresponse.datalayer')
 const request = require('request')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const needle = require('needle')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 function validateInput (body) {
   if (!_.has(body, 'platform')) return false
@@ -736,6 +737,9 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
         logger.serverLog(TAG, `ERROR! unable to upload attachment on Facebook: ${JSON.stringify(err)}`, 'error')
         return ({status: 'failed', data: err})
       } else {
+        if (resp.body.error) {
+          sendOpAlert(resp.body.error, 'broadcast utility in kiboengage')
+        }
         logger.serverLog(TAG, `file uploaded on Facebook: ${JSON.stringify(resp.body)}`)
         payloadItem.fileurl.attachment_id = resp.body.attachment_id
         logger.serverLog(TAG, `broadcast after attachment: ${JSON.stringify(payloadItem)}`, 'debug')
@@ -824,9 +828,15 @@ function isWhiteListedDomain (domain, pageId, user) {
       (err, resp) => {
         if (err) {
         }
+        if (resp.body.error) {
+          sendOpAlert(resp.body.error, 'broadcast utility in kiboengage')
+        }
         needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
           (err, resp) => {
             if (err) {
+            }
+            if (resp.body.error) {
+              sendOpAlert(resp.body.error, 'broadcast utility in kiboengage')
             }
             console.log('reponse from whitelisted_domains', resp.body.data)
             if (resp.body.data && resp.body.data[0].whitelisted_domains) {

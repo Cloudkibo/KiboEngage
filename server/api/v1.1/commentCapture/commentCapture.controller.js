@@ -4,6 +4,7 @@ const TAG = 'api/commentCapture/commentCapture.controller.js'
 const utility = require('../utility/index.js')
 const logicLayer = require('./commentCapture.logiclayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email})
@@ -71,6 +72,9 @@ exports.create = function (req, res) {
                     logger.serverLog(TAG,
                       `Page accesstoken from graph api Error${JSON.stringify(err)}`, 'error')
                   }
+                  if (respp.body.error) {
+                    sendOpAlert(respp.body.error, 'comment capture controller in kiboengage')
+                  }
                   let messageData = logicLayer.setMessage(req.body.payload)
                   if (messageData.image) {
                     needle.post(
@@ -90,6 +94,7 @@ exports.create = function (req, res) {
                               sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
                             })
                         } else {
+                          sendOpAlert(resp.body.error, 'comment capture controller in kiboengage')
                           sendErrorResponse(res, 500, '', resp.body)
                         }
                       })
@@ -105,6 +110,9 @@ exports.create = function (req, res) {
                           `https://graph.facebook.com/${page.pageId}/feed?fields=object_id,type&access_token=${respp.body.access_token}`, (err, response) => {
                             if (err) {
                               logger.serverLog(TAG, err, 'error')
+                            }
+                            if (response.body.error) {
+                              sendOpAlert(response.body.error, 'comment capture controller in kiboengage')
                             }
                             logger.serverLog(TAG, `response from feed ${JSON.stringify(response.body)}`)
                             logicLayer.getPostId(response.body.data, resp.body.id).then(postId => {
@@ -137,6 +145,7 @@ exports.create = function (req, res) {
                               sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
                             })
                         } else {
+                          sendOpAlert(resp.body.error, 'comment capture controller in kiboengage')
                           sendErrorResponse(res, 500, '', resp.body)
                         }
                       })
