@@ -67,16 +67,16 @@ function findRedisObject (featureName, cb) {
 
 // todo will remove this part
 exports.record = function (featureName) {
-  findRecord(featureName, (err, record) => {
-    if (err) {
-      return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
-    }
-    if (!record) {
-      createNewRecord(featureName)
-    } else {
-      incrementRecord(featureName)
-    }
-  })
+//   findRecord(featureName, (err, record) => {
+//     if (err) {
+//       return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
+//     }
+//     if (!record) {
+//       createNewRecord(featureName)
+//     } else {
+//       incrementRecord(featureName)
+//     }
+//   })
 }
 
 function createNewRecord (featureName) {
