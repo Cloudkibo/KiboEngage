@@ -57,7 +57,7 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
   // logger.serverLog(TAG,
   //   `final query ${JSON.stringify(
   //     query)}`, 'debug')
-  // return query
+  return query
 }
 exports.getCriteriasForAutopostingByType = function (req) {
   let matchAggregate = { companyId: req.user.companyId,
