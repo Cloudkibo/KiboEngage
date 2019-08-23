@@ -8,6 +8,7 @@ const SurveysDataLayer = require('../surveys/surveys.datalayer')
 const PageBroadcastDataLayer = require('../page_broadcast/page_broadcast.datalayer')
 const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
 const PagePollDataLayer = require('../page_poll/page_poll.datalayer')
+const SequenceDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const TAG = 'api/pages/dashboard.controller.js'
@@ -18,7 +19,6 @@ const async = require('async')
 let _ = require('lodash')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
-const helperApiCalls = require('./helperApiCalls')
 
 exports.index = function (req, res) {
   callApi.callApi('pages/aggregate', 'post', [])
@@ -223,89 +223,192 @@ function populateIds (pages, subscriber) {
   })
 }
 
-const _getDataCounts = (data, next) => {
-  async.parallelLimit([
-    helperApiCalls._getBroadcastSentCount.bind(null, data),
-    helperApiCalls._getBroadcastSeenCount.bind(null, data),
-    helperApiCalls._getSurveysSentCount.bind(null, data),
-    helperApiCalls._getSurveysSeenCount.bind(null, data),
-    helperApiCalls._getPollSentCount.bind(null, data),
-    helperApiCalls._getPollSeenCount.bind(null, data),
-    helperApiCalls._getSurveyResponseCount.bind(null, data),
-    helperApiCalls._getPollsResponseCount.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      next(err)
-    } else {
-      data.dataCounts = {
-        broadcast: {
-          broadcastSentCount: data.broadcastSentCount,
-          broadcastSeenCount: data.broadcastSeenCount
-        },
-        survey: {
-          surveySentCount: data.surveySentCount,
-          surveySeenCount: data.surveySeenCount,
-          surveyResponseCount: data.surveyResponseCount
-        },
-        poll: {
-          pollSentCount: data.pollSentCount,
-          pollSeenCount: data.pollSeenCount,
-          pollResponseCount: data.pollResponseCount
-        }
-      }
-      next()
-    }
-  })
-}
-
-const _getGraphData = (data, next) => {
-  data.groupAggregate = {
-    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
-    count: {$sum: 1}}
-  async.parallelLimit([
-    helperApiCalls._getBroadcastGraphData.bind(null, data),
-    helperApiCalls._getPollGraphData.bind(null, data),
-    helperApiCalls._getSurveyGraphData.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      next(err)
-    } else {
-      data.graphData = {
-        broadcastsgraphdata: data.broadcastsgraphdata,
-        pollsgraphdata: data.pollsgraphdata,
-        surveysgraphdata: data.surveysgraphdata
-      }
-      next()
-    }
-  })
-}
-
 exports.sentVsSeenNew = function (req, res) {
-  let data = {
-    companyId: req.user.companyId,
-    pageId: req.body.pageId,
-    days: req.body.days,
-    companyCriteria: {companyId: req.user.companyId},
-    companyUserCriteria: {domain_email: req.user.domain_email},
-    connectedPagesCriteria: {connected: true, companyId: req.user.companyId},
-    surveyResponseCriteria: {
-      match: {companyId: req.user.companyId},
-      group: {_id: null, responses: {$sum: '$isresponded'}}
-    }
-  }
-  async.series([
-    helperApiCalls._getCompanyUser.bind(null, data),
-    helperApiCalls._getPagesUsingQuery.bind(null, data),
-    helperApiCalls._getCriterias.bind(null, data),
-    _getDataCounts.bind(null, data),
-    _getGraphData.bind(null, data)
-  ], function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, err)
-    } else {
-      sendSuccessResponse(res, 200, {datacounts: data.dataCounts, graphDatas: data.graphData})
-    }
-  })
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
+    .then(companyUser => {
+      if (!companyUser) {
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
+      }
+      callApi.callApi(`pages/query`, 'post', {connected: true, companyId: companyUser.companyId}) // fetch connected pages
+        .then(pages => {
+          populateIds(pages).then(result => {
+          // We should call the count function when we switch to v1.1
+            PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
+              .then(broadcastSentCount => {
+                // We should call the count function when we switch to v1.1
+                PageBroadcastDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
+                  .then(broadcastSeenCount => {
+                    // call the count function in v1.1
+                    PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
+                      .then(surveySentCount => {
+                        // call the count function in v1.1
+                        PageSurveyDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
+                          .then(surveySeenCount => {
+                            // we should call the v1.1 count function because we are counting here.
+                            PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, false, result.pageIds))
+                              .then(pollSentCount => {
+                                // we should call the v1.1 count function because we are counting here.
+                                PagePollDataLayer.countDocuments(LogicLayer.getCriterias(req.body, companyUser, true, result.pageIds))
+                                  .then(pollSeenCount => {
+                                    SurveysDataLayer.genericFindForSurvey({companyId: companyUser.companyId})
+                                      .then(surveyResponseCount => {
+                                        PollsDataLayer.genericFindForPolls({companyId: companyUser.companyId})
+                                          .then(polls => {
+                                            PagePollDataLayer.find({companyId: companyUser.companyId})
+                                              .then(pollPages => {
+                                                // we should call the pollresponse datalayer method in v1.1
+                                                let groupPollAggregate = {
+                                                  _id: '$pollId',
+                                                  count: {$sum: 1}
+                                                }
+                                                PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
+                                                  .then(pollResponseCount => {
+                                                    let responsesCount = []
+                                                    // logger.serverLog(TAG,
+                                                    //   `counts for dashboard poll response ${JSON.stringify(
+                                                    //     pollResponseCount)}`, 'debug')
+                                                    for (let a = 0; a < polls.length; a++) {
+                                                      for (let b = 0; b < pollResponseCount.length; b++) {
+                                                        if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
+                                                          responsesCount.push(pollResponseCount[b].count)
+                                                        }
+                                                      }
+                                                    }
+                                                    var sum = 0
+                                                    if (responsesCount.length > 0) {
+                                                      for (var c = 0; c <
+                                                                          responsesCount.length; c++) {
+                                                        sum = sum + responsesCount[c]
+                                                      }
+                                                    }
+                                                    var sum1 = 0
+                                                    if (surveyResponseCount.length > 0) {
+                                                      for (var j = 0; j <
+                                                                          surveyResponseCount.length; j++) {
+                                                        sum1 = sum1 +
+                                                                              surveyResponseCount[j].isresponded
+                                                      }
+                                                    }
+
+                                                    let datacounts = {
+                                                      broadcast: {
+                                                        broadcastSentCount: 0,
+                                                        broadcastSeenCount: 0
+                                                      },
+                                                      survey: {
+                                                        surveySentCount: 0,
+                                                        surveySeenCount: 0,
+                                                        surveyResponseCount: 0
+                                                      },
+                                                      poll: {
+                                                        pollSentCount: 0,
+                                                        pollSeenCount: 0,
+                                                        pollResponseCount: 0
+                                                      }
+                                                    }
+                                                    if (broadcastSentCount.length > 0) {
+                                                      datacounts.broadcast.broadcastSentCount = broadcastSentCount[0].count
+                                                      if (broadcastSeenCount.length > 0) {
+                                                        datacounts.broadcast.broadcastSeenCount = broadcastSeenCount[0].count
+                                                      }
+                                                    }
+                                                    if (surveySentCount.length > 0) {
+                                                      datacounts.survey.surveySentCount = surveySentCount[0].count
+                                                      if (surveySeenCount.length > 0) {
+                                                        datacounts.survey.surveySeenCount = surveySeenCount[0].count
+                                                        datacounts.survey.surveyResponseCount = sum1
+                                                      }
+                                                    }
+                                                    if (pollSentCount.length > 0) {
+                                                      datacounts.poll.pollSentCount = pollSentCount[0].count
+                                                      if (pollSeenCount.length > 0) {
+                                                        datacounts.poll.pollSeenCount = pollSeenCount[0].count
+                                                        datacounts.poll.pollResponseCount = sum
+                                                      }
+                                                    }
+                                                    // logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`, 'debug')
+                                                    graphDataNew(req.body, companyUser, result.pageIds)
+                                                      .then(result => {
+                                                        sendSuccessResponse(res, 200, {datacounts, graphDatas: result})
+                                                      })
+                                                      .catch(err => {
+                                                        sendErrorResponse(res, 500, '', `Error in getting graphdaya ${JSON.stringify(err)}`)
+                                                      })
+                                                  })
+                                                  .catch(err => {
+                                                    if (err) {
+                                                      sendErrorResponse(res, 500, '', `Error in getting poll response count ${JSON.stringify(err)}`)
+                                                    }
+                                                  })
+                                              })
+                                              .catch(err => {
+                                                if (err) {
+                                                  logger.serverLog(TAG, `Error: ${err}`, 'error')
+                                                  sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
+                                                }
+                                              })
+                                          })
+                                          .catch(err => {
+                                            if (err) {
+                                              logger.serverLog(TAG, `Error: ${err}`, 'error')
+                                              sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
+                                            }
+                                          })
+                                      })
+                                      .catch(err => {
+                                        if (err) {
+                                          sendErrorResponse(res, 500, '', 'responses count not found')
+                                        }
+                                      })
+                                  })
+                                  .catch(err => {
+                                    if (err) {
+                                      sendErrorResponse(res, 500, '', `Error in getting pollSeenCount count ${JSON.stringify(err)}`)
+                                    }
+                                  })
+                              })
+                              .catch(err => {
+                                if (err) {
+                                  sendErrorResponse(res, 500, '', `Error in getting pollSentCount count ${JSON.stringify(err)}`)
+                                }
+                              })
+                          })
+                          .catch(err => {
+                            if (err) {
+                              sendErrorResponse(res, 500, '', `Error in getting surveytSeenCount count ${JSON.stringify(err)}`)
+                            }
+                          })
+                      })
+                      .catch(err => {
+                        if (err) {
+                          sendErrorResponse(res, 500, '', `Error in getting surveySentCount count ${JSON.stringify(err)}`)
+                        }
+                      })
+                  })
+                  .catch(err => {
+                    if (err) {
+                      sendErrorResponse(res, 500, '', `Error in getting broadcastSeenCount count ${JSON.stringify(err)}`)
+                    }
+                  })
+              })
+              .catch(err => {
+                if (err) {
+                  sendErrorResponse(res, 500, '', `Error in getting broadcastSentCount count ${JSON.stringify(err)}`)
+                }
+              })
+          })
+        })
+        .catch(err => {
+          if (err) {
+            sendErrorResponse(res, 500, '', `Error in getting connected pages ${JSON.stringify(err)}`)
+          }
+        })
+    })
+    .catch(err => {
+      if (err) {
+        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
+      }
+    })
 }
 
 exports.likesVsSubscribers = function (req, res) {
@@ -382,49 +485,106 @@ exports.otherPages = function (req, res) {
     })
 }
 
-const _getStats = (data, next) => {
-  async.parallelLimit([
-    helperApiCalls._getTotalPages.bind(null, data),
-    helperApiCalls._getSubscribersUsingQuery.bind(null, data),
-    helperApiCalls._getSequences.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      next(err)
-    } else {
-      next()
-    }
-  })
-}
-
 exports.stats = function (req, res) {
-  let data = {
-    companyId: req.user.companyId,
-    companyUserCriteria: {domain_email: req.user.domain_email},
-    connectedPagesCriteria: {connected: true, companyId: req.user.companyId},
-    totalPagesCriteria: {companyId: req.user.companyId}
+  const payload = {
+    scheduledBroadcast: 0,
+    username: req.user.name
   }
-  async.series([
-    helperApiCalls._getCompanyUser.bind(null, data),
-    helperApiCalls._getPagesUsingQuery.bind(null, data),
-    _getStats.bind(null, data)
-  ], function (err) {
-    if (err) {
-      console.log(err)
-      sendErrorResponse(res, 500, err)
-    } else {
-      let payload = {
-        scheduledBroadcast: 0,
-        username: req.user.name,
-        pages: data.pages.length,
-        totalPages: data.totalPages.length,
-        subscribers: data.subscribers.length,
-        sequences: data.sequences
-      }
-      sendSuccessResponse(res, 200, payload)
-    }
-  })
-}
 
+  callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
+    .then(companyUser => {
+      if (!companyUser) {
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
+      }
+      callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId})
+        .then((pages) => {
+          populateIds(pages, true).then(result => {
+            payload.pages = pages.length
+            callApi.callApi('pages/query', 'post', {companyId: companyUser.companyId})
+              .then(allPages => {
+                let removeDuplicates = (myArr, prop) => {
+                  return myArr.filter((obj, pos, arr) => {
+                    return arr.map(mapObj => mapObj[prop]).indexOf(obj[prop]) === pos
+                  })
+                }
+                let allPagesWithoutDuplicates = removeDuplicates(allPages, 'pageId')
+                payload.totalPages = allPagesWithoutDuplicates.length
+                callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isSubscribed: true, pageId: {$in: result.pageIds}})
+                  .then(subscribers => {
+                    //logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
+                    payload.subscribers = subscribers.length
+                    BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
+                      .then(recentBroadcasts => {
+                        payload.recentBroadcasts = recentBroadcasts
+                        BroadcastsDataLayer.countBroadcasts({companyId: companyUser.companyId})
+                          .then(broadcastCount => {
+                            PollsDataLayer.countPolls({companyId: companyUser.companyId})
+                              .then(pollsCount => {
+                                SurveysDataLayer.countSurveys({companyId: companyUser.companyId})
+                                  .then(surveysCount => {
+                                    payload.activityChart = {
+                                      messages: broadcastCount,
+                                      polls: pollsCount,
+                                      surveys: surveysCount
+                                    }
+                                    SequenceDataLayer.countSequences({companyId: companyUser.companyId})
+                                      .then(sequences => {
+                                        payload.sequences = sequences.length > 0 ? sequences[0].count : 0
+                                        sendSuccessResponse(res, 200, payload)
+                                      })
+                                      .catch(err => {
+                                        sendErrorResponse(res, 500, '', `failed to retrieve sequences ${err}`)
+                                      })
+                                  })
+                                  .catch(err => {
+                                    if (err) {
+                                      sendErrorResponse(res, 500, '', JSON.stringify(err))
+                                    }
+                                  })
+                              })
+                              .catch(err => {
+                                if (err) {
+                                  sendErrorResponse(res, 500, '', JSON.stringify(err))
+                                }
+                              })
+                          })
+                          .catch(err => {
+                            if (err) {
+                              sendErrorResponse(res, 500, '', JSON.stringify(err))
+                            }
+                          })
+                      })
+                      .catch(err => {
+                        if (err) {
+                          sendErrorResponse(res, 500, '', JSON.stringify(err))
+                        }
+                      })
+                  })
+                  .catch(err => {
+                    if (err) {
+                      sendErrorResponse(res, 500, '', JSON.stringify(err))
+                    }
+                  })
+              })
+              .catch(err => {
+                if (err) {
+                  sendErrorResponse(res, 500, '', JSON.stringify(err))
+                }
+              })
+          })
+        })
+        .catch(err => {
+          if (err) {
+            sendErrorResponse(res, 500, '', JSON.stringify(err))
+          }
+        })
+    })
+    .catch(err => {
+      if (err) {
+        sendErrorResponse(res, 500, '', `Internal Server Error ${err}`)
+      }
+    })
+}
 exports.graphData = function (req, res) {
   var days = 0
   if (req.params.days === '0') {
@@ -513,6 +673,37 @@ exports.graphData = function (req, res) {
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
+}
+function graphDataNew (body, companyUser, pageIds) {
+  return new Promise(function (resolve, reject) {
+    let groupAggregate = {
+      _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+      count: {$sum: 1}}
+    PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
+      .then(broadcastsgraphdata => {
+        logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`, 'debug')
+        PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
+          .then(pollsgraphdata => {
+            PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
+              .then(surveysgraphdata => {
+                resolve({
+                  broadcastsgraphdata: broadcastsgraphdata,
+                  pollsgraphdata: pollsgraphdata,
+                  surveysgraphdata: surveysgraphdata
+                })
+              })
+              .catch(err => {
+                reject(err)
+              })
+          })
+          .catch(err => {
+            reject(err)
+          })
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
 }
 
 exports.toppages = function (req, res) {
@@ -679,7 +870,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                 `Page access token from graph api error ${JSON.stringify(
                   err)}`, 'error')
             }
-            if (resp && resp.body.error) {
+            if (resp.body.error) {
               sendOpAlert(resp.body.error, 'dashboard controller in kiboengage')
             }
             if (resp && resp.body && resp.body.access_token) {

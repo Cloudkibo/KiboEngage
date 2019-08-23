@@ -16,69 +16,83 @@ const broadcastApi = require('../../global/broadcastApi')
 const { saveLiveChat, preparePayload } = require('../../global/livechat')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
-const helperApiCalls = require('./helperApiCalls')
 
 exports.index = function (req, res) {
-  let data = {
-    criteria: {companyId: req.user.companyId},
-    responsesCriteria: {
-      match: {},
-      group: {_id: {pollId: '$pollId'}, count: {$sum: 1}}
-    }
-  }
-  async.parallelLimit([
-    helperApiCalls._getPollsUsingQuery.bind(null, data),
-    helperApiCalls._getPollPagesUsingQuery.bind(null, data),
-    helperApiCalls._getPollResponsesUsingAggregate.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, err)
-    } else {
-      let responsesCount = PollLogicLayer.prepareResponsesPayload(data.polls, data.responsesCount)
-      let payload = {
-        polls: data.polls,
-        pollpages: data.pollPages,
-        responsesCount
-      }
-      sendSuccessResponse(res, 200, payload)
-    }
-  })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+    .then(companyUser => {
+      PollDataLayer.genericFindForPolls({companyId: companyUser.companyId})
+        .then(polls => {
+          PollPageDataLayer.genericFind({companyId: companyUser.companyId})
+            .then(pollpages => {
+              PollResponseDataLayer.aggregateForPollResponse({}, {
+                _id: {pollId: '$pollId'},
+                count: {$sum: 1}})
+                .then(responsesCount1 => {
+                  let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
+                  sendSuccessResponse(res, 200, {polls, pollpages, responsesCount})
+                })
+                .catch(error => {
+                  sendErrorResponse(res, 500, `Failed to aggregate poll responses ${JSON.stringify(error)}`)
+                })
+            })
+            .catch(error => {
+              sendErrorResponse(res, 500, `Failed to fetch poll pages ${JSON.stringify(error)}`)
+            })
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failedto fetch polls ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+    })
 }
-
 exports.allPolls = function (req, res) {
-  let criterias = PollLogicLayer.getCriterias(req)
-  let data = {
-    criteria: {companyId: req.user.companyId},
-    pollsCriteria: {
-      match: criterias.fetchCriteria[0].$match,
-      sort: criterias.fetchCriteria[1].$sort,
-      skip: criterias.fetchCriteria[2].$skip,
-      limit: criterias.fetchCriteria[3].$limit
-    },
-    responsesCriteria: {
-      match: {},
-      group: {_id: {pollId: '$pollId'}, count: {$sum: 1}}
-    }
-  }
-  async.parallelLimit([
-    helperApiCalls._countPolls.bind(null, data),
-    helperApiCalls._getPollsUsingAggregate.bind(null, data),
-    helperApiCalls._getPollPagesUsingQuery.bind(null, data),
-    helperApiCalls._getPollResponsesUsingAggregate.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, err)
-    } else {
-      let responsesCount = PollLogicLayer.prepareResponsesPayload(data.polls, data.responsesCount)
-      let payload = {
-        polls: data.polls,
-        pollpages: data.pollPages,
-        responsesCount: responsesCount,
-        count: data.pollsCount
-      }
-      sendSuccessResponse(res, 200, payload)
-    }
-  })
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+    .then(companyUser => {
+      let criterias = PollLogicLayer.getCriterias(req.body, companyUser)
+      PollDataLayer.countPolls(criterias.countCriteria[0].$match)
+        .then(pollsCount => {
+          let aggregateMatch = criterias.fetchCriteria[0].$match
+          let aggregateSort = criterias.fetchCriteria[1].$sort
+          let aggregateSkip = criterias.fetchCriteria[2].$skip
+          let aggregateLimit = criterias.fetchCriteria[3].$limit
+          PollDataLayer.aggregateForPolls(aggregateMatch, null, null, aggregateLimit, aggregateSort, aggregateSkip)
+            .then(polls => {
+              PollPageDataLayer.genericFind({companyId: companyUser.companyId})
+                .then(pollpages => {
+                  PollResponseDataLayer.aggregateForPollResponse({}, {
+                    _id: {pollId: '$pollId'},
+                    count: {$sum: 1}})
+                    .then(responsesCount1 => {
+                      let responsesCount = PollLogicLayer.prepareResponsesPayload(polls, responsesCount1)
+                      let payload = {
+                        polls: polls,
+                        pollpages: pollpages,
+                        responsesCount: responsesCount,
+                        count: polls.length > 0 ? pollsCount[0].count : 0
+                      }
+                      sendSuccessResponse(res, 200, payload)
+                    })
+                    .catch(error => {
+                      sendErrorResponse(res, 500, `Failed to aggregate poll responses ${JSON.stringify(error)}`)
+                    })
+                })
+                .catch(error => {
+                  sendErrorResponse(res, 500, `Failed to fetch poll pages ${JSON.stringify(error)}`)
+                })
+            })
+            .catch(error => {
+              sendErrorResponse(res, 500, `Failed to fetch polls ${JSON.stringify(error)}`)
+            })
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to fetch polls count ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+    })
 }
 
 exports.create = function (req, res) {
@@ -180,22 +194,26 @@ exports.sendPollDirectly = function (req, res) {
     })
 }
 exports.deletePoll = function (req, res) {
-  let data = {
-    pollId: req.params.id
-  }
-  async.parallelLimit([
-    helperApiCalls._deletePolls.bind(null, data),
-    helperApiCalls._deletePollPages.bind(null, data),
-    helperApiCalls._deletePollResponses.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, err)
-    } else {
-      sendSuccessResponse(res, 200)
-    }
-  })
+  PollDataLayer.deleteForPolls(req.params.id)
+    .then(poll => {
+      PollPageDataLayer.deleteForPollPage({pollId: req.params.id})
+        .then(pollpages => {
+          PollResponseDataLayer.deleteForPollResponse({pollId: req.params.id})
+            .then(pollresponses => {
+              sendSuccessResponse(res, 200)
+            })
+            .catch(error => {
+              sendErrorResponse(res, 500, `Failed to delete poll responses ${JSON.stringify(error)}`)
+            })
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to delete poll pages ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to delete poll ${JSON.stringify(error)}`)
+    })
 }
-
 exports.getAllResponses = function (req, res) {
   PollResponseDataLayer.genericFindForPollResponse({})
     .then(pollresponses => {
