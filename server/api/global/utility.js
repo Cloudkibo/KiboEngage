@@ -43,4 +43,3 @@ const getAlertEmailWithBody = (emailObject, errorMessage, codePart) => {
 
 exports.getEmailObject = getEmailObject
 exports.getAlertEmailWithBody = getAlertEmailWithBody
-exports.getSendGridObject = utility.getSendGridObject
