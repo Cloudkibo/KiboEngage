@@ -88,7 +88,7 @@ exports.getCriterias = function (req, tagIDs) {
     { $match: {companyId: req.user.companyId} },
     { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
     { $unwind: '$pageId' },
-    { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
+   // { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
     { $project: {
       'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
       'firstName': 1,
@@ -103,8 +103,7 @@ exports.getCriterias = function (req, tagIDs) {
       'datetime': 1,
       'timezone': 1,
       'senderId': 1,
-      '_id': 1,
-      'tags_subscriber': 1
+      '_id': 1
     }},
     { $match: temp },
     { $group: { _id: null, count: { $sum: 1 } } }
@@ -121,7 +120,6 @@ exports.getCriterias = function (req, tagIDs) {
       { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
-      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -136,12 +134,12 @@ exports.getCriterias = function (req, tagIDs) {
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
-        '_id': 1,
-        'tags_subscriber': 1
+        '_id': 1
       }},
       { $match: temp },
       { $skip: recordsToSkip },
-      { $limit: req.body.number_of_records }
+      { $limit: req.body.number_of_records },
+      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } }
     ]
   } else if (req.body.first_page === 'next') {
     recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
@@ -150,7 +148,6 @@ exports.getCriterias = function (req, tagIDs) {
       { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
-      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -165,12 +162,12 @@ exports.getCriterias = function (req, tagIDs) {
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
-        '_id': 1,
-        'tags_subscriber': 1
+        '_id': 1
       }},
       { $match: { $and: [temp, { _id: { $lt: req.body.last_id } }] } },
       { $skip: recordsToSkip },
-      { $limit: req.body.number_of_records }
+      { $limit: req.body.number_of_records },
+      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } }
     ]
   } else if (req.body.first_page === 'previous') {
     recordsToSkip = Math.abs(req.body.requested_page * req.body.number_of_records)
@@ -179,7 +176,6 @@ exports.getCriterias = function (req, tagIDs) {
       { $sort: { datetime: -1 } },
       { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
       { $unwind: '$pageId' },
-      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -194,12 +190,12 @@ exports.getCriterias = function (req, tagIDs) {
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
-        '_id': 1,
-        'tags_subscriber': 1
+        '_id': 1
       }},
       { $match: { $and: [temp, { _id: { $gt: req.body.last_id } }] } },
       { $skip: recordsToSkip },
-      { $limit: req.body.number_of_records }
+      { $limit: req.body.number_of_records },
+      { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } }
     ]
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
