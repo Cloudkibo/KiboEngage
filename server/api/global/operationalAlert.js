@@ -1,6 +1,6 @@
 let { getEmailObject, getAlertEmailWithBody } = require('./utility')
 let { getSendGridObject } = require('./../../config/environment')
-let logger = require('./../../components/logger')
+let logger = require('./../../components/utility')
 let TAG = 'server/api/global/operationalAlert.js'
 
 exports.sendOpAlert = function (errObj, codePart) {
