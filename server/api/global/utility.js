@@ -14,7 +14,7 @@ exports.getScheduledTime = (interval) => {
   return date
 }
 
-const getEmailObject = (to, from, subject, text, emailObject, errorMessage, codePart) => {
+const getEmailObject = (to, from, subject, text, errorMessage, codePart) => {
   let sendgrid = utility.getSendGridObject()
   let email = new sendgrid.Email({
     to: to,
