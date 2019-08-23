@@ -170,11 +170,14 @@ exports.show = function (req, res) {
     surveyId: req.params.id
   }
   async.parallelLimit([
-    helperApiCalls._getOneSurvey.bind(null, data)
+    helperApiCalls._getOneSurvey.bind(null, data),
+    helperApiCalls._getSurveyQuestions.bind(null, data),
+    helperApiCalls._getSurveyResponses.bind(null, data)
   ], 10, function (err) {
     if (err) {
       sendErrorResponse(res, 500, err)
     } else {
+      console.log('in else')
       let payload = {
         survey: data.survey,
         questions: data.questions

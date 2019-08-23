@@ -45,7 +45,7 @@ exports._getTotalPages = (data, next) => {
 
 exports._getCriterias = (data, next) => {
   let matchAggregate = {
-    companyId: data.companyId,
+    companyId: data.companyId.toString(),
     'pageId': data.pageId === 'all' ? {$in: data.pageIds} : data.pageId,
     'datetime': data.days === 'all' ? { $exists: true }
       : {
@@ -56,13 +56,13 @@ exports._getCriterias = (data, next) => {
       }
   }
   data.sentCriteria = matchAggregate
-  let seen = matchAggregate
-  seen['seen'] = true
-  data.seenCriteria = seen
+  data.seenCriteria = Object.assign({seen: true}, matchAggregate)
   next()
 }
 
 exports._getBroadcastSentCount = (data, next) => {
+  console.log(JSON.stringify(data.sentCriteria))
+  console.log(JSON.stringify(data.seenCriteria))
   PageBroadcastDataLayer.countDocuments(data.sentCriteria)
     .then(result => {
       data.broadcastSentCount = result.length > 0 ? result[0].count : 0
