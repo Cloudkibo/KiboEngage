@@ -22,6 +22,7 @@ const compUtility = require('../../../components/utility')
 const { saveLiveChat, preparePayload } = require('../../global/livechat')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const helperApiCalls = require('./helperApiCalls')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -165,31 +166,30 @@ exports.edit = function (req, res) {
 
 // Get a single survey
 exports.show = function (req, res) {
-  surveyDataLayer.findOneSurvey(req.params.id)
-    .then(survey => {
-      surveyQuestionsDataLayer.findSurveyWithId(survey._id)
-        .then(questions => {
-          surveyResponseDataLayer.genericFind({'surveyId': survey._id})
-            .then(responses => {
-              if (responses.length > 0) {
-                populateResponses(responses, req).then(result => {
-                  sendSuccessResponse(res, 200, {survey, questions, responses: result})
-                })
-              } else {
-                sendSuccessResponse(res, 200, {survey, questions, responses})
-              }
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, error)
-            })
+  let data = {
+    surveyId: req.params.id
+  }
+  async.parallelLimit([
+    helperApiCalls._getOneSurvey.bind(null, data)
+  ], 10, function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      let payload = {
+        survey: data.survey,
+        questions: data.questions
+      }
+      if (data.responses.length > 0) {
+        populateResponses(data.responses, req).then(result => {
+          payload.responses = result
+          sendSuccessResponse(res, 200, payload)
         })
-        .catch(error => {
-          sendErrorResponse(res, 500, error)
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, error)
-    })
+      } else {
+        payload.responses = data.responses
+        sendSuccessResponse(res, 200, payload)
+      }
+    }
+  })
 }
 
 function populateResponses (responses, req) {
@@ -338,29 +338,20 @@ exports.sendSurveyDirectly = function (req, res) {
 }
 
 exports.deleteSurvey = function (req, res) {
-  surveyDataLayer.deleteForSurveys(req.params.id)
-    .then(survey => {
-      SurveyPageDataLayer.deleteSurveyPage({surveyId: req.params.id})
-        .then(surveypages => {
-          surveyResponseDataLayer.removeAllSurveyResponse(req.params.id)
-            .then(surveyresponses => {
-              surveyQuestionsDataLayer.removeAllSurveyQuestionsQuery(req.params.id)
-                .then(success => {
-                  sendSuccessResponse(res, 200)
-                })
-
-                .catch(error => {
-                  sendErrorResponse(res, 500, '', `failed to survey responses  ${JSON.stringify(error)}`)
-                })
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, '', `failed to survey remove  ${JSON.stringify(error)}`)
-            })
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, '', `failed to survey remove  ${JSON.stringify(error)}`)
-        })
-    })
+  let data = {
+    surveyId: req.params.id
+  }
+  async.parallelLimit([
+    helperApiCalls._deleteSurvey.bind(null, data),
+    helperApiCalls._deleteSurveyPages.bind(null, data),
+    helperApiCalls._deleteSurveyResponses.bind(null, data)
+  ], 10, function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200)
+    }
+  })
 }
 
 function sendSurvey (req, res, planUsage, companyUsage, abort) {
