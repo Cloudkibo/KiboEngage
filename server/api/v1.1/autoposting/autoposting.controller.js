@@ -9,6 +9,7 @@ const feedparser = require('feedparser-promised')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { getScheduledTime } = require('../../global/utility')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -401,6 +402,7 @@ exports.handleTweetModeration = function (req, res) {
           if (response.body.error) {
             logger.serverLog(TAG, `Failed to send approval message ${JSON.stringify(response.body.error)}`, 'error')
           } else {
+            sendOpAlert(response.body.error, 'autoposting controller in kiboengage')
             logger.serverLog(TAG, `Approval message send successfully!`)
           }
         })

@@ -6,6 +6,7 @@ const fs = require('fs')
 const csv = require('csv-parser')
 let request = require('request')
 const notificationsUtility = require('../notifications/notifications.utility')
+const { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.upload = function (req, res) {
   let directory = logicLayer.directory(req)
@@ -161,6 +162,9 @@ exports.upload = function (req, res) {
                                           return logger.serverLog(TAG,
                                             `At invite to messenger using phone ${JSON.stringify(
                                               err)}`)
+                                        }
+                                        if (res.body.error) {
+                                          sendOpAlert(res.body.error, 'phone number controller')
                                         }
                                       })
                                   })
@@ -380,6 +384,9 @@ exports.sendNumbers = function (req, res) {
                                 return logger.serverLog(TAG,
                                   `Error At invite to messenger using phone ${JSON.stringify(
                                     err)}`)
+                              }
+                              if (res.body.error) {
+                                sendOpAlert(res.body.error, 'pages controller')
                               }
                             })
                         })

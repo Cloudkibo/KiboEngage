@@ -7,6 +7,7 @@ const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const {callApi} = require('../utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 const { saveLiveChat, preparePayloadFacebook } = require('../../global/livechat')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.surveyResponse = function (req, res) {
   logger.serverLog(TAG, `in surveyResponse ${JSON.stringify(req.body)}`)
@@ -125,6 +126,9 @@ function savesurvey (req, subscriber) {
                 if (err3) {
                   logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
                 }
+                if (response.body.error) {
+                  sendOpAlert(response.body.error, 'survey response in kiboengage')
+                }
                 const messageData = {
                   attachment: {
                     type: 'template',
@@ -143,6 +147,9 @@ function savesurvey (req, subscriber) {
                 needle.post(
                   `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
                   data, (err4, respp) => {
+                    if (respp.body.error) {
+                      sendOpAlert(respp.body.error, 'survey response in kiboengage')
+                    }
                   })
               })
           } else { // else send thank you message
@@ -157,6 +164,9 @@ function savesurvey (req, subscriber) {
               `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
                 if (err3) logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
+                if (response.body.error) {
+                  sendOpAlert(response.body.error, 'survey response in kiboengage')
+                }
                 const messageData = {
                   text: 'Thank you. Response submitted successfully.'
                 }
@@ -168,6 +178,9 @@ function savesurvey (req, subscriber) {
                 needle.post(
                   `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
                   data, (err4, respp) => {
+                    if (respp.body.error) {
+                      sendOpAlert(respp.body.error, 'survey response in kiboengage')
+                    }
                     if (err4) {
                     }
                   })

@@ -489,15 +489,29 @@ exports.sessionsGraph = function (req, res) {
     })
 }
 exports.getAllSubscribers = function (req, res) {
+  var dt = new Date()
+  var utcDate = dt.toUTCString()
+  logger.serverLog(TAG, `starting function time ${utcDate}`, 'info')
   let criteria = LogicLayer.getAllSubscribersCriteria(req.params.pageid, req.body)
   utility.callApi(`subscribers/aggregate`, 'post', criteria.countCriteria)
     .then(subscribersCount => {
+      dt = new Date()
+      utcDate = dt.toUTCString()
+      logger.serverLog(TAG, `subscribers/aggregate count ${utcDate}`, 'info')
+
       utility.callApi(`subscribers/aggregate`, 'post', criteria.finalCriteria)
         .then(subscribers => {
+          dt = new Date()
+          utcDate = dt.toUTCString()
+          logger.serverLog(TAG, `subscribers/aggregate data subscribers ${utcDate}`, 'info')
           let payload = {
             subscribers: subscribers,
             count: subscribers.length > 0 ? subscribersCount[0].count : ''
           }
+          dt = new Date()
+          utcDate = dt.toUTCString()
+          logger.serverLog(TAG, `before send success response ${utcDate}`, 'info')
+
           sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
@@ -964,7 +978,7 @@ exports.getPagePermissions = function (req, res) {
         public_profile: false
       }
       let pageLevelPermissions = {
-        subscription_messaging: 'not applied'
+        subscription_messaging: 'Not Applied'
       }
       async.parallelLimit([
         function (callback) {
@@ -992,9 +1006,7 @@ exports.getPagePermissions = function (req, res) {
         function (callback) {
           facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
             .then(response => {
-              console.log('response from facebook for subscription', response.body)
               if (response.body && response.body.data) {
-                console.log('inside first condition')
                 if (response.body.data.length > 0) {
                   for (let i = 0; i < response.body.data.length; i++) {
                     pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
@@ -1003,11 +1015,9 @@ exports.getPagePermissions = function (req, res) {
                     }
                   }
                 } else {
-                  console.log('in else of second condition.', pageLevelPermissions)
                   callback(null, pageLevelPermissions)
                 }
               } else {
-                console.log('in else of first condition ')
                 callback(response.body.error)
               }
             })
@@ -1022,8 +1032,6 @@ exports.getPagePermissions = function (req, res) {
             description: `Failed to fetch page permissions ${err}`
           })
         } else {
-          console.log('results[0]...', results[0])
-          console.log('results[1]', results[1])
           sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
         }
       })
@@ -1091,13 +1099,30 @@ exports.fetchUniquePages = (req, res) => {
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
       // console.log('uniquePages', uniquePages)
+      let pageOwnersFound = 0
       for (let i = 0; i < uniquePages.length; i++) {
         uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
+        utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
+          .then(page => {
+            // console.log('found page owner', page[0].userId)
+            pageOwnersFound += 1
+            if (page[0]) {
+              uniquePages[i].connectedBy = page[0].userId
+            }
+            if (pageOwnersFound === uniquePages.length) {
+              return res.status(200).json({
+                status: 'success',
+                payload: uniquePages
+              })
+            }
+          })
+          .catch(err => {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch connected page ${err}`
+            })
+          })
       }
-      return res.status(200).json({
-        status: 'success',
-        payload: uniquePages
-      })
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
@@ -1105,5 +1130,21 @@ exports.fetchUniquePages = (req, res) => {
         status: 'failed',
         description: `Failed to fetch unique pages ${err}`
       })
+    })
+}
+exports.fetchPageUsers = (req, res) => {
+  let criterias = LogicLayer.getPageUsersCriteria(req.body)
+  utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
+    .then(pagesCount => {
+      utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
+        .then(pageUsers => {
+          sendSuccessResponse(res, 200, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
     })
 }

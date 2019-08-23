@@ -3,6 +3,7 @@ const TAG = 'api/facebookEvents/comment.controller.js'
 const needle = require('needle')
 const utility = require('../utility')
 const commentCaptureLogicLayer = require('./commentCapture.logiclayer')
+const { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.sendCommentReply = function (req, res) {
   res.status(200).json({
@@ -27,12 +28,18 @@ exports.sendCommentReply = function (req, res) {
                   if (err) {
                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`)
                   }
+                  if (resp.body.error) {
+                    sendOpAlert(resp.body.error, 'comment controller')
+                  }
                   let messageData = { message: post.reply }
                   needle.post(
                     `https://graph.facebook.com/${req.body.entry[0].changes[0].value.comment_id}/private_replies?access_token=${resp.body.access_token}`,
                     messageData, (err, resp) => {
                       if (err) {
                         logger.serverLog(TAG, err)
+                      }
+                      if (resp.body.error) {
+                        sendOpAlert(resp.body.error, 'comment controller')
                       }
                       logger.serverLog(TAG,
                         `response from comment on facebook 2 ${JSON.stringify(resp.body)}`)

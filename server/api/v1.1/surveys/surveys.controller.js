@@ -21,6 +21,7 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const compUtility = require('../../../components/utility')
 const { saveLiveChat, preparePayload } = require('../../global/livechat')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -624,6 +625,9 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                       data, (err, resp) => {
                         if (err) {
                           sendErrorResponse(res, 500, JSON.stringify(err))
+                        }
+                        if (resp.body.error) {
+                          sendOpAlert(resp.body.error, 'surveys controller in kiboengage')
                         }
                         messageData.componentType = 'survey'
                         let message = preparePayload(req.user, subscribers[j], page, messageData)

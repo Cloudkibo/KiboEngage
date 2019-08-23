@@ -5,6 +5,7 @@ const logicLayer = require('./logiclayer')
 const request = require('request')
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const messengerEventsUtility = require('./utility')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -52,6 +53,9 @@ function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName,
           (err, res) => {
             if (err) {
             } else {
+              if (res.body.error) {
+                sendOpAlert(res.body.error, 'Menu controller in KiboEngage')
+              }
               if (res.statusCode !== 200) {
                 logger.serverLog(TAG,
                   `At send message landingPage ${JSON.stringify(

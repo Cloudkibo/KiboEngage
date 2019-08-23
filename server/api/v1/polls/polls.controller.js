@@ -10,6 +10,7 @@ const TAG = 'api/v1/polls/polls.controller.js'
 const utility = require('../utility')
 const compUtility = require('../../../components/utility')
 const notificationsUtility = require('../notifications/notifications.utility')
+const { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -240,6 +241,9 @@ exports.send = function (req, res) {
                                           if (err) {
                                             logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err)}`)
                                           }
+                                          if (resp.body.error) {
+                                            sendOpAlert(resp.body.error, 'polls controller')
+                                          }
                                           broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                             subscribers = taggedSubscribers
                                             for (let j = 0; j < subscribers.length && !abort; j++) {
@@ -276,6 +280,9 @@ exports.send = function (req, res) {
                                                               if (err) {
                                                                 logger.serverLog(TAG, err)
                                                                 logger.serverLog(TAG, `Error occured at subscriber :${JSON.stringify(subscribers[j])}`)
+                                                              }
+                                                              if (resp.body.error) {
+                                                                sendOpAlert(resp.body.error, 'polls controller')
                                                               }
                                                               let pollBroadcast = PollLogicLayer.preparePollPagePayload(pages[z], req.user, companyUser, req.body, subscribers[j], req.body._id)
                                                               PollPageDataLayer.createForPollPage(pollBroadcast)
@@ -339,6 +346,9 @@ exports.send = function (req, res) {
                                       if (err) {
                                         logger.serverLog(TAG,
                                           `Page accesstoken from graph api Error${JSON.stringify(err)}`)
+                                      }
+                                      if (resp.body.error) {
+                                        sendOpAlert(resp.body.error, 'polls controller')
                                       }
                                       if (subscribers.length > 0) {
                                         broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {

@@ -2,6 +2,7 @@ const utility = require('../utility')
 const logiclayer = require('./sponsoredMessaging.logiclayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const { marketingApiAccessToken } = require('../../../config/environment')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -76,12 +77,18 @@ exports.send = function (req, res) {
         console.log('campaign paylaod', campaignPayload)
         facebookApiCaller('v3.1', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
           .then(resp => {
+            if (resp.body.error) {
+              sendOpAlert(resp.body.error, 'sponsored messaging controller in kiboengage')
+            }
             let campaignId = resp.body.id
             console.log('campaign id', resp.body)
             let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
             console.log('adsetPayload', adsetPayload)
             facebookApiCaller('v3.1', `act_${req.body.ad_account_id}/adsets`, 'post', adsetPayload)
               .then(response => {
+                if (response.body.error) {
+                  sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage')
+                }
                 let adsetid = response.body.id
                 console.log('adset', adsetid)
                 /// //////////
@@ -160,6 +167,9 @@ exports.getInsight = function (req, res) {
     let insightPayload = logiclayer.prepareInsightPayload(accesstoken)
     facebookApiCaller('v3.1', ad_id, 'get', insightPayload)
       .then(response => {
+        if (response.body.error) {
+          sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage')
+        }
         return res.status(200).json({ status: 'success', payload: response })
       })
       .catch(error => {

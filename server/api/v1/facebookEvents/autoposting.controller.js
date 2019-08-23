@@ -12,6 +12,7 @@ const request = require('request')
 const TAG = 'api/v1/facebookEvents/autoposting.controller.js'
 let config = require('./../../../config/environment')
 const utility = require('../utility')
+const { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.autoposting = function (req, res) {
   res.status(200).json({
@@ -235,6 +236,7 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
             err)}`)
       } else {
         if (res.statusCode !== 200) {
+          sendOpAlert(res.body.error, 'autoposting controller of kiboengage')
           logger.serverLog(TAG,
             `At send fb post broadcast response ${JSON.stringify(
               res.body.error)}`)

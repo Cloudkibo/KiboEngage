@@ -8,6 +8,7 @@ const callApi = require('../utility')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
@@ -55,6 +56,7 @@ exports.create = function (req, res) {
                 facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
                   .then(label => {
                     if (label.body.error) {
+                      sendOpAlert(label.body.error, 'tags controller in kiboengage')
                       sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                     }
                     let tagPayload = {
@@ -126,6 +128,7 @@ exports.rename = function (req, res) {
               facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
                 .then(label => {
                   if (label.body.error) {
+                    sendOpAlert(label.body.error, 'tags controller in kiboengage')
                     sendErrorResponse(res, 500, '', `Failed to delete tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                 })
@@ -135,6 +138,7 @@ exports.rename = function (req, res) {
               facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.newTag})
                 .then(label => {
                   if (label.body.error) {
+                    sendOpAlert(label.body.error, 'tags controller in kiboengage')
                     sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                   let data = {
@@ -273,6 +277,7 @@ function deleteTagsFromFacebook (req, tags, callback) {
         facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
             if (label.body.error) {
+              sendOpAlert(label.body.error, 'tags controller in kiboengage')
               callback(label.body.error)
             }
             if (i === tags.length - 1) {
@@ -309,7 +314,10 @@ function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
           let tagPayload = tags[existsTag.index]
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
-              if (assignedLabel.body.error) callback(assignedLabel.body.error)
+              if (assignedLabel.body.error) { 
+                sendOpAlert(assignedLabel.body.error, 'tags controller in kiboengage')
+                callback(assignedLabel.body.error)
+              }
               let subscriberTagsPayload = {
                 tagId: tagPayload._id,
                 subscriberId: subscriber._id,
@@ -333,7 +341,10 @@ function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
               tags.push(tagPayload)
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
                 .then(assignedLabel => {
-                  if (assignedLabel.body.error) callback(assignedLabel.body.error)
+                  if (assignedLabel.body.error) {
+                    sendOpAlert(assignedLabel.body.error, 'tags controller in kiboengage')
+                    callback(assignedLabel.body.error)
+                  }
                   let subscriberTagsPayload = {
                     tagId: tagPayload._id,
                     subscriberId: subscriber._id,
@@ -393,7 +404,10 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
           let tagPayload = tags[existsTag.index]
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.accessToken}`, 'delete', {})
             .then(unassignedLabel => {
-              if (unassignedLabel.body.error) callback(unassignedLabel.body.error)
+              if (unassignedLabel.body.error) {
+                sendOpAlert(unassignedLabel.body.error, 'tags controller in kiboengage')
+                callback(unassignedLabel.body.error)
+              }
               callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id})
                 .then(deleteRecord => {
                   if (i === subscribers.length - 1) {
@@ -410,7 +424,10 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
               tags.push(tagPayload)
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?user=${subscriber.senderId}&access_token=${subscriber.pageId.accessToken}`, 'delete', {})
                 .then(unassignedLabel => {
-                  if (unassignedLabel.body.error) callback(unassignedLabel.body.error)
+                  if (unassignedLabel.body.error) {
+                    sendOpAlert(unassignedLabel.body.error, 'tags controller in kiboengage')
+                    callback(unassignedLabel.body.error)
+                  }
                   callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id})
                     .then(deleteRecord => {
                       if (i === subscribers.length - 1) {

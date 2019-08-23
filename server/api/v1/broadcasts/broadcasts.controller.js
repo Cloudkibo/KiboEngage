@@ -16,6 +16,7 @@ let request = require('request')
 const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
 const utility = require('../utility')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization)
@@ -262,6 +263,9 @@ exports.upload = function (req, res) {
                   description: 'unable to get page access_token: ' + JSON.stringify(err)
                 })
               }
+              if (resp2.body.error) {
+                sendOpAlert(resp2.body.error, 'scripts controller in kiboengage')
+              }
               let pageAccessToken = resp2.body.access_token
               let fileReaderStream = fs.createReadStream(dir + '/userfiles/' + req.files.file.name)
               const messageData = {
@@ -289,6 +293,9 @@ exports.upload = function (req, res) {
                       description: 'unable to upload attachment on Facebook, sending response' + JSON.stringify(err)
                     })
                   } else {
+                    if (resp.body.error) {
+                      return sendOpAlert(resp.body.error, 'broadcast controller.js')
+                    }
                     logger.serverLog(TAG,
                       `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
                     return res.status(201).json({
@@ -427,6 +434,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     } else {
      // logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
       if (body.error && body.error.code === 190 && body.error.error_subcode === 460) {
+        sendOpAlert(body.error, 'inside broadcastcontroller.js')
         return res.status(200)
           .json({status: 'INVALID_SESSION', description: body.error.message})
       } else if (subscriberNumber === (subscribersLength - 1)) {

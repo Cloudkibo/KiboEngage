@@ -86,12 +86,17 @@ router.post('/fetchAutopostingDetails',
   auth.isAuthorizedSuperUser(),
   controller.fetchAutopostingDetails)
 
-router.get('/fetchUniquePages',
+router.post('/fetchUniquePages',
   auth.isAuthorizedSuperUser(),
   controller.fetchUniquePages)
 
 router.get('/getPagePermissions/:id',
   auth.isAuthorizedSuperUser(),
   controller.getPagePermissions)
+
+router.post('/fetchPageUsers',
+  validate({body: validationSchema.getPageUsersPayload}),
+  auth.isAuthorizedSuperUser(),
+  controller.fetchPageUsers)
 
 module.exports = router

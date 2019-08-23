@@ -136,3 +136,23 @@ exports.getAllSubscribersPayload = {
     }
   }
 }
+exports.getPageUsersPayload = {
+  properties: {
+    pageId: {
+      type: 'string',
+      required: true
+    },
+    last_id: {
+      type: 'string',
+      required: true
+    },
+    number_of_records: {
+      type: 'number',
+      required: true
+    },
+    first_page: {
+      type: 'string',
+      required: true
+    }
+  }
+}

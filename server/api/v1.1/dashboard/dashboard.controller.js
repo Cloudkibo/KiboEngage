@@ -18,6 +18,7 @@ const needle = require('needle')
 const async = require('async')
 let _ = require('lodash')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   callApi.callApi('pages/aggregate', 'post', [])
@@ -869,6 +870,9 @@ exports.updateSubscriptionPermission = function (req, res) {
                 `Page access token from graph api error ${JSON.stringify(
                   err)}`, 'error')
             }
+            if (resp.body.error) {
+              sendOpAlert(resp.body.error, 'dashboard controller in kiboengage')
+            }
             if (resp && resp.body && resp.body.access_token) {
               needle.get(
                 `https://graph.facebook.com/v2.11/me/messaging_feature_review?access_token=${resp.body.access_token}`,
@@ -877,6 +881,9 @@ exports.updateSubscriptionPermission = function (req, res) {
                     logger.serverLog(TAG,
                       `Page access token from graph api error ${JSON.stringify(
                         err)}`, 'error')
+                  }
+                  if (respp.body.error) {
+                    sendOpAlert(respp.body.error, 'dashboard controller in kiboengage')
                   }
                   if (respp && respp.body && respp.body.data && respp.body.data.length > 0) {
                     for (let a = 0; a < respp.body.data.length; a++) {
