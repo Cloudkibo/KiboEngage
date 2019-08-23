@@ -1,4 +1,5 @@
-let { getEmailObject, getAlertEmailWithBody, getSendGridObject } = require('./utility')
+let { getEmailObject, getAlertEmailWithBody } = require('./utility')
+let { getSendGridObject } = require('./../../config/environment')
 let logger = require('./../../components/logger')
 let TAG = 'server/api/global/operationalAlert.js'
 
