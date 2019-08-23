@@ -1062,75 +1062,94 @@ exports.getPagePermissions = function (req, res) {
 exports.fetchUniquePages = (req, res) => {
   let aggregation = [
     {
-      '$lookup': {
-        from: 'tags',
-        localField: '_id',
-        foreignField: 'pageId',
-        as: 'tag'
+      '$facet': {
+        'data': [
+          {
+            '$lookup': {
+              from: 'tags',
+              localField: '_id',
+              foreignField: 'pageId',
+              as: 'tag'
+            }
+          },
+          {
+            '$lookup': {
+              from: 'users',
+              localField: 'userId',
+              foreignField: '_id',
+              as: 'user'
+            }
+          },
+          {
+            '$unwind': '$user'
+          },
+          {
+            '$group': {
+              '_id': '$pageId',
+              'count': { '$sum': 1 },
+              'pageName': {'$first': '$pageName'},
+              'page_ids': {'$push': '$_id'},
+              'users': {'$push': '$user'},
+              'tags': {'$push': '$tag'}
+            }
+          },
+          {
+            '$sort': {'count': -1}
+          },
+          {
+            '$project': {
+              '_id': 0,
+              'pageId': '$_id',
+              'count': '$count',
+              'pageName': 1,
+              'page_ids': 1,
+              'users': 1,
+              'tags': 1
+            }
+          },
+          {
+            '$match': req.body.pageName ? {'pageName': req.body.pageName} : {}
+          },
+          {
+            '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
+          },
+          {
+            '$limit': 10
+          }
+        ],
+        'count': [
+          {
+            '$match': req.body.pageName ? {'pageName': req.body.pageName} : {}
+          },
+          { '$group': {
+            '_id': '$pageId'
+          }}
+        ]
       }
-    },
-    {
-      '$lookup': {
-        from: 'users',
-        localField: 'userId',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    {
-      '$unwind': '$user'
-    },
-    {
-      '$group': {
-        '_id': '$pageId',
-        'count': { '$sum': 1 },
-        'pageName': {'$first': '$pageName'},
-        'page_ids': {'$push': '$_id'},
-        'users': {'$push': '$user'},
-        'tags': {'$push': '$tag'}
-      }
-    },
-    {
-      '$sort': {'count': -1}
-    },
-    {
-      '$project': {
-        '_id': 0,
-        'pageId': '$_id',
-        'count': '$count',
-        'pageName': 1,
-        'page_ids': 1,
-        'users': 1,
-        'tags': 1
-      }
-    },
-    {
-      '$match': req.body.pageName ? {'pageName': req.body.pageName} : {}
-    },
-    {
-      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
-    },
-    {
-      '$limit': 10
     }
   ]
+
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
-      // console.log('uniquePages', uniquePages)
+      console.log('uniquePages', JSON.stringify(uniquePages))
       let pageOwnersFound = 0
-      for (let i = 0; i < uniquePages.length; i++) {
-        uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
-        utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
+      uniquePages = uniquePages[0]
+      for (let i = 0; i < uniquePages.data.length; i++) {
+        uniquePages.data[i].tags = [].concat.apply([], uniquePages.data[i].tags)
+        utility.callApi(`pages/query`, 'post', {pageId: uniquePages.data[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
           .then(page => {
             // console.log('found page owner', page[0].userId)
             pageOwnersFound += 1
             if (page[0]) {
-              uniquePages[i].connectedBy = page[0].userId
+              uniquePages.data[i].connectedBy = page[0].userId
             }
-            if (pageOwnersFound === uniquePages.length) {
+            if (pageOwnersFound === uniquePages.data.length) {
               return res.status(200).json({
                 status: 'success',
-                payload: uniquePages
+                payload: {
+                  data: uniquePages.data,
+                  totalCount: uniquePages.count.length
+                }
               })
             }
           })
