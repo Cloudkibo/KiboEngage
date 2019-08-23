@@ -104,7 +104,6 @@ exports.getCriterias = function (req, tagIDs) {
       'timezone': 1,
       'senderId': 1,
       '_id': 1
-//      'tags_subscriber': 1
     }},
     { $match: temp },
     { $group: { _id: null, count: { $sum: 1 } } }
