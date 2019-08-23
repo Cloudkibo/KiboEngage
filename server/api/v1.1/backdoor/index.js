@@ -99,4 +99,8 @@ router.post('/fetchPageUsers',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageUsers)
 
+router.get('/fetchPageTags/:pageId',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchPageTags)
+
 module.exports = router
