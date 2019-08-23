@@ -489,15 +489,29 @@ exports.sessionsGraph = function (req, res) {
     })
 }
 exports.getAllSubscribers = function (req, res) {
+  var dt = new Date()
+  var utcDate = dt.toUTCString()
+  logger.serverLog(TAG, `starting function time ${utcDate}`, 'info')
   let criteria = LogicLayer.getAllSubscribersCriteria(req.params.pageid, req.body)
   utility.callApi(`subscribers/aggregate`, 'post', criteria.countCriteria)
     .then(subscribersCount => {
+      dt = new Date()
+      utcDate = dt.toUTCString()
+      logger.serverLog(TAG, `subscribers/aggregate count ${utcDate}`, 'info')
+
       utility.callApi(`subscribers/aggregate`, 'post', criteria.finalCriteria)
         .then(subscribers => {
+          dt = new Date()
+          utcDate = dt.toUTCString()
+          logger.serverLog(TAG, `subscribers/aggregate data subscribers ${utcDate}`, 'info')
           let payload = {
             subscribers: subscribers,
             count: subscribers.length > 0 ? subscribersCount[0].count : ''
           }
+          dt = new Date()
+          utcDate = dt.toUTCString()
+          logger.serverLog(TAG, `before send success response ${utcDate}`, 'info')
+
           sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
