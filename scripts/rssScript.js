@@ -194,22 +194,24 @@ function getMetaData (feed) {
         if (err) {
           logger.serverLog(TAG, 'error in fetching metdata', 'error')
         }
-        gallery.push({
-          title: meta.title,
-          subtitle: 'kibopush.com',
-          image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
-          buttons: [
-            {
-              type: 'element_share'
-            },
-            {
-              type: 'web_url',
-              title: 'Read More...',
-              url: feed[i].link
-            }
-          ]
-        })
-        if (gallery.length === feed.length) {
+        if (meta && meta.title && meta.image) {
+          gallery.push({
+            title: meta.title,
+            subtitle: 'kibopush.com',
+            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+            buttons: [
+              {
+                type: 'element_share'
+              },
+              {
+                type: 'web_url',
+                title: 'Read More...',
+                url: feed[i].link
+              }
+            ]
+          })
+        }
+        if (i === feed.length - 1 || i === 9) {
           resolve(gallery)
         }
       })
