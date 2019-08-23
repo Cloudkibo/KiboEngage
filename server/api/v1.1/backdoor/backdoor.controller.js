@@ -15,49 +15,54 @@ const helperApiCalls = require('./helperApiCalls')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
-  let data = {
-    userQueryCriteria: criterias.findCriteria,
-    userAggregateCriteria: criterias.finalCriteria
-  }
-  async.parallelLimit([
-    helperApiCalls._getUsersUsingQuery.bind(null, data),
-    helperApiCalls._getUsersUsingAggregate.bind(null, data)
-  ], 10, function (err, results) {
-    if (err) {
-      sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(err)}`)
-    } else {
-      const usersData = results[0]
-      const users = results[1]
-      let usersPayload = []
-      if (users.length > 0) {
-        users.forEach(user => {
-          data.pageCriteria = {userId: user._id, connected: true}
-          async.series([
-            helperApiCalls._getPagesUsingQuery.bind(null, data),
-            helperApiCalls._getSubscribersUsingQuery.bind(null, data)
-          ], function (err) {
-            if (err) {
-              sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(err)}`)
-            } else {
-              usersPayload.push({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                facebookInfo: user.facebookInfo ? user.facebookInfo : null,
-                createdAt: user.createdAt,
-                pages: data.pages.length,
-                subscribers: data.subscribers.length
-              })
-              if (usersPayload.length === users.length) {
-                let sorted = sortBy(usersPayload, 'createdAt')
-                sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersData.length})
-              }
-            }
-          })
+  utility.callApi(`user/query`, 'post', criterias.findCriteria)
+    .then(usersData => {
+      utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria)
+        .then(users => {
+          let usersPayload = []
+          if (users.length > 0) {
+            users.forEach((user) => {
+              let pageIds = []
+              utility.callApi(`pages/query`, 'post', {userId: user._id, connected: true})
+                .then(pages => {
+                  for (let i = 0; i < pages.length; i++) {
+                    pageIds.push(pages[i]._id)
+                  }
+                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true, isEnabledByPage: true})
+                    .then(subscribers => {
+                      usersPayload.push({
+                        _id: user._id,
+                        name: user.name,
+                        email: user.email,
+                        facebookInfo: user.facebookInfo ? user.facebookInfo : null,
+                        createdAt: user.createdAt,
+                        pages: pages.length,
+                        subscribers: subscribers.length
+                      })
+                      if (usersPayload.length === users.length) {
+                        let sorted = sortBy(usersPayload, 'createdAt')
+                        sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersData.length})
+                      }
+                    })
+                    .catch(error => {
+                      logger.serverLog(TAG, `ERROR in fetching subscribers ${JSON.stringify(error)}`, 'error')
+                    })
+                })
+                .catch(error => {
+                  logger.serverLog(TAG, `ERROR in fetching pages ${JSON.stringify(error)}`, 'error')
+                })
+            })
+          } else {
+            sendSuccessResponse(res, 200, {users: [], count: usersData.length})
+          }
         })
-      }
-    }
-  })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to fetch users aggregate ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
+    })
 }
 
 exports.getAllPages = function (req, res) {
@@ -220,64 +225,50 @@ exports.getAllBroadcasts = function (req, res) {
 
 exports.getAllPolls = function (req, res) {
   let criteria = LogicLayer.getAllPollsCriteria(req.body)
-  let data = {
-    pollsCountCriteria: criteria.countCriteria[0].$match,
-    pollsAggregate: {
-      lookup: criteria.finalCriteria[0].$lookup,
-      match: criteria.finalCriteria[1].$match,
-      sort: criteria.finalCriteria[2].$sort,
-      skip: criteria.finalCriteria[3].$skip,
-      limit: criteria.finalCriteria[4].$limit
-    }
-  }
-  async.parallelLimit([
-    helperApiCalls._getPollsCount.bind(null, data),
-    helperApiCalls._getPollsUsingAggregate.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, `Failed to fetch polls ${JSON.stringify(err)}`)
-    } else {
-      if (data.polls.length > 0) {
-        preparePollDataToSend(data.polls, req)
-          .then(result => {
-            sendSuccessResponse(res, 200, {polls: result.data, count: result.data.length > 0 ? data.count[0].count : ''})
-          })
-      } else {
-        sendSuccessResponse(res, 200, {polls: [], count: ''})
-      }
-    }
-  })
+  DataLayer.countPolls(criteria.countCriteria[0].$match)
+    .then(pollsCount => {
+      let aggregateLookup = criteria.finalCriteria[0].$lookup
+      let aggregateMatch = criteria.finalCriteria[1].$match
+      let aggregateSort = criteria.finalCriteria[2].$sort
+      let aggregateSkip = criteria.finalCriteria[3].$skip
+      let aggregateLimit = criteria.finalCriteria[4].$limit
+      let aggregateLookup1 = criteria.finalCriteria[5].$lookup
+      DataLayer.aggregateForPolls(aggregateMatch, undefined, aggregateLookup, aggregateLimit, aggregateSort, aggregateSkip, aggregateLookup1)
+        .then(polls => {
+          if (polls.length > 0) {
+            preparePollDataToSend(polls, req)
+              .then(result => {
+                sendSuccessResponse(res, 200, {polls: result.data, count: result.data.length > 0 ? pollsCount[0].count : ''})
+              })
+          } else {
+            sendSuccessResponse(res, 200, {polls: [], count: ''})
+          }
+        })
+    })
 }
 
 exports.getAllSurveys = function (req, res) {
   let criteria = LogicLayer.getAllSurveysCriteria(req.body)
-  let data = {
-    surveysCountCriteria: criteria.countCriteria[0].$match,
-    surveysAggregate: {
-      lookup: criteria.finalCriteria[0].$lookup,
-      match: criteria.finalCriteria[1].$match,
-      sort: criteria.finalCriteria[2].$sort,
-      skip: criteria.finalCriteria[3].$skip,
-      limit: criteria.finalCriteria[4].$limit
-    }
-  }
-  async.parallelLimit([
-    helperApiCalls._getSurveysCount.bind(null, data),
-    helperApiCalls._getSurveysUsingAggregate.bind(null, data)
-  ], 10, function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, `Failed to fetch surveys ${JSON.stringify(err)}`)
-    } else {
-      if (data.surveys.length > 0) {
-        prepareSurveyDataToSend(data.surveys, req)
-          .then(result => {
-            sendSuccessResponse(res, 200, {surveys: result.data, count: result.data.length > 0 ? data.count[0].count : ''})
-          })
-      } else {
-        sendSuccessResponse(res, 200, {surveys: [], count: ''})
-      }
-    }
-  })
+  DataLayer.countSurveys(criteria.countCriteria[0].$match)
+    .then(surveysCount => {
+      let aggregateLookup = criteria.finalCriteria[0].$lookup
+      let aggregateMatch = criteria.finalCriteria[1].$match
+      let aggregateSort = criteria.finalCriteria[2].$sort
+      let aggregateSkip = criteria.finalCriteria[3].$skip
+      let aggregateLimit = criteria.finalCriteria[4].$limit
+      let aggregateLookup1 = criteria.finalCriteria[5].$lookup
+      DataLayer.aggregateForSurveys(aggregateMatch, undefined, aggregateLookup, aggregateLimit, aggregateSort, aggregateSkip, aggregateLookup1)
+        .then(surveys => {
+          if (surveys.length > 0) {
+            prepareSurveyDataToSend(surveys, req)
+              .then(result => {
+                sendSuccessResponse(res, 200, {surveys: result.data, count: result.data.length > 0 ? surveysCount[0].count : ''})
+              })
+          } else {
+            sendSuccessResponse(res, 200, {surveys: [], count: ''})
+          }
+        })
+    })
 }
 
 function prepareSurveyDataToSend (surveys, req) {
@@ -1114,9 +1105,18 @@ exports.fetchUniquePages = (req, res) => {
       '$limit': 10
     }
   ]
+
+  let countAggregation = [
+    {
+      '$match': req.body.pageName ? {'pageName': req.body.pageName} : {}
+    },
+    { '$group': {
+      '_id': '$pageId'
+    }}
+  ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
-      // console.log('uniquePages', uniquePages)
+      console.log('uniquePages', JSON.stringify(uniquePages))
       let pageOwnersFound = 0
       for (let i = 0; i < uniquePages.length; i++) {
         uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
@@ -1128,10 +1128,22 @@ exports.fetchUniquePages = (req, res) => {
               uniquePages[i].connectedBy = page[0].userId
             }
             if (pageOwnersFound === uniquePages.length) {
-              return res.status(200).json({
-                status: 'success',
-                payload: uniquePages
-              })
+              utility.callApi(`pages/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
+                .then(count => {
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      data: uniquePages,
+                      totalCount: count.length
+                    }
+                  })
+                })
+                .catch(err => {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Failed to fetch unique pages count ${err}`
+                  })
+                })
             }
           })
           .catch(err => {

@@ -301,10 +301,8 @@ exports.sentVsSeenNew = function (req, res) {
     _getGraphData.bind(null, data)
   ], function (err) {
     if (err) {
-      console.log(err)
       sendErrorResponse(res, 500, err)
     } else {
-      console.log('final response')
       sendSuccessResponse(res, 200, {datacounts: data.dataCounts, graphDatas: data.graphData})
     }
   })
@@ -681,7 +679,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                 `Page access token from graph api error ${JSON.stringify(
                   err)}`, 'error')
             }
-            if (resp.body.error) {
+            if (resp && resp.body.error) {
               sendOpAlert(resp.body.error, 'dashboard controller in kiboengage')
             }
             if (resp && resp.body && resp.body.access_token) {
