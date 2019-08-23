@@ -70,7 +70,6 @@ exports.getCriterias = function (req, tagIDs) {
   } else {
     search = '.*' + req.body.filter_criteria.search_value + '.*'
     findCriteria = {
-      companyId: req.user.companyId,
       fullName: {$regex: search, $options: 'i'},
       gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
       locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
@@ -86,6 +85,7 @@ exports.getCriterias = function (req, tagIDs) {
   temp['pageId.connected'] = true
 
   let countCriteria = [
+    { $match: {companyId: req.user.companyId} },
     { $match: temp },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
