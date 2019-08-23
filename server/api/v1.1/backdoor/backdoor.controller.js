@@ -973,7 +973,7 @@ exports.fetchAutopostingDetails = function (req, res) {
   })
 }
 exports.getPagePermissions = function (req, res) {
-  utility.callApi(`pages/query`, 'post', { _id: req.params.id })
+  utility.callApi(`pages/query`, 'post', { pageId: req.params.id, connected: true })
     .then(page => {
       page = page[0]
       let appLevelPermissions = {
