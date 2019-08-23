@@ -6,7 +6,6 @@ const TAG = 'api/v2/pages/pages.controller.js'
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 let config = require('./../../../config/environment')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
-let { sendOpAlert } = require('./../../global/operationalAlert')
 // const util = require('util')
 
 exports.index = function (req, res) {
@@ -150,7 +149,6 @@ exports.enable = function (req, res) {
                   needle('get', `https://graph.facebook.com/v2.6/me?access_token=${page.accessToken}`)
                     .then(response => {
                       if (response.body.error) {
-                        sendOpAlert(response.body.error, 'pages controller in kiboengage')
                         return res.status(400).json({status: 'failed', payload: response.body.error.message, type: 'invalid_permissions'})
                       } else {
                         utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId, connected: true})
@@ -195,9 +193,6 @@ exports.enable = function (req, res) {
                                   // initiate reach estimation
                                   needle('post', `https://graph.facebook.com/v2.11/me/broadcast_reach_estimations?access_token=${page.accessToken}`)
                                     .then(reachEstimation => {
-                                      if (reachEstimation.body.error) {
-                                        sendOpAlert(reachEstimation.body.error, 'pages controller in kiboengage')
-                                      }
                                       console.log('reachEstimation response', reachEstimation.body)
                                       if (reachEstimation.body.reach_estimation_id) {
                                         query.reachEstimationId = reachEstimation.body.reach_estimation_id
@@ -237,9 +232,6 @@ exports.enable = function (req, res) {
                                                     console.log('error in subscribed_apps', error)
                                                     sendErrorResponse(res, 5000, JSON.stringify(error))
                                                   }
-                                                  if (response.body.error) {
-                                                    sendOpAlert(response.body.error, 'pages controller in kiboengage')
-                                                  }
                                                   var valueForMenu = {
                                                     'get_started': {
                                                       'payload': '<GET_STARTED_PAYLOAD>'
@@ -257,9 +249,6 @@ exports.enable = function (req, res) {
                                                         logger.serverLog(TAG,
                                                           `Internal Server Error ${JSON.stringify(
                                                             err)}`, 'error')
-                                                      }
-                                                      if (resp.body.error) {
-                                                        sendOpAlert(resp.body.error, 'pages controller in kiboengage')
                                                       }
                                                     })
                                                   // require('./../../../config/socketio').sendMessageToClient({
@@ -349,9 +338,6 @@ exports.disable = function (req, res) {
             if (error) {
               sendErrorResponse(res, 500, JSON.stringify(error))
             }
-            if (response.body.error) {
-              sendOpAlert(response.body.error, 'pages controller in kiboengage')
-            }
             // require('./../../../config/socketio').sendMessageToClient({
             //   room_id: req.body.companyId,
             //   body: {
@@ -420,9 +406,6 @@ exports.saveGreetingText = function (req, res) {
                 needle.request('post', requesturl, valueForMenu, {json: true},
                   function (err, resp) {
                     if (!err) {
-                      if (resp.body.error) {
-                        sendOpAlert(resp.body.error, 'pages controller in kiboengage')
-                      }
                       sendSuccessResponse(res, 200, 'Operation completed successfully!')
                     }
                     if (err) {
@@ -523,9 +506,6 @@ exports.isWhitelisted = function (req, res) {
 function createTag (user, page, tag, req) {
   needle('post', `https://graph.facebook.com/v2.11/me/custom_labels?access_token=${page.accessToken}`, {'name': tag})
     .then(label => {
-      if (label.body.error) {
-        sendOpAlert(label.body.error, 'pages controller in kiboengage')
-      }
       if (label.body.id) {
         let tagData = {
           tag: tag,
