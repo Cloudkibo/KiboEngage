@@ -8,14 +8,15 @@ const _ = require('lodash')
 const broadcastApi = require('../server/api/global/broadcastApi')
 const { getScheduledTime } = require('../server/api/global/utility')
 const AutopostingDataLayer = require('../server/api/v1.1/autoposting/autoposting.datalayer')
+const { facebookApiCaller } = require('../server/api/global/facebookApiCaller')
 
 exports.runRSSScript = () => {
-  callApi(`autoposting/`, 'get', {}, 'kiboengage')
+  AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({subscriptionType: 'rss', isActive: true})
     .then(autopostings => {
       autopostings.forEach(autoposting => {
-        if (autoposting.scheduledTime &&
-          new Date(autoposting.scheduledTime).getTime() <=
-          new Date().getTime()) {
+        // if (autoposting.scheduledTime &&
+        //   new Date(autoposting.scheduledTime).getTime() <=
+        //   new Date().getTime()) {
           let pagesFindCriteria = _pagesFindCriteria(autoposting)
           callApi(`pages/query`, 'post', pagesFindCriteria)
             .then(pages => {
@@ -26,8 +27,7 @@ exports.runRSSScript = () => {
                   page: page
                 }
                 async.series([
-                  _getSubscribersCount.bind(null, data),
-                  _sendRSSUpdates.bind(null, data),
+                  _performAction.bind(null, data),
                   _updateScheduledTime.bind(null, autoposting)
                 ], function (err) {
                   if (err) {
@@ -41,11 +41,131 @@ exports.runRSSScript = () => {
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(err)}`, 'error')
             })
-        }
+        // }
       })
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch autoposting objects ${err}`, 'error')
+    })
+}
+
+const _performAction = (data, next) => {
+  if (data.autoposting.actionType === 'messenger') {
+    async.series([
+      _sendToMessenger.bind(null, data)
+    ], function (err) {
+      if (err) {
+        next(err)
+      } else {
+        next()
+      }
+    })
+  } else if (data.autoposting.actionType === 'facebook') {
+    async.series([
+      _postOnFacebook.bind(null, data)
+    ], function (err) {
+      if (err) {
+        next(err)
+      } else {
+        next()
+      }
+    })
+  } else {
+    async.parallelLimit([
+      _sendToMessenger.bind(null, data),
+      _postOnFacebook.bind(null, data)
+    ], 10, function (err) {
+      if (err) {
+        next(err)
+      } else {
+        next()
+      }
+    })
+  }
+}
+
+const _sendToMessenger = (data, next) => {
+  async.series([
+    _getSubscribersCount.bind(null, data),
+    _sendRSSUpdates.bind(null, data)
+  ], function (err) {
+    if (err) {
+      next(err)
+    } else {
+      next()
+    }
+  })
+}
+
+const _postOnFacebook = (data, next) => {
+  async.series([
+    _parseFeed.bind(null, data),
+    _prepareMessageDataForFacebook.bind(null, data),
+    _postRSSUpdatesOnFacebook.bind(null, data),
+    _savePostObject.bind(null, data)
+  ], function (err) {
+    if (err) {
+      next(err)
+    } else {
+      next()
+    }
+  })
+}
+
+const _savePostObject = (data, next) => {
+  let newPost = {
+    pageId: data.page._id,
+    companyId: data.autoposting.companyId,
+    autopostingType: 'rss',
+    autopostingId: data.autoposting._id,
+    post: data.messageData,
+    postId: data.postId,
+    likes: 0,
+    comments: 0
+  }
+  callApi(`autoposting_fb_post`, 'post', newPost, 'kiboengage')
+    .then(created => {
+      logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
+      next()
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to create post object ${err}`, 'error')
+      next(err)
+    })
+}
+
+const _prepareMessageDataForFacebook = (data, next) => {
+  let payload = {
+  }
+  let links = []
+  if (data.feed.length === 1) {
+    payload['link'] = data.feed[0].link
+  } else {
+    payload['link'] = `https://kibopush.com`
+  }
+  for (let i = 0; i < data.feed.length && i < 10; i++) {
+    links.push(JSON.stringify({'link': data.feed[i].link, 'name': data.feed[i].title}))
+  }
+  payload['child_attachments'] = links
+  data.messageData = payload
+  next()
+}
+
+const _postRSSUpdatesOnFacebook = (data, next) => {
+  facebookApiCaller('v3.3', `${data.page.pageId}/feed?access_token=${data.page.accessToken}`, 'post', data.messageData)
+    .then(response => {
+      if (response.body.error) {
+        logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+        next(response.body.error)
+      } else {
+        logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
+        data.postId = response.body.post_id ? response.body.post_id : response.body.id
+        next()
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+      next(err)
     })
 }
 
