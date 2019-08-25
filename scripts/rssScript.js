@@ -14,9 +14,9 @@ exports.runRSSScript = () => {
   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({subscriptionType: 'rss', isActive: true})
     .then(autopostings => {
       autopostings.forEach(autoposting => {
-        // if (autoposting.scheduledTime &&
-        //   new Date(autoposting.scheduledTime).getTime() <=
-        //   new Date().getTime()) {
+        if (autoposting.scheduledTime &&
+          new Date(autoposting.scheduledTime).getTime() <=
+          new Date().getTime()) {
           let pagesFindCriteria = _pagesFindCriteria(autoposting)
           callApi(`pages/query`, 'post', pagesFindCriteria)
             .then(pages => {
@@ -41,7 +41,7 @@ exports.runRSSScript = () => {
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(err)}`, 'error')
             })
-        // }
+        }
       })
     })
     .catch(err => {
