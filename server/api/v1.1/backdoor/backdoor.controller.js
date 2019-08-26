@@ -12,6 +12,7 @@ const AutopostingMessagesDataLayer = require('../autopostingMessages/autoposting
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const helperApiCalls = require('./helperApiCalls')
+const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
@@ -1053,32 +1054,10 @@ exports.getPagePermissions = function (req, res) {
 exports.fetchUniquePages = (req, res) => {
   let aggregation = [
     {
-      '$lookup': {
-        from: 'tags',
-        localField: '_id',
-        foreignField: 'pageId',
-        as: 'tag'
-      }
-    },
-    {
-      '$lookup': {
-        from: 'users',
-        localField: 'userId',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    {
-      '$unwind': '$user'
-    },
-    {
       '$group': {
         '_id': '$pageId',
         'count': { '$sum': 1 },
-        'pageName': {'$first': '$pageName'},
-        'page_ids': {'$push': '$_id'},
-        'users': {'$push': '$user'},
-        'tags': {'$push': '$tag'}
+        'pageName': {'$first': '$pageName'}
       }
     },
     {
@@ -1089,10 +1068,7 @@ exports.fetchUniquePages = (req, res) => {
         '_id': 0,
         'pageId': '$_id',
         'count': '$count',
-        'pageName': 1,
-        'page_ids': 1,
-        'users': 1,
-        'tags': 1
+        'pageName': 1
       }
     },
     {
@@ -1116,10 +1092,8 @@ exports.fetchUniquePages = (req, res) => {
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
-      console.log('uniquePages', JSON.stringify(uniquePages))
       let pageOwnersFound = 0
       for (let i = 0; i < uniquePages.length; i++) {
-        uniquePages[i].tags = [].concat.apply([], uniquePages[i].tags)
         utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
           .then(page => {
             // console.log('found page owner', page[0].userId)
@@ -1176,5 +1150,70 @@ exports.fetchPageUsers = (req, res) => {
     })
     .catch(err => {
       sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
+    })
+}
+
+exports.fetchPageTags = (req, res) => {
+  let aggregation = [
+    {
+      '$lookup': {
+        from: 'tags',
+        localField: '_id',
+        foreignField: 'pageId',
+        as: 'tag'
+      }
+    },
+    {
+      '$unwind': '$tag'
+    },
+    {
+      '$group': {
+        '_id': '$pageId',
+        'pageName': {'$first': '$pageName'},
+        'accessToken': {'$first': '$accessToken'},
+        'tags': {'$push': '$tag'}
+      }
+    },
+    {
+      '$project': {
+        '_id': 0,
+        'pageId': '$_id',
+        'pageName': 1,
+        'tags': 1,
+        'accessToken': 1
+      }
+    },
+    {
+      '$match': {'pageId': req.params.pageId}
+    }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
+    .then(kiboPageTags => {
+      needle.get(
+        `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
+        (err, resp) => {
+          if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+            })
+          } else {
+            console.log('fbPageTags', resp.body)
+            return res.status(200).json({
+              status: 'success',
+              payload: {
+                kiboPageTags: kiboPageTags,
+                fbPageTags: resp.body.data ? resp.body.data : []
+              }
+            })
+          }
+        })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch unique pages ${err}`
+      })
     })
 }
