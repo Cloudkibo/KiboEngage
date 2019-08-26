@@ -40,4 +40,8 @@ router.post('/unSubscribe',
   validate({body: validationSchema.unSubscribePayload}),
   controller.unSubscribe)
 
+router.post('/getCount',
+  auth.isAuthenticated(),
+  controller.getCount)
+
 module.exports = router

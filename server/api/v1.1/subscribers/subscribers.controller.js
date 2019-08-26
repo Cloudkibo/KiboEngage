@@ -73,6 +73,41 @@ exports.allLocales = function (req, res) {
     })
 }
 
+exports.getCount = (req, res) => {
+  if (req.body.tagValue) {
+    utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.tagValue } })
+      .then(tags => {
+        let tagIds = tags.map((t) => t._id)
+        _getSubscribersCount(res, req.body, req.user.companyId, tagIds)
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to fecth tags ${err}`)
+        sendErrorResponse(res, 500, `Failed to fecth tags`)
+      })
+  } else {
+    _getSubscribersCount(res, req.body, req.user.companyId)
+  }
+}
+
+const _getSubscribersCount = (res, body, companyId, tagIds) => {
+  logicLayer.getCountCriteria(body, companyId, tagIds)
+    .then(criteria => {
+      console.log(JSON.stringify(criteria))
+      utility.callApi(`subscribers/aggregate`, 'post', criteria)
+        .then(result => {
+          if (result.length > 0) {
+            sendSuccessResponse(res, 200, {count: result[0].count})
+          } else {
+            sendSuccessResponse(res, 200, {count: 0})
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+          sendErrorResponse(res, 500, `Failed to fecth subscribers`)
+        })
+    })
+}
+
 exports.getAll = function (req, res) {
   var dt = new Date()
   var utcDate = dt.toUTCString()
@@ -117,16 +152,16 @@ exports.getAll = function (req, res) {
                       dt = new Date()
                       utcDate = dt.toUTCString()
                       logger.serverLog(TAG, `tags_subscriber/query data subscribers ${utcDate}`, 'info')
-                    //  logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`, 'debug')
+                      //  logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`, 'debug')
                       let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, tagIds, req.body.filter_criteria.tag_value)
-                      //logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
+                      // logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
                       // start append custom Fields
                       utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
                         .then(customFields => {
                           dt = new Date()
                           utcDate = dt.toUTCString()
                           logger.serverLog(TAG, `custom_fields/query ${utcDate}`, 'info')
-                         // logger.serverLog(TAG, `customFields: ${util.inspect(customFields)}`, 'debug')
+                          // logger.serverLog(TAG, `customFields: ${util.inspect(customFields)}`, 'debug')
                           let customFieldIds = customFields.map((cf) => cf._id)
                           utility.callApi('custom_field_subscribers/query', 'post', {purpose: 'findAll', match: {subscriberId: {$in: subscriberIds}, customFieldId: {$in: customFieldIds}}})
                             .then(customFieldSubscribers => {
