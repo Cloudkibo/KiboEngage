@@ -5,7 +5,7 @@ const { callApi } = require('../utility')
 
 exports.create = function (req, res) {
   logger.serverLog(TAG, 'Hit the create json ad endpoint', 'debug')
-  callApi(`jsonAd/create`, 'post', req.body)
+  callApi(`jsonAd/create`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(jsonAd => {
       sendSuccessResponse(res, 200, jsonAd)
     })
@@ -16,7 +16,7 @@ exports.create = function (req, res) {
 
 exports.edit = function (req, res) {
   logger.serverLog(TAG, 'Hit the edit json ad endpoint', 'debug')
-  callApi(`jsonAd/edit`, 'post', req.body)
+  callApi(`jsonAd/edit`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(jsonAd => {
       sendSuccessResponse(res, 200, jsonAd)
     })
@@ -32,7 +32,7 @@ exports.getAll = function (req, res) {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      callApi(`jsonAd/query`, 'post', {companyId: companyUser.companyId})
+      callApi(`jsonAd/query`, 'post', {companyId: companyUser.companyId}, 'accounts', req.headers.authorization)
         .then(jsonAds => {
           sendSuccessResponse(res, 200, jsonAds)
         })
