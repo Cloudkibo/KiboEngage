@@ -582,6 +582,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
       utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
         subscribers = taggedSubscribers
         utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
+          console.log('returned from applySurveyFilterIfNecessary', repliedSubscribers)
           subscribers = repliedSubscribers
           for (let j = 0; j < subscribers.length && !abort; j++) {
             callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}})
