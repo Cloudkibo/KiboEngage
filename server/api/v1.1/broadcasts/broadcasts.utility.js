@@ -427,13 +427,13 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
 
 function applySurveyFilterIfNecessary (req, subscribers, fn) {
   if (req.body.segmentationSurvey && req.body.segmentationSurvey.length > 0) {
-    SurveyResponsesDataLayer.find({ surveyId: { $in: req.body.segmentationSurvey } })
+    SurveyResponsesDataLayer.genericFind({ surveyId: { $in: req.body.segmentationSurvey } })
       .then(responses => {
         let subscribersPayload = []
         for (let i = 0; i < subscribers.length; i++) {
           for (let j = 0; j < responses.length; j++) {
             if (subscribers[i]._id.toString() ===
-              responses[j].subscriberId._id.toString()) {
+              responses[j].subscriberId.toString()) {
               subscribersPayload.push({
                 _id: subscribers[i]._id,
                 firstName: subscribers[i].firstName,
