@@ -201,6 +201,95 @@ exports.getCriterias = function (req, tagIDs) {
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }
 
+exports.getCriteriasTags = function (req, tagIDs) {
+ 
+  let search = ''
+  let findCriteria = {}
+  let finalCriteria = {}
+  let recordsToSkip = 0
+  search = '.*' + req.body.filter_criteria.search_value + '.*'
+  findCriteria = {
+    'fullName': {$regex: search, $options: 'i'},
+    'Subscribers.gender': req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
+    'Subscribers.locale': req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
+    'Subscribers.isSubscribed': req.body.filter_criteria.status_value !== '' ? req.body.filter_criteria.status_value : {$exists: true},
+    'Subscribers.pageId': req.body.filter_criteria.page_value !== '' ? req.body.filter_criteria.page_value : {$exists: true}
+  }
+
+  let countCriteria = [
+    { $match: {companyId: req.user.companyId, 'tagId': {$in: tagIDs}} },
+    { $lookup: { from: 'subscribers', localField: 'subscriberId', foreignField: '_id', as: 'Subscribers' } },
+    { $unwind: '$Subscribers' },
+    { $project: {
+      'fullName': { '$concat': [ '$Subscribers.firstName', ' ', '$Subscribers.lastName' ] },
+      'Subscribers': 1
+    }},  
+    {$match: findCriteria},
+    { $lookup: { from: 'pages', localField: 'Subscribers.pageId', foreignField: '_id', as: 'pageId' } },
+    { $unwind: '$pageId' },
+    { $group: { _id: null, count: { $sum: 1 } } }
+
+  ]
+  if (req.body.first_page === 'first') {
+    if (req.body.current_page) {
+      recordsToSkip = Math.abs(req.body.current_page * req.body.number_of_records)
+    }
+    finalCriteria = [
+      { $match: {companyId: req.user.companyId, 'tagId': {$in: tagIDs}} },
+      { $lookup: { from: 'subscribers', localField: 'subscriberId', foreignField: '_id', as: 'Subscribers' } },
+      { $unwind: '$Subscribers' },
+      {$sort: { 'Subscribers.datetime': -1 }},
+      { $project: {
+        'fullName': { '$concat': [ '$Subscribers.firstName', ' ', '$Subscribers.lastName' ] },
+        'Subscribers': 1
+      }},  
+      {$match: findCriteria},
+      { $lookup: { from: 'pages', localField: 'Subscribers.pageId', foreignField: '_id', as: 'pageId' } },
+      { $unwind: '$pageId' },
+      { $skip: recordsToSkip },
+      { $limit: req.body.number_of_records }
+    ]
+    
+  }
+  else if (req.body.first_page === 'next') {
+    recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
+    finalCriteria = [
+      { $match: {companyId: req.user.companyId, 'tagId': {$in: tagIDs}} },
+      { $lookup: { from: 'subscribers', localField: 'subscriberId', foreignField: '_id', as: 'Subscribers' } },
+      { $unwind: '$Subscribers' },
+      {$sort: { 'Subscribers.datetime': -1 }},
+      { $project: {
+        'fullName': { '$concat': [ '$Subscribers.firstName', ' ', '$Subscribers.lastName' ] },
+        'Subscribers': 1
+      }},  
+      { $match: { $and: [findCriteria, { 'Subscribers._id': { $lt: req.body.last_id } }] } },
+      { $lookup: { from: 'pages', localField: 'Subscribers.pageId', foreignField: '_id', as: 'pageId' } },
+      { $unwind: '$pageId' },    
+      { $skip: recordsToSkip },
+      { $limit: req.body.number_of_records }
+    ]
+  }
+  else if (req.body.first_page === 'previous') {
+    recordsToSkip = Math.abs(req.body.requested_page * req.body.number_of_records)
+    finalCriteria = [
+      { $match: {companyId: req.user.companyId, 'tagId': {$in: tagIDs}} },
+      { $lookup: { from: 'subscribers', localField: 'subscriberId', foreignField: '_id', as: 'Subscribers' } },
+      { $unwind: '$Subscribers' },
+      {$sort: { 'Subscribers.datetime': -1 }},
+      { $project: {
+        'fullName': { '$concat': [ '$Subscribers.firstName', ' ', '$Subscribers.lastName' ] },
+        'Subscribers': 1
+      }},  
+      { $match: { $and: [findCriteria, { 'Subscribers._id': { $gt: req.body.last_id } }] } },
+      { $lookup: { from: 'pages', localField: 'Subscribers.pageId', foreignField: '_id', as: 'pageId' } },
+      { $unwind: '$pageId' },
+      { $skip: recordsToSkip },
+      { $limit: req.body.number_of_records }
+    ]
+  }
+  return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
+
+}
 exports.getCountCriteria = (body, companyId, tagIds) => {
   return new Promise((resolve, reject) => {
     let criteria = []
