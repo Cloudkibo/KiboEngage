@@ -106,7 +106,6 @@ module.exports = function (app) {
   })
 
   app.get('/landingPage/:id', (req, res) => {
-    console.log('i m here')
     callApi('landingPage/query', 'post', {_id: req.params.id})
       .then(landingPages => {
         let landingPage = landingPages[0]
