@@ -15,7 +15,7 @@ const async = require('async')
 const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
-//const helperApiCalls = require('./helperApiCalls')
+// const helperApiCalls = require('./helperApiCalls')
 const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
@@ -1194,7 +1194,7 @@ exports.fetchPageTags = (req, res) => {
             return res.status(200).json({
               status: 'success',
               payload: {
-                kiboPageTags: kiboPageTags,
+                kiboPageTags: kiboPageTags[0].tags,
                 fbPageTags: resp.body.data ? resp.body.data : []
               }
             })
