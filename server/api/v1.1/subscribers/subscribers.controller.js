@@ -152,15 +152,19 @@ exports.getAll = function (req, res) {
         let criterias = logicLayer.getCriteriasTags(req, tagIDs)
         utility.callApi(`tags_subscriber/aggregate`, 'post', criterias.countCriteria) // fetch subscribers count
           .then(count => {
+            console.log('subscribers by filter count', count)
+
             logger.serverLog(TAG, `tags_subscribers/aggregate count ${utcDate}`, 'info')
             utility.callApi(`tags_subscriber/aggregate`, 'post', criterias.fetchCriteria) // fetch subscribers count
               .then(subscribers => {
+                console.log('subscribers by filter', subscribers)
                 let new_subscribers = []
                 subscribers.forEach((subscriber, index) => {
                   let new_subscriber = subscriber.Subscribers
                   new_subscriber.pageId = subscriber.pageId
                   new_subscribers.push(new_subscriber)
                 })
+                console.log('new_subscribers', new_subscribers)
                 getAllSubscribers(new_subscribers, count, req, res)
               })
               .catch(err => {
