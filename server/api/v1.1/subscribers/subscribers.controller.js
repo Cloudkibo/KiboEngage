@@ -72,6 +72,44 @@ exports.allLocales = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
+
+
+
+exports.getCount = (req, res) => {
+  if (req.body.tagValue) {
+    utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.tagValue } })
+      .then(tags => {
+        let tagIds = tags.map((t) => t._id)
+        _getSubscribersCount(res, req.body, req.user.companyId, tagIds)
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to fecth tags ${err}`)
+        sendErrorResponse(res, 500, `Failed to fecth tags`)
+      })
+  } else {
+    _getSubscribersCount(res, req.body, req.user.companyId)
+  }
+}
+
+const _getSubscribersCount = (res, body, companyId, tagIds) => {
+  logicLayer.getCountCriteria(body, companyId, tagIds)
+    .then(criteria => {
+      console.log(JSON.stringify(criteria))
+      utility.callApi(`subscribers/aggregate`, 'post', criteria)
+        .then(result => {
+          if (result.length > 0) {
+            sendSuccessResponse(res, 200, {count: result[0].count})
+          } else {
+            sendSuccessResponse(res, 200, {count: 0})
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+          sendErrorResponse(res, 500, `Failed to fecth subscribers`)
+        })
+    })
+}
+
 const getAllSubscribers = function (subscribers, count, req, res) {
   var dt = new Date()
   var utcDate = dt.toUTCString()

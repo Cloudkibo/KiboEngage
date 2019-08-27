@@ -88,7 +88,7 @@ exports.getCriterias = function (req, tagIDs) {
     { $match: {companyId: req.user.companyId} },
     { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'pageId' } },
     { $unwind: '$pageId' },
-   // { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
+    // { $lookup: { from: 'tags_subscribers', localField: '_id', foreignField: 'subscriberId', as: 'tags_subscriber' } },
     { $project: {
       'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
       'firstName': 1,
@@ -289,4 +289,43 @@ exports.getCriteriasTags = function (req, tagIDs) {
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 
+}
+exports.getCountCriteria = (body, companyId, tagIds) => {
+  return new Promise((resolve, reject) => {
+    let criteria = []
+    let matchCriteria = {
+      companyId,
+      isSubscribed: true
+    }
+    if (body.genderValue) matchCriteria['gender'] = {$in: body.genderValue}
+    if (body.localeValue) matchCriteria['locale'] = {$in: body.localeValue}
+    criteria.push({$match: matchCriteria})
+    criteria.push({
+      $lookup: {
+        from: 'pages',
+        localField: 'pageId',
+        foreignField: '_id',
+        as: 'pageId'
+      }
+    })
+    criteria.push({$unwind: '$pageId'})
+    if (body.pageValue) {
+      criteria.push({$match: {'pageId._id': {$in: body.pageValue}, 'pageId.connected': true}})
+    } else {
+      criteria.push({$match: {'pageId.connected': true}})
+    }
+    if (tagIds) {
+      criteria.push({
+        $lookup: {
+          from: 'tags_subscribers',
+          localField: '_id',
+          foreignField: 'subscriberId',
+          as: 'tags_subscriber'
+        }
+      })
+      criteria.push({$match: {'tags_subscriber.tagIds': {$in: tagIds}}})
+    }
+    criteria.push({$group: {_id: null, count: {$sum: 1}}})
+    resolve(criteria)
+  })
 }
