@@ -1064,7 +1064,7 @@ exports.fetchUniquePages = (req, res) => {
       }
     },
     {
-      '$match': req.body.pageName ? {'pageName': req.body.pageName} : {}
+      '$match': req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : {}
     },
     {
       '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
