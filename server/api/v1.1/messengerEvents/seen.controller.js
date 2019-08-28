@@ -10,7 +10,6 @@ const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceM
 const async = require('async')
 
 exports.index = function (req, res) {
-  console.log('in seen controller')
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -90,47 +89,48 @@ function _updateSurveySeen (data, next) {
 }
 
 function _updateSequenceSeen (data, next) {
-  console.log('_updateSequenceSeen')
   utility.callApi(`pages/query`, 'post', {pageId: data.recipient.id, connected: true})
     .then(pages => {
       const page = pages[0]
-      console.log('pageFound', page)
       if (page) {
         utility.callApi(`subscribers/query`, 'post', { senderId: data.sender.id, companyId: page.companyId })
           .then(subscribers => {
             const subscriber = subscribers[0]
-            console.log('subscriberFound', subscriber)
             if (subscriber) {
               SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }})
                 .then(seqSubMsg => {
-                  console.log('seqSubMsg', seqSubMsg)
                   SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }},
                     { seen: true }, { multi: true })
                     .then(updated => {
-                      console.log('updated', updated)
-                      for (let k = 0; k < seqSubMsg.length; k++) {
-                        // check queue for trigger - sees the message
-                        SequenceMessageQueueDataLayer.genericFind({ subscriberId: subscriber._id, companyId: subscriber.companyId })
-                          .then(seqQueue => {
-                            if (seqQueue.length > 0) {
-                              for (let i = 0; i < seqQueue.length; i++) {
-                                if (seqQueue[i].sequenceMessageId.trigger.event === 'sees' && seqQueue[i].sequenceMessageId.trigger.value === seqSubMsg[k].messageId) {
-                                  let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
-                                  SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
-                                    .then(updated => {
-                                      next(null)
-                                    })
-                                    .catch(err => {
-                                      next(err)
-                                    })
+                      SequencesDataLayer.genericUpdateForSequenceMessages({_id: seqSubMsg.messageId}, {$inc: { seen: 1 }}, {})
+                        .then(updated => {
+                          for (let k = 0; k < seqSubMsg.length; k++) {
+                            // check queue for trigger - sees the message
+                            SequenceMessageQueueDataLayer.genericFind({ subscriberId: subscriber._id, companyId: subscriber.companyId })
+                              .then(seqQueue => {
+                                if (seqQueue.length > 0) {
+                                  for (let i = 0; i < seqQueue.length; i++) {
+                                    if (seqQueue[i].sequenceMessageId.trigger.event === 'sees' && seqQueue[i].sequenceMessageId.trigger.value === seqSubMsg[k].messageId) {
+                                      let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
+                                      SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
+                                        .then(updated => {
+                                          next(null)
+                                        })
+                                        .catch(err => {
+                                          next(err)
+                                        })
+                                    }
+                                  }
                                 }
-                              }
-                            }
-                          })
-                          .catch(err => {
-                            next(err)
-                          })
-                      }
+                              })
+                              .catch(err => {
+                                next(err)
+                              })
+                          }
+                        })
+                        .catch(err => {
+                          next(err)
+                        })
                     })
                     .catch(err => {
                       next(err)
