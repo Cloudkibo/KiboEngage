@@ -96,12 +96,15 @@ function _updateSequenceSeen (data, next) {
         utility.callApi(`subscribers/query`, 'post', { senderId: data.sender.id, companyId: page.companyId })
           .then(subscribers => {
             const subscriber = subscribers[0]
+            console.log('subscriberFound', subscriber)
             if (subscriber) {
               SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }})
                 .then(seqSubMsg => {
+                  console.log('seqSubMsg', seqSubMsg)
                   SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }},
                     { seen: true }, { multi: true })
                     .then(updated => {
+                      console.log('updated', updated)
                       for (let k = 0; k < seqSubMsg.length; k++) {
                         // check queue for trigger - sees the message
                         SequenceMessageQueueDataLayer.genericFind({ subscriberId: subscriber._id, companyId: subscriber.companyId })
