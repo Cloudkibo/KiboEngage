@@ -10,6 +10,7 @@ const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceM
 const async = require('async')
 
 exports.index = function (req, res) {
+  console.log('in seen controller')
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -89,9 +90,11 @@ function _updateSurveySeen (data, next) {
 }
 
 function _updateSequenceSeen (data, next) {
+  console.log('_updateSequenceSeen')
   utility.callApi(`pages/query`, 'post', {pageId: data.recipient.id, connected: true})
     .then(pages => {
       const page = pages[0]
+      console.log('pageFound', page)
       if (page) {
         utility.callApi(`subscribers/query`, 'post', { senderId: data.sender.id, companyId: page.companyId })
           .then(subscribers => {
