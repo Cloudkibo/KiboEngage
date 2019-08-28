@@ -88,6 +88,7 @@ exports.create = function (req, res) {
                           let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
                           utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
                             .then(result => {
+                              postCreated.post_id = postId
                               sendSuccessResponse(res, 200, postCreated)
                             })
                             .catch(error => {
@@ -119,6 +120,7 @@ exports.create = function (req, res) {
                               logger.serverLog(TAG, `postId ${postId}`, 'debug')
                               utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
                                 .then(result => {
+                                  postCreated.post_id = postId
                                   sendSuccessResponse(res, 200, postCreated)
                                 })
                                 .catch(error => {
@@ -139,6 +141,7 @@ exports.create = function (req, res) {
                           let postId = resp.body.post_id ? resp.body.post_id : resp.body.id
                           utility.callApi(`comment_capture/update`, 'put', {query: {_id: postCreated._id}, newPayload: {post_id: postId}, options: {}})
                             .then(result => {
+                              postCreated.post_id = postId
                               sendSuccessResponse(res, 200, postCreated)
                             })
                             .catch(error => {
