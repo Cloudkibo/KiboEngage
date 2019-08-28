@@ -103,7 +103,7 @@ function _updateSequenceSeen (data, next) {
                   SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }},
                     { seen: true }, { multi: true })
                     .then(updated => {
-                      SequencesDataLayer.genericUpdateForSequenceMessages({_id: seqSubMsg.messageId}, {$inc: { seen: 1 }}, {})
+                      SequencesDataLayer.genericUpdateForSequenceMessages({_id: seqSubMsg[0].messageId}, {$inc: { seen: 1 }}, {})
                         .then(updated => {
                           for (let k = 0; k < seqSubMsg.length; k++) {
                             // check queue for trigger - sees the message
