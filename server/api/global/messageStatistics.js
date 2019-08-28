@@ -14,7 +14,7 @@ exports.connectRedis = function () {
   })
 }
 
-exports.recordRedis = function (featureName) {
+function recordRedis (featureName) {
   findRedisObject(featureName, (err, record) => {
     if (err) {
       return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
@@ -26,6 +26,8 @@ exports.recordRedis = function (featureName) {
     }
   })
 }
+
+exports.recordRedis = recordRedis
 
 function createRedisObject (featureName) {
   let today = new Date()
@@ -67,6 +69,7 @@ function findRedisObject (featureName, cb) {
 
 // todo will remove this part
 exports.record = function (featureName) {
+  recordRedis(featureName)
 //   findRecord(featureName, (err, record) => {
 //     if (err) {
 //       return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)

@@ -85,7 +85,7 @@ const _checkAutopostingExistStatus = (data, next) => {
   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: data.companyUser.companyId._id, subscriptionUrl: data.subscriptionUrl})
     .then(autoposting => {
       if (autoposting && autoposting.length > 0) {
-        next('Cannot add duplicate accounts.')
+        next('Feed already exist')
       } else {
         next()
       }
@@ -300,7 +300,8 @@ exports.create = function (req, res) {
   ], function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
-      sendErrorResponse(res, 500, '', 'Failed to craete autoposting')
+     // console.log('Failed to create autoposting', err)
+      sendErrorResponse(res, 500, '', err)
     } else {
       sendSuccessResponse(res, 200, data.result)
     }

@@ -550,7 +550,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     body = JSON.parse(body)
     logger.serverLog(TAG, `sendBroadcast Batch send response ${JSON.stringify(body)}`, 'debug')
-    if (body[0].code === 200) {
+    if (body[0].code === 200 && !err) {
       successfullySent += 1
     } else {
       logger.serverLog(TAG, `Failed to send broadcast to all subscribers ${err}`, 'debug')
