@@ -85,7 +85,7 @@ const _checkAutopostingExistStatus = (data, next) => {
   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: data.companyUser.companyId._id, subscriptionUrl: data.subscriptionUrl})
     .then(autoposting => {
       if (autoposting && autoposting.length > 0) {
-        next('Cannot add duplicate accounts.')
+        next('Feed already exist')
       } else {
         next()
       }
