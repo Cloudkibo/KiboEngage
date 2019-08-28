@@ -99,6 +99,7 @@ function _updateSequenceSeen (data, next) {
             if (subscriber) {
               SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }})
                 .then(seqSubMsg => {
+                  console.log('seqSubMsg', seqSubMsg)
                   SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }},
                     { seen: true }, { multi: true })
                     .then(updated => {
