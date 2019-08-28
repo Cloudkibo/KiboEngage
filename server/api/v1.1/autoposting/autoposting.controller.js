@@ -299,9 +299,9 @@ exports.create = function (req, res) {
     _createAutoposting.bind(null, data)
   ], function (err) {
     if (err) {
-      //logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
-      console.log('Failed to create autoposting', err)
-      sendErrorResponse(res, 500, '', `${JSON.stringify(err)}`)
+      logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
+     // console.log('Failed to create autoposting', err)
+      sendErrorResponse(res, 500, '', err)
     } else {
       sendSuccessResponse(res, 200, data.result)
     }
