@@ -109,7 +109,7 @@ function getRecords () {
         count: data.replies[i]
       })
     }
-    console.log(data)
+    console.log(result)
   })
 }
 
