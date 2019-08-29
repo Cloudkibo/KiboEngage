@@ -4,38 +4,11 @@ const TAG = 'api/global/messageStatistics.js'
 let redis = require('redis')
 let client
 
-function findAllKeys (fn) {
-  client.keys('*', (err, objs) => {
-    if (err) {
-      return fn(`error in message statistics find all keys ${JSON.stringify(err)}`)
-    }
-    if (objs && objs.length > 0) {
-      let arrObjs = []
-      for (let i = 0; i < objs.length; i++) {
-        arrObjs.push(['get', objs[i]])
-      }
-      client.multi(arrObjs).exec(function (err, replies) {
-        if (err) {
-          return fn(`error in message statistics multi all keys ${JSON.stringify(err)}`)
-        }
-        fn(null, replies)
-      })
-    } else {
-      fn(null, [])
-    }
-  })
-}
-
 exports.connectRedis = function () {
   client = redis.createClient()
   client.on('connect', () => {
+    getRecords()
     logger.serverLog(TAG, 'connected to redis', 'info')
-    findAllKeys((err, data) => {
-      if (err) {
-        return console.log(err)
-      }
-      console.log(data)
-    })
   })
   client.on('error', (err) => {
     logger.serverLog(TAG, 'unable connected to redis ' + JSON.stringify(err), 'info')
@@ -54,8 +27,6 @@ function recordRedis (featureName) {
     }
   })
 }
-
-exports.recordRedis = recordRedis
 
 function createRedisObject (featureName) {
   let today = new Date()
@@ -92,6 +63,53 @@ function findRedisObject (featureName, cb) {
       return cb(err)
     }
     cb(null, obj)
+  })
+}
+
+function findAllKeys (fn) {
+  client.keys('*', (err, objs) => {
+    if (err) {
+      return fn(`error in message statistics find all keys ${JSON.stringify(err)}`)
+    }
+    if (objs && objs.length > 0) {
+      let arrObjs = []
+      for (let i = 0; i < objs.length; i++) {
+        arrObjs.push(['get', objs[i]])
+      }
+      client.multi(arrObjs).exec(function (err, replies) {
+        if (err) {
+          return fn(`error in message statistics multi all keys ${JSON.stringify(err)}`)
+        }
+        fn(null, {objs, replies})
+      })
+    } else {
+      fn(null, [])
+    }
+  })
+}
+
+// exports.getRecords = function (req, res) {
+function getRecords () {
+  findAllKeys((err, data) => {
+    if (err) {
+      return console.log(err)
+    }
+    console.log(data)
+    let result = []
+    for (let i = 0; i < data.objs.length; i++) {
+      let feature = data.objs[i].split('-')[0]
+      let dateTime = data.objs[i].split('-')[1].split(':')
+      result.push({
+        feature,
+        year: dateTime[0],
+        month: dateTime[1],
+        days: dateTime[2],
+        hours: dateTime[3],
+        minutes: dateTime[4],
+        count: data.replies[i]
+      })
+    }
+    console.log(data)
   })
 }
 
