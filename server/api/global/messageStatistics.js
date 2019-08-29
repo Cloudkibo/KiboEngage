@@ -7,7 +7,6 @@ let client
 exports.connectRedis = function () {
   client = redis.createClient()
   client.on('connect', () => {
-    getRecords()
     logger.serverLog(TAG, 'connected to redis', 'info')
   })
   client.on('error', (err) => {
@@ -73,13 +72,16 @@ function findAllKeys (fn) {
     }
     if (objs && objs.length > 0) {
       let arrObjs = []
+      let arrObjsDel = []
       for (let i = 0; i < objs.length; i++) {
         arrObjs.push(['get', objs[i]])
+        arrObjsDel.push(['del', objs[i]])
       }
       client.multi(arrObjs).exec(function (err, replies) {
         if (err) {
           return fn(`error in message statistics multi all keys ${JSON.stringify(err)}`)
         }
+        deleteAllKeys(arrObjsDel)
         fn(null, {objs, replies})
       })
     } else {
@@ -88,13 +90,19 @@ function findAllKeys (fn) {
   })
 }
 
-// exports.getRecords = function (req, res) {
-function getRecords () {
+function deleteAllKeys (arrObjs) {
+  // client.multi(arrObjs).exec(function (err, replies) {
+  //   if (err) {
+  //     return logger.serverLog(TAG, `error in message statistics delete all keys ${JSON.stringify(err)}`)
+  //   }
+  // })
+}
+
+exports.getRecords = function (fn) {
   findAllKeys((err, data) => {
     if (err) {
-      return console.log(err)
+      return fn(err)
     }
-    console.log(data)
     let result = []
     for (let i = 0; i < data.objs.length; i++) {
       let feature = data.objs[i].split('-')[0]
@@ -109,7 +117,7 @@ function getRecords () {
         count: data.replies[i]
       })
     }
-    console.log(result)
+    fn(null, result)
   })
 }
 
