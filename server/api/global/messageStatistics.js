@@ -12,7 +12,7 @@ function findAllKeys (fn) {
     if (objs && objs.length > 0) {
       let arrObjs = []
       for (let i = 0; i < objs.length; i++) {
-        arrObjs.push(['*', objs[i]])
+        arrObjs.push(['get', objs[i]])
       }
       client.multi(arrObjs).exec(function (err, replies) {
         if (err) {
