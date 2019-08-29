@@ -543,40 +543,28 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
     })
 }
-
-let successfullySent = 0
-
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     body = JSON.parse(body)
     logger.serverLog(TAG, `sendBroadcast Batch send response ${JSON.stringify(body)}`, 'debug')
-    if (body[0].code === 200 && !err) {
-      successfullySent += 1
-    } else {
-      logger.serverLog(TAG, `Failed to send broadcast to all subscribers ${err}`, 'debug')
-      sendErrorResponse(res, 500, `Failed to send broadcast to all subscribers ${JSON.stringify(err)}`)
-    }
     if (err) {
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
     }
-    if (body.error) {
-      sendOpAlert(body.error, 'broadcast controller in kiboengage')
-    }
-    // Following change is to incorporate persistant menu
-
+   // Following change is to incorporate persistant menu
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
-      if (testBroadcast || (successfullySent === (subscribersLength))) {
-        successfullySent = 0
-        logger.serverLog(TAG, `Conversation sent successfully ${JSON.stringify(body)}`, 'debug')
+      if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
       }
     }
   })
+
   const form = r.form()
+
   form.append('access_token', page.accessToken)
+
   form.append('batch', batchMessages)
 }
 const updatePayload = (self, payload, broadcast) => {
