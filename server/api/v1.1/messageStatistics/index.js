@@ -4,10 +4,11 @@
 const express = require('express')
 
 const router = express.Router()
+var cors = require('cors')
 
 const controller = require('./messageStatistics.controller')
 
-router.get('/',
+router.get('/', cors(),
   controller.index)
 
 module.exports = router
