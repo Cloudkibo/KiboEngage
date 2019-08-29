@@ -4,10 +4,27 @@ const TAG = 'api/global/messageStatistics.js'
 let redis = require('redis')
 let client
 
+function findAllKeys () {
+  console.log('GOING TO FIND ALL REDIS KEYS')
+  try {
+    client.keys('*', (err, objs) => {
+      if (err) {
+        console.log('client keys failed in if')
+        return console.log(err)
+      }
+      console.log(objs)
+    })
+  } catch (e) {
+    console.log('client keys failed in catch')
+    console.log(e)
+  }
+}
+
 exports.connectRedis = function () {
   client = redis.createClient()
   client.on('connect', () => {
     logger.serverLog(TAG, 'connected to redis', 'info')
+    findAllKeys()
   })
   client.on('error', (err) => {
     logger.serverLog(TAG, 'unable connected to redis ' + JSON.stringify(err), 'info')
