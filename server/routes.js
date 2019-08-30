@@ -66,6 +66,7 @@ module.exports = function (app) {
   app.use('/api/abandonedCarts', require('./api/v1.1/abandoned_carts'))
   app.use('/api/shopify', require('./api/v1.1/shopify'))
   app.use('/api/api_ngp', require('./api/v1.1/api_ngp'))
+  app.use('/api/messageStatistics', require('./api/v1.1/messageStatistics'))
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
 
