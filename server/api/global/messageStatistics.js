@@ -27,8 +27,6 @@ function recordRedis (featureName) {
   })
 }
 
-exports.recordRedis = recordRedis
-
 function createRedisObject (featureName) {
   let today = new Date()
   let minutes = today.getMinutes()
@@ -64,6 +62,62 @@ function findRedisObject (featureName, cb) {
       return cb(err)
     }
     cb(null, obj)
+  })
+}
+
+function findAllKeys (fn) {
+  client.keys('*', (err, objs) => {
+    if (err) {
+      return fn(`error in message statistics find all keys ${JSON.stringify(err)}`)
+    }
+    if (objs && objs.length > 0) {
+      let arrObjs = []
+      let arrObjsDel = []
+      for (let i = 0; i < objs.length; i++) {
+        arrObjs.push(['get', objs[i]])
+        arrObjsDel.push(['del', objs[i]])
+      }
+      client.multi(arrObjs).exec(function (err, replies) {
+        if (err) {
+          return fn(`error in message statistics multi all keys ${JSON.stringify(err)}`)
+        }
+        deleteAllKeys(arrObjsDel)
+        fn(null, {objs, replies})
+      })
+    } else {
+      fn(null, [])
+    }
+  })
+}
+
+function deleteAllKeys (arrObjs) {
+  // client.multi(arrObjs).exec(function (err, replies) {
+  //   if (err) {
+  //     return logger.serverLog(TAG, `error in message statistics delete all keys ${JSON.stringify(err)}`)
+  //   }
+  // })
+}
+
+exports.getRecords = function (fn) {
+  findAllKeys((err, data) => {
+    if (err) {
+      return fn(err)
+    }
+    let result = []
+    for (let i = 0; i < data.objs.length; i++) {
+      let feature = data.objs[i].split('-')[0]
+      let dateTime = data.objs[i].split('-')[1].split(':')
+      result.push({
+        feature,
+        year: dateTime[0],
+        month: dateTime[1],
+        days: dateTime[2],
+        hours: dateTime[3],
+        minutes: dateTime[4],
+        count: data.replies[i]
+      })
+    }
+    fn(null, result)
   })
 }
 
