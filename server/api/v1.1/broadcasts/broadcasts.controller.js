@@ -799,6 +799,8 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                   }
                   broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                     .then(response => {
+                      logger.serverLog(`user domain email in sentUsinInterval function ${req.user.domain_email}`, 'info')
+                      logger.serverLog(`user name in sentUsinInterval function ${req.user.name}`, 'info')
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                       if (i === limit - 1) {
                         if (response.status === 'success') {
