@@ -23,7 +23,6 @@ const util = require('util')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const urlMetadata = require('url-metadata')
-let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -351,7 +350,6 @@ const _refreshPageAccessToken = (filedata, next) => {
     needle('get', `https://graph.facebook.com/v2.10/${filedata.page.pageId}?fields=access_token&access_token=${filedata.page.userId.facebookInfo.fbToken}`)
       .then(response => {
         if (response.body.error) {
-          sendOpAlert(response.body.error, 'broadcast controller in kiboengage')
           next(response.body.error)
         } else {
           filedata.pageAccessToken = response.body.access_token
@@ -391,7 +389,6 @@ const _uploadOnFacebook = (filedata, next) => {
         if (err) {
           next(err)
         } else if (resp.body.error) {
-          sendOpAlert(resp.body.error, 'broadcast controller in kiboengage')
           next(resp.body.error)
         } else {
           logger.serverLog(TAG, `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
@@ -543,6 +540,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
       sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
     })
 }
+
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     body = JSON.parse(body)
@@ -551,7 +549,9 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
     }
-   // Following change is to incorporate persistant menu
+
+    // Following change is to incorporate persistant menu
+
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
@@ -560,11 +560,8 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       }
     }
   })
-
   const form = r.form()
-
   form.append('access_token', page.accessToken)
-
   form.append('batch', batchMessages)
 }
 const updatePayload = (self, payload, broadcast) => {
@@ -736,7 +733,6 @@ exports.retrieveReachEstimation = (req, res) => {
       facebookApiCaller('v2.11', `${page.reachEstimationId}?access_token=${page.pageAccessToken}`, 'get', {})
         .then(reachEstimation => {
           if (reachEstimation.error) {
-            sendOpAlert(reachEstimation.error, 'broadcasts controller in kiboengage')
             sendErrorResponse(res, 500, `Failed to retrieve reach estimation ${JSON.stringify(reachEstimation.error)}`)
           } else {
             sendSuccessResponse(res, 200, reachEstimation)
@@ -799,8 +795,6 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                   }
                   broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
                     .then(response => {
-                      logger.serverLog(`user domain email in sentUsinInterval function ${req.user.domain_email}`, 'info')
-                      logger.serverLog(`user name in sentUsinInterval function ${req.user.name}`, 'info')
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                       if (i === limit - 1) {
                         if (response.status === 'success') {

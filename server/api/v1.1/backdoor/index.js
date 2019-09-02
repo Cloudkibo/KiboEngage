@@ -103,4 +103,8 @@ router.get('/fetchPageTags/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageTags)
 
+router.get('/fetchSubscribersWithTags/:pageId',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchSubscribersWithTags)
+
 module.exports = router
