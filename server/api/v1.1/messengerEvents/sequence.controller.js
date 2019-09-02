@@ -35,7 +35,7 @@ exports.subscriberJoins = function (req, res) {
                       .then(subscriberCreated => {
                         messages.forEach(message => {
                           let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                          SequenceUtility.addToMessageQueue(seq._id, utcDate, message._id)
+                          SequenceUtility.addToMessageQueue(seq._id, message._id, subscriber._id, subscriber.companyId, utcDate)
                         })
                         require('./../../../config/socketio').sendMessageToClient({
                           room_id: req.body.companyId,

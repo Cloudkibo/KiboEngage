@@ -14,7 +14,12 @@ exports.index = function (req, res) {
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   let payloadToSend
-  callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
+  let aggregateData = [
+    {$match: { pageId: pageId, connected: true }},
+    {$lookup: {from: 'users', foreignField: '_id', localField: 'userId', as: 'userId'}},
+    {$unwind: '$userId'}
+  ]
+  callApi(`pages/aggregate`, 'post', aggregateData)
     .then(page => {
       page = page[0]
       logger.serverLog(TAG, `pageId ${JSON.stringify(page._id)}`, 'debug')
@@ -30,7 +35,7 @@ exports.index = function (req, res) {
               broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
             } else {
               needle.get(
-                `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.accessToken}`,
+                `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
                 (err, resp2) => {
                   if (err) {
                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
