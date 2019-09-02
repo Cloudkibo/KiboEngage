@@ -157,6 +157,7 @@ exports.upload = function (req, res) {
                                     }
                                     if (res.body.error) {
                                       sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage')
+                                      sendErrorResponse(res, 500, '', 'This page do not have a U.S based admin ')
                                     }
                                   })
                               })
