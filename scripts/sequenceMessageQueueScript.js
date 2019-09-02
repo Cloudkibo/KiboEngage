@@ -10,7 +10,6 @@ const request = require('request')
 exports.runSequenceMessageQueueScript = function () {
   SequenceMessagesQueueDataLayer.findAll()
     .then(data => {
-      logger.serverLog(TAG, `Found sequenceMessageQueue objects ${data.length}`)
       if (data) {
         for (let i = 0; i < data.length; i++) {
           let message = data[i]
