@@ -103,10 +103,15 @@ exports.delete = function (req, res) {
   })
 }
 exports.addButton = function (req, res) {
+  console.log(JSON.stringify(req.body))
   if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
     sendErrorResponse(res, 500, '', 'Url is required for type web_url.')
   }
-  if (req.body.type === 'postback' && !(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) {
+  if (
+    req.body.type === 'postback' &&
+    ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
+    !(_.has(req.body, 'messageId')))
+  ) {
     sendErrorResponse(res, 500, '', 'SequenceId & action are required for type postback')
   }
   let buttonPayload = {
@@ -153,7 +158,7 @@ exports.addButton = function (req, res) {
   } else if (req.body.type === 'element_share') {
     sendSuccessResponse(res, 200, {type: req.body.type})
   } else {
-    if (req.body.module.type === 'sequenceMessaging') {
+    if (req.body.module && req.body.module.type === 'sequenceMessaging') {
       let buttonId = uniqid()
       buttonPayload.payload = JSON.stringify({
         sequenceId: req.body.sequenceId,
@@ -162,6 +167,13 @@ exports.addButton = function (req, res) {
       })
       buttonPayload.sequenceValue = req.body.sequenceId
       sendSuccessResponse(res, 200, buttonPayload)
+    } else {
+      let buttonId = uniqid()
+      buttonPayload.payload = JSON.stringify({
+        messageId: req.body.messageId,
+        buttonId: buttonId
+      })
+      sendSuccessResponse(res, 200, buttonPayload)
     }
   }
 }
@@ -169,7 +181,11 @@ exports.editButton = function (req, res) {
   if (req.body.type === 'web_url' && !req.body.messenger_extensions && !(_.has(req.body, 'newUrl'))) {
     sendErrorResponse(res, 400, '', 'Url is required for type web_url.')
   }
-  if (req.body.type === 'postback' && !(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) {
+  if (
+    req.body.type === 'postback' &&
+    ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) ||
+    !(_.has(req.body, 'messageId')))
+  ) {
     sendErrorResponse(res, 400, '', 'SequenceId & action are required for type postback')
   }
   let buttonPayload = {
@@ -233,12 +249,19 @@ exports.editButton = function (req, res) {
     }
     sendSuccessResponse(res, 200, {id: req.body.id, button: buttonPayload})
   } else {
-    buttonPayload.payload = JSON.stringify({
-      sequenceId: req.body.sequenceId,
-      action: req.body.action
-    })
-    buttonPayload.sequenceValue = req.body.sequenceId
-    sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
+    if (req.body.module && req.body.module.type === 'sequenceMessaging') {
+      buttonPayload.payload = JSON.stringify({
+        sequenceId: req.body.sequenceId,
+        action: req.body.action
+      })
+      buttonPayload.sequenceValue = req.body.sequenceId
+      sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
+    } else {
+      buttonPayload.payload = JSON.stringify({
+        messageId: req.body.messageId
+      })
+      sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
+    }
   }
 }
 exports.deleteButton = function (req, res) {
