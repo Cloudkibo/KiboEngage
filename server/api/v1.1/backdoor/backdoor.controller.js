@@ -1209,3 +1209,128 @@ exports.fetchPageTags = (req, res) => {
       })
     })
 }
+
+exports.fetchSubscribersWithTags = (req, res) => {
+  let aggregation = [
+    {
+      '$lookup': {
+        from: 'subscribers',
+        localField: '_id',
+        foreignField: 'pageId',
+        as: 'subscriber'
+      }
+    },
+    {
+      '$unwind': '$subscriber'
+    },
+    {
+      '$group': {
+        '_id': '$pageId',
+        'pageName': {'$first': '$pageName'},
+        'subscribers': {'$push': '$subscriber'},
+        'accessToken': {'$first': '$accessToken'}
+      }
+    },
+    {
+      '$project': {
+        '_id': 0,
+        'pageId': '$_id',
+        'pageName': 1,
+        'subscribers': 1,
+        'accessToken': 1
+      }
+    },
+    {
+      '$match': {pageId: req.params.pageId}
+    }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
+    .then(pageSubscribers => {
+      if (pageSubscribers[0]) {
+        console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
+        let subscriberData = []
+        let retrievedSubscriberData = 0
+        for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
+          needle.get(
+            `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
+            (err, resp) => {
+              if (err) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
+                })
+              } else {
+                console.log(`fbSubscriberTags ${i}`, resp.body.data)
+                let kiboTagAggregation = [
+                  {
+                    '$lookup': {
+                      from: 'tags',
+                      localField: 'tagId',
+                      foreignField: '_id',
+                      as: 'tag'
+                    }
+                  },
+                  {
+                    '$unwind': '$tag'
+                  },
+                  {
+                    '$group': {
+                      '_id': '$subscriberId',
+                      'subscriberId': {'$first': '$subscriberId'},
+                      'tags': {'$push': '$tag'}
+                    }
+                  },
+                  {
+                    '$project': {
+                      '_id': 0,
+                      'tags': 1,
+                      'subscriberId': 1
+                    }
+                  },
+                  {
+                    '$match': {'subscriberId': pageSubscribers[0].subscribers[i]._id}
+                  }
+                ]
+                utility.callApi(`tags_subscriber/aggregate`, 'post', kiboTagAggregation, 'accounts', req.headers.authorization)
+                  .then(kiboTags => {
+                    console.log(`kiboTags ${i}`, kiboTags)
+                    subscriberData[i] = {
+                      subscriber: pageSubscribers[0].subscribers[i],
+                      fbTags: resp.body.data,
+                      kiboTags: kiboTags
+                    }
+                    retrievedSubscriberData += 1
+
+                    if (retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
+                      console.log('subscriberData', subscriberData)
+                      return res.status(200).json({
+                        status: 'success',
+                        payload: subscriberData
+                      })
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to fetch kibo tag_subscribers ${err}`, 'debug')
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Failed to fetch kibo tag_subscribers ${err}`
+                    })
+                  })
+              }
+            })
+        }
+      } else {
+        return res.status(200).json({
+          status: 'success',
+          payload: []
+        })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch unique pages ${err}`
+      })
+    })
+}
