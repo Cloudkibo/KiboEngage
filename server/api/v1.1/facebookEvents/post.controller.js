@@ -1,8 +1,6 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/facebookEvents/post.controller.js'
 const utility = require('../utility')
-var fs = require('fs')
-var https = require('https')
 
 exports.handlePostEvent = function (req, res) {
   res.status(200).json({
