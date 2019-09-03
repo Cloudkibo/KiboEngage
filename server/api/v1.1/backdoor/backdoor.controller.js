@@ -1249,7 +1249,8 @@ exports.fetchSubscribersWithTags = (req, res) => {
         'pageId': '$_id',
         'pageName': 1,
         'subscribers': 1,
-        'accessToken': 1
+        'accessToken': 1,
+        'tags': 1
       }
     },
     {
