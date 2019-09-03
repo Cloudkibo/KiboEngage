@@ -310,7 +310,7 @@ exports.getCountCriteria = (body, companyId, tagIds) => {
     })
     criteria.push({$unwind: '$pageId'})
     if (body.pageValue) {
-      criteria.push({$match: {'pageId.pageId': {$in: body.pageValue}, 'pageId.connected': true}})
+      criteria.push({$match: {'pageId._id': {$in: body.pageValue}, 'pageId.connected': true}})
     } else {
       criteria.push({$match: {'pageId.connected': true}})
     }
