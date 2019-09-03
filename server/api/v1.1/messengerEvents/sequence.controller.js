@@ -72,7 +72,7 @@ exports.subscriberJoins = function (req, res) {
   })
 }
 
-exports.resposndsToPoll = function (data) {
+exports.respondsToPoll = function (data) {
   logger.serverLog(TAG, `in sequence resposndsToPoll ${JSON.stringify(data)}`, 'debug')
 
   SequencesDataLayer.genericFindForSequence({companyId: data.companyId, 'trigger.event': 'responds_to_poll', 'trigger.value': data.pollId})
@@ -92,7 +92,7 @@ exports.resposndsToPoll = function (data) {
                   .then(subscriberCreated => {
                     messages.forEach(message => {
                       let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                      SequenceUtility.addToMessageQueue(seq._id, utcDate, message._id)
+                      SequenceUtility.addToMessageQueue(seq._id, message._id, data.subscriberId, data.companyId, utcDate)
                     })
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: data.companyId,
