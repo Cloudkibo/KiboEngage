@@ -1288,7 +1288,13 @@ exports.fetchSubscribersWithTags = (req, res) => {
                     }
                   }
                   if (!tagAssigned) {
-                    unassignedTags.push(kiboPageTags[j])
+                    if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                      if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                        unassignedTags.push(kiboPageTags[j])
+                      }
+                    } else {
+                      unassignedTags.push(kiboPageTags[j])
+                    }
                   } else {
                     tagAssigned = false
                   }
