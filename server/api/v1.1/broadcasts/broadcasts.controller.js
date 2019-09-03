@@ -779,6 +779,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
             utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id})
               .then(pageTags => {
                 const limit = Math.ceil(req.body.subscribersCount / 10000)
+                logger.serverLog(TAG, `limit ${util.inspect(limit)}`)
                 for (let i = 0; i < limit; i++) {
                   let labels = []
                   let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
@@ -819,9 +820,11 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                               current++
                             })
                             .catch(err => {
+                              current++
                               sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
                             })
                         } else {
+                          current++
                           sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(response.description)}`)
                         }
                       }
