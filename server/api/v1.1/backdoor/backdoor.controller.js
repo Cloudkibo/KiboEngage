@@ -1274,9 +1274,29 @@ exports.fetchSubscribersWithTags = (req, res) => {
                 })
               } else {
                 console.log(`fbSubscriberTags ${i}`, resp.body.data)
+                let fbTags = resp.body.data
+                let kiboPageTags = pageSubscribers[0].tags
+                let assignedTags = []
+                let unassignedTags = []
+                let tagAssigned = false
+                for (let j = 0; j < kiboPageTags.length; j++) {
+                  for (let k = 0; k < fbTags.length; k++) {
+                    if (fbTags[k].id === kiboPageTags[j].labelFbId) {
+                      assignedTags.push(kiboPageTags[j])
+                      tagAssigned = true
+                      break
+                    }
+                  }
+                  if (!tagAssigned) {
+                    unassignedTags.push(kiboPageTags[j])
+                  } else {
+                    tagAssigned = false
+                  }
+                }
                 subscriberData[i] = {
                   subscriber: pageSubscribers[0].subscribers[i],
-                  fbTags: resp.body.data
+                  assignedTags: assignedTags,
+                  unassignedTags: unassignedTags
                 }
                 retrievedSubscriberData += 1
 
@@ -1284,10 +1304,7 @@ exports.fetchSubscribersWithTags = (req, res) => {
                   console.log('subscriberData', subscriberData)
                   return res.status(200).json({
                     status: 'success',
-                    payload: {
-                      subscriberData,
-                      pageTags: pageSubscribers[0].tags
-                    }
+                    payload: subscriberData
                   })
                 }
               }
