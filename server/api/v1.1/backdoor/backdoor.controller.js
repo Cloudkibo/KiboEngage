@@ -1238,9 +1238,9 @@ exports.fetchSubscribersWithTags = (req, res) => {
       '$group': {
         '_id': '$pageId',
         'pageName': {'$first': '$pageName'},
-        'subscribers': {'$push': '$subscriber'},
+        'subscribers': {'$addToSet': '$subscriber'},
         'accessToken': {'$first': '$accessToken'},
-        'tags': {'$push': '$tag'}
+        'tags': {'$addToSet': '$tag'}
       }
     },
     {
