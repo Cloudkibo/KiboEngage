@@ -1224,11 +1224,23 @@ exports.fetchSubscribersWithTags = (req, res) => {
       '$unwind': '$subscriber'
     },
     {
+      '$lookup': {
+        from: 'tags',
+        localField: '_id',
+        foreignField: 'pageId',
+        as: 'tag'
+      }
+    },
+    {
+      '$unwind': '$tag'
+    },
+    {
       '$group': {
         '_id': '$pageId',
         'pageName': {'$first': '$pageName'},
         'subscribers': {'$push': '$subscriber'},
-        'accessToken': {'$first': '$accessToken'}
+        'accessToken': {'$first': '$accessToken'},
+        'tags': {'$push': '$tag'}
       }
     },
     {
@@ -1261,61 +1273,22 @@ exports.fetchSubscribersWithTags = (req, res) => {
                 })
               } else {
                 console.log(`fbSubscriberTags ${i}`, resp.body.data)
-                let kiboTagAggregation = [
-                  {
-                    '$lookup': {
-                      from: 'tags',
-                      localField: 'tagId',
-                      foreignField: '_id',
-                      as: 'tag'
-                    }
-                  },
-                  {
-                    '$unwind': '$tag'
-                  },
-                  {
-                    '$group': {
-                      '_id': '$subscriberId',
-                      'subscriberId': {'$first': '$subscriberId'},
-                      'tags': {'$push': '$tag'}
-                    }
-                  },
-                  {
-                    '$project': {
-                      '_id': 0,
-                      'tags': 1,
-                      'subscriberId': 1
-                    }
-                  },
-                  {
-                    '$match': {'subscriberId': pageSubscribers[0].subscribers[i]._id}
-                  }
-                ]
-                utility.callApi(`tags_subscriber/aggregate`, 'post', kiboTagAggregation, 'accounts', req.headers.authorization)
-                  .then(kiboTags => {
-                    console.log(`kiboTags ${i}`, kiboTags)
-                    subscriberData[i] = {
-                      subscriber: pageSubscribers[0].subscribers[i],
-                      fbTags: resp.body.data,
-                      kiboTags: kiboTags
-                    }
-                    retrievedSubscriberData += 1
+                subscriberData[i] = {
+                  subscriber: pageSubscribers[0].subscribers[i],
+                  fbTags: resp.body.data
+                }
+                retrievedSubscriberData += 1
 
-                    if (retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
-                      console.log('subscriberData', subscriberData)
-                      return res.status(200).json({
-                        status: 'success',
-                        payload: subscriberData
-                      })
+                if (retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
+                  console.log('subscriberData', subscriberData)
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      subscriberData,
+                      pageTags: pageSubscribers[0].tags
                     }
                   })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch kibo tag_subscribers ${err}`, 'debug')
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to fetch kibo tag_subscribers ${err}`
-                    })
-                  })
+                }
               }
             })
         }
