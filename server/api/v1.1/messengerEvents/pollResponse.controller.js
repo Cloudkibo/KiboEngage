@@ -18,22 +18,17 @@ exports.pollResponse = function (req, res) {
       callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: poll.companyId })
         .then(subscribers => {
           let subscriber = subscribers[0]
+          console.log('subscriber found', JSON.stringify(subscriber))
           if (subscriber) {
             let message = preparePayloadFacebook(subscriber, subscriber.pageId, {componentType: 'text', text: req.body.entry[0].messaging[0].message.text})
             saveLiveChat(message)
             savepoll(req.body.entry[0].messaging[0], resp, subscriber)
-              .then(response => {
-                logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`, 'debug')
-                sequenceController.resposndsToPoll({companyId: poll.companyId, subscriberId: subscriber._id, pollId: resp.poll_id})
-                return res.status(200).json({
-                  status: 'success',
-                  description: `received the payload`
-                })
-              })
-              .catch(err => {
-                logger.serverLog(TAG, `Failed to save poll response ${JSON.stringify(err)}`, 'error')
-                return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
-              })
+            logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`, 'debug')
+            sequenceController.respondsToPoll({companyId: poll.companyId, subscriberId: subscriber._id, pollId: resp.poll_id})
+            return res.status(200).json({
+              status: 'success',
+              description: `received the payload`
+            })
           } else {
             return res.status(500).json({
               status: 'failed',
@@ -42,7 +37,7 @@ exports.pollResponse = function (req, res) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
           return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
         })
     })

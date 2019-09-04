@@ -1227,7 +1227,7 @@ exports.fetchSubscribersWithTags = (req, res) => {
       '$group': {
         '_id': '$pageId',
         'pageName': {'$first': '$pageName'},
-        'subscribers': {'$push': '$subscriber'},
+        'subscribers': {'$addToSet': '$subscriber'},
         'accessToken': {'$first': '$accessToken'}
       }
     },
@@ -1248,56 +1248,92 @@ exports.fetchSubscribersWithTags = (req, res) => {
     .then(pageSubscribers => {
       if (pageSubscribers[0]) {
         console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
-        let subscriberData = []
-        let retrievedSubscriberData = 0
-        for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
-          needle.get(
-            `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
-            (err, resp) => {
-              if (err) {
-                return res.status(500).json({
-                  status: 'failed',
-                  description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
-                })
-              } else {
-                console.log(`fbSubscriberTags ${i}`, resp.body.data)
-                let kiboTagAggregation = [
-                  {
-                    '$lookup': {
-                      from: 'tags',
-                      localField: 'tagId',
-                      foreignField: '_id',
-                      as: 'tag'
+        let pageTagsAggregation = [
+          {
+            '$lookup': {
+              from: 'tags',
+              localField: '_id',
+              foreignField: 'pageId',
+              as: 'tag'
+            }
+          },
+          {
+            '$unwind': '$tag'
+          },
+          {
+            '$group': {
+              '_id': '$pageId',
+              'tags': {'$addToSet': '$tag'}
+            }
+          },
+          {
+            '$project': {
+              '_id': 0,
+              'pageId': '$_id',
+              'tags': 1
+            }
+          },
+          {
+            '$match': {'pageId': req.params.pageId}
+          }
+        ]
+        utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
+          .then(pageTags => {
+            let subscriberData = []
+            let retrievedSubscriberData = 0
+            for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
+              needle.get(
+                `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
+                (err, resp) => {
+                  if (err) {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
+                    })
+                  } else {
+                    logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
+                    logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags[0])}`, 'debug')
+                    let fbTags = resp.body.data
+                    let kiboPageTags = pageTags[0].tags
+                    let assignedTags = []
+                    let unassignedTags = []
+                    let tagAssigned = false
+                    if (fbTags) {
+                      for (let j = 0; j < kiboPageTags.length; j++) {
+                        for (let k = 0; k < fbTags.length; k++) {
+                          if (fbTags[k].id === kiboPageTags[j].labelFbId) {
+                            assignedTags.push(kiboPageTags[j])
+                            tagAssigned = true
+                            break
+                          }
+                        }
+                        if (!tagAssigned) {
+                          if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                            if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                              unassignedTags.push(kiboPageTags[j])
+                            }
+                          } else {
+                            unassignedTags.push(kiboPageTags[j])
+                          }
+                        } else {
+                          tagAssigned = false
+                        }
+                      }
+                    } else {
+                      for (let j = 0; j < kiboPageTags.length; j++) {
+                        if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                          if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                            unassignedTags.push(kiboPageTags[j])
+                          }
+                        } else {
+                          unassignedTags.push(kiboPageTags[j])
+                        }
+                      }
                     }
-                  },
-                  {
-                    '$unwind': '$tag'
-                  },
-                  {
-                    '$group': {
-                      '_id': '$subscriberId',
-                      'subscriberId': {'$first': '$subscriberId'},
-                      'tags': {'$push': '$tag'}
-                    }
-                  },
-                  {
-                    '$project': {
-                      '_id': 0,
-                      'tags': 1,
-                      'subscriberId': 1
-                    }
-                  },
-                  {
-                    '$match': {'subscriberId': pageSubscribers[0].subscribers[i]._id}
-                  }
-                ]
-                utility.callApi(`tags_subscriber/aggregate`, 'post', kiboTagAggregation, 'accounts', req.headers.authorization)
-                  .then(kiboTags => {
-                    console.log(`kiboTags ${i}`, kiboTags)
                     subscriberData[i] = {
                       subscriber: pageSubscribers[0].subscribers[i],
-                      fbTags: resp.body.data,
-                      kiboTags: kiboTags
+                      assignedTags: assignedTags,
+                      unassignedTags: unassignedTags
                     }
                     retrievedSubscriberData += 1
 
@@ -1308,17 +1344,16 @@ exports.fetchSubscribersWithTags = (req, res) => {
                         payload: subscriberData
                       })
                     }
-                  })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch kibo tag_subscribers ${err}`, 'debug')
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to fetch kibo tag_subscribers ${err}`
-                    })
-                  })
-              }
+                  }
+                })
+            }
+          })
+          .catch(err => {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch page tags ${err}`
             })
-        }
+          })
       } else {
         return res.status(200).json({
           status: 'success',
