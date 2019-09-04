@@ -35,7 +35,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
   })
 }
 
-exports.callMessageCreativesEndpoint = (data, pageAccessToken, module = 'broadcast') => {
+exports.callMessageCreativesEndpoint = (data, pageAccessToken, errorData, module = 'broadcast') => {
   return new Promise((resolve, reject) => {
     getMessagesData(data, module).then(messages => {
       let dataToSend = {
@@ -46,7 +46,7 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken, module = 'broadca
           if (response.body.message_creative_id) {
             resolve({status: 'success', message_creative_id: response.body.message_creative_id})
           } else {
-            sendOpAlert(response.body.error, 'in broadcastapi')
+            sendOpAlert(response.body.error, 'in broadcastapi', errorData)
             resolve({status: 'failed', description: response.body.error})
           }
         })
