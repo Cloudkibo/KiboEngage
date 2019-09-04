@@ -1291,7 +1291,8 @@ exports.fetchSubscribersWithTags = (req, res) => {
                       description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
                     })
                   } else {
-                    console.log(`fbSubscriberTags ${i}`, resp.body.data)
+                    logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
+                    logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags[0])}`, 'debug')
                     let fbTags = resp.body.data
                     let kiboPageTags = pageTags[0].tags
                     let assignedTags = []
