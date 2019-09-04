@@ -1298,24 +1298,26 @@ exports.fetchSubscribersWithTags = (req, res) => {
                     let assignedTags = []
                     let unassignedTags = []
                     let tagAssigned = false
-                    for (let j = 0; j < kiboPageTags.length; j++) {
-                      for (let k = 0; k < fbTags.length; k++) {
-                        if (fbTags[k].id === kiboPageTags[j].labelFbId) {
-                          assignedTags.push(kiboPageTags[j])
-                          tagAssigned = true
-                          break
+                    if (fbTags) {
+                      for (let j = 0; j < kiboPageTags.length; j++) {
+                        for (let k = 0; k < fbTags.length; k++) {
+                          if (fbTags[k].id === kiboPageTags[j].labelFbId) {
+                            assignedTags.push(kiboPageTags[j])
+                            tagAssigned = true
+                            break
+                          }
                         }
-                      }
-                      if (!tagAssigned) {
-                        if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                          if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                        if (!tagAssigned) {
+                          if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                            if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                              unassignedTags.push(kiboPageTags[j])
+                            }
+                          } else {
                             unassignedTags.push(kiboPageTags[j])
                           }
                         } else {
-                          unassignedTags.push(kiboPageTags[j])
+                          tagAssigned = false
                         }
-                      } else {
-                        tagAssigned = false
                       }
                     }
                     subscriberData[i] = {
