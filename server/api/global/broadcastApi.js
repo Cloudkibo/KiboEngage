@@ -3,7 +3,7 @@ const { facebookApiCaller } = require('./facebookApiCaller')
 const { sendOpAlert } = require('./operationalAlert')
 // const util = require('util')
 
-exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken) => {
+exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, errorData) => {
   return new Promise((resolve, reject) => {
     let labelValues = labels
     labelValues.push({operator: 'NOT', values: notlabels})
@@ -25,7 +25,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
         if (response.body.broadcast_id) {
           resolve({status: 'success', broadcast_id: response.body.broadcast_id})
         } else {
-          sendOpAlert(response.body.error, 'in broadcast api.js')
+          sendOpAlert(response.body.error, 'in broadcast api.js', errorData)
           resolve({status: 'failed', description: response.body.error})
         }
       })
