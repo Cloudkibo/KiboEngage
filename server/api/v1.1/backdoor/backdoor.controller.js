@@ -1222,7 +1222,7 @@ exports.fetchSubscribersWithTags = (req, res) => {
     },
     {
       '$unwind': '$subscriber'
-    }
+    },
     {
       '$group': {
         '_id': '$pageId',
@@ -1293,7 +1293,7 @@ exports.fetchSubscribersWithTags = (req, res) => {
                   } else {
                     console.log(`fbSubscriberTags ${i}`, resp.body.data)
                     let fbTags = resp.body.data
-                    let kiboPageTags = pageTags.tags
+                    let kiboPageTags = pageTags[0].tags
                     let assignedTags = []
                     let unassignedTags = []
                     let tagAssigned = false
@@ -1323,7 +1323,7 @@ exports.fetchSubscribersWithTags = (req, res) => {
                       unassignedTags: unassignedTags
                     }
                     retrievedSubscriberData += 1
-    
+
                     if (retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
                       console.log('subscriberData', subscriberData)
                       return res.status(200).json({
