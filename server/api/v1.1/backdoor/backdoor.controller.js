@@ -1202,43 +1202,6 @@ exports.fetchPageUsers = (req, res) => {
         })
     }
   })
-  // utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId}, 'accounts', req.headers.authorization)
-  //   .then(connectedPage => {
-  //     facebookApiCaller('v4.0', `${req.body.pageId}?fields=access_token&access_token=${connectedPage.user.facebookInfo.fbToken}`, 'get', {})
-  //       .then(response => {
-  //         if (response.body && response.body.access_token) {
-  //           facebookApiCaller('v4.0', `${req.body.pageId}/roles?access_token=${response.body.access_token}`, 'get', {})
-  //             .then(resp => {
-  //               if (resp.body && resp.body.data) {
-  //                 let criterias = LogicLayer.getPageUsersCriteria(req.body)
-  //                 utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
-  //                   .then(pagesCount => {
-  //                     utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
-  //                       .then(pageUsers => {
-  //                         let connectedUser = pageUsers.filter((user) => user.connected === true)
-  //                         sendSuccessResponse(res, 200, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
-  //                       })
-  //                       .catch(err => {
-  //                         sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
-  //                       })
-  //                   })
-  //                   .catch(err => {
-  //                     sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
-  //                   })
-  //               }
-  //             })
-  //             .catch(err => {
-  //               sendErrorResponse(res, 500, `Failed to fetch page roles ${JSON.stringify(err)}`)
-  //             })
-  //         }
-  //       })
-  //       .catch(err => {
-  //         sendErrorResponse(res, 500, `Failed to fetch page access token ${JSON.stringify(err)}`)
-  //       })
-  //   })
-  //   .catch(err => {
-  //     sendErrorResponse(res, 500, `Failed to fetch connected page ${JSON.stringify(err)}`)
-  //   })
 }
 
 function getAdminedData (fbRoles, localDataFromDB) {
