@@ -596,40 +596,40 @@ exports.updateTrigger = function (req, res) {
   } else if (req.body.type === 'message') { // Logic to update the trigger if the type is message
     SequenceDatalayer.genericFindByIdAndUpdateMessage({ _id: req.body.messageId }, { trigger: req.body.trigger })
       .then(message => {
-        SequenceMessageQueueDatalayer.deleteMany({sequenceMessageId: message._id})
-          .then(result => {
-            let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-            SequenceUtility.addToMessageQueue(message.sequenceId, utcDate, message._id)
-          })
-          .catch(err => {
-            sendErrorResponse(res, 500, '', `Failed to delete sequence message queue ${err}`)
-          })
+        if (req.body.trigger.event === 'none') {
+          let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+          SequenceMessageQueueDatalayer.genericUpdate({sequenceMessageId: message._id}, {queueScheduledTime: utcDate}, {multi: true})
+        } else {
+          SequenceMessageQueueDatalayer.genericUpdate({sequenceMessageId: message._id}, {queueScheduledTime: ''}, {multi: true})
+        }
         let trigger = req.body.trigger
         if (trigger.event === 'clicks') {
           let messageIdToBeUpdated = trigger.value
           // find the message whose payload needs to be updated
           SequenceDatalayer.genericFindForSequenceMessages({ _id: messageIdToBeUpdated })
             .then(seqMessage => {
+              seqMessage = seqMessage[0]
               if (seqMessage) {
-                let tempPayloadArray = []
-                let tempButtonsArray = []
-                let payLoadArray = seqMessage.payload
-                if (payLoadArray.length > 0) {
-                  for (let payLoad of payLoadArray) {
-                    let buttonArray = payLoad.buttons
-                    if (buttonArray.length > 0) {
-                      for (let button of buttonArray) {
-                        if (button.buttonId === trigger.buttonId) {
-                          button.type = 'postback'
-                          tempButtonsArray.push(button)
+                let updatedMessage = seqMessage.payload
+                if (updatedMessage.length > 0) {
+                  for (let i = 0; i < updatedMessage.length; i++) {
+                    if (updatedMessage[i].buttons.length > 0) {
+                      for (let j = 0; j < updatedMessage[i].buttons.length; j++) {
+                        if (updatedMessage[i].buttons[j].title === trigger.buttonId) {
+                          updatedMessage[i].buttons[j].payload = JSON.stringify({
+                            action: 'send_sequence_message',
+                            messageId: message._id
+                          })
                         }
                       }
                     }
-                    tempPayloadArray.push(payLoad)
                   }
                 }
-                seqMessage.payLoad = tempPayloadArray
-                SequenceDatalayer.createMessage(tempPayloadArray)
+                SequenceDatalayer.genericUpdateForSequenceMessages(
+                  {_id: seqMessage._id},
+                  {payload: updatedMessage},
+                  {}
+                )
                   .then(savedMessage => {
                     logger.serverLog('Saved Message:', savedMessage, 'debug')
                     sendSuccessResponse(res, 200, savedMessage)
@@ -642,6 +642,8 @@ exports.updateTrigger = function (req, res) {
             .catch(err => {
               sendErrorResponse(res, 500, '', `Failed to fetch message ${err}`)
             })
+        } else {
+          sendSuccessResponse(res, 200, message)
         }
       })
       .catch(err => {
