@@ -1129,20 +1129,100 @@ exports.fetchUniquePages = (req, res) => {
     })
 }
 exports.fetchPageUsers = (req, res) => {
-  let criterias = LogicLayer.getPageUsersCriteria(req.body)
-  utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
-    .then(pagesCount => {
-      utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
-        .then(pageUsers => {
-          sendSuccessResponse(res, 200, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
+  async.parallelLimit([
+    function (callback) {
+      let recentPageCriteria = [
+        {$match: {pageId: req.body.pageId}},
+        {$sort: {_id: -1}},
+        {$limit: 1},
+        { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+        { '$unwind': '$user' }
+      ]
+      utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
+        .then(connectedPage => {
+          connectedPage = connectedPage[0]
+          facebookApiCaller('v4.0', `${req.body.pageId}?fields=access_token&access_token=${connectedPage.user.facebookInfo.fbToken}`, 'get', {})
+            .then(response => {
+              if (response.body && response.body.access_token) {
+                facebookApiCaller('v4.0', `${req.body.pageId}/roles?access_token=${response.body.access_token}`, 'get', {})
+                  .then(resp => {
+                    if (resp.body && resp.body.data) {
+                      callback(null, resp.body.data)
+                    } else if (resp.body && resp.body.error) {
+                      callback(null, [])
+                    }
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              } else if (response.body && response.body.error) {
+                callback(null, [])
+              }
+            })
+            .catch(err => {
+              callback(err)
+            })
         })
         .catch(err => {
-          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
+          callback(err)
         })
-    })
-    .catch(err => {
-      sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
-    })
+    }, function (callback) {
+      let criterias = LogicLayer.getPageUsersCriteria(req.body)
+      utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
+        .then(pagesCount => {
+          utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
+            .then(pageUsers => {
+              callback(null, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
+            })
+            .catch(err => {
+              sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
+            })
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, `Failed to fetch page users ${err}`)
+    } else {
+      getAdminedData(results[0], results[1])
+        .then(result => {
+          if (req.body.admin_filter === true) {
+            result.pageUsers = result.pageUsers.filter((c) => c.admin === true)
+            result.count = result.pageUsers.length
+          } else if (req.body.admin_filter === false) {
+            result.pageUsers = result.pageUsers.filter((c) => c.admin === false)
+            result.count = result.pageUsers.length
+          }
+          sendSuccessResponse(res, 200, {count: result.count, pageUsers: result.pageUsers})
+        })
+    }
+  })
+}
+
+function getAdminedData (fbRoles, localDataFromDB) {
+  return new Promise(function (resolve, reject) {
+    let roles = []
+    if (fbRoles.length > 0) {
+      roles = fbRoles.map(role => role.name)
+    }
+    let localData = localDataFromDB.pageUsers
+    if (localData.length > 0) {
+      for (let i = 0; i < localData.length; i++) {
+        if (localData[i].user.facebookInfo && roles.indexOf(localData[i].user.facebookInfo.name) > -1) {
+          localData[i].admin = true
+        } else {
+          localData[i].admin = false
+        }
+        if (i === localData.length - 1) {
+          resolve({count: localDataFromDB.count, pageUsers: localData})
+        }
+      }
+    } else {
+      resolve({count: 0, pageUsers: []})
+    }
+  })
 }
 
 exports.fetchPageTags = (req, res) => {

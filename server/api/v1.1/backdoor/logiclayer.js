@@ -525,57 +525,47 @@ exports.getCriteriasForAutopostingByTypethatCame = function (req, type) {
   return matchAggregate
 }
 exports.getPageUsersCriteria = function (body) {
-  let findCriteria = {
-    pageId: body.pageId
+  let searchValue = {$regex: '.*' + body.search_value + '.*', $options: 'i'}
+  let filters = { 'user.name': searchValue }
+  if (body.type_filter !== '') {
+    let typeArray = []
+    if (body.type_filter === 'individual') {
+      typeArray = [ { 'plan.unique_ID': 'plan_A' }, { 'plan.unique_ID': 'plan_B' } ]
+    } else if (body.type_filter === 'team') {
+      typeArray = [{ 'plan.unique_ID': 'plan_C' }, { 'plan.unique_ID': 'plan_D' }]
+    }
+    filters['$or'] = typeArray
+  } else {
+    filters['plan.unique_ID'] = { $exists: true }
   }
-  let recordsToSkip = 0
+  let findCriteria = {
+    pageId: body.pageId,
+    connected: body.connected_filter !== '' ? body.connected_filter : {$exists: true}
+  }
   let finalCriteria = {}
   let countCriteria = [
     { $match: findCriteria },
+    { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+    { '$unwind': '$user' },
+    { $lookup: { from: 'companyprofiles', localField: 'companyId', foreignField: '_id', as: 'company' } },
+    { '$unwind': '$company' },
+    { $lookup: { from: 'plans', localField: 'company.planId', foreignField: '_id', as: 'plan' } },
+    { '$unwind': '$plan' },
+    { '$project': { 'user': 1, 'connected': 1, 'company': 1, 'plan': 1, pageName: 1 } },
+    { $match: filters },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
-  if (body.first_page === 'first') {
-    finalCriteria = [
-      { $match: findCriteria },
-      { $skip: recordsToSkip },
-      { $limit: body.number_of_records },
-      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
-      { '$unwind': '$user' },
-      { $lookup: { from: 'companyprofiles', localField: 'companyId', foreignField: '_id', as: 'company' } },
-      { '$unwind': '$company' },
-      { $lookup: { from: 'plans', localField: 'company.planId', foreignField: '_id', as: 'plan' } },
-      { '$unwind': '$plan' },
-      { '$project': { 'user': 1, 'connected': 1, 'company': 1, 'plan': 1, pageName: 1 } }
-    ]
-  } else if (body.first_page === 'next') {
-    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
-    finalCriteria = [
-      { $match: {$and: [findCriteria, {_id: {$gt: body.last_id}}]} },
-      { $skip: recordsToSkip },
-      { $limit: body.number_of_records },
-      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
-      { '$unwind': '$user' },
-      { $lookup: { from: 'companyprofiles', localField: 'companyId', foreignField: '_id', as: 'company' } },
-      { '$unwind': '$company' },
-      { $lookup: { from: 'plans', localField: 'company.planId', foreignField: '_id', as: 'plan' } },
-      { '$unwind': '$plan' },
-      { '$project': { 'user': 1, 'connected': 1, 'company': 1, 'plan': 1, pageName: 1 } }
-    ]
-  } else if (body.first_page === 'previous') {
-    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
-    finalCriteria = [
-      { $match: {$and: [findCriteria, {_id: {$lt: body.last_id}}]} },
-      { $skip: recordsToSkip },
-      { $limit: body.number_of_records },
-      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
-      { '$unwind': '$user' },
-      { $lookup: { from: 'companyprofiles', localField: 'companyId', foreignField: '_id', as: 'company' } },
-      { '$unwind': '$company' },
-      { $lookup: { from: 'plans', localField: 'company.planId', foreignField: '_id', as: 'plan' } },
-      { '$unwind': '$plan' },
-      { '$project': { 'user': 1, 'connected': 1, 'company': 1, 'plan': 1, pageName: 1 } }
-    ]
-  }
+  finalCriteria = [
+    { $match: findCriteria },
+    { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+    { '$unwind': '$user' },
+    { $lookup: { from: 'companyprofiles', localField: 'companyId', foreignField: '_id', as: 'company' } },
+    { '$unwind': '$company' },
+    { $lookup: { from: 'plans', localField: 'company.planId', foreignField: '_id', as: 'plan' } },
+    { '$unwind': '$plan' },
+    { '$project': { 'user': 1, 'connected': 1, 'company': 1, 'plan': 1, pageName: 1 } },
+    { $match: filters }
+  ]
   return {
     countCriteria,
     finalCriteria
