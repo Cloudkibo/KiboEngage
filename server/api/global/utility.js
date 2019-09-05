@@ -14,7 +14,7 @@ exports.getScheduledTime = (interval) => {
   return date
 }
 
-const getEmailObject = (to, from, subject, text, errorMessage, codePart, errorData) => {
+const getEmailObject = (to, from, subject, text, errorMessage, codePart) => {
   let sendgrid = utility.getSendGridObject()
   let email = new sendgrid.Email({
     to: to,
@@ -33,9 +33,6 @@ const getEmailObject = (to, from, subject, text, errorMessage, codePart, errorDa
     '<tr> <td class="wrapper last"> <p> Hello, <br> This is to inform you  that following facebook error has occurred on KiboPush. </p> <p> </p>  <!-- BEGIN: Note Panel --> <table class="twelve columns" style="margin-bottom: 10px"> ' +
     '<tr> <td class="panel" style="background: #ECF8FF;border: 0;padding: 10px !important;"> </td> <td class="expander"> </td> </tr> </table> <p> <b>Error Message:</b> ' + errorMessage + ' <br><br>' +
     '<b>Area Where It occurred: </b> ' + codePart + ' ' +
-    '<b>Company ID: </b> ' + errorData.companyId + ' ' +
-    '<b>User ID: </b> ' + errorData.userId + ' ' +
-    '<b>page ID </b> ' + errorData.pageId + ' ' +
     '</p> <!-- END: Note Panel --> </td> </tr> </table><span class="devider" style="border-bottom: 1px solid #eee;margin: 15px -15px;display: block;"></span> <!-- END: Disscount Content --> </td> </tr> </table> </td> </tr> </table> <!-- END: Content --> <!-- BEGIN: Footer --> <table class="page-footer" align="center" style="width: 100%;background: #2f2f2f;"> <tr> <td class="center" align="center" style="vertical-align: middle;color: #fff;"> <table class="container" align="center"> <tr> <td style="vertical-align: middle;color: #fff;"> <!-- BEGIN: Unsubscribet --> <table class="row"> <tr> <td class="wrapper last" style="vertical-align: middle;color: #fff;"><span style="font-size:12px;"><i>This is a system generated email and reply is not required.</i></span> </td> </tr> </table> <!-- END: Unsubscribe --> ' +
     '<!-- END: Footer Panel List --> </td> </tr> </table> </td> </tr> </table> <!-- END: Footer --> </td> </tr></table></body>')
   return email
