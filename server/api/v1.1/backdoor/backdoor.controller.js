@@ -1248,6 +1248,59 @@ exports.fetchSubscribersWithTags = (req, res) => {
     .then(pageSubscribers => {
       if (pageSubscribers[0]) {
         console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
+        let subscriberData = []
+        let subscriberOwnersFound = 0
+        let retrievedSubscriberData = 0
+        for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
+          let subscriberOwnerAggregation = [
+            {
+              '$lookup': {
+                from: 'users',
+                localField: 'userId',
+                foreignField: '_id',
+                as: 'user'
+              }
+            },
+            {
+              '$unwind': '$user'
+            },
+            {
+              '$group': {
+                '_id': '$_id',
+                'pageName': {'$first': '$pageName'},
+                'users': {'$addToSet': '$user'}
+              }
+            },
+            {
+              '$project': {
+                '_id': 1,
+                'pageName': 1,
+                'users': 1
+              }
+            },
+            {
+              '$match': {_id: pageSubscribers[0].subscribers[i].pageId}
+            }
+          ]
+          utility.callApi(`pages/aggregate`, 'post', subscriberOwnerAggregation, 'accounts', req.headers.authorization)
+            .then(subscriberOwner => {
+              subscriberOwnersFound += 1
+              pageSubscribers[0].subscribers[i].pageOwner = subscriberOwner[0].users[0]
+              if (retrievedSubscriberData === pageSubscribers[0].subscribers.length && subscriberOwnersFound === pageSubscribers[0].subscribers.length) {
+                console.log('subscriberData', subscriberData)
+                return res.status(200).json({
+                  status: 'success',
+                  payload: subscriberData
+                })
+              }
+            })
+            .catch(err => {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Failed to fetch page owner for subscriber ${err}`
+              })
+            })
+        }
         let pageTagsAggregation = [
           {
             '$lookup': {
@@ -1279,8 +1332,6 @@ exports.fetchSubscribersWithTags = (req, res) => {
         ]
         utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
           .then(pageTags => {
-            let subscriberData = []
-            let retrievedSubscriberData = 0
             for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
               needle.get(
                 `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
@@ -1337,7 +1388,7 @@ exports.fetchSubscribersWithTags = (req, res) => {
                     }
                     retrievedSubscriberData += 1
 
-                    if (retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
+                    if (retrievedSubscriberData === pageSubscribers[0].subscribers.length && subscriberOwnersFound === pageSubscribers[0].subscribers.length) {
                       console.log('subscriberData', subscriberData)
                       return res.status(200).json({
                         status: 'success',
