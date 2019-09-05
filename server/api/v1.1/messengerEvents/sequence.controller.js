@@ -3,6 +3,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/sequence.controller'
 const SequenceUtility = require('../sequenceMessaging/utility')
 const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
+const SequenceMessageQueueDatalayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
 
 exports.index = function (req, res) {
   logger.serverLog(TAG, `in sequence ${JSON.stringify(req.body)}`)
@@ -117,5 +118,26 @@ exports.respondsToPoll = function (data) {
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fecth sequences ${err}`, 'error')
+    })
+}
+
+exports.sendSequenceMessage = (req, res) => {
+  let payload = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  SequencesDataLayer.genericFindForSequenceMessages({_id: payload.messageId})
+    .then(message => {
+      message = message[0]
+      if (message) {
+        let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+        SequenceMessageQueueDatalayer.genericUpdate({sequenceMessageId: message._id}, {queueScheduledTime: utcDate}, {multi: true})
+          .then(updated => {
+            logger.serverLog(TAG, `sequence message queue updated succssfully!`)
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fecth sequence message queue ${err}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fecth sequence message ${err}`, 'error')
     })
 }
