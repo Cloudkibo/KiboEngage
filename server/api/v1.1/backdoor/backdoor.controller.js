@@ -1141,14 +1141,11 @@ exports.fetchPageUsers = (req, res) => {
       utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
         .then(connectedPage => {
           connectedPage = connectedPage[0]
-          console.log('connectedPage', connectedPage)
           facebookApiCaller('v4.0', `${req.body.pageId}?fields=access_token&access_token=${connectedPage.user.facebookInfo.fbToken}`, 'get', {})
             .then(response => {
-              console.log('access_token response', response.body)
               if (response.body && response.body.access_token) {
                 facebookApiCaller('v4.0', `${req.body.pageId}/roles?access_token=${response.body.access_token}`, 'get', {})
                   .then(resp => {
-                    console.log('roles fetched', resp.body)
                     if (resp.body && resp.body.data) {
                       callback(null, resp.body.data)
                     } else if (resp.body && resp.body.error) {
@@ -1211,10 +1208,8 @@ function getAdminedData (fbRoles, localDataFromDB) {
       roles = fbRoles.map(role => role.name)
     }
     let localData = localDataFromDB.pageUsers
-    console.log('roles mapped', roles)
     if (localData.length > 0) {
       for (let i = 0; i < localData.length; i++) {
-        console.log('local Data', localData[i].user.facebookInfo)
         if (localData[i].user.facebookInfo && roles.indexOf(localData[i].user.facebookInfo.name) > -1) {
           localData[i].admin = true
         } else {
