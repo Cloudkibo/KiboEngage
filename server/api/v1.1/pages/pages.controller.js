@@ -240,6 +240,16 @@ exports.enable = function (req, res) {
                                                   if (response.body.error) {
                                                     sendOpAlert(response.body.error, 'pages controller in kiboengage')
                                                   }
+                                                  if (response.body.success) {
+                                                    let updateConnectedFacebook = {query: {pageId: page.pageId}, newPayload: {connectedFacebook: true}, options: {multi: true}}
+                                                    utility.callApi(`pages/update`, 'post', updateConnectedFacebook) // connect page
+                                                      .then(updatedPage => {
+                                                      })
+                                                      .catch(error => {
+                                                        logger.serverLog(TAG,
+                                                          `Failed to updatedPage ${JSON.stringify(error)}`, 'error')
+                                                      })
+                                                  }
                                                   var valueForMenu = {
                                                     'get_started': {
                                                       'payload': '<GET_STARTED_PAYLOAD>'
@@ -351,6 +361,19 @@ exports.disable = function (req, res) {
             }
             if (response.body.error) {
               sendOpAlert(response.body.error, 'pages controller in kiboengage')
+            }
+            if (response.body.success) {
+              utility.callApi(`pages/${req.body._id}`, 'get', {}) // fetch page
+                .then(page => {
+                  let updateConnectedFacebook = {query: {pageId: page.pageId}, newPayload: {connectedFacebook: false}, options: {multi: true}}
+                  utility.callApi(`pages/update`, 'post', updateConnectedFacebook) // connect page
+                    .then(updatedPage => {
+                    })
+                    .catch(error => {
+                      logger.serverLog(TAG,
+                        `Failed to updatedPage ${JSON.stringify(error)}`, 'error')
+                    })
+                })
             }
             // require('./../../../config/socketio').sendMessageToClient({
             //   room_id: req.body.companyId,

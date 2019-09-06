@@ -976,7 +976,6 @@ exports.getPagePermissions = function (req, res) {
   utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
     .then(page => {
       page = page[0]
-      console.log('page found', page)
       let appLevelPermissions = {
         email: false,
         manage_pages: false,
@@ -994,7 +993,6 @@ exports.getPagePermissions = function (req, res) {
         function (callback) {
           facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${page.user.facebookInfo.fbToken}`, 'get', {})
             .then(response => {
-              console.log('response from fb', response.body)
               if (response.body && response.body.data && response.body.data.scopes) {
                 if (response.body.data.scopes.length > 0) {
                   for (let i = 0; i < response.body.data.scopes.length; i++) {
@@ -1058,7 +1056,8 @@ exports.fetchUniquePages = (req, res) => {
       '$group': {
         '_id': '$pageId',
         'count': { '$sum': 1 },
-        'pageName': {'$first': '$pageName'}
+        'pageName': {'$first': '$pageName'},
+        'connectedFacebook': {'$first': '$connectedFacebook'}
       }
     },
     {
@@ -1069,11 +1068,15 @@ exports.fetchUniquePages = (req, res) => {
         '_id': 0,
         'pageId': '$_id',
         'count': '$count',
-        'pageName': 1
+        'pageName': 1,
+        connectedFacebook: 1
       }
     },
     {
-      '$match': req.body.pageName ? {pageName: { $regex: '.*' + req.body.pageName + '.*', $options: 'i' }} : {}
+      '$match': {
+        pageName: req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : {$exists: true},
+        connectedFacebook: req.body.connectedFacebook !== '' ? req.body.connectedFacebook : {$exists: true}
+      }
     },
     {
       '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
@@ -1085,7 +1088,10 @@ exports.fetchUniquePages = (req, res) => {
 
   let countAggregation = [
     {
-      '$match': req.body.pageName ? {'pageName': req.body.pageName} : {}
+      '$match': {
+        pageName: req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : {$exists: true},
+        connectedFacebook: req.body.connectedFacebook !== '' ? req.body.connectedFacebook : {$exists: true}
+      }
     },
     { '$group': {
       '_id': '$pageId'
@@ -1094,39 +1100,49 @@ exports.fetchUniquePages = (req, res) => {
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
       let pageOwnersFound = 0
-      for (let i = 0; i < uniquePages.length; i++) {
-        utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
-          .then(page => {
-            // console.log('found page owner', page[0].userId)
-            pageOwnersFound += 1
-            if (page[0]) {
-              uniquePages[i].connectedBy = page[0].userId
-            }
-            if (pageOwnersFound === uniquePages.length) {
-              utility.callApi(`pages/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
-                .then(count => {
-                  return res.status(200).json({
-                    status: 'success',
-                    payload: {
-                      data: uniquePages,
-                      totalCount: count.length
-                    }
+      if (uniquePages.length > 0) {
+        for (let i = 0; i < uniquePages.length; i++) {
+          utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
+            .then(page => {
+              // console.log('found page owner', page[0].userId)
+              pageOwnersFound += 1
+              if (page[0]) {
+                uniquePages[i].connectedBy = page[0].userId
+              }
+              if (pageOwnersFound === uniquePages.length) {
+                utility.callApi(`pages/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
+                  .then(count => {
+                    return res.status(200).json({
+                      status: 'success',
+                      payload: {
+                        data: uniquePages,
+                        totalCount: count.length
+                      }
+                    })
                   })
-                })
-                .catch(err => {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Failed to fetch unique pages count ${err}`
+                  .catch(err => {
+                    return res.status(500).json({
+                      status: 'failed',
+                      description: `Failed to fetch unique pages count ${err}`
+                    })
                   })
-                })
-            }
-          })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to fetch connected page ${err}`
+              }
             })
-          })
+            .catch(err => {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Failed to fetch connected page ${err}`
+              })
+            })
+        }
+      } else {
+        return res.status(200).json({
+          status: 'success',
+          payload: {
+            data: [],
+            totalCount: 0
+          }
+        })
       }
     })
     .catch(err => {
