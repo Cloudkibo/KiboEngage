@@ -966,9 +966,17 @@ exports.fetchAutopostingDetails = function (req, res) {
   })
 }
 exports.getPagePermissions = function (req, res) {
-  utility.callApi(`pages/query`, 'post', { pageId: req.params.id, connected: true })
+  let recentPageCriteria = [
+    {$match: {pageId: req.params.id}},
+    {$sort: {_id: -1}},
+    {$limit: 1},
+    { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+    { '$unwind': '$user' }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
     .then(page => {
       page = page[0]
+      console.log('page found', page)
       let appLevelPermissions = {
         email: false,
         manage_pages: false,
@@ -984,8 +992,9 @@ exports.getPagePermissions = function (req, res) {
       }
       async.parallelLimit([
         function (callback) {
-          facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${page.accessToken}`, 'get', {})
+          facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${page.user.facebookInfo.fbToken}`, 'get', {})
             .then(response => {
+              console.log('response from fb', response.body)
               if (response.body && response.body.data && response.body.data.scopes) {
                 if (response.body.data.scopes.length > 0) {
                   for (let i = 0; i < response.body.data.scopes.length; i++) {
@@ -1031,7 +1040,7 @@ exports.getPagePermissions = function (req, res) {
         if (err) {
           return res.status(500).json({
             status: 'failed',
-            description: `Failed to fetch page permissions ${err}`
+            description: `Failed to fetch page permissions ${JSON.stringify(err)}`
           })
         } else {
           sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
