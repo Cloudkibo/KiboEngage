@@ -107,4 +107,8 @@ router.get('/fetchSubscribersWithTags/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchSubscribersWithTags)
 
+router.get('/fetchPageAdmins/:pageId',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchPageAdmins)
+
 module.exports = router

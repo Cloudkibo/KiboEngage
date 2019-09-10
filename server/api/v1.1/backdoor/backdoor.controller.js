@@ -1525,3 +1525,36 @@ exports.fetchSubscribersWithTags = (req, res) => {
       })
     })
 }
+
+exports.fetchPageAdmins = (req, res) => {
+  let pageAggregation = [
+    {$match: {pageId: req.params.pageId}},
+    {$sort: {_id: -1}},
+    {$limit: 1}
+  ]
+  utility.callApi(`pages/aggregate`, 'post', pageAggregation, 'accounts', req.headers.authorization)
+    .then(page => {
+      page = page[0]
+      facebookApiCaller('v4.0', `${req.params.pageId}/roles?access_token=${page.accessToken}`, 'get', {})
+        .then(resp => {
+          if (resp.body && resp.body.data) {
+            return res.status(200).json({
+              status: 'success',
+              payload: resp.body.data
+            })
+          }
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Failed to fetch page admins ${err}`
+          })
+        })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch page ${err}`
+      })
+    })
+}
