@@ -2,6 +2,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/messengerEvents/welcomeMessage.controller.js'
 const {callApi} = require('../utility')
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
+let { passwordChangeEmailAlert } = require('../../global/utility')
 const messengerEventsUtility = require('./utility')
 const needle = require('needle')
 let { sendOpAlert } = require('./../../global/operationalAlert')
@@ -40,8 +41,10 @@ exports.index = function (req, res) {
                   if (err) {
                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                   }
-                  if (resp2.body.error) {
-                    sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
+                  if (resp2.body.error && resp2.body.error.code === 190) {
+                    passwordChangeEmailAlert(req.user._id, req.user.email)
+                  } else {
+                    sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage')
                   }
                   logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
                   let pageAccessToken = resp2.body.access_token
