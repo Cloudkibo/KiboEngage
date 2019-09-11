@@ -110,7 +110,7 @@ exports.validateUserAccessToken = function (req, res) {
       if (err) {
         sendErrorResponse(res, 500, JSON.stringify(err))
       } else if (response.body.error) {
-        sendOpAlert(response.body.error, 'user controller in kiboengage')
+        sendOpAlert(response.body.error, 'user controller in kiboengage', '', req.user._id, req.user.companyId)
         sendErrorResponse(res, 500, response.body)
       } else {
         sendSuccessResponse(res, 200, 'User Access Token validated successfully!')

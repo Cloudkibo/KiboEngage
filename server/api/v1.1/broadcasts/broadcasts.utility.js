@@ -739,7 +739,7 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
         return ({status: 'failed', data: err})
       } else {
         if (resp.body.error) {
-          sendOpAlert(resp.body.error, 'broadcast utility in kiboengage')
+          sendOpAlert(resp.body.error, 'broadcast utility in kiboengage', '', '', '')
         }
         logger.serverLog(TAG, `file uploaded on Facebook: ${JSON.stringify(resp.body)}`)
         payloadItem.fileurl.attachment_id = resp.body.attachment_id
@@ -830,14 +830,14 @@ function isWhiteListedDomain (domain, pageId, user) {
         if (err) {
         }
         if (resp.body.error) {
-          sendOpAlert(resp.body.error, 'broadcast utility in kiboengage')
+          sendOpAlert(resp.body.error, 'broadcast utility in kiboengage', pageId, user._id, '')
         }
         needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
           (err, resp) => {
             if (err) {
             }
             if (resp.body.error) {
-              sendOpAlert(resp.body.error, 'broadcast utility in kiboengage')
+              sendOpAlert(resp.body.error, 'broadcast utility in kiboengage', pageId, user._id, '')
             }
             console.log('reponse from whitelisted_domains', resp.body.data)
             if (resp.body.data && resp.body.data[0].whitelisted_domains) {
