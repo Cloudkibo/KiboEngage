@@ -563,7 +563,8 @@ exports.getPageUsersCriteria = function (body) {
     { '$unwind': '$company' },
     { $lookup: { from: 'plans', localField: 'company.planId', foreignField: '_id', as: 'plan' } },
     { '$unwind': '$plan' },
-    { '$project': { 'user': 1, 'connected': 1, 'company': 1, 'plan': 1, pageName: 1 } },
+    { '$lookup': { from: 'subscribers', localField: '_id', foreignField: 'pageId', as: 'subscribers' } },
+    { '$project': { 'user': 1, 'connected': 1, 'company': 1, 'plan': 1, pageName: 1, subscribers: 1 } },
     { $match: filters }
   ]
   return {
