@@ -5,8 +5,6 @@ const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const messengerEventsUtility = require('./utility')
 let { getPlainEmailObject } = require('../../global/utility')
 let { getSendGridObject } = require('../../../components/utility')
-
-
 const needle = require('needle')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 
