@@ -14,7 +14,7 @@ exports.getScheduledTime = (interval) => {
   return date
 }
 
-const getEmailObject = (to, from, subject, text, errorMessage, codePart, pageId, userId, companyId) => {
+const getEmailObject = (to, from, subject, text, errorMessage, code, subCode, codePart, pageId, userId, companyId) => {
   let sendgrid = utility.getSendGridObject()
   let email = new sendgrid.Email({
     to: to,
@@ -33,6 +33,8 @@ const getEmailObject = (to, from, subject, text, errorMessage, codePart, pageId,
     '<tr> <td class="wrapper last"> <p> Hello, <br> This is to inform you  that following facebook error has occurred on KiboPush. </p> <p> </p>  <!-- BEGIN: Note Panel --> <table class="twelve columns" style="margin-bottom: 10px"> ' +
     '<tr> <td class="panel" style="background: #ECF8FF;border: 0;padding: 10px !important;"> </td> <td class="expander"> </td> </tr> </table> <p> <b>Error Message:</b> ' + errorMessage + ' <br><br>' +
     '<b>Area Where It occurred: </b> ' + codePart + ' <br><br>' +
+    '<b>Error Code: </b> ' + code + ' <br><br>' +
+    '<b>Error Sub Code: </b> ' + subCode + ' <br><br>' +
     '<b>PageID: </b> ' + pageId + ' <br><br>' +
     '<b>UserID: </b> ' + userId + ' <br><br>' +
     '<b>CompanyID: </b> ' + companyId + ' ' +
