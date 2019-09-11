@@ -111,7 +111,7 @@ router.get('/fetchPageAdmins/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageAdmins)
 
-router.get('/fetchCompanyInfo',
+router.post('/fetchCompanyInfo',
   auth.isAuthorizedSuperUser(),
   controller.fetchCompanyInfo)
 
