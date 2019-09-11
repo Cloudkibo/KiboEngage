@@ -9,7 +9,7 @@ exports.sendOpAlert = function (errObj, codePart, pageId, userId, companyId) {
     getSendGridObject()
       .send(email, function (err, json) {
         if (err) {
-          logger.log(TAG, 'error in sending Alert email ' + err, 'debug')
+          logger.serverLog(TAG, 'error in sending Alert email ' + err, 'debug')
         }
       })
   }
