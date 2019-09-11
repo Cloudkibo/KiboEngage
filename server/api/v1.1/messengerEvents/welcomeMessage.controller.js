@@ -3,6 +3,10 @@ const TAG = 'api/messengerEvents/welcomeMessage.controller.js'
 const {callApi} = require('../utility')
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const messengerEventsUtility = require('./utility')
+let { getPlainEmailObject } = require('../../global/utility')
+let { getSendGridObject } = require('../../../components/utility')
+
+
 const needle = require('needle')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 
@@ -40,7 +44,33 @@ exports.index = function (req, res) {
                   if (err) {
                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                   }
-                  if (resp2.body.error) {
+                  if (resp2.body.error && resp2.body.error.code === 190) {
+                    let body = {
+                      query:{
+                        _id: req.user._id
+                      },
+                      newPayload:{
+                        connectFacebook: false
+                      }
+                    }
+                    callApi(`user/update`, 'post', body)
+                    .then(response1 => {
+                      //sucess... Email user to reconnect facebook account
+                      let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
+                      let email = getPlainEmailObject(req.user.email, 'support@cloudkibo.com', 'KiboPush: Facebook Connect', emailText)
+                          if (require('../../../config/environment').env === 'production') {
+                            getSendGridObject()
+                              .send(email, function (err, json) {
+                                if (err) {
+                                  logger.log(TAG, 'error in sending Alert email ' + err, 'debug')
+                                }
+                              })
+                          }
+                    })
+                      .catch( error => {
+                        logger.serverLog(TAG, `error: ${JSON.stringify(error)}`, 'error')
+                      })
+                  } else {
                     sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage')
                   }
                   logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
