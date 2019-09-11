@@ -32,7 +32,7 @@ exports.getCriterias = function (req) {
       console.log('req.body.filter_criteria.MessageType', req.body.filter_criteria.MessageType)
       findCriteria = {
         companyId: req.user.companyId,
-        $and: [{'payload.0.componentType': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
+        $and: [{'payload.0.componentType': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true }}, {'payload.1': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? { $exists: false } : { $exists: true }}],
         MessageType: (req.body.filter_criteria.MessageType === '' || req.body.filter_criteria.MessageType === 'all') ? { $in: [null, 'Non Promotional', 'Promotional'] } : req.body.filter_criteria.MessageType === 'Non Promotional' ? { $in: [null, 'Non Promotional'] } : { $in: ['Promotional'] },            
         title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
         'datetime': req.body.filter_criteria.days !== '0' ? {
