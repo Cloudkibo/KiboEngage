@@ -81,7 +81,7 @@ const passwordChangeEmailAlert = function(userId, userEmail){
          utility.getSendGridObject()
             .send(email, function (err, json) {
               if (err) {
-                logger.log(TAG, 'error in sending Alert email ' + err, 'debug')
+                logger.serverLog(TAG, `error in sending Alert email: ${JSON.stringify(error)}`, 'error')
               }
             })
         }
