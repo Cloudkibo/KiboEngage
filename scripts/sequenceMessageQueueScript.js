@@ -32,16 +32,7 @@ exports.runSequenceMessageQueueScript = function () {
                       logger.serverLog(TAG, `Failed to fetch sequence subscriber message - sees trigger ${JSON.stringify(err)}`)
                     })
                 } else if (sequenceMessage.trigger.event === 'clicks') {
-                  SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
-                    .then(clickedMessage => {
-                      clickedMessage = clickedMessage[0]
-                      if (clickedMessage.clicked && clickedMessage.clicked.status && clickedMessage.clicked.values.includes(sequenceMessage.trigger.buttonId)) {
-                        sendSequenceMessage(message, sequence, sequenceMessage)
-                      }
-                    })
-                    .catch(err => {
-                      logger.serverLog(TAG, `Failed to fetch sequence subscriber message - clicks trigger ${JSON.stringify(err)}`)
-                    })
+                  sendSequenceMessage(message, sequence, sequenceMessage)
                 } else if (sequenceMessage.trigger.event === 'receives') {
                   SequenceDataLayer.genericFindForSubscriberMessages({ messageId: sequenceMessage.trigger.value, subscriberId: message.subscriberId })
                     .then(receivedMessage => {
