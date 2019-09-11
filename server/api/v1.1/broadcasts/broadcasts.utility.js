@@ -320,7 +320,8 @@ function prepareBroadCastPayload (req, companyId) {
     userId: req.user._id,
     companyId,
     title: req.body.title,
-    sent: req.body.subscribersCount
+    sent: req.body.subscribersCount,
+    MessageType: req.body.MessageType ? req.body.MessageType : 'Non Promotional'
   }
   if (req.body.isSegmented) {
     broadcastPayload.isSegmented = true
