@@ -269,7 +269,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
       const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
       let subsFindCriteria = {}
       if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
-        broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'poll')
+        broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'poll')
           .then(messageCreative => {
             if (messageCreative.status === 'success') {
               const messageCreativeId = messageCreative.message_creative_id
@@ -306,7 +306,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                         labels = labels.concat(temp)
                       }
                     }
-                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
+                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page)
                       .then(response => {
                         if (i === limit - 1) {
                           if (response.status === 'success') {
@@ -396,7 +396,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                         logger.serverLog(TAG, err, 'error')
                       }
                       if (resp.body.error) {
-                        sendOpAlert(resp.body.error, 'polls controller in kiboengage')
+                        sendOpAlert(resp.body.error, 'polls controller in kiboengage', page._id, page.userId, page.companyId)
                       }
                       messageData.componentType = 'poll'
                       let message = preparePayload(req.user, subscribers[j], page, messageData)

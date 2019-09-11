@@ -423,7 +423,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                           }
                         }
                       }
-                      broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, 'survey')
+                      broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'survey')
                         .then(messageCreative => {
                           if (messageCreative.status === 'success') {
                             const messageCreativeId = messageCreative.message_creative_id
@@ -460,7 +460,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                       labels = labels.concat(temp)
                                     }
                                   }
-                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
+                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page)
                                     .then(response => {
                                       if (i === limit - 1) {
                                         if (response.status === 'success') {
@@ -627,7 +627,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                           sendErrorResponse(res, 500, JSON.stringify(err))
                         }
                         if (resp.body.error) {
-                          sendOpAlert(resp.body.error, 'surveys controller in kiboengage')
+                          sendOpAlert(resp.body.error, 'surveys controller in kiboengage', page._id, page.userId, page.companyId)
                         }
                         messageData.componentType = 'survey'
                         let message = preparePayload(req.user, subscribers[j], page, messageData)

@@ -76,7 +76,7 @@ function sendToFacebook (checkout, store, details) {
         if (!error && response.statusCode === 200) {
           return logger.serverLog(TAG, `SHOPIFY Sent the abandoned cart successfully`)
         } else {
-          sendOpAlert(body.error, 'utility abandoned in kiboengage')
+          sendOpAlert(body.error, 'utility abandoned in kiboengage', page._id, page.userId, page.companyId)
           return logger.serverLog(TAG, `SHOPIFY Batch send error ${JSON.stringify(response)}`)
         }
       })
@@ -107,7 +107,7 @@ function sendOrderStatusToFacebook (order, statusMessage, store) {
       request(options, function (error, response, body) {
         logger.serverLog(TAG, `SHOPIFY Sent the order status successfully ${JSON.stringify(response)} ${JSON.stringify(body)} ${JSON.stringify(error)}`)
         if (!error && response.statusCode === 200) {
-          sendOpAlert(body.error, 'utility abandoned in kiboengage')
+          sendOpAlert(body.error, 'utility abandoned in kiboengage', page._id, page.userId, page.companyId)
           return logger.serverLog(TAG, `SHOPIFY Sent the order status successfully`)
         } else {
           return logger.serverLog(TAG, `SHOPIFY Batch send error ${JSON.stringify(response)}`)

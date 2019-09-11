@@ -15,7 +15,7 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
     } else {
       if (send) {
         send = false
-        broadcastApi.callMessageCreativesEndpoint(messageData[current], page.accessToken, 'autoposting')
+        broadcastApi.callMessageCreativesEndpoint(messageData[current], page.accessToken, page, 'autoposting')
           .then(messageCreative => {
             if (messageCreative.status === 'success') {
               const messageCreativeId = messageCreative.message_creative_id
@@ -42,7 +42,7 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                       labels = labels.concat(temp)
                     }
                     console.log('labels', labels)
-                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
+                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page)
                       .then(response => {
                         console.log('response from callBroadcastMessagesEndpoint', response)
                         if (messageData[current].attachment && messageData[current].attachment.type === 'video' &&

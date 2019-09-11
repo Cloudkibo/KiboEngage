@@ -78,7 +78,7 @@ exports.send = function (req, res) {
         facebookApiCaller('v3.1', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
           .then(resp => {
             if (resp.body.error) {
-              sendOpAlert(resp.body.error, 'sponsored messaging controller in kiboengage')
+              sendOpAlert(resp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
             }
             let campaignId = resp.body.id
             console.log('campaign id', resp.body)
@@ -87,7 +87,7 @@ exports.send = function (req, res) {
             facebookApiCaller('v3.1', `act_${req.body.ad_account_id}/adsets`, 'post', adsetPayload)
               .then(response => {
                 if (response.body.error) {
-                  sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage')
+                  sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
                 }
                 let adsetid = response.body.id
                 console.log('adset', adsetid)
@@ -168,7 +168,7 @@ exports.getInsight = function (req, res) {
     facebookApiCaller('v3.1', ad_id, 'get', insightPayload)
       .then(response => {
         if (response.body.error) {
-          sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage')
+          sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
         }
         return res.status(200).json({ status: 'success', payload: response })
       })

@@ -871,7 +871,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                   err)}`, 'error')
             }
             if (resp.body.error) {
-              sendOpAlert(resp.body.error, 'dashboard controller in kiboengage')
+              sendOpAlert(resp.body.error, 'dashboard controller in kiboengage', page._id, page.userId, page.companyId)
             }
             if (resp && resp.body && resp.body.access_token) {
               needle.get(
@@ -883,7 +883,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                         err)}`, 'error')
                   }
                   if (respp.body.error) {
-                    sendOpAlert(respp.body.error, 'dashboard controller in kiboengage')
+                    sendOpAlert(respp.body.error, 'dashboard controller in kiboengage', page._id, page.userId, page.companyId)
                   }
                   if (respp && respp.body && respp.body.data && respp.body.data.length > 0) {
                     for (let a = 0; a < respp.body.data.length; a++) {
