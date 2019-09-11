@@ -403,7 +403,7 @@ exports.handleTweetModeration = function (req, res) {
           if (response.body.error) {
             logger.serverLog(TAG, `Failed to send approval message ${JSON.stringify(response.body.error)}`, 'error')
           } else {
-            sendOpAlert(response.body.error, 'autoposting controller in kiboengage')
+            sendOpAlert(response.body.error, 'autoposting controller in kiboengage', '', '', '')
             logger.serverLog(TAG, `Approval message send successfully!`)
           }
         })

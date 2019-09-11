@@ -320,7 +320,7 @@ exports.unSubscribe = function (req, res) {
               `Page access token from graph api error ${JSON.stringify(err)}`, 'error')
           }
           if (resp.body.error) {
-            sendOpAlert(resp.body.error, 'subscribers controller in kiboengage')
+            sendOpAlert(resp.body.error, 'subscribers controller in kiboengage', req.body.page_id, userPage.userId._id, '')
           }
           const messageData = {
             text: 'We have unsubscribed you from our page. We will notify you when we subscribe you again. Thanks'
@@ -337,7 +337,7 @@ exports.unSubscribe = function (req, res) {
                 sendErrorResponse(res, 500, '', JSON.stringify(err))
               }
               if (resp.body.error) {
-                sendOpAlert(resp.body.error, 'subscribers controller in kiboengage')
+                sendOpAlert(resp.body.error, 'subscribers controller in kiboengage', '', '', '')
               }
               require('./../../../config/socketio').sendMessageToClient({
                 room_id: companyUser.companyId,

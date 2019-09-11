@@ -33,7 +33,7 @@ exports.sendCommentReply = function (req, res) {
                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                   }
                   if (resp.body.error) {
-                    sendOpAlert(resp.body.error, 'comment controller in kiboengage')
+                    sendOpAlert(resp.body.error, 'comment controller in kiboengage', '', req.user.companyId, req.user._id)
                   }
                   let messageData = { message: post.reply }
                   needle.post(
@@ -43,7 +43,7 @@ exports.sendCommentReply = function (req, res) {
                         logger.serverLog(TAG, err, 'error')
                       }
                       if (resp.body.error) {
-                        sendOpAlert(resp.body.error, 'comment controller in kiboengage')
+                        sendOpAlert(resp.body.error, 'comment controller in kiboengage', '', req.user.companyId, req.user._id)
                       }
                       logger.serverLog(TAG,
                         `response from comment on facebook 2 ${JSON.stringify(resp.body)}`)

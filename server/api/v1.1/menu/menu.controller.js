@@ -113,7 +113,7 @@ exports.create = function (req, res) {
                         if (!err) {
                         }
                         if (resp.body.error) {
-                          sendOpAlert(resp.body.error, 'menu controller in kiboengage')
+                          sendOpAlert(resp.body.error, 'menu controller in kiboengage', page._id, page.userId, page.companyId)
                           sendErrorResponse(res, 500, '', JSON.stringify(resp.body.error))
                         } else {
                           res.status(201).json({status: 'success', payload: savedMenu})
@@ -154,7 +154,7 @@ exports.create = function (req, res) {
                             `Internal Server Error ${JSON.stringify(err)}`, 'error')
                         }
                         if (resp.body.error) {
-                          sendOpAlert(resp.body.error, 'menu controller in kiboengage')
+                          sendOpAlert(resp.body.error, 'menu controller in kiboengage', page._id, page.userId, page.companyId)
                           logger.serverLog(TAG, `Error from facebook graph api: ${JSON.stringify(resp.body.error)}`, 'error')
                           sendErrorResponse(res, 500, '', JSON.stringify(resp.body.error))
                         } else {
