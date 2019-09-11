@@ -111,4 +111,8 @@ router.get('/fetchPageAdmins/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageAdmins)
 
+router.get('/fetchCompanyInfo',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchCompanyInfo)
+
 module.exports = router
