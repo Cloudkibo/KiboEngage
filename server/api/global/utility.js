@@ -1,4 +1,6 @@
 const utility = require('./../../components/utility')
+const {callApi} = require('../v1.1/utility')
+const logger = require('../../components/logger')
 
 exports.getScheduledTime = (interval) => {
   let hours
@@ -61,6 +63,34 @@ const getPlainEmailObject = (to, from, subject, text, errorMessage, codePart) =>
   return email
 }
 
+const passwordChangeEmailAlert = function(userId, userEmail){
+  let body = {
+    query:{
+      _id: userId
+    },
+    newPayload:{
+      connectFacebook: false
+    }
+  }
+  callApi(`user/update`, 'post', body)
+  .then(response1 => {
+    //sucess... Email user to reconnect facebook account
+    let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
+    let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Facebook Connect', emailText)
+        if (require('../../config/environment').env === 'production') {
+         utility.getSendGridObject()
+            .send(email, function (err, json) {
+              if (err) {
+                logger.log(TAG, 'error in sending Alert email ' + err, 'debug')
+              }
+            })
+        }
+  })
+    .catch( error => {
+      logger.serverLog(TAG, `error: ${JSON.stringify(error)}`, 'error')
+    })
+}
 
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject
+exports.passwordChangeEmailAlert = passwordChangeEmailAlert
