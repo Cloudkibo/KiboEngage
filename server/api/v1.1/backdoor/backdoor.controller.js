@@ -1613,6 +1613,14 @@ exports.fetchCompanyInfo = (req, res) => {
       }
     },
     {
+      '$match': {
+        companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
+      }
+    },
+    {
+      '$sort': {'_id': -1}
+    },
+    {
       '$project': {
         '_id': 1,
         'companyName': 1,
@@ -1621,6 +1629,12 @@ exports.fetchCompanyInfo = (req, res) => {
         'subscribers': 1,
         'user': 1
       }
+    },
+    {
+      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
+    },
+    {
+      '$limit': 10
     }
   ]
   utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
