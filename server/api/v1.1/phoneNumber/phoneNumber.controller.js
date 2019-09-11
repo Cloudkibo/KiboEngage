@@ -156,7 +156,7 @@ exports.upload = function (req, res) {
                                           err)}`, 'error')
                                     }
                                     if (res.body.error) {
-                                      sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage')
+                                      sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage', page._id, page.userId, page.companyId)
                                       respSent = true
                                       sendErrorResponse(res, 500, '', 'This page do not have a U.S based admin ')
                                     }
@@ -330,7 +330,7 @@ exports.sendNumbers = function (req, res) {
                                 err)}`, 'error')
                           }
                           if (res.body.error) {
-                            sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage')
+                            sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage', page._id, page.userId, page.companyId)
                           }
                         })
                     })

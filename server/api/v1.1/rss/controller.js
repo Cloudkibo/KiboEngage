@@ -19,7 +19,7 @@ exports.fetchRssFeed = function (req, res) {
           )
             .then(response => {
               if (response.body.error) {
-                sendOpAlert(response.body.error, 'rss controller in kiboengage')
+                sendOpAlert(response.body.error, 'rss controller in kiboengage', '', req.user._id, req.user.company_id)
                 return res.status(500).json({
                   status: 'failed',
                   payload: JSON.stringify(response.body.error)
