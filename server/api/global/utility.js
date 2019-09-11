@@ -58,7 +58,7 @@ const getPlainEmailObject = (to, from, subject, text, errorMessage, codePart) =>
     '<tr> <td class="center" align="center" valign="top"> <!-- BEGIN: Header --> <table class="page-header" align="center" style="width: 100%;background: #1f1f1f;"> <tr> <td class="center" align="center"> ' +
     '<!-- BEGIN: Header Container --> <table class="container" align="center"> <tr> <td> <table class="row "> <tr>  </tr> </table> <!-- END: Logo --> </td> <td class="wrapper vertical-middle last" style="padding-top: 0;padding-bottom: 0;vertical-align: middle;"> <!-- BEGIN: Social Icons --> <table class="six columns"> ' +
     '<tr> <td> <table class="wrapper social-icons" align="right" style="float: right;"> <tr> <td class="vertical-middle" style="padding-top: 0;padding-bottom: 0;vertical-align: middle;padding: 0 2px !important;width: auto !important;"> ' +
-    '<p style="color: #ffffff"> KiboPush - Facebook API Error </p> </td></tr> </table> </td> </tr> </table> ' +
+    '<p style="color: #ffffff"> KiboPush - Reconnect Facebook Account </p> </td></tr> </table> </td> </tr> </table> ' +
     '<!-- END: Social Icons --> </td> </tr> </table> </td> </tr> </table> ' +
     '<!-- END: Header Container --> </td> </tr> </table> <!-- END: Header --> <!-- BEGIN: Content --> <table class="container content" align="center"> <tr> <td> <table class="row note"> ' +
     '<tr> <td class="wrapper last"> <p> Hello, <br> '+ text +'</p> <p> </p>  <!-- BEGIN: Note Panel --> <table class="twelve columns" style="margin-bottom: 10px"> ' +
@@ -81,7 +81,7 @@ const passwordChangeEmailAlert = function(userId, userEmail){
   .then(response1 => {
     //sucess... Email user to reconnect facebook account
     let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
-    let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Facebook Connect', emailText)
+    let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
         if (require('../../config/environment').env === 'production') {
          utility.getSendGridObject()
             .send(email, function (err, json) {
