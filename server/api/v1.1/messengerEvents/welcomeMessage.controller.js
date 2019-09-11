@@ -59,7 +59,7 @@ exports.index = function (req, res) {
                     if (error) {
                     } else {
                       if (response.body.error) {
-                        sendOpAlert(response.body.error, 'welcome message controller in kiboengage')
+                        sendOpAlert(response.body.error, 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
                       }
                       broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                     }
