@@ -976,77 +976,83 @@ exports.getPagePermissions = function (req, res) {
   utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
     .then(page => {
       page = page[0]
-      console.log('page with user', page)
-      let appLevelPermissions = {
-        email: false,
-        manage_pages: false,
-        pages_show_list: false,
-        publish_pages: false,
-        pages_messaging: false,
-        pages_messaging_phone_number: false,
-        pages_messaging_subscriptions: false,
-        public_profile: false
-      }
-      let pageLevelPermissions = {
-        subscription_messaging: 'Not Applied'
-      }
-      async.parallelLimit([
-        function (callback) {
-          facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${page.user.facebookInfo.fbToken}`, 'get', {})
-            .then(response => {
-              console.log('response from debugger', response.body)
-              if (response.body && response.body.data && response.body.data.scopes) {
-                if (response.body.data.scopes.length > 0) {
-                  for (let i = 0; i < response.body.data.scopes.length; i++) {
-                    appLevelPermissions[`${response.body.data.scopes[i]}`] = true
-                    if (i === response.body.data.scopes.length - 1) {
+      utility.callApi(`user/query`, 'post', {email: 'anisha@cloudkibo.com'}, 'accounts', req.headers.authorization)
+        .then(user => {
+          user = user[0]
+          let appLevelPermissions = {
+            email: false,
+            manage_pages: false,
+            pages_show_list: false,
+            publish_pages: false,
+            pages_messaging: false,
+            pages_messaging_phone_number: false,
+            pages_messaging_subscriptions: false,
+            public_profile: false
+          }
+          let pageLevelPermissions = {
+            subscription_messaging: 'Not Applied'
+          }
+          async.parallelLimit([
+            function (callback) {
+              facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${user.facebookInfo.fbToken}`, 'get', {})
+                .then(response => {
+                  logger.serverLog(TAG, `response from debug token ${response.body}`)
+                  if (response.body && response.body.data && response.body.data.scopes) {
+                    if (response.body.data.scopes.length > 0) {
+                      for (let i = 0; i < response.body.data.scopes.length; i++) {
+                        appLevelPermissions[`${response.body.data.scopes[i]}`] = true
+                        if (i === response.body.data.scopes.length - 1) {
+                          callback(null, appLevelPermissions)
+                        }
+                      }
+                    } else {
                       callback(null, appLevelPermissions)
                     }
+                  } else {
+                    callback(response.body.error)
                   }
-                } else {
-                  callback(null, appLevelPermissions)
-                }
-              } else {
-                callback(response.body.error)
-              }
-            })
-            .catch(err => {
-              callback(err)
-            })
-        },
-        function (callback) {
-          facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
-            .then(response => {
-              console.log('response from feature', response.body)
-              if (response.body && response.body.data) {
-                if (response.body.data.length > 0) {
-                  for (let i = 0; i < response.body.data.length; i++) {
-                    pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
-                    if (i === response.body.data.length - 1) {
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            },
+            function (callback) {
+              facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
+                .then(response => {
+                  logger.serverLog(TAG, `response from messaging_feature_review ${response.body}`)
+                  if (response.body && response.body.data) {
+                    if (response.body.data.length > 0) {
+                      for (let i = 0; i < response.body.data.length; i++) {
+                        pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
+                        if (i === response.body.data.length - 1) {
+                          callback(null, pageLevelPermissions)
+                        }
+                      }
+                    } else {
                       callback(null, pageLevelPermissions)
                     }
+                  } else {
+                    callback(response.body.error)
                   }
-                } else {
-                  callback(null, pageLevelPermissions)
-                }
-              } else {
-                callback(response.body.error)
-              }
-            })
-            .catch(err => {
-              callback(err)
-            })
-        }
-      ], 10, function (err, results) {
-        if (err) {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch page permissions ${JSON.stringify(err)}`
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            }
+          ], 10, function (err, results) {
+            if (err) {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Failed to fetch page permissions ${JSON.stringify(err)}`
+              })
+            } else {
+              sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
+            }
           })
-        } else {
-          sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
-        }
-      })
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
+        })
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
