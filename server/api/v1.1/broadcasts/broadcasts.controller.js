@@ -778,7 +778,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
       logger.serverLog(TAG, `Conversation sent successfully using interval ${JSON.stringify(payload)}`, 'debug')
       sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
     } else {
-      broadcastApi.callMessageCreativesEndpoint(payload[current], page.accessToken)
+      broadcastApi.callMessageCreativesEndpoint(payload[current], page.accessToken, page)
         .then(messageCreative => {
           logger.serverLog(TAG, `messageCreative ${util.inspect(messageCreative)}`)
           if (messageCreative.status === 'success') {
@@ -817,7 +817,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                       labels = labels.concat(temp)
                     }
                   }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken)
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page)
                     .then(response => {
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                       if (i === limit - 1) {

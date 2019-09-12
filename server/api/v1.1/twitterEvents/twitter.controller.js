@@ -46,7 +46,7 @@ exports.twitterwebhook = function (req, res) {
                 facebookApiCaller('v3.3', `me/messages?access_token=${postingItem.approvalChannel.pageAccessToken}`, 'post', messageData)
                   .then(response => {
                     if (response.body.error) {
-                      sendOpAlert(response.body.error, 'twitter controller in kiboengage')
+                      sendOpAlert(response.body.error, 'twitter controller in kiboengage', '', req.user._id, req.user.companyId)
                       logger.serverLog(TAG, `Failed to send approval message ${JSON.stringify(response.body.error)}`, 'error')
                     } else {
                       logger.serverLog(TAG, `Approval message send successfully!`)
@@ -159,7 +159,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage')
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
@@ -173,7 +173,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/photos?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage')
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
@@ -187,7 +187,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage')
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
@@ -201,7 +201,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/videos?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage')
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')

@@ -73,7 +73,7 @@ exports.create = function (req, res) {
                       `Page accesstoken from graph api Error${JSON.stringify(err)}`, 'error')
                   }
                   if (respp.body.error) {
-                    sendOpAlert(respp.body.error, 'comment capture controller in kiboengage')
+                    sendOpAlert(respp.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
                   }
                   let messageData = logicLayer.setMessage(req.body.payload)
                   if (messageData.image) {
@@ -95,7 +95,7 @@ exports.create = function (req, res) {
                               sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
                             })
                         } else {
-                          sendOpAlert(resp.body.error, 'comment capture controller in kiboengage')
+                          sendOpAlert(resp.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
                           sendErrorResponse(res, 500, '', resp.body)
                         }
                       })
@@ -113,7 +113,7 @@ exports.create = function (req, res) {
                               logger.serverLog(TAG, err, 'error')
                             }
                             if (response.body.error) {
-                              sendOpAlert(response.body.error, 'comment capture controller in kiboengage')
+                              sendOpAlert(response.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
                             }
                             logger.serverLog(TAG, `response from feed ${JSON.stringify(response.body)}`)
                             logicLayer.getPostId(response.body.data, resp.body.id).then(postId => {
@@ -148,7 +148,7 @@ exports.create = function (req, res) {
                               sendErrorResponse(res, 500, `Failed to create post ${JSON.stringify(error)}`)
                             })
                         } else {
-                          sendOpAlert(resp.body.error, 'comment capture controller in kiboengage')
+                          sendOpAlert(resp.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
                           sendErrorResponse(res, 500, '', resp.body)
                         }
                       })

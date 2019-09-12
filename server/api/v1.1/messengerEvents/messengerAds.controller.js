@@ -33,7 +33,7 @@ exports.index = function (req, res) {
                           logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                         }
                         if (resp2.body.error) {
-                          sendOpAlert(resp2.body.error, 'messenger Ads in KiboEngage')
+                          sendOpAlert(resp2.body.error, 'messenger Ads in KiboEngage', page._id, page.userId, page.companyId)
                         }
                         let pageAccessToken = resp2.body.access_token
                         const options = {
@@ -47,7 +47,7 @@ exports.index = function (req, res) {
                           if (error) {
                           } else {
                             if (response.body.error) {
-                              sendOpAlert(response.body.error, 'messenger Ads in KiboEngage')
+                              sendOpAlert(response.body.error, 'messenger Ads in KiboEngage', page._id, page.userId, page.companyId)
                             }
                             broadcastUtility.getBatchData(response.messageContent, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                           }

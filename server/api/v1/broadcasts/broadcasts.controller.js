@@ -264,7 +264,7 @@ exports.upload = function (req, res) {
                 })
               }
               if (resp2.body.error) {
-                sendOpAlert(resp2.body.error, 'scripts controller in kiboengage')
+                sendOpAlert(resp2.body.error, 'scripts controller in kiboengage', page._id, page.userId, page.companyId)
               }
               let pageAccessToken = resp2.body.access_token
               let fileReaderStream = fs.createReadStream(dir + '/userfiles/' + req.files.file.name)
@@ -294,7 +294,7 @@ exports.upload = function (req, res) {
                     })
                   } else {
                     if (resp.body.error) {
-                      return sendOpAlert(resp.body.error, 'broadcast controller.js')
+                      return sendOpAlert(resp.body.error, 'broadcast controller.js', page._id, page.userId, page.companyId)
                     }
                     logger.serverLog(TAG,
                       `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
@@ -434,7 +434,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     } else {
      // logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
       if (body.error && body.error.code === 190 && body.error.error_subcode === 460) {
-        sendOpAlert(body.error, 'inside broadcastcontroller.js')
+        sendOpAlert(body.error, 'inside broadcastcontroller.js', page._id, page.userId, page.companyId)
         return res.status(200)
           .json({status: 'INVALID_SESSION', description: body.error.message})
       } else if (subscriberNumber === (subscribersLength - 1)) {

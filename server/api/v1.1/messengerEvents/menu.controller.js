@@ -36,7 +36,7 @@ exports.index = function (req, res) {
     })
 }
 
-function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken) {
+function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken, page) {
   for (let i = 0; i < replyPayload.length; i++) {
     logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
       .then(result => {
@@ -54,7 +54,7 @@ function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName,
             if (err) {
             } else {
               if (res.body.error) {
-                sendOpAlert(res.body.error, 'Menu controller in KiboEngage')
+                sendOpAlert(res.body.error, 'Menu controller in KiboEngage', page._id, page.userId, page.companyId)
               }
               if (res.statusCode !== 200) {
                 logger.serverLog(TAG,
