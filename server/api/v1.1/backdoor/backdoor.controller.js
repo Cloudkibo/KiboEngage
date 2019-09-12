@@ -180,6 +180,7 @@ exports.allUserSurveys = function (req, res) {
 }
 exports.getAllBroadcasts = function (req, res) {
   let criteria = LogicLayer.getAllBroadcastsCriteria(req.body)
+  console.log('criteria.finalCriteria', criteria.finalCriteria)
   DataLayer.countBroadcasts(criteria.countCriteria[0].$match)
     .then(broadcastsCount => {
       let aggregateLookup = criteria.finalCriteria[0].$lookup
