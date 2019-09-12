@@ -180,7 +180,6 @@ exports.allUserSurveys = function (req, res) {
 }
 exports.getAllBroadcasts = function (req, res) {
   let criteria = LogicLayer.getAllBroadcastsCriteria(req.body)
-  console.log('criteria.finalCriteria', criteria.finalCriteria)
   DataLayer.countBroadcasts(criteria.countCriteria[0].$match)
     .then(broadcastsCount => {
       let aggregateLookup = criteria.finalCriteria[0].$lookup
@@ -977,6 +976,7 @@ exports.getPagePermissions = function (req, res) {
   utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
     .then(page => {
       page = page[0]
+      console.log('page with user', page)
       let appLevelPermissions = {
         email: false,
         manage_pages: false,
@@ -994,6 +994,7 @@ exports.getPagePermissions = function (req, res) {
         function (callback) {
           facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${page.user.facebookInfo.fbToken}`, 'get', {})
             .then(response => {
+              console.log('response from debugger', response.body)
               if (response.body && response.body.data && response.body.data.scopes) {
                 if (response.body.data.scopes.length > 0) {
                   for (let i = 0; i < response.body.data.scopes.length; i++) {
@@ -1016,6 +1017,7 @@ exports.getPagePermissions = function (req, res) {
         function (callback) {
           facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
             .then(response => {
+              console.log('response from feature', response.body)
               if (response.body && response.body.data) {
                 if (response.body.data.length > 0) {
                   for (let i = 0; i < response.body.data.length; i++) {
