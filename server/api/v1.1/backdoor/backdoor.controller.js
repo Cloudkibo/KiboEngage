@@ -1770,7 +1770,6 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                     retrievedSubscriberData += 1
 
                     if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
-                      console.log('subscriberData', subscriberData
                       utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
                         .then(user => {
                           user = user[0]
