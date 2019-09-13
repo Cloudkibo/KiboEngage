@@ -103,9 +103,9 @@ router.get('/fetchPageTags/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageTags)
 
-router.get('/fetchSubscribersWithTags/:pageId',
+router.post('/fetchSubscribersWithTags/:pageId',
   auth.isAuthorizedSuperUser(),
-  controller.fetchSubscribersWithTags)
+  controller.fetchSubscribersWithTagsNew)
 
 router.get('/fetchPageAdmins/:pageId',
   auth.isAuthorizedSuperUser(),
