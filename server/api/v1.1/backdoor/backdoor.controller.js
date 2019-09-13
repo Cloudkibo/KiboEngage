@@ -17,7 +17,6 @@ const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 // const helperApiCalls = require('./helperApiCalls')
 const needle = require('needle')
-const PassportFacebookExtension = require('passport-facebook-extension')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
