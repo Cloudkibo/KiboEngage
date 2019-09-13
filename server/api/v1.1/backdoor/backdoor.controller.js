@@ -1865,15 +1865,20 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                       }
                     }
                     if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                      subscriberData.push({
-                        subscriber: pageSubscribers[0].subscribers[i],
-                        assignedTags: assignedTags,
-                        unassignedTags: unassignedTags
-                      })
+                      if (req.body.subscriberName && 
+                        (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
+                        pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))
+                        ) {
+                          subscriberData.push({
+                            subscriber: pageSubscribers[0].subscribers[i],
+                            assignedTags: assignedTags,
+                            unassignedTags: unassignedTags
+                          })
+                        }
                     }
                     retrievedSubscriberData += 1
 
-                    if (retrievedSubscriberData === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
+                    if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
                       console.log('subscriberData', subscriberData)
                       utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
                         .then(user => {
