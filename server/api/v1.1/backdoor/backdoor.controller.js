@@ -1754,7 +1754,8 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
         '_id': '$pageId',
         'pageName': {'$first': '$pageName'},
         'subscribers': {'$addToSet': '$subscriber'},
-        'accessToken': {'$first': '$accessToken'}
+        'accessToken': {'$first': '$accessToken'},
+        'userId': {'$first': '$userId'},
       }
     },
     {
@@ -1763,6 +1764,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
         'pageId': '$_id',
         'pageName': 1,
         'subscribers': 1,
+        'userId': 1,
         'accessToken': 1
       }
     }
@@ -1906,13 +1908,24 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
 
                     if (retrievedSubscriberData === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
                       console.log('subscriberData', subscriberData)
-                      return res.status(200).json({
-                        status: 'success',
-                        payload: {
-                          subscriberData,
-                          totalSubscribers: pageSubscribers[0].subscribers.length
-                        }
-                      })
+                      utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
+                        .then(user => {
+                          user = user[0]
+                          return res.status(200).json({
+                            status: 'success',
+                            payload: {
+                              subscriberData,
+                              totalSubscribers: pageSubscribers[0].subscribers.length,
+                              user
+                            }
+                          })
+                        })
+                        .catch(err => {
+                          return res.status(500).json({
+                            status: 'failed',
+                            description: `Failed to fetch page owner info ${err}`
+                          })
+                        })
                     }
                   }
                 })
