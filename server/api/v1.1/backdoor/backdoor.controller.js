@@ -1104,6 +1104,10 @@ exports.fetchUniquePages = (req, res) => {
     },
     { '$group': {
       '_id': '$pageId'
+    }},
+    { '$group': {
+      '_id': null,
+      'count': {$sum: 1}
     }}
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
@@ -1121,11 +1125,12 @@ exports.fetchUniquePages = (req, res) => {
               if (pageOwnersFound === uniquePages.length) {
                 utility.callApi(`pages/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
                   .then(count => {
+                    // console.log('countAggregation result', count)
                     return res.status(200).json({
                       status: 'success',
                       payload: {
                         data: uniquePages,
-                        totalCount: count.length
+                        totalCount: count[0].count
                       }
                     })
                   })
