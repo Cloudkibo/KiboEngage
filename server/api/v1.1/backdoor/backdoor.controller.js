@@ -1582,147 +1582,6 @@ exports.fetchPageAdmins = (req, res) => {
     })
 }
 
-exports.fetchCompanyInfo = (req, res) => {
-  console.log('fetching company info')
-  let companyAggregation = [
-    {
-      '$lookup': {
-        from: 'pages',
-        localField: '_id',
-        foreignField: 'companyId',
-        as: 'page'
-      }
-    },
-    {
-      '$unwind': '$page'
-    },
-    { '$lookup': {
-      from: 'users',
-      localField: 'ownerId',
-      foreignField: '_id',
-      as: 'user'
-    }
-    },
-    {
-      '$unwind': '$user'
-    },
-    { '$lookup': {
-      from: 'companyusers',
-      localField: '_id',
-      foreignField: 'companyId',
-      as: 'companyUser'
-    }
-    },
-    {
-      '$unwind': '$companyUser'
-    },
-    { '$lookup': {
-      from: 'subscribers',
-      localField: '_id',
-      foreignField: 'companyId',
-      as: 'subscriber'
-    }
-    },
-    {
-      '$unwind': '$subscriber'
-    },
-    {
-      '$group': {
-        '_id': '$_id',
-        'pages': {'$addToSet': '$page'},
-        'companyName': {'$first': '$companyName'},
-        'companyUsers': {'$addToSet': '$companyUser'},
-        'subscribers': {'$addToSet': '$subscriber'},
-        'user': {'$first': '$user'}
-      }
-    },
-    {
-      '$match': {
-        companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
-      }
-    },
-    {
-      '$sort': {'_id': -1}
-    },
-    {
-      '$project': {
-        '_id': 1,
-        'companyName': 1,
-        'pages': 1,
-        'companyUsers': 1,
-        'subscribers': 1,
-        'user': 1
-      }
-    },
-    {
-      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
-    },
-    {
-      '$limit': 10
-    }
-  ]
-  utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
-    .then(companyOwnedPages => {
-      // console.log('companyAggregation done', companyOwnedPages)
-      console.log('companyInfo length', companyOwnedPages.length)
-      let data = []
-      for (let i = 0; i < companyOwnedPages.length; i++) {
-        // console.log(`companyInfo ${i} ${JSON.stringify(companyOwnedPages[i])}`)
-        // console.log('company loop', i)
-        data.push({
-          companyName: companyOwnedPages[i].companyName,
-          numOfConnectedPages: companyOwnedPages[i].pages.filter(page => page.connected).length,
-          numOfOwnedPages: companyOwnedPages[i].pages.length,
-          numOfCompanyUsers: companyOwnedPages[i].companyUsers.length,
-          numOfSubscribers: companyOwnedPages[i].subscribers.length,
-          owner: companyOwnedPages[i].user
-        })
-      }
-      console.log('company data done', data)
-      let countAggregation = [
-        {
-          '$group': {
-            '_id': '$_id',
-            'companyName': {'$first': '$companyName'}
-          }
-        },
-        {
-          '$project': {
-            '_id': 1,
-            'companyName': 1
-          }
-        },
-        {
-          '$match': {
-            companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
-          }
-        }
-      ]
-      utility.callApi(`companyprofile/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
-        .then(count => {
-          return res.status(200).json({
-            status: 'success',
-            payload: {
-              data,
-              count: count.length
-            }
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch count of companies ${err}`
-          })
-        })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch company owned pages ${err}`
-      })
-    })
-}
-
 exports.fetchSubscribersWithTagsNew = (req, res) => {
   let aggregation = [
     {
@@ -1912,7 +1771,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                     retrievedSubscriberData += 1
 
                     if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
-                      console.log('subscriberData', subscriberData)
+                      console.log('subscriberData', subscriberData
                       utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
                         .then(user => {
                           user = user[0]
@@ -1954,6 +1813,147 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch unique pages ${err}`
+      })
+    })
+}
+
+exports.fetchCompanyInfo = (req, res) => {
+  console.log('fetching company info')
+  let companyAggregation = [
+    {
+      '$lookup': {
+        from: 'pages',
+        localField: '_id',
+        foreignField: 'companyId',
+        as: 'page'
+      }
+    },
+    {
+      '$unwind': '$page'
+    },
+    { '$lookup': {
+      from: 'users',
+      localField: 'ownerId',
+      foreignField: '_id',
+      as: 'user'
+    }
+    },
+    {
+      '$unwind': '$user'
+    },
+    { '$lookup': {
+      from: 'companyusers',
+      localField: '_id',
+      foreignField: 'companyId',
+      as: 'companyUser'
+    }
+    },
+    {
+      '$unwind': '$companyUser'
+    },
+    { '$lookup': {
+      from: 'subscribers',
+      localField: '_id',
+      foreignField: 'companyId',
+      as: 'subscriber'
+    }
+    },
+    {
+      '$unwind': '$subscriber'
+    },
+    {
+      '$group': {
+        '_id': '$_id',
+        'pages': {'$addToSet': '$page'},
+        'companyName': {'$first': '$companyName'},
+        'companyUsers': {'$addToSet': '$companyUser'},
+        'subscribers': {'$addToSet': '$subscriber'},
+        'user': {'$first': '$user'}
+      }
+    },
+    {
+      '$match': {
+        companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
+      }
+    },
+    {
+      '$sort': {'_id': -1}
+    },
+    {
+      '$project': {
+        '_id': 1,
+        'companyName': 1,
+        'pages': 1,
+        'companyUsers': 1,
+        'subscribers': 1,
+        'user': 1
+      }
+    },
+    {
+      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
+    },
+    {
+      '$limit': 10
+    }
+  ]
+  utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
+    .then(companyOwnedPages => {
+      // console.log('companyAggregation done', companyOwnedPages)
+      console.log('companyInfo length', companyOwnedPages.length)
+      let data = []
+      for (let i = 0; i < companyOwnedPages.length; i++) {
+        // console.log(`companyInfo ${i} ${JSON.stringify(companyOwnedPages[i])}`)
+        // console.log('company loop', i)
+        data.push({
+          companyName: companyOwnedPages[i].companyName,
+          numOfConnectedPages: companyOwnedPages[i].pages.filter(page => page.connected).length,
+          numOfOwnedPages: companyOwnedPages[i].pages.length,
+          numOfCompanyUsers: companyOwnedPages[i].companyUsers.length,
+          numOfSubscribers: companyOwnedPages[i].subscribers.length,
+          owner: companyOwnedPages[i].user
+        })
+      }
+      console.log('company data done', data)
+      let countAggregation = [
+        {
+          '$group': {
+            '_id': '$_id',
+            'companyName': {'$first': '$companyName'}
+          }
+        },
+        {
+          '$project': {
+            '_id': 1,
+            'companyName': 1
+          }
+        },
+        {
+          '$match': {
+            companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
+          }
+        }
+      ]
+      utility.callApi(`companyprofile/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
+        .then(count => {
+          return res.status(200).json({
+            status: 'success',
+            payload: {
+              data,
+              count: count.length
+            }
+          })
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Failed to fetch count of companies ${err}`
+          })
+        })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch company owned pages ${err}`
       })
     })
 }
