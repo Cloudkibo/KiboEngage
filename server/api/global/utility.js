@@ -86,7 +86,7 @@ const passwordChangeEmailAlert = function(userId, userEmail){
     let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
     let transporter = getMailTransporter()
     
-    if (require('../../config/environment').env === 'production') {
+    if (config.env === 'production') {
       transporter.sendMail(email, function (err, data) {
         if (err) {
           logger.serverLog(TAG, `error in sending Alert email: ${JSON.stringify(err)}`, 'error')
