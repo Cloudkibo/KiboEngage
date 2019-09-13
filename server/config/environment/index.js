@@ -41,6 +41,11 @@ const all = {
     username: 'cloudkibo',
     password: 'cl0udk1b0'
   },
+  nodemailer: {
+    service: 'gmail',
+    email: 'muzamil@cloudkibo.com',
+    password: 'cloudkibo123'
+  },
   kibodashdomain: `${process.env.KIBODASH || 'http://localhost:5050'}`
 }
 
