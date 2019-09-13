@@ -5,7 +5,6 @@ const config = require('./../../config/environment')
 const nodemailer = require('nodemailer')
 let TAG = 'server/api/global/utility'
 
-
 exports.getScheduledTime = (interval) => {
   let hours
   if (interval === '24 hours') {
