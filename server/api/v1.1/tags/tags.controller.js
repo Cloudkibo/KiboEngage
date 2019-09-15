@@ -56,7 +56,7 @@ exports.create = function (req, res) {
                 facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
                   .then(label => {
                     if (label.body.error) {
-                      sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId, page.companyId)
+                      sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId._id, page.companyId)
                       sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                     }
                     let tagPayload = {
@@ -128,7 +128,7 @@ exports.rename = function (req, res) {
               facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
                 .then(label => {
                   if (label.body.error) {
-                    sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId, page.companyId)
+                    sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId._id, page.companyId)
                     sendErrorResponse(res, 500, '', `Failed to delete tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                 })
@@ -138,7 +138,7 @@ exports.rename = function (req, res) {
               facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.newTag})
                 .then(label => {
                   if (label.body.error) {
-                    sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId, page.companyId)
+                    sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId._id, page.companyId)
                     sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                   let data = {
@@ -277,7 +277,7 @@ function deleteTagsFromFacebook (req, tags, callback) {
         facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
             if (label.body.error) {
-              sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId, page.companyId)
+              sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId._id, page.companyId)
               callback(label.body.error)
             }
             if (i === tags.length - 1) {

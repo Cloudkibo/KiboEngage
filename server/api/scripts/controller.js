@@ -44,14 +44,14 @@ exports.addWhitelistDomain = function (req, res) {
                     if (err) {
                     }
                     if (resp.body.error) {
-                      sendOpAlert(resp.body.error, 'scripts in kiboengage', pages[i]._id, pages[i].userId, pages[i].companyId)
+                      sendOpAlert(resp.body.error, 'scripts in kiboengage', pages[i]._id, pages[i].userId._id, pages[i].companyId)
                     }
                     var accessToken = resp.body.access_token
                     needle.get(`https://graph.facebook.com/v2.6/me/messenger_profile?fields=whitelisted_domains&access_token=${accessToken}`, function (err, resp) {
                       if (err) {
                       }
                       if (resp.body.error) {
-                        sendOpAlert(resp.body.error, 'scripts in kiboengage', pages[i]._id, pages[i].userId, pages[i].companyId)
+                        sendOpAlert(resp.body.error, 'scripts in kiboengage', pages[i]._id, pages[i].userId._id, pages[i].companyId)
                       }
                       var body = JSON.parse(JSON.stringify(resp.body))
                       let temp = []
@@ -67,7 +67,7 @@ exports.addWhitelistDomain = function (req, res) {
                         if (err) {
                         }
                         if (resp.body.error) {
-                          sendOpAlert(resp.body.error, 'scripts in kiboengage', pages[i]._id, pages[i].userId, pages[i].companyId)
+                          sendOpAlert(resp.body.error, 'scripts in kiboengage', pages[i]._id, pages[i].userId._id, pages[i].companyId)
                         }
                       })
                     })
@@ -109,7 +109,7 @@ exports.performanceTestBroadcast = function (req, res) {
       facebookApiCaller('v2.11', `me/messages?access_token=${page.AccessToken}`, 'post', payload)
         .then(response => {
           if (response.body.error) {
-            sendOpAlert(response.body.error, 'scripts controller in kiboengage', page._id, page.userId, page.companyId)
+            sendOpAlert(response.body.error, 'scripts controller in kiboengage', page._id, page.userId._id, page.companyId)
             return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${response.body.error}`})
           } else {
             if (i === count - 1) {
@@ -144,7 +144,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       })
     }
     if (body.error) {
-      sendOpAlert(body.error, 'scripts controller in kiboengage', page._id, page.userId, page.companyId)
+      sendOpAlert(body.error, 'scripts controller in kiboengage', page._id, page.userId._id, page.companyId)
     }
     // Following change is to incorporate persistant menu
 

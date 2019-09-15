@@ -159,7 +159,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId._id, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
@@ -173,7 +173,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/photos?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId._id, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
@@ -187,7 +187,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId._id, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
@@ -201,7 +201,7 @@ const postOnFacebook = (postingItem, page, req) => {
         facebookApiCaller('v3.3', `${page.pageId}/videos?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
-              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
+              sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId._id, page.companyId)
               logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
             } else {
               logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')

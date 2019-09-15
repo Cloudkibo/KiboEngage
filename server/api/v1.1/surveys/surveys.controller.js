@@ -627,7 +627,7 @@ function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUs
                           sendErrorResponse(res, 500, JSON.stringify(err))
                         }
                         if (resp.body.error) {
-                          sendOpAlert(resp.body.error, 'surveys controller in kiboengage', page._id, page.userId, page.companyId)
+                          sendOpAlert(resp.body.error, 'surveys controller in kiboengage', page._id, page.userId._id, page.companyId)
                         }
                         messageData.componentType = 'survey'
                         let message = preparePayload(req.user, subscribers[j], page, messageData)

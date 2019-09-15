@@ -396,7 +396,7 @@ function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planU
                         logger.serverLog(TAG, err, 'error')
                       }
                       if (resp.body.error) {
-                        sendOpAlert(resp.body.error, 'polls controller in kiboengage', page._id, page.userId, page.companyId)
+                        sendOpAlert(resp.body.error, 'polls controller in kiboengage', page._id, page.userId._id, page.companyId)
                       }
                       messageData.componentType = 'poll'
                       let message = preparePayload(req.user, subscribers[j], page, messageData)

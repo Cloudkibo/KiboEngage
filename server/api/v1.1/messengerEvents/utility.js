@@ -9,7 +9,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
       logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
     }
     if (body.error) {
-      sendOpAlert(body.error, 'in utility of messengerevents in kiboengage', page._id, page.userId, page.companyId)
+      sendOpAlert(body.error, 'in utility of messengerevents in kiboengage', page._id, page.userId._id, page.companyId)
     }
   })
   const form = r.form()

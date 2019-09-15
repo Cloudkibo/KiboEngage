@@ -54,7 +54,7 @@ function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName,
             if (err) {
             } else {
               if (res.body.error) {
-                sendOpAlert(res.body.error, 'Menu controller in KiboEngage', page._id, page.userId, page.companyId)
+                sendOpAlert(res.body.error, 'Menu controller in KiboEngage', page._id, page.userId._id, page.companyId)
               }
               if (res.statusCode !== 200) {
                 logger.serverLog(TAG,

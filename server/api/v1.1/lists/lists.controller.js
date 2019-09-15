@@ -104,7 +104,7 @@ function createTag (req, callback) {
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
             if (label.body.error) {
-              sendOpAlert(label.body.error, 'lists controller in kiboengage from createTag', page._id, page.userId, page.companyId)
+              sendOpAlert(label.body.error, 'lists controller in kiboengage from createTag', page._id, page.userId._id, page.companyId)
               return callback(label.body.error)
             }
             let tagPayload = {
@@ -178,7 +178,7 @@ exports.editList = function (req, res) {
               facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': label})
                 .then(label => {
                   if (label.body.error) {
-                    sendOpAlert(label.body.error, 'lists controller in kiboengage from editList', page._id, page.userId, page.companyId)
+                    sendOpAlert(label.body.error, 'lists controller in kiboengage from editList', page._id, page.userId._id, page.companyId)
                     sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                   }
                   let data = {
@@ -390,7 +390,7 @@ function deleteListFromFacebook (req, tags, callback) {
         facebookApiCaller('v2.11', `${tag.labelFbId}?access_token=${page.accessToken}`, 'delete', {})
           .then(label => {
             if (label.body.error) {
-              sendOpAlert(label.body.error, 'lists controller in kiboengage From deleteListFromFacebook', page._id, page.userId, page.companyId)
+              sendOpAlert(label.body.error, 'lists controller in kiboengage From deleteListFromFacebook', page._id, page.userId._id, page.companyId)
               callback(label.error)
             }
             if (i === tags.length - 1) {
@@ -491,7 +491,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
               if (assignedLabel.body.error) {
-                sendOpAlert(assignedLabel.body.error, 'lists controller in kiboengage from assignTagToSubscribers1', '', req.user.companyId, req.user._id)
+                sendOpAlert(assignedLabel.body.error, 'lists controller in kiboengage from assignTagToSubscribers1', '', req.user._id, req.user.companyId)
                 sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${assignedLabel.body.error}`)
               }
               let subscriberTagsPayload = {
@@ -522,7 +522,7 @@ function assignTagToSubscribers (subscribers, tag, req, res) {
               facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
                 .then(assignedLabel => {
                   if (assignedLabel.body.error) {
-                    sendOpAlert(assignedLabel.body.error, 'lists controller in kiboengage from assignTagToSubscribers2', '', req.user.companyId, req.user._id)
+                    sendOpAlert(assignedLabel.body.error, 'lists controller in kiboengage from assignTagToSubscribers2', '', req.user._id, req.user.companyId)
                     sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${assignedLabel.body.error}`)
                   }
                   let subscriberTagsPayload = {
