@@ -115,4 +115,8 @@ router.post('/fetchCompanyInfo',
   auth.isAuthorizedSuperUser(),
   controller.fetchCompanyInfo)
 
+router.post('/topPages',
+  auth.isAuthorizedSuperUser(),
+  controller.topPages)
+
 module.exports = router
