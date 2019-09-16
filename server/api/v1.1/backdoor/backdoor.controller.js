@@ -967,7 +967,9 @@ exports.fetchAutopostingDetails = function (req, res) {
 }
 exports.getPagePermissions = function (req, res) {
   let recentPageCriteria = [
-    {$match: {pageId: req.params.id, connected: true}},
+    {$match: {pageId: req.params.id}},
+    {$sort: {_id: -1}},
+    {$limit: 1},
     { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
     { '$unwind': '$user' }
   ]
@@ -1584,7 +1586,7 @@ exports.fetchPageAdmins = (req, res) => {
 exports.fetchSubscribersWithTagsNew = (req, res) => {
   let aggregation = [
     {
-      '$match': {pageId: req.params.pageId}
+      '$match': {pageId: req.body.pageId}
     },
     {
       '$match': req.body.pageOwner ? {'userId': req.body.pageOwner}
@@ -1660,11 +1662,12 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
             }
           },
           {
-            '$match': {'pageId': req.params.pageId}
+            '$match': {'pageId': req.body.pageId}
           }
         ]
         utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
           .then(pageTags => {
+            console.log('pageTags found', pageTags)
             for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
               console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
               needle.get(
@@ -1762,7 +1765,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                       (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
                       pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))}`, 'debug')
                     if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                      if (req.body.subscriberName && 
+                      if (req.body.subscriberName &&
                         (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
                         pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))
                         ) {
@@ -1915,46 +1918,27 @@ exports.fetchCompanyInfo = (req, res) => {
         })
       }
       console.log('company data done', data)
-      let countAggregation = [
-        {
-          '$group': {
-            '_id': '$_id',
-            'companyName': {'$first': '$companyName'}
-          }
-        },
-        {
-          '$project': {
-            '_id': 1,
-            'companyName': 1
-          }
-        },
-        {
-          '$match': {
-            companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
-          }
+      return res.status(200).json({
+        status: 'success',
+        payload: {
+          data
         }
-      ]
-      utility.callApi(`companyprofile/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
-        .then(count => {
-          return res.status(200).json({
-            status: 'success',
-            payload: {
-              data,
-              count: count.length
-            }
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch count of companies ${err}`
-          })
-        })
+      })
     })
     .catch(err => {
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch company owned pages ${err}`
       })
+    })
+}
+exports.topPages = function (req, res) {
+  let body = LogicLayer.topPagesCriteria(req.body)
+  utility.callApi(`subscribers/aggregate`, 'post', body)
+    .then(topPages => {
+      sendSuccessResponse(res, 200, topPages)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch sessions ${JSON.stringify(error)}`)
     })
 }
