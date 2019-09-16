@@ -65,9 +65,10 @@ exports.preparePollsPayload = function (user, body) {
   let pollPayload = {
     platform: 'facebook',
     statement: body.statement,
-    options: body.options,
+    options: body.options.map((o) => o.option),
     companyId: user.companyId,
-    userId: user._id
+    userId: user._id,
+    actions: body.options
   }
   if (body.isSegmented) {
     pollPayload.isSegmented = true
@@ -172,20 +173,32 @@ exports.prepareMessageData = function (body, id) {
       {
         'content_type': 'text',
         'title': body.options[0],
-        'payload': JSON.stringify(
-          {poll_id: id, option: body.options[0]})
+        'payload': JSON.stringify({
+          poll_id: id,
+          option: body.options[0],
+          sequenceId: body.actions[0].sequenceId,
+          action: body.actions[0].action
+        })
       },
       {
         'content_type': 'text',
         'title': body.options[1],
-        'payload': JSON.stringify(
-          {poll_id: id, option: body.options[1]})
+        'payload': JSON.stringify({
+          poll_id: id,
+          option: body.options[1],
+          sequenceId: body.actions[1].sequenceId,
+          action: body.actions[1].action
+        })
       },
       {
         'content_type': 'text',
         'title': body.options[2],
-        'payload': JSON.stringify(
-          {poll_id: id, option: body.options[2]})
+        'payload': JSON.stringify({
+          poll_id: id,
+          option: body.options[2],
+          sequenceId: body.actions[2].sequenceId,
+          action: body.actions[2].action
+        })
       }
     ],
     metadata: 'SENT_FROM_KIBOPUSH'

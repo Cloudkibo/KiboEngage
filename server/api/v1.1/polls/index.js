@@ -32,7 +32,6 @@ router.post('/send',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
-  validate({body: validationSchema.createPayload}),
   controller.send)
 
 router.post('/sendPollDirectly',

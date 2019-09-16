@@ -103,7 +103,6 @@ exports.delete = function (req, res) {
   })
 }
 exports.addButton = function (req, res) {
-  console.log(JSON.stringify(req.body))
   if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
     sendErrorResponse(res, 500, '', 'Url is required for type web_url.')
   }
@@ -183,7 +182,7 @@ exports.editButton = function (req, res) {
   }
   if (
     req.body.type === 'postback' &&
-    ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) ||
+    ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
     !(_.has(req.body, 'messageId')))
   ) {
     sendErrorResponse(res, 400, '', 'SequenceId & action are required for type postback')
