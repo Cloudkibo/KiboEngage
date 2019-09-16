@@ -967,7 +967,9 @@ exports.fetchAutopostingDetails = function (req, res) {
 }
 exports.getPagePermissions = function (req, res) {
   let recentPageCriteria = [
-    {$match: {pageId: req.params.id, connected: true}},
+    {$match: {pageId: req.params.id}},
+    {$sort: {_id: -1}},
+    {$limit: 1},
     { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
     { '$unwind': '$user' }
   ]
@@ -1756,7 +1758,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                       }
                     }
                     if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                      if (req.body.subscriberName && 
+                      if (req.body.subscriberName &&
                         (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
                         pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))
                         ) {
