@@ -141,3 +141,80 @@ exports.sendSequenceMessage = (req, res) => {
       logger.serverLog(TAG, `Failed to fecth sequence message ${err}`, 'error')
     })
 }
+
+exports.subscribeToSequence = (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    description: `received the payload`
+  })
+  let resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  const sender = req.body.entry[0].messaging[0].sender.id
+  const pageId = req.body.entry[0].messaging[0].recipient.id
+  let pageQuery = [
+    { $match: {pageId: pageId, connected: true} },
+    { $lookup: { from: 'companyprofiles', localField: 'companyId', foreignField: '_id', as: 'company' } },
+    { '$unwind': '$company' }
+  ]
+  callApi(`pages/aggregate`, 'post', pageQuery)
+    .then(page => {
+      page = page[0]
+      callApi(`subscribers/query`, 'post', {senderId: sender, pageId: page._id})
+        .then(subscriber => {
+          subscriber = subscriber[0]
+          SequencesDataLayer.genericFindForSequenceMessages({sequenceId: resp.sequenceId})
+            .then(messages => {
+              if (messages.length > 0) {
+                SequencesDataLayer.genericFindForSequenceSubscribers({sequenceId: resp.sequenceId, companyId: page.company._id, subscriberId: subscriber._id})
+                  .then(seqSubs => {
+                    if (seqSubs.length > 0) {
+                      logger.serverLog(TAG, 'This subscriber is already subscribed to the sequence')
+                    } else {
+                      let sequenceSubscriberPayload = {
+                        sequenceId: resp.sequenceId,
+                        subscriberId: subscriber._id,
+                        companyId: page.company._id,
+                        status: 'subscribed'
+                      }
+                      SequencesDataLayer.createForSequenceSubcriber(sequenceSubscriberPayload)
+                        .then(subscriberCreated => {
+                          messages.forEach(message => {
+                            if (message.trigger.event === 'none') {
+                              let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                              SequenceUtility.addToMessageQueue(resp.sequenceId, message._id, subscriber._id, page.company._id, utcDate)
+                            } else {
+                              SequenceUtility.addToMessageQueue(resp.sequenceId, message._id, subscriber._id, page.company._id)
+                            }
+                          })
+                          require('./../../../config/socketio').sendMessageToClient({
+                            room_id: page.company._id,
+                            body: {
+                              action: 'sequence_update',
+                              payload: {
+                                sequence_id: resp.sequenceId
+                              }
+                            }
+                          })
+                          console.log('subsriber subscribed successfully')
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to fetch sequence subscriber ${err}`, 'error')
+                        })
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to fetch sequence subscriber ${err}`, 'error')
+                  })
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch sequence messages ${err}`, 'error')
+            })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+        })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch page ${err}`, 'error')
+    })
+}

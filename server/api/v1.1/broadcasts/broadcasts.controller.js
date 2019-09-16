@@ -165,7 +165,7 @@ exports.addButton = function (req, res) {
         action: req.body.action,
         buttonId: buttonId
       })
-      buttonPayload.sequenceValue = req.body.sequenceId
+      // buttonPayload.sequenceValue = req.body.sequenceId
       sendSuccessResponse(res, 200, buttonPayload)
     } else {
       let buttonId = uniqid()
