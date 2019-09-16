@@ -1909,89 +1909,12 @@ exports.fetchCompanyInfo = (req, res) => {
         })
       }
       console.log('company data done', data)
-      let countAggregation = [
-        {
-          '$lookup': {
-            from: 'pages',
-            localField: '_id',
-            foreignField: 'companyId',
-            as: 'page'
-          }
-        },
-        {
-          '$unwind': '$page'
-        },
-        { '$lookup': {
-          from: 'users',
-          localField: 'ownerId',
-          foreignField: '_id',
-          as: 'user'
+      return res.status(200).json({
+        status: 'success',
+        payload: {
+          data
         }
-        },
-        {
-          '$unwind': '$user'
-        },
-        { '$lookup': {
-          from: 'companyusers',
-          localField: '_id',
-          foreignField: 'companyId',
-          as: 'companyUser'
-        }
-        },
-        {
-          '$unwind': '$companyUser'
-        },
-        { '$lookup': {
-          from: 'subscribers',
-          localField: '_id',
-          foreignField: 'companyId',
-          as: 'subscriber'
-        }
-        },
-        {
-          '$unwind': '$subscriber'
-        },
-        {
-          '$group': {
-            '_id': '$_id',
-            'pages': {'$addToSet': '$page'},
-            'companyName': {'$first': '$companyName'},
-            'companyUsers': {'$addToSet': '$companyUser'},
-            'subscribers': {'$addToSet': '$subscriber'},
-            'user': {'$first': '$user'}
-          }
-        },
-        {
-          '$match': {
-            companyName: {$exists: true}
-          }
-        },
-        {
-          '$sort': {'_id': -1}
-        },
-        { '$group': { _id: null, count: { $sum: 1 } } },
-        {
-          '$project': {
-            'count': 1
-          }
-        }
-      ]
-      utility.callApi(`companyprofile/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
-        .then(count => {
-          return res.status(200).json({
-            status: 'success',
-            payload: {
-              data,
-              count: count[0].count
-            }
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch count of companies ${err}`
-          })
-        })
+      })
     })
     .catch(err => {
       return res.status(500).json({
