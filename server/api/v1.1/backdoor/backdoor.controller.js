@@ -997,7 +997,6 @@ exports.getPagePermissions = function (req, res) {
               function (callback) {
                 facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${user.facebookInfo.fbToken}`, 'get', {})
                   .then(response => {
-                    console.log('response debug', response.body)
                     logger.serverLog(TAG, `response from debug token ${response.body}`)
                     if (response.body && response.body.data && response.body.data.scopes) {
                       if (response.body.data.scopes.length > 0) {
