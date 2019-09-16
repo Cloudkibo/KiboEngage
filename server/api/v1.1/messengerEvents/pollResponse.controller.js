@@ -24,7 +24,7 @@ exports.pollResponse = function (req, res) {
             saveLiveChat(message)
             savepoll(req.body.entry[0].messaging[0], resp, subscriber)
             logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`, 'debug')
-            sequenceController.respondsToPoll({companyId: poll.companyId, subscriberId: subscriber._id, pollId: resp.poll_id})
+            sequenceController.respondsToPoll({companyId: poll.companyId, subscriberId: subscriber._id, payload: resp})
             return res.status(200).json({
               status: 'success',
               description: `received the payload`
