@@ -1584,7 +1584,7 @@ exports.fetchPageAdmins = (req, res) => {
 exports.fetchSubscribersWithTagsNew = (req, res) => {
   let aggregation = [
     {
-      '$match': {pageId: req.params.pageId}
+      '$match': {pageId: req.body.pageId}
     },
     {
       '$match': req.body.pageOwner ? {'userId': req.body.pageOwner}
@@ -1660,11 +1660,12 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
             }
           },
           {
-            '$match': {'pageId': req.params.pageId}
+            '$match': {'pageId': req.body.pageId}
           }
         ]
         utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
           .then(pageTags => {
+            console.log('pageTags found', pageTags)
             for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
               console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
               needle.get(
