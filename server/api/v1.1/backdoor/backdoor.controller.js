@@ -1925,3 +1925,13 @@ exports.fetchCompanyInfo = (req, res) => {
       })
     })
 }
+exports.topPages = function (req, res) {
+  let body = LogicLayer.topPagesCriteria(req.body)
+  utility.callApi(`subscribers/aggregate`, 'post', body)
+    .then(topPages => {
+      sendSuccessResponse(res, 200, topPages)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch sessions ${JSON.stringify(error)}`)
+    })
+}

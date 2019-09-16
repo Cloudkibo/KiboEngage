@@ -572,3 +572,18 @@ exports.getPageUsersCriteria = function (body) {
     finalCriteria
   }
 }
+exports.topPagesCriteria = function (body) {
+  let criteria = [
+    {$group: {
+      _id: '$pageId',
+      count: {$sum: 1}}
+    },
+    { $sort: { count: -1 } },
+    { $limit: body.limit },
+    { $lookup: { from: 'pages', localField: '_id', foreignField: '_id', as: 'page' } },
+    {'$unwind': '$page'},
+    { $lookup: { from: 'users', localField: 'page.userId', foreignField: '_id', as: 'user' } },
+    {'$unwind': '$user'}
+  ]
+  return criteria
+}
