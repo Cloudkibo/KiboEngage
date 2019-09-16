@@ -1888,10 +1888,7 @@ exports.fetchCompanyInfo = (req, res) => {
       }
     },
     {
-      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
-    },
-    {
-      '$limit': 10
+      '$limit': req.body.pageNumber ? (req.body.pageNumber) * 10 : 10
     }
   ]
   utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
