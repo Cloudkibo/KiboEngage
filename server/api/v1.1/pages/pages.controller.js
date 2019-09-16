@@ -544,9 +544,11 @@ exports.isWhitelisted = function (req, res) {
 }
 
 function createTag (user, page, tag, req) {
+  console.log('tag in create tag', tag)
   needle('post', `https://graph.facebook.com/v2.11/me/custom_labels?access_token=${page.accessToken}`, {'name': tag})
     .then(label => {
       if (label.body.error) {
+        console.log(label.body.error, 'pages controller in kiboengage')
         sendOpAlert(label.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
       }
       if (label.body.id) {
@@ -558,9 +560,11 @@ function createTag (user, page, tag, req) {
           labelFbId: label.body.id,
           defaultTag: true
         }
+        console.log('before call api')
         utility.callApi('tags', 'post', tagData)
           .then(created => {
             logger.serverLog(TAG, `default tag created successfully!`, 'debug')
+            console.log('successfully create tag', tag)
           })
           .catch(err => {
             logger.serverLog(TAG, `Error at save tag ${err}`, 'error')
