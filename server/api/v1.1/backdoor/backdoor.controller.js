@@ -1909,41 +1909,12 @@ exports.fetchCompanyInfo = (req, res) => {
         })
       }
       console.log('company data done', data)
-      let countAggregation = [
-        {
-          '$group': {
-            '_id': '$_id',
-            'companyName': {'$first': '$companyName'}
-          }
-        },
-        {
-          '$project': {
-            '_id': 1,
-            'companyName': 1
-          }
-        },
-        {
-          '$match': {
-            companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
-          }
+      return res.status(200).json({
+        status: 'success',
+        payload: {
+          data
         }
-      ]
-      utility.callApi(`companyprofile/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
-        .then(count => {
-          return res.status(200).json({
-            status: 'success',
-            payload: {
-              data,
-              count: count.length
-            }
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch count of companies ${err}`
-          })
-        })
+      })
     })
     .catch(err => {
       return res.status(500).json({
