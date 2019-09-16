@@ -1911,20 +1911,68 @@ exports.fetchCompanyInfo = (req, res) => {
       console.log('company data done', data)
       let countAggregation = [
         {
-          '$group': {
-            '_id': '$_id',
-            'companyName': {'$first': '$companyName'}
+          '$lookup': {
+            from: 'pages',
+            localField: '_id',
+            foreignField: 'companyId',
+            as: 'page'
           }
         },
         {
-          '$project': {
-            '_id': 1,
-            'companyName': 1
+          '$unwind': '$page'
+        },
+        { '$lookup': {
+          from: 'users',
+          localField: 'ownerId',
+          foreignField: '_id',
+          as: 'user'
+        }
+        },
+        {
+          '$unwind': '$user'
+        },
+        { '$lookup': {
+          from: 'companyusers',
+          localField: '_id',
+          foreignField: 'companyId',
+          as: 'companyUser'
+        }
+        },
+        {
+          '$unwind': '$companyUser'
+        },
+        { '$lookup': {
+          from: 'subscribers',
+          localField: '_id',
+          foreignField: 'companyId',
+          as: 'subscriber'
+        }
+        },
+        {
+          '$unwind': '$subscriber'
+        },
+        {
+          '$group': {
+            '_id': '$_id',
+            'pages': {'$addToSet': '$page'},
+            'companyName': {'$first': '$companyName'},
+            'companyUsers': {'$addToSet': '$companyUser'},
+            'subscribers': {'$addToSet': '$subscriber'},
+            'user': {'$first': '$user'}
           }
         },
         {
           '$match': {
-            companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
+            companyName: {$exists: true}
+          }
+        },
+        {
+          '$sort': {'_id': -1}
+        },
+        { '$group': { _id: null, count: { $sum: 1 } } },
+        {
+          '$project': {
+            'count': 1
           }
         }
       ]
@@ -1934,7 +1982,7 @@ exports.fetchCompanyInfo = (req, res) => {
             status: 'success',
             payload: {
               data,
-              count: count.length
+              count: count[0].count
             }
           })
         })
