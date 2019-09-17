@@ -558,6 +558,42 @@ function createTag (user, page, tag, req) {
   needle('post', `https://graph.facebook.com/v2.11/me/custom_labels?access_token=${page.accessToken}`, {'name': tag})
     .then(label => {
       if (label.body.error) {
+        if (label.statusCode.error.code === 100) {
+          utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.body._id, companyId: req.user.companyId, tag: tag})
+            .then(defaultTag => {
+              if (defaultTag.length === 0) {
+                needle('get', `https://graph.facebook.com/v2.11/me/custom_labels?fields=name&access_token=${page.accessToken}`)
+                  .then(Tags => { 
+                    console.log('tags in facebook ', Tags)
+                    let default_tag = Tags.data.filter(data => data.name === tag)
+                    console.log('default tag in facebook', default_tag)
+                    let tagData = {
+                      tag: tag,
+                      userId: user._id,
+                      companyId: user.companyId,
+                      pageId: page._id,
+                      labelFbId: default_tag[0].id,
+                      defaultTag: true
+                    }
+                    utility.callApi('tags', 'post', tagData)
+                      .then(created => {
+                        logger.serverLog(TAG, `default tag created successfully!`, 'debug')
+                        console.log('successfully create tag', tag)
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Error at save tag ${err}`, 'error')
+                      })                
+                  })
+                  
+                  .catch(err => {
+                    logger.serverLog(TAG, `Error at find default tags from facebook ${err}`, 'error')
+                  })
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Error at find default tags ${err}`, 'error')
+            })
+        } 
         console.log(label.body.error, 'pages controller in kiboengage')
         sendOpAlert(label.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
       }

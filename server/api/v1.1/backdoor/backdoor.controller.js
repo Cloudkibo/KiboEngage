@@ -1301,25 +1301,77 @@ exports.fetchPageTags = (req, res) => {
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(kiboPageTags => {
-      needle.get(
-        `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
-        (err, resp) => {
-          if (err) {
+      if (kiboPageTags && kiboPageTags[0]) {
+        needle.get(
+          `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
+          (err, resp) => {
+            if (err) {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+              })
+            } else {
+              console.log('fbPageTags', resp.body)
+              return res.status(200).json({
+                status: 'success',
+                payload: {
+                  kiboPageTags: kiboPageTags[0].tags,
+                  fbPageTags: resp.body.data ? resp.body.data : []
+                }
+              })
+            }
+          })
+      } else {
+        let backupAggregation = [
+          {
+            '$match': {'pageId': req.params.pageId}
+          },
+          {
+            '$group': {
+              '_id': '$pageId',
+              'pageName': {'$first': '$pageName'},
+              'accessToken': {'$first': '$accessToken'}
+            }
+          },
+          {
+            '$project': {
+              '_id': 0,
+              'pageId': '$_id',
+              'pageName': 1,
+              'accessToken': 1
+            }
+          }
+        ]
+        utility.callApi(`pages/aggregate`, 'post', backupAggregation, 'accounts', req.headers.authorization)
+          .then(pageInfo => {
+            pageInfo = pageInfo[0]
+            needle.get(
+              `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${pageInfo.accessToken}`,
+              (err, resp) => {
+                if (err) {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+                  })
+                } else {
+                  console.log('fbPageTags', resp.body)
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      kiboPageTags: [],
+                      fbPageTags: resp.body.data ? resp.body.data : []
+                    }
+                  })
+                }
+              })
+          })
+          .catch(err => {
             return res.status(500).json({
               status: 'failed',
-              description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+              description: `Failed to fetch page info ${err}`
             })
-          } else {
-            console.log('fbPageTags', resp.body)
-            return res.status(200).json({
-              status: 'success',
-              payload: {
-                kiboPageTags: kiboPageTags[0].tags,
-                fbPageTags: resp.body.data ? resp.body.data : []
-              }
-            })
-          }
-        })
+          })
+      }
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
@@ -1701,6 +1753,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               console.log('pageTags found', pageTags)
               let criteriaFulfilled = 0
               let loopFinished = false
+              let subscriberDataPopulated = false
               for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                 console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
                 if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
@@ -1810,7 +1863,9 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                               })
                         }
                         retrievedSubscriberData += 1
-                        if (subscriberData.length === 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
+                        if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
+                          if (!subscriberDataPopulated) {
+                            subscriberDataPopulated = true
                             return res.status(200).json({
                               status: 'success',
                               payload: {
@@ -1818,6 +1873,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                                 totalSubscribers: pageSubscribers[0].subscribers.length
                               }
                             })
+                          }
                         }
                       }
                     })
