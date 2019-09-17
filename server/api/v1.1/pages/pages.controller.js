@@ -560,6 +560,7 @@ function createTag (user, page, tag, req) {
       console.log('label.body', label.body)
       console.log('label.body.error', label.body.error)
       if (label.body.error) {
+        label.statusCode.error = JSON.stringify(label.statusCode.error)
         if (label.statusCode.error.code === 100) {
           utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.body._id, companyId: req.user.companyId, tag: tag})
             .then(defaultTag => {
@@ -570,6 +571,7 @@ function createTag (user, page, tag, req) {
                     console.log('tags in facebook ', Tags)
                     let default_tag = Tags.data.filter(data => data.name === tag)
                     console.log('default tag in facebook', default_tag)
+                    console.log('default_tag[0].id', default_tag[0].id)
                     let tagData = {
                       tag: tag,
                       userId: user._id,
@@ -600,7 +602,7 @@ function createTag (user, page, tag, req) {
         console.log(label.body.error, 'pages controller in kiboengage')
         sendOpAlert(label.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
       }
-      if (label.body.id) {
+      else if (label.body.id) {
         let tagData = {
           tag: tag,
           userId: user._id,
