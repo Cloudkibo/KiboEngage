@@ -1819,12 +1819,12 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                       }
                     })
                 }
-                if (!foundOne) {
-                  return res.status(200).json({
-                    status: 'success',
-                    payload: []
-                  })
-                }
+            }
+            if (!foundOne) {
+              return res.status(200).json({
+                status: 'success',
+                payload: []
+              })
             }
           }
         })
