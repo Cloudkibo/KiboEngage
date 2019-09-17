@@ -976,83 +976,84 @@ exports.getPagePermissions = function (req, res) {
   utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
     .then(page => {
       page = page[0]
-      utility.callApi(`user/query`, 'post', {email: 'anisha@cloudkibo.com'}, 'accounts', req.headers.authorization)
-        .then(user => {
-          user = user[0]
-          let appLevelPermissions = {
-            email: false,
-            manage_pages: false,
-            pages_show_list: false,
-            publish_pages: false,
-            pages_messaging: false,
-            pages_messaging_phone_number: false,
-            pages_messaging_subscriptions: false,
-            public_profile: false
-          }
-          let pageLevelPermissions = {
-            subscription_messaging: 'Not Applied'
-          }
-          async.parallelLimit([
-            function (callback) {
-              facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${user.facebookInfo.fbToken}`, 'get', {})
-                .then(response => {
-                  logger.serverLog(TAG, `response from debug token ${response.body}`)
-                  if (response.body && response.body.data && response.body.data.scopes) {
-                    if (response.body.data.scopes.length > 0) {
-                      for (let i = 0; i < response.body.data.scopes.length; i++) {
-                        appLevelPermissions[`${response.body.data.scopes[i]}`] = true
-                        if (i === response.body.data.scopes.length - 1) {
-                          callback(null, appLevelPermissions)
+      if (page) {
+        utility.callApi(`user/query`, 'post', {email: 'anisha@cloudkibo.com'}, 'accounts', req.headers.authorization)
+          .then(user => {
+            user = user[0]
+            let appLevelPermissions = {
+              email: false,
+              manage_pages: false,
+              pages_show_list: false,
+              publish_pages: false,
+              pages_messaging: false,
+              pages_messaging_phone_number: false,
+              pages_messaging_subscriptions: false,
+              public_profile: false
+            }
+            let pageLevelPermissions = {
+              subscription_messaging: 'Not Applied'
+            }
+            async.parallelLimit([
+              function (callback) {
+                facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${user.facebookInfo.fbToken}`, 'get', {})
+                  .then(response => {
+                    logger.serverLog(TAG, `response from debug token ${response.body}`)
+                    if (response.body && response.body.data && response.body.data.scopes) {
+                      if (response.body.data.scopes.length > 0) {
+                        for (let i = 0; i < response.body.data.scopes.length; i++) {
+                          appLevelPermissions[`${response.body.data.scopes[i]}`] = true
+                          if (i === response.body.data.scopes.length - 1) {
+                            callback(null, appLevelPermissions)
+                          }
                         }
+                      } else {
+                        callback(null, appLevelPermissions)
                       }
                     } else {
-                      callback(null, appLevelPermissions)
+                      callback(response.body.error)
                     }
-                  } else {
-                    callback(response.body.error)
-                  }
-                })
-                .catch(err => {
-                  callback(err)
-                })
-            },
-            function (callback) {
-              facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
-                .then(response => {
-                  logger.serverLog(TAG, `response from messaging_feature_review ${response.body}`)
-                  if (response.body && response.body.data) {
-                    if (response.body.data.length > 0) {
-                      for (let i = 0; i < response.body.data.length; i++) {
-                        pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
-                        if (i === response.body.data.length - 1) {
-                          callback(null, pageLevelPermissions)
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              },
+              function (callback) {
+                facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
+                  .then(response => {
+                    logger.serverLog(TAG, `response from messaging_feature_review ${response.body}`)
+                    if (response.body && response.body.data) {
+                      if (response.body.data.length > 0) {
+                        for (let i = 0; i < response.body.data.length; i++) {
+                          pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
+                          if (i === response.body.data.length - 1) {
+                            callback(null, pageLevelPermissions)
+                          }
                         }
+                      } else {
+                        callback(null, pageLevelPermissions)
                       }
                     } else {
-                      callback(null, pageLevelPermissions)
+                      callback(response.body.error)
                     }
-                  } else {
-                    callback(response.body.error)
-                  }
-                })
-                .catch(err => {
-                  callback(err)
-                })
-            }
-          ], 10, function (err, results) {
-            if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Failed to fetch page permissions ${JSON.stringify(err)}`
-              })
-            } else {
-              sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
-            }
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              }
+            ], 10, function (err, results) {
+              if (err) {
+                sendErrorResponse(res, 500, `Failed to fetch page permissions ${JSON.stringify(err)}`)
+              } else {
+                sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
+              }
+            })
           })
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
-        })
+          .catch(error => {
+            sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
+          })
+      } else {
+        sendErrorResponse(res, 500, `Failed to fetch permissions ${JSON.stringify({message: `This page is not connected by any User. So, we cannot fetch this page's permissions`})}`)
+      }
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
@@ -1061,6 +1062,12 @@ exports.getPagePermissions = function (req, res) {
 
 exports.fetchUniquePages = (req, res) => {
   let aggregation = [
+    {
+      '$match': {
+        pageName: req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : {$exists: true},
+        connectedFacebook: req.body.connectedFacebook !== '' ? req.body.connectedFacebook : {$exists: true}
+      }
+    },
     {
       '$group': {
         '_id': '$pageId',
@@ -1082,12 +1089,6 @@ exports.fetchUniquePages = (req, res) => {
       }
     },
     {
-      '$match': {
-        pageName: req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : {$exists: true},
-        connectedFacebook: req.body.connectedFacebook !== '' ? req.body.connectedFacebook : {$exists: true}
-      }
-    },
-    {
       '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
     },
     {
@@ -1104,6 +1105,10 @@ exports.fetchUniquePages = (req, res) => {
     },
     { '$group': {
       '_id': '$pageId'
+    }},
+    { '$group': {
+      '_id': null,
+      'count': {$sum: 1}
     }}
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
@@ -1121,11 +1126,12 @@ exports.fetchUniquePages = (req, res) => {
               if (pageOwnersFound === uniquePages.length) {
                 utility.callApi(`pages/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
                   .then(count => {
+                    // console.log('countAggregation result', count)
                     return res.status(200).json({
                       status: 'success',
                       payload: {
                         data: uniquePages,
-                        totalCount: count.length
+                        totalCount: count[0].count
                       }
                     })
                   })
@@ -1262,6 +1268,9 @@ function getAdminedData (fbRoles, localDataFromDB) {
 exports.fetchPageTags = (req, res) => {
   let aggregation = [
     {
+      '$match': {'pageId': req.params.pageId}
+    },
+    {
       '$lookup': {
         from: 'tags',
         localField: '_id',
@@ -1288,242 +1297,80 @@ exports.fetchPageTags = (req, res) => {
         'tags': 1,
         'accessToken': 1
       }
-    },
-    {
-      '$match': {'pageId': req.params.pageId}
     }
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(kiboPageTags => {
-      needle.get(
-        `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
-        (err, resp) => {
-          if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
-            })
-          } else {
-            console.log('fbPageTags', resp.body)
-            return res.status(200).json({
-              status: 'success',
-              payload: {
-                kiboPageTags: kiboPageTags[0].tags,
-                fbPageTags: resp.body.data ? resp.body.data : []
-              }
-            })
-          }
-        })
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch unique pages ${err}`
-      })
-    })
-}
-
-exports.fetchSubscribersWithTags = (req, res) => {
-  let aggregation = [
-    {
-      '$lookup': {
-        from: 'subscribers',
-        localField: '_id',
-        foreignField: 'pageId',
-        as: 'subscriber'
-      }
-    },
-    {
-      '$unwind': '$subscriber'
-    },
-    {
-      '$group': {
-        '_id': '$pageId',
-        'pageName': {'$first': '$pageName'},
-        'subscribers': {'$addToSet': '$subscriber'},
-        'accessToken': {'$first': '$accessToken'}
-      }
-    },
-    {
-      '$project': {
-        '_id': 0,
-        'pageId': '$_id',
-        'pageName': 1,
-        'subscribers': 1,
-        'accessToken': 1
-      }
-    },
-    {
-      '$match': {pageId: req.params.pageId}
-    }
-  ]
-  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
-    .then(pageSubscribers => {
-      if (pageSubscribers[0]) {
-        console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
-        let subscriberData = []
-        let subscriberOwnersFound = 0
-        let retrievedSubscriberData = 0
-        for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
-          let subscriberOwnerAggregation = [
-            {
-              '$lookup': {
-                from: 'users',
-                localField: 'userId',
-                foreignField: '_id',
-                as: 'user'
-              }
-            },
-            {
-              '$unwind': '$user'
-            },
-            {
-              '$group': {
-                '_id': '$_id',
-                'pageName': {'$first': '$pageName'},
-                'users': {'$addToSet': '$user'}
-              }
-            },
-            {
-              '$project': {
-                '_id': 1,
-                'pageName': 1,
-                'users': 1
-              }
-            },
-            {
-              '$match': {_id: pageSubscribers[0].subscribers[i].pageId}
-            }
-          ]
-          utility.callApi(`pages/aggregate`, 'post', subscriberOwnerAggregation, 'accounts', req.headers.authorization)
-            .then(subscriberOwner => {
-              subscriberOwnersFound += 1
-              pageSubscribers[0].subscribers[i].pageOwner = subscriberOwner[0].users[0]
-              if (retrievedSubscriberData === pageSubscribers[0].subscribers.length && subscriberOwnersFound === pageSubscribers[0].subscribers.length) {
-                console.log('subscriberData', subscriberData)
-                return res.status(200).json({
-                  status: 'success',
-                  payload: subscriberData
-                })
-              }
-            })
-            .catch(err => {
+      if (kiboPageTags && kiboPageTags[0]) {
+        needle.get(
+          `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
+          (err, resp) => {
+            if (err) {
               return res.status(500).json({
                 status: 'failed',
-                description: `Failed to fetch page owner for subscriber ${err}`
+                description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
               })
-            })
-        }
-        let pageTagsAggregation = [
-          {
-            '$lookup': {
-              from: 'tags',
-              localField: '_id',
-              foreignField: 'pageId',
-              as: 'tag'
+            } else {
+              console.log('fbPageTags', resp.body)
+              return res.status(200).json({
+                status: 'success',
+                payload: {
+                  kiboPageTags: kiboPageTags[0].tags,
+                  fbPageTags: resp.body.data ? resp.body.data : []
+                }
+              })
             }
-          },
+          })
+      } else {
+        let backupAggregation = [
           {
-            '$unwind': '$tag'
+            '$match': {'pageId': req.params.pageId}
           },
           {
             '$group': {
               '_id': '$pageId',
-              'tags': {'$addToSet': '$tag'}
+              'pageName': {'$first': '$pageName'},
+              'accessToken': {'$first': '$accessToken'}
             }
           },
           {
             '$project': {
               '_id': 0,
               'pageId': '$_id',
-              'tags': 1
+              'pageName': 1,
+              'accessToken': 1
             }
-          },
-          {
-            '$match': {'pageId': req.params.pageId}
           }
         ]
-        utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
-          .then(pageTags => {
-            for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
-              needle.get(
-                `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
-                (err, resp) => {
-                  if (err) {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
-                    })
-                  } else {
-                    logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
-                    logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags[0])}`, 'debug')
-                    let fbTags = resp.body.data
-                    let kiboPageTags = pageTags[0].tags
-                    let assignedTags = []
-                    let unassignedTags = []
-                    let tagAssigned = false
-                    if (fbTags) {
-                      for (let j = 0; j < kiboPageTags.length; j++) {
-                        for (let k = 0; k < fbTags.length; k++) {
-                          if (fbTags[k].id === kiboPageTags[j].labelFbId) {
-                            assignedTags.push(kiboPageTags[j])
-                            tagAssigned = true
-                            break
-                          }
-                        }
-                        if (!tagAssigned) {
-                          if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                            if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
-                              unassignedTags.push(kiboPageTags[j])
-                            }
-                          } else {
-                            unassignedTags.push(kiboPageTags[j])
-                          }
-                        } else {
-                          tagAssigned = false
-                        }
-                      }
-                    } else {
-                      for (let j = 0; j < kiboPageTags.length; j++) {
-                        if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                          if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
-                            unassignedTags.push(kiboPageTags[j])
-                          }
-                        } else {
-                          unassignedTags.push(kiboPageTags[j])
-                        }
-                      }
+        utility.callApi(`pages/aggregate`, 'post', backupAggregation, 'accounts', req.headers.authorization)
+          .then(pageInfo => {
+            pageInfo = pageInfo[0]
+            needle.get(
+              `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${pageInfo.accessToken}`,
+              (err, resp) => {
+                if (err) {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+                  })
+                } else {
+                  console.log('fbPageTags', resp.body)
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      kiboPageTags: [],
+                      fbPageTags: resp.body.data ? resp.body.data : []
                     }
-                    subscriberData[i] = {
-                      subscriber: pageSubscribers[0].subscribers[i],
-                      assignedTags: assignedTags,
-                      unassignedTags: unassignedTags
-                    }
-                    retrievedSubscriberData += 1
-
-                    if (retrievedSubscriberData === pageSubscribers[0].subscribers.length && subscriberOwnersFound === pageSubscribers[0].subscribers.length) {
-                      console.log('subscriberData', subscriberData)
-                      return res.status(200).json({
-                        status: 'success',
-                        payload: subscriberData
-                      })
-                    }
-                  }
-                })
-            }
+                  })
+                }
+              })
           })
           .catch(err => {
             return res.status(500).json({
               status: 'failed',
-              description: `Failed to fetch page tags ${err}`
+              description: `Failed to fetch page info ${err}`
             })
           })
-      } else {
-        return res.status(200).json({
-          status: 'success',
-          payload: []
-        })
       }
     })
     .catch(err => {
@@ -1568,7 +1415,285 @@ exports.fetchPageAdmins = (req, res) => {
     })
 }
 
+exports.fetchSubscribersWithTagsNew = (req, res) => {
+  let aggregation = [
+    {
+      '$match': {pageId: req.body.pageId}
+    },
+    {
+      '$match': {'userId': req.body.pageOwner}
+    },
+    {
+      '$lookup': {
+        from: 'subscribers',
+        localField: '_id',
+        foreignField: 'pageId',
+        as: 'subscriber'
+      }
+    },
+    {
+      '$unwind': '$subscriber'
+    },
+    {
+      '$group': {
+        '_id': '$pageId',
+        'pageName': {'$first': '$pageName'},
+        'subscribers': {'$addToSet': '$subscriber'},
+        'accessToken': {'$first': '$accessToken'},
+        'userId': {'$first': '$userId'},
+      }
+    },
+    {
+      '$project': {
+        '_id': 0,
+        'pageId': '$_id',
+        'pageName': 1,
+        'subscribers': 1,
+        'userId': 1,
+        'accessToken': 1
+      }
+    }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
+    .then(pageSubscribers => {
+      if (pageSubscribers[0]) {
+        pageSubscribers[0].subscribers = pageSubscribers[0].subscribers.sort((a, b) => (a.firstName > b.firstName) ? 1 : ((b.lastName > a.lastName) ? -1 : 0))
+        console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
+        let subscriberData = []
+        let retrievedSubscriberData = 0
+        let pageTagsAggregation = [
+          {
+            '$match': {'pageId': req.body.pageId}
+          },
+          {
+            '$lookup': {
+              from: 'tags',
+              localField: '_id',
+              foreignField: 'pageId',
+              as: 'tag'
+            }
+          },
+          {
+            '$unwind': '$tag'
+          },
+          {
+            '$group': {
+              '_id': '$pageId',
+              'tags': {'$addToSet': '$tag'}
+            }
+          },
+          {
+            '$project': {
+              '_id': 0,
+              'pageId': '$_id',
+              'tags': 1
+            }
+          }
+        ]
+        utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
+          .then(pageTags => {
+            if (!pageTags || !pageTags[0]) {
+              let subscriberData = []
+              let statusFilterSucceeded = true
+              if (req.body.status) {
+                if (req.body.status === 'correct') {
+                  statusFilterSucceeded = true
+                } else {
+                  statusFilterSucceeded = false
+                }
+              }
+              if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
+                for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
+                  retrievedSubscriberData += 1
+                  if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
+                      pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
+                        subscriberData.push({
+                          subscriber: pageSubscribers[0].subscribers[i],
+                          assignedTags: [],
+                          unassignedTags: []
+                        })
+                      }
+                }
+              } else {
+                return res.status(200).json({
+                  status: 'success',
+                  payload: []
+                })
+              }
+              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10) ) {
+                  subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      subscriberData,
+                      totalSubscribers: pageSubscribers[0].subscribers.length
+                    }
+                  })
+              }
+            } else {
+              console.log('pageTags found', pageTags)
+              let criteriaFulfilled = 0
+              let loopFinished = false
+              let subscriberDataPopulated = false
+              for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
+                console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
+                if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
+                  pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
+                    console.log('subscriber name search', req.body.subscriberName)
+                    console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
+                  criteriaFulfilled += 1
+                  needle.get(
+                    `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
+                    (err, resp) => {
+                      if (err) {
+                        return res.status(500).json({
+                          status: 'failed',
+                          description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
+                        })
+                      } else {
+                        logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
+                        logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags[0])}`, 'debug')
+                        let fbTags = resp.body.data
+                        let kiboPageTags = pageTags[0].tags
+                        let assignedTags = []
+                        let unassignedTags = []
+                        let tagAssigned = false
+                        if (fbTags) {
+                          for (let j = 0; j < kiboPageTags.length; j++) {
+                            for (let k = 0; k < fbTags.length; k++) {
+                              if (fbTags[k].id === kiboPageTags[j].labelFbId) {
+                                assignedTags.push(kiboPageTags[j])
+                                tagAssigned = true
+                                break
+                              }
+                            }
+                            if (!tagAssigned) {
+                              if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                                if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                                  unassignedTags.push(kiboPageTags[j])
+                                }
+                              } else {
+                                unassignedTags.push(kiboPageTags[j])
+                              }
+                            } else {
+                              tagAssigned = false
+                            }
+                          }
+                        } else {
+                          for (let j = 0; j < kiboPageTags.length; j++) {
+                            if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                              if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                                unassignedTags.push(kiboPageTags[j])
+                              }
+                            } else {
+                              unassignedTags.push(kiboPageTags[j])
+                            }
+                          }
+                        }
+                        let filteredAssignedTags = assignedTags.filter(x => {
+                          let tagName = x.tag
+                          if (tagName.toLowerCase().includes(req.body.assignedTag.toLowerCase())) {
+                            return true
+                          }
+                        })
+                        let filteredUnassignedTags = unassignedTags.filter(x => {
+                          let tagName = x.tag
+                          if (tagName.toLowerCase().includes(req.body.unassignedTag.toLowerCase())) {
+                            return true
+                          }
+                        })
+                        let assignedTagsFound = false
+                        let unassignedTagsFound = false
+                        if (assignedTags.length > 0) {
+                          if (filteredAssignedTags.length > 0) {
+                            assignedTagsFound = true
+                          }
+                        } else {
+                          assignedTagsFound = true
+                        }
+    
+                        if (unassignedTags.length > 0) {
+                          if (filteredUnassignedTags.length > 0) {
+                            unassignedTagsFound = true
+                          }
+                        } else {
+                          unassignedTagsFound = true
+                        }
+    
+                        let statusFilterSucceeded = true
+                        if (req.body.status) {
+                          if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
+                            statusFilterSucceeded = true
+                          } else if (req.body.status === 'correct' && filteredUnassignedTags.length === 0) {
+                            statusFilterSucceeded = true
+                          } else {
+                            statusFilterSucceeded = false
+                          }
+                        }
+                        logger.serverLog(TAG, `assignedTagsFound ${i} ${assignedTagsFound}`, 'debug')
+                        logger.serverLog(TAG, `unassignedTagsFound ${i} ${unassignedTagsFound}`, 'debug')
+                        logger.serverLog(TAG, `statusFilterSucceeded ${i} ${statusFilterSucceeded}`, 'debug')
+                        logger.serverLog(TAG, `subscriberName condtion ${req.body.subscriberName && 
+                          (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
+                          pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))}`, 'debug')
+                        if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
+                              subscriberData.push({
+                                subscriber: pageSubscribers[0].subscribers[i],
+                                assignedTags: assignedTags,
+                                unassignedTags: unassignedTags
+                              })
+                        }
+                        retrievedSubscriberData += 1
+                        if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
+                          if (!subscriberDataPopulated) {
+                            subscriberDataPopulated = true
+                            subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
+                            return res.status(200).json({
+                              status: 'success',
+                              payload: {
+                                subscriberData: subscriberData.slice(0,10),
+                                totalSubscribers: pageSubscribers[0].subscribers.length
+                              }
+                            })
+                          }
+                        }
+                      }
+                    })
+                }
+            }
+            loopFinished = true
+            if (criteriaFulfilled === 0) {
+              return res.status(200).json({
+                status: 'success',
+                payload: []
+              })
+            }
+          }
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Failed to fetch page tags ${err}`
+          })
+        })
+      } else {
+        return res.status(200).json({
+          status: 'success',
+          payload: []
+        })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch unique pages ${err}`
+      })
+    })
+}
+
 exports.fetchCompanyInfo = (req, res) => {
+  console.log('fetching company info')
   let companyAggregation = [
     {
       '$lookup': {
@@ -1640,10 +1765,7 @@ exports.fetchCompanyInfo = (req, res) => {
       }
     },
     {
-      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
-    },
-    {
-      '$limit': 10
+      '$limit': req.body.pageNumber ? (req.body.pageNumber) * 10 : 10
     }
   ]
   utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
@@ -1653,7 +1775,7 @@ exports.fetchCompanyInfo = (req, res) => {
       let data = []
       for (let i = 0; i < companyOwnedPages.length; i++) {
         // console.log(`companyInfo ${i} ${JSON.stringify(companyOwnedPages[i])}`)
-        console.log('company loop', i)
+        // console.log('company loop', i)
         data.push({
           companyName: companyOwnedPages[i].companyName,
           numOfConnectedPages: companyOwnedPages[i].pages.filter(page => page.connected).length,
@@ -1666,7 +1788,9 @@ exports.fetchCompanyInfo = (req, res) => {
       console.log('company data done', data)
       return res.status(200).json({
         status: 'success',
-        payload: data
+        payload: {
+          data
+        }
       })
     })
     .catch(err => {
@@ -1674,5 +1798,15 @@ exports.fetchCompanyInfo = (req, res) => {
         status: 'failed',
         description: `Failed to fetch company owned pages ${err}`
       })
+    })
+}
+exports.topPages = function (req, res) {
+  let body = LogicLayer.topPagesCriteria(req.body)
+  utility.callApi(`subscribers/aggregate`, 'post', body)
+    .then(topPages => {
+      sendSuccessResponse(res, 200, topPages)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch sessions ${JSON.stringify(error)}`)
     })
 }

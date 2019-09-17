@@ -34,7 +34,7 @@ exports.createPayload = {
       'type': 'array',
       'items': [
         {
-          'type': 'string'
+          'type': 'object'
         }
       ]
     },
