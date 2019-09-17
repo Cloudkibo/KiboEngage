@@ -557,10 +557,13 @@ function createTag (user, page, tag, req) {
   console.log('tag in create tag', tag)
   needle('post', `https://graph.facebook.com/v2.11/me/custom_labels?access_token=${page.accessToken}`, {'name': tag})
     .then(label => {
+      console.log('label.body', label.body)
+      console.log('label.body.error', label.body.error)
       if (label.body.error) {
         if (label.statusCode.error.code === 100) {
           utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.body._id, companyId: req.user.companyId, tag: tag})
             .then(defaultTag => {
+              console.log('defaultTag using tag', defaultTag)
               if (defaultTag.length === 0) {
                 needle('get', `https://graph.facebook.com/v2.11/me/custom_labels?fields=name&access_token=${page.accessToken}`)
                   .then(Tags => { 
@@ -616,10 +619,11 @@ function createTag (user, page, tag, req) {
             logger.serverLog(TAG, `Error at save tag ${err}`, 'error')
           })
       } else {
-        logger.serverLog(TAG, `Error at create tag on Facebook ${JSON.stringify(label.body.error)}`, 'error')
+        logger.serverLog(TAG, `else Error at create tag on Facebook ${JSON.stringify(label.body.error)}`, 'error')
       }
     })
     .catch(err => {
+      console.log('error at catch condition', err)
       logger.serverLog(TAG, `Error at create tag on Facebook ${JSON.stringify(err)}`, 'error')
     })
 }
