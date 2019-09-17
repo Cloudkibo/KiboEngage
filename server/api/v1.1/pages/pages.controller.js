@@ -172,6 +172,7 @@ exports.enable = function (req, res) {
                                   // create default tags
                                   utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.params._id, companyId: req.user.companyId})
                                     .then(defaultTags => {
+                                      console.log('defaultTags', defaultTags)
                                       defaultTags = defaultTags.map((t) => t.tag)
                                       if (!defaultTags.includes(`_${page.pageId}_1`)) {
                                         createTag(req.user, page, `_${page.pageId}_1`, req)
@@ -180,6 +181,7 @@ exports.enable = function (req, res) {
                                         createTag(req.user, page, `_${page.pageId}_unsubscribe`, req)
                                       }
                                       if (!defaultTags.includes('male')) {
+                                        console.log('male')
                                         createTag(req.user, page, 'male', req)
                                       }
                                       if (!defaultTags.includes('female')) {
