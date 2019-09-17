@@ -1701,6 +1701,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               console.log('pageTags found', pageTags)
               let criteriaFulfilled = 0
               let loopFinished = false
+              let subscriberDataPopulated = false
               for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                 console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
                 if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
@@ -1810,7 +1811,9 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                               })
                         }
                         retrievedSubscriberData += 1
-                        if (subscriberData.length === 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
+                        if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
+                          if (!subscriberDataPopulated) {
+                            subscriberDataPopulated = true
                             return res.status(200).json({
                               status: 'success',
                               payload: {
@@ -1818,6 +1821,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                                 totalSubscribers: pageSubscribers[0].subscribers.length
                               }
                             })
+                          }
                         }
                       }
                     })
