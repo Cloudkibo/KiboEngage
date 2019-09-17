@@ -6,9 +6,7 @@ const { sendOpAlert } = require('./operationalAlert')
 exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, page) => {
   return new Promise((resolve, reject) => {
     let labelValues = labels
-    if (notlabels !== false) {
-      labelValues.push({operator: 'NOT', values: notlabels})
-    }
+    labelValues.push({operator: 'NOT', values: notlabels})
     let data = {
       'message_creative_id': messageCreativeId,
       'notification_type': 'REGULAR',

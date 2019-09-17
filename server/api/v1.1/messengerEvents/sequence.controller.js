@@ -35,8 +35,12 @@ exports.subscriberJoins = function (req, res) {
                     SequencesDataLayer.createForSequenceSubcriber(sequenceSubscriberPayload)
                       .then(subscriberCreated => {
                         messages.forEach(message => {
-                          let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                          SequenceUtility.addToMessageQueue(seq._id, message._id, subscriber._id, subscriber.companyId, utcDate)
+                          if (message.trigger.event === 'none') {
+                            let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                            SequenceUtility.addToMessageQueue(seq._id, message._id, subscriber._id, subscriber.companyId, utcDate)
+                          } else {
+                            SequenceUtility.addToMessageQueue(seq._id, message._id, subscriber._id, subscriber.companyId)
+                          }
                         })
                         require('./../../../config/socketio').sendMessageToClient({
                           room_id: req.body.companyId,
@@ -75,16 +79,17 @@ exports.subscriberJoins = function (req, res) {
 
 exports.respondsToPoll = function (data) {
   logger.serverLog(TAG, `in sequence resposndsToPoll ${JSON.stringify(data)}`, 'debug')
-
-  SequencesDataLayer.genericFindForSequence({companyId: data.companyId, 'trigger.event': 'responds_to_poll', 'trigger.value': data.pollId})
-    .then(sequences => {
-      if (sequences.length > 0) {
-        sequences.forEach(seq => {
-          SequencesDataLayer.genericFindForSequenceMessages({sequenceId: seq._id})
-            .then(messages => {
-              if (messages.length > 0) {
+  if (data.payload.action === 'subscribe') {
+    SequencesDataLayer.genericFindForSequenceMessages({sequenceId: data.payload.sequenceId})
+      .then(messages => {
+        if (messages.length > 0) {
+          SequencesDataLayer.genericFindForSequenceSubscribers({sequenceId: data.payload.sequenceId, companyId: data.companyId, subscriberId: data.subscriberId})
+            .then(seqSubs => {
+              if (seqSubs.length > 0) {
+                logger.serverLog(TAG, 'This subscriber is already subscribed to the sequence')
+              } else {
                 let sequenceSubscriberPayload = {
-                  sequenceId: seq._id,
+                  sequenceId: data.payload.sequenceId,
                   subscriberId: data.subscriberId,
                   companyId: data.companyId,
                   status: 'subscribed'
@@ -92,8 +97,12 @@ exports.respondsToPoll = function (data) {
                 SequencesDataLayer.createForSequenceSubcriber(sequenceSubscriberPayload)
                   .then(subscriberCreated => {
                     messages.forEach(message => {
-                      let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                      SequenceUtility.addToMessageQueue(seq._id, message._id, data.subscriberId, data.companyId, utcDate)
+                      if (message.trigger.event === 'none') {
+                        let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                        SequenceUtility.addToMessageQueue(data.payload.sequenceId, message._id, data.subscriberId, data.companyId, utcDate)
+                      } else {
+                        SequenceUtility.addToMessageQueue(data.payload.sequenceId, message._id, data.subscriberId, data.companyId)
+                      }
                     })
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: data.companyId,
@@ -110,15 +119,26 @@ exports.respondsToPoll = function (data) {
                   })
               }
             })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fecth sequence messages ${err}`, 'error')
-            })
-        })
-      }
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fecth sequences ${err}`, 'error')
-    })
+        }
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to fecth sequence messages ${err}`, 'error')
+      })
+  } else if (data.payload.action === 'unsubscribe') {
+    SequencesDataLayer.removeForSequenceSubscribers(data.payload.sequenceId, data.subscriberId)
+      .then(result => {
+        SequenceMessageQueueDatalayer.removeForSequenceSubscribers(data.payload.sequenceId, data.subscriberId)
+          .then(result => {
+            logger.serverLog(TAG, 'Subscriber has unsubscribed successfully!')
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Internal server error in creating sequence subscriber ${err}`, 'error')
+          })
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Internal server error in finding sequence messages ${err}`, 'error')
+      })
+  }
 }
 
 exports.sendSequenceMessage = (req, res) => {
@@ -139,5 +159,82 @@ exports.sendSequenceMessage = (req, res) => {
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fecth sequence message ${err}`, 'error')
+    })
+}
+
+exports.subscribeToSequence = (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    description: `received the payload`
+  })
+  let resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  const sender = req.body.entry[0].messaging[0].sender.id
+  const pageId = req.body.entry[0].messaging[0].recipient.id
+  let pageQuery = [
+    { $match: {pageId: pageId, connected: true} },
+    { $lookup: { from: 'companyprofiles', localField: 'companyId', foreignField: '_id', as: 'company' } },
+    { '$unwind': '$company' }
+  ]
+  callApi(`pages/aggregate`, 'post', pageQuery)
+    .then(page => {
+      page = page[0]
+      callApi(`subscribers/query`, 'post', {senderId: sender, pageId: page._id})
+        .then(subscriber => {
+          subscriber = subscriber[0]
+          SequencesDataLayer.genericFindForSequenceMessages({sequenceId: resp.sequenceId})
+            .then(messages => {
+              if (messages.length > 0) {
+                SequencesDataLayer.genericFindForSequenceSubscribers({sequenceId: resp.sequenceId, companyId: page.company._id, subscriberId: subscriber._id})
+                  .then(seqSubs => {
+                    if (seqSubs.length > 0) {
+                      logger.serverLog(TAG, 'This subscriber is already subscribed to the sequence')
+                    } else {
+                      let sequenceSubscriberPayload = {
+                        sequenceId: resp.sequenceId,
+                        subscriberId: subscriber._id,
+                        companyId: page.company._id,
+                        status: 'subscribed'
+                      }
+                      SequencesDataLayer.createForSequenceSubcriber(sequenceSubscriberPayload)
+                        .then(subscriberCreated => {
+                          messages.forEach(message => {
+                            if (message.trigger.event === 'none') {
+                              let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                              SequenceUtility.addToMessageQueue(resp.sequenceId, message._id, subscriber._id, page.company._id, utcDate)
+                            } else {
+                              SequenceUtility.addToMessageQueue(resp.sequenceId, message._id, subscriber._id, page.company._id)
+                            }
+                          })
+                          require('./../../../config/socketio').sendMessageToClient({
+                            room_id: page.company._id,
+                            body: {
+                              action: 'sequence_update',
+                              payload: {
+                                sequence_id: resp.sequenceId
+                              }
+                            }
+                          })
+                          console.log('subsriber subscribed successfully')
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, `Failed to fetch sequence subscriber ${err}`, 'error')
+                        })
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to fetch sequence subscriber ${err}`, 'error')
+                  })
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch sequence messages ${err}`, 'error')
+            })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+        })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch page ${err}`, 'error')
     })
 }

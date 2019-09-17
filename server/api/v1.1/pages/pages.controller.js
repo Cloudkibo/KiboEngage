@@ -166,12 +166,17 @@ exports.enable = function (req, res) {
                                     text: 'Hi {{user_full_name}}! Thanks for getting in touch with us on Messenger. Please send us any questions you may have'
                                   }]
                               }
+                              console.log('req.body._id', req.body._id)
+                              console.log('req.params._id', req.params._id)
                               utility.callApi('pages/query', 'post', {_id: req.body._id})
                                 .then(pages => {
+                  
                                   let page = pages[0]
+                                  console.log('page', page)
                                   // create default tags
-                                  utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.params._id, companyId: req.user.companyId})
+                                  utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.body._id, companyId: req.user.companyId})
                                     .then(defaultTags => {
+                                      console.log('defaultTags', defaultTags)
                                       defaultTags = defaultTags.map((t) => t.tag)
                                       if (!defaultTags.includes(`_${page.pageId}_1`)) {
                                         createTag(req.user, page, `_${page.pageId}_1`, req)
@@ -180,6 +185,7 @@ exports.enable = function (req, res) {
                                         createTag(req.user, page, `_${page.pageId}_unsubscribe`, req)
                                       }
                                       if (!defaultTags.includes('male')) {
+                                        console.log('male')
                                         createTag(req.user, page, 'male', req)
                                       }
                                       if (!defaultTags.includes('female')) {
@@ -205,6 +211,7 @@ exports.enable = function (req, res) {
                                           .then(connectPage => {
                                             utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
                                               .then(whitelistDomains => {
+                                                console.log('whitle list domain updated')
                                               })
                                               .catch(error => {
                                                 logger.serverLog(TAG,
@@ -216,12 +223,14 @@ exports.enable = function (req, res) {
                                               options: {}
                                             })
                                               .then(updated => {
+                                                console.log('update company')
                                               })
                                               .catch(error => {
                                                 sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
                                               })
                                             utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
                                               .then(updatedSubscriber => {
+                                                console.log('update subscriber')
                                                 const options = {
                                                   url: `https://graph.facebook.com/v2.6/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
                                                   qs: {access_token: page.accessToken},
@@ -284,6 +293,7 @@ exports.enable = function (req, res) {
                                                   //     }
                                                   //   }
                                                   // })
+                                                  console.log('sending success response')
                                                   sendSuccessResponse(res, 200, 'Page connected successfully!')
                                                 })
                                               })
@@ -544,9 +554,11 @@ exports.isWhitelisted = function (req, res) {
 }
 
 function createTag (user, page, tag, req) {
+  console.log('tag in create tag', tag)
   needle('post', `https://graph.facebook.com/v2.11/me/custom_labels?access_token=${page.accessToken}`, {'name': tag})
     .then(label => {
       if (label.body.error) {
+        console.log(label.body.error, 'pages controller in kiboengage')
         sendOpAlert(label.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
       }
       if (label.body.id) {
@@ -558,9 +570,11 @@ function createTag (user, page, tag, req) {
           labelFbId: label.body.id,
           defaultTag: true
         }
+        console.log('before call api')
         utility.callApi('tags', 'post', tagData)
           .then(created => {
             logger.serverLog(TAG, `default tag created successfully!`, 'debug')
+            console.log('successfully create tag', tag)
           })
           .catch(err => {
             logger.serverLog(TAG, `Error at save tag ${err}`, 'error')
