@@ -1589,14 +1589,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
       '$match': {pageId: req.body.pageId}
     },
     {
-      '$match': req.body.pageOwner ? {'userId': req.body.pageOwner}
-        : {
-          '$or':
-          [
-            {'connected': true},
-            {'userId': {$exists: true}}
-          ]
-        }
+      '$match': {'userId': req.body.pageOwner}
     },
     {
       '$lookup': {
@@ -1695,24 +1688,13 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                   payload: []
                 })
               }
-              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
-                utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
-                  .then(user => {
-                    user = user[0]
-                    return res.status(200).json({
-                      status: 'success',
-                      payload: {
-                        subscriberData,
-                        totalSubscribers: pageSubscribers[0].subscribers.length,
-                        user
-                      }
-                    })
-                  })
-                  .catch(err => {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to fetch page owner info ${err}`
-                    })
+              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10) ) {
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      subscriberData,
+                      totalSubscribers: pageSubscribers[0].subscribers.length
+                    }
                   })
               }
             } else {
@@ -1818,34 +1800,20 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                           (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
                           pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))}`, 'debug')
                         if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                            ) {
                               subscriberData.push({
                                 subscriber: pageSubscribers[0].subscribers[i],
                                 assignedTags: assignedTags,
                                 unassignedTags: unassignedTags
                               })
-                            }
                         }
                         retrievedSubscriberData += 1
-    
                         if (subscriberData.length === 10 || retrievedSubscriberData === (pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10)) ) {
-                          utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
-                            .then(user => {
-                              user = user[0]
-                              return res.status(200).json({
-                                status: 'success',
-                                payload: {
-                                  subscriberData: subscriberData.slice(0,10),
-                                  totalSubscribers: pageSubscribers[0].subscribers.length,
-                                  user
-                                }
-                              })
-                            })
-                            .catch(err => {
-                              return res.status(500).json({
-                                status: 'failed',
-                                description: `Failed to fetch page owner info ${err}`
-                              })
+                            return res.status(200).json({
+                              status: 'success',
+                              payload: {
+                                subscriberData: subscriberData.slice(0,10),
+                                totalSubscribers: pageSubscribers[0].subscribers.length
+                              }
                             })
                         }
                       }
