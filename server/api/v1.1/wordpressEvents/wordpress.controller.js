@@ -123,7 +123,7 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
       clearInterval(interval)
       logger.serverLog(TAG, `Wordpress autoposting sent successfully!`)
     } else {
-      broadcastApi.callMessageCreativesEndpoint(messageData[current], page.accessToken, page, 'autoposting')
+      broadcastApi.callMessageCreativesEndpoint(messageData[current], page.accessToken, page, 'wordpress.controller.js', 'autoposting')
         .then(messageCreative => {
           if (messageCreative.status === 'success') {
             const messageCreativeId = messageCreative.message_creative_id
@@ -148,7 +148,7 @@ const sentUsinInterval = function (messageData, page, postingItem, subscribersCo
                     let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
                     labels = labels.concat(temp)
                   }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page)
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'wordpress.controller.js')
                     .then(response => {
                       if (i === limit - 1) {
                         if (response.status === 'success') {
