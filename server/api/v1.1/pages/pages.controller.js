@@ -166,9 +166,13 @@ exports.enable = function (req, res) {
                                     text: 'Hi {{user_full_name}}! Thanks for getting in touch with us on Messenger. Please send us any questions you may have'
                                   }]
                               }
+                              console.log('req.body._id', req.body._id)
+                              console.log('req.params._id', req.params._id)
                               utility.callApi('pages/query', 'post', {_id: req.body._id})
                                 .then(pages => {
+                  
                                   let page = pages[0]
+                                  console.log('page', page)
                                   // create default tags
                                   utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.params._id, companyId: req.user.companyId})
                                     .then(defaultTags => {
