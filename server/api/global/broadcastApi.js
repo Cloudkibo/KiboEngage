@@ -25,8 +25,13 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
         if (response.body.broadcast_id) {
           resolve({status: 'success', broadcast_id: response.body.broadcast_id})
         } else {
-          sendOpAlert(response.body.error, 'in broadcast api.js', page._id, page.userId, page.companyId)
-          resolve({status: 'failed', description: response.body.error})
+          let errorObj = response.body.error
+          if (errorObj && errorObj.code === 10 && errorObj.error_subcode === 2018065) {
+            resolve({status: 'failed', description: errorObj.message})
+          } else {
+            sendOpAlert(response.body.error, 'in broadcast api.js', page._id, page.userId, page.companyId)
+            resolve({status: 'failed', description: response.body.error})
+          }
         }
       })
       .catch(err => {
