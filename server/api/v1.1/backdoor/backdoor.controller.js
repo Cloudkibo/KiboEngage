@@ -1344,7 +1344,7 @@ exports.fetchPageTags = (req, res) => {
         ]
         utility.callApi(`pages/aggregate`, 'post', backupAggregation, 'accounts', req.headers.authorization)
           .then(pageInfo => {
-            let pageInfo = pageInfo[0]
+            pageInfo = pageInfo[0]
             needle.get(
               `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${pageInfo.accessToken}`,
               (err, resp) => {
