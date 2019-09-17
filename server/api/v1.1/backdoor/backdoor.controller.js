@@ -1669,25 +1669,25 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
           .then(pageTags => {
             if (!pageTags || !pageTags[0]) {
               let subscriberData = []
-              for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
-                let statusFilterSucceeded = true
-                if (req.body.status) {
-                  if (req.body.status === 'correct') {
-                    statusFilterSucceeded = true
-                  } else {
-                    statusFilterSucceeded = false
-                  }
+              let statusFilterSucceeded = true
+              if (req.body.status) {
+                if (req.body.status === 'correct') {
+                  statusFilterSucceeded = true
+                } else {
+                  statusFilterSucceeded = false
                 }
-                if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
-                          pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
-                            if (statusFilterSucceeded) {
-                              subscriberData.push({
-                                subscriber: pageSubscribers[0].subscribers[i],
-                                assignedTags: [],
-                                unassignedTags: []
-                              })
-                            }
-                    }
+              }
+              if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
+                for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
+                  if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
+                      pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
+                        subscriberData.push({
+                          subscriber: pageSubscribers[0].subscribers[i],
+                          assignedTags: [],
+                          unassignedTags: []
+                        })
+                      }
+                }
               }
               if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
                 utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
