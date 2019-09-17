@@ -233,7 +233,7 @@ const _sendBroadcast = (data, next) => {
       let temp = data.pageTags.filter((pt) => data.autoposting.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
       labels = labels.concat(temp)
     }
-    broadcastApi.callBroadcastMessagesEndpoint(data.messageCreativeId, labels, notlabels, data.page.accessToken, data.page)
+    broadcastApi.callBroadcastMessagesEndpoint(data.messageCreativeId, labels, notlabels, data.page.accessToken, data.page, 'rssScript.js')
       .then(response => {
         if (i === limit - 1) {
           if (response.status === 'success') {
@@ -261,7 +261,7 @@ const _fetchTags = (data, next) => {
 }
 
 const _createMessageCreative = (data, next) => {
-  broadcastApi.callMessageCreativesEndpoint(data.messageData, data.page.accessToken, data.page, 'autoposting')
+  broadcastApi.callMessageCreativesEndpoint(data.messageData, data.page.accessToken, data.page, 'rssScripts.js', 'autoposting')
     .then(messageCreative => {
       if (messageCreative.status === 'success') {
         data.messageCreativeId = messageCreative.message_creative_id
