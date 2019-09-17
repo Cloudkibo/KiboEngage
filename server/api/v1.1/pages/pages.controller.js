@@ -205,6 +205,7 @@ exports.enable = function (req, res) {
                                           .then(connectPage => {
                                             utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
                                               .then(whitelistDomains => {
+                                                console.log('whitle list domain updated')
                                               })
                                               .catch(error => {
                                                 logger.serverLog(TAG,
@@ -216,12 +217,14 @@ exports.enable = function (req, res) {
                                               options: {}
                                             })
                                               .then(updated => {
+                                                console.log('update company')
                                               })
                                               .catch(error => {
                                                 sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
                                               })
                                             utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
                                               .then(updatedSubscriber => {
+                                                console.log('update subscriber')
                                                 const options = {
                                                   url: `https://graph.facebook.com/v2.6/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
                                                   qs: {access_token: page.accessToken},
@@ -284,6 +287,7 @@ exports.enable = function (req, res) {
                                                   //     }
                                                   //   }
                                                   // })
+                                                  console.log('sending success response')
                                                   sendSuccessResponse(res, 200, 'Page connected successfully!')
                                                 })
                                               })
