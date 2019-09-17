@@ -1457,6 +1457,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(pageSubscribers => {
       if (pageSubscribers[0]) {
+        pageSubscribers[0].subscribers = pageSubscribers[0].subscribers.sort((a, b) => (a.firstName > b.firstName) ? 1 : ((b.lastName > a.lastName) ? -1 : 0))
         console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
         let subscriberData = []
         let retrievedSubscriberData = 0
@@ -1520,9 +1521,9 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                 })
               }
               if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10) ) {
-                  subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
                   return res.status(200).json({
                     status: 'success',
+                    subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
                     payload: {
                       subscriberData,
                       totalSubscribers: pageSubscribers[0].subscribers.length
@@ -1646,7 +1647,8 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                         if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
                           if (!subscriberDataPopulated) {
                             subscriberDataPopulated = true
-                            subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
+
+                      subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
                             return res.status(200).json({
                               status: 'success',
                               payload: {
