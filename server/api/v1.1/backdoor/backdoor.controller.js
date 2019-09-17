@@ -1589,14 +1589,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
       '$match': {pageId: req.body.pageId}
     },
     {
-      '$match': req.body.pageOwner ? {'userId': req.body.pageOwner}
-        : {
-          '$or':
-          [
-            {'connected': true},
-            {'userId': {$exists: true}}
-          ]
-        }
+      '$match': {'userId': req.body.pageOwner}
     },
     {
       '$lookup': {
@@ -1695,56 +1688,65 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                   payload: []
                 })
               }
-              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
-                utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
-                  .then(user => {
-                    user = user[0]
-                    return res.status(200).json({
-                      status: 'success',
-                      payload: {
-                        subscriberData,
-                        totalSubscribers: pageSubscribers[0].subscribers.length,
-                        user
-                      }
-                    })
-                  })
-                  .catch(err => {
-                    return res.status(500).json({
-                      status: 'failed',
-                      description: `Failed to fetch page owner info ${err}`
-                    })
+              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10) ) {
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      subscriberData,
+                      totalSubscribers: pageSubscribers[0].subscribers.length
+                    }
                   })
               }
             } else {
               console.log('pageTags found', pageTags)
+              let criteriaFulfilled = 0
+              let loopFinished = false
               for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                 console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
-                needle.get(
-                  `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
-                  (err, resp) => {
-                    if (err) {
-                      return res.status(500).json({
-                        status: 'failed',
-                        description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
-                      })
-                    } else {
-                      logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
-                      logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags[0])}`, 'debug')
-                      let fbTags = resp.body.data
-                      let kiboPageTags = pageTags[0].tags
-                      let assignedTags = []
-                      let unassignedTags = []
-                      let tagAssigned = false
-                      if (fbTags) {
-                        for (let j = 0; j < kiboPageTags.length; j++) {
-                          for (let k = 0; k < fbTags.length; k++) {
-                            if (fbTags[k].id === kiboPageTags[j].labelFbId) {
-                              assignedTags.push(kiboPageTags[j])
-                              tagAssigned = true
-                              break
+                if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
+                  pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
+                    console.log('subscriber name search', req.body.subscriberName)
+                    console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
+                  criteriaFulfilled += 1
+                  needle.get(
+                    `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
+                    (err, resp) => {
+                      if (err) {
+                        return res.status(500).json({
+                          status: 'failed',
+                          description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
+                        })
+                      } else {
+                        logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
+                        logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags[0])}`, 'debug')
+                        let fbTags = resp.body.data
+                        let kiboPageTags = pageTags[0].tags
+                        let assignedTags = []
+                        let unassignedTags = []
+                        let tagAssigned = false
+                        if (fbTags) {
+                          for (let j = 0; j < kiboPageTags.length; j++) {
+                            for (let k = 0; k < fbTags.length; k++) {
+                              if (fbTags[k].id === kiboPageTags[j].labelFbId) {
+                                assignedTags.push(kiboPageTags[j])
+                                tagAssigned = true
+                                break
+                              }
+                            }
+                            if (!tagAssigned) {
+                              if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                                if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
+                                  unassignedTags.push(kiboPageTags[j])
+                                }
+                              } else {
+                                unassignedTags.push(kiboPageTags[j])
+                              }
+                            } else {
+                              tagAssigned = false
                             }
                           }
-                          if (!tagAssigned) {
+                        } else {
+                          for (let j = 0; j < kiboPageTags.length; j++) {
                             if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
                               if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
                                 unassignedTags.push(kiboPageTags[j])
@@ -1752,102 +1754,81 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                             } else {
                               unassignedTags.push(kiboPageTags[j])
                             }
-                          } else {
-                            tagAssigned = false
                           }
                         }
-                      } else {
-                        for (let j = 0; j < kiboPageTags.length; j++) {
-                          if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                            if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
-                              unassignedTags.push(kiboPageTags[j])
-                            }
-                          } else {
-                            unassignedTags.push(kiboPageTags[j])
+                        let filteredAssignedTags = assignedTags.filter(x => {
+                          let tagName = x.tag
+                          if (tagName.toLowerCase().includes(req.body.assignedTag.toLowerCase())) {
+                            return true
                           }
-                        }
-                      }
-                      let filteredAssignedTags = assignedTags.filter(x => {
-                        let tagName = x.tag
-                        if (tagName.toLowerCase().includes(req.body.assignedTag.toLowerCase())) {
-                          return true
-                        }
-                      })
-                      let filteredUnassignedTags = unassignedTags.filter(x => {
-                        let tagName = x.tag
-                        if (tagName.toLowerCase().includes(req.body.unassignedTag.toLowerCase())) {
-                          return true
-                        }
-                      })
-                      let assignedTagsFound = false
-                      let unassignedTagsFound = false
-                      if (assignedTags.length > 0) {
-                        if (filteredAssignedTags.length > 0) {
+                        })
+                        let filteredUnassignedTags = unassignedTags.filter(x => {
+                          let tagName = x.tag
+                          if (tagName.toLowerCase().includes(req.body.unassignedTag.toLowerCase())) {
+                            return true
+                          }
+                        })
+                        let assignedTagsFound = false
+                        let unassignedTagsFound = false
+                        if (assignedTags.length > 0) {
+                          if (filteredAssignedTags.length > 0) {
+                            assignedTagsFound = true
+                          }
+                        } else {
                           assignedTagsFound = true
                         }
-                      } else {
-                        assignedTagsFound = true
-                      }
-  
-                      if (unassignedTags.length > 0) {
-                        if (filteredUnassignedTags.length > 0) {
+    
+                        if (unassignedTags.length > 0) {
+                          if (filteredUnassignedTags.length > 0) {
+                            unassignedTagsFound = true
+                          }
+                        } else {
                           unassignedTagsFound = true
                         }
-                      } else {
-                        unassignedTagsFound = true
-                      }
-  
-                      let statusFilterSucceeded = true
-                      if (req.body.status) {
-                        if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
-                          statusFilterSucceeded = true
-                        } else if (req.body.status === 'correct' && filteredUnassignedTags.length === 0) {
-                          statusFilterSucceeded = true
-                        } else {
-                          statusFilterSucceeded = false
-                        }
-                      }
-                      logger.serverLog(TAG, `assignedTagsFound ${i} ${assignedTagsFound}`, 'debug')
-                      logger.serverLog(TAG, `unassignedTagsFound ${i} ${unassignedTagsFound}`, 'debug')
-                      logger.serverLog(TAG, `statusFilterSucceeded ${i} ${statusFilterSucceeded}`, 'debug')
-                      logger.serverLog(TAG, `subscriberName condtion ${req.body.subscriberName && 
-                        (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
-                        pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))}`, 'debug')
-                      if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                        if ((pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
-                          pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))
-                          ) {
-                            subscriberData.push({
-                              subscriber: pageSubscribers[0].subscribers[i],
-                              assignedTags: assignedTags,
-                              unassignedTags: unassignedTags
-                            })
+    
+                        let statusFilterSucceeded = true
+                        if (req.body.status) {
+                          if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
+                            statusFilterSucceeded = true
+                          } else if (req.body.status === 'correct' && filteredUnassignedTags.length === 0) {
+                            statusFilterSucceeded = true
+                          } else {
+                            statusFilterSucceeded = false
                           }
-                      }
-                      retrievedSubscriberData += 1
-  
-                      if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
-                        utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
-                          .then(user => {
-                            user = user[0]
+                        }
+                        logger.serverLog(TAG, `assignedTagsFound ${i} ${assignedTagsFound}`, 'debug')
+                        logger.serverLog(TAG, `unassignedTagsFound ${i} ${unassignedTagsFound}`, 'debug')
+                        logger.serverLog(TAG, `statusFilterSucceeded ${i} ${statusFilterSucceeded}`, 'debug')
+                        logger.serverLog(TAG, `subscriberName condtion ${req.body.subscriberName && 
+                          (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
+                          pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))}`, 'debug')
+                        if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
+                              subscriberData.push({
+                                subscriber: pageSubscribers[0].subscribers[i],
+                                assignedTags: assignedTags,
+                                unassignedTags: unassignedTags
+                              })
+                        }
+                        retrievedSubscriberData += 1
+                        if (subscriberData.length === 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
                             return res.status(200).json({
                               status: 'success',
                               payload: {
-                                subscriberData,
-                                totalSubscribers: pageSubscribers[0].subscribers.length,
-                                user
+                                subscriberData: subscriberData.slice(0,10),
+                                totalSubscribers: pageSubscribers[0].subscribers.length
                               }
                             })
-                          })
-                          .catch(err => {
-                            return res.status(500).json({
-                              status: 'failed',
-                              description: `Failed to fetch page owner info ${err}`
-                            })
-                          })
+                        }
                       }
-                    }
-                  })
+                    })
+                }
+            }
+            loopFinished = true
+            if (criteriaFulfilled === 0) {
+              return res.status(200).json({
+                status: 'success',
+                payload: []
+              })
             }
           }
         })
