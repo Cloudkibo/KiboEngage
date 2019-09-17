@@ -1638,6 +1638,9 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
         let retrievedSubscriberData = 0
         let pageTagsAggregation = [
           {
+            '$match': {'pageId': req.body.pageId}
+          },
+          {
             '$lookup': {
               from: 'tags',
               localField: '_id',
@@ -1660,9 +1663,6 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               'pageId': '$_id',
               'tags': 1
             }
-          },
-          {
-            '$match': {'pageId': req.body.pageId}
           }
         ]
         utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
