@@ -560,8 +560,8 @@ function createTag (user, page, tag, req) {
       console.log('label.body', label.body)
       console.log('label.body.error', label.body.error)
       if (label.body.error) {
-        label.statusCode.error = JSON.stringify(label.statusCode.error)
-        if (label.statusCode.error.code === 100) {
+        //label.statusCode.error = JSON.stringify(label.statusCode.error)
+        if (label.body.error.code === 100) {
           utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.body._id, companyId: req.user.companyId, tag: tag})
             .then(defaultTag => {
               console.log('defaultTag using tag', defaultTag)
