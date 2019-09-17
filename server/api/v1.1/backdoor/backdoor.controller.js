@@ -1301,25 +1301,77 @@ exports.fetchPageTags = (req, res) => {
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(kiboPageTags => {
-      needle.get(
-        `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
-        (err, resp) => {
-          if (err) {
+      if (kiboPageTags && kiboPageTags[0]) {
+        needle.get(
+          `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
+          (err, resp) => {
+            if (err) {
+              return res.status(500).json({
+                status: 'failed',
+                description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+              })
+            } else {
+              console.log('fbPageTags', resp.body)
+              return res.status(200).json({
+                status: 'success',
+                payload: {
+                  kiboPageTags: kiboPageTags[0].tags,
+                  fbPageTags: resp.body.data ? resp.body.data : []
+                }
+              })
+            }
+          })
+      } else {
+        let backupAggregation = [
+          {
+            '$match': {'pageId': req.params.pageId}
+          },
+          {
+            '$group': {
+              '_id': '$pageId',
+              'pageName': {'$first': '$pageName'},
+              'accessToken': {'$first': '$accessToken'}
+            }
+          },
+          {
+            '$project': {
+              '_id': 0,
+              'pageId': '$_id',
+              'pageName': 1,
+              'accessToken': 1
+            }
+          }
+        ]
+        utility.callApi(`pages/aggregate`, 'post', backupAggregation, 'accounts', req.headers.authorization)
+          .then(pageInfo => {
+            let pageInfo = pageInfo[0]
+            needle.get(
+              `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${pageInfo.accessToken}`,
+              (err, resp) => {
+                if (err) {
+                  return res.status(500).json({
+                    status: 'failed',
+                    description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+                  })
+                } else {
+                  console.log('fbPageTags', resp.body)
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      kiboPageTags: [],
+                      fbPageTags: resp.body.data ? resp.body.data : []
+                    }
+                  })
+                }
+              })
+          })
+          .catch(err => {
             return res.status(500).json({
               status: 'failed',
-              description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
+              description: `Failed to fetch page info ${err}`
             })
-          } else {
-            console.log('fbPageTags', resp.body)
-            return res.status(200).json({
-              status: 'success',
-              payload: {
-                kiboPageTags: kiboPageTags[0].tags,
-                fbPageTags: resp.body.data ? resp.body.data : []
-              }
-            })
-          }
-        })
+          })
+      }
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
