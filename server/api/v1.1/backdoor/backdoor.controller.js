@@ -1699,12 +1699,15 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               }
             } else {
               console.log('pageTags found', pageTags)
-              let foundOne = false
+              let criteriaFulfilled = 0
+              let loopFinished = false
               for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                 console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
                 if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
                   pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
-                  foundOne = true
+                    console.log('subscriber name search', req.body.subscriberName)
+                    console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
+                  criteriaFulfilled += 1
                   needle.get(
                     `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
                     (err, resp) => {
@@ -1807,7 +1810,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                               })
                         }
                         retrievedSubscriberData += 1
-                        if (subscriberData.length === 10 || retrievedSubscriberData === (pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10)) ) {
+                        if (subscriberData.length === 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
                             return res.status(200).json({
                               status: 'success',
                               payload: {
@@ -1820,7 +1823,8 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                     })
                 }
             }
-            if (!foundOne) {
+            loopFinished = true
+            if (criteriaFulfilled === 0) {
               return res.status(200).json({
                 status: 'success',
                 payload: []
