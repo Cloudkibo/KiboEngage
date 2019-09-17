@@ -1268,6 +1268,9 @@ function getAdminedData (fbRoles, localDataFromDB) {
 exports.fetchPageTags = (req, res) => {
   let aggregation = [
     {
+      '$match': {'pageId': req.params.pageId}
+    },
+    {
       '$lookup': {
         from: 'tags',
         localField: '_id',
@@ -1294,9 +1297,6 @@ exports.fetchPageTags = (req, res) => {
         'tags': 1,
         'accessToken': 1
       }
-    },
-    {
-      '$match': {'pageId': req.params.pageId}
     }
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
