@@ -1688,6 +1688,11 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                         })
                       }
                 }
+              } else {
+                return res.status(200).json({
+                  status: 'success',
+                  payload: []
+                })
               }
               if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length) {
                 utility.callApi(`user/query`, 'post', {_id: pageSubscribers[0].userId}, 'accounts', req.headers.authorization)
