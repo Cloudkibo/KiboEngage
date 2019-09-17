@@ -174,7 +174,7 @@ exports.enable = function (req, res) {
                                   let page = pages[0]
                                   console.log('page', page)
                                   // create default tags
-                                  utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.params._id, companyId: req.user.companyId})
+                                  utility.callApi('tags/query', 'post', {defaultTag: true, pageId: req.body._id, companyId: req.user.companyId})
                                     .then(defaultTags => {
                                       console.log('defaultTags', defaultTags)
                                       defaultTags = defaultTags.map((t) => t.tag)
