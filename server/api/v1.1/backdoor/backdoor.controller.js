@@ -1679,6 +1679,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               }
               if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
                 for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
+                  retrievedSubscriberData += 1
                   if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
                       pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
                         subscriberData.push({
