@@ -96,6 +96,7 @@ exports.allPolls = function (req, res) {
 }
 
 exports.create = function (req, res) {
+  console.log(JSON.stringify(req.body))
   utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
@@ -119,6 +120,7 @@ exports.create = function (req, res) {
           ], 10, function (err, results) {
             if (err) {
               sendErrorResponse(res, 500, `Failed to create poll ${JSON.stringify(err)}`)
+              console.log(err)
             }
             sendSuccessResponse(res, 200, results[1])
           })
@@ -182,6 +184,9 @@ exports.sendPollDirectly = function (req, res) {
             }
             let pollCreated = result[0]
             req.body._id = pollCreated._id
+            let optionsData = req.body.options
+            req.body.options = optionsData.map((o) => o.option)
+            req.body.actions = optionsData
             sendPoll(req, res, planUsage, companyUsage, abort)
           })
         })

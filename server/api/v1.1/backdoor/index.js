@@ -103,7 +103,7 @@ router.get('/fetchPageTags/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageTags)
 
-router.post('/fetchSubscribersWithTags/:pageId',
+router.post('/fetchSubscribersWithTags',
   auth.isAuthorizedSuperUser(),
   controller.fetchSubscribersWithTagsNew)
 
@@ -114,5 +114,9 @@ router.get('/fetchPageAdmins/:pageId',
 router.post('/fetchCompanyInfo',
   auth.isAuthorizedSuperUser(),
   controller.fetchCompanyInfo)
+
+router.post('/topPages',
+  auth.isAuthorizedSuperUser(),
+  controller.topPages)
 
 module.exports = router
