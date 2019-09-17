@@ -568,8 +568,8 @@ function createTag (user, page, tag, req) {
               if (defaultTag.length === 0) {
                 needle('get', `https://graph.facebook.com/v2.11/me/custom_labels?fields=name&access_token=${page.accessToken}`)
                   .then(Tags => { 
-                    console.log('tags in facebook ', Tags)
-                    let default_tag = Tags.data.filter(data => data.name === tag)
+                    console.log('tags in facebook ', Tags.body)
+                    let default_tag = Tags.body.data.filter(data => data.name === tag)
                     console.log('default tag in facebook', default_tag)
                     console.log('default_tag[0].id', default_tag[0].id)
                     let tagData = {
