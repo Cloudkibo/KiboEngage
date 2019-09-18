@@ -865,7 +865,7 @@ exports.updateSubscriptionPermission = function (req, res) {
         needle.get(
           `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${req.user.facebookInfo.fbToken}`,
           (err, resp) => {
-            console.log('respp body in updateSubscriptionPermission ', resp)
+            console.log('respp body in updateSubscriptionPermission ', resp.body)
             if (err) {
               logger.serverLog(TAG,
                 `Page access token from graph api error ${JSON.stringify(
