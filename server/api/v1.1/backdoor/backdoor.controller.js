@@ -1957,31 +1957,38 @@ exports.fetchCompanyInfoNew = (req, res) => {
         }
         let totalRequests = userRequests.concat(pageRequests).concat(companyUserRequests).concat(subscriberRequests)
         async.parallelLimit(totalRequests, 30, function (err, results) {
-          let data = []
-          for (let i = 0; i < results.length/4; i++) {
-            data.push({
-              owner: results[i].user,
-              companyName: results[i].companyName,
-              numOfOwnedPages: results[i+(results.length/4)].numOfOwnedPages,
-              numOfConnectedPages: results[i+(results.length/4)].numOfConnectedPages,
-              numOfCompanyUsers: results[i+(results.length/4)*2].numOfCompanyUsers,
-              numOfSubscribers: results[i+(results.length/4)*3].numOfSubscribers
+          if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch company data ${err}`
+            })
+          } else {
+            let data = []
+            for (let i = 0; i < results.length/4; i++) {
+              data.push({
+                owner: results[i].user,
+                companyName: results[i].companyName,
+                numOfOwnedPages: results[i+(results.length/4)].numOfOwnedPages,
+                numOfConnectedPages: results[i+(results.length/4)].numOfConnectedPages,
+                numOfCompanyUsers: results[i+(results.length/4)*2].numOfCompanyUsers,
+                numOfSubscribers: results[i+(results.length/4)*3].numOfSubscribers
+              })
+            }
+            console.log('company data done', data)
+            return res.status(200).json({
+              status: 'success',
+              payload: {
+                data
+              }
             })
           }
-          console.log('company data done', data)
-          return res.status(200).json({
-            status: 'success',
-            payload: {
-              data
-            }
-          })
         })
       }
     })
     .catch(err => {
       return res.status(500).json({
         status: 'failed',
-        description: `Failed to fetch company owned pages ${err}`
+        description: `Failed to fetch companies ${err}`
       })
     })
 }
