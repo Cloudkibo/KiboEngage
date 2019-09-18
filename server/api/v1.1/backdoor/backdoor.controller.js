@@ -1859,3 +1859,136 @@ exports.topPages = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch sessions ${JSON.stringify(error)}`)
     })
 }
+
+
+exports.fetchCompanyInfoNew = (req, res) => {
+  console.log('fetching company info')
+  let companyAggregation = [
+    {
+      '$match': {
+        companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
+      }
+    },
+    {
+      '$group': {
+        '_id': '$_id',
+        'companyName': {'$first': '$companyName'},
+        'userId': {'$first': '$ownerId'},
+      }
+    },
+    {
+      '$sort': {'_id': -1}
+    },
+    {
+      '$project': {
+        '_id': 1,
+        'companyName': 1,
+        'userId': 1
+      }
+    },
+    {
+      '$skip':  req.body.pageNumber ? (req.body.pageNumber-1) * 10 : 0
+    },
+    {
+      '$limit': 10
+    }
+  ]
+  utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
+    .then(companies => {
+      if (companies) {
+        console.log('companies retrieved', companies)
+        let userRequests = []
+        let pageRequests = []
+        let companyUserRequests = []
+        let subscriberRequests = []
+        for (let i = 0; i < companies.length; i++) {
+
+          userRequests.push(
+            function (callback) {
+              utility.callApi(`user/query`, 'post', {_id: companies[i].userId}, 'accounts', req.headers.authorization)
+                .then(users => {
+                  callback(null, {companyId: companies[i]._id,
+                                   companyName: companies[i].companyName,
+                                   user: users[0]})
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            }
+          )
+
+          pageRequests.push(
+            function (callback) {
+              utility.callApi(`pages/query`, 'post', {companyId: companies[i]._id}, 'accounts', req.headers.authorization)
+                .then(pages => {
+                  callback(null, { numOfOwnedPages: pages.length,
+                                   numOfConnectedPages: pages.filter(page => page.connected).length})
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            }
+          )
+
+          companyUserRequests.push(
+            function (callback) {
+              utility.callApi(`companyUser/queryAll`, 'post', {companyId: companies[i]._id}, 'accounts', req.headers.authorization)
+                .then(companyUsers => {
+                  callback(null, {numOfCompanyUsers: companyUsers.length})
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            }
+          )
+
+          subscriberRequests.push(
+            function (callback) {
+              utility.callApi(`subscribers/query`, 'post', {companyId: companies[i]._id}, 'accounts', req.headers.authorization)
+                .then(subscribers => {
+                  callback(null, {numOfSubscribers: subscribers.length})
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            }
+          )
+
+        }
+        let totalRequests = userRequests.concat(pageRequests).concat(companyUserRequests).concat(subscriberRequests)
+        async.parallelLimit(totalRequests, 30, function (err, results) {
+          if (err) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch company data ${err}`
+            })
+          } else {
+            let data = []
+            for (let i = 0; i < results.length/4; i++) {
+              data.push({
+                owner: results[i].user,
+                companyName: results[i].companyName,
+                numOfOwnedPages: results[i+(results.length/4)].numOfOwnedPages,
+                numOfConnectedPages: results[i+(results.length/4)].numOfConnectedPages,
+                numOfCompanyUsers: results[i+(results.length/4)*2].numOfCompanyUsers,
+                numOfSubscribers: results[i+(results.length/4)*3].numOfSubscribers
+              })
+            }
+            console.log('company data done', data)
+            return res.status(200).json({
+              status: 'success',
+              payload: {
+                data
+              }
+            })
+          }
+        })
+      }
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch companies ${err}`
+      })
+    })
+}
