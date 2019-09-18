@@ -5,8 +5,6 @@ exports.batchApi = (payload, recipientId, page, sendBroadcast, fname, lname, res
   let messagingTag = messagingTypeTag !== undefined ? messagingTypeTag : 'MESSAGE_TAG'
   let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": recipientId}))
   let tag = "tag=" + encodeURIComponent(fbMessageTag)
-  console.log('messagingTag', messagingTag)
-  console.log('fbMessageTag', fbMessageTag)
   // let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
   let messagingType = "messaging_type=" + encodeURIComponent(messagingTag)
   let batch = []
