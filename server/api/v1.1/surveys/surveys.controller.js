@@ -423,7 +423,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                           }
                         }
                       }
-                      broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'survey')
+                      broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'surveys.controller.js', 'survey')
                         .then(messageCreative => {
                           if (messageCreative.status === 'success') {
                             const messageCreativeId = messageCreative.message_creative_id
@@ -460,7 +460,7 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                                       labels = labels.concat(temp)
                                     }
                                   }
-                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page)
+                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'Surveys.controller.js')
                                     .then(response => {
                                       if (i === limit - 1) {
                                         if (response.status === 'success') {
