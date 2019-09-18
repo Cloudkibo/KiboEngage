@@ -11,13 +11,13 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
       'message_creative_id': messageCreativeId,
       'notification_type': 'REGULAR',
       'messaging_type': tag !== undefined ? tag : 'MESSAGE_TAG',
-      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION'
-      // 'targeting': JSON.stringify({
-      //   labels: {
-      //     operator: 'AND',
-      //     values: labelValues
-      //   }
-      // })
+      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
+      'targeting': JSON.stringify({
+        labels: {
+          operator: 'AND',
+          values: labelValues
+        }
+      })
     }
     if (tag === 'UPDATE') {
       delete data.tag
