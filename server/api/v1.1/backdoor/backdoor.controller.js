@@ -1549,16 +1549,32 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                 }
               }
               if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
+                let foundOne = false
                 for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                   retrievedSubscriberData += 1
                   let subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
                   if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
+                        foundOne = true
                         subscriberData.push({
                           subscriber: pageSubscribers[0].subscribers[i],
                           assignedTags: [],
                           unassignedTags: []
                         })
                       }
+                }
+                if (foundOne) {
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: {
+                      subscriberData,
+                      totalSubscribers: pageSubscribers[0].subscribers.length
+                    }
+                  })
+                } else {
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: []
+                  })
                 }
               } else {
                 return res.status(200).json({
