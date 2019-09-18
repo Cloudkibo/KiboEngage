@@ -460,6 +460,7 @@ exports.sendConversation = function (req, res) {
   if (req.body.segmentationPageIds.length !== 1) {
     sendErrorResponse(res, 400, '', 'Please select only one page')
   }
+  let inputTag = req.body.messageType === 'promotional' ? 'UPDATE' : 'MESSAGE_TAG'
   utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
     .then(page => {
       page = page[0]
@@ -493,7 +494,7 @@ exports.sendConversation = function (req, res) {
               let interval = setInterval(() => {
                 if (payload) {
                   clearInterval(interval)
-                  sentUsinInterval(payload, page, broadcast, req, res, 3000)
+                  sentUsinInterval(payload, page, broadcast, req, res, 3000, inputTag)
                 }
               }, 3000)
             } else {
@@ -504,7 +505,7 @@ exports.sendConversation = function (req, res) {
                     let interval = setInterval(() => {
                       if (payload) {
                         clearInterval(interval)
-                        sendToSubscribers(subsFindCriteria, req, res, page, broadcast, req.user, payload)
+                        sendToSubscribers(subsFindCriteria, req, res, page, broadcast, req.user, payload, inputTag)
                       }
                     }, 3000)
                   })
@@ -516,7 +517,7 @@ exports.sendConversation = function (req, res) {
                 let interval = setInterval(() => {
                   if (payload) {
                     clearInterval(interval)
-                    sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, req.user, payload)
+                    sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, req.user, payload, inputTag)
                   }
                 }, 3000)
               }
@@ -531,7 +532,7 @@ exports.sendConversation = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
     })
 }
-const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
+const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload, tag) => {
   utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
     .then(subscribers => {
       if (subscribers.length < 1) {
@@ -550,7 +551,7 @@ const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, co
           })
             .then(savedpagebroadcast => {
               require('../../global/messageStatistics').record('broadcast')
-              batchApi(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag)
+              batchApi(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag, undefined, tag)
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to create page_broadcast ${JSON.stringify(error)}`)
@@ -769,7 +770,7 @@ exports.retrieveReachEstimation = (req, res) => {
     })
 }
 
-const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
+const sentUsinInterval = function (payload, page, broadcast, req, res, delay, tag) {
   let current = 0
   let interval = setInterval(() => {
     if (current === payload.length) {
@@ -816,7 +817,7 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                       labels = labels.concat(temp)
                     }
                   }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'Broadcasts.Controller.js')
+                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'Broadcasts.Controller.js', tag)
                     .then(response => {
                       logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
                       if (i === limit - 1) {
