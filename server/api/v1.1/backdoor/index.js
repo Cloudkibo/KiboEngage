@@ -119,4 +119,8 @@ router.post('/topPages',
   auth.isAuthorizedSuperUser(),
   controller.topPages)
 
+router.get('/fetchPageOwners/:pageId',
+  auth.isAuthorizedSuperUser(),
+  controller.fetchPageOwners)
+
 module.exports = router

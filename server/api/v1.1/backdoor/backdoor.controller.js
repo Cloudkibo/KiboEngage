@@ -1265,6 +1265,53 @@ function getAdminedData (fbRoles, localDataFromDB) {
   })
 }
 
+exports.fetchPageOwners = (req, res) => {
+  let aggregation = [
+    {
+      '$match': {'pageId': req.params.pageId}
+    },
+    {
+      '$lookup': {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      '$unwind': '$user'
+    },
+    {
+      '$group': {
+        '_id': '$pageId',
+        'users': {'$addToSet': '$user'}
+      }
+    },
+    {
+      '$project': {
+        '_id': 0,
+        'pageId': '$_id',
+        'users': 1,
+      }
+    }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
+    .then(pageOwners => {
+      return res.status(200).json({
+        status: 'success',
+        payload: {
+          pageOwners: pageOwners[0].users,
+        }
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        status: 'failed',
+        description: `Failed to fetch page owners for page ${req.params.pageId} ${err}`
+      })
+    })
+}
+
 exports.fetchPageTags = (req, res) => {
   let aggregation = [
     {
