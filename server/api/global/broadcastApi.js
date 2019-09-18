@@ -48,7 +48,7 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken, page, location, m
           if (response.body.message_creative_id) {
             resolve({status: 'success', message_creative_id: response.body.message_creative_id})
           } else {
-            sendOpAlert(response.body.error, 'Function: callMessageCreativesEndpoint' + 'File :' + location, page._id, page.userId, page.companyId)
+            sendOpAlert(response.body.error, 'Function: callMessageCreativesEndpoint File :' + location, page._id, page.userId, page.companyId)
             resolve({status: 'failed', description: response.body.error})
           }
         })
