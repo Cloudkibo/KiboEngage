@@ -490,38 +490,38 @@ exports.sendConversation = function (req, res) {
             let payload = updatePayload(req.body.self, payloadData, broadcast)
             broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
             // condition to decide broadcast or batch api
-            // if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
+            if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
               let interval = setInterval(() => {
                 if (payload) {
                   clearInterval(interval)
                   sentUsinInterval(payload, page, broadcast, req, res, 3000, inputTag)
                 }
               }, 3000)
-            // } else {
-            //   if (req.body.isList === true) {
-            //     utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
-            //       .then(lists => {
-            //         let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
-            //         let interval = setInterval(() => {
-            //           if (payload) {
-            //             clearInterval(interval)
-            //             sendToSubscribers(subsFindCriteria, req, res, page, broadcast, req.user, payload, inputTag)
-            //           }
-            //         }, 3000)
-            //       })
-            //       .catch(error => {
-            //         sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
-            //       })
-            //   } else {
-            //     let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
-            //     let interval = setInterval(() => {
-            //       if (payload) {
-            //         clearInterval(interval)
-            //         sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, req.user, payload, inputTag)
-            //       }
-            //     }, 3000)
-            //   }
-            // }
+            } else {
+              if (req.body.isList === true) {
+                utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
+                  .then(lists => {
+                    let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
+                    let interval = setInterval(() => {
+                      if (payload) {
+                        clearInterval(interval)
+                        sendToSubscribers(subsFindCriteria, req, res, page, broadcast, req.user, payload, inputTag)
+                      }
+                    }, 3000)
+                  })
+                  .catch(error => {
+                    sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
+                  })
+              } else {
+                let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
+                let interval = setInterval(() => {
+                  if (payload) {
+                    clearInterval(interval)
+                    sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, req.user, payload, inputTag)
+                  }
+                }, 3000)
+              }
+            }
           })
           .catch(error => {
             sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
