@@ -3,21 +3,24 @@ const { facebookApiCaller } = require('./facebookApiCaller')
 const { sendOpAlert } = require('./operationalAlert')
 // const util = require('util')
 
-exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, page, location) => {
+exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, page, location, tag) => {
   return new Promise((resolve, reject) => {
     let labelValues = labels
     labelValues.push({operator: 'NOT', values: notlabels})
     let data = {
       'message_creative_id': messageCreativeId,
       'notification_type': 'REGULAR',
-      'messaging_type': 'MESSAGE_TAG',
-      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
-      'targeting': JSON.stringify({
-        labels: {
-          operator: 'AND',
-          values: labelValues
-        }
-      })
+      'messaging_type': tag !== undefined ? tag : 'MESSAGE_TAG',
+      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION'
+      // 'targeting': JSON.stringify({
+      //   labels: {
+      //     operator: 'AND',
+      //     values: labelValues
+      //   }
+      // })
+    }
+    if (tag === 'UPDATE') {
+      delete data.tag
     }
     facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
