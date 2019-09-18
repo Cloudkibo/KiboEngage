@@ -871,7 +871,7 @@ exports.updateSubscriptionPermission = function (req, res) {
                 `Page access token from graph api error ${JSON.stringify(
                   err)}`, 'error')
             }
-            if (resp.body.error) {
+            if (resp && resp.body & resp.body.error) {
               sendOpAlert(resp.body.error, 'dashboard controller in kiboengage', page._id, page.userId, page.companyId)
             }
             if (resp && resp.body && resp.body.access_token) {
