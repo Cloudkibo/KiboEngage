@@ -1549,23 +1549,28 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                 }
               }
               if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
+                let foundOne = false
                 for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                   retrievedSubscriberData += 1
-                  let subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
+                  let subscriberFullName = ''
+                  if (pageSubscribers[0].subscribers[i].firstName && pageSubscribers[0].subscribers[i].lastName) {
+                    subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
+                  }
                   if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
+                        foundOne = true
                         subscriberData.push({
                           subscriber: pageSubscribers[0].subscribers[i],
                           assignedTags: [],
                           unassignedTags: []
                         })
-                      }
+                    }
+                  }
+                } else {
+                  return res.status(200).json({
+                    status: 'success',
+                    payload: []
+                  })
                 }
-              } else {
-                return res.status(200).json({
-                  status: 'success',
-                  payload: []
-                })
-              }
               if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10) ) {
                   subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
                   return res.status(200).json({
@@ -1583,7 +1588,10 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               let subscriberDataPopulated = false
               for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                 console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
-                let subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
+                let subscriberFullName = ''
+                if (pageSubscribers[0].subscribers[i].firstName && pageSubscribers[0].subscribers[i].lastName) {
+                  subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
+                }
                 if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
                     console.log('subscriber name search', req.body.subscriberName)
                     console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
@@ -1737,6 +1745,11 @@ exports.fetchCompanyInfo = (req, res) => {
   console.log('fetching company info')
   let companyAggregation = [
     {
+      '$match': {
+        companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
+      }
+    },
+    {
       '$lookup': {
         from: 'pages',
         localField: '_id',
@@ -1785,11 +1798,6 @@ exports.fetchCompanyInfo = (req, res) => {
         'companyUsers': {'$addToSet': '$companyUser'},
         'subscribers': {'$addToSet': '$subscriber'},
         'user': {'$first': '$user'}
-      }
-    },
-    {
-      '$match': {
-        companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : {$exists: true}
       }
     },
     {
