@@ -43,10 +43,8 @@ exports.index = function (req, res) {
                   }
                   if (resp2.body.error && resp2.body.error.code === 190) {
                     passwordChangeEmailAlert(req.user._id, req.user.email)
-                  } else {
-                    console.log('resp2.body', resp2.body)
-                    console.log('resp2.body.error', resp2.body.error)
-                    sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage')
+                  } else if (resp2.body.error) {
+                    sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
                   }
                   logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
                   let pageAccessToken = resp2.body.access_token
