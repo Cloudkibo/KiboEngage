@@ -1551,7 +1551,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
                 for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                   retrievedSubscriberData += 1
-                  let subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].firstName.toLowerCase()
+                  let subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
                   if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
                         subscriberData.push({
                           subscriber: pageSubscribers[0].subscribers[i],
@@ -1583,7 +1583,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               let subscriberDataPopulated = false
               for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                 console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
-                let subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].firstName.toLowerCase()
+                let subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
                 if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
                     console.log('subscriber name search', req.body.subscriberName)
                     console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
