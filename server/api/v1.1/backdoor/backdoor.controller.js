@@ -1299,9 +1299,8 @@ exports.fetchPageOwners = (req, res) => {
     .then(pageOwners => {
       return res.status(200).json({
         status: 'success',
-        payload: {
-          pageOwners: pageOwners[0].users,
-        }
+        payload: pageOwners[0].users,
+        
       })
     })
     .catch(err => {
