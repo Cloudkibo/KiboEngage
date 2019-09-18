@@ -19,17 +19,17 @@ const prepareAutopostingPayload = (req) => {
   if (req.body.isSegmented) {
     autoPostingPayload.isSegmented = true
     autoPostingPayload.segmentationPageIds = (req.body.segmentationPageIds)
-      ? req.body.pageIds
-      : null
+      ? req.body.segmentationPageIds
+      : []
     autoPostingPayload.segmentationGender = (req.body.segmentationGender)
       ? req.body.segmentationGender
-      : null
+      : []
     autoPostingPayload.segmentationLocale = (req.body.segmentationLocale)
       ? req.body.segmentationLocale
-      : null
+      : []
     autoPostingPayload.segmentationTags = (req.body.segmentationTags)
       ? req.body.segmentationTags
-      : null
+      : []
   }
   return autoPostingPayload
 }
