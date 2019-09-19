@@ -28,12 +28,12 @@ exports.getAllUsers = function (req, res) {
           if (users.length > 0) {
             users.forEach((user) => {
               let pageIds = []
-              utility.callApi(`pages/query`, 'post', { userId: user._id, connected: true })
+              utility.callApi(`pages/query`, 'post', {userId: user._id, connected: true})
                 .then(pages => {
                   for (let i = 0; i < pages.length; i++) {
                     pageIds.push(pages[i]._id)
                   }
-                  utility.callApi(`subscribers/query`, 'post', { pageId: pageIds, isSubscribed: true, isEnabledByPage: true })
+                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true, isEnabledByPage: true})
                     .then(subscribers => {
                       usersPayload.push({
                         _id: user._id,
@@ -46,7 +46,7 @@ exports.getAllUsers = function (req, res) {
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
-                        sendSuccessResponse(res, 200, { users: sorted.reverse(), count: usersData.length })
+                        sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersData.length})
                       }
                     })
                     .catch(error => {
@@ -58,7 +58,7 @@ exports.getAllUsers = function (req, res) {
                 })
             })
           } else {
-            sendSuccessResponse(res, 200, { users: [], count: usersData.length })
+            sendSuccessResponse(res, 200, {users: [], count: usersData.length})
           }
         })
         .catch(error => {
@@ -104,7 +104,7 @@ exports.getAllPages = function (req, res) {
     })
 }
 exports.allLocales = function (req, res) {
-  utility.callApi(`user/distinct`, 'post', { distinct: 'facebookInfo.locale' })
+  utility.callApi(`user/distinct`, 'post', {distinct: 'facebookInfo.locale'})
     .then(locales => {
       sendSuccessResponse(res, 200, locales)
     })
@@ -192,10 +192,10 @@ exports.getAllBroadcasts = function (req, res) {
           if (broadcasts.length > 0) {
             prepareDataToSend(broadcasts, req)
               .then(result => {
-                sendSuccessResponse(res, 200, { broadcasts: result.data, count: result.data.length > 0 ? broadcastsCount[0].count : '' })
+                sendSuccessResponse(res, 200, {broadcasts: result.data, count: result.data.length > 0 ? broadcastsCount[0].count : ''})
               })
           } else {
-            sendSuccessResponse(res, 200, { broadcasts: [], count: '' })
+            sendSuccessResponse(res, 200, {broadcasts: [], count: ''})
           }
         })
         .catch(error => {
@@ -222,10 +222,10 @@ exports.getAllPolls = function (req, res) {
           if (polls.length > 0) {
             preparePollDataToSend(polls, req)
               .then(result => {
-                sendSuccessResponse(res, 200, { polls: result.data, count: result.data.length > 0 ? pollsCount[0].count : '' })
+                sendSuccessResponse(res, 200, {polls: result.data, count: result.data.length > 0 ? pollsCount[0].count : ''})
               })
           } else {
-            sendSuccessResponse(res, 200, { polls: [], count: '' })
+            sendSuccessResponse(res, 200, {polls: [], count: ''})
           }
         })
     })
@@ -246,23 +246,23 @@ exports.getAllSurveys = function (req, res) {
           if (surveys.length > 0) {
             prepareSurveyDataToSend(surveys, req)
               .then(result => {
-                sendSuccessResponse(res, 200, { surveys: result.data, count: result.data.length > 0 ? surveysCount[0].count : '' })
+                sendSuccessResponse(res, 200, {surveys: result.data, count: result.data.length > 0 ? surveysCount[0].count : ''})
               })
           } else {
-            sendSuccessResponse(res, 200, { surveys: [], count: '' })
+            sendSuccessResponse(res, 200, {surveys: [], count: ''})
           }
         })
     })
 }
 
-function prepareSurveyDataToSend(surveys, req) {
+function prepareSurveyDataToSend (surveys, req) {
   return new Promise(function (resolve, reject) {
     let data = []
     for (let j = 0; j < surveys.length; j++) {
       let pagesurveyTapped = surveys[j].surveyPages.filter((c) => c.seen === true)
-      utility.callApi(`user/query`, 'post', { _id: surveys[j].userId })
+      utility.callApi(`user/query`, 'post', {_id: surveys[j].userId})
         .then(user => {
-          utility.callApi(`pages/query`, 'post', { companyId: surveys[j].companyId })
+          utility.callApi(`pages/query`, 'post', {companyId: surveys[j].companyId})
             .then(pages => {
               let pageSend = []
               if (surveys[j].segmentationPageIds && surveys[j].segmentationPageIds.length > 0) {
@@ -276,21 +276,19 @@ function prepareSurveyDataToSend(surveys, req) {
                   pageSend.push(page[a].pageName)
                 }
               }
-              data.push({
-                _id: surveys[j]._id,
+              data.push({_id: surveys[j]._id,
                 title: surveys[j].title,
                 datetime: surveys[j].datetime,
                 page: pageSend,
                 user: user[0],
                 sent: surveys[j].surveyPages.length,
                 seen: pagesurveyTapped.length,
-                responded: surveys[j].surveyResponses.length
-              })
+                responded: surveys[j].surveyResponses.length})
               if (data.length === surveys.length) {
                 data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
-                resolve({ data: data })
+                resolve({data: data})
               }
             })
         })
@@ -298,14 +296,14 @@ function prepareSurveyDataToSend(surveys, req) {
   })
 }
 
-function preparePollDataToSend(polls, req) {
+function preparePollDataToSend (polls, req) {
   return new Promise(function (resolve, reject) {
     let data = []
     for (let j = 0; j < polls.length; j++) {
       let pagepollTapped = polls[j].pollPages.filter((c) => c.seen === true)
-      utility.callApi(`user/query`, 'post', { _id: polls[j].userId })
+      utility.callApi(`user/query`, 'post', {_id: polls[j].userId})
         .then(user => {
-          utility.callApi(`pages/query`, 'post', { companyId: polls[j].companyId })
+          utility.callApi(`pages/query`, 'post', {companyId: polls[j].companyId})
             .then(pages => {
               let pageSend = []
               if (polls[j].segmentationPageIds && polls[j].segmentationPageIds.length > 0) {
@@ -319,8 +317,7 @@ function preparePollDataToSend(polls, req) {
                   pageSend.push(page[a].pageName)
                 }
               }
-              data.push({
-                _id: polls[j]._id,
+              data.push({_id: polls[j]._id,
                 statement: polls[j].statement,
                 datetime: polls[j].datetime,
                 page: pageSend,
@@ -333,7 +330,7 @@ function preparePollDataToSend(polls, req) {
                 data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
-                resolve({ data: data })
+                resolve({data: data})
               }
             })
         })
@@ -341,14 +338,14 @@ function preparePollDataToSend(polls, req) {
   })
 }
 
-function prepareDataToSend(broadcasts, req) {
+function prepareDataToSend (broadcasts, req) {
   return new Promise(function (resolve, reject) {
     let data = []
     for (let j = 0; j < broadcasts.length; j++) {
       let pagebroadcastTapped = broadcasts[j].broadcastPages.filter((c) => c.seen === true)
-      utility.callApi(`user/query`, 'post', { _id: broadcasts[j].userId })
+      utility.callApi(`user/query`, 'post', {_id: broadcasts[j].userId})
         .then(user => {
-          utility.callApi(`pages/query`, 'post', { companyId: broadcasts[j].companyId })
+          utility.callApi(`pages/query`, 'post', {companyId: broadcasts[j].companyId})
             .then(pages => {
               let pageSend = []
               if (pages.length > 0) {
@@ -366,8 +363,7 @@ function prepareDataToSend(broadcasts, req) {
                   }
                 }
               }
-              data.push({
-                _id: broadcasts[j]._id,
+              data.push({_id: broadcasts[j]._id,
                 title: broadcasts[j].title,
                 datetime: broadcasts[j].datetime,
                 payload: broadcasts[j].payload,
@@ -380,7 +376,7 @@ function prepareDataToSend(broadcasts, req) {
                 data.sort(function (a, b) {
                   return new Date(b.datetime) - new Date(a.datetime)
                 })
-                resolve({ data: data })
+                resolve({data: data})
               }
             })
         })
@@ -400,15 +396,14 @@ exports.broadcastsGraph = function (req, res) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let aggregateMatch = {
-    'datetime': { $gte: startDate }
+    'datetime': {$gte: startDate}
   }
   let aggregateGroup = {
-    _id: { 'year': { $year: '$datetime' }, 'month': { $month: '$datetime' }, 'day': { $dayOfMonth: '$datetime' } },
-    count: { $sum: 1 }
-  }
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1}}
   DataLayer.aggregateForBroadcasts(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
     .then(broadcastsgraphdata => {
-      sendSuccessResponse(res, 200, { broadcastsgraphdata })
+      sendSuccessResponse(res, 200, {broadcastsgraphdata})
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
@@ -427,15 +422,14 @@ exports.pollsGraph = function (req, res) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let aggregateMatch = {
-    'datetime': { $gte: startDate }
+    'datetime': {$gte: startDate}
   }
   let aggregateGroup = {
-    _id: { 'year': { $year: '$datetime' }, 'month': { $month: '$datetime' }, 'day': { $dayOfMonth: '$datetime' } },
-    count: { $sum: 1 }
-  }
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1}}
   DataLayer.aggregateForPolls(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
     .then(pollsgraphdata => {
-      sendSuccessResponse(res, 200, { pollsgraphdata })
+      sendSuccessResponse(res, 200, {pollsgraphdata})
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch polls ${JSON.stringify(error)}`)
@@ -454,15 +448,14 @@ exports.surveysGraph = function (req, res) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let aggregateMatch = {
-    'datetime': { $gte: startDate }
+    'datetime': {$gte: startDate}
   }
   let aggregateGroup = {
-    _id: { 'year': { $year: '$datetime' }, 'month': { $month: '$datetime' }, 'day': { $dayOfMonth: '$datetime' } },
-    count: { $sum: 1 }
-  }
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1}}
   DataLayer.aggregateForSurveys(aggregateMatch, aggregateGroup, undefined, undefined, undefined, undefined)
     .then(surveysgraphdata => {
-      sendSuccessResponse(res, 200, { surveysgraphdata })
+      sendSuccessResponse(res, 200, {surveysgraphdata})
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch surveys ${JSON.stringify(error)}`)
@@ -482,17 +475,16 @@ exports.sessionsGraph = function (req, res) {
   startDate.setSeconds(0)
   let body = [
     {
-      $match: { 'datetime': { $gte: startDate } }
+      $match: {'datetime': {$gte: startDate}}
     },
     {
       $group: {
-        _id: { 'year': { $year: '$datetime' }, 'month': { $month: '$datetime' }, 'day': { $dayOfMonth: '$datetime' } },
-        count: { $sum: 1 }
-      }
+        _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+        count: {$sum: 1}}
     }]
   utility.callApi(`subscribers/aggregate`, 'post', body)
     .then(sessionsgraphdata => {
-      sendSuccessResponse(res, 200, { sessionsgraphdata })
+      sendSuccessResponse(res, 200, {sessionsgraphdata})
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch sessions ${JSON.stringify(error)}`)
@@ -535,11 +527,11 @@ exports.getAllSubscribers = function (req, res) {
 exports.poll = function (req, res) {
   DataLayer.findOnePoll(req.params.pollid)
     .then(poll => {
-      PollResponseDataLayer.genericFindForPollResponse({ pollId: req.params.pollid })
+      PollResponseDataLayer.genericFindForPollResponse({pollId: req.params.pollid})
         .then(pollResponses => {
-          PollPageDataLayer.genericFind({ pollId: req.params.pollid })
+          PollPageDataLayer.genericFind({pollId: req.params.pollid})
             .then(pollpages => {
-              sendSuccessResponse(res, 200, { pollResponses, poll, pollpages })
+              sendSuccessResponse(res, 200, {pollResponses, poll, pollpages})
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to fetch poll pages ${JSON.stringify(error)}`)
@@ -554,13 +546,13 @@ exports.poll = function (req, res) {
     })
 }
 exports.surveyDetails = function (req, res) {
-  DataLayer.findSurvey({ _id: req.params.surveyid })
+  DataLayer.findSurvey({_id: req.params.surveyid})
     .then(survey => {
       SurveyQuestionDataLayer.findSurveyWithId(req.params.surveyid)
         .then(questions => {
-          SurveyResponseDataLayer.genericFind({ surveyId: req.params.surveyid })
+          SurveyResponseDataLayer.genericFind({surveyId: req.params.surveyid})
             .then(responses => {
-              sendSuccessResponse(res, 200, { survey, questions, responses })
+              sendSuccessResponse(res, 200, {survey, questions, responses})
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to fetch survey responses ${JSON.stringify(error)}`)
@@ -596,7 +588,7 @@ exports.uploadFile = function (req, res) {
 exports.AllSubscribers = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      utility.callApi(`subscribers/query`, 'post', { pageId: req.params.pageid }) // fetch subscribers of company
+      utility.callApi(`subscribers/query`, 'post', {pageId: req.params.pageid}) // fetch subscribers of company
         .then(subscribers => {
           console.log('subscribers in All subscribers', subscribers)
           downloadSubscribersData(subscribers)
@@ -613,7 +605,7 @@ exports.AllSubscribers = function (req, res) {
     })
 }
 
-function downloadSubscribersData(subscribers) {
+function downloadSubscribersData (subscribers) {
   let subscriberPayload = []
   return new Promise(function (resolve, reject) {
     if (subscribers.length > 0) {
@@ -637,7 +629,7 @@ function downloadSubscribersData(subscribers) {
           const opts = { keys }
           try {
             const csv = parse(info, opts)
-            resolve({ data: csv })
+            resolve({data: csv})
           } catch (err) {
             console.error('error at parse', err)
           }
@@ -647,7 +639,7 @@ function downloadSubscribersData(subscribers) {
       const opts = ['Name', 'Gender', 'Locale', 'PageName']
       try {
         const csv = parse([], opts)
-        resolve({ data: csv })
+        resolve({data: csv})
       } catch (err) {
         console.error('error at parse', err)
       }
@@ -655,18 +647,18 @@ function downloadSubscribersData(subscribers) {
   })
 }
 
-function downloadCSV(pages, req) {
+function downloadCSV (pages, req) {
   return new Promise(function (resolve, reject) {
     let usersPayload = []
     for (let i = 0; i < pages.length; i++) {
       if (pages[i].userId) {
-        utility.callApi(`subscribers/query`, 'post', { pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true })
+        utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true})
           .then(subscribers => {
-            DataLayer.findBroadcasts({ pageIds: pages[i].pageId })
+            DataLayer.findBroadcasts({pageIds: pages[i].pageId})
               .then(broadcasts => {
-                DataLayer.findSurvey({ pageIds: pages[i].pageId })
+                DataLayer.findSurvey({pageIds: pages[i].pageId})
                   .then(surveys => {
-                    DataLayer.findPolls({ pageIds: pages[i].pageId })
+                    DataLayer.findPolls({pageIds: pages[i].pageId})
                       .then(polls => {
                         usersPayload.push({
                           Page: pages[i].pageName,
@@ -694,7 +686,7 @@ function downloadCSV(pages, req) {
                           const opts = { keys }
                           try {
                             const csv = parse(info, opts)
-                            resolve({ data: csv })
+                            resolve({data: csv})
                           } catch (err) {
                             console.error('error at parse', err)
                           }
@@ -739,26 +731,24 @@ exports.sendEmail = function (req, res) {
           surveys: 0,
           liveChat: 0
         }
-        utility.callApi(`companyUser/query`, 'post', { domain_email: user.domain_email })
+        utility.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email})
           .then(companyUser => {
-            utility.callApi(`subscribers/query`, 'post', { isSubscribed: true, isEnabledByPage: true })
+            utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true})
               .then(subs => {
                 if (subs.length > 1) {
                   let subscriberAggregate = [
                     {
                       $match: {
                         $and: [
-                          {
-                            'datetime': {
-                              $gte: new Date(
-                                (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                              $lt: new Date(
-                                (new Date().getTime()))
-                            }
-                          }, { companyId: companyUser.companyId },
-                          { isEnabledByPage: true }, { isSubscribed: true }]
-                      }
-                    }
+                          {'datetime': {
+                            $gte: new Date(
+                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+                            $lt: new Date(
+                              (new Date().getTime()))
+                          }
+                          }, {companyId: companyUser.companyId},
+                          {isEnabledByPage: true}, {isSubscribed: true}]
+                      }}
                   ]
                   utility.callApi(`subscribers/aggregate`, 'post', subscriberAggregate)
                     .then(subscribers => {
@@ -766,42 +756,39 @@ exports.sendEmail = function (req, res) {
                       // if (subscribers.length > 50) {
                       DataLayer.aggregateForPolls({
                         $and: [
-                          {
-                            'datetime': {
-                              $gte: new Date(
-                                (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                              $lt: new Date(
-                                (new Date().getTime()))
-                            }
-                          }, { companyId: companyUser.companyId }]
+                          {'datetime': {
+                            $gte: new Date(
+                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+                            $lt: new Date(
+                              (new Date().getTime()))
+                          }
+                          }, {companyId: companyUser.companyId}]
                       }, undefined, undefined, undefined, undefined, undefined)
                         .then(polls => {
                           data.polls = polls.length
                         })
                       DataLayer.aggregateForSurveys({
                         $and: [
-                          {
-                            'datetime': {
-                              $gte: new Date(
-                                (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                              $lt: new Date(
-                                (new Date().getTime()))
-                            }
-                          }, { companyId: companyUser.companyId }]
+                          {'datetime': {
+                            $gte: new Date(
+                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+                            $lt: new Date(
+                              (new Date().getTime()))
+                          }
+                          }, {companyId: companyUser.companyId}]
                       }, undefined, undefined, undefined, undefined, undefined)
                         .then(surveys => {
                           data.surveys = surveys.length
                         })
                       DataLayer.aggregateForBroadcasts({
                         $and: [
-                          {
-                            'datetime': {
-                              $gte: new Date(
-                                (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                              $lt: new Date(
-                                (new Date().getTime()))
-                            }
-                          }, { companyId: companyUser.companyId }]
+                          {'datetime': {
+                            $gte: new Date(
+                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+                            $lt: new Date(
+                              (new Date().getTime()))
+                          }
+                          }, {companyId: companyUser.companyId}]
                       }, undefined, undefined, undefined, undefined, undefined)
                         .then(broadcasts => {
                           let sendgrid = require('sendgrid')(config.sendgrid.username,
@@ -821,7 +808,7 @@ exports.sendEmail = function (req, res) {
                                   err)}`, 'error')
                             }
                           })
-                          // }
+                        // }
                         })
                     })
                     .catch(error => {
@@ -842,7 +829,7 @@ exports.sendEmail = function (req, res) {
       logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(error)}`, 'error')
     })
   return res.status(200)
-    .json({ status: 'success' })
+    .json({status: 'success'})
 }
 exports.fetchAutopostingDetails = function (req, res) {
   const criteria = LogicLayer.getCriteriasForAutopostingByType(req)
@@ -854,18 +841,18 @@ exports.fetchAutopostingDetails = function (req, res) {
   }
   const groupCriteraType = {
     _id: '$subscriptionType',
-    count: { $sum: 1 },
-    forwarded: { $sum: '$tweetsForwarded' },
-    ignored: { $sum: '$tweetsIgnored' }
+    count: {$sum: 1},
+    forwarded: {$sum: '$tweetsForwarded'},
+    ignored: {$sum: '$tweetsIgnored'}
   }
   const groupCriteriaMessages = {
     _id: '$message_id',
-    count: { $sum: 1 },
-    sent: { $sum: '$sent' }
+    count: {$sum: 1},
+    sent: {$sum: '$sent'}
   }
   const groupCriteriaGraph = {
-    _id: { 'year': { $year: '$datetime' }, 'month': { $month: '$datetime' }, 'day': { $dayOfMonth: '$datetime' } },
-    count: { $sum: '$sent' }
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: '$sent'}
   }
 
   async.parallelLimit([
@@ -980,9 +967,9 @@ exports.fetchAutopostingDetails = function (req, res) {
 }
 exports.getPagePermissions = function (req, res) {
   let recentPageCriteria = [
-    { $match: { pageId: req.params.id } },
-    { $sort: { _id: -1 } },
-    { $limit: 1 },
+    {$match: {pageId: req.params.id}},
+    {$sort: {_id: -1}},
+    {$limit: 1},
     { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
     { '$unwind': '$user' }
   ]
@@ -990,7 +977,7 @@ exports.getPagePermissions = function (req, res) {
     .then(page => {
       page = page[0]
       if (page) {
-        utility.callApi(`user/query`, 'post', { email: 'anisha@cloudkibo.com' }, 'accounts', req.headers.authorization)
+        utility.callApi(`user/query`, 'post', {email: 'anisha@cloudkibo.com'}, 'accounts', req.headers.authorization)
           .then(user => {
             user = user[0]
             let appLevelPermissions = {
@@ -1057,7 +1044,7 @@ exports.getPagePermissions = function (req, res) {
               if (err) {
                 sendErrorResponse(res, 500, `Failed to fetch page permissions ${JSON.stringify(err)}`)
               } else {
-                sendSuccessResponse(res, 200, { appLevelPermissions: results[0], pageLevelPermissions: results[1] })
+                sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
               }
             })
           })
@@ -1065,7 +1052,7 @@ exports.getPagePermissions = function (req, res) {
             sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
           })
       } else {
-        sendErrorResponse(res, 500, `Failed to fetch permissions ${JSON.stringify({ message: `This page is not connected by any User. So, we cannot fetch this page's permissions` })}`)
+        sendErrorResponse(res, 500, `Failed to fetch permissions ${JSON.stringify({message: `This page is not connected by any User. So, we cannot fetch this page's permissions`})}`)
       }
     })
     .catch(error => {
@@ -1085,12 +1072,12 @@ exports.fetchUniquePages = (req, res) => {
       '$group': {
         '_id': '$pageId',
         'count': { '$sum': 1 },
-        'pageName': { '$first': '$pageName' },
-        'connectedFacebook': { '$first': '$connectedFacebook' }
+        'pageName': {'$first': '$pageName'},
+        'connectedFacebook': {'$first': '$connectedFacebook'}
       }
     },
     {
-      '$sort': { 'count': -1 }
+      '$sort': {'count': -1}
     },
     {
       '$project': {
@@ -1102,15 +1089,6 @@ exports.fetchUniquePages = (req, res) => {
       }
     },
     {
-<<<<<<< HEAD
-      '$match': {
-        pageName: req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : { $exists: true },
-        connectedFacebook: req.body.connectedFacebook !== '' ? req.body.connectedFacebook : { $exists: true }
-      }
-    },
-    {
-=======
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
       '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
     },
     {
@@ -1121,28 +1099,24 @@ exports.fetchUniquePages = (req, res) => {
   let countAggregation = [
     {
       '$match': {
-        pageName: req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : { $exists: true },
-        connectedFacebook: req.body.connectedFacebook !== '' ? req.body.connectedFacebook : { $exists: true }
+        pageName: req.body.pageName ? { $regex: '.*' + req.body.pageName + '.*', $options: 'i' } : {$exists: true},
+        connectedFacebook: req.body.connectedFacebook !== '' ? req.body.connectedFacebook : {$exists: true}
       }
     },
-    {
-      '$group': {
-        '_id': '$pageId'
-      }
-    },
-    {
-      '$group': {
-        '_id': null,
-        'count': { $sum: 1 }
-      }
-    }
+    { '$group': {
+      '_id': '$pageId'
+    }},
+    { '$group': {
+      '_id': null,
+      'count': {$sum: 1}
+    }}
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
     .then(uniquePages => {
       let pageOwnersFound = 0
       if (uniquePages.length > 0) {
         for (let i = 0; i < uniquePages.length; i++) {
-          utility.callApi(`pages/query`, 'post', { pageId: uniquePages[i].pageId, 'connected': true }, 'accounts', req.headers.authorization)
+          utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
             .then(page => {
               // console.log('found page owner', page[0].userId)
               pageOwnersFound += 1
@@ -1198,9 +1172,9 @@ exports.fetchPageUsers = (req, res) => {
   async.parallelLimit([
     function (callback) {
       let recentPageCriteria = [
-        { $match: { pageId: req.body.pageId } },
-        { $sort: { _id: -1 } },
-        { $limit: 1 },
+        {$match: {pageId: req.body.pageId}},
+        {$sort: {_id: -1}},
+        {$limit: 1},
         { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
         { '$unwind': '$user' }
       ]
@@ -1238,7 +1212,7 @@ exports.fetchPageUsers = (req, res) => {
         .then(pagesCount => {
           utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
             .then(pageUsers => {
-              callback(null, { count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers })
+              callback(null, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
             })
             .catch(err => {
               sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
@@ -1261,13 +1235,13 @@ exports.fetchPageUsers = (req, res) => {
             result.pageUsers = result.pageUsers.filter((c) => c.admin === false)
             result.count = result.pageUsers.length
           }
-          sendSuccessResponse(res, 200, { count: result.count, pageUsers: result.pageUsers })
+          sendSuccessResponse(res, 200, {count: result.count, pageUsers: result.pageUsers})
         })
     }
   })
 }
 
-function getAdminedData(fbRoles, localDataFromDB) {
+function getAdminedData (fbRoles, localDataFromDB) {
   return new Promise(function (resolve, reject) {
     let roles = []
     if (fbRoles.length > 0) {
@@ -1282,11 +1256,11 @@ function getAdminedData(fbRoles, localDataFromDB) {
           localData[i].admin = false
         }
         if (i === localData.length - 1) {
-          resolve({ count: localDataFromDB.count, pageUsers: localData })
+          resolve({count: localDataFromDB.count, pageUsers: localData})
         }
       }
     } else {
-      resolve({ count: 0, pageUsers: [] })
+      resolve({count: 0, pageUsers: []})
     }
   })
 }
@@ -1294,7 +1268,7 @@ function getAdminedData(fbRoles, localDataFromDB) {
 exports.fetchPageOwners = (req, res) => {
   let aggregation = [
     {
-      '$match': { 'pageId': req.params.pageId }
+      '$match': {'pageId': req.params.pageId}
     },
     {
       '$lookup': {
@@ -1310,13 +1284,7 @@ exports.fetchPageOwners = (req, res) => {
     {
       '$group': {
         '_id': '$pageId',
-<<<<<<< HEAD
-        'pageName': { '$first': '$pageName' },
-        'accessToken': { '$first': '$accessToken' },
-        'tags': { '$push': '$tag' }
-=======
         'users': {'$addToSet': '$user'}
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
       }
     },
     {
@@ -1346,11 +1314,7 @@ exports.fetchPageOwners = (req, res) => {
 exports.fetchPageTags = (req, res) => {
   let aggregation = [
     {
-<<<<<<< HEAD
-      '$match': req.body.pageOwner ? { 'userId': req.body.pageOwner } : { 'connected': true }
-=======
       '$match': {'pageId': req.params.pageId}
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
     },
     {
       '$lookup': {
@@ -1366,15 +1330,9 @@ exports.fetchPageTags = (req, res) => {
     {
       '$group': {
         '_id': '$pageId',
-<<<<<<< HEAD
-        'pageName': { '$first': '$pageName' },
-        'subscribers': { '$addToSet': '$subscriber' },
-        'accessToken': { '$first': '$accessToken' }
-=======
         'pageName': {'$first': '$pageName'},
         'accessToken': {'$first': '$accessToken'},
         'tags': {'$push': '$tag'}
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
       }
     },
     {
@@ -1385,70 +1343,6 @@ exports.fetchPageTags = (req, res) => {
         'tags': 1,
         'accessToken': 1
       }
-<<<<<<< HEAD
-    },
-    {
-      '$match': { pageId: req.params.pageId }
-    },
-    {
-      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
-    },
-    {
-      '$limit': 10
-    }
-  ]
-  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
-    .then(pageSubscribers => {
-      if (pageSubscribers[0]) {
-        console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
-        let subscriberData = []
-        let subscriberOwnersFound = 0
-        let retrievedSubscriberData = 0
-        for (let i = 0; i < pageSubscribers[0].subscribers.length; i++) {
-          let subscriberOwnerAggregation = [
-            {
-              '$lookup': {
-                from: 'users',
-                localField: 'userId',
-                foreignField: '_id',
-                as: 'user'
-              }
-            },
-            {
-              '$unwind': '$user'
-            },
-            {
-              '$group': {
-                '_id': '$_id',
-                'pageName': { '$first': '$pageName' },
-                'users': { '$addToSet': '$user' }
-              }
-            },
-            {
-              '$project': {
-                '_id': 1,
-                'pageName': 1,
-                'users': 1
-              }
-            },
-            {
-              '$match': { _id: pageSubscribers[0].subscribers[i].pageId }
-            }
-          ]
-          utility.callApi(`pages/aggregate`, 'post', subscriberOwnerAggregation, 'accounts', req.headers.authorization)
-            .then(subscriberOwner => {
-              subscriberOwnersFound += 1
-              pageSubscribers[0].subscribers[i].pageOwner = subscriberOwner[0].users[0]
-              if (retrievedSubscriberData === pageSubscribers[0].subscribers.length && subscriberOwnersFound === pageSubscribers[0].subscribers.length) {
-                console.log('subscriberData', subscriberData)
-                return res.status(200).json({
-                  status: 'success',
-                  payload: subscriberData
-                })
-              }
-            })
-            .catch(err => {
-=======
     }
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
@@ -1458,7 +1352,6 @@ exports.fetchPageTags = (req, res) => {
           `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
           (err, resp) => {
             if (err) {
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
               return res.status(500).json({
                 status: 'failed',
                 description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
@@ -1482,12 +1375,8 @@ exports.fetchPageTags = (req, res) => {
           {
             '$group': {
               '_id': '$pageId',
-<<<<<<< HEAD
-              'tags': { '$addToSet': '$tag' }
-=======
               'pageName': {'$first': '$pageName'},
               'accessToken': {'$first': '$accessToken'}
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
             }
           },
           {
@@ -1497,12 +1386,6 @@ exports.fetchPageTags = (req, res) => {
               'pageName': 1,
               'accessToken': 1
             }
-<<<<<<< HEAD
-          },
-          {
-            '$match': { 'pageId': req.params.pageId }
-=======
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
           }
         ]
         utility.callApi(`pages/aggregate`, 'post', backupAggregation, 'accounts', req.headers.authorization)
@@ -1547,9 +1430,9 @@ exports.fetchPageTags = (req, res) => {
 
 exports.fetchPageAdmins = (req, res) => {
   let pageAggregation = [
-    { $match: { pageId: req.params.pageId } },
-    { $sort: { _id: -1 } },
-    { $limit: 1 }
+    {$match: {pageId: req.params.pageId}},
+    {$sort: {_id: -1}},
+    {$limit: 1}
   ]
   utility.callApi(`pages/aggregate`, 'post', pageAggregation, 'accounts', req.headers.authorization)
     .then(page => {
@@ -1581,10 +1464,10 @@ exports.fetchPageAdmins = (req, res) => {
 exports.fetchSubscribersWithTagsNew = (req, res) => {
   let aggregation = [
     {
-      '$match': { pageId: req.body.pageId }
+      '$match': {pageId: req.body.pageId}
     },
     {
-      '$match': { 'userId': req.body.pageOwner }
+      '$match': {'userId': req.body.pageOwner}
     },
     {
       '$lookup': {
@@ -1600,10 +1483,10 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
     {
       '$group': {
         '_id': '$pageId',
-        'pageName': { '$first': '$pageName' },
-        'subscribers': { '$addToSet': '$subscriber' },
-        'accessToken': { '$first': '$accessToken' },
-        'userId': { '$first': '$userId' },
+        'pageName': {'$first': '$pageName'},
+        'subscribers': {'$addToSet': '$subscriber'},
+        'accessToken': {'$first': '$accessToken'},
+        'userId': {'$first': '$userId'},
       }
     },
     {
@@ -1626,7 +1509,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
         let retrievedSubscriberData = 0
         let pageTagsAggregation = [
           {
-            '$match': { 'pageId': req.body.pageId }
+            '$match': {'pageId': req.body.pageId}
           },
           {
             '$lookup': {
@@ -1642,7 +1525,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
           {
             '$group': {
               '_id': '$pageId',
-              'tags': { '$addToSet': '$tag' }
+              'tags': {'$addToSet': '$tag'}
             }
           },
           {
@@ -1669,31 +1552,6 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                 let foundOne = false
                 for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                   retrievedSubscriberData += 1
-<<<<<<< HEAD
-                  if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
-                    pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
-                    subscriberData.push({
-                      subscriber: pageSubscribers[0].subscribers[i],
-                      assignedTags: [],
-                      unassignedTags: []
-                    })
-                  }
-                }
-              } else {
-                return res.status(200).json({
-                  status: 'success',
-                  payload: []
-                })
-              }
-              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber - 1) * 10)) {
-                return res.status(200).json({
-                  status: 'success',
-                  payload: {
-                    subscriberData,
-                    totalSubscribers: pageSubscribers[0].subscribers.length
-                  }
-                })
-=======
                   let subscriberFullName = ''
                   if (pageSubscribers[0].subscribers[i].firstName && pageSubscribers[0].subscribers[i].lastName) {
                     subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
@@ -1722,7 +1580,6 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                       totalSubscribers: pageSubscribers[0].subscribers.length
                     }
                   })
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
               }
             } else {
               console.log('pageTags found', pageTags)
@@ -1731,12 +1588,6 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
               let subscriberDataPopulated = false
               for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
                 console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
-<<<<<<< HEAD
-                if (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
-                  pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase())) {
-                  console.log('subscriber name search', req.body.subscriberName)
-                  console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
-=======
                 let subscriberFullName = ''
                 if (pageSubscribers[0].subscribers[i].firstName && pageSubscribers[0].subscribers[i].lastName) {
                   subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
@@ -1744,7 +1595,6 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                 if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
                     console.log('subscriber name search', req.body.subscriberName)
                     console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
                   criteriaFulfilled += 1
                   needle.get(
                     `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
@@ -1815,7 +1665,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                         } else {
                           assignedTagsFound = true
                         }
-
+    
                         if (unassignedTags.length > 0) {
                           if (filteredUnassignedTags.length > 0) {
                             unassignedTagsFound = true
@@ -1823,7 +1673,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                         } else {
                           unassignedTagsFound = true
                         }
-
+    
                         let statusFilterSucceeded = true
                         if (req.body.status) {
                           if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
@@ -1834,34 +1684,15 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                             statusFilterSucceeded = false
                           }
                         }
-<<<<<<< HEAD
-                        logger.serverLog(TAG, `assignedTagsFound ${i} ${assignedTagsFound}`, 'debug')
-                        logger.serverLog(TAG, `unassignedTagsFound ${i} ${unassignedTagsFound}`, 'debug')
-                        logger.serverLog(TAG, `statusFilterSucceeded ${i} ${statusFilterSucceeded}`, 'debug')
-                        logger.serverLog(TAG, `subscriberName condtion ${req.body.subscriberName &&
-                          (pageSubscribers[0].subscribers[i].firstName.toLowerCase().includes(req.body.subscriberName.toLowerCase()) ||
-                            pageSubscribers[0].subscribers[i].lastName.toLowerCase().includes(req.body.subscriberName.toLowerCase()))}`, 'debug')
-=======
 
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
                         if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                          subscriberData.push({
-                            subscriber: pageSubscribers[0].subscribers[i],
-                            assignedTags: assignedTags,
-                            unassignedTags: unassignedTags
-                          })
+                              subscriberData.push({
+                                subscriber: pageSubscribers[0].subscribers[i],
+                                assignedTags: assignedTags,
+                                unassignedTags: unassignedTags
+                              })
                         }
                         retrievedSubscriberData += 1
-<<<<<<< HEAD
-                        if (subscriberData.length === 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled)) {
-                          return res.status(200).json({
-                            status: 'success',
-                            payload: {
-                              subscriberData: subscriberData.slice(0, 10),
-                              totalSubscribers: pageSubscribers[0].subscribers.length
-                            }
-                          })
-=======
                         if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
                           if (!subscriberDataPopulated) {
                             subscriberDataPopulated = true
@@ -1874,27 +1705,26 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                               }
                             })
                           }
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
                         }
                       }
                     })
                 }
-              }
-              loopFinished = true
-              if (criteriaFulfilled === 0) {
-                return res.status(200).json({
-                  status: 'success',
-                  payload: []
-                })
-              }
             }
+            loopFinished = true
+            if (criteriaFulfilled === 0) {
+              return res.status(200).json({
+                status: 'success',
+                payload: []
+              })
+            }
+          }
+        })
+        .catch(err => {
+          return res.status(500).json({
+            status: 'failed',
+            description: `Failed to fetch page tags ${err}`
           })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to fetch page tags ${err}`
-            })
-          })
+        })
       } else {
         return res.status(200).json({
           status: 'success',
@@ -1930,35 +1760,32 @@ exports.fetchCompanyInfo = (req, res) => {
     {
       '$unwind': '$page'
     },
-    {
-      '$lookup': {
-        from: 'users',
-        localField: 'ownerId',
-        foreignField: '_id',
-        as: 'user'
-      }
+    { '$lookup': {
+      from: 'users',
+      localField: 'ownerId',
+      foreignField: '_id',
+      as: 'user'
+    }
     },
     {
       '$unwind': '$user'
     },
-    {
-      '$lookup': {
-        from: 'companyusers',
-        localField: '_id',
-        foreignField: 'companyId',
-        as: 'companyUser'
-      }
+    { '$lookup': {
+      from: 'companyusers',
+      localField: '_id',
+      foreignField: 'companyId',
+      as: 'companyUser'
+    }
     },
     {
       '$unwind': '$companyUser'
     },
-    {
-      '$lookup': {
-        from: 'subscribers',
-        localField: '_id',
-        foreignField: 'companyId',
-        as: 'subscriber'
-      }
+    { '$lookup': {
+      from: 'subscribers',
+      localField: '_id',
+      foreignField: 'companyId',
+      as: 'subscriber'
+    }
     },
     {
       '$unwind': '$subscriber'
@@ -1966,24 +1793,15 @@ exports.fetchCompanyInfo = (req, res) => {
     {
       '$group': {
         '_id': '$_id',
-        'pages': { '$addToSet': '$page' },
-        'companyName': { '$first': '$companyName' },
-        'companyUsers': { '$addToSet': '$companyUser' },
-        'subscribers': { '$addToSet': '$subscriber' },
-        'user': { '$first': '$user' }
+        'pages': {'$addToSet': '$page'},
+        'companyName': {'$first': '$companyName'},
+        'companyUsers': {'$addToSet': '$companyUser'},
+        'subscribers': {'$addToSet': '$subscriber'},
+        'user': {'$first': '$user'}
       }
     },
     {
-<<<<<<< HEAD
-      '$match': {
-        companyName: req.body.companyName ? { $regex: '.*' + req.body.companyName + '.*', $options: 'i' } : { $exists: true }
-      }
-    },
-    {
-      '$sort': { '_id': -1 }
-=======
       '$sort': {'_id': -1}
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
     },
     {
       '$project': {
@@ -2042,20 +1860,6 @@ exports.topPages = function (req, res) {
     })
 }
 
-<<<<<<< HEAD
-exports.usersListForViewAs = function (req, res) {
-  let aggregatePayload = [
-    { $project: { domain_email: 1, name: 1, email: 1 } }
-  ]
-  utility.callApi(`users/aggregate`, 'post', aggregatePayload, 'accounts', req.headers.authorization)
-    .then(users => {
-      sendSuccessResponse(res, 200, users)
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch users list for view as ${JSON.stringify(error)}`)
-    })
-}
-=======
 
 exports.fetchCompanyInfoNew = (req, res) => {
   console.log('fetching company info')
@@ -2188,4 +1992,17 @@ exports.fetchCompanyInfoNew = (req, res) => {
       })
     })
 }
->>>>>>> c3b87d8f8a2af1db1e6e112d366174d7845b9bc3
+
+exports.usersListForViewAs = function (req, res) {
+  let aggregatePayload = [
+    { $project: { domain_email: 1, name: 1, email: 1 } }
+  ]
+  utility.callApi(`users/aggregate`, 'post', aggregatePayload, 'accounts', req.headers.authorization)
+    .then(users => {
+      sendSuccessResponse(res, 200, users)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch users list for view as ${JSON.stringify(error)}`)
+    })
+}
+
