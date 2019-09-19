@@ -119,4 +119,9 @@ router.post('/topPages',
   auth.isAuthorizedSuperUser(),
   controller.topPages)
 
+router.post('/usersListForViewAs',
+  auth.isAuthorizedSuperUser(),
+  controller.usersListForViewAs
+)
+
 module.exports = router
