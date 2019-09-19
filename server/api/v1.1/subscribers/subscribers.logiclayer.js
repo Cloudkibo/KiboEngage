@@ -323,7 +323,8 @@ exports.getCountCriteria = (body, companyId, tagIds) => {
           as: 'tags_subscriber'
         }
       })
-      criteria.push({$match: {'tags_subscriber.tagIds': {$in: tagIds}}})
+      criteria.push({$unwind: '$tags_subscriber'})
+      criteria.push({$match: {'tags_subscriber.tagId': {$in: tagIds}}})
     }
     criteria.push({$group: {_id: null, count: {$sum: 1}}})
     resolve(criteria)

@@ -274,7 +274,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
       const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
       let subsFindCriteria = {}
       if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
-        broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'poll')
+        broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'polls.controllers.js', 'poll')
           .then(messageCreative => {
             if (messageCreative.status === 'success') {
               const messageCreativeId = messageCreative.message_creative_id
@@ -311,7 +311,7 @@ function sendPoll (req, res, planUsage, companyUsage, abort) {
                         labels = labels.concat(temp)
                       }
                     }
-                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page)
+                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'Polls.controller.js')
                       .then(response => {
                         if (i === limit - 1) {
                           if (response.status === 'success') {

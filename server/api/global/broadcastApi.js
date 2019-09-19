@@ -3,7 +3,7 @@ const { facebookApiCaller } = require('./facebookApiCaller')
 const { sendOpAlert } = require('./operationalAlert')
 // const util = require('util')
 
-exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, page) => {
+exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, page, location) => {
   return new Promise((resolve, reject) => {
     let labelValues = labels
     labelValues.push({operator: 'NOT', values: notlabels})
@@ -29,7 +29,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
           if (errorObj && errorObj.code === 10 && errorObj.error_subcode === 2018065) {
             resolve({status: 'failed', description: errorObj.message})
           } else {
-            sendOpAlert(response.body.error, 'in broadcast api.js', page._id, page.userId, page.companyId)
+            sendOpAlert(response.body.error, 'function: callBroadcastMessagesEndpoint file: ' + location, page._id, page.userId, page.companyId)
             resolve({status: 'failed', description: response.body.error})
           }
         }
@@ -40,7 +40,7 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
   })
 }
 
-exports.callMessageCreativesEndpoint = (data, pageAccessToken, page, module = 'broadcast') => {
+exports.callMessageCreativesEndpoint = (data, pageAccessToken, page, location, module = 'broadcast') => {
   return new Promise((resolve, reject) => {
     getMessagesData(data, module).then(messages => {
       let dataToSend = {
@@ -51,7 +51,7 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken, page, module = 'b
           if (response.body.message_creative_id) {
             resolve({status: 'success', message_creative_id: response.body.message_creative_id})
           } else {
-            sendOpAlert(response.body.error, 'in broadcastapi', page._id, page.userId, page.companyId)
+            sendOpAlert(response.body.error, 'Function: callMessageCreativesEndpoint File :' + location, page._id, page.userId, page.companyId)
             resolve({status: 'failed', description: response.body.error})
           }
         })
