@@ -119,6 +119,11 @@ router.post('/topPages',
   auth.isAuthorizedSuperUser(),
   controller.topPages)
 
+router.post('/usersListForViewAs',
+  auth.isAuthorizedSuperUser(),
+  controller.usersListForViewAs
+)
+
 router.get('/fetchPageOwners/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageOwners)

@@ -7,7 +7,7 @@ const TAG = 'whatsAppBroadcasts.controller.js'
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
       let criteria = logicLayer.getCriterias(req.body, companyuser)
       dataLayer.countBroadcasts(criteria.countCriteria[0].$match)
@@ -33,11 +33,11 @@ exports.index = function (req, res) {
     })
 }
 exports.sendBroadcast = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}, req.headers.authorization) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
     .then(companyUser => {
       dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
         .then(broadcast => {
-          utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}, req.headers.authorization) // fetch company user
+          utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}) // fetch company user
             .then(contacts => {
               let accountSid = companyUser.companyId.twilioWhatsApp.accountSID
               let authToken = companyUser.companyId.twilioWhatsApp.authToken

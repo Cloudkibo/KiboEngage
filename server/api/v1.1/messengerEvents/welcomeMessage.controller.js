@@ -42,7 +42,7 @@ exports.index = function (req, res) {
                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
                   }
                   if (resp2.body.error && resp2.body.error.code === 190) {
-                    passwordChangeEmailAlert(req.user._id, req.user.email)
+                    passwordChangeEmailAlert(page.userId._id, page.userId.email)
                   } else if (resp2.body.error) {
                     sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
                   }

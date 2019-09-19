@@ -2283,3 +2283,16 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
     })
   }})
 }
+
+exports.usersListForViewAs = function (req, res) {
+  let aggregatePayload = [
+    { $project: { domain_email: 1, name: 1, email: 1 } }
+  ]
+  utility.callApi(`users/aggregate`, 'post', aggregatePayload, 'accounts', req.headers.authorization)
+    .then(users => {
+      sendSuccessResponse(res, 200, users)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch users list for view as ${JSON.stringify(error)}`)
+    })
+}
