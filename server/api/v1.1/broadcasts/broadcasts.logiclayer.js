@@ -10,7 +10,7 @@ exports.getCriterias = function (req) {
   let finalCriteria = {}
   let countCriteria = {}
   let recordsToSkip = 0
-  if (req.body.filter_criteria.search_value === '' && req.body.filter_criteria.type_value === '' && req.body.filter_criteria.MessageType === '') {
+  if (req.body.filter_criteria.search_value === '' && req.body.filter_criteria.type_value === '' && req.body.filter_criteria.messageType === '') {
     findCriteria = {
       companyId: req.user.companyId,
       'datetime': req.body.filter_criteria.days !== '0' ? {
@@ -22,19 +22,19 @@ exports.getCriterias = function (req) {
       findCriteria = {
         companyId: req.user.companyId,
         'payload.1': { $exists: true },
-        MessageType: (req.body.filter_criteria.MessageType === '' || req.body.filter_criteria.MessageType === 'all') ? { $in: [null, 'Non Promotional', 'Promotional'] } : req.body.filter_criteria.MessageType === 'Non Promotional' ? { $in: [null, 'Non Promotional'] } : { $in: ['Promotional'] },            
+        messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
         title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
         'datetime': req.body.filter_criteria.days !== '0' ? {
           $gte: startDate
         } : { $exists: true }
       }
     } else {
-      console.log('req.body.filter_criteria.MessageType', req.body.filter_criteria.MessageType)
+      console.log('req.body.filter_criteria.messageType', req.body.filter_criteria.messageType)
       if (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') {
         findCriteria = {
           companyId: req.user.companyId,
           $and: [{'payload.0.componentType': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
-          MessageType: (req.body.filter_criteria.MessageType === '' || req.body.filter_criteria.MessageType === 'all') ? { $in: [null, 'Non Promotional', 'Promotional'] } : req.body.filter_criteria.MessageType === 'Non Promotional' ? { $in: [null, 'Non Promotional'] } : { $in: ['Promotional'] },            
+          messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
           title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
           'datetime': req.body.filter_criteria.days !== '0' ? {
             $gte: startDate
@@ -45,7 +45,7 @@ exports.getCriterias = function (req) {
         findCriteria = {
           companyId: req.user.companyId,
           'payload.0.componentType': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true },
-          MessageType: (req.body.filter_criteria.MessageType === '' || req.body.filter_criteria.MessageType === 'all') ? { $in: [null, 'Non Promotional', 'Promotional'] } : req.body.filter_criteria.MessageType === 'Non Promotional' ? { $in: [null, 'Non Promotional'] } : { $in: ['Promotional'] },            
+          messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
           title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
           'datetime': req.body.filter_criteria.days !== '0' ? {
             $gte: startDate
