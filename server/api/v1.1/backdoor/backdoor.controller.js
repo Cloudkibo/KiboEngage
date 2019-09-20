@@ -42,7 +42,8 @@ exports.getAllUsers = function (req, res) {
                         facebookInfo: user.facebookInfo ? user.facebookInfo : null,
                         createdAt: user.createdAt,
                         pages: pages.length,
-                        subscribers: subscribers.length
+                        subscribers: subscribers.length,
+                        domain_email: user.domain_email
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
@@ -1300,7 +1301,7 @@ exports.fetchPageOwners = (req, res) => {
       return res.status(200).json({
         status: 'success',
         payload: pageOwners[0].users,
-        
+
       })
     })
     .catch(err => {
@@ -1665,7 +1666,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                         } else {
                           assignedTagsFound = true
                         }
-    
+
                         if (unassignedTags.length > 0) {
                           if (filteredUnassignedTags.length > 0) {
                             unassignedTagsFound = true
@@ -1673,7 +1674,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
                         } else {
                           unassignedTagsFound = true
                         }
-    
+
                         let statusFilterSucceeded = true
                         if (req.body.status) {
                           if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
@@ -2005,4 +2006,3 @@ exports.usersListForViewAs = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch users list for view as ${JSON.stringify(error)}`)
     })
 }
-
