@@ -10,7 +10,11 @@ exports.index = function (req, res) {
         .then(count => {
           utility.callApi(`whatsAppContacts/aggregate`, 'post', criterias.fetchCriteria) // fetch subscribers
             .then(contacts => {
-              sendSuccessResponse(res, 200, contacts)
+              var data = {
+                count: count[0].count,
+                contacts: contacts
+              }
+              sendSuccessResponse(res, 200, data)
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
