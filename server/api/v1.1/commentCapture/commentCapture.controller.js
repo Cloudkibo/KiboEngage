@@ -168,7 +168,30 @@ exports.create = function (req, res) {
     })
 }
 exports.edit = function (req, res) {
-  utility.callApi(`comment_capture/update`, 'put', { query: {_id: req.body.postId}, newPayload: {includedKeywords: req.body.includedKeywords, excludedKeywords: req.body.excludedKeywords}, options: {} })
+  if(req.body.postText){
+    var postText = {
+        message : req.body.postText
+    }
+    needle.post(
+      `https://graph.facebook.com/v4.0/${req.body.pagePostId}?access_token=${req.body.pageAccessToken}`,
+      postText, (err, resp) => {
+        if (err) {
+          logger.serverLog(TAG, err, 'error')
+        }
+
+      })
+  }
+
+  var updatePayload = {
+    includedKeywords: req.body.includedKeywords, 
+    excludedKeywords: req.body.excludedKeywords
+  }
+  
+  if(req.body.postText){
+      updatePayload.postText =  req.body.postText
+  }
+
+  utility.callApi(`comment_capture/update`, 'put', { query: {_id: req.body.postId}, newPayload: updatePayload , options: {} })
     .then(result => {
       sendSuccessResponse(res, 200, result)
     })
