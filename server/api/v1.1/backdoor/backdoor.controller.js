@@ -2049,9 +2049,13 @@ function get10PageSubscribers (req, skip) {
         '_id': 1,
         'firstName': 1,
         'lastName': 1,
+        'fullName': { $concat : [ "$firstName", " ", "$lastName" ] },
         'senderId': 1,
         'gender': 1
       }
+    },
+    {
+      '$match': { fullName: { $regex: '.*'+ req.body.subscriberName +'.*', $options: 'i' } }
     },
     {'$skip': skip ? skip : 0},
     {'$limit': 10}
@@ -2140,18 +2144,12 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
       }
       if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
         for (let i = 0; subscriberData.length < 10 && i < subscribers.length; i++) {
-          retrievedSubscriberData += 1
-          let subscriberFullName = ''
-          if (subscribers[i].firstName && subscribers[i].lastName) {
-            subscriberFullName = subscribers[i].firstName.toLowerCase() + ' ' + subscribers[i].lastName.toLowerCase()
-          }
-          if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
-                subscriberData.push({
-                  subscriber: subscribers[i],
-                  assignedTags: [],
-                  unassignedTags: []
-                })
-            }
+            retrievedSubscriberData += 1
+            subscriberData.push({
+              subscriber: subscribers[i],
+              assignedTags: [],
+              unassignedTags: []
+            })
           }
           resolve(subscriberData)
         } else {
@@ -2161,55 +2159,35 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
       let requests = []
       for (let i = 0; subscriberData.length < 10 && i < subscribers.length; i++) {
         requests.push((callback) => {
-          let subscriberFullName = ''
-          if (subscribers[i].firstName && subscribers[i].lastName) {
-            subscriberFullName = subscribers[i].firstName.toLowerCase() + ' ' + subscribers[i].lastName.toLowerCase()
-          }
-          console.log('subscriberFullName', subscriberFullName)
-          if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) { 
-            console.log('searched name', req.body.subscriberName)
-            needle.get(
-              `https://graph.facebook.com/v4.0/${subscribers[i].senderId}/custom_labels?fields=name&access_token=${req.body.accessToken}`,
-              (err, resp) => {
-                if (err) {
-                  logger.serverLog(TAG, `Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`, 'debug')
-                  callback(null, {
-                    subscriber: subscribers[i],
-                    assignedTags: [],
-                    unassignedTags: pageTags
-                  })
-                  //callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
-                } else {
-                  logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
-                  logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags)}`, 'debug')
-                  let fbTags = resp.body.data
-                  let kiboPageTags = pageTags
-                  let assignedTags = []
-                  let unassignedTags = []
-                  let tagAssigned = false
-                  if (fbTags) {
-                    for (let j = 0; j < kiboPageTags.length; j++) {
-                      for (let k = 0; k < fbTags.length; k++) {
-                        if (fbTags[k].id === kiboPageTags[j].labelFbId) {
-                          assignedTags.push(kiboPageTags[j])
-                          tagAssigned = true
-                          break
-                        }
-                      }
-                      if (!tagAssigned) {
-                        if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                          if (kiboPageTags[j].tag === subscribers[i].gender) {
-                            unassignedTags.push(kiboPageTags[j])
-                          }
-                        } else {
-                          unassignedTags.push(kiboPageTags[j])
-                        }
-                      } else {
-                        tagAssigned = false
+          needle.get(
+            `https://graph.facebook.com/v4.0/${subscribers[i].senderId}/custom_labels?fields=name&access_token=${req.body.accessToken}`,
+            (err, resp) => {
+              if (err) {
+                logger.serverLog(TAG, `Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`, 'debug')
+                callback(null, {
+                  subscriber: subscribers[i],
+                  assignedTags: [],
+                  unassignedTags: pageTags
+                })
+                //callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
+              } else {
+                logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
+                logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags)}`, 'debug')
+                let fbTags = resp.body.data
+                let kiboPageTags = pageTags
+                let assignedTags = []
+                let unassignedTags = []
+                let tagAssigned = false
+                if (fbTags) {
+                  for (let j = 0; j < kiboPageTags.length; j++) {
+                    for (let k = 0; k < fbTags.length; k++) {
+                      if (fbTags[k].id === kiboPageTags[j].labelFbId) {
+                        assignedTags.push(kiboPageTags[j])
+                        tagAssigned = true
+                        break
                       }
                     }
-                  } else {
-                    for (let j = 0; j < kiboPageTags.length; j++) {
+                    if (!tagAssigned) {
                       if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
                         if (kiboPageTags[j].tag === subscribers[i].gender) {
                           unassignedTags.push(kiboPageTags[j])
@@ -2217,63 +2195,73 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                       } else {
                         unassignedTags.push(kiboPageTags[j])
                       }
-                    }
-                  }
-                  let filteredAssignedTags = assignedTags.filter(x => {
-                    let tagName = x.tag
-                    if (tagName.toLowerCase().includes(req.body.assignedTag.toLowerCase())) {
-                      return true
-                    }
-                  })
-                  let filteredUnassignedTags = unassignedTags.filter(x => {
-                    let tagName = x.tag
-                    if (tagName.toLowerCase().includes(req.body.unassignedTag.toLowerCase())) {
-                      return true
-                    }
-                  })
-                  let assignedTagsFound = false
-                  let unassignedTagsFound = false
-                  if (assignedTags.length > 0) {
-                    if (filteredAssignedTags.length > 0) {
-                      assignedTagsFound = true
-                    }
-                  } else {
-                    assignedTagsFound = true
-                  }
-    
-                  if (unassignedTags.length > 0) {
-                    if (filteredUnassignedTags.length > 0) {
-                      unassignedTagsFound = true
-                    }
-                  } else {
-                    unassignedTagsFound = true
-                  }
-    
-                  let statusFilterSucceeded = true
-                  if (req.body.status) {
-                    if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
-                      statusFilterSucceeded = true
-                    } else if (req.body.status === 'correct' && filteredUnassignedTags.length === 0) {
-                      statusFilterSucceeded = true
                     } else {
-                      statusFilterSucceeded = false
+                      tagAssigned = false
                     }
                   }
-    
-                  if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                    callback(null, {
-                      subscriber: subscribers[i],
-                      assignedTags: assignedTags,
-                      unassignedTags: unassignedTags
-                    })
-                  } else {
-                    callback(null, null)
+                } else {
+                  for (let j = 0; j < kiboPageTags.length; j++) {
+                    if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
+                      if (kiboPageTags[j].tag === subscribers[i].gender) {
+                        unassignedTags.push(kiboPageTags[j])
+                      }
+                    } else {
+                      unassignedTags.push(kiboPageTags[j])
+                    }
                   }
                 }
-              })
-          } else {
-            callback(null, null)
-          }
+                let filteredAssignedTags = assignedTags.filter(x => {
+                  let tagName = x.tag
+                  if (tagName.toLowerCase().includes(req.body.assignedTag.toLowerCase())) {
+                    return true
+                  }
+                })
+                let filteredUnassignedTags = unassignedTags.filter(x => {
+                  let tagName = x.tag
+                  if (tagName.toLowerCase().includes(req.body.unassignedTag.toLowerCase())) {
+                    return true
+                  }
+                })
+                let assignedTagsFound = false
+                let unassignedTagsFound = false
+                if (assignedTags.length > 0) {
+                  if (filteredAssignedTags.length > 0) {
+                    assignedTagsFound = true
+                  }
+                } else {
+                  assignedTagsFound = true
+                }
+  
+                if (unassignedTags.length > 0) {
+                  if (filteredUnassignedTags.length > 0) {
+                    unassignedTagsFound = true
+                  }
+                } else {
+                  unassignedTagsFound = true
+                }
+  
+                let statusFilterSucceeded = true
+                if (req.body.status) {
+                  if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
+                    statusFilterSucceeded = true
+                  } else if (req.body.status === 'correct' && filteredUnassignedTags.length === 0) {
+                    statusFilterSucceeded = true
+                  } else {
+                    statusFilterSucceeded = false
+                  }
+                }
+  
+                if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
+                  callback(null, {
+                    subscriber: subscribers[i],
+                    assignedTags: assignedTags,
+                    unassignedTags: unassignedTags
+                  })
+                } else {
+                  callback(null, null)
+                }
+              }
+            })
         })
     }
     async.parallelLimit(requests, 30, function (err, results) {
