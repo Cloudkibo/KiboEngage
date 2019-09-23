@@ -475,6 +475,7 @@ exports.sendConversation = function (req, res) {
       } else {
         BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
           .then(broadcast => {
+            logger.serverLog(TAG, `broadcast created ${JSON.stringify(broadcast)}`, 'debug')
             require('./../../../config/socketio').sendMessageToClient({
               room_id: req.user.companyId,
               body: {
