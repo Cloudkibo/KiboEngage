@@ -764,7 +764,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
               logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
               URLObject.module = module
               logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
-              URLDataLayer.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
+              URLDataLayer.updateOneURL(URLObject._id, {'$set': {'module.id': broadcastId, 'module': module}})
                 .then(savedurl => {
                   logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
                 })
