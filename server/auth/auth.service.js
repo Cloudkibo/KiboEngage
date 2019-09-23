@@ -80,6 +80,14 @@ function isAuthorizedSuperUser () {
         res.send(403)
       }
     })
+    .use(function isSuperUserActingAsCustomer (req, res, next) {
+      if (req.headers.hasOwnProperty('actingAsUser')) {
+        req.user.domain_email = req.headers.actingAsUser
+        next()
+      } else {
+        next()
+      }
+    })
 }
 
 /**

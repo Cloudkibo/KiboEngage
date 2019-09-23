@@ -865,12 +865,13 @@ exports.updateSubscriptionPermission = function (req, res) {
         needle.get(
           `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${req.user.facebookInfo.fbToken}`,
           (err, resp) => {
+            console.log('respp body in updateSubscriptionPermission ', resp.body)
             if (err) {
               logger.serverLog(TAG,
                 `Page access token from graph api error ${JSON.stringify(
                   err)}`, 'error')
             }
-            if (resp.body.error) {
+            if (resp && resp.body & resp.body.error) {
               sendOpAlert(resp.body.error, 'dashboard controller in kiboengage', page._id, page.userId, page.companyId)
             }
             if (resp && resp.body && resp.body.access_token) {

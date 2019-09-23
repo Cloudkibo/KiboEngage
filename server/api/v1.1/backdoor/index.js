@@ -113,11 +113,16 @@ router.get('/fetchPageAdmins/:pageId',
 
 router.post('/fetchCompanyInfo',
   auth.isAuthorizedSuperUser(),
-  controller.fetchCompanyInfo)
+  controller.fetchCompanyInfoNew)
 
 router.post('/topPages',
   auth.isAuthorizedSuperUser(),
   controller.topPages)
+
+router.post('/usersListForViewAs',
+  auth.isAuthorizedSuperUser(),
+  controller.usersListForViewAs
+)
 
 router.get('/fetchPageOwners/:pageId',
   auth.isAuthorizedSuperUser(),
