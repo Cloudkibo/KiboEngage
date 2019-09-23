@@ -2148,7 +2148,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                 subscriberData.push({
                   subscriber: subscribers[i],
                   assignedTags: [],
-                  unassignedTags: []
+                  unassignedTags: pageTags
                 })
             }
           }
@@ -2171,7 +2171,13 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
               `https://graph.facebook.com/v4.0/${subscribers[i].senderId}/custom_labels?fields=name&access_token=${req.body.accessToken}`,
               (err, resp) => {
                 if (err) {
-                  callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
+                  logger.serverLog(TAG, `Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`, 'debug')
+                  callback(null, {
+                    subscriber: subscribers[i],
+                    assignedTags: [],
+                    unassignedTags: kiboPageTags
+                  })
+                  //callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
                 } else {
                   logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
                   logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags)}`, 'debug')
