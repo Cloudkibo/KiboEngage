@@ -2148,7 +2148,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                 subscriberData.push({
                   subscriber: subscribers[i],
                   assignedTags: [],
-                  unassignedTags: pageTags
+                  unassignedTags: []
                 })
             }
           }
@@ -2175,7 +2175,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                   callback(null, {
                     subscriber: subscribers[i],
                     assignedTags: [],
-                    unassignedTags: kiboPageTags
+                    unassignedTags: pageTags
                   })
                   //callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
                 } else {
