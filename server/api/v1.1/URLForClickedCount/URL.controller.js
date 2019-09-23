@@ -25,6 +25,7 @@ exports.index = function (req, res) {
 }
 
 exports.broadcast = function (req, res) {
+  logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
       if (URLObject) {
