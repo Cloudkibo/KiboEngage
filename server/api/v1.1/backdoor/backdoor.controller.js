@@ -2100,7 +2100,8 @@ function _fetchSubscribersWithTagsNew(req, res, skip, pageTags, results) {
   get10PageSubscribers(req, (req.body.pageNumber -1)*10)
     .then(subscribers => {
       console.log('got subscribers', subscribers)
-      filterSubscribers(req, res, subscribers, pageTags, results)
+      if (subscribers) {
+        filterSubscribers(req, res, subscribers, pageTags, results)
         .then(filteredSubscribers => {
           if (results.length < 10 && subscribers.length >= 10) {
             console.log('recursion condition')
@@ -2121,6 +2122,14 @@ function _fetchSubscribersWithTagsNew(req, res, skip, pageTags, results) {
             description: `Failed to filter subscribers  ${err}`
           })
         })
+      } else {
+        return res.status(200).json({
+          status: 'success',
+          payload: {
+            subscriberData: []
+          }
+        })
+      }
     })
     .catch(err => {
       return res.status(500).json({
