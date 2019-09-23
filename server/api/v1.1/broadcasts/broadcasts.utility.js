@@ -750,6 +750,7 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
 }
 
 function addModuleIdIfNecessary (payload, broadcastId) {
+  logger.serverLog(TAG, `addModuleIdIfNecessary ${broadcastId}`, 'debug')
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
@@ -760,6 +761,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
             .then(URLObject => {
               let module = URLObject.module
               module.id = broadcastId
+              logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
               URLObject.module = module
               URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
                 .then(savedurl => {
@@ -849,9 +851,7 @@ function isWhiteListedDomain (domain, pageId, user) {
                   resolve({returnValue: returnValue})
                 }
               }
-            }
-            else {
-
+            } else {
               resolve({returnValue: returnValue})
             }
           })
