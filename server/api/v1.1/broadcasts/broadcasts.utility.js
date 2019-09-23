@@ -773,7 +773,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
+              logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
             })
         }
       })
