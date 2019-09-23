@@ -178,9 +178,8 @@ exports.edit = function (req, res) {
         if (err) {
           logger.serverLog(TAG, err, 'error')
         }
-
       })
-  }
+    }
 
   var updatePayload = {
     includedKeywords: req.body.includedKeywords, 
@@ -191,7 +190,7 @@ exports.edit = function (req, res) {
       updatePayload.postText =  req.body.postText
   }
 
-  utility.callApi(`comment_capture/update`, 'put', { query: {_id: req.body.postId}, newPayload: updatePayload , options: {} })
+  utility.callApi(`comment_capture/updateone`, 'put', { query: {_id: req.body.postId}, newPayload: updatePayload , options: {} })
     .then(result => {
       sendSuccessResponse(res, 200, result)
     })
