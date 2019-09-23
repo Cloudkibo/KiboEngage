@@ -750,6 +750,7 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
 }
 
 function addModuleIdIfNecessary (payload, broadcastId) {
+  logger.serverLog(TAG, `addModuleIdIfNecessary ${broadcastId}`, 'debug')
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
@@ -760,16 +761,19 @@ function addModuleIdIfNecessary (payload, broadcastId) {
             .then(URLObject => {
               let module = URLObject.module
               module.id = broadcastId
+              logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
               URLObject.module = module
+              logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
               URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
                 .then(savedurl => {
+                  logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
                 })
                 .catch(err => {
                   logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
+              logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
             })
         }
       })
@@ -849,9 +853,7 @@ function isWhiteListedDomain (domain, pageId, user) {
                   resolve({returnValue: returnValue})
                 }
               }
-            }
-            else {
-
+            } else {
               resolve({returnValue: returnValue})
             }
           })

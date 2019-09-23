@@ -25,9 +25,11 @@ exports.index = function (req, res) {
 }
 
 exports.broadcast = function (req, res) {
+  logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
       if (URLObject) {
+        logger.serverLog(TAG, `URLObject found, incrementing click ${JSON.stringify(URLObject)}`, 'debug')
         BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
           .then(updatedData => {
             res.writeHead(301, {Location: URLObject.originalURL.startsWith('http') ? URLObject.originalURL : `https://${URLObject.originalURL}`})
