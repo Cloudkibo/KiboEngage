@@ -2,7 +2,6 @@
  * Created by sojharo on 24/07/2017.
  */
 'use strict'
-
 const config = require('../config/environment')
 const compose = require('composable-middleware')
 const apiCaller = require('../api/v1.1/utility')
@@ -12,7 +11,6 @@ const util = require('util')
 const logger = require('../components/logger')
 const requestPromise = require('request-promise')
 const TAG = 'auth/auth.service.js'
-
 /**
  * Attaches the user object to the request if authenticated
  * Otherwise returns 403
@@ -43,7 +41,6 @@ function isAuthenticated () {
         headers,
         json: true
       }
-
       requestPromise(options)
         .then(result => {
           // logger.serverLog(TAG, `response got ${result}`)
@@ -65,8 +62,45 @@ function isAuthenticated () {
           }
         })
     })
+    .use(function isSuperUserActingAsCustomer (req, res, next) {
+      if (req.user.isSuperUser) {
+        if (req.headers.hasOwnProperty('actingasuser')) {
+          let actUserAs
+          apiCaller.callApi(`user/query`, 'post', {domain_email: req.headers.actingasuser})
+            .then(user => {
+              req.user.domain_email = req.headers.actingasuser
+              actUserAs = user
+              return apiCaller.callApi('companyUser/query', 'post', {userId: actUserAs._id})
+            })
+            .then(companyUserInfo => {
+              req.user.companyId = companyUserInfo.companyId
+              return apiCaller.callApi('permissions/query', 'post', {userId: actUserAs._id})
+            })
+            .then(permissionsGot => {
+              req.user.permissions = permissionsGot
+              return apiCaller.callApi('companyprofile/query', 'post', {_id: req.user.companyId})
+            })
+            .then(companyProfileGot => {
+              req.user.currentPlan = companyProfileGot.planId
+              req.user.last4 = companyProfileGot.stripe.last4
+              return apiCaller.callApi('permissions_plan/query', 'post', {plan_id: companyProfileGot.planId._id})
+            })
+            .then(permissionsPlan => {
+              req.user.plan = permissionsPlan
+              next()
+            })
+            .catch(err => {
+              return res.status(500)
+                .json({status: 'failed', description: `Internal Server Error: ${err}`})
+            })
+        } else {
+          next()
+        }
+      } else {
+        next()
+      }
+    })
 }
-
 /**
  * Checks if the user role meets the minimum requirements of the route
  */
@@ -80,23 +114,13 @@ function isAuthorizedSuperUser () {
         res.send(403)
       }
     })
-    .use(function isSuperUserActingAsCustomer (req, res, next) {
-      if (req.headers.hasOwnProperty('actingAsUser')) {
-        req.user.domain_email = req.headers.actingAsUser
-        next()
-      } else {
-        next()
-      }
-    })
 }
-
 /**
  * Checks if the user role meets the minimum requirements of the route
  * Note: maybe we don't use it
  */
 function hasRole (roleRequired) {
   if (!roleRequired) throw new Error('Required role needs to be set')
-
   return compose()
     .use(function meetsRequirements (req, res, next) {
       if (config.userRoles.indexOf(req.user.role) >=
@@ -107,12 +131,10 @@ function hasRole (roleRequired) {
       }
     })
 }
-
 function hasRequiredPlan (planRequired) {
   if (!planRequired) throw new Error('Required plan needs to be set')
   if (!(typeof planRequired === 'object' &&
     planRequired.length)) throw new Error('Required plan must be of type array')
-
   return compose().use(function meetsRequirements (req, res, next) {
     if (planRequired.indexOf(req.user.plan.unique_ID) > -1) {
       next()
@@ -121,10 +143,8 @@ function hasRequiredPlan (planRequired) {
     }
   })
 }
-
 function doesPlanPermitsThisAction (action) {
   if (!action) throw new Error('Action needs to be set')
-
   return compose().use(function meetsRequirements (req, res, next) {
     apiCaller.callApi(`permissions_plan/query`, 'post', {plan_id: req.user.plan.plan_id._id})
       .then(plan => {
@@ -152,10 +172,8 @@ function doesPlanPermitsThisAction (action) {
       })
   })
 }
-
 function doesRolePermitsThisAction (action) {
   if (!action) throw new Error('Action needs to be set')
-
   return compose().use(function meetsRequirements (req, res, next) {
     apiCaller.callApi(`permissions/query`, 'post', {userId: req.user._id})
       .then(plan => {
@@ -183,7 +201,6 @@ function doesRolePermitsThisAction (action) {
       })
   })
 }
-
 function validateApiKeys (req, res, next) {
   console.log('APP ID', req.headers['app_id'], req.headers['app_secret'])
   if (req.headers.hasOwnProperty('app_secret')) {
@@ -223,7 +240,6 @@ function validateApiKeys (req, res, next) {
     })
   }
 }
-
 /**
  * Set token cookie directly for oAuth strategies
 */
@@ -288,7 +304,6 @@ function fbConnectDone (req, res) {
       res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
     })
 }
-
 // eslint-disable-next-line no-unused-vars
 function isAuthorizedWebHookTrigger () {
   return compose().use((req, res, next) => {
@@ -302,7 +317,6 @@ function isAuthorizedWebHookTrigger () {
     else res.send(403)
   })
 }
-
 function isItWebhookServer () {
   return compose().use((req, res, next) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
@@ -316,13 +330,11 @@ function isItWebhookServer () {
     else res.send(403)
   })
 }
-
 // Auth for kibodash service
 function isKiboDash (req, res, next) {
   logger.serverLog(TAG, `Request header from KiboDash ${JSON.stringify(req.headers)}`)
   next()
 }
-
 exports.isAuthenticated = isAuthenticated
 exports.isAuthorizedSuperUser = isAuthorizedSuperUser
 exports.hasRole = hasRole
@@ -335,14 +347,12 @@ exports.isKiboDash = isKiboDash
 exports.isItWebhookServer = isItWebhookServer
 // This functionality will be exposed in later stages
 // exports.isAuthorizedWebHookTrigger = isAuthorizedWebHookTrigger;
-
 function fetchPages (url, user, req, token) {
   const options = {
     headers: {
       'X-Custom-Header': 'CloudKibo Web Application'
     },
     json: true
-
   }
   needle.get(url, options, (err, resp) => {
     if (err !== null) {
@@ -448,7 +458,6 @@ function fetchPages (url, user, req, token) {
     }
   })
 }
-
 function updateUnapprovedPages (facebookPages, user, companyUser) {
   if (facebookPages.length > 0) {
     let fbPages = facebookPages.map(item => item.id)
@@ -464,7 +473,6 @@ function updateUnapprovedPages (facebookPages, user, companyUser) {
       })
   }
 }
-
 // eslint-disable-next-line no-unused-vars
 function isAuthorizedKiboAPITrigger (req) {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
