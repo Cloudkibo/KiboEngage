@@ -660,7 +660,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'template_type': 'list',
           'top_element_style': body.topElementStyle,
           'elements': listElements,
-          'buttons': removeOldUrlFromButton(card.buttons)
+          'buttons': removeOldUrlFromButton(body.buttons)
         }
       }
     }
