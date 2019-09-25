@@ -5,7 +5,10 @@ let config = require('./../../config/environment')
 
 exports.sendOpAlert = function (errObj, codePart, pageId, userId, companyId) {
   const Raven = require('raven')
-  Raven.captureException(errObj)
+  Raven.setContext({
+    facebookAlertErrorMessage: errObj
+  })
+  Raven.captureException(errObj.message)
 
   let email = getEmailObject(['sojharo@cloudkibo.com', 'jawaid@cloudkibo.com', 'faizan@cloudkibo.com'], 'support@cloudkibo.com', 'KiboPush: Facebook Error', 'Facebook Error', errObj.message, errObj.code, errObj.error_subcode, codePart, pageId, userId._id, companyId)
 
