@@ -32,29 +32,31 @@ exports.broadcast = function (req, res) {
   // logger.serverLog(TAG, `broadcast click count increased ${util.inspect(req)}`, 'debug')
   const clientIp = requestIp.getClientIp(req)
   console.log('clientIp ', clientIp)
-  URLDataLayer.findOneURL(req.params.id)
-    .then(URLObject => {
-      if (URLObject) {
-        logger.serverLog(TAG, `URLObject found, incrementing click ${JSON.stringify(URLObject)}`, 'debug')
-        BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
-          .then(updatedData => {
-            res.writeHead(301, {Location: URLObject.originalURL.startsWith('http') ? URLObject.originalURL : `https://${URLObject.originalURL}`})
-            res.end()
-          })
-          .catch(err => {
-            if (err) {
-              sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
-            }
-          })
-      } else {
-        sendErrorResponse(res, 500, '', 'No URL found with id ' + req.params.id)
-      }
-    })
-    .catch(err => {
-      if (err) {
-        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
-      }
-    })
+  if (!clientIp.startsWith('::ffff:173.252.87')) {
+    URLDataLayer.findOneURL(req.params.id)
+      .then(URLObject => {
+        if (URLObject) {
+          logger.serverLog(TAG, `URLObject found, incrementing click ${JSON.stringify(URLObject)}`, 'debug')
+          BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
+            .then(updatedData => {
+              res.writeHead(301, {Location: URLObject.originalURL.startsWith('http') ? URLObject.originalURL : `https://${URLObject.originalURL}`})
+              res.end()
+            })
+            .catch(err => {
+              if (err) {
+                sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
+              }
+            })
+        } else {
+          sendErrorResponse(res, 500, '', 'No URL found with id ' + req.params.id)
+        }
+      })
+      .catch(err => {
+        if (err) {
+          sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
+        }
+      })
+  }
 }
 
 exports.sequence = function (req, res) {
