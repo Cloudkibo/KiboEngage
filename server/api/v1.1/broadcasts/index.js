@@ -51,12 +51,6 @@ router.post('/addButton',
   validate({body: validationSchema.addButtonPayload}),
   controller.addButton)
 
-router.post('/addListAction',
-  auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('broadcasts'),
-  auth.doesRolePermitsThisAction('broadcastPermission'),
-  controller.addListAction)
-
 router.post('/addCardAction',
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('broadcasts'),
