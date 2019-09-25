@@ -114,6 +114,8 @@ function savesurvey (req, subscriber) {
                 payload: JSON.stringify({
                   survey_id: resp.survey_id,
                   option: firstQuestion.options[x],
+                  action: firstQuestion.actions ? firstQuestion.actions[x].action : '',
+                  sequenceId: firstQuestion.actions ? firstQuestion.actions[x].sequenceId : '',
                   question_id: firstQuestion._id,
                   nextQuestionId,
                   userToken: resp.userToken
