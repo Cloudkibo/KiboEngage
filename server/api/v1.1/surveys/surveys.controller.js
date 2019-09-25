@@ -397,6 +397,8 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                         payload: JSON.stringify({
                           survey_id: req.body._id,
                           option: first_question.options[x],
+                          action: first_question.actions ? first_question.actions[x].action : '',
+                          sequenceId: first_question.actions ? first_question.actions[x].sequenceId : '',
                           question_id: first_question._id,
                           next_question_id,
                           userToken: currentUser.facebookInfo.fbToken
