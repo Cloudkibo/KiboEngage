@@ -100,6 +100,13 @@ function isAuthenticated () {
         next()
       }
     })
+    .use(function sentryContextDefinition (req, res, next) {
+      const Raven = require('raven')
+      Raven.setContext({
+        user: req.user
+      })
+      next()
+    })
 }
 /**
  * Checks if the user role meets the minimum requirements of the route
