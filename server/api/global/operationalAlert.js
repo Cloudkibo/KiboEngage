@@ -4,21 +4,22 @@ let TAG = 'server/api/global/operationalAlert.js'
 let config = require('./../../config/environment')
 
 exports.sendOpAlert = function (errObj, codePart, pageId, userId, companyId) {
-  const Raven = require('raven')
-  Raven.setContext({
-    facebookAlertErrorMessage: errObj
-  })
-  Raven.captureException(errObj.message)
-
-  let email = getEmailObject(['sojharo@cloudkibo.com', 'jawaid@cloudkibo.com', 'faizan@cloudkibo.com'], 'support@cloudkibo.com', 'KiboPush: Facebook Error', 'Facebook Error', errObj.message, errObj.code, errObj.error_subcode, codePart, pageId, userId._id, companyId)
-
-  let transporter = getMailTransporter()
-
   if (config.env === 'production') {
-    transporter.sendMail(email, function (err, data) {
-      if (err) {
-        logger.serverLog(TAG, 'error in sending Alert email ' + err, 'debug')
-      }
-    })
+    const Raven = require('raven')
+    Raven.captureException(errObj)
   }
+
+  // NOTE: We were using email to send facebook alerts before.
+  // I have comment out this logic as now errors
+  // let email = getEmailObject(['sojharo@cloudkibo.com', 'jawaid@cloudkibo.com', 'faizan@cloudkibo.com'], 'support@cloudkibo.com', 'KiboPush: Facebook Error', 'Facebook Error', errObj.message, errObj.code, errObj.error_subcode, codePart, pageId, userId._id, companyId)
+
+  // let transporter = getMailTransporter()
+
+  // if (config.env === 'production') {
+  //   transporter.sendMail(email, function (err, data) {
+  //     if (err) {
+  //       logger.serverLog(TAG, 'error in sending Alert email ' + err, 'debug')
+  //     }
+  //   })
+  // }
 }
