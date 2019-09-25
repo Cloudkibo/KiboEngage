@@ -7,6 +7,7 @@ const logger = require('../../../components/logger')
 const sequenceUtility = require('./../sequenceMessaging/utility')
 const { sendErrorResponse } = require('../../global/response')
 const util = require('util')
+const requestIp = require('request-ip')
 
 exports.index = function (req, res) {
   URLDataLayer.findOneURL(req.params.id)
@@ -26,8 +27,11 @@ exports.index = function (req, res) {
 }
 
 exports.broadcast = function (req, res) {
+  console.log('broadcast click count increased')
   logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
   // logger.serverLog(TAG, `broadcast click count increased ${util.inspect(req)}`, 'debug')
+  const clientIp = requestIp.getClientIp(req)
+  console.log('clientIp ', clientIp)
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
       if (URLObject) {
