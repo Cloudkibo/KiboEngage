@@ -660,7 +660,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'template_type': 'list',
           'top_element_style': body.topElementStyle,
           'elements': listElements,
-          'buttons': removeOldUrlFromButton(card.buttons)
+          'buttons': removeOldUrlFromButton(body.buttons)
         }
       }
     }
@@ -764,7 +764,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
               logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
               URLObject.module = module
               logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
-              URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
+              URLDataLayer.updateOneURL(URLObject._id, {'module': module})
                 .then(savedurl => {
                   logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
                 })
@@ -773,7 +773,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
+              logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
             })
         }
       })
