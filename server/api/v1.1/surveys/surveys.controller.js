@@ -705,11 +705,10 @@ function createSurvey (req, callback) {
   surveyDataLayer.createSurvey(surveyPayload)
     .then(survey => {
       for (let question in req.body.questions) {
-        let options = []
-        options = req.body.questions[question].options
         const surveyQuestion = {
           statement: req.body.questions[question].statement, // question statement
-          options, // array of question options
+          options: req.body.questions[question].options.map((o) => o.option), // array of question options
+          actions: req.body.questions[question].options,
           type: 'multichoice', // type can be text/multichoice
           surveyId: survey._id
         }
