@@ -433,6 +433,7 @@ exports.getAll = function (req, res) {
 }
 
 exports.subscribeToSequence = function (req, res) {
+  let subscribed = false
   req.body.subscriberIds.forEach(subscriberId => {
     SequenceDatalayer.genericFindForSequenceMessages({sequenceId: req.body.sequenceId})
       .then(messages => {
@@ -441,6 +442,13 @@ exports.subscribeToSequence = function (req, res) {
             .then(seqSubs => {
               if (seqSubs.length > 0) {
                 logger.serverLog(TAG, 'This subscriber is already subscribed to the sequence')
+                if (subscriberId === req.body.subscriberIds[req.body.subscriberIds.length - 1]) {
+                  if (subscribed) {
+                    sendSuccessResponse(res, 200, 'Subscribers subscribed successfully')
+                  } else {
+                    sendErrorResponse(res, 500, '', 'Subscriber(s) is already subscribed to the sequence')
+                  }
+                }
               } else {
                 let sequenceSubscriberPayload = {
                   sequenceId: req.body.sequenceId,
@@ -450,6 +458,7 @@ exports.subscribeToSequence = function (req, res) {
                 }
                 SequenceDatalayer.createForSequenceSubcriber(sequenceSubscriberPayload)
                   .then(subscriberCreated => {
+                    subscribed = true
                     messages.forEach(message => {
                       if (message.trigger.event === 'none') {
                         let utcDate = SequenceUtility.setScheduleDate(message.schedule)
@@ -472,17 +481,20 @@ exports.subscribeToSequence = function (req, res) {
                     }
                   })
                   .catch(err => {
-                    sendErrorResponse(res, 500, '', `Internal server error in creating sequence subscriber ${err}`)
+                    logger.serverLog(TAG, `Internal server error in creating sequence subscriber ${err}`, 'error')
+                    sendErrorResponse(res, 500, '', 'Failed to subscribe to sequence!')
                   })
               }
             })
             .catch(err => {
-              sendErrorResponse(res, 500, '', `Internal server error in finding sequence subscriber ${err}`)
+              logger.serverLog(TAG, `Internal server error in finding sequence subscriber ${err}`, 'error')
+              sendErrorResponse(res, 500, '', 'Failed to subscribe to sequence!')
             })
         }
       })
       .catch(err => {
-        sendErrorResponse(res, 500, '', `Internal server error in finding sequence messages ${err}`)
+        logger.serverLog(TAG, `Internal server error in finding sequence messages ${err}`, 'error')
+        sendErrorResponse(res, 500, '', 'Failed to subscribe to sequence!')
       })
   })
 }
