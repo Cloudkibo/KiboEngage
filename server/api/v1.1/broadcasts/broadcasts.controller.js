@@ -768,18 +768,22 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                       }
                     })
                     .catch(err => {
+                      current++
                       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
                     })
                 }
               })
               .catch(err => {
+                current++
                 sendErrorResponse(res, 500, `Failed to find tags ${JSON.stringify(err)}`)
               })
           } else {
+            current++
             sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
           }
         })
         .catch(err => {
+          current++
           sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
         })
     }
