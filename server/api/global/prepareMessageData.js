@@ -126,18 +126,6 @@ exports.facebook = (body, fname, lname) => {
         }
       }
     }
-  } else if (body.componentType === 'list') {
-    payload = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'list',
-          'top_element_style': body.topElementStyle,
-          'elements': body.listItems,
-          'buttons': body.buttons
-        }
-      }
-    }
   } else if (body.componentType === 'media') {
     payload = {
       'attachment': {

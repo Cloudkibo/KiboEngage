@@ -73,8 +73,6 @@ exports.allLocales = function (req, res) {
     })
 }
 
-
-
 exports.getCount = (req, res) => {
   if (req.body.tagValue) {
     utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.tagValue } })
@@ -94,7 +92,7 @@ exports.getCount = (req, res) => {
 const _getSubscribersCount = (res, body, companyId, tagIds) => {
   logicLayer.getCountCriteria(body, companyId, tagIds)
     .then(criteria => {
-      console.log(JSON.stringify(criteria))
+      logger.serverLog(TAG, `subscriber count criteria ${JSON.stringify(criteria)}`, 'debug')
       utility.callApi(`subscribers/aggregate`, 'post', criteria)
         .then(result => {
           if (result.length > 0) {
@@ -130,9 +128,9 @@ const getAllSubscribers = function (subscribers, count, req, res) {
           dt = new Date()
           utcDate = dt.toUTCString()
           logger.serverLog(TAG, `tags_subscriber/query data subscribers ${utcDate}`, 'info')
-        //  logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`, 'debug')
+          //  logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`, 'debug')
           let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, tagIds, req.body.filter_criteria.tag_value)
-          //logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
+          // logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
           // start append custom Fields
           utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
             .then(customFields => {
@@ -170,7 +168,6 @@ const getAllSubscribers = function (subscribers, count, req, res) {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch tags ${JSON.stringify(error)}`)
     })
-
 }
 exports.getAll = function (req, res) {
   var dt = new Date()
@@ -216,8 +213,7 @@ exports.getAll = function (req, res) {
       .catch(err => {
         logger.serverLog(TAG, `Failed to fetch tag  ${JSON.stringify(err)}`, 'error')
       })
-  }
-  else {
+  } else {
     dt = new Date()
     utcDate = dt.toUTCString()
     logger.serverLog(TAG, `After tags Query Loop  ${utcDate}`, 'info')

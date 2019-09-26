@@ -90,48 +90,6 @@ function validateInput (body) {
           }
         }
       }
-      if (body.payload[i].componentType === 'list') {
-        if (body.payload[i].listItems === undefined) return false
-        if (body.payload[i].listItems.length === 0) return false
-        if (body.payload[i].topElementStyle === undefined ||
-        body.payload[i].topElementStyle === '') return false
-        for (let m = 0; m < body.payload[i].buttons.length; m++) {
-          if (body.payload[i].buttons[m].type === undefined ||
-          body.payload[i].buttons[m].type === '') return false
-          if (body.payload[i].buttons[m].type !== 'element_share' && (body.payload[i].buttons[m].title === undefined ||
-          body.payload[i].buttons[m].title === '')) return false
-          if (body.payload[i].buttons[m].type === 'web_url') {
-            if (!utility.validateUrl(
-              body.payload[i].buttons[m].url)) return false
-          }
-        }
-        for (let j = 0; j < body.payload[i].listItems.length; j++) {
-          if (body.payload[i].listItems[j].title === undefined ||
-            body.payload[i].listItems[j].title === '') return false
-          if (body.payload[i].listItems[j].subtitle === undefined ||
-            body.payload[i].listItems[j].subtitle === '') return false
-          if (body.payload[i].listItems[j].default_action && (
-            body.payload[i].listItems[j].default_action.type === undefined ||
-            body.payload[i].listItems[j].default_action.type === '')) return false
-          if (body.payload[i].listItems[j].default_action && (
-            body.payload[i].listItems[j].default_action.url === undefined ||
-            body.payload[i].listItems[j].default_action.url === '')) return false
-          if (body.payload[i].listItems[j].image_url && !utility.validateUrl(
-            body.payload[i].listItems[j].image_url)) return false
-          if (body.payload[i].listItems[j].buttons) {
-            for (let k = 0; k < body.payload[i].listItems[j].buttons.length; k++) {
-              if (body.payload[i].listItems[j].buttons[k].type !== 'element_share' && (body.payload[i].listItems[j].buttons[k].title === undefined ||
-              body.payload[i].listItems[j].buttons[k].title === '')) return false
-              if (body.payload[i].listItems[j].buttons[k].type === undefined ||
-              body.payload[i].listItems[j].buttons[k].type === '') return false
-              if (body.payload[i].listItems[j].buttons[k].type === 'web_url') {
-                if (!utility.validateUrl(
-                  body.payload[i].listItems[j].buttons[k].url)) return false
-              }
-            }
-          }
-        }
-      }
     }
   }
 
@@ -287,24 +245,6 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           'payload': {
             'template_type': 'generic',
             'elements': galleryCards
-          }
-        }
-      })
-    }
-  } else if (body.componentType === 'list') {
-    payload = {
-      'messaging_type': messageType,
-      'recipient': JSON.stringify({
-        'id': subscriberId
-      }),
-      'message': JSON.stringify({
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'list',
-            'top_element_style': body.topElementStyle,
-            'elements': body.listItems,
-            'buttons': body.buttons
           }
         }
       })
@@ -640,31 +580,6 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       }
     }
     return payload
-  } else if (body.componentType === 'list') {
-    var listElements = []
-    for (let i = 0; i < body.listItems.length; i++) {
-      var element = {}
-      element.title = body.listItems[i].title
-      element.subtitle = body.listItems[i].subtitle
-      element.image_url = body.listItems[i].image_url
-      element.buttons = removeOldUrlFromButton(body.listItems[i].buttons)
-      if (body.listItems.default_action) {
-        element.default_action = body.listItems[i].default_action
-      }
-      listElements.push(element)
-    }
-    payload = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'list',
-          'top_element_style': body.topElementStyle,
-          'elements': listElements,
-          'buttons': removeOldUrlFromButton(card.buttons)
-        }
-      }
-    }
-    return payload
   } else if (body.componentType === 'media') {
     payload = {
       'attachment': {
@@ -764,7 +679,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
               logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
               URLObject.module = module
               logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
-              URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId, module: module})
+              URLDataLayer.updateOneURL(URLObject._id, {'module': module})
                 .then(savedurl => {
                   logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
                 })
@@ -798,30 +713,6 @@ function addModuleIdIfNecessary (payload, broadcastId) {
               })
           }
         })
-      })
-    } else if (payload[i].componentType === 'list') {
-      payload[i].listItems.forEach((element, lindex) => {
-        if (element.buttons && element.buttons.length > 0) {
-          element.buttons.forEach((button, bindex) => {
-            if (button.url) {
-              let temp = button.url.split('/')
-              let urlId = temp[temp.length - 1]
-              URLDataLayer.findOneURL(urlId)
-                .then(URLObject => {
-                  URLObject.module.id = broadcastId
-                  URLObject.updateOneURL(URLObject._id, {'module.id': broadcastId})
-                    .then(savedurl => {
-                    })
-                    .catch(err => {
-                      logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
-                    })
-                })
-                .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
-                })
-            }
-          })
-        }
       })
     }
   }

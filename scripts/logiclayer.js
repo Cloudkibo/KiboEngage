@@ -157,16 +157,6 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
           }
         }
       }
-    } else if (payload.componentType === 'list') {
-      messageData.message = {
-        'attachment': {
-          'type': 'list',
-          'payload': {
-            'template_type': 'generic',
-            'elements': payload.listItems
-          }
-        }
-      }
     } else if (payload.componentType === 'media') {
       messageData.message = {
         'attachment': {

@@ -68,8 +68,11 @@ function isAuthenticated () {
           let actUserAs
           apiCaller.callApi(`user/query`, 'post', {domain_email: req.headers.actingasuser})
             .then(user => {
+              user = user[0]
               req.user.domain_email = req.headers.actingasuser
+              req.user.facebookInfo = user.facebookInfo
               actUserAs = user
+              // req.user = user
               return apiCaller.callApi('companyUser/query', 'post', {userId: actUserAs._id})
             })
             .then(companyUserInfo => {
@@ -77,6 +80,7 @@ function isAuthenticated () {
               return apiCaller.callApi('permissions/query', 'post', {userId: actUserAs._id})
             })
             .then(permissionsGot => {
+              permissionsGot = permissionsGot[0]
               req.user.permissions = permissionsGot
               return apiCaller.callApi('companyprofile/query', 'post', {_id: req.user.companyId})
             })
@@ -86,6 +90,7 @@ function isAuthenticated () {
               return apiCaller.callApi('permissions_plan/query', 'post', {plan_id: companyProfileGot.planId._id})
             })
             .then(permissionsPlan => {
+              permissionsPlan = permissionsPlan[0]
               req.user.plan = permissionsPlan
               next()
             })
@@ -99,6 +104,13 @@ function isAuthenticated () {
       } else {
         next()
       }
+    })
+    .use(function sentryContextDefinition (req, res, next) {
+      const Raven = require('raven')
+      Raven.setContext({
+        user: req.user
+      })
+      next()
     })
 }
 /**

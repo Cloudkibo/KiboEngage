@@ -397,6 +397,8 @@ function sendSurvey (req, res, planUsage, companyUsage, abort) {
                         payload: JSON.stringify({
                           survey_id: req.body._id,
                           option: first_question.options[x],
+                          action: first_question.actions ? first_question.actions[x].action : '',
+                          sequenceId: first_question.actions ? first_question.actions[x].sequenceId : '',
                           question_id: first_question._id,
                           next_question_id,
                           userToken: currentUser.facebookInfo.fbToken
@@ -705,11 +707,10 @@ function createSurvey (req, callback) {
   surveyDataLayer.createSurvey(surveyPayload)
     .then(survey => {
       for (let question in req.body.questions) {
-        let options = []
-        options = req.body.questions[question].options
         const surveyQuestion = {
           statement: req.body.questions[question].statement, // question statement
-          options, // array of question options
+          options: req.body.questions[question].options.map((o) => o.option), // array of question options
+          actions: req.body.questions[question].options,
           type: 'multichoice', // type can be text/multichoice
           surveyId: survey._id
         }

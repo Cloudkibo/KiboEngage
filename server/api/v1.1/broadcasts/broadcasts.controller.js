@@ -591,29 +591,7 @@ const updatePayload = (self, payload, broadcast) => {
   let shouldReturn = false
   logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`, 'debug')
   for (let j = 0; j < payload.length; j++) {
-    if (!self && payload[j].componentType === 'list') {
-      payload[j].listItems.forEach((element, lindex) => {
-        if (element.default_action && !element.default_action.messenger_extensions) {
-          URLDataLayer.createURLObject({
-            originalURL: element.default_action.url,
-            module: {
-              id: broadcast._id,
-              type: 'broadcast'
-            }
-          })
-            .then(savedurl => {
-              let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-              payload[j].listItems[lindex].default_action.url = newURL
-            })
-            .catch(error => {
-              logger.serverLog(TAG, error, 'error')
-            })
-        }
-        if (lindex === (payload[j].listItems.length - 1)) {
-          shouldReturn = operation(j, payload.length - 1)
-        }
-      })
-    } else {
+    if (self) {
       shouldReturn = operation(j, payload.length - 1)
     }
   }
@@ -665,53 +643,6 @@ exports.addCardAction = function (req, res) {
   if (req.body.messenger_extensions || req.body.webview_height_ratio) {
     if (!broadcastUtility.isWebView(req.body)) {
       return res.status(500).json({status: 'failed', payload: `parameters are missing`})
-    }
-    broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
-      .then(result => {
-        if (result.returnValue) {
-          var webViewPayload = {
-            type: req.body.type,
-            url: req.body.url, // User defined link,
-            messenger_extensions: req.body.messenger_extensions,
-            webview_height_ratio: req.body.webview_height_ratio
-          }
-          sendSuccessResponse(res, 200, webViewPayload)
-        } else {
-          sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
-        }
-      })
-      .catch(err => {
-        sendErrorResponse(res, 500, `Error at checking whitelist domain ${err}`)
-      })
-  } else {
-    URLDataLayer.createURLObject({
-      originalURL: req.body.url,
-      module: {
-        type: 'broadcast'
-      }
-    })
-      .then(savedurl => {
-        let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-        buttonPayload.newUrl = newURL
-        buttonPayload.url = req.body.url
-        sendSuccessResponse(res, 200, buttonPayload)
-      })
-      .catch(error => {
-        sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
-      })
-  }
-}
-
-exports.addListAction = function (req, res) {
-  if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
-    sendErrorResponse(res, 400, 'Url is required for type web_url.')
-  }
-  let buttonPayload = {
-    type: req.body.type
-  }
-  if (req.body.messenger_extensions || req.body.webview_height_ratio) {
-    if (!broadcastUtility.isWebView(req.body)) {
-      sendErrorResponse(res, 400, `parameters are missing`)
     }
     broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
       .then(result => {
