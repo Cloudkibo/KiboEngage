@@ -27,12 +27,13 @@ exports.index = function (req, res) {
 }
 
 exports.broadcast = function (req, res) {
-  console.log('broadcast click count increased')
-  logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
+  // console.log('broadcast click count increased')
   // logger.serverLog(TAG, `broadcast click count increased ${util.inspect(req)}`, 'debug')
   const clientIp = requestIp.getClientIp(req)
   console.log('clientIp ', clientIp)
+  logger.serverLog(TAG, `request headers ${JSON.stringify(req.headers)}`, 'debug')
   if (!clientIp.startsWith('::ffff:173.252.87')) {
+    logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
     URLDataLayer.findOneURL(req.params.id)
       .then(URLObject => {
         if (URLObject) {
