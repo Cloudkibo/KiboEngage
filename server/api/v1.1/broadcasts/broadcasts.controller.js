@@ -591,9 +591,7 @@ const updatePayload = (self, payload, broadcast) => {
   let shouldReturn = false
   logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`, 'debug')
   for (let j = 0; j < payload.length; j++) {
-    if (self) {
-      shouldReturn = operation(j, payload.length - 1)
-    }
+    shouldReturn = operation(j, payload.length - 1)
   }
   if (shouldReturn) {
     return payload
