@@ -26,6 +26,9 @@ exports.getQRCode = function (req, res) {
     .then(response => {
       sendSuccessResponse(res, 200, response)
     })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to get QRCode ${JSON.stringify(error)}`)
+    })
 }
 exports.delete = function (req, res) {
   utility.callApi(`messenger_code/${req.params.id}`, 'delete', {})
