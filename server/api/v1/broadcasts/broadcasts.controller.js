@@ -113,11 +113,6 @@ exports.addButton = function (req, res) {
           return res.status(500).json({status: 'failed', payload: `Failed to save url ${JSON.stringify(error)}`})
         })
     }
-  } else if (req.body.type === 'element_share') {
-    return res.status(200).json({
-      status: 'success',
-      payload: {type: req.body.type}
-    })
   } else {
     if (req.body.module.type === 'sequenceMessaging') {
       let buttonId = uniqid()
@@ -432,7 +427,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
-     // logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
+      // logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
       if (body.error && body.error.code === 190 && body.error.error_subcode === 460) {
         sendOpAlert(body.error, 'inside broadcastcontroller.js', page._id, page.userId, page.companyId)
         return res.status(200)
