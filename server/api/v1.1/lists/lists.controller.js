@@ -117,9 +117,10 @@ function createTag (req, callback) {
             utility.callApi('tags/', 'post', tagPayload)
               .then(newTag => {
                 tagsCreated++
+                logger.serverLog(TAG, `tag created ${tagsCreated}`, 'debug')
                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}})
                   .then(updated => {
-                    logger.serverLog(TAG, `Updated Feature Usage ${tagsCreated}`, 'debug')
+                    logger.serverLog(TAG, `Updated Feature Usage ${updated}`, 'debug')
                   })
                   .catch(err => {
                     if (err) {
