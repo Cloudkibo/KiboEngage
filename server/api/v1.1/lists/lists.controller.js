@@ -119,17 +119,17 @@ function createTag (req, callback) {
                 utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}})
                   .then(updated => {
                     tagsCreated++
-                    logger.serverLog(TAG, `Updated Feature Usage ${JSON.stringify(updated)}`, 'debug')
+                    logger.serverLog(TAG, `Updated Feature Usage ${tagsCreated}`, 'debug')
+                    if (tagsCreated === pages.length) {
+                      logger.serverLog(TAG, 'new tag created', 'debug')
+                      return callback(null, newTag)
+                    }
                   })
                   .catch(err => {
                     if (err) {
                       logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
                     }
                   })
-                if (tagsCreated === pages.length) {
-                  logger.serverLog(TAG, 'new tag created', 'debug')
-                  return callback(null, newTag)
-                }
               })
               .catch(err => callback(err))
           })
