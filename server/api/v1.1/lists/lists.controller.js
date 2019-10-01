@@ -102,7 +102,7 @@ function createTag (req, callback) {
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
             if (label.body.error) {
-              logger.serverLog(TAG, `facebook label error ${label.body.error}`, 'debug')
+              logger.serverLog(TAG, `facebook label error ${JSON.stringify(label.body.error)}`, 'debug')
               sendOpAlert(label.body.error, 'lists controller in kiboengage from createTag', page._id, page.userId, page.companyId)
               return callback(label.body.error)
             }
