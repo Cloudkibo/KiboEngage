@@ -78,11 +78,9 @@ exports.create = function (req, res) {
           ], 10, function (err, results) {
             if (err) {
               sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
-            }
-            if (newTagCreated) {
+            } else {
               logger.serverLog(TAG, 'assigning tag to subscribers', 'debug')
               assignTagToSubscribers(req.body.content, req.body.listName, req, res)
-              newTagCreated = false
             }
           })
         })
@@ -94,7 +92,7 @@ exports.create = function (req, res) {
       sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
-let newTagCreated = false
+
 function createTag (req, callback) {
   utility.callApi('pages/query', 'post', {companyId: req.user.companyId})
     .then(pages => {
@@ -104,6 +102,7 @@ function createTag (req, callback) {
         facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
           .then(label => {
             if (label.body.error) {
+              logger.serverLog(TAG, `facebook label error ${label.body.error}`, 'debug')
               sendOpAlert(label.body.error, 'lists controller in kiboengage from createTag', page._id, page.userId, page.companyId)
               return callback(label.body.error)
             }
@@ -127,8 +126,7 @@ function createTag (req, callback) {
                       logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
                     }
                   })
-                if (tagsCreated === pages.length - 1) {
-                  newTagCreated = true
+                if (tagsCreated === pages.length) {
                   logger.serverLog(TAG, 'new tag created', 'debug')
                   return callback(null, newTag)
                 }
