@@ -315,7 +315,6 @@ exports.viewList = function (req, res) {
 exports.deleteList = function (req, res) {
   utility.callApi(`lists/${req.params.id}`, 'get', {})
     .then(list => {
-      console.log('list', list)
       utility.callApi('tags/query', 'post', {companyId: req.user.companyId, tag: list.listName})
         .then(tags => {
           console.log('tags resp', tags)
