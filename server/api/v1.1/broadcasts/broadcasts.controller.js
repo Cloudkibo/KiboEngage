@@ -154,8 +154,6 @@ exports.addButton = function (req, res) {
           sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
         })
     }
-  } else if (req.body.type === 'element_share') {
-    sendSuccessResponse(res, 200, {type: req.body.type})
   } else {
     if (req.body.module && req.body.module.type === 'sequenceMessaging') {
       let buttonId = uniqid()
@@ -242,11 +240,6 @@ exports.editButton = function (req, res) {
           sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
         }
       })
-  } else if (req.body.type === 'element_share') {
-    buttonPayload = {
-      type: req.body.type
-    }
-    sendSuccessResponse(res, 200, {id: req.body.id, button: buttonPayload})
   } else {
     if (req.body.module && req.body.module.type === 'sequenceMessaging') {
       buttonPayload.payload = JSON.stringify({
@@ -766,18 +759,22 @@ const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
                       }
                     })
                     .catch(err => {
+                      current++
                       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
                     })
                 }
               })
               .catch(err => {
+                current++
                 sendErrorResponse(res, 500, `Failed to find tags ${JSON.stringify(err)}`)
               })
           } else {
+            current++
             sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
           }
         })
         .catch(err => {
+          current++
           sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
         })
     }

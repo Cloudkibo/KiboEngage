@@ -55,7 +55,6 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
     let buttons = []
     prepareViewTweetButton(savedMsg, tweetId, screenName).then(button => {
       buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card', screenName))
     })
     for (let i = 0; i < urls.length; i++) {
       og(urls[i].expanded_url, (err, meta) => {
@@ -103,7 +102,6 @@ function prepareGallery (media, savedMsg, tweetId, userName, screenName) {
   let buttons = []
   prepareViewTweetButton(savedMsg, tweetId, screenName).then(button => {
     buttons.push(button)
-    buttons.push(prepareShareButton(savedMsg, tweetId, null, 'card', screenName))
   })
   for (let i = 0; i < length; i++) {
     elements.push({
@@ -122,7 +120,6 @@ const prepareMessengerPayloadForText = (type, body, savedMsg, tweetId, showButto
   if (showButton) {
     prepareViewTweetButton(savedMsg, tweetId, screenName).then(button => {
       buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, tweetId, body, null, screenName))
     })
     messageData = {
       'attachment': {
@@ -162,36 +159,6 @@ const prepareViewTweetButton = (savedMsg, tweetId, screenName) => {
         resolve(button)
       })
   })
-}
-const prepareShareButton = (savedMsg, tweetId, body, type, screenName) => {
-  let button
-  if (type && type === 'card') {
-    button = {
-      'type': 'element_share'
-    }
-  } else {
-    button = {
-      'type': 'element_share',
-      'share_contents': {
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'generic',
-            'elements': [{
-              'title': body.text,
-              'subtitle': 'kibopush.com',
-              'default_action': {
-                'type': 'web_url',
-                'url': `https://twitter.com/${screenName}/status/${tweetId}`
-              },
-              'buttons': []
-            }]
-          }
-        }
-      }
-    }
-  }
-  return button
 }
 
 const getVideoURL = (variants) => {

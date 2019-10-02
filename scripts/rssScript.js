@@ -321,9 +321,6 @@ function getMetaData (feed) {
             image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
             buttons: [
               {
-                type: 'element_share'
-              },
-              {
                 type: 'web_url',
                 title: 'Read More...',
                 url: feed[i].link
