@@ -21,8 +21,9 @@ exports.index = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
+
 exports.getQRCode = function (req, res) {
-  qrcode.toDataURL(`https://m.me/${req.params.pageId}`)
+  qrcode.toDataURL(`https://m.me/${req.params.pageId}?ref=QRCode`)
     .then(response => {
       sendSuccessResponse(res, 200, response)
     })
