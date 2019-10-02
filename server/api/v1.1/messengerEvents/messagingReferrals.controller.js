@@ -25,6 +25,14 @@ exports.index = function (req, res) {
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`, 'error')
             })
+          callApi(`messenger_code/query`, 'post', { pageId: page._id, companyId: page.companyId })
+            .then(messegerCode => {
+              messegerCode = messegerCode[0]
+              broadcastUtility.getBatchData(messegerCode.optInMessage, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`, 'error')
+            })
         })
         .catch(err => {
           logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
