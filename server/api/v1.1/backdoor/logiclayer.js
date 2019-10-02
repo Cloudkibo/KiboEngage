@@ -378,6 +378,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   let findCriteria = {
     pageId: pageid,
     fullName: {$regex: search, $options: 'i'},
+    isSubscribed: true,
     gender: body.filter_criteria.gender_value !== '' ? body.filter_criteria.gender_value : {$exists: true},
     locale: body.filter_criteria.locale_value !== '' ? body.filter_criteria.locale_value : {$exists: true}
   }

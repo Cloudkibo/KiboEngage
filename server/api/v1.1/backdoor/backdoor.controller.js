@@ -33,7 +33,7 @@ exports.getAllUsers = function (req, res) {
                   for (let i = 0; i < pages.length; i++) {
                     pageIds.push(pages[i]._id)
                   }
-                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true, isEnabledByPage: true})
+                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true})
                     .then(subscribers => {
                       usersPayload.push({
                         _id: user._id,
@@ -78,6 +78,7 @@ exports.getAllPages = function (req, res) {
         .then(pages => {
           let pagesPayload = []
           for (let i = 0; i < pages.length; i++) {
+            let subscribers = pages[i].subscribers.filter(subscriber => subscriber.isSubscribed === true)
             pagesPayload.push({
               _id: pages[i]._id,
               pageId: pages[i].pageId,
@@ -87,7 +88,7 @@ exports.getAllPages = function (req, res) {
               connected: pages[i].connected,
               pageUserName: pages[i].pageUserName,
               likes: pages[i].likes,
-              subscribers: pages[i].subscribers.length
+              subscribers: subscribers.length
             })
           }
           let payload = {
