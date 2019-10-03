@@ -6,6 +6,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/tags/tags.controller.js'
 const callApi = require('../utility')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const needle = require('needle')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
@@ -89,7 +90,7 @@ exports.create = function (req, res) {
                   .then(label => {
                     if (label.body.error) {
                       if (label.body.error.code === 100) {
-                        facebookApiCaller('v2.11', `https://graph.facebook.com/v2.11/me/custom_labels?fields=name&access_token=${page.accessToken}`, 'get')
+                        needle('get', `https://graph.facebook.com/v2.11/me/custom_labels?fields=name&access_token=${page.accessToken}`)
                           .then(Tags => { 
                             let default_tag = Tags.body.data.filter(data => data.name === req.body.tag)
                             let tagPayload = {
