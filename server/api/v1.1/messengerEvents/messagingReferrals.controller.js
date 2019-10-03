@@ -20,7 +20,19 @@ exports.index = function (req, res) {
           callApi(`pageReferrals/query`, 'post', { pageId: page._id, companyId: page.companyId, ref_parameter: req.body.referral.ref })
             .then(pageReferral => {
               pageReferral = pageReferral[0]
-              broadcastUtility.getBatchData(pageReferral.reply, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+              if (pageReferral) {
+                broadcastUtility.getBatchData(pageReferral.reply, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`, 'error')
+            })
+          callApi(`messenger_code/query`, 'post', { pageId: page._id, companyId: page.companyId })
+            .then(messegerCode => {
+              messegerCode = messegerCode[0]
+              if (messegerCode) {
+                broadcastUtility.getBatchData(messegerCode.optInMessage, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+              }
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`, 'error')
