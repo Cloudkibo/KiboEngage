@@ -52,13 +52,16 @@ exports.create = function (req, res) {
           // }
           callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, isApproved: true})
             .then(pages => {
+              console.log('pages in tags', pages)
               pages.forEach((page, i) => {
                 facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': req.body.tag})
                   .then(label => {
                     if (label.body.error) {
+                      console.log('Not created tag page', page)
                       sendOpAlert(label.body.error, 'tags controller in kiboengage', page._id, page.userId, page.companyId)
                       sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
                     }
+                    console.log('created tag page', page)
                     let tagPayload = {
                       tag: req.body.tag,
                       userId: req.user._id,
