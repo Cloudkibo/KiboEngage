@@ -99,7 +99,7 @@ exports.create = function (req, res) {
                               pageId: page._id,
                               labelFbId: default_tag[0].id
                             }
-                            createTag(req, res, tagPayload, i)            
+                            createTag(req, res, tagPayload, pages, i)            
                           })
                           .catch(err => {
                             logger.serverLog(TAG, `Error at find  tags from facebook ${err}`, 'error')
@@ -120,7 +120,7 @@ exports.create = function (req, res) {
                         pageId: page._id,
                         labelFbId: label.body.id
                       }
-                      createTag(req, res, tagPayload, i)            
+                      createTag(req, res, tagPayload, pages, i)            
                     }
                   })
                   .catch(err => {
