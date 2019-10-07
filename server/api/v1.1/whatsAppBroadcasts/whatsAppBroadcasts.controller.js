@@ -35,6 +35,7 @@ exports.index = function (req, res) {
 exports.sendBroadcast = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
     .then(companyUser => {
+      console.log('logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id)', logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
       dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
         .then(broadcast => {
           utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}) // fetch company user
@@ -54,6 +55,14 @@ exports.sendBroadcast = function (req, res) {
                     })
                     .then(response => {
                       logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
+                      let MessageObject = logicLayer.prepareChat(req.body.payload, companyUser, contacts[i])
+                      console.log('MessageObject', MessageObject)
+                      utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
+                        .then(response => {
+                        })
+                        .catch(error => {
+                          logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
+                        })
                     })
                     .catch(error => {
                       logger.serverLog(TAG, `error at sending message ${error}`, 'error')

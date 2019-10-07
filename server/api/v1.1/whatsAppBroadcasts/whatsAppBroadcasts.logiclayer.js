@@ -1,3 +1,13 @@
+exports.prepareChat = (payload, companyUser, contact) => {
+  let MessageObject = {
+    senderNumber: companyUser.companyId.twilioWhatsApp.sandboxNumber,
+    recipientNumber: contact.number,
+    contactId: contact._id,
+    companyId: companyUser.companyId._id,
+    payload: payload[0]
+  }
+  return MessageObject
+}
 exports.getCriterias = function (body, companyUser) {
   let findCriteria = {}
   let finalCriteria = {}
