@@ -44,7 +44,7 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
         console.log('req.body.payload[j].componentType', req.body.payload[j].componentType)
         client.messages
           .create({
-            mediaUrl: req.body.payload[j].componentType === 'text' ? [] : [req.body.payload[j].fileurl.url],
+            mediaUrl: req.body.payload[j].componentType === 'text' ? [] : req.body.payload[j].file ? [req.body.payload[j].file.fileurl.url] : [req.body.payload[j].fileurl.url],
             body: req.body.payload[j].componentType === 'text' ? req.body.payload[j].text : '',
             from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
             to: `whatsapp:${contacts[i].number}`,
