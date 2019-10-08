@@ -134,3 +134,18 @@ exports.checkFilterValues = function (values, data) {
   }
   return matchCriteria
 }
+
+exports.createPayloadgetSubscribersCount = function (companyId, number) {
+  let finalFindCriteria = {
+    companyId: companyId,
+    senderNumber: number,
+    format: 'twilio'
+  }
+  let finalCriteria = {
+    purpose: 'aggregate',
+    match: finalFindCriteria,
+    sort: {datetime: -1},
+    limit: 1  
+  }
+  return finalCriteria
+}

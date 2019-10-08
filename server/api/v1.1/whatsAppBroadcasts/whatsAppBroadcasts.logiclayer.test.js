@@ -1,4 +1,4 @@
-const { getCriterias } = require('./whatsAppBroadcasts.logiclayer')
+const { getCriterias, createPayloadgetSubscribersCount, checkFilterValues } = require('./whatsAppBroadcasts.logiclayer')
 
 describe('Validate getCriterias for pagaination', () => {
     test('should give first page countCriterias and fetchCriteria', () => {
@@ -361,4 +361,169 @@ test('should give first page countCriterias and fetchCriteria with all component
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
 })
+})
+
+describe('Get Payload of get subscribers count method', () => {
+  test('return payload', () => {
+    let finalFindCriteria = {
+      companyId: '12345678',
+      senderNumber: '+923403630780',
+      format: 'twilio'
+    }
+    var output = {
+      purpose: 'aggregate',
+      match: finalFindCriteria,
+      sort: {datetime: -1},
+      limit: 1  
+      }
+    expect(createPayloadgetSubscribersCount('12345678', '+923403630780')).toEqual(output)
+  })
+})
+
+describe('createPayloadgetSubscribersCount method testing', () => {
+  test('return payload which used in get subscriber count method', () => {
+    let finalFindCriteria = {
+      companyId: '12345678',
+      senderNumber: '+923403630780',
+      format: 'twilio'
+    }
+    var output = {
+      purpose: 'aggregate',
+      match: finalFindCriteria,
+      sort: {datetime: -1},
+      limit: 1  
+      }
+    expect(createPayloadgetSubscribersCount('12345678', '+923403630780')).toEqual(output)
+  })
+})
+
+describe('checkFilterValues method testing', () => {
+  test('return true because segmentation is null ', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+  } 
+    expect(checkFilterValues(null, contact)).toEqual(true)
+  })
+  test('return true because segmentation length is zero ', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+  } 
+    expect(checkFilterValues(null, contact)).toEqual(true)
+  })
+  test('return false because name doesnot exist in contact', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+  
+    var values = [{
+      criteria: 'is',
+      text: 'Arveen Kumar',
+      condition: 'name'
+    }]
+      expect(checkFilterValues(values, contact)).toEqual(false)
+    })
+    test('return false because name exist in contact', () => {
+    var contact = {
+      'name': 'Arveen Kumar',
+      'number': '+923403630780'
+    }
+  
+    var values = [{
+      criteria: 'is',
+      text: 'Arveen Kumar',
+      condition: 'name'
+    }]
+      expect(checkFilterValues(values, contact)).toEqual(true)
+    })
+  test('return false because name doesnot exist in contact', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+  
+    var values = [{
+      criteria: 'contains',
+      text: 'Vishal',
+      condition: 'name'
+    }]
+      expect(checkFilterValues(values, contact)).toEqual(false)
+    })
+  test('return true because name  exist in contact', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+  
+    var values = [{
+      criteria: 'contains',
+      text: 'Kumar',
+      condition: 'name'
+    }]
+      expect(checkFilterValues(values, contact)).toEqual(true)
+    })
+  test('return false because name doesnot begin with Arveen in contact', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+  
+    var values = [{
+      criteria: 'begins',
+      text: 'Kumar Maheshwari',
+      condition: 'name'
+    }]
+      expect(checkFilterValues(values, contact)).toEqual(false)
+    })
+  test('return true because name  begin with Arveen in contact', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+  
+    var values = [{
+      criteria: 'begins',
+      text: 'Arveen',
+      condition: 'name'
+    }]
+      expect(checkFilterValues(values, contact)).toEqual(true)
+    })
+  test('return true because name  exist with Arveen and contact in contacts', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+    var values = [{
+      criteria: 'is',
+      text: 'Arveen Kumar Maheshwari',
+      condition: 'name'
+    },
+    {
+      criteria: 'is',
+      text: '+923403630780',
+      condition: 'number'
+    }
+  ]
+      expect(checkFilterValues(values, contact)).toEqual(true)
+    })
+    test('return false because name  doesnot exist with Arveen and contact in contacts', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+    var values = [{
+      criteria: 'is',
+      text: 'Arveen Kumar Maheshwari',
+      condition: 'name'
+    },
+    {
+      criteria: 'is',
+      text: '+92340363078',
+      condition: 'number'
+    }
+    ]
+        expect(checkFilterValues(values, contact)).toEqual(false)
+      })
 })
