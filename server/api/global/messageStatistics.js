@@ -1,4 +1,5 @@
 const { callApi } = require('../v1.1/utility')
+const { padWithZeros } = require('./../../components/utility')
 const logger = require('../../components/logger')
 const TAG = 'api/global/messageStatistics.js'
 let redis = require('redis')
@@ -107,13 +108,21 @@ exports.getRecords = function (fn) {
     for (let i = 0; i < data.objs.length; i++) {
       let feature = data.objs[i].split('-')[0]
       let dateTime = data.objs[i].split('-')[1].split(':')
+      let MM = padWithZeros(dateTime[1], 2)
+      let dd = padWithZeros(dateTime[2], 2)
+      let yyyy = dateTime[0]
+      let HH = padWithZeros(dateTime[3], 2)
+      let mm = padWithZeros(dateTime[4], 2)
+      let ss = '00'
+      let formattedDateTime = `${MM}-${dd}-${yyyy} ${HH}:${mm}:${ss}`
       result.push({
         feature,
-        year: dateTime[0],
-        month: dateTime[1],
-        days: dateTime[2],
-        hours: dateTime[3],
-        minutes: dateTime[4],
+        year: yyyy,
+        month: MM,
+        days: dd,
+        hours: HH,
+        minutes: mm,
+        datetime: formattedDateTime,
         count: data.replies[i]
       })
     }
