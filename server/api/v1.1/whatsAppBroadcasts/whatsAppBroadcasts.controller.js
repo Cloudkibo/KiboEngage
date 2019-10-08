@@ -54,6 +54,13 @@ exports.sendBroadcast = function (req, res) {
                     })
                     .then(response => {
                       logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
+                      let MessageObject = logicLayer.prepareChat(req.body.payload[0], companyUser, contacts[i])
+                      utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
+                        .then(response => {
+                        })
+                        .catch(error => {
+                          logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
+                        })
                     })
                     .catch(error => {
                       logger.serverLog(TAG, `error at sending message ${error}`, 'error')
