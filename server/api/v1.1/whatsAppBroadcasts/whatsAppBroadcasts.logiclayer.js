@@ -104,7 +104,7 @@ exports.prepareBroadCastPayload = function (req, companyId) {
 }
 exports.checkFilterValues = function (values, data) {
   var matchCriteria = true
-  if (values.length > 0) {
+  if (values && values.length > 0) {
     for (var i = 0; i < values.length; i++) {
       var filter = values[i]
       if (filter.criteria === 'is') {
