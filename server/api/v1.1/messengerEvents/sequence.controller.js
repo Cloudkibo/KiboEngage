@@ -77,8 +77,8 @@ exports.subscriberJoins = function (req, res) {
   })
 }
 
-exports.respondsToPoll = function (data) {
-  logger.serverLog(TAG, `in sequence resposndsToPoll ${JSON.stringify(data)}`, 'debug')
+exports.handlePollSurveyResponse = function (data) {
+  logger.serverLog(TAG, `in sequence handlePollSurveyResponse ${JSON.stringify(data)}`, 'debug')
   if (data.payload.action === 'subscribe') {
     SequencesDataLayer.genericFindForSequenceMessages({sequenceId: data.payload.sequenceId})
       .then(messages => {
@@ -109,7 +109,7 @@ exports.respondsToPoll = function (data) {
                       body: {
                         action: 'sequence_update',
                         payload: {
-                          sequence_id: seq._id
+                          sequence_id: data.payload.sequenceId
                         }
                       }
                     })
