@@ -4,6 +4,8 @@ const utility = require('../utility')
 let config = require('./../../../config/environment')
 const logger = require('../../../components/logger')
 const TAG = 'whatsAppBroadcasts.controller.js'
+const async = require('async')
+
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
@@ -74,5 +76,72 @@ exports.sendBroadcast = function (req, res) {
         .catch(error => {
           sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
         })
+    })
+}
+function getSubscribersCount (req, res, contacts, companyUser) {
+  let requests = []
+  for (let i = 0; i < contacts.length; i++) {
+    requests.push((callback) => {
+
+      let finalFindCriteria = {
+        companyId: companyUser.companyId._id,
+        senderNumber: contacts[i].number,
+        format: 'twilio'
+      }
+      let finalCriteria = {
+        purpose: 'aggregate',
+        match: finalFindCriteria,
+        sort: {datetime: -1},
+        limit: 1  
+      }
+      utility.callApi(`whatsAppChat/query`, 'post', finalCriteria, 'kibochat') // fetch company user
+        .then(data => {
+          var hours = (new Date() - new Date(data[0].datetime)) / 3600000
+          if (hours <= 24) {
+            var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
+            if (matchCriteria) {
+              callback(null, data)
+            }
+            else {
+              callback(null, null)
+            }
+          }
+          else {
+            callback(null, null)
+          } 
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to fetch contact ${JSON.stringify(error)}`)
+        })
+    })
+  }
+  async.parallelLimit(requests, 30, function (err, results) {
+    if (err) {
+      console.log(`Failed to fetch livechat Data ${err}`)
+    }
+    else {
+      console.log('results', results.length)
+      var finalResults = results.filter(result => result !== null) 
+      console.log('finalResults', finalResults.length)
+      sendSuccessResponse(res, 200, {subscribersCount: finalResults.length})
+    }
+  })
+
+}
+exports.getCount = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
+    .then(companyUser => {
+      utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}) // fetch company user
+        .then(contacts => {
+          getSubscribersCount(req, res, contacts, companyUser)
+        })
+        .catch(error => {
+          console.log(`Failed to fetch contact ${(error)}`)
+          sendErrorResponse(res, 500, `Failed to fetch fetch contact user ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      console.log(`Failed to fetch company user ${(error)}`)
+      sendErrorResponse(res, 500, `Failed to fetch company user ${error}`)
     })
 }
