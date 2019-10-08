@@ -54,7 +54,7 @@ exports.sendBroadcast = function (req, res) {
                     })
                     .then(response => {
                       logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
-                      let MessageObject = logicLayer.prepareChat(req.body.payload, companyUser, contacts[i])
+                      let MessageObject = logicLayer.prepareChat(req.body.payload[0], companyUser, contacts[i])
                       utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
                         .then(response => {
                         })

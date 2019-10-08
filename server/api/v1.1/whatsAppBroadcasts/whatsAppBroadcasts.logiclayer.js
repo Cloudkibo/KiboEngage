@@ -1,10 +1,20 @@
 exports.prepareChat = (payload, companyUser, contact) => {
+  if (!(contact && contact._id && contact.number)) {
+    throw Error('contact payload should contain _id and number as parameters and should be valid payload')
+  }
+  if (!(companyUser && companyUser.companyId && companyUser.companyId._id &&
+    companyUser.companyId.twilioWhatsApp && companyUser.companyId.twilioWhatsApp.sandboxNumber)) {
+    throw Error('company payload should be valid')
+  }
+  if (!(payload && payload.componentType)) {
+    throw Error('payload should be defined')
+  }
   let MessageObject = {
     senderNumber: companyUser.companyId.twilioWhatsApp.sandboxNumber,
     recipientNumber: contact.number,
     contactId: contact._id,
     companyId: companyUser.companyId._id,
-    payload: payload[0]
+    payload: payload
   }
   return MessageObject
 }
