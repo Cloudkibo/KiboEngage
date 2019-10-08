@@ -26,7 +26,7 @@ exports.index = function (req, res) {
     const opts = { keys }
     try {
       const csv = parse(info, opts)
-      sendSuccessResponse(res, '200', csv, '')
+      res.send(csv)
     } catch (err) {
       sendErrorResponse(res, '500', '', err)
     }
