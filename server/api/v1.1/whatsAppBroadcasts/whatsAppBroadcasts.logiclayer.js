@@ -1,11 +1,55 @@
 exports.getCriterias = function (body, companyUser) {
   let findCriteria = {}
+  let startDate = new Date() 
+  startDate.setDate(startDate.getDate() - body.filter_criteria.days)
+  startDate.setHours(0) 
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
   let finalCriteria = {}
+  let countCriteria = {}
   let recordsToSkip = 0
-  findCriteria = {
-    companyId: companyUser.companyId
+  if (body.filter_criteria.search_value === '' && body.filter_criteria.type_value === '') {
+    findCriteria = {
+      companyId: companyUser.companyId,
+      'datetime': body.filter_criteria.days !== '0' ? {
+        $gte: startDate
+      } : { $exists: true }
+    }
   }
-  let countCriteria = [
+  else {
+    if (body.filter_criteria.type_value === 'miscellaneous') {
+      findCriteria = {
+        companyId: companyUser.companyId,
+        'payload.1': { $exists: true },
+        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+        'datetime': body.filter_criteria.days !== '0' ? {
+          $gte: startDate
+        } : { $exists: true }
+      }
+    } else {
+      if (body.filter_criteria.type_value !== '' && body.filter_criteria.type_value !== 'all') {
+        findCriteria = {
+          companyId: companyUser.companyId,
+          $and: [{'payload.0.componentType': (body.filter_criteria.type_value !== '' && body.filter_criteria.type_value !== 'all') ? body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
+          title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+          'datetime': body.filter_criteria.days !== '0' ? {
+            $gte: startDate
+          } : { $exists: true }
+        }
+      }
+      else {
+        findCriteria = {
+          companyId: companyUser.companyId,
+          'payload.0.componentType': (body.filter_criteria.type_value !== '' && body.filter_criteria.type_value !== 'all') ? body.filter_criteria.type_value : { $exists: true },
+          title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+          'datetime': body.filter_criteria.days !== '0' ? {
+            $gte: startDate
+          } : { $exists: true }
+        }
+      }
+    } 
+  }
+  countCriteria = [
     { $match: findCriteria },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
