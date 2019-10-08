@@ -11,7 +11,8 @@ const { getRecords } = require('./../../global/messageStatistics')
 const { parse } = require('json2csv')
 
 exports.index = function (req, res) {
-  getRecords(req.params.name, (err, data) => {
+  let name = req.params.name || 'broadcast'
+  getRecords(name, (err, data) => {
     if (err) {
       return sendErrorResponse(res, '500', '', err)
     }
