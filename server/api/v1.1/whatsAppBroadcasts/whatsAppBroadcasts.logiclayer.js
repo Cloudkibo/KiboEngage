@@ -19,13 +19,66 @@ exports.prepareChat = (payload, companyUser, contact) => {
   return MessageObject
 }
 exports.getCriterias = function (body, companyUser) {
-  let findCriteria = {}
-  let finalCriteria = {}
-  let recordsToSkip = 0
-  findCriteria = {
-    companyId: companyUser.companyId
+  if (!body) {
+    throw Error('body shouldnot be empty')
   }
-  let countCriteria = [
+  if (!(body.number_of_records)) {
+    throw Error('body must contain number_of_records and should be valid payload')
+  }
+  if (!(companyUser && companyUser.companyId)) {
+    throw Error('companyUser must contain companyId and should be valid payload')
+  }
+  let findCriteria = {}
+  let startDate = new Date() 
+  startDate.setDate(startDate.getDate() - body.filter_criteria.days)
+  startDate.setHours(0) 
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  if (body.filter_criteria.search_value === '' && body.filter_criteria.type_value === '') {
+    findCriteria = {
+      companyId: companyUser.companyId,
+      'datetime': body.filter_criteria.days !== '0' ? {
+        $gte: startDate
+      } : { $exists: true }
+    }
+  }
+  else {
+    if (body.filter_criteria.type_value === 'miscellaneous') {
+      findCriteria = {
+        companyId: companyUser.companyId,
+        'payload.1': { $exists: true },
+        title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+        'datetime': body.filter_criteria.days !== '0' ? {
+          $gte: startDate
+        } : { $exists: true }
+      }
+    } else {
+      if (body.filter_criteria.type_value !== '' && body.filter_criteria.type_value !== 'all') {
+        findCriteria = {
+          companyId: companyUser.companyId,
+          $and: [{'payload.0.componentType': (body.filter_criteria.type_value !== '' && body.filter_criteria.type_value !== 'all') ? body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
+          title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+          'datetime': body.filter_criteria.days !== '0' ? {
+            $gte: startDate
+          } : { $exists: true }
+        }
+      }
+      else {
+        findCriteria = {
+          companyId: companyUser.companyId,
+          'payload.0.componentType': (body.filter_criteria.type_value !== '' && body.filter_criteria.type_value !== 'all') ? body.filter_criteria.type_value : { $exists: true },
+          title: body.filter_criteria.search_value !== '' ? { $regex: body.filter_criteria.search_value } : { $exists: true },
+          'datetime': body.filter_criteria.days !== '0' ? {
+            $gte: startDate
+          } : { $exists: true }
+        }
+      }
+    } 
+  }
+  countCriteria = [
     { $match: findCriteria },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
@@ -79,8 +132,17 @@ exports.prepareBroadCastPayload = function (req, companyId) {
   return broadcastPayload
 }
 exports.checkFilterValues = function (values, data) {
+  if (!data) {
+    throw Error('contact data must contain and should be valid payload')
+  }
+  if (!(data && data.name)) {
+    throw Error('contact data must contain name and should be valid payload')
+  }
+  if (!(data && data.number)) {
+    throw Error('contact data must contain number and should be valid payload')
+  }
   var matchCriteria = true
-  if (values.length > 0) {
+  if (values && values.length > 0) {
     for (var i = 0; i < values.length; i++) {
       var filter = values[i]
       if (filter.criteria === 'is') {
@@ -109,4 +171,25 @@ exports.checkFilterValues = function (values, data) {
     }
   }
   return matchCriteria
+}
+
+exports.createPayloadgetSubscribersCount = function (companyId, number) {
+  if (!(companyId)) {
+    throw Error('must contain companyId and should be valid payload')
+  }
+  if (!(number)) {
+    throw Error('must contain contact number and should be valid payload')
+  }
+  let finalFindCriteria = {
+    companyId: companyId,
+    senderNumber: number,
+    format: 'twilio'
+  }
+  let finalCriteria = {
+    purpose: 'aggregate',
+    match: finalFindCriteria,
+    sort: {datetime: -1},
+    limit: 1  
+  }
+  return finalCriteria
 }
