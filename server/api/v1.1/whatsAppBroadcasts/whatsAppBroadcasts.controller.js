@@ -96,18 +96,7 @@ function getSubscribersCount (req, res, contacts, companyUser) {
     let requests = []
     for (let i = 0; i < contacts.length; i++) {
       requests.push((callback) => {
-
-        let finalFindCriteria = {
-          companyId: companyUser.companyId._id,
-          senderNumber: contacts[i].number,
-          format: 'twilio'
-        }
-        let finalCriteria = {
-          purpose: 'aggregate',
-          match: finalFindCriteria,
-          sort: {datetime: -1},
-          limit: 1  
-        }
+        let finalCriteria = logicLayer.createPayloadgetSubscribersCount(companyUser.companyId._id, contacts[i].number)
         utility.callApi(`whatsAppChat/query`, 'post', finalCriteria, 'kibochat') // fetch company user
           .then(data => {
             var hours = (new Date() - new Date(data[0].datetime)) / 3600000

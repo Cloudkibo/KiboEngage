@@ -1,4 +1,13 @@
 exports.getCriterias = function (body, companyUser) {
+  if (!body) {
+    throw Error('body shouldnot be empty')
+  }
+  if (!(body.number_of_records)) {
+    throw Error('body must contain number_of_records and should be valid payload')
+  }
+  if (!(companyUser && companyUser.companyId)) {
+    throw Error('companyUser must contain companyId and should be valid payload')
+  }
   let findCriteria = {}
   let startDate = new Date() 
   startDate.setDate(startDate.getDate() - body.filter_criteria.days)
@@ -103,6 +112,15 @@ exports.prepareBroadCastPayload = function (req, companyId) {
   return broadcastPayload
 }
 exports.checkFilterValues = function (values, data) {
+  if (!data) {
+    throw Error('contact data must contain and should be valid payload')
+  }
+  if (!(data && data.name)) {
+    throw Error('contact data must contain name and should be valid payload')
+  }
+  if (!(data && data.number)) {
+    throw Error('contact data must contain number and should be valid payload')
+  }
   var matchCriteria = true
   if (values && values.length > 0) {
     for (var i = 0; i < values.length; i++) {
@@ -133,4 +151,25 @@ exports.checkFilterValues = function (values, data) {
     }
   }
   return matchCriteria
+}
+
+exports.createPayloadgetSubscribersCount = function (companyId, number) {
+  if (!(companyId)) {
+    throw Error('must contain companyId and should be valid payload')
+  }
+  if (!(number)) {
+    throw Error('must contain contact number and should be valid payload')
+  }
+  let finalFindCriteria = {
+    companyId: companyId,
+    senderNumber: number,
+    format: 'twilio'
+  }
+  let finalCriteria = {
+    purpose: 'aggregate',
+    match: finalFindCriteria,
+    sort: {datetime: -1},
+    limit: 1  
+  }
+  return finalCriteria
 }
