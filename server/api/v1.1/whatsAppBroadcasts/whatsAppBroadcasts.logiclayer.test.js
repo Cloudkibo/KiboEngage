@@ -1,7 +1,31 @@
 const { getCriterias, createPayloadgetSubscribersCount, checkFilterValues } = require('./whatsAppBroadcasts.logiclayer')
 
-describe('Validate getCriterias for pagaination', () => {
-    test('should give first page countCriterias and fetchCriteria', () => {
+describe('Validate getCriterias method for pagaination', () => {
+    test( 'should return an error because body is empty', () => {
+      expect(() => { getCriterias(null, '12345678') }).toThrowError(Error('body shouldnot be empty'))
+    })
+    test( 'should return an error because companyId is null', () => {
+    var body = {filter: false,
+      filter_criteria: {search_value: '', type_value: '', days: '0'},
+      first_page: 'next',
+      last_id: '5d9c3027e58f4b3f604b2961',
+      number_of_records: 10,
+      requested_page:1,
+      current_page: 0
+    }
+      expect(() => { getCriterias(body, null) }).toThrowError(Error('companyUser must contain companyId and should be valid payload'))
+    })
+  test( 'should return an error because number_of_records is null', () => {
+    var body = {filter: false,
+      filter_criteria: {search_value: '', type_value: '', days: '0'},
+      first_page: 'next',
+      last_id: '5d9c3027e58f4b3f604b2961',
+      requested_page:1,
+      current_page: 0
+    }
+      expect(() => { getCriterias(body, '12345678') }).toThrowError(Error('body must contain number_of_records and should be valid payload'))
+    })
+    test('should give first page countCriterias and fetchCriteria', () => { 
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: '', days: '0'},
       first_page: 'first',
@@ -395,6 +419,36 @@ describe('createPayloadgetSubscribersCount method testing', () => {
       }
     expect(createPayloadgetSubscribersCount('12345678', '+923403630780')).toEqual(output)
   })
+  test('return error because companyID is missing', () => {
+    let finalFindCriteria = {
+      companyId: '12345678',
+      senderNumber: '+923403630780',
+      format: 'twilio'
+    }
+    var output = {
+      purpose: 'aggregate',
+      match: finalFindCriteria,
+      sort: {datetime: -1},
+      limit: 1  
+      }
+      expect(() => { createPayloadgetSubscribersCount(null, '+923403630780') }).toThrowError(Error('must contain companyId and should be valid payload'))
+
+  })
+  test('return error because contact no is missing', () => {
+    let finalFindCriteria = {
+      companyId: '12345678',
+      senderNumber: '+923403630780',
+      format: 'twilio'
+    }
+    var output = {
+      purpose: 'aggregate',
+      match: finalFindCriteria,
+      sort: {datetime: -1},
+      limit: 1  
+      }
+      expect(() => { createPayloadgetSubscribersCount('123456789', null) }).toThrowError(Error('must contain contact number and should be valid payload'))
+
+  })
 })
 
 describe('checkFilterValues method testing', () => {
@@ -526,4 +580,56 @@ describe('checkFilterValues method testing', () => {
     ]
         expect(checkFilterValues(values, contact)).toEqual(false)
       })
+  test('return error because contact data is missing', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari',
+      'number': '+923403630780'
+    }
+    var values = [{
+      criteria: 'is',
+      text: 'Arveen Kumar Maheshwari',
+      condition: 'name'
+    },
+    {
+      criteria: 'is',
+      text: '+92340363078',
+      condition: 'number'
+    }
+    ]
+    expect(() => { checkFilterValues(values, null) }).toThrowError(Error('contact data must contain and should be valid payload'))
+  })
+  test('return error because contact data.name is missing', () => {
+    var contact = {
+      'number': '+923403630780'
+    }
+    var values = [{
+      criteria: 'is',
+      text: 'Arveen Kumar Maheshwari',
+      condition: 'name'
+    },
+    {
+      criteria: 'is',
+      text: '+92340363078',
+      condition: 'number'
+    }
+    ]
+    expect(() => { checkFilterValues(values, contact) }).toThrowError(Error('contact data must contain name and should be valid payload'))
+  })
+  test('return error because contact data.number is missing', () => {
+    var contact = {
+      'name': 'Arveen Kumar Maheshwari'
+    }
+    var values = [{
+      criteria: 'is',
+      text: 'Arveen Kumar Maheshwari',
+      condition: 'name'
+    },
+    {
+      criteria: 'is',
+      text: '+92340363078',
+      condition: 'number'
+    }
+    ]
+    expect(() => { checkFilterValues(values, contact) }).toThrowError(Error('contact data must contain number and should be valid payload'))
+  })
 })
