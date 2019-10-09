@@ -8,7 +8,7 @@ var cors = require('cors')
 
 const controller = require('./messageStatistics.controller')
 
-router.get('/', cors(),
+router.get('/:name', cors(),
   controller.index)
 
 module.exports = router

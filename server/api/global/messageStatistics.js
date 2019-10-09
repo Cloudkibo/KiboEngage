@@ -1,4 +1,5 @@
 const { callApi } = require('../v1.1/utility')
+const { padWithZeros } = require('./../../components/utility')
 const logger = require('../../components/logger')
 const TAG = 'api/global/messageStatistics.js'
 let redis = require('redis')
@@ -14,7 +15,7 @@ exports.connectRedis = function () {
   })
 }
 
-function recordRedis (featureName) {
+function recordRedis(featureName) {
   findRedisObject(featureName, (err, record) => {
     if (err) {
       return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
@@ -27,7 +28,7 @@ function recordRedis (featureName) {
   })
 }
 
-function createRedisObject (featureName) {
+function createRedisObject(featureName) {
   let today = new Date()
   let minutes = today.getMinutes()
   let hours = today.getHours()
@@ -38,7 +39,7 @@ function createRedisObject (featureName) {
   client.set(key, 0)
 }
 
-function incrementRedisObject (featureName) {
+function incrementRedisObject(featureName) {
   let today = new Date()
   let minutes = today.getMinutes()
   let hours = today.getHours()
@@ -49,7 +50,7 @@ function incrementRedisObject (featureName) {
   client.incr(key)
 }
 
-function findRedisObject (featureName, cb) {
+function findRedisObject(featureName, cb) {
   let today = new Date()
   let minutes = today.getMinutes()
   let hours = today.getHours()
@@ -65,7 +66,7 @@ function findRedisObject (featureName, cb) {
   })
 }
 
-function findAllKeys (fn) {
+function findAllKeys(fn) {
   client.keys('*', (err, objs) => {
     if (err) {
       return fn(`error in message statistics find all keys ${JSON.stringify(err)}`)
@@ -82,7 +83,7 @@ function findAllKeys (fn) {
           return fn(`error in message statistics multi all keys ${JSON.stringify(err)}`)
         }
         deleteAllKeys(arrObjsDel)
-        fn(null, {objs, replies})
+        fn(null, { objs, replies })
       })
     } else {
       fn(null, [])
@@ -90,7 +91,7 @@ function findAllKeys (fn) {
   })
 }
 
-function deleteAllKeys (arrObjs) {
+function deleteAllKeys(arrObjs) {
   // client.multi(arrObjs).exec(function (err, replies) {
   //   if (err) {
   //     return logger.serverLog(TAG, `error in message statistics delete all keys ${JSON.stringify(err)}`)
@@ -98,7 +99,7 @@ function deleteAllKeys (arrObjs) {
   // })
 }
 
-exports.getRecords = function (fn) {
+exports.getRecords = function (featureName, fn) {
   findAllKeys((err, data) => {
     if (err) {
       return fn(err)
@@ -106,16 +107,26 @@ exports.getRecords = function (fn) {
     let result = []
     for (let i = 0; i < data.objs.length; i++) {
       let feature = data.objs[i].split('-')[0]
-      let dateTime = data.objs[i].split('-')[1].split(':')
-      result.push({
-        feature,
-        year: dateTime[0],
-        month: dateTime[1],
-        days: dateTime[2],
-        hours: dateTime[3],
-        minutes: dateTime[4],
-        count: data.replies[i]
-      })
+      if (feature === featureName) {
+        let dateTime = data.objs[i].split('-')[1].split(':')
+        let MM = padWithZeros(dateTime[1], 2)
+        let dd = padWithZeros(dateTime[2], 2)
+        let yyyy = dateTime[0]
+        let HH = padWithZeros(dateTime[3], 2)
+        let mm = padWithZeros(dateTime[4], 2)
+        let ss = '00'
+        let formattedDateTime = `${MM}-${dd}-${yyyy} ${HH}:${mm}:${ss}`
+        result.push({
+          feature,
+          year: yyyy,
+          month: MM,
+          days: dd,
+          hours: HH,
+          minutes: mm,
+          datetime: formattedDateTime,
+          count: data.replies[i]
+        })
+      }
     }
     fn(null, result)
   })
@@ -124,19 +135,19 @@ exports.getRecords = function (fn) {
 // todo will remove this part
 exports.record = function (featureName) {
   recordRedis(featureName)
-//   findRecord(featureName, (err, record) => {
-//     if (err) {
-//       return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
-//     }
-//     if (!record) {
-//       createNewRecord(featureName)
-//     } else {
-//       incrementRecord(featureName)
-//     }
-//   })
+  //   findRecord(featureName, (err, record) => {
+  //     if (err) {
+  //       return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
+  //     }
+  //     if (!record) {
+  //       createNewRecord(featureName)
+  //     } else {
+  //       incrementRecord(featureName)
+  //     }
+  //   })
 }
 
-function createNewRecord (featureName) {
+function createNewRecord(featureName) {
   let today = new Date()
   let payload = { featureName }
   payload.day = today.getDate()
@@ -150,7 +161,7 @@ function createNewRecord (featureName) {
     .catch(err => console.log(TAG, `error in message statistics create ${JSON.stringify(err)}`))
 }
 
-function incrementRecord (featureName) {
+function incrementRecord(featureName) {
   let today = new Date()
   let payload = { featureName }
   payload.day = today.getDate()
@@ -168,7 +179,7 @@ function incrementRecord (featureName) {
     .catch(err => logger.serverLog(TAG, `error in message statistics create ${JSON.stringify(err)}`))
 }
 
-function findRecord (featureName, cb) {
+function findRecord(featureName, cb) {
   let today = new Date()
   let payload = { featureName }
   payload.day = today.getDate()

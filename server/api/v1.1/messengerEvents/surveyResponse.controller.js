@@ -8,6 +8,7 @@ const {callApi} = require('../utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 const { saveLiveChat, preparePayloadFacebook } = require('../../global/livechat')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const sequenceController = require('./sequence.controller')
 
 exports.surveyResponse = function (req, res) {
   logger.serverLog(TAG, `in surveyResponse ${JSON.stringify(req.body)}`)
@@ -23,17 +24,12 @@ exports.surveyResponse = function (req, res) {
               let message = preparePayloadFacebook(subscriber, subscriber.pageId, {componentType: 'text', text: event.postback.title})
               saveLiveChat(message)
               savesurvey(event, subscriber)
-                .then(response => {
-                  logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`, 'debug')
-                  //  sequenceController.setSequenceTrigger(subscriber.companyId, subscriber._id, { event: 'responds_to_survey', value: resp.poll_id })
-                  res.status(200).json({
-                    status: 'success',
-                    description: `received the payload`
-                  })
-                })
-                .catch(err => {
-                  return res.status(500).json({status: 'failed', description: `Failed to update survey ${err}`})
-                })
+              logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`, 'debug')
+              sequenceController.handlePollSurveyResponse({companyId: survey.companyId, subscriberId: subscriber._id, payload: resp})
+              res.status(200).json({
+                status: 'success',
+                description: `received the payload`
+              })
             } else {
               return res.status(500).json({status: 'failed', description: `subscriber not found`})
             }

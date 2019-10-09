@@ -59,7 +59,15 @@ function getSendGridObject () {
   return sendgrid
 }
 
+function padWithZeros (n, width, z) {
+  z = z || '0'
+  n = n + ''
+  let result = n.length >= width ? n : new Array(width - n.length + 1).join(z) + n
+  return result
+}
+
 exports.validateUrl = validateUrl
 exports.checkLastMessageAge = checkLastMessageAge
 exports.setProtocolUrl = setProtocolUrl
 exports.getSendGridObject = getSendGridObject
+exports.padWithZeros = padWithZeros

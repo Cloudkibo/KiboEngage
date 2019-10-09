@@ -8,12 +8,28 @@ const logger = require('../../../components/logger')
 const TAG = 'api/messageStatistics/messageStatistics.controller.js'
 const { sendSuccessResponse, sendErrorResponse } = require('../../global/response')
 const { getRecords } = require('./../../global/messageStatistics')
+const { parse } = require('json2csv')
 
 exports.index = function (req, res) {
-  getRecords((err, data) => {
+  let name = req.params.name || 'broadcast'
+  getRecords(name, (err, data) => {
     if (err) {
       return sendErrorResponse(res, '500', '', err)
     }
-    sendSuccessResponse(res, '200', data, '')
+    var info = data
+    var keys = []
+    var val = info[0]
+    // fetching json keys and storing in array
+    for (var k in val) {
+      var subKey = k
+      keys.push(subKey)
+    }
+    const opts = { keys }
+    try {
+      const csv = parse(info, opts)
+      res.send(csv)
+    } catch (err) {
+      sendErrorResponse(res, '500', '', err)
+    }
   })
 }
