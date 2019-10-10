@@ -804,4 +804,30 @@ exports.urlMetaData = (req, res) => {
   }
 }
 
+exports.retrieveSubscribersCount = function (req, res) {
+  let match = {
+    pageId: req.body.pageId,
+    companyId: req.user.companyId,
+    lastMessagedAt: {
+      $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
+    }
+  }
+  if (req.body.isList) {
+    utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
+      .then(lists => {
+        
+      })
+      .catch(err => {
+        logger.serverLog(TAG, err)
+        sendErrorResponse(res, 500, 'Failed to fetch list')
+      })
+  } else if (req.body.segmented) {
+    if (req.body.segmentationGender.length > 0) match.gender = {$in: req.body.segmentationGender}
+    if (req.body.segmentationLocale.length > 0) match.locale = {$in: req.body.segmentationLocale}
+    if (req.body.segmentationTags.length > 0) {
+
+    }
+  }
+}
+
 exports.sendBroadcast = sendBroadcast
