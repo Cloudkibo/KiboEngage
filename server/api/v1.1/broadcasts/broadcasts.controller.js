@@ -23,6 +23,7 @@ const util = require('util')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const urlMetadata = require('url-metadata')
+const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -440,6 +441,75 @@ exports.uploadForTemplate = function (req, res) {
       sendSuccessResponse(res, 200, payload)
     }
   })
+}
+
+exports.sendConversationNew = function (req, res) {
+  if (req.body.segmentationPageIds.length !== 1) { // restrict to one page
+    sendErrorResponse(res, 400, '', 'Please select only one page')
+  } else if (req.body.payload.length > 3) { // check components restriction
+    logger.serverLog(TAG, 'Recieved more than 3 components', 'error')
+    sendErrorResponse(res, 400, '', 'Recieved more than 3 components')
+  } else if (!validateInput.facebookBroadcast(req.body)) { // validate broadcast
+    logger.serverLog(TAG, 'Parameters are missing.', 'error')
+    sendErrorResponse(res, 400, '', 'Please fill all the required fields')
+  } else {
+    logger.serverLog(TAG, `Send Broadcast endpoint is hit ${JSON.stringify(req.body)}`, 'debug')
+    utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
+      .then(pages => {
+        if (pages.length > 0) {
+          const page = pages[0]
+          const payload = req.body.payload
+          if (req.body.self) {
+            sendTestBroadcast(req.user, page, payload, req, res)
+          } else {
+            sendBroadcastToSubscribers(page, payload, req, res)
+          }
+        } else {
+          sendErrorResponse(res, 500, `Page not found`)
+        }
+      })
+      .catch(err => {
+        logger.serverLog(TAG, err)
+        sendErrorResponse(res, 500, `Failed to fetch page see server logs for more info`)
+      })
+  }
+}
+
+const sendBroadcastToSubscribers = (page, payload, req, res) => {
+  BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
+    .then(broadcast => {
+      logger.serverLog(TAG, `broadcast created ${JSON.stringify(broadcast)}`, 'debug')
+      require('./../../../config/socketio').sendMessageToClient({
+        room_id: req.user.companyId,
+        body: {
+          action: 'new_broadcast',
+          payload: {
+            broadcast_id: broadcast._id,
+            user_id: req.user._id,
+            user_name: req.user.name
+          }
+        }
+      })
+      broadcastUtility.addModuleIdIfNecessary(payload, broadcast._id) // add module id in buttons for click count
+      if (req.body.isList) {
+        utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
+          .then(lists => {
+            let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
+            // send
+          })
+          .catch(error => {
+            logger.serverLog(TAG, error)
+            sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
+          })
+      } else {
+        let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
+        // send
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, err)
+      sendErrorResponse(res, 'Failed to create broadcast see server logs for more info')
+    })
 }
 
 exports.sendConversation = function (req, res) {

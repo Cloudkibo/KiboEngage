@@ -1,9 +1,44 @@
-const utility = require('./../../components/utility')
 const {callApi} = require('../v1.1/utility')
 const logger = require('../../components/logger')
 const config = require('./../../config/environment')
 const nodemailer = require('nodemailer')
-let TAG = 'server/api/global/utility'
+const TAG = 'server/api/global/utility'
+const _ = require('lodash')
+
+exports.prepareSubscribersCriteria = (body, page, lists) => {
+  if (
+    !body ||
+    (Object.entries(body).length === 0 && body.constructor === Object)
+  ) throw Error('body is required and cannot be empty!')
+  else if (
+    !page ||
+    (Object.entries(page).length === 0 && page.constructor === Object)
+  ) throw Error('page is required and cannot be empty!')
+  else {
+    let criteria = {
+      pageId: page._id,
+      companyId: page.companyId,
+      isSubscribed: true
+    }
+    if (body.isList) {
+      if (
+        !lists ||
+        lists.length === 0
+      ) throw Error('lists is required and cannot be empty!')
+      else {
+        lists = [].concat(lists)
+        lists = lists.map((l) => l.content)
+        lists = [].concat.apply([], lists)
+        lists = lists.filter((item, i, arr) => arr.indexOf(item) === i)
+        criteria = _.merge(criteria, {_id: {$in: lists}})
+      }
+    } else if (body.segmented) {
+      if (body.segmentationGender.length > 0) criteria = _.merge(criteria, {gender: {$in: body.segmentationGender}})
+      if (body.segmentationLocale.length > 0) criteria = _.merge(criteria, {locale: {$in: body.segmentationLocale}})
+    }
+    return criteria
+  }
+}
 
 exports.getScheduledTime = (interval) => {
   let hours
@@ -26,7 +61,7 @@ const getEmailObject = (to, from, subject, text, errorMessage, code, subCode, co
     subject: subject,
     text: text
   }
-  email.html = 
+  email.html =
     '<body style="min-width: 80%;-webkit-text-size-adjust: 100%;-ms-text-size-adjust: 100%;margin: 0;padding: 0;direction: ltr;background: #f6f8f1;width: 80% !important;"><table class="body", style="width:100%"> ' +
     '<tr> <td class="center" align="center" valign="top"> <!-- BEGIN: Header --> <table class="page-header" align="center" style="width: 100%;background: #1f1f1f;"> <tr> <td class="center" align="center"> ' +
     '<!-- BEGIN: Header Container --> <table class="container" align="center"> <tr> <td> <table class="row "> <tr>  </tr> </table> <!-- END: Logo --> </td> <td class="wrapper vertical-middle last" style="padding-top: 0;padding-bottom: 0;vertical-align: middle;"> <!-- BEGIN: Social Icons --> <table class="six columns"> ' +
@@ -54,7 +89,7 @@ const getPlainEmailObject = (to, from, subject, text, errorMessage, codePart) =>
     subject: subject,
     text: text
   }
-  email.html = 
+  email.html =
     '<body style="min-width: 80%;-webkit-text-size-adjust: 100%;-ms-text-size-adjust: 100%;margin: 0;padding: 0;direction: ltr;background: #f6f8f1;width: 80% !important;"><table class="body", style="width:100%"> ' +
     '<tr> <td class="center" align="center" valign="top"> <!-- BEGIN: Header --> <table class="page-header" align="center" style="width: 100%;background: #1f1f1f;"> <tr> <td class="center" align="center"> ' +
     '<!-- BEGIN: Header Container --> <table class="container" align="center"> <tr> <td> <table class="row "> <tr>  </tr> </table> <!-- END: Logo --> </td> <td class="wrapper vertical-middle last" style="padding-top: 0;padding-bottom: 0;vertical-align: middle;"> <!-- BEGIN: Social Icons --> <table class="six columns"> ' +
@@ -84,7 +119,7 @@ const passwordChangeEmailAlert = function(userId, userEmail){
     let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
     let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
     let transporter = getMailTransporter()
-    
+
     if (config.env === 'production') {
       transporter.sendMail(email, function (err, data) {
         if (err) {
@@ -102,7 +137,7 @@ const getMailTransporter =  function(){
   let transporter = nodemailer.createTransport({
     service: config.nodemailer.service,
     auth: {
-        user: config.nodemailer.email, 
+        user: config.nodemailer.email,
         pass: config.nodemailer.password
       }
   })
