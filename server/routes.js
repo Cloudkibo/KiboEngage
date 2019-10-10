@@ -67,6 +67,8 @@ module.exports = function (app) {
   app.use('/api/shopify', require('./api/v1.1/shopify'))
   app.use('/api/api_ngp', require('./api/v1.1/api_ngp'))
   app.use('/api/messageStatistics', require('./api/v1.1/messageStatistics'))
+  app.use('/api/twilioEvents', require('./api/v1.1/twilioEvents'))
+
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
 

@@ -42,7 +42,6 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
 
   for (let i = 0; i < contacts.length; i++) {
     for (let j = 0; j < req.body.payload.length; j++) {
-      console.log('req.body.payload[j].componentType', req.body.payload[j].componentType)
       client.messages
         .create({
           mediaUrl: req.body.payload[j].componentType === 'text' ? [] : req.body.payload[j].file ? [req.body.payload[j].file.fileurl.url] : [req.body.payload[j].fileurl.url],
@@ -79,7 +78,6 @@ exports.sendBroadcast = function (req, res) {
             .then(contacts => {
               getSubscribersCount(req, res, contacts, companyUser)
                 .then(contactList => {
-                  console.log('contactList', contactList)
                   sendBrodcastComponent(req, res, companyUser, broadcast, contactList[0])
                 })
                 .catch(error => {
@@ -111,17 +109,15 @@ function getSubscribersCount (req, res, contacts, companyUser) {
               var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
               if (matchCriteria) {
                 callback(null, data)
-              }
-              else {
+              } else {
                 callback(null, null)
               }
-            }
-            else {
+            } else {
               callback(null, null)
-            } 
+            }
           })
           .catch(error => {
-            reject(`Failed to fetch livechat Data ${(error)}`)
+            reject(`Failed to fetch livechat Data ${(error)}`, error)
             sendErrorResponse(res, 500, `Failed to fetch livechat Data ${(error)}`)
           })
       })
@@ -129,11 +125,8 @@ function getSubscribersCount (req, res, contacts, companyUser) {
     async.parallelLimit(requests, 30, function (err, results) {
       if (err) {
         reject(`Failed to handle all requests ${err}`)
-      }
-      else {
-        console.log('results', results.length)
-        var finalResults = results.filter(result => result !== null) 
-        console.log('finalResults', finalResults.length)
+      } else {
+        var finalResults = results.filter(result => result !== null)
         resolve(finalResults)
       }
     })
@@ -150,12 +143,10 @@ exports.getCount = function (req, res) {
             })
         })
         .catch(error => {
-          console.log(`Failed to fetch contact ${(error)}`)
           sendErrorResponse(res, 500, `Failed to fetch fetch contact user ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      console.log(`Failed to fetch company user ${(error)}`)
       sendErrorResponse(res, 500, `Failed to fetch company user ${error}`)
     })
 }
