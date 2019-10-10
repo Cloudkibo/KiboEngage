@@ -632,7 +632,8 @@ describe('checkFilterValues method testing', () => {
     }
     ]
     expect(() => { checkFilterValues(values, contact) }).toThrowError(Error('contact data must contain number and should be valid payload'))
-
+  })
+})
 describe('Validate prepareChat in whatsapp logic layer', () => {
   test('should return an object', () => {
     let payload = {componentType: 'text', text: 'hi'}
