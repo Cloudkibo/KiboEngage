@@ -663,8 +663,8 @@ describe('Validate prepareChat in whatsapp logic layer', () => {
         twilioWhatsApp: {}}
     }
     let contact = {
-      _id: '5abc',
-      number: '+923322'
+      contactId: '5abc',
+      senderNumber: '+923322'
     }
     expect(() => { prepareChat(payload, companyUser, contact) }).toThrowError(Error('company payload should be valid'))
   })
@@ -676,8 +676,8 @@ describe('Validate prepareChat in whatsapp logic layer', () => {
         twilioWhatsApp: {sandboxNumber: '+123'}}
     }
     let contact = {
-      _id: '5abc',
-      number: '+923322'
+      contactId: '5abc',
+      senderNumber: '+923322'
     }
     expect(() => { prepareChat(payload, companyUser, contact) }).toThrowError(Error('payload should be defined'))
   })
