@@ -132,3 +132,34 @@ exports.sendConversationPayload = {
     'fbMessageTag'
   ]
 }
+exports.subscriberCountPayload = {
+  'type': 'object',
+  'properties': {
+    'pageId': {
+      'type': 'string'
+    },
+    'segmented': {
+      'type': 'boolean'
+    },
+    'isList': {
+      'type': 'boolean'
+    },
+    'segmentationGender': {
+      'type': 'array'
+    },
+    'segmentationLocale': {
+      'type': 'array'
+    },
+    'segmentationTags': {
+      'type': 'array'
+    },
+    'segmentationList': {
+      'type': 'array'
+    }
+  },
+  'required': [
+    'pageId',
+    'segmented',
+    'isList'
+  ]
+}
