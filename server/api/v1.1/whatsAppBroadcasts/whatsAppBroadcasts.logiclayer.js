@@ -1,5 +1,5 @@
 exports.prepareChat = (payload, companyUser, contact) => {
-  if (!(contact && contact._id && contact.number)) {
+  if (!(contact && contact.contactId && contact.senderNumber)) {
     throw Error('contact payload should contain _id and number as parameters and should be valid payload')
   }
   if (!(companyUser && companyUser.companyId && companyUser.companyId._id &&
@@ -11,8 +11,8 @@ exports.prepareChat = (payload, companyUser, contact) => {
   }
   let MessageObject = {
     senderNumber: companyUser.companyId.twilioWhatsApp.sandboxNumber,
-    recipientNumber: contact.number,
-    contactId: contact._id,
+    recipientNumber: contact.senderNumber,
+    contactId: contact.contactId,
     companyId: companyUser.companyId._id,
     payload: payload
   }
@@ -29,9 +29,9 @@ exports.getCriterias = function (body, companyUser) {
     throw Error('companyUser must contain companyId and should be valid payload')
   }
   let findCriteria = {}
-  let startDate = new Date() 
+  let startDate = new Date()
   startDate.setDate(startDate.getDate() - body.filter_criteria.days)
-  startDate.setHours(0) 
+  startDate.setHours(0)
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let finalCriteria = {}
@@ -76,7 +76,7 @@ exports.getCriterias = function (body, companyUser) {
           } : { $exists: true }
         }
       }
-    } 
+    }
   }
   countCriteria = [
     { $match: findCriteria },
@@ -189,7 +189,7 @@ exports.createPayloadgetSubscribersCount = function (companyId, number) {
     purpose: 'aggregate',
     match: finalFindCriteria,
     sort: {datetime: -1},
-    limit: 1  
+    limit: 1
   }
   return finalCriteria
 }

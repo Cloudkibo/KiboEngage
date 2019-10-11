@@ -874,4 +874,80 @@ exports.urlMetaData = (req, res) => {
   }
 }
 
+exports.retrieveSubscribersCount = function (req, res) {
+  let match = {
+    pageId: req.body.pageId,
+    companyId: req.user.companyId,
+    lastMessagedAt: {
+      $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
+    }
+  }
+  if (req.body.isList) {
+    utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
+      .then(lists => {
+        lists = [].concat(lists)
+        lists = lists.map((l) => l.content)
+        lists = [].concat.apply([], lists)
+        lists = lists.filter((item, i, arr) => arr.indexOf(item) === i)
+        match['_id'] = {$in: lists}
+        _getSubscribersCount(match, res)
+      })
+      .catch(err => {
+        logger.serverLog(TAG, err)
+        sendErrorResponse(res, 500, 'Failed to fetch list')
+      })
+  } else if (req.body.segmented) {
+    if (req.body.segmentationGender.length > 0) match.gender = {$in: req.body.segmentationGender}
+    if (req.body.segmentationLocale.length > 0) match.locale = {$in: req.body.segmentationLocale}
+    if (req.body.segmentationTags.length > 0) {
+      utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+        .then(tags => {
+          let tagIds = tags.map((t) => t._id)
+          utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+            .then(tagSubscribers => {
+              if (tagSubscribers.length > 0) {
+                let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                match['_id'] = {$in: subscriberIds}
+                _getSubscribersCount(match, res)
+              } else {
+                sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, err)
+              sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+            })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, err)
+          sendErrorResponse(res, 500, 'Failed to fetch tags')
+        })
+    } else {
+      _getSubscribersCount(match, res)
+    }
+  } else {
+    console.log('match criteria', JSON.stringify(match))
+    _getSubscribersCount(match, res)
+  }
+}
+
+const _getSubscribersCount = (match, res) => {
+  let criteria = [
+    {$match: match},
+    {$group: {_id: null, count: {$sum: 1}}}
+  ]
+  utility.callApi(`subscribers/aggregate`, 'post', criteria)
+    .then(response => {
+      let count = 0
+      if (response.length > 0) {
+        count = response[0].count
+      }
+      sendSuccessResponse(res, 200, {count})
+    })
+    .catch(err => {
+      logger.serverLog(TAG, err)
+      sendErrorResponse(res, 500, 'Failed to get subscribers count')
+    })
+}
+
 exports.sendBroadcast = sendBroadcast
