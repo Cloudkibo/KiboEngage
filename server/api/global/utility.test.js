@@ -48,7 +48,7 @@ describe('Validate prepareSubscribersCriteria in global/utility', () => {
   }
 
   test('test with segmented true', () => {
-    expect(prepareSubscribersCriteria(Object.assign(body, {segmented: true}), page)).toEqual({
+    expect(prepareSubscribersCriteria(Object.assign(body, {isSegmented: true}), page)).toEqual({
       pageId: 1,
       companyId: 'cid',
       isSubscribed: true,
