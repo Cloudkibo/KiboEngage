@@ -48,23 +48,27 @@ describe('Validate prepareSubscribersCriteria in global/utility', () => {
   }
 
   test('test with segmented true', () => {
-    expect(prepareSubscribersCriteria(Object.assign(body, {segmented: true}), page)).toEqual({
+    const result = prepareSubscribersCriteria(Object.assign(body, {isSegmented: true}), page, lists)
+    const expectedObject = {
       pageId: 1,
       companyId: 'cid',
       isSubscribed: true,
       gender: {$in: ['male']},
       locale: {$in: ['en_US']}
-    })
+    }
+    expect(result).toMatchObject(expectedObject)
   })
 
   let lists = [{content: ['sub1', 'sub2']}, {content: ['sub2', 'sub3']}]
 
   test('test with isList true', () => {
-    expect(prepareSubscribersCriteria(Object.assign(body, {isList: true}), page, lists)).toEqual({
+    const result = prepareSubscribersCriteria(Object.assign(body, {isList: true}), page, lists)
+    const expectedObject = {
       pageId: 1,
       companyId: 'cid',
       isSubscribed: true,
       _id: {$in: ['sub1', 'sub2', 'sub3']}
-    })
+    }
+    expect(result).toMatchObject(expectedObject)
   })
 })
