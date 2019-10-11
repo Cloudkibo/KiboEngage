@@ -18,7 +18,10 @@ exports.prepareSubscribersCriteria = (body, page, lists) => {
     let criteria = {
       pageId: page._id,
       companyId: page.companyId,
-      isSubscribed: true
+      isSubscribed: true,
+      lastMessagedAt: {
+        $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
+      }
     }
     if (body.isList) {
       if (
@@ -32,7 +35,7 @@ exports.prepareSubscribersCriteria = (body, page, lists) => {
         lists = lists.filter((item, i, arr) => arr.indexOf(item) === i)
         criteria = _.merge(criteria, {_id: {$in: lists}})
       }
-    } else if (body.segmented) {
+    } else if (body.isSegmented) {
       if (body.segmentationGender.length > 0) criteria = _.merge(criteria, {gender: {$in: body.segmentationGender}})
       if (body.segmentationLocale.length > 0) criteria = _.merge(criteria, {locale: {$in: body.segmentationLocale}})
     }

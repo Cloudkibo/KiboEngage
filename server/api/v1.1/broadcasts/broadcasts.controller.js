@@ -15,15 +15,13 @@ let request = require('request')
 const crypto = require('crypto')
 const broadcastUtility = require('./broadcasts.utility')
 const utility = require('../utility')
-const { batchApi } = require('../../global/batchApi')
-const broadcastApi = require('../../global/broadcastApi')
 const validateInput = require('../../global/validateInput')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
-const util = require('util')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const urlMetadata = require('url-metadata')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
+const { prepareSubscribersCriteria } = require('../../global/utility')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -443,7 +441,7 @@ exports.uploadForTemplate = function (req, res) {
   })
 }
 
-exports.sendConversationNew = function (req, res) {
+exports.sendConversation = function (req, res) {
   if (req.body.segmentationPageIds.length !== 1) { // restrict to one page
     sendErrorResponse(res, 400, '', 'Please select only one page')
   } else if (req.body.payload.length > 3) { // check components restriction
@@ -491,19 +489,61 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
         }
       })
       broadcastUtility.addModuleIdIfNecessary(payload, broadcast._id) // add module id in buttons for click count
+      let pageBroadcastData = {
+        pageId: page.pageId,
+        userId: req.user._id,
+        broadcastId: broadcast._id,
+        seen: false,
+        sent: false,
+        companyId: req.user.companyId
+      }
+      let reportObj = {
+        successful: 0,
+        unsuccessful: 0,
+        errors: []
+      }
       if (req.body.isList) {
         utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
           .then(lists => {
-            let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
-            // send
+            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
+            sendUsingBatchAPI(payload, subsFindCriteria, page.accessToken, reportObj, _savePageBroadcast, pageBroadcastData)
+            sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
           })
           .catch(error => {
             logger.serverLog(TAG, error)
             sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
           })
       } else {
-        let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
-        // send
+        let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+        console.log('subsFindCriteria', subsFindCriteria)
+        if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
+          utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+            .then(tags => {
+              let tagIds = tags.map((t) => t._id)
+              utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                .then(tagSubscribers => {
+                  if (tagSubscribers.length > 0) {
+                    let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                    subsFindCriteria['_id'] = {$in: subscriberIds}
+                    sendUsingBatchAPI(payload, subsFindCriteria, page.accessToken, reportObj, _savePageBroadcast, pageBroadcastData)
+                    sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                  } else {
+                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                  }
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, err)
+                  sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+                })
+            })
+            .catch(err => {
+              logger.serverLog(TAG, err)
+              sendErrorResponse(res, 500, 'Failed to fetch tags')
+            })
+        } else {
+          sendUsingBatchAPI(payload, subsFindCriteria, page.accessToken, reportObj, _savePageBroadcast, pageBroadcastData)
+          sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+        }
       }
     })
     .catch(err => {
@@ -512,118 +552,14 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
     })
 }
 
-exports.sendConversation = function (req, res) {
-  logger.serverLog(TAG, `Sending Broadcast ${JSON.stringify(req.body)}`, 'debug')
-  // validate braodcast
-  if (!validateInput.facebookBroadcast(req.body)) {
-    logger.serverLog(TAG, 'Parameters are missing.', 'error')
-    sendErrorResponse(res, 400, '', 'Please fill all the required fields')
-  }
-  // restrict to one page
-  if (req.body.segmentationPageIds.length !== 1) {
-    sendErrorResponse(res, 400, '', 'Please select only one page')
-  }
-  utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
-    .then(page => {
-      page = page[0]
-      let payloadData = req.body.payload
-      if (req.body.self) {
-        let payload = updatePayload(req.body.self, payloadData)
-        let interval = setInterval(() => {
-          if (payload) {
-            clearInterval(interval)
-            sendTestBroadcast(req.user, page, payload, req, res)
-          }
-        }, 3000)
-      } else {
-        BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
-          .then(broadcast => {
-            logger.serverLog(TAG, `broadcast created ${JSON.stringify(broadcast)}`, 'debug')
-            require('./../../../config/socketio').sendMessageToClient({
-              room_id: req.user.companyId,
-              body: {
-                action: 'new_broadcast',
-                payload: {
-                  broadcast_id: broadcast._id,
-                  user_id: req.user._id,
-                  user_name: req.user.name
-                }
-              }
-            })
-            let payload = updatePayload(req.body.self, payloadData, broadcast)
-            broadcastUtility.addModuleIdIfNecessary(payloadData, broadcast._id) // add module id in buttons for click count
-            // condition to decide broadcast or batch api
-            if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
-              let interval = setInterval(() => {
-                if (payload) {
-                  clearInterval(interval)
-                  sentUsinInterval(payload, page, broadcast, req, res, 3000)
-                }
-              }, 3000)
-            } else {
-              if (req.body.isList === true) {
-                utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
-                  .then(lists => {
-                    let subsFindCriteria = BroadcastLogicLayer.subsFindCriteriaForList(lists, page)
-                    let interval = setInterval(() => {
-                      if (payload) {
-                        clearInterval(interval)
-                        sendToSubscribers(subsFindCriteria, req, res, page, broadcast, req.user, payload)
-                      }
-                    }, 3000)
-                  })
-                  .catch(error => {
-                    sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
-                  })
-              } else {
-                let subscriberFindCriteria = BroadcastLogicLayer.subsFindCriteria(req.body, page)
-                let interval = setInterval(() => {
-                  if (payload) {
-                    clearInterval(interval)
-                    sendToSubscribers(subscriberFindCriteria, req, res, page, broadcast, req.user, payload)
-                  }
-                }, 3000)
-              }
-            }
-          })
-          .catch(error => {
-            sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
-          })
-      }
+const _savePageBroadcast = (data) => {
+  BroadcastPageDataLayer.createForBroadcastPage(data)
+    .then(savedpagebroadcast => {
+      require('../../global/messageStatistics').record('broadcast')
+      logger.serverLog(TAG, 'page broadcast object saved in db')
     })
     .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
-    })
-}
-const sendToSubscribers = (subscriberFindCriteria, req, res, page, broadcast, companyUser, payload) => {
-  utility.callApi(`subscribers/query`, 'post', subscriberFindCriteria)
-    .then(subscribers => {
-      if (subscribers.length < 1) {
-        sendErrorResponse(res, 500, '', `No subscribers match the selected criteria`)
-      }
-      broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
-        taggedSubscribers.forEach((subscriber, index) => {
-          BroadcastPageDataLayer.createForBroadcastPage({
-            pageId: page.pageId,
-            userId: req.user._id,
-            subscriberId: subscriber.senderId,
-            broadcastId: broadcast._id,
-            seen: false,
-            sent: false,
-            companyId: companyUser.companyId
-          })
-            .then(savedpagebroadcast => {
-              require('../../global/messageStatistics').record('broadcast')
-              batchApi(payload, subscriber.senderId, page, sendBroadcast, subscriber.firstName, subscriber.lastName, res, index, taggedSubscribers.length, req.body.fbMessageTag)
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, `Failed to create page_broadcast ${JSON.stringify(error)}`)
-            })
-        })
-      }, res)
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+      logger.serverLog(`Failed to create page_broadcast ${JSON.stringify(error)}`)
     })
 }
 
@@ -650,16 +586,6 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
   form.append('access_token', page.accessToken)
   form.append('batch', batchMessages)
 }
-const updatePayload = (self, payload, broadcast) => {
-  let shouldReturn = false
-  logger.serverLog(TAG, `Update Payload: ${JSON.stringify(payload)}`, 'debug')
-  for (let j = 0; j < payload.length; j++) {
-    shouldReturn = operation(j, payload.length - 1)
-  }
-  if (shouldReturn) {
-    return payload
-  }
-}
 
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   var testBroadcast = true
@@ -685,13 +611,6 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
-}
-const operation = (index, length) => {
-  if (index === length) {
-    return true
-  } else {
-    return false
-  }
 }
 
 exports.addCardAction = function (req, res) {
@@ -760,95 +679,6 @@ exports.retrieveReachEstimation = (req, res) => {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
     })
-}
-
-const sentUsinInterval = function (payload, page, broadcast, req, res, delay) {
-  let current = 0
-  let interval = setInterval(() => {
-    if (current === payload.length) {
-      clearInterval(interval)
-      logger.serverLog(TAG, `Conversation sent successfully using interval ${JSON.stringify(payload)}`, 'debug')
-      sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-    } else {
-      broadcastApi.callMessageCreativesEndpoint(payload[current], page.accessToken, page, 'broadcasts.controller.js')
-        .then(messageCreative => {
-          logger.serverLog(TAG, `messageCreative ${util.inspect(messageCreative)}`)
-          if (messageCreative.status === 'success') {
-            const messageCreativeId = messageCreative.message_creative_id
-            utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id})
-              .then(pageTags => {
-                const limit = Math.ceil(req.body.subscribersCount / 10000)
-                logger.serverLog(TAG, `limit ${util.inspect(limit)}`)
-                for (let i = 0; i < limit; i++) {
-                  let labels = []
-                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
-                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
-                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
-                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
-                  if (req.body.isList) {
-                    utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
-                      .then(lists => {
-                        lists = lists.map((l) => l.listName)
-                        let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
-                        labels = labels.concat(temp)
-                      })
-                      .catch(err => {
-                        sendErrorResponse(res, 500, `Failed to apply list segmentation ${JSON.stringify(err)}`)
-                      })
-                  } else {
-                    if (req.body.segmentationGender.length > 0) {
-                      let temp = pageTags.filter((pt) => req.body.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                      labels = labels.concat(temp)
-                    }
-                    if (req.body.segmentationLocale.length > 0) {
-                      let temp = pageTags.filter((pt) => req.body.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                      labels = labels.concat(temp)
-                    }
-                    if (req.body.segmentationTags.length > 0) {
-                      let temp = pageTags.filter((pt) => req.body.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                      labels = labels.concat(temp)
-                    }
-                  }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'Broadcasts.Controller.js')
-                    .then(response => {
-                      logger.serverLog(TAG, `broadcastApi response ${util.inspect(response)}`)
-                      if (i === limit - 1) {
-                        if (response.status === 'success') {
-                          utility.callApi('broadcasts', 'put', {purpose: 'updateOne', match: {_id: broadcast._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
-                            .then(updated => {
-                              current++
-                            })
-                            .catch(err => {
-                              current++
-                              sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
-                            })
-                        } else {
-                          current++
-                          sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(response.description)}`)
-                        }
-                      }
-                    })
-                    .catch(err => {
-                      current++
-                      sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
-                    })
-                }
-              })
-              .catch(err => {
-                current++
-                sendErrorResponse(res, 500, `Failed to find tags ${JSON.stringify(err)}`)
-              })
-          } else {
-            current++
-            sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(messageCreative.description)}`)
-          }
-        })
-        .catch(err => {
-          current++
-          sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
-        })
-    }
-  }, delay)
 }
 
 exports.urlMetaData = (req, res) => {

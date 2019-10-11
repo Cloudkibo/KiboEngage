@@ -4,16 +4,18 @@ const TAG = 'global/sendConversation.js'
 const request = require('request')
 const prepareMessageData = require('./prepareMessageData')
 
-const sendUsingBatchAPI = (payload, subsCriteria, accessToken, result) => {
-  callApi(`subscribers/aggregate`, 'post', subsCriteria)
+const sendUsingBatchAPI = (payload, subsCriteria, accessToken, result, saveMsgRecord, recordObj) => {
+  console.log('criteria', subsCriteria)
+  callApi(`subscribers/query`, 'post', subsCriteria)
     .then(subscribers => {
       if (subscribers.length > 0) {
         let batch = _prepareBatchData(payload, subscribers)
         _callBatchAPI(JSON.stringify(batch), accessToken)
           .then(response => {
             logger.serverLog(TAG, JSON.stringify(response))
-            result = _prepareReport(payload.length, response, subscribers, result)
-            sendUsingBatchAPI(payload, subsCriteria, accessToken, result)
+            result = _prepareReport(payload.length, response, subscribers, result, saveMsgRecord, recordObj)
+            subsCriteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
+            sendUsingBatchAPI(payload, subsCriteria, accessToken, result, saveMsgRecord, recordObj)
           })
           .catch(err => {
             logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
@@ -66,11 +68,13 @@ const _prepareBatchData = (payload, subscribers) => {
 }
 /* eslint-enable */
 
-const _prepareReport = (increment, data, subscribers, result) => {
+const _prepareReport = (increment, data, subscribers, result, saveMsgRecord, recordObj) => {
   for (let i = 0; i < data.length; i += increment) {
     let index = (increment - 1) + i
     if (data[index].code === 200) {
       result.successful = result.successful + 1
+      recordObj['subscriberId'] = subscribers[Math.floor(index / increment)].senderId
+      saveMsgRecord(recordObj)
     } else {
       let message = 'An unexpected error occured.'
       if (
