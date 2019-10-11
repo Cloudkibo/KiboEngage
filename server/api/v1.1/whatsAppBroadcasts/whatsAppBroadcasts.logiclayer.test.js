@@ -26,7 +26,7 @@ describe('Validate getCriterias method for pagaination', () => {
     }
       expect(() => { getCriterias(body, '12345678') }).toThrowError(Error('body must contain number_of_records and should be valid payload'))
     })
-    test('should give first page countCriterias and fetchCriteria', () => { 
+    test('should give first page countCriterias and fetchCriteria', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: '', days: '0'},
       first_page: 'first',
@@ -41,7 +41,7 @@ describe('Validate getCriterias method for pagaination', () => {
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -49,7 +49,7 @@ describe('Validate getCriterias method for pagaination', () => {
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
      [ { '$match': {
        'companyId': '12345678',
        'datetime': {
@@ -78,7 +78,7 @@ test('should give next page countCriterias and fetchCriteria', () => {
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -86,7 +86,7 @@ test('should give next page countCriterias and fetchCriteria', () => {
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
        [ { '$match': {
          'companyId': '12345678',
          '_id': { $lt: '5d9c3027e58f4b3f604b2961' },
@@ -97,7 +97,7 @@ test('should give next page countCriterias and fetchCriteria', () => {
        { '$sort': { datetime: -1 } },
        { '$skip': 0 },
        { '$limit': 10 } ] }
-      expect(getCriterias(body, companyUser)).toEqual(output)    
+      expect(getCriterias(body, companyUser)).toEqual(output)
 
 })
 test('should give previous page countCriterias and fetchCriteria', () => {
@@ -117,7 +117,7 @@ test('should give previous page countCriterias and fetchCriteria', () => {
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -125,7 +125,7 @@ test('should give previous page countCriterias and fetchCriteria', () => {
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
        [ { '$match': {
          'companyId': '12345678',
          '_id': { $gt: '5d9c3027e58f4b3f604b2961' },
@@ -136,7 +136,7 @@ test('should give previous page countCriterias and fetchCriteria', () => {
        { '$sort': { datetime: -1 } },
        { '$skip': 10 },
        { '$limit': 10 } ] }
-      expect(getCriterias(body, companyUser)).toEqual(output)    
+      expect(getCriterias(body, companyUser)).toEqual(output)
 
 })
 test('should give first page countCriterias and fetchCriteria with miscellaneous component type', () => {
@@ -156,7 +156,7 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -164,7 +164,7 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
      [ { '$match': {
        'companyId': '12345678',
        'payload.1': { $exists: true },
@@ -196,7 +196,7 @@ test('should give first page countCriterias and fetchCriteria with media compone
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -204,7 +204,7 @@ test('should give first page countCriterias and fetchCriteria with media compone
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
      [ { '$match': {
        'companyId': '12345678',
        '$and': [{'payload.0.componentType': 'media'}, {'payload.1': { $exists: false }}],
@@ -235,7 +235,7 @@ test('should give first page countCriterias and fetchCriteria with all component
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -243,7 +243,7 @@ test('should give first page countCriterias and fetchCriteria with all component
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
      [ { '$match': {
        'companyId': '12345678',
        'payload.0.componentType': { $exists: true },
@@ -276,7 +276,7 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -284,7 +284,7 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
      [ { '$match': {
        'companyId': '12345678',
        'payload.1': { $exists: true },
@@ -319,7 +319,7 @@ test('should give first page countCriterias and fetchCriteria with media compone
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -327,7 +327,7 @@ test('should give first page countCriterias and fetchCriteria with media compone
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
      [ { '$match': {
        'companyId': '12345678',
        '$and': [{'payload.0.componentType': 'media'}, {'payload.1': { $exists: false }}],
@@ -362,7 +362,7 @@ test('should give first page countCriterias and fetchCriteria with all component
       'datetime': {
         '$exists': true
       },
-}}, 
+}},
     { '$group': {
       '_id': null,
       'count':{
@@ -370,7 +370,7 @@ test('should give first page countCriterias and fetchCriteria with all component
       }
     }
     } ],
-    fetchCriteria: 
+    fetchCriteria:
      [ { '$match': {
        'companyId': '12345678',
        'payload.0.componentType': { $exists: true },
@@ -399,7 +399,7 @@ describe('Get Payload of get subscribers count method', () => {
       purpose: 'aggregate',
       match: finalFindCriteria,
       sort: {datetime: -1},
-      limit: 1  
+      limit: 1
       }
     expect(createPayloadgetSubscribersCount('12345678', '+923403630780')).toEqual(output)
   })
@@ -416,7 +416,7 @@ describe('createPayloadgetSubscribersCount method testing', () => {
       purpose: 'aggregate',
       match: finalFindCriteria,
       sort: {datetime: -1},
-      limit: 1  
+      limit: 1
       }
     expect(createPayloadgetSubscribersCount('12345678', '+923403630780')).toEqual(output)
   })
@@ -430,7 +430,7 @@ describe('createPayloadgetSubscribersCount method testing', () => {
       purpose: 'aggregate',
       match: finalFindCriteria,
       sort: {datetime: -1},
-      limit: 1  
+      limit: 1
       }
       expect(() => { createPayloadgetSubscribersCount(null, '+923403630780') }).toThrowError(Error('must contain companyId and should be valid payload'))
 
@@ -445,7 +445,7 @@ describe('createPayloadgetSubscribersCount method testing', () => {
       purpose: 'aggregate',
       match: finalFindCriteria,
       sort: {datetime: -1},
-      limit: 1  
+      limit: 1
       }
       expect(() => { createPayloadgetSubscribersCount('123456789', null) }).toThrowError(Error('must contain contact number and should be valid payload'))
 
@@ -457,14 +457,14 @@ describe('checkFilterValues method testing', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
-  } 
+  }
     expect(checkFilterValues(null, contact)).toEqual(true)
   })
   test('return true because segmentation length is zero ', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
-  } 
+  }
     expect(checkFilterValues(null, contact)).toEqual(true)
   })
   test('return false because name doesnot exist in contact', () => {
@@ -472,7 +472,7 @@ describe('checkFilterValues method testing', () => {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
     }
-  
+
     var values = [{
       criteria: 'is',
       text: 'Arveen Kumar',
@@ -485,7 +485,7 @@ describe('checkFilterValues method testing', () => {
       'name': 'Arveen Kumar',
       'number': '+923403630780'
     }
-  
+
     var values = [{
       criteria: 'is',
       text: 'Arveen Kumar',
@@ -498,7 +498,7 @@ describe('checkFilterValues method testing', () => {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
     }
-  
+
     var values = [{
       criteria: 'contains',
       text: 'Vishal',
@@ -511,7 +511,7 @@ describe('checkFilterValues method testing', () => {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
     }
-  
+
     var values = [{
       criteria: 'contains',
       text: 'Kumar',
@@ -524,7 +524,7 @@ describe('checkFilterValues method testing', () => {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
     }
-  
+
     var values = [{
       criteria: 'begins',
       text: 'Kumar Maheshwari',
@@ -537,7 +537,7 @@ describe('checkFilterValues method testing', () => {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
     }
-  
+
     var values = [{
       criteria: 'begins',
       text: 'Arveen',
@@ -632,7 +632,8 @@ describe('checkFilterValues method testing', () => {
     }
     ]
     expect(() => { checkFilterValues(values, contact) }).toThrowError(Error('contact data must contain number and should be valid payload'))
-
+  })
+})
 describe('Validate prepareChat in whatsapp logic layer', () => {
   test('should return an object', () => {
     let payload = {componentType: 'text', text: 'hi'}
@@ -642,8 +643,8 @@ describe('Validate prepareChat in whatsapp logic layer', () => {
         twilioWhatsApp: {sandboxNumber: '+123'}}
     }
     let contact = {
-      _id: '5abc',
-      number: '+923322'
+      contactId: '5abc',
+      senderNumber: '+923322'
     }
     let output = {
       senderNumber: '+123',
@@ -662,8 +663,8 @@ describe('Validate prepareChat in whatsapp logic layer', () => {
         twilioWhatsApp: {}}
     }
     let contact = {
-      _id: '5abc',
-      number: '+923322'
+      contactId: '5abc',
+      senderNumber: '+923322'
     }
     expect(() => { prepareChat(payload, companyUser, contact) }).toThrowError(Error('company payload should be valid'))
   })
@@ -675,8 +676,8 @@ describe('Validate prepareChat in whatsapp logic layer', () => {
         twilioWhatsApp: {sandboxNumber: '+123'}}
     }
     let contact = {
-      _id: '5abc',
-      number: '+923322'
+      contactId: '5abc',
+      senderNumber: '+923322'
     }
     expect(() => { prepareChat(payload, companyUser, contact) }).toThrowError(Error('payload should be defined'))
   })

@@ -78,6 +78,13 @@ router.get('/retrieveReachEstimation/:page_id',
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.retrieveReachEstimation)
 
+router.post('/retrieveSubscribersCount',
+  auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('broadcasts'),
+  auth.doesRolePermitsThisAction('broadcastPermission'),
+  validate({body: validationSchema.subscriberCountPayload}),
+  controller.retrieveSubscribersCount)
+
 router.post('/urlMetaData/',
   auth.isAuthenticated(),
   controller.urlMetaData)

@@ -36,7 +36,7 @@ function createRedisObject(featureName) {
   let month = (today.getMonth() + 1)
   let year = today.getFullYear()
   let key = featureName + '-' + year + ':' + month + ':' + day + ':' + hours + ':' + minutes
-  client.set(key, 0)
+  client.set(key, 1)
 }
 
 function incrementRedisObject(featureName) {
