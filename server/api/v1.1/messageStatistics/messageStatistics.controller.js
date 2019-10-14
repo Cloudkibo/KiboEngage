@@ -14,7 +14,7 @@ exports.index = function (req, res) {
   let name = req.params.name || 'broadcast'
   getRecords(name, (err, data) => {
     if (err) {
-      return sendErrorResponse(res, '500', '', err)
+      return sendErrorResponse(res, '500', '', JSON.stringify(err))
     }
     var info = data
     var keys = []
@@ -29,7 +29,7 @@ exports.index = function (req, res) {
       const csv = parse(info, opts)
       res.send(csv)
     } catch (err) {
-      sendErrorResponse(res, '500', '', err)
+      sendErrorResponse(res, '500', '', JSON.stringify(err))
     }
   })
 }
