@@ -172,7 +172,6 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
     let buttons = []
     prepareViewPostButton(savedMsg, postId).then(button => {
       buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, postId, null, 'card'))
     })
     let options
     for (let i = 0; i < urls.length; i++) {
@@ -232,7 +231,6 @@ function prepareGallery (media, savedMsg, postId, pageName) {
   let buttons = []
   prepareViewPostButton(savedMsg, postId).then(button => {
     buttons.push(button)
-    buttons.push(prepareShareButton(savedMsg, postId, null, 'card'))
   })
   for (let i = 0; i < length; i++) {
     elements.push({
@@ -250,7 +248,6 @@ const prepareFacbookPayloadForText = (text, savedMsg, postId, showButton) => {
   if (showButton) {
     prepareViewPostButton(savedMsg, postId).then(button => {
       buttons.push(button)
-      buttons.push(prepareShareButton(savedMsg, postId, text))
     })
     messageData = {
       'attachment': {
@@ -289,34 +286,4 @@ const prepareViewPostButton = (savedMsg, postId) => {
         resolve(button)
       })
   })
-}
-const prepareShareButton = (savedMsg, postId, text, type) => {
-  let button
-  if (type && type === 'card') {
-    button = {
-      'type': 'element_share'
-    }
-  } else {
-    button = {
-      'type': 'element_share',
-      'share_contents': {
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'generic',
-            'elements': [{
-              'title': text,
-              'subtitle': 'kibopush.com',
-              'default_action': {
-                'type': 'web_url',
-                'url': `https://facebook.com/${postId}`
-              },
-              'buttons': []
-            }]
-          }
-        }
-      }
-    }
-  }
-  return button
 }
