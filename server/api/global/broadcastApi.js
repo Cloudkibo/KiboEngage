@@ -2,7 +2,7 @@ const prepareMessageData = require('./prepareMessageData')
 const { facebookApiCaller } = require('./facebookApiCaller')
 const { sendOpAlert } = require('./operationalAlert')
 const TAG = 'api/global/broadcastApi.js'
-const logger = require('../../../components/logger')
+const logger = require('../../components/logger')
 // const util = require('util')
 
 exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, page, location) => {
