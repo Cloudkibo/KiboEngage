@@ -40,7 +40,6 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
   let authToken = companyUser.companyId.twilioWhatsApp.authToken
   let client = require('twilio')(accountSid, authToken)
 
-  console.log('contacts.length', contacts.length)
   for (let i = 0; i < contacts.length; i++) {
     for (let j = 0; j < req.body.payload.length; j++) {
       client.messages
