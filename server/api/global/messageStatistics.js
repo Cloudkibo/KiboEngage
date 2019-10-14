@@ -1,5 +1,5 @@
 // const { callApi } = require('../v1.1/utility')
-const { padWithZeros } = require('./../../components/utility')
+const { padWithZeros, dateDiffInDays } = require('./../../components/utility')
 const logger = require('../../components/logger')
 const TAG = 'api/global/messageStatistics.js'
 let redis = require('redis')
@@ -76,7 +76,7 @@ function findAllKeys (fn) {
       let arrObjsDel = []
       for (let i = 0; i < objs.length; i++) {
         arrObjs.push(['get', objs[i]])
-        arrObjsDel.push(['del', objs[i]])
+        if (shouldDelete(objs[i])) arrObjsDel.push(['del', objs[i]])
       }
       client.multi(arrObjs).exec(function (err, replies) {
         if (err) {
@@ -92,11 +92,29 @@ function findAllKeys (fn) {
 }
 
 function deleteAllKeys (arrObjs) {
-  // client.multi(arrObjs).exec(function (err, replies) {
-  //   if (err) {
-  //     return logger.serverLog(TAG, `error in message statistics delete all keys ${JSON.stringify(err)}`)
-  //   }
-  // })
+  client.multi(arrObjs).exec(function (err, replies) {
+    if (err) {
+      return logger.serverLog(TAG, `error in message statistics delete all keys ${JSON.stringify(err)}`)
+    }
+  })
+}
+
+function shouldDelete (key) {
+  let dateTime = key.split('-')[1].split(':')
+  let MM = padWithZeros(dateTime[1], 2)
+  let dd = padWithZeros(dateTime[2], 2)
+  let yyyy = dateTime[0]
+  let HH = padWithZeros(dateTime[3], 2)
+  let mm = padWithZeros(dateTime[4], 2)
+  let ss = '00'
+  let formattedDateTime = `${MM}/${dd}/${yyyy} ${HH}:${mm}:${ss}`
+  let d1 = new Date(formattedDateTime)
+  let d2 = new Date()
+  let diffInDays = dateDiffInDays(d1, d2)
+  if (diffInDays > 60) {
+    return true
+  }
+  return false
 }
 
 exports.getRecords = function (featureName, fn) {
