@@ -65,7 +65,7 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                                 require('../../global/messageStatistics').record('autoposting')
                                 logger.serverLog(TAG, 'AUTOPOSTING RECORDING FOR TYPE')
                                 logger.serverLog(TAG, updated)
-                                logger.serverLog(TAG, postingItem)
+                                logger.serverLog(TAG, JSON.stringify(postingItem))
                                 let autopostingType = updated.autoposting_type
                                 require('../../global/messageStatistics').record(`autoposting${autopostingType}`)
                                 current++
