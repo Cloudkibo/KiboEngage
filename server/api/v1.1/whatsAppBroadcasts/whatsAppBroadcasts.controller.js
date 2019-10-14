@@ -40,6 +40,7 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
   let authToken = companyUser.companyId.twilioWhatsApp.authToken
   let client = require('twilio')(accountSid, authToken)
 
+  console.log('contacts.length', contacts.length)
   for (let i = 0; i < contacts.length; i++) {
     for (let j = 0; j < req.body.payload.length; j++) {
       client.messages
@@ -78,7 +79,8 @@ exports.sendBroadcast = function (req, res) {
             .then(contacts => {
               getSubscribersCount(req, res, contacts, companyUser)
                 .then(contactList => {
-                  sendBrodcastComponent(req, res, companyUser, broadcast, contactList[0])
+                  let ArrayContact = [].concat(...contactList)
+                  sendBrodcastComponent(req, res, companyUser, broadcast, ArrayContact)
                 })
                 .catch(error => {
                   sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
