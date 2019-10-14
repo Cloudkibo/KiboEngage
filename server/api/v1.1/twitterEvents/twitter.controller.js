@@ -46,8 +46,8 @@ exports.twitterwebhook = function (req, res) {
                 facebookApiCaller('v3.3', `me/messages?access_token=${postingItem.approvalChannel.pageAccessToken}`, 'post', messageData)
                   .then(response => {
                     if (response.body.error) {
-                      sendOpAlert(response.body.error, 'twitter controller in kiboengage', '', req.user._id, req.user.companyId)
                       logger.serverLog(TAG, `Failed to send approval message ${JSON.stringify(response.body.error)}`, 'error')
+                      sendOpAlert(response.body.error, 'twitter controller in kiboengage', '', req.user._id, req.user.companyId)
                     } else {
                       logger.serverLog(TAG, `Approval message send successfully!`)
                     }
