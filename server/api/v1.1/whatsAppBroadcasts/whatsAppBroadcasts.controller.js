@@ -106,11 +106,15 @@ function getSubscribersCount (req, res, contacts, companyUser) {
         let finalCriteria = logicLayer.createPayloadgetSubscribersCount(companyUser.companyId._id, contacts[i].number)
         utility.callApi(`whatsAppChat/query`, 'post', finalCriteria, 'kibochat') // fetch company user
           .then(data => {
-            var hours = (new Date() - new Date(data[0].datetime)) / 3600000
-            if (hours <= 24) {
-              var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
-              if (matchCriteria) {
-                callback(null, data)
+            if (data && data.length > 0) {
+              var hours = (new Date() - new Date(data[0].datetime)) / 3600000
+              if (hours <= 24) {
+                var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
+                if (matchCriteria) {
+                  callback(null, data)
+                } else {
+                  callback(null, null)
+                }
               } else {
                 callback(null, null)
               }
@@ -119,14 +123,14 @@ function getSubscribersCount (req, res, contacts, companyUser) {
             }
           })
           .catch(error => {
-            reject(`Failed to fetch livechat Data ${(error)}`, error)
-            sendErrorResponse(res, 500, `Failed to fetch livechat Data ${(error)}`)
+            reject(error)
+            //sendErrorResponse(res, 500, `Failed to fetch livechat Data ${(error)}`)
           })
       })
     }
     async.parallelLimit(requests, 30, function (err, results) {
       if (err) {
-        reject(`Failed to handle all requests ${err}`)
+        reject(err)
       } else {
         var finalResults = results.filter(result => result !== null)
         resolve(finalResults)
