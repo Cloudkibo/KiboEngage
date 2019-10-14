@@ -1,4 +1,4 @@
-const { callApi } = require('../v1.1/utility')
+// const { callApi } = require('../v1.1/utility')
 const { padWithZeros } = require('./../../components/utility')
 const logger = require('../../components/logger')
 const TAG = 'api/global/messageStatistics.js'
@@ -15,7 +15,7 @@ exports.connectRedis = function () {
   })
 }
 
-function recordRedis(featureName) {
+function recordRedis (featureName) {
   findRedisObject(featureName, (err, record) => {
     if (err) {
       return logger.serverLog(TAG, `error in message statistics ${JSON.stringify(err)}`)
@@ -28,7 +28,7 @@ function recordRedis(featureName) {
   })
 }
 
-function createRedisObject(featureName) {
+function createRedisObject (featureName) {
   let today = new Date()
   let minutes = today.getMinutes()
   let hours = today.getHours()
@@ -39,7 +39,7 @@ function createRedisObject(featureName) {
   client.set(key, 1)
 }
 
-function incrementRedisObject(featureName) {
+function incrementRedisObject (featureName) {
   let today = new Date()
   let minutes = today.getMinutes()
   let hours = today.getHours()
@@ -50,7 +50,7 @@ function incrementRedisObject(featureName) {
   client.incr(key)
 }
 
-function findRedisObject(featureName, cb) {
+function findRedisObject (featureName, cb) {
   let today = new Date()
   let minutes = today.getMinutes()
   let hours = today.getHours()
@@ -66,7 +66,7 @@ function findRedisObject(featureName, cb) {
   })
 }
 
-function findAllKeys(fn) {
+function findAllKeys (fn) {
   client.keys('*', (err, objs) => {
     if (err) {
       return fn(`error in message statistics find all keys ${JSON.stringify(err)}`)
@@ -91,7 +91,7 @@ function findAllKeys(fn) {
   })
 }
 
-function deleteAllKeys(arrObjs) {
+function deleteAllKeys (arrObjs) {
   // client.multi(arrObjs).exec(function (err, replies) {
   //   if (err) {
   //     return logger.serverLog(TAG, `error in message statistics delete all keys ${JSON.stringify(err)}`)
@@ -147,52 +147,52 @@ exports.record = function (featureName) {
   //   })
 }
 
-function createNewRecord(featureName) {
-  let today = new Date()
-  let payload = { featureName }
-  payload.day = today.getDate()
-  payload.month = (today.getMonth() + 1)
-  payload.year = today.getFullYear()
-  payload.messageCount = 1
-  callApi('messageStatistics', 'post', payload, 'kiboengage', '')
-    .then(saved => {
-      logger.serverLog(TAG, 'Message Statistics created successfully!')
-    })
-    .catch(err => console.log(TAG, `error in message statistics create ${JSON.stringify(err)}`))
-}
+// function createNewRecord (featureName) {
+//   let today = new Date()
+//   let payload = { featureName }
+//   payload.day = today.getDate()
+//   payload.month = (today.getMonth() + 1)
+//   payload.year = today.getFullYear()
+//   payload.messageCount = 1
+//   callApi('messageStatistics', 'post', payload, 'kiboengage', '')
+//     .then(saved => {
+//       logger.serverLog(TAG, 'Message Statistics created successfully!')
+//     })
+//     .catch(err => console.log(TAG, `error in message statistics create ${JSON.stringify(err)}`))
+// }
 
-function incrementRecord(featureName) {
-  let today = new Date()
-  let payload = { featureName }
-  payload.day = today.getDate()
-  payload.month = (today.getMonth() + 1)
-  payload.year = today.getFullYear()
-  let query = {
-    purpose: 'updateOne',
-    match: payload,
-    updated: { $inc: { messageCount: 1 } }
-  }
-  callApi(`messageStatistics`, 'put', query, 'kiboengage')
-    .then(updated => {
-      logger.serverLog(TAG, 'Message Statistics updated successfully!')
-    })
-    .catch(err => logger.serverLog(TAG, `error in message statistics create ${JSON.stringify(err)}`))
-}
+// function incrementRecord (featureName) {
+//   let today = new Date()
+//   let payload = { featureName }
+//   payload.day = today.getDate()
+//   payload.month = (today.getMonth() + 1)
+//   payload.year = today.getFullYear()
+//   let query = {
+//     purpose: 'updateOne',
+//     match: payload,
+//     updated: { $inc: { messageCount: 1 } }
+//   }
+//   callApi(`messageStatistics`, 'put', query, 'kiboengage')
+//     .then(updated => {
+//       logger.serverLog(TAG, 'Message Statistics updated successfully!')
+//     })
+//     .catch(err => logger.serverLog(TAG, `error in message statistics create ${JSON.stringify(err)}`))
+// }
 
-function findRecord(featureName, cb) {
-  let today = new Date()
-  let payload = { featureName }
-  payload.day = today.getDate()
-  payload.month = (today.getMonth() + 1)
-  payload.year = today.getFullYear()
-  let query = {
-    purpose: 'findOne',
-    match: payload
-  }
-  callApi(`messageStatistics/query`, 'post', query, 'kiboengage')
-    .then(found => {
-      cb(null, found)
-      logger.serverLog(TAG, 'Message Statistics fetched successfully!')
-    })
-    .catch(err => cb(err))
-}
+// function findRecord (featureName, cb) {
+//   let today = new Date()
+//   let payload = { featureName }
+//   payload.day = today.getDate()
+//   payload.month = (today.getMonth() + 1)
+//   payload.year = today.getFullYear()
+//   let query = {
+//     purpose: 'findOne',
+//     match: payload
+//   }
+//   callApi(`messageStatistics/query`, 'post', query, 'kiboengage')
+//     .then(found => {
+//       cb(null, found)
+//       logger.serverLog(TAG, 'Message Statistics fetched successfully!')
+//     })
+//     .catch(err => cb(err))
+// }
