@@ -1,4 +1,4 @@
-const { validateUrl, getSendGridObject, padWithZeros } = require('./utility.js')
+const { validateUrl, getSendGridObject, padWithZeros, dateDiffInDays } = require('./utility.js')
 
 describe('Validate url test in utility', () => {
   test('should validate correct Urls', () => {
@@ -10,6 +10,14 @@ describe('Validate url test in utility', () => {
     expect(validateUrl('https:/app.yahoo.com')).toBe(false)
     expect(validateUrl('htt://app.yahoo.com')).toBe(false)
     expect(validateUrl('https://appcom')).toBe(false)
+  })
+})
+
+describe('Give date difference in days in utility', () => {
+  test('should give date differnce in days correctly', () => {
+    let d1 = new Date('10/10/2019')
+    let d2 = new Date('10/16/2019')
+    expect(dateDiffInDays(d1, d2)).toBe(6)
   })
 })
 

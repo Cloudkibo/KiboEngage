@@ -66,8 +66,15 @@ function padWithZeros (n, width, z) {
   return result
 }
 
+function dateDiffInDays (date1, date2) {
+  const diffTime = Math.abs(date2 - date1)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays
+}
+
 exports.validateUrl = validateUrl
 exports.checkLastMessageAge = checkLastMessageAge
 exports.setProtocolUrl = setProtocolUrl
 exports.getSendGridObject = getSendGridObject
 exports.padWithZeros = padWithZeros
+exports.dateDiffInDays = dateDiffInDays
