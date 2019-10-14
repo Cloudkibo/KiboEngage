@@ -1,6 +1,8 @@
 const prepareMessageData = require('./prepareMessageData')
 const { facebookApiCaller } = require('./facebookApiCaller')
 const { sendOpAlert } = require('./operationalAlert')
+const TAG = 'api/global/broadcastApi.js'
+const logger = require('../../../components/logger')
 // const util = require('util')
 
 exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, pageAccessToken, page, location) => {
@@ -51,6 +53,7 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken, page, location, m
           if (response.body.message_creative_id) {
             resolve({status: 'success', message_creative_id: response.body.message_creative_id})
           } else {
+            logger.serverLog(TAG, `callMessageCreativesEndpoint error in facebookApiCaller ${JSON.stringify(response.body.error)}`, 'error')
             sendOpAlert(response.body.error, 'Function: callMessageCreativesEndpoint File :' + location, page._id, page.userId, page.companyId)
             resolve({status: 'failed', description: response.body.error})
           }
