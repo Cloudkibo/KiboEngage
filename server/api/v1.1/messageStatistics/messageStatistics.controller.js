@@ -14,7 +14,9 @@ exports.index = function (req, res) {
   let name = req.params.name || 'broadcast'
   getRecords(name, (err, data) => {
     if (err) {
-      return sendErrorResponse(res, '500', '', err)
+      logger.serverLog(TAG, 'Got error from Message Statistics on getRecords')
+      logger.serverLog(TAG, err)
+      return sendErrorResponse(res, '500', '', JSON.stringify(err))
     }
     var info = data
     var keys = []
@@ -29,7 +31,9 @@ exports.index = function (req, res) {
       const csv = parse(info, opts)
       res.send(csv)
     } catch (err) {
-      sendErrorResponse(res, '500', '', err)
+      logger.serverLog(TAG, 'Got error from Message Statistics on CSV')
+      logger.serverLog(TAG, err)
+      sendErrorResponse(res, '500', '', JSON.stringify(err))
     }
   })
 }
