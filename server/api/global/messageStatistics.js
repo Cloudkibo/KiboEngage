@@ -100,8 +100,6 @@ function deleteAllKeys (arrObjs) {
 }
 
 function shouldDelete (key) {
-  logger.serverLog(TAG, `Working on Statistics Keys`)
-  logger.serverLog(TAG, key)
   let dateTime = key.split('-')[1].split(':')
   let MM = padWithZeros(dateTime[1], 2)
   let dd = padWithZeros(dateTime[2], 2)

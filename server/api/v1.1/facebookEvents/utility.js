@@ -63,7 +63,10 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                             utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                               .then(updated => {
                                 require('../../global/messageStatistics').record('autoposting')
-                                let autopostingType = postingItem.autoposting_type
+                                logger.serverLog(TAG, 'AUTOPOSTING RECORDING FOR TYPE')
+                                logger.serverLog(TAG, updated)
+                                logger.serverLog(TAG, postingItem)
+                                let autopostingType = updated.autoposting_type
                                 require('../../global/messageStatistics').record(`autoposting${autopostingType}`)
                                 current++
                                 send = true
