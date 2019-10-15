@@ -85,7 +85,8 @@ exports.twitterwebhook = function (req, res) {
 const sendTweet = (postingItem, req) => {
   let pagesFindCriteria = {
     companyId: postingItem.companyId,
-    connected: true
+    connected: true,
+    gotPageSubscriptionPermission: true
   }
   if (postingItem.isSegmented) {
     if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
