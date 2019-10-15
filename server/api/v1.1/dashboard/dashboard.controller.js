@@ -865,7 +865,6 @@ exports.updateSubscriptionPermission = function (req, res) {
         needle.get(
           `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${req.user.facebookInfo.fbToken}`,
           (err, resp) => {
-            console.log('respp body in updateSubscriptionPermission ', resp.body)
             if (err) {
               logger.serverLog(TAG,
                 `Page access token from graph api error ${JSON.stringify(
@@ -1068,8 +1067,8 @@ exports.fetchAutopostingDetails = function (req, res) {
         facebookAutopostingGraph: results[4],
         twitterAutopostingGraph: results[5],
         wordpressAutopostingGraph: results[6],
-        tweetsForwarded: results[0].length > 0 ? results[0][twitterIndex].forwarded : 0,
-        tweetsIgnored: results[0].length > 0 ? results[0][twitterIndex].ignored : 0,
+        tweetsForwarded: results[0].length > 0 && twitterIndex !== -1 ? results[0][twitterIndex].forwarded : 0,
+        tweetsIgnored: results[0].length > 0 && twitterIndex !== -1 ? results[0][twitterIndex].ignored : 0,
         posts: results[7].length > 0 ? results[7][0].count : 0,
         likes: results[7].length > 0 ? results[7][0].likes : 0,
         comments: results[7].length > 0 ? results[7][0].comments : 0
