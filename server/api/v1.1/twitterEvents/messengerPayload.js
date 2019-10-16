@@ -56,7 +56,8 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
     prepareViewTweetButton(savedMsg, tweetId, screenName).then(button => {
       buttons.push(button)
     })
-    for (let i = 0; i < urls.length; i++) {
+    let length = urls.length <= 10 ? urls.length : 10
+    for (let i = 0; i < length; i++) {
       og(urls[i].expanded_url, (err, meta) => {
         if (err) {
           console.log('error in fetching metdata')
@@ -69,11 +70,11 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
             'image_url': meta.image.url,
             'buttons': buttons
           })
-          if (i === urls.length - 1) {
+          if (i === length - 1) {
             resolve(gallery)
           }
         } else {
-          if (i === urls.length - 1) {
+          if (i === length - 1) {
             resolve(gallery)
           }
         }
