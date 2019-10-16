@@ -1070,8 +1070,6 @@ exports.fetchAutopostingDetails = function (req, res) {
       sendErrorResponse(res, 500, '', `Failed to fetch autoposting analytics ${err}`)
     } else {
       let types = results[0].map((t) => t._id)
-      console.log('types', types)
-      console.log('results[0]', results[0])
       let facebookIndex = types.indexOf('facebook')
       let twitterIndex = types.indexOf('twitter')
       let wordpressIndex = types.indexOf('wordpress')
@@ -1099,7 +1097,6 @@ exports.fetchAutopostingDetails = function (req, res) {
         rssFeedAutopostingSent: results[8].length > 0 ? results[8].reduce((a, b) => a + b.sent, 0) : 0,
         rssFeedAutopostingGraph: results[9]
       }
-      console.log('payload', payload)
       sendSuccessResponse(res, 200, payload)
     }
   })
