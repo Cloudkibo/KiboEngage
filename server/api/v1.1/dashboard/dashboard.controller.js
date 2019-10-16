@@ -1070,8 +1070,6 @@ exports.fetchAutopostingDetails = function (req, res) {
       sendErrorResponse(res, 500, '', `Failed to fetch autoposting analytics ${err}`)
     } else {
       let types = results[0].map((t) => t._id)
-      console.log('types', types)
-      console.log('results[0]', results[0])
       let facebookIndex = types.indexOf('facebook')
       let twitterIndex = types.indexOf('twitter')
       let wordpressIndex = types.indexOf('wordpress')
