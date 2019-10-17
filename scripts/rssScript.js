@@ -9,6 +9,7 @@ const broadcastApi = require('../server/api/global/broadcastApi')
 const { getScheduledTime } = require('../server/api/global/utility')
 const AutopostingDataLayer = require('../server/api/v1.1/autoposting/autoposting.datalayer')
 const { facebookApiCaller } = require('../server/api/global/facebookApiCaller')
+const AutoPostingMessage = require('../server/api/v1.1/autopostingMessages/autopostingMessages.datalayer')
 
 exports.runRSSScript = () => {
   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({subscriptionType: 'rss', isActive: true})
@@ -237,7 +238,25 @@ const _sendBroadcast = (data, next) => {
       .then(response => {
         if (i === limit - 1) {
           if (response.status === 'success') {
-            next()
+            let newMsg = {
+              pageId: data.page._id,
+              companyId: data.page.companyId,
+              autoposting_type: 'rss',
+              autopostingId: data.autoposting._id,
+              sent: data.subscribersCount[0].count,
+              message_id: data.messageCreativeId,
+              payload: data.messageData,
+              seen: 0,
+              clicked: 0
+            }
+            AutoPostingMessage.createAutopostingMessage(newMsg)
+              .then(savedMsg => {
+                logger.serverLog(TAG, `rss broadcast successfully sent ${savedMsg}`, 'debug')
+                next()
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
+              })
           } else {
             next('Failed to send broadcast.')
           }

@@ -44,26 +44,30 @@ exports.index = function (req, res) {
                   if (resp2.body.error && resp2.body.error.code === 190) {
                     passwordChangeEmailAlert(page.userId._id, page.userId.email)
                   } else if (resp2.body.error) {
-                    sendOpAlert(resp2.body.error, 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
+                    sendOpAlert(JSON.stringify(resp2.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
                   }
                   logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
                   let pageAccessToken = resp2.body.access_token
-                  const options = {
-                    url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
-                    qs: { access_token: page.accessToken },
-                    method: 'GET'
+                  if (pageAccessToken) {
+                    const options = {
+                      url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
+                      qs: { access_token: page.accessToken },
+                      method: 'GET'
 
-                  }
-                  logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
-                  needle.get(options.url, options, (error, response) => {
-                    if (error) {
-                    } else {
-                      if (response.body.error) {
-                        sendOpAlert(response.body.error, 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
-                      }
-                      broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                     }
-                  })
+                    logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
+                    needle.get(options.url, options, (error, response) => {
+                      if (error) {
+                      } else {
+                        if (response.body.error) {
+                          sendOpAlert(JSON.stringify(response.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
+                        }
+                        broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                      }
+                    })
+                  } else {
+                    logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'error')
+                  }
                 })
             }
           }
