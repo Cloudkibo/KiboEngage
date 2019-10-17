@@ -865,7 +865,6 @@ exports.updateSubscriptionPermission = function (req, res) {
         needle.get(
           `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${req.user.facebookInfo.fbToken}`,
           (err, resp) => {
-            console.log('respp body in updateSubscriptionPermission ', resp.body)
             if (err) {
               logger.serverLog(TAG,
                 `Page access token from graph api error ${JSON.stringify(
@@ -956,7 +955,8 @@ exports.fetchAutopostingDetails = function (req, res) {
   const cameCriteria = {
     facebook: LogicLayer.getCriteriasForAutopostingByTypethatCame(req, 'facebook'),
     twitter: LogicLayer.getCriteriasForAutopostingByTypethatCame(req, 'twitter'),
-    wordpress: LogicLayer.getCriteriasForAutopostingByTypethatCame(req, 'wordpress')
+    wordpress: LogicLayer.getCriteriasForAutopostingByTypethatCame(req, 'wordpress'),
+    rss: LogicLayer.getCriteriasForAutopostingByTypethatCame(req, 'rss')
   }
   const groupCriteraType = {
     _id: '$subscriptionType',
@@ -1046,6 +1046,24 @@ exports.fetchAutopostingDetails = function (req, res) {
         .catch(err => {
           callback(err)
         })
+    },
+    function (callback) {
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.rss, groupCriteriaMessages)
+        .then(rssFeedAutopostingsCame => {
+          callback(null, rssFeedAutopostingsCame)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      AutopostingMessagesDataLayer.findAutopostingMessageUsingAggregate(cameCriteria.rss, groupCriteriaGraph)
+        .then(rssFeedAutopostingGraph => {
+          callback(null, rssFeedAutopostingGraph)
+        })
+        .catch(err => {
+          callback(err)
+        })
     }
   ], 10, function (err, results) {
     if (err) {
@@ -1055,6 +1073,7 @@ exports.fetchAutopostingDetails = function (req, res) {
       let facebookIndex = types.indexOf('facebook')
       let twitterIndex = types.indexOf('twitter')
       let wordpressIndex = types.indexOf('wordpress')
+      let rssIndex = types.indexOf('rss')
       let payload = {
         facebookAutoposting: results[0].length > 0 && facebookIndex !== -1 ? results[0][facebookIndex].count : 0,
         twitterAutoposting: results[0].length > 0 && twitterIndex !== -1 ? results[0][twitterIndex].count : 0,
@@ -1068,11 +1087,15 @@ exports.fetchAutopostingDetails = function (req, res) {
         facebookAutopostingGraph: results[4],
         twitterAutopostingGraph: results[5],
         wordpressAutopostingGraph: results[6],
-        tweetsForwarded: results[0].length > 0 ? results[0][twitterIndex].forwarded : 0,
-        tweetsIgnored: results[0].length > 0 ? results[0][twitterIndex].ignored : 0,
+        tweetsForwarded: results[0].length > 0 && twitterIndex !== -1 ? results[0][twitterIndex].forwarded : 0,
+        tweetsIgnored: results[0].length > 0 && twitterIndex !== -1 ? results[0][twitterIndex].ignored : 0,
         posts: results[7].length > 0 ? results[7][0].count : 0,
         likes: results[7].length > 0 ? results[7][0].likes : 0,
-        comments: results[7].length > 0 ? results[7][0].comments : 0
+        comments: results[7].length > 0 ? results[7][0].comments : 0,
+        rssFeedAutoposting: results[0].length > 0 && rssIndex !== -1 ? results[0][rssIndex].count : 0,
+        rssFeedAutopostingCame: results[8].length > 0 ? results[8].length : 0,
+        rssFeedAutopostingSent: results[8].length > 0 ? results[8].reduce((a, b) => a + b.sent, 0) : 0,
+        rssFeedAutopostingGraph: results[9]
       }
       sendSuccessResponse(res, 200, payload)
     }
