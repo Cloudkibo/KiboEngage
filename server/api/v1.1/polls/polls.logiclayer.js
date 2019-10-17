@@ -166,15 +166,16 @@ exports.subscriberFindCriteria = function (page, body) {
   }
   return subscriberFindCriteria
 }
-exports.prepareMessageData = function (body, id) {
+exports.prepareMessageData = function (body) {
   let messageData = {
+    componentType: 'polls',
     text: body.statement,
     quick_replies: [
       {
         'content_type': 'text',
         'title': body.options[0],
         'payload': JSON.stringify({
-          poll_id: id,
+          poll_id: body._id,
           option: body.options[0],
           sequenceId: body.actions[0].sequenceId,
           action: body.actions[0].action
@@ -184,7 +185,7 @@ exports.prepareMessageData = function (body, id) {
         'content_type': 'text',
         'title': body.options[1],
         'payload': JSON.stringify({
-          poll_id: id,
+          poll_id: body._id,
           option: body.options[1],
           sequenceId: body.actions[1].sequenceId,
           action: body.actions[1].action
@@ -194,7 +195,7 @@ exports.prepareMessageData = function (body, id) {
         'content_type': 'text',
         'title': body.options[2],
         'payload': JSON.stringify({
-          poll_id: id,
+          poll_id: body._id,
           option: body.options[2],
           sequenceId: body.actions[2].sequenceId,
           action: body.actions[2].action

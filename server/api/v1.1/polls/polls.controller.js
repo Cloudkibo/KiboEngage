@@ -3,19 +3,15 @@ const PollResponseDataLayer = require('./pollresponse.datalayer')
 const PollDataLayer = require('./polls.datalayer')
 const PollLogicLayer = require('./polls.logiclayer')
 const PollPageDataLayer = require('../page_poll/page_poll.datalayer')
-const AutomationQueueDataLayer = require('../automationQueue/automationQueue.datalayer')
 const needle = require('needle')
-const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const TAG = 'api/v1/polls/polls.controller.js'
 const utility = require('../utility')
-const compUtility = require('../../../components/utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 const async = require('async')
-const broadcastApi = require('../../global/broadcastApi')
 // const util = require('util')
-const { saveLiveChat, preparePayload } = require('../../global/livechat')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
-let { sendOpAlert } = require('./../../global/operationalAlert')
+const { prepareSubscribersCriteria } = require('../../global/utility')
+const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -266,196 +262,87 @@ function populateResponses (responses, req) {
   })
 }
 
-function sendPoll (req, res, planUsage, companyUsage, abort) {
-  let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(req.user, req.body)
-  utility.callApi(`pages/query`, 'post', pagesFindCriteria)
-    .then(pages => {
-      let page = pages[0]
-      const messageData = PollLogicLayer.prepareMessageData(req.body, req.body._id)
-      let subsFindCriteria = {}
-      if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
-        broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'polls.controllers.js', 'poll')
-          .then(messageCreative => {
-            if (messageCreative.status === 'success') {
-              const messageCreativeId = messageCreative.message_creative_id
-              utility.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id})
-                .then(pageTags => {
-                  const limit = Math.ceil(req.body.subscribersCount / 10000)
-                  for (let i = 0; i < limit; i++) {
-                    let labels = []
-                    let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
-                    let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
-                    let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
-                    pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
-                    if (req.body.isList) {
-                      utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user))
-                        .then(lists => {
-                          lists = lists.map((l) => l.listName)
-                          let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
-                          labels = labels.concat(temp)
-                        })
-                        .catch(err => {
-                          sendErrorResponse(res, 500, `Failed to apply list segmentation ${JSON.stringify(err)}`)
-                        })
-                    } else {
-                      if (req.body.segmentationGender.length > 0) {
-                        let temp = pageTags.filter((pt) => req.body.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                        labels = labels.concat(temp)
-                      }
-                      if (req.body.segmentationLocale.length > 0) {
-                        let temp = pageTags.filter((pt) => req.body.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                        labels = labels.concat(temp)
-                      }
-                      if (req.body.segmentationTags.length > 0) {
-                        let temp = pageTags.filter((pt) => req.body.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                        labels = labels.concat(temp)
-                      }
-                    }
-                    broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'Polls.controller.js')
-                      .then(response => {
-                        if (i === limit - 1) {
-                          if (response.status === 'success') {
-                            utility.callApi('polls', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
-                              .then(updated => {
-                                sendSuccessResponse(res, 200, 'Poll sent successfully!')
-                              })
-                              .catch(err => {
-                                sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(err)}`)
-                              })
-                          } else {
-                            sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(response.description)}`)
-                          }
-                        }
-                      })
-                      .catch(err => {
-                        sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(err)}`)
-                      })
-                  }
-                })
-                .catch(err => {
-                  sendErrorResponse(res, 500, `Failed to find tags ${JSON.stringify(err)}`)
-                })
-            } else {
-              sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(messageCreative.description)}`)
-            }
-          })
-          .catch(err => {
-            sendErrorResponse(res, 500, `Failed to send poll ${JSON.stringify(err)}`)
-          })
-      } else {
-        if (req.body.isList) {
-          let ListFindCriteria = PollLogicLayer.ListFindCriteria(req.body, req.user)
-          utility.callApi(`lists/query`, 'post', ListFindCriteria)
-            .then(lists => {
-              subsFindCriteria = PollLogicLayer.subsFindCriteria(lists, page)
-              sendToSubscribers(req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort)
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
-            })
-        } else {
-          subsFindCriteria = PollLogicLayer.subscriberFindCriteria(page, req.body)
-          sendToSubscribers(req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort)
-        }
-      }
+const _savePagePoll = (data) => {
+  PollPageDataLayer.createForBroadcastPage(data)
+    .then(savedpagebroadcast => {
+      require('../../global/messageStatistics').record('polls')
+      logger.serverLog(TAG, 'page poll object saved in db')
     })
     .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch page ${error}`)
+      logger.serverLog(`Failed to create page_poll ${JSON.stringify(error)}`)
     })
 }
 
-function sendToSubscribers (req, res, page, subsFindCriteria, messageData, planUsage, companyUsage, abort) {
-  utility.callApi(`subscribers/query`, 'post', subsFindCriteria)
-    .then(subscribers => {
-      if (subscribers.length === 0) {
-        sendErrorResponse(res, 500, '', `No subscribers match the selected criteria`)
-      }
-      broadcastUtility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
-        subscribers = taggedSubscribers
-        for (let j = 0; j < subscribers.length && !abort; j++) {
-          utility.callApi(`featureUsage/updateCompany`, 'put', {
-            query: {companyId: req.user.companyId},
-            newPayload: { $inc: { polls: 1 } },
-            options: {}
-          })
-            .then(updated => {
-              if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
-                abort = true
-              }
-              const data = {
-                messaging_type: 'MESSAGE_TAG',
-                recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
-                message: JSON.stringify(messageData),
-                tag: req.body.fbMessageTag ? req.body.fbMessageTag : 'NON_PROMOTIONAL_SUBSCRIPTION'
-              }
-              // this calls the needle when the last message was older than 30 minutes
-              // checks the age of function using callback
-              compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
-                if (err) {
-                  return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err), 'error')
-                }
-                if (isLastMessage) {
-                  needle.post(
-                    `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`, data, (err, resp) => {
-                      if (err) {
-                        logger.serverLog(TAG, err, 'error')
-                      }
-                      if (resp.body.error) {
-                        sendOpAlert(resp.body.error, 'polls controller in kiboengage', page._id, page.userId, page.companyId)
-                      }
-                      messageData.componentType = 'poll'
-                      let message = preparePayload(req.user, subscribers[j], page, messageData)
-                      require('../../global/messageStatistics').record('polls')
-                      saveLiveChat(message)
-                      let pollBroadcast = PollLogicLayer.preparePollPagePayload(page, req.user, req.body, subscribers[j], req.body._id)
-                      PollPageDataLayer.createForPollPage(pollBroadcast)
-                        .then(pollCreated => {
-                          require('./../../../config/socketio').sendMessageToClient({
-                            room_id: req.user.companyId,
-                            body: {
-                              action: 'poll_send',
-                              poll_id: pollCreated._id,
-                              user_id: req.user._id,
-                              user_name: req.user.name,
-                              company_id: req.user.companyId
-                            }
-                          })
-                          if (j === subscribers.length - 1 || abort) {
-                            sendSuccessResponse(res, 200, 'Polls sent successfully.')
-                          }
-                        })
-                        .catch(error => {
-                          sendErrorResponse(res, 500, `Failed to create poll page ${JSON.stringify(error)}`)
-                        })
-                    })
-                } else {
-                  logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ', 'debug')
-                  let timeNow = new Date()
-                  AutomationQueueDataLayer.createAutomationQueueObject({
-                    automatedMessageId: req.body._id,
-                    subscriberId: subscribers[j]._id,
-                    companyId: req.user.companyId,
-                    type: 'poll',
-                    scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
-                  }).then(saved => {
-                    if (j === subscribers.length - 1 || abort) {
-                      sendSuccessResponse(res, 200, 'Polls sent successfully.')
-                    }
-                  })
-                    .catch(error => {
-                      sendErrorResponse(res, 500, `Failed to create automation queue object ${JSON.stringify(error)}`)
-                    })
-                }
-              })
+const sendPoll = (req, res, planUsage, companyUsage, abort) => {
+  let pagesFindCriteria = PollLogicLayer.pagesFindCriteria(req.user, req.body)
+  utility.callApi(`pages/query`, 'post', pagesFindCriteria)
+    .then(pages => {
+      if (pages.length > 0) {
+        const page = pages[0]
+        const messageData = PollLogicLayer.prepareMessageData(req.body)
+        let pagePollData = {
+          pageId: page.pageId,
+          userId: req.user._id,
+          companyId: req.user.companyId,
+          pollId: req.body._id,
+          seen: false,
+          sent: false
+        }
+        let reportObj = {
+          successful: 0,
+          unsuccessful: 0,
+          errors: []
+        }
+        if (req.body.isList) {
+          utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user))
+            .then(lists => {
+              let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
+              sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+              sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
             })
             .catch(error => {
-              sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
+              logger.serverLog(TAG, error)
+              sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
             })
+        } else {
+          let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+          console.log('subsFindCriteria', subsFindCriteria)
+          if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
+            utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+              .then(tags => {
+                let tagIds = tags.map((t) => t._id)
+                utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                  .then(tagSubscribers => {
+                    if (tagSubscribers.length > 0) {
+                      let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                      subsFindCriteria['_id'] = {$in: subscriberIds}
+                      sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                      sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                    } else {
+                      sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, err)
+                    sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+                  })
+              })
+              .catch(err => {
+                logger.serverLog(TAG, err)
+                sendErrorResponse(res, 500, 'Failed to fetch tags')
+              })
+          } else {
+            sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+            sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+          }
         }
-      }, res)
+      } else {
+        sendErrorResponse(res, 500, 'Page not found!')
+      }
     })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+    .catch(err => {
+      logger.serverLog(TAG, err, 'error')
+      sendErrorResponse(res, 500, 'Failed to fetch page')
     })
 }
 
