@@ -71,16 +71,13 @@ exports.create = function (req, res) {
           async.parallelLimit([
             function (callback) {
               createList(req, callback)
-            },
-            function (callback) {
-              createTag(req, callback)
             }
           ], 10, function (err, results) {
             if (err) {
               sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
             } else {
               logger.serverLog(TAG, 'assigning tag to subscribers', 'debug')
-              assignTagToSubscribers(req.body.content, req.body.listName, req, res)
+              sendSuccessResponse(res, 200, 'List created successfully!')
             }
           })
         })
@@ -91,53 +88,6 @@ exports.create = function (req, res) {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
-}
-
-function createTag (req, callback) {
-  utility.callApi('pages/query', 'post', {companyId: req.user.companyId})
-    .then(pages => {
-      let tagsCreated = 0
-      pages.forEach((page, i) => {
-        let tag = req.body.listName
-        facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': tag})
-          .then(label => {
-            if (label.body.error) {
-              logger.serverLog(TAG, `facebook label error ${JSON.stringify(label.body.error)}`, 'debug')
-              sendOpAlert(label.body.error, 'lists controller in kiboengage from createTag', page._id, page.userId, page.companyId)
-              return callback(label.body.error)
-            }
-            let tagPayload = {
-              tag: req.body.listName,
-              userId: req.user._id,
-              companyId: req.user.companyId,
-              pageId: page._id,
-              labelFbId: label.body.id,
-              isList: true
-            }
-            utility.callApi('tags/', 'post', tagPayload)
-              .then(newTag => {
-                tagsCreated++
-                logger.serverLog(TAG, `tag created ${tagsCreated}`, 'debug')
-                utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { labels: 1 } }, options: {}})
-                  .then(updated => {
-                    logger.serverLog(TAG, `Updated Feature Usage ${updated}`, 'debug')
-                  })
-                  .catch(err => {
-                    if (err) {
-                      logger.serverLog(TAG, `ERROR in updating Feature Usage${JSON.stringify(err)}`, 'error')
-                    }
-                  })
-                if (tagsCreated === pages.length) {
-                  logger.serverLog(TAG, 'new tag created', 'debug')
-                  return callback(null, newTag)
-                }
-              })
-              .catch(err => callback(err))
-          })
-          .catch(err => callback(err))
-      })
-    })
-    .catch(err => callback(err))
 }
 
 function createList (req, callback) {
@@ -167,61 +117,23 @@ function createList (req, callback) {
 
 exports.editList = function (req, res) {
   if (req.body.newListName !== req.body.listName) {
-    utility.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.listName})
-      .then(tags => {
-        tags.forEach((tag, i) => {
-          utility.callApi('pages/query', 'post', {_id: tag.pageId})
-            .then(pages => {
-              let page = pages[0]
-              let label = req.body.newListName
-              facebookApiCaller('v2.11', `me/custom_labels?access_token=${page.accessToken}`, 'post', {'name': label})
-                .then(label => {
-                  if (label.body.error) {
-                    sendOpAlert(label.body.error, 'lists controller in kiboengage from editList', page._id, page.userId, page.companyId)
-                    sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.body.error)}`)
-                  }
-                  let data = {
-                    listName: req.body.newListName,
-                    conditions: req.body.conditions,
-                    joiningCondition: req.body.joiningCondition,
-                    content: req.body.content
-                  }
-                  async.parallelLimit([
-                    function (callback) {
-                      updateList(data, req, callback)
-                    }
-                  ], 10, function (err, results) {
-                    if (err) {
-                      sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.error)}`)
-                    }
-                    if (i === tags.length - 1) {
-                      utility.callApi('tags_subscriber/query', 'post', {companyId: req.user.companyId, tag: req.body.listName})
-                        .then(tagSubscribers => {
-                          let subscribers = tagSubscribers.map((ts) => ts.subscriberId._id)
-                          if (subscribers.length > 0) {
-                            assignTagToSubscribers(subscribers, req.body.listName, req, res)
-                          } else {
-                            sendSuccessResponse(res, 200, 'List updated successfully!')
-                          }
-                        })
-                        .catch(err => {
-                          sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(err)}`)
-                        })
-                    }
-                  })
-                })
-                .catch(error => {
-                  sendErrorResponse(res, 500, `Failed to create tag on Facebook ${JSON.stringify(error)}`)
-                })
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
-            })
-        })
-      })
-      .catch(error => {
-        sendErrorResponse(res, 500, `Failed to fetch tags ${JSON.stringify(error)}`)
-      })
+    let label = req.body.newListName
+    let data = {
+      listName: req.body.newListName,
+      conditions: req.body.conditions,
+      joiningCondition: req.body.joiningCondition,
+      content: req.body.content
+    }
+    async.parallelLimit([
+      function (callback) {
+        updateList(data, req, callback)
+      }
+    ], 10, function (err, results) {
+      if (err) {
+        sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.error)}`)
+      }
+      sendSuccessResponse(res, 200, 'List updated successfully!')
+    })
   } else {
     let data = {
       listName: req.body.newListName,
@@ -464,91 +376,4 @@ exports.repliedSurveySubscribers = function (req, res) {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
-}
-
-function isTagExists (pageId, tags) {
-  let temp = tags.map((t) => t.pageId)
-  let index = temp.indexOf(pageId)
-  if (index > -1) {
-    return {status: true, index}
-  } else {
-    return {status: false}
-  }
-}
-
-function assignTagToSubscribers (subscribers, tag, req, res) {
-  logger.serverLog(TAG, `assignTagToSubscribers`, 'debug')
-  let tags = []
-  subscribers.forEach((subscriberId, i) => {
-    utility.callApi(`subscribers/${subscriberId}`, 'get', {})
-      .then(subscriber => {
-        let existsTag = isTagExists(subscriber.pageId._id, tags)
-        if (existsTag.status) {
-          logger.serverLog(TAG, 'existsTag.status', 'debug')
-          let tagPayload = tags[existsTag.index]
-          facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
-            .then(assignedLabel => {
-              if (assignedLabel.body.error) {
-                sendOpAlert(assignedLabel.body.error, 'lists controller in kiboengage from assignTagToSubscribers1', '', req.user.companyId, req.user._id)
-                sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${assignedLabel.body.error}`)
-              }
-              let subscriberTagsPayload = {
-                tagId: tagPayload._id,
-                subscriberId: subscriber._id,
-                companyId: req.user.companyId
-              }
-              utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
-                .then(newRecord => {
-                  if (i === subscribers.length - 1) {
-                    sendSuccessResponse(res, 200, 'List created successfully!')
-                  }
-                })
-                .catch(err => {
-                  sendErrorResponse(res, 500, `Failed to assign tag to subscriber ${err}`)
-                })
-            })
-            .catch(err => {
-              sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
-            })
-        } else {
-          logger.serverLog(TAG, `tags/query ${JSON.stringify({tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})}`, 'debug')
-          utility.callApi('tags/query', 'post', {tag, pageId: subscriber.pageId._id, companyId: req.user.companyId})
-            .then(tagPayload => {
-              logger.serverLog(TAG, `tagPayload ${JSON.stringify(tagPayload)}`)
-              tagPayload = tagPayload[0]
-              tags.push(tagPayload)
-              facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
-                .then(assignedLabel => {
-                  if (assignedLabel.body.error) {
-                    sendOpAlert(assignedLabel.body.error, 'lists controller in kiboengage from assignTagToSubscribers2', '', req.user.companyId, req.user._id)
-                    sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${assignedLabel.body.error}`)
-                  }
-                  let subscriberTagsPayload = {
-                    tagId: tagPayload._id,
-                    subscriberId: subscriber._id,
-                    companyId: req.user.companyId
-                  }
-                  utility.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
-                    .then(newRecord => {
-                      if (i === subscribers.length - 1) {
-                        sendSuccessResponse(res, 200, 'List created successfully!')
-                      }
-                    })
-                    .catch(err => {
-                      sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
-                    })
-                })
-                .catch(err => {
-                  sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
-                })
-            })
-            .catch(err => {
-              sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
-            })
-        }
-      })
-      .catch(err => {
-        sendErrorResponse(res, 500, `Failed to associate tag to subscriber ${err}`)
-      })
-  })
 }
