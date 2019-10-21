@@ -328,7 +328,8 @@ const _prepareMessageData = (data, next) => {
 function getMetaData (feed) {
   return new Promise((resolve, reject) => {
     let gallery = []
-    for (let i = 0; i < feed.length; i++) {
+    let length = feed.length < 10 ? feed.length : 10
+    for (let i = 0; i < length; i++) {
       og(feed[i].link, (err, meta) => {
         if (err) {
           logger.serverLog(TAG, 'error in fetching metdata', 'error')
@@ -347,7 +348,7 @@ function getMetaData (feed) {
             ]
           })
         }
-        if (i === feed.length - 1 || i === 9) {
+        if (i === length - 1) {
           resolve(gallery)
         }
       })
