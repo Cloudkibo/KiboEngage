@@ -859,7 +859,7 @@ exports.getAllSubscribers = function (req, res) {
   }
 }
 exports.updateSubscriptionPermission = function (req, res) {
-  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, isApproved: true})
+  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, isApproved: true, connected: true})
     .then(userPages => {
       userPages.forEach((page) => {
         needle.get(

@@ -245,6 +245,7 @@ const _sendBroadcast = (data, next) => {
               autopostingId: data.autoposting._id,
               sent: data.subscribersCount[0].count,
               message_id: data.messageCreativeId,
+              payload: data.messageData,
               seen: 0,
               clicked: 0
             }
