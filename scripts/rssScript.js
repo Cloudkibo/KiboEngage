@@ -308,6 +308,7 @@ const _parseFeed = (data, next) => {
 const _prepareMessageData = (data, next) => {
   getMetaData(data.feed)
     .then(gallery => {
+      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
         attachment: {
           type: 'template',
@@ -327,6 +328,7 @@ const _prepareMessageData = (data, next) => {
 
 function getMetaData (feed) {
   return new Promise((resolve, reject) => {
+    logger.serverLog(TAG, `feed.length ${feed.length}`)
     let gallery = []
     let length = feed.length < 10 ? feed.length : 10
     for (let i = 0; i < length; i++) {
