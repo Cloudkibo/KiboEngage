@@ -13,18 +13,18 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
       'message_creative_id': messageCreativeId,
       'notification_type': 'REGULAR',
       'messaging_type': tag !== undefined ? tag : 'MESSAGE_TAG',
-      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION'
-      // 'targeting': JSON.stringify({
-      //   labels: {
-      //     operator: 'AND',
-      //     values: labelValues
-      //   }
-      // })
+      'tag': 'NON_PROMOTIONAL_SUBSCRIPTION',
+      'targeting': JSON.stringify({
+        labels: {
+          operator: 'AND',
+          values: labelValues
+        }
+      })
     }
     if (tag === 'UPDATE') {
       delete data.tag
     }
-    facebookApiCaller('v2.11', `me/broadcast_messages?access_token=EAAUTvApDOEYBANGKtXj2IUGcrZCag99O2ga05Q7olDndlnh5n4maCdbD6aHafesTcZBEKkeIuGLV0CXxWzc8nZBb77vsbZCnmrketKN1qxtj45ZCwcYsAStc6KE3ueGBkuVIoXCxvoWXH1sms4DzTZCKZAly1yxfsGn0Xe7ddriqAZDZD`, 'post', data)
+    facebookApiCaller('v2.11', `me/broadcast_messages?access_token=${pageAccessToken}`, 'post', data)
       .then(response => {
         console.log('response from facebookApiCaller', JSON.stringify(response.body))
         if (response.body.broadcast_id) {
@@ -51,7 +51,7 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken, page, location, m
       let dataToSend = {
         'messages': messages
       }
-      facebookApiCaller('v2.11', `me/message_creatives?access_token=EAAUTvApDOEYBANGKtXj2IUGcrZCag99O2ga05Q7olDndlnh5n4maCdbD6aHafesTcZBEKkeIuGLV0CXxWzc8nZBb77vsbZCnmrketKN1qxtj45ZCwcYsAStc6KE3ueGBkuVIoXCxvoWXH1sms4DzTZCKZAly1yxfsGn0Xe7ddriqAZDZD`, 'post', dataToSend)
+      facebookApiCaller('v2.11', `me/message_creatives?access_token=${pageAccessToken}`, 'post', dataToSend)
         .then(response => {
           if (response.body.message_creative_id) {
             resolve({status: 'success', message_creative_id: response.body.message_creative_id})
