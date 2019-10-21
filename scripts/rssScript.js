@@ -328,7 +328,7 @@ function getMetaData (feed) {
   return new Promise((resolve, reject) => {
     let gallery = []
     let length = feed.length < 10 ? feed.length : 10
-    for (let i = 0; i < length && i < 10; i++) {
+    for (let i = 0; i < length; i++) {
       og(feed[i].link, (err, meta) => {
         if (err) {
           logger.serverLog(TAG, 'error in fetching metdata', 'error')
