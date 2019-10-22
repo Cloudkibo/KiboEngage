@@ -36,34 +36,68 @@ exports.index = function (req, res) {
 }
 
 function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
+  console.log('sendBrodcastComponent', req.body)
   let accountSid = companyUser.companyId.twilioWhatsApp.accountSID
   let authToken = companyUser.companyId.twilioWhatsApp.authToken
   let client = require('twilio')(accountSid, authToken)
-
+  console.log('contacts.length', contacts.length)
   for (let i = 0; i < contacts.length; i++) {
-    for (let j = 0; j < req.body.payload.length; j++) {
-      client.messages
-        .create({
-          mediaUrl: req.body.payload[j].componentType === 'text' ? [] : req.body.payload[j].file ? [req.body.payload[j].file.fileurl.url] : [req.body.payload[j].fileurl.url],
-          body: req.body.payload[j].componentType === 'text' ? req.body.payload[j].text : '',
-          from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
-          to: `whatsapp:${contacts[i].senderNumber}`,
-          statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
-        })
-        .then(response => {
-          logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
-          let MessageObject = logicLayer.prepareChat(req.body.payload[j], companyUser, contacts[i])
-          utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
-            .then(response => {
-            })
-            .catch(error => {
-              logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
-            })
-        })
-        .catch(error => {
-          logger.serverLog(TAG, `error at sending message ${error}`, 'error')
-        })
-    }
+    let j = 0
+    let interval = setInterval(() => {
+      if (j === req.body.payload.length) {
+        clearInterval(interval)
+        logger.serverLog(TAG, `send message successfully!`)
+      } else {
+        let payload = req.body.payload[j]
+        client.messages
+          .create({
+            mediaUrl: req.body.payload[j].componentType === 'text' ? [] : req.body.payload[j].file ? [req.body.payload[j].file.fileurl.url] : [req.body.payload[j].fileurl.url],
+            body: req.body.payload[j].componentType === 'text' ? req.body.payload[j].text : '',
+            from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
+            to: `whatsapp:${contacts[i].senderNumber}`,
+            statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
+          })
+          .then(response => {
+            logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
+            let MessageObject = logicLayer.prepareChat(payload, companyUser, contacts[i])
+            utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
+              .then(response => {
+                j++
+              })
+              .catch(error => {
+                j++
+                logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
+              })
+          })
+          .catch(error => {
+            j++
+            logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+          })
+      }
+    }, 3500)
+    // for (let j = 0; j < req.body.payload.length; j++) {
+    //   client.messages
+    //     .create({
+    //       mediaUrl: req.body.payload[j].componentType === 'text' ? [] : req.body.payload[j].file ? [req.body.payload[j].file.fileurl.url] : [req.body.payload[j].fileurl.url],
+    //       body: req.body.payload[j].componentType === 'text' ? req.body.payload[j].text : '',
+    //       from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
+    //       to: `whatsapp:${contacts[i].senderNumber}`,
+    //       statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
+    //     })
+    //     .then(response => {
+    //       logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
+    //       let MessageObject = logicLayer.prepareChat(req.body.payload[j], companyUser, contacts[i])
+    //       utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
+    //         .then(response => {
+    //         })
+    //         .catch(error => {
+    //           logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
+    //         })
+    //     })
+    //     .catch(error => {
+    //       logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+    //     })
+    // }
     if (i === contacts.length - 1) {
       sendSuccessResponse(res, 200, 'Conversation sent successfully!')
     }
@@ -123,7 +157,7 @@ function getSubscribersCount (req, res, contacts, companyUser) {
           })
           .catch(error => {
             reject(error)
-            //sendErrorResponse(res, 500, `Failed to fetch livechat Data ${(error)}`)
+            // sendErrorResponse(res, 500, `Failed to fetch livechat Data ${(error)}`)
           })
       })
     }
