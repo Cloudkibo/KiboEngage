@@ -90,7 +90,6 @@ exports.postPublish = function (req, res) {
                               errors: []
                             }
                             let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
-                            console.log('subsFindCriteria', subsFindCriteria)
                             if (postingItem.isSegmented && postingItem.segmentationTags.length > 0) {
                               utility.callApi(`tags/query`, 'post', { companyId: page.companyId, tag: { $in: postingItem.segmentationTags } })
                                 .then(tags => {
