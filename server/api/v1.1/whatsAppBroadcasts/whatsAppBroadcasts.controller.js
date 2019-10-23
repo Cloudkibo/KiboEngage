@@ -41,64 +41,35 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
   let authToken = companyUser.companyId.twilioWhatsApp.authToken
   let client = require('twilio')(accountSid, authToken)
   console.log('contacts.length', contacts.length)
-  for (let i = 0; i < contacts.length; i++) {
-    let j = 0
-    let interval = setInterval(() => {
-      if (j === req.body.payload.length) {
-        clearInterval(interval)
-        logger.serverLog(TAG, `send message successfully!`)
-      } else {
-        let payload = req.body.payload[j]
+
+  for (let i = 0; i < req.body.payload.length; i++) {
+    let payload = req.body.payload[i]
+    for (let j = 0; j < contacts.length; j++) {
+      setTimeout(() => {
         client.messages
           .create({
-            mediaUrl: req.body.payload[j].componentType === 'text' ? [] : req.body.payload[j].file ? [req.body.payload[j].file.fileurl.url] : [req.body.payload[j].fileurl.url],
-            body: req.body.payload[j].componentType === 'text' ? req.body.payload[j].text : '',
+            mediaUrl: req.body.payload[i].componentType === 'text' ? [] : req.body.payload[i].file ? [req.body.payload[i].file.fileurl.url] : [req.body.payload[i].fileurl.url],
+            body: req.body.payload[i].componentType === 'text' ? req.body.payload[i].text : '',
             from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
-            to: `whatsapp:${contacts[i].senderNumber}`,
+            to: `whatsapp:${contacts[j].senderNumber}`,
             statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
           })
           .then(response => {
-            logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
-            let MessageObject = logicLayer.prepareChat(payload, companyUser, contacts[i])
+            logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`, 'info')
+            let MessageObject = logicLayer.prepareChat(payload, companyUser, contacts[j])
             utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
               .then(response => {
-                j++
               })
               .catch(error => {
-                j++
                 logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
               })
           })
           .catch(error => {
-            j++
             logger.serverLog(TAG, `error at sending message ${error}`, 'error')
           })
-      }
-    }, 3500)
-    // for (let j = 0; j < req.body.payload.length; j++) {
-    //   client.messages
-    //     .create({
-    //       mediaUrl: req.body.payload[j].componentType === 'text' ? [] : req.body.payload[j].file ? [req.body.payload[j].file.fileurl.url] : [req.body.payload[j].fileurl.url],
-    //       body: req.body.payload[j].componentType === 'text' ? req.body.payload[j].text : '',
-    //       from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
-    //       to: `whatsapp:${contacts[i].senderNumber}`,
-    //       statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
-    //     })
-    //     .then(response => {
-    //       logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
-    //       let MessageObject = logicLayer.prepareChat(req.body.payload[j], companyUser, contacts[i])
-    //       utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
-    //         .then(response => {
-    //         })
-    //         .catch(error => {
-    //           logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
-    //         })
-    //     })
-    //     .catch(error => {
-    //       logger.serverLog(TAG, `error at sending message ${error}`, 'error')
-    //     })
-    // }
-    if (i === contacts.length - 1) {
+      }, ((contacts.length) * i + (j + 1)) * 1000)
+    }
+    if (i === req.body.payload.length - 1) {
       sendSuccessResponse(res, 200, 'Conversation sent successfully!')
     }
   }
