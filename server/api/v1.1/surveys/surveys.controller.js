@@ -369,7 +369,6 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
     .then(pages => {
       if (pages.length > 0) {
         const page = pages[0]
-        console.log('page found')
         callApi.callApi(`user/query`, 'post', {_id: page.userId})
           .then(connectedUser => {
             connectedUser = connectedUser[0]
@@ -381,7 +380,6 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
             }
             surveyQuestionsDataLayer.findSurveyWithId(req.body._id)
               .then(questions => {
-                console.log('Questions found', JSON.stringify(questions))
                 if (questions.length > 0) {
                   surveyDataLayer.findOneSurvey(req.body._id)
                     .then(survey => {
@@ -441,7 +439,6 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                           })
                       } else {
                         let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
-                        console.log('subsFindCriteria', subsFindCriteria)
                         if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
                           utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
                             .then(tags => {
