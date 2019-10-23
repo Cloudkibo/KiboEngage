@@ -92,7 +92,6 @@ exports.allPolls = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  console.log(JSON.stringify(req.body))
   utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
     .then(planUsage => {
       planUsage = planUsage[0]
@@ -116,7 +115,7 @@ exports.create = function (req, res) {
           ], 10, function (err, results) {
             if (err) {
               sendErrorResponse(res, 500, `Failed to create poll ${JSON.stringify(err)}`)
-              console.log(err)
+              logger.serverLog(TAG, err, 'error')
             }
             sendSuccessResponse(res, 200, results[1])
           })
@@ -306,7 +305,6 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
             })
         } else {
           let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
-          console.log('subsFindCriteria', subsFindCriteria)
           if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
             utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
               .then(tags => {
