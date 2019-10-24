@@ -45,6 +45,8 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
   for (let i = 0; i < req.body.payload.length; i++) {
     let payload = req.body.payload[i]
     for (let j = 0; j < contacts.length; j++) {
+      let c_type = (req.body.payload[i].componentType === 'file' || req.body.payload[i].componentType === 'audio') ? req.body.payload[i].file.fileName : ''
+      logger.serverLog(TAG, `req.body.payload[i].componentType ${JSON.stringify(c_type)}`, 'info')
       setTimeout(() => {
         client.messages
           .create({
