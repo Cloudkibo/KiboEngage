@@ -45,13 +45,11 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
   for (let i = 0; i < req.body.payload.length; i++) {
     let payload = req.body.payload[i]
     for (let j = 0; j < contacts.length; j++) {
-      let c_type = (req.body.payload[i].componentType === 'file' || req.body.payload[i].componentType === 'audio') ? req.body.payload[i].file.fileName : ''
-      logger.serverLog(TAG, `req.body.payload[i].componentType ${JSON.stringify(c_type)}`, 'info')
       setTimeout(() => {
         client.messages
           .create({
             mediaUrl: req.body.payload[i].componentType === 'text' ? [] : req.body.payload[i].file ? [req.body.payload[i].file.fileurl.url] : [req.body.payload[i].fileurl.url],
-            body: req.body.payload[i].componentType === 'text' ? req.body.payload[i].text : (req.body.payload[i].componentType === 'file' || req.body.payload[i].componentType === 'audio') ? req.body.payload[i].file.fileName : '',
+            body: req.body.payload[i].componentType === 'text' ? req.body.payload[i].text : (req.body.payload[i].componentType === 'file') ? req.body.payload[i].file.fileName : '',
             from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
             to: `whatsapp:${contacts[j].senderNumber}`,
             statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
