@@ -3,19 +3,19 @@ const logger = require('../../components/logger')
 const TAG = 'global/sendConversation.js'
 const request = require('request')
 const prepareMessageData = require('./prepareMessageData')
+const { saveLiveChat, preparePayload } = require('./livechat')
 
-const sendUsingBatchAPI = (payload, subsCriteria, accessToken, result, saveMsgRecord, recordObj) => {
-  console.log('criteria', subsCriteria)
+const sendUsingBatchAPI = (module, payload, subsCriteria, page, user, result, saveMsgRecord, recordObj) => {
   callApi(`subscribers/query`, 'post', subsCriteria)
     .then(subscribers => {
       if (subscribers.length > 0) {
-        let batch = _prepareBatchData(payload, subscribers)
-        _callBatchAPI(JSON.stringify(batch), accessToken)
+        let batch = _prepareBatchData(module, payload, subscribers, page, user)
+        _callBatchAPI(JSON.stringify(batch), page.accessToken)
           .then(response => {
             logger.serverLog(TAG, JSON.stringify(response))
-            result = _prepareReport(payload.length, response, subscribers, result, saveMsgRecord, recordObj)
+            result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
             subsCriteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
-            sendUsingBatchAPI(payload, subsCriteria, accessToken, result, saveMsgRecord, recordObj)
+            sendUsingBatchAPI(payload, subsCriteria, page.accessToken, result, saveMsgRecord, recordObj)
           })
           .catch(err => {
             logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
@@ -46,7 +46,7 @@ const _callBatchAPI = (batch, accessToken) => {
 }
 
 /* eslint-disable */
-const _prepareBatchData = (payload, subscribers) => {
+const _prepareBatchData = (module, payload, subscribers, page, user) => {
   let batch = []
   for (let i = 0; i <= subscribers.length; i++) {
     if (i === subscribers.length) {
@@ -56,11 +56,14 @@ const _prepareBatchData = (payload, subscribers) => {
       let tag = "tag=" + encodeURIComponent("NON_PROMOTIONAL_SUBSCRIPTION")
       let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
       payload.forEach((item, index) => {
-        let message = "message=" + encodeURIComponent(prepareMessageData.facebook(item, subscribers[i].firstName, subscribers[i].lastName))
+        let message = "message=" + encodeURIComponent(_prepareMessageData(module, item, subscribers[i]))
         if (index === 0) {
           batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
         } else {
           batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "depends_on": `${subscribers[i].senderId}${index}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
+        }
+        if (['polls', 'surveys'].includes(item.componentType)) {
+          saveLiveChat(preparePayload(user, subscribers[i], page, item))
         }
       })
     }
@@ -68,13 +71,21 @@ const _prepareBatchData = (payload, subscribers) => {
 }
 /* eslint-enable */
 
-const _prepareReport = (increment, data, subscribers, result, saveMsgRecord, recordObj) => {
+const _prepareMessageData = (module, item, subscriber) => {
+  let message = ['autoposting'].includes(module) ? JSON.stringify(item)
+    : prepareMessageData.facebook(item, subscriber.firstName, subscriber.lastName)
+  return message
+}
+
+const _prepareReport = (module, increment, data, subscribers, result, saveMsgRecord, recordObj) => {
   for (let i = 0; i < data.length; i += increment) {
     let index = (increment - 1) + i
     if (data[index].code === 200) {
       result.successful = result.successful + 1
-      recordObj['subscriberId'] = subscribers[Math.floor(index / increment)].senderId
-      saveMsgRecord(recordObj)
+      if (!['autoposting'].includes(module)) {
+        recordObj['subscriberId'] = subscribers[Math.floor(index / increment)].senderId
+        saveMsgRecord(recordObj)
+      }
     } else {
       let message = 'An unexpected error occured.'
       if (

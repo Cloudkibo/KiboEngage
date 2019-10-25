@@ -6,7 +6,8 @@ const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.d
 const URLObject = require('../URLForClickedCount/URL.datalayer')
 const _ = require('lodash')
 const config = require('../../../config/environment/index')
-const broadcastApi = require('../../global/broadcastApi')
+const { prepareSubscribersCriteria } = require('../../global/utility')
+const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.postPublish = function (req, res) {
   logger.serverLog(TAG, `Wordpress post received : ${JSON.stringify(req.body)}`)
@@ -51,7 +52,6 @@ exports.postPublish = function (req, res) {
                     }
                     AutoPostingMessage.createAutopostingMessage(newMsg)
                       .then(savedMsg => {
-                        let messageData = {}
                         let urlObject = {
                           originalURL: req.body.guid,
                           module: {
@@ -62,7 +62,7 @@ exports.postPublish = function (req, res) {
                         URLObject.createURLObject(urlObject)
                           .then(savedurl => {
                             let newURL = config.domain + '/api/URL/' + savedurl._id
-                            messageData = JSON.stringify({
+                            let messageData = {
                               'attachment': {
                                 'type': 'template',
                                 'payload': {
@@ -83,8 +83,39 @@ exports.postPublish = function (req, res) {
                                   ]
                                 }
                               }
-                            })
-                            sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
+                            }
+                            let reportObj = {
+                              successful: 0,
+                              unsuccessful: 0,
+                              errors: []
+                            }
+                            let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+                            if (postingItem.isSegmented && postingItem.segmentationTags.length > 0) {
+                              utility.callApi(`tags/query`, 'post', { companyId: page.companyId, tag: { $in: postingItem.segmentationTags } })
+                                .then(tags => {
+                                  let tagIds = tags.map((t) => t._id)
+                                  utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                                    .then(tagSubscribers => {
+                                      if (tagSubscribers.length > 0) {
+                                        let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                                        subsFindCriteria['_id'] = {$in: subscriberIds}
+                                        sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                                        logger.serverLog(TAG, 'Conversation sent successfully!')
+                                      } else {
+                                        logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
+                                      }
+                                    })
+                                    .catch(err => {
+                                      logger.serverLog(TAG, err)
+                                    })
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, err)
+                                })
+                            } else {
+                              sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                              logger.serverLog(TAG, 'Conversation sent successfully!')
+                            }
                           })
                           .catch(err => {
                             logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`, 'error')
@@ -114,77 +145,4 @@ exports.postPublish = function (req, res) {
         description: `Internal server error while fetching autoposts ${err}`
       })
     })
-}
-
-const sentUsinInterval = function (messageData, page, postingItem, subscribersCount, req, delay) {
-  let current = 0
-  let interval = setInterval(() => {
-    if (current === messageData.length) {
-      clearInterval(interval)
-      logger.serverLog(TAG, `Wordpress autoposting sent successfully!`)
-    } else {
-      broadcastApi.callMessageCreativesEndpoint(messageData[current], page.accessToken, page, 'wordpress.controller.js', 'autoposting')
-        .then(messageCreative => {
-          if (messageCreative.status === 'success') {
-            const messageCreativeId = messageCreative.message_creative_id
-            utility.callApi('tags/query', 'post', {companyId: page.companyId, pageId: page._id})
-              .then(pageTags => {
-                const limit = Math.ceil(subscribersCount[0].count / 10000)
-                for (let i = 0; i < limit; i++) {
-                  let labels = []
-                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
-                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
-                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
-                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
-                  if (postingItem.segmentationGender.length > 0) {
-                    let temp = pageTags.filter((pt) => postingItem.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                    labels = labels.concat(temp)
-                  }
-                  if (postingItem.segmentationLocale.length > 0) {
-                    let temp = pageTags.filter((pt) => postingItem.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                    labels = labels.concat(temp)
-                  }
-                  if (postingItem.segmentationTags.length > 0) {
-                    let temp = pageTags.filter((pt) => postingItem.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                    labels = labels.concat(temp)
-                  }
-                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'wordpress.controller.js')
-                    .then(response => {
-                      if (i === limit - 1) {
-                        if (response.status === 'success') {
-                          utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
-                            .then(updated => {
-                              current++
-                            })
-                            .catch(err => {
-                              logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
-                              current++
-                            })
-                        } else {
-                          logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`, 'error')
-                          current++
-                        }
-                      }
-                    })
-                    .catch(err => {
-                      logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
-                      current++
-                    })
-                }
-              })
-              .catch(err => {
-                logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`, 'error')
-                current++
-              })
-          } else {
-            logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`, 'error')
-            current++
-          }
-        })
-        .catch(err => {
-          logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
-          current++
-        })
-    }
-  }, delay)
 }
