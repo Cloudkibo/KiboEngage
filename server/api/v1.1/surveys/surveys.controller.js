@@ -6,22 +6,18 @@
 const logger = require('../../../components/logger')
 const surveyQuestionsDataLayer = require('./surveyquestion.datalayer')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
-const AutomationQueueDataLayer = require('./../automationQueue/automationQueue.datalayer')
 const TAG = 'api/surveys/surveys.controller.js'
 const webhookUtility = require('./../notifications/notifications.utility')
 const surveyDataLayer = require('./surveys.datalayer')
 const surveyLogicLayer = require('./surveys.logiclayer')
 const surveyResponseDataLayer = require('./surveyresponse.datalayer')
 const callApi = require('../utility/index')
-let _ = require('lodash')
 const async = require('async')
-const broadcastApi = require('../../global/broadcastApi')
 const needle = require('needle')
 const utility = require('./../broadcasts/broadcasts.utility')
-const compUtility = require('../../../components/utility')
-const { saveLiveChat, preparePayload } = require('../../global/livechat')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
-let { sendOpAlert } = require('./../../global/operationalAlert')
+const { prepareSubscribersCriteria } = require('../../global/utility')
+const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -267,14 +263,7 @@ exports.submitresponse = function (req, res) {
       sendErrorResponse(res, 500, error)
     })
 }
-function exists (list, content) {
-  for (let i = 0; i < list.length; i++) {
-    if (JSON.stringify(list[i]) === JSON.stringify(content)) {
-      return true
-    }
-  }
-  return false
-}
+
 exports.send = function (req, res) {
   let abort = false
   callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
@@ -363,342 +352,147 @@ exports.deleteSurvey = function (req, res) {
     })
 }
 
-function sendSurvey (req, res, planUsage, companyUsage, abort) {
+const _savePageSurvey = (data) => {
+  SurveyPageDataLayer.createForSurveyPage(data)
+    .then(savedpagebroadcast => {
+      require('../../global/messageStatistics').record('surveys')
+      logger.serverLog(TAG, 'page survey object saved in db')
+    })
+    .catch(error => {
+      logger.serverLog(`Failed to create page_survey ${JSON.stringify(error)}`)
+    })
+}
+
+const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
   let pagesFindCriteria = surveyLogicLayer.pageFindCriteria(req)
   callApi.callApi(`pages/query`, 'post', pagesFindCriteria)
     .then(pages => {
-      let page = pages[0]
-      callApi.callApi(`user/query`, 'post', {_id: page.userId})
-        .then(connectedUser => {
-          connectedUser = connectedUser[0]
-          var currentUser
-          if (req.user.facebookInfo) {
-            currentUser = req.user
-          } else {
-            currentUser = connectedUser
-          }
-          surveyQuestionsDataLayer.findSurveyWithId(req.body._id)
-            .then(questions => {
-              surveyDataLayer.findOneSurvey(req.body._id)
-                .then(survey => {
-                  if (questions.length > 0) {
-                    let first_question = questions[0]
-                    // create buttons
-                    const buttons = []
-                    let next_question_id = 'nil'
-                    if (questions.length > 1) {
-                      next_question_id = questions[1]._id
-                    }
-
-                    for (let x = 0; x < first_question.options.length; x++) {
-                      buttons.push({
-                        type: 'postback',
-                        title: first_question.options[x],
-                        payload: JSON.stringify({
-                          survey_id: req.body._id,
-                          option: first_question.options[x],
-                          action: first_question.actions ? first_question.actions[x].action : '',
-                          sequenceId: first_question.actions ? first_question.actions[x].sequenceId : '',
-                          question_id: first_question._id,
-                          next_question_id,
-                          userToken: currentUser.facebookInfo.fbToken
+      if (pages.length > 0) {
+        const page = pages[0]
+        callApi.callApi(`user/query`, 'post', {_id: page.userId})
+          .then(connectedUser => {
+            connectedUser = connectedUser[0]
+            var currentUser
+            if (req.user.facebookInfo) {
+              currentUser = req.user
+            } else {
+              currentUser = connectedUser
+            }
+            surveyQuestionsDataLayer.findSurveyWithId(req.body._id)
+              .then(questions => {
+                if (questions.length > 0) {
+                  surveyDataLayer.findOneSurvey(req.body._id)
+                    .then(survey => {
+                      const firstQuestion = questions[0]
+                      const buttons = []
+                      const nextQuestionId = questions.length > 0 ? questions[1]._id : 'nil'
+                      for (let x = 0; x < firstQuestion.options.length; x++) {
+                        buttons.push({
+                          type: 'postback',
+                          title: firstQuestion.options[x],
+                          payload: JSON.stringify({
+                            survey_id: req.body._id,
+                            option: firstQuestion.options[x],
+                            action: firstQuestion.actions ? firstQuestion.actions[x].action : '',
+                            sequenceId: firstQuestion.actions ? firstQuestion.actions[x].sequenceId : '',
+                            question_id: firstQuestion._id,
+                            next_question_id: nextQuestionId,
+                            userToken: currentUser.facebookInfo.fbToken
+                          })
                         })
-                      })
-                    }
-                    let ListFindCriteria = {
-                      companyId: req.user.companyId
-                    }
-                    ListFindCriteria = _.merge(ListFindCriteria,
-                      {
-                        _id: {
-                          $in: req.body.segmentationList
-                        }
-                      })
-                    if (page.subscriberLimitForBatchAPI < req.body.subscribersCount) {
-                      let messageData = {
+                      }
+                      const messageData = {
+                        componentType: 'survey',
                         attachment: {
                           type: 'template',
                           payload: {
                             template_type: 'button',
-                            text: `${survey.description}\n${first_question.statement}`,
+                            text: `${survey.description}\n${firstQuestion.statement}`,
                             buttons
                           }
-                        }
+                        },
+                        metadata: 'SENT_FROM_KIBOPUSH'
                       }
-                      broadcastApi.callMessageCreativesEndpoint(messageData, page.accessToken, page, 'surveys.controller.js', 'survey')
-                        .then(messageCreative => {
-                          if (messageCreative.status === 'success') {
-                            const messageCreativeId = messageCreative.message_creative_id
-                            callApi.callApi('tags/query', 'post', {companyId: req.user.companyId, pageId: page._id})
-                              .then(pageTags => {
-                                const limit = Math.ceil(req.body.subscribersCount / 10000)
-                                for (let i = 0; i < limit; i++) {
-                                  let labels = []
-                                  let unsubscribeTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_unsubscribe`)
-                                  let pageIdTag = pageTags.filter((pt) => pt.tag === `_${page.pageId}_${i + 1}`)
-                                  let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
-                                  pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
-                                  if (req.body.isList) {
-                                    callApi.callApi(`lists/query`, 'post', ListFindCriteria)
-                                      .then(lists => {
-                                        lists = lists.map((l) => l.listName)
-                                        let temp = pageTags.filter((pt) => lists.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                        labels = labels.concat(temp)
-                                      })
-                                      .catch(err => {
-                                        sendErrorResponse(res, 500, `Failed to apply list segmentation ${JSON.stringify(err)}`)
-                                      })
-                                  } else {
-                                    if (req.body.segmentationGender.length > 0) {
-                                      let temp = pageTags.filter((pt) => req.body.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                      labels = labels.concat(temp)
-                                    }
-                                    if (req.body.segmentationLocale.length > 0) {
-                                      let temp = pageTags.filter((pt) => req.body.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-                                      labels = labels.concat(temp)
-                                    }
-                                    if (req.body.segmentationTags.length > 0) {
-                                      let temp = pageTags.filter((pt) => req.body.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-                                      labels = labels.concat(temp)
-                                    }
-                                  }
-                                  broadcastApi.callBroadcastMessagesEndpoint(messageCreativeId, labels, notlabels, page.accessToken, page, 'Surveys.controller.js')
-                                    .then(response => {
-                                      if (i === limit - 1) {
-                                        if (response.status === 'success') {
-                                          callApi.callApi('surveys', 'put', {purpose: 'updateOne', match: {_id: req.body._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
-                                            .then(updated => {
-                                              sendSuccessResponse(res, 200, 'Survey sent successfully!')
-                                            })
-                                            .catch(err => {
-                                              sendErrorResponse(res, 500, `Failed to send survey ${JSON.stringify(err)}`)
-                                            })
-                                        } else {
-                                          sendErrorResponse(res, 500, '', `Failed to send survey ${JSON.stringify(response.description)}`)
-                                        }
-                                      }
-                                    })
-                                    .catch(err => {
-                                      sendErrorResponse(res, 500, '', `Failed to send survey ${JSON.stringify(err)}`)
-                                    })
-                                }
-                              })
-                              .catch(err => {
-                                sendErrorResponse(res, 500, '', `Failed to find tags ${JSON.stringify(err)}`)
-                              })
-                          } else {
-                            sendErrorResponse(res, 500, '', `Failed to send survey ${JSON.stringify(messageCreative.description)}`)
-                          }
-                        })
-                        .catch(err => {
-                          sendErrorResponse(res, 500, '', `Failed to send survey ${JSON.stringify(err)}`)
-                        })
-                    } else {
-                      if (req.body.isList === true) {
-                        callApi.callApi(`lists/query`, 'post', ListFindCriteria)
+                      let pageSurveyData = {
+                        pageId: page.pageId,
+                        userId: req.user._id,
+                        surveyId: req.body._id,
+                        seen: false,
+                        sent: false,
+                        companyId: req.user.companyId
+                      }
+                      let reportObj = {
+                        successful: 0,
+                        unsuccessful: 0,
+                        errors: []
+                      }
+                      if (req.body.isList) {
+                        utility.callApi(`lists/query`, 'post', surveyLogicLayer.ListFindCriteria(req.body, req.user))
                           .then(lists => {
-                            let subsFindCriteria = {pageId: page._id, companyId: page.companyId}
-                            let listData = []
-                            if (lists.length > 1) {
-                              for (let i = 0; i < lists.length; i++) {
-                                for (let j = 0; j < lists[i].content.length; j++) {
-                                  if (exists(listData, lists[i].content[j]) === false) {
-                                    listData.push(lists[i].content[j])
-                                  }
-                                }
-                              }
-                              subsFindCriteria = _.merge(subsFindCriteria, {
-                                _id: {
-                                  $in: listData
-                                }
-                              })
-                            } else {
-                              subsFindCriteria = _.merge(subsFindCriteria, {
-                                _id: {
-                                  $in: lists[0].content
-                                }
-                              })
-                            }
-                            let surveyData = {
-                              survey,
-                              first_question,
-                              buttons
-                            }
-                            sendToSubscribers(req, res, subsFindCriteria, page, surveyData, planUsage, companyUsage, abort)
+                            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
+                            sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                            sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                           })
                           .catch(error => {
-                            sendErrorResponse(res, 500, error)
+                            logger.serverLog(TAG, error)
+                            sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
                           })
                       } else {
-                        let subscriberFindCriteria = {
-                          pageId: page._id,
-                          companyId: page.companyId,
-                          isSubscribed: true
-                        }
-                        if (req.body.isSegmented) {
-                          if (req.body.segmentationGender.length > 0) {
-                            subscriberFindCriteria = _.merge(subscriberFindCriteria,
-                              {
-                                gender: {
-                                  $in: req.body.segmentationGender
-                                }
-                              })
-                          }
-                          if (req.body.segmentationLocale.length > 0) {
-                            subscriberFindCriteria = _.merge(subscriberFindCriteria, {
-                              locale: {
-                                $in: req.body.segmentationLocale
-                              }
+                        let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+                        if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
+                          utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+                            .then(tags => {
+                              let tagIds = tags.map((t) => t._id)
+                              utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                                .then(tagSubscribers => {
+                                  if (tagSubscribers.length > 0) {
+                                    let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                                    subsFindCriteria['_id'] = {$in: subscriberIds}
+                                    sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                    sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                                  } else {
+                                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                  }
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, err)
+                                  sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+                                })
                             })
-                          }
+                            .catch(err => {
+                              logger.serverLog(TAG, err)
+                              sendErrorResponse(res, 500, 'Failed to fetch tags')
+                            })
+                        } else {
+                          sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                          sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                         }
-                        let surveyData = {
-                          survey,
-                          first_question,
-                          buttons
-                        }
-                        sendToSubscribers(req, res, subscriberFindCriteria, page, surveyData, planUsage, companyUsage, abort)
                       }
-                    }
-                  } else {
-                    sendErrorResponse(res, 404, '', 'Survey Questions not found')
-                  }
-                })
-                .catch(error => {
-                  sendErrorResponse(res, 500, error)
-                })
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, error)
-            })
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to fetch connected user ${error}`)
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch page ${error}`)
-    })
-}
-
-function sendToSubscribers (req, res, subsFindCriteria, page, surveyData, planUsage, companyUsage, abort) {
-  callApi.callApi(`subscribers/query`, 'post', subsFindCriteria)
-    .then(subscribers => {
-      if (subscribers.length === 0) {
-        sendErrorResponse(res, 404, '', `No subscribers match the selected criteria`)
+                    })
+                    .catch(err => {
+                      logger.serverLog(TAG, err, 'error')
+                      sendErrorResponse(res, 500, 'Failed to fetch survey')
+                    })
+                } else {
+                  sendErrorResponse(res, 500, 'Survey Questions not found!')
+                }
+              })
+              .catch(err => {
+                logger.serverLog(TAG, err, 'error')
+                sendErrorResponse(res, 500, 'Failed to fetch survey questions')
+              })
+          })
+          .catch(err => {
+            logger.serverLog(TAG, err, 'error')
+            sendErrorResponse(res, 500, 'Failed to fetch user')
+          })
+      } else {
+        sendErrorResponse(res, 500, 'Page not found!')
       }
-      utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
-        subscribers = taggedSubscribers
-        utility.applySurveyFilterIfNecessary(req, subscribers, (repliedSubscribers) => {
-          subscribers = repliedSubscribers
-          for (let j = 0; j < subscribers.length && !abort; j++) {
-            callApi.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: req.user.companyId}, newPayload: { $inc: { surveys: 1 } }, options: {}})
-              .then(updated => {
-                if (planUsage.surveys !== -1 && companyUsage.surveys >= planUsage.surveys) {
-                  abort = true
-                }
-                const messageData = {
-                  attachment: {
-                    type: 'template',
-                    payload: {
-                      template_type: 'button',
-                      text: `${surveyData.survey.description}\n${surveyData.first_question.statement}`,
-                      buttons: surveyData.buttons
-                    }
-                  },
-                  metadata: 'SENT_FROM_KIBOPUSH'
-                }
-                const data = {
-                  messaging_type: 'MESSAGE_TAG',
-                  recipient: JSON.stringify({id: subscribers[j].senderId}), // this is the subscriber id
-                  message: JSON.stringify(messageData),
-                  tag: 'NON_PROMOTIONAL_SUBSCRIPTION'
-                }
-
-                // checks the age of function using callback
-                compUtility.checkLastMessageAge(subscribers[j].senderId, req, (err, isLastMessage) => {
-                  if (err) {
-                    return logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err), 'error')
-                  }
-                  if (isLastMessage) {
-                    logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data), 'debug')
-                    needle.post(
-                      `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
-                      data, (err, resp) => {
-                        if (err) {
-                          sendErrorResponse(res, 500, JSON.stringify(err))
-                        }
-                        if (resp.body.error) {
-                          sendOpAlert(resp.body.error, 'surveys controller in kiboengage', page._id, page.userId, page.companyId)
-                        }
-                        messageData.componentType = 'survey'
-                        let message = preparePayload(req.user, subscribers[j], page, messageData)
-                        saveLiveChat(message)
-                        require('../../global/messageStatistics').record('surveys')
-                        let surveyPage = {
-                          pageId: page.pageId,
-                          userId: req.user._id,
-                          subscriberId: subscribers[j].senderId,
-                          surveyId: req.body._id,
-                          seen: false,
-                          sent: false,
-                          companyId: req.user.companyId
-                        }
-
-                        SurveyPageDataLayer.createForSurveyPage(surveyPage)
-                          .then(success => {
-                            require('./../../../config/socketio').sendMessageToClient({
-                              room_id: req.user.companyId._id,
-                              body: {
-                                action: 'survey_send',
-                                payload: {
-                                  survey_id: surveyData.survey._id,
-                                  user_id: req.user._id,
-                                  user_name: req.user.name,
-                                  company_id: req.user.companyId
-                                }
-                              }
-                            })
-                            if (j === subscribers.length - 1 || abort) {
-                              sendSuccessResponse(res, 200, 'Survey sent successfully.')
-                            }
-                          })
-                          .catch(error => {
-                            sendErrorResponse(res, 500, error)
-                          })
-                      })
-                  } else {
-                    logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ', 'debug')
-                    let timeNow = new Date()
-                    let automatedQueueMessage = {
-                      automatedMessageId: req.body._id,
-                      subscriberId: subscribers[j]._id,
-                      companyId: req.user.companyId,
-                      type: 'survey',
-                      scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)
-                    }
-
-                    AutomationQueueDataLayer.createAutomationQueueObject(automatedQueueMessage)
-                      .then(success => {
-                        if (j === subscribers.length - 1 || abort) {
-                          sendSuccessResponse(res, 200, 'Survey sent successfully.')
-                        }
-                      })
-                      .catch(error => {
-                        sendErrorResponse(res, 500, error)
-                      })
-                  }
-                })
-              })
-              .catch(error => {
-                sendErrorResponse(res, 500, error)
-              })
-          }
-        })
-      })
     })
-    .catch(error => {
-      sendErrorResponse(res, 500, error)
+    .catch(err => {
+      logger.serverLog(TAG, err, 'error')
+      sendErrorResponse(res, 500, 'Failed to fetch page')
     })
 }
 

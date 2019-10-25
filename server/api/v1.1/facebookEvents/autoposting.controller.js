@@ -4,7 +4,8 @@ const AutopostingMessagesDataLayer = require('../autopostingMessages/autoposting
 const autopostingLogicLayer = require('./autoposting.logiclayer')
 const TAG = 'api/v1/facebookEvents/autoposting.controller.js'
 const utility = require('../utility')
-const {sentUsinInterval} = require('./utility')
+const { prepareSubscribersCriteria } = require('../../global/utility')
+const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.autoposting = function (req, res) {
   res.status(200).json({
@@ -38,7 +39,38 @@ exports.autoposting = function (req, res) {
                       .then(savedMsg => {
                         autopostingLogicLayer.handleFacebookPayload(req.body.entry[0].changes[0].value, savedMsg, page)
                           .then(messageData => {
-                            sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
+                            let reportObj = {
+                              successful: 0,
+                              unsuccessful: 0,
+                              errors: []
+                            }
+                            let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+                            if (postingItem.isSegmented && postingItem.segmentationTags.length > 0) {
+                              utility.callApi(`tags/query`, 'post', { companyId: page.companyId, tag: { $in: postingItem.segmentationTags } })
+                                .then(tags => {
+                                  let tagIds = tags.map((t) => t._id)
+                                  utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                                    .then(tagSubscribers => {
+                                      if (tagSubscribers.length > 0) {
+                                        let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                                        subsFindCriteria['_id'] = {$in: subscriberIds}
+                                        sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                                        logger.serverLog(TAG, 'Conversation sent successfully!')
+                                      } else {
+                                        logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
+                                      }
+                                    })
+                                    .catch(err => {
+                                      logger.serverLog(TAG, err)
+                                    })
+                                })
+                                .catch(err => {
+                                  logger.serverLog(TAG, err)
+                                })
+                            } else {
+                              sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                              logger.serverLog(TAG, 'Conversation sent successfully!')
+                            }
                           })
                           .catch(err => {
                             logger.serverLog(`Failed to prepare data`, err)

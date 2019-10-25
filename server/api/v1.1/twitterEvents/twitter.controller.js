@@ -5,9 +5,10 @@ const AutoPostingMessage = require('../autopostingMessages/autopostingMessages.d
 const utility = require('../utility')
 const _ = require('lodash')
 const logicLayer = require('./logiclayer')
-const {sentUsinInterval} = require('../facebookEvents/utility')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const { prepareSubscribersCriteria } = require('../../global/utility')
+const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.findAutoposting = function (req, res) {
   logger.serverLog(TAG, `in findAutoposting ${JSON.stringify(req.body)}`)
@@ -137,7 +138,38 @@ const sendToMessenger = (postingItem, page, req) => {
           .then(savedMsg => {
             logicLayer.handleTwitterPayload(req, savedMsg, page, 'messenger')
               .then(messageData => {
-                sentUsinInterval(messageData, page, postingItem, subscribersCount, req, 3000)
+                let reportObj = {
+                  successful: 0,
+                  unsuccessful: 0,
+                  errors: []
+                }
+                let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+                if (postingItem.isSegmented && postingItem.segmentationTags.length > 0) {
+                  utility.callApi(`tags/query`, 'post', { companyId: page.companyId, tag: { $in: postingItem.segmentationTags } })
+                    .then(tags => {
+                      let tagIds = tags.map((t) => t._id)
+                      utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                        .then(tagSubscribers => {
+                          if (tagSubscribers.length > 0) {
+                            let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                            subsFindCriteria['_id'] = {$in: subscriberIds}
+                            sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                            logger.serverLog(TAG, 'Conversation sent successfully!')
+                          } else {
+                            logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
+                          }
+                        })
+                        .catch(err => {
+                          logger.serverLog(TAG, err)
+                        })
+                    })
+                    .catch(err => {
+                      logger.serverLog(TAG, err)
+                    })
+                } else {
+                  sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                  logger.serverLog(TAG, 'Conversation sent successfully!')
+                }
               })
               .catch(err => {
                 logger.serverLog(TAG, `Failed to prepare data ${err}`, 'error')
