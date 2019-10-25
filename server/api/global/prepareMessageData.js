@@ -1,7 +1,17 @@
 exports.facebook = (body, fname, lname) => {
   let payload = {}
   let text = body.text
-  if (body.componentType === 'text' && !body.buttons) {
+  if (body.componentType === 'polls') {
+    payload = {
+      text: text,
+      quick_replies: body.quick_replies,
+      metadata: body.metadata
+    }
+  } else if (body.componentType === 'survey') {
+    payload = {
+      attachment: body.attachment
+    }
+  } else if (body.componentType === 'text' && !body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
       text = text.replace(
         '{{user_full_name}}', fname + ' ' + lname)

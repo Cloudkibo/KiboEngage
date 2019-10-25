@@ -92,3 +92,16 @@ exports.pageFindCriteria = function (req) {
   }
   return pagesFindCriteria
 }
+
+exports.ListFindCriteria = function (body, user) {
+  let ListFindCriteria = {
+    companyId: user.companyId
+  }
+  ListFindCriteria = _.merge(ListFindCriteria,
+    {
+      _id: {
+        $in: body.segmentationList
+      }
+    })
+  return ListFindCriteria
+}
