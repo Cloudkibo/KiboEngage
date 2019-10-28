@@ -467,6 +467,9 @@ function prepareMessageData (subscriberId, body, fname, lname) {
       'text': text,
       'metadata': 'This is a meta data'
     }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
     return payload
   } else if (body.componentType === 'text' && body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
@@ -491,16 +494,33 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         }
       }
     }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
     return payload
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
-    payload = {
-      'attachment': {
-        'type': body.componentType,
-        'payload': {
-          'attachment_id': body.fileurl.attachment_id
+    if (body.fileurl && body.fileurl.attachment_id) {
+      payload = {
+        'attachment': {
+          'type': body.componentType,
+          'payload': {
+            'attachment_id': body.fileurl.attachment_id
+          }
         }
       }
+    } else {
+      payload = {
+        'attachment': {
+          'type': body.componentType,
+          'payload': {
+            'url': body.fileurl.url
+          }
+        }
+      }
+    }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
     }
     return payload
     // todo test this one. we are not removing as we need to keep it for live chat
@@ -534,6 +554,9 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           }
         }
       }
+      if (body.quickReplies && body.quickReplies.length > 0) {
+        payload.quick_replies = body.quickReplies
+      }
       return payload
     } else {
       payload = {
@@ -551,6 +574,9 @@ function prepareMessageData (subscriberId, body, fname, lname) {
             ]
           }
         }
+      }
+      if (body.quickReplies && body.quickReplies.length > 0) {
+        payload.quick_replies = body.quickReplies
       }
       return payload
     }
@@ -579,6 +605,9 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         }
       }
     }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
     return payload
   } else if (body.componentType === 'media') {
     payload = {
@@ -595,6 +624,9 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           ]
         }
       }
+    }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
     }
     return payload
   }

@@ -74,6 +74,15 @@ exports.facebookBroadcast = (body) => {
           }
         }
       }
+      if (body.payload[i].quickReplies && body.payload[i].quickReplies.length > 0) {
+        for (let a = 0; a < body.payload[i].quickReplies.length; a++) {
+          if (body.payload[i].quickReplies[a].content_type === undefined ||
+            body.payload[i].quickReplies[a].content_type === '') return false
+          if (body.payload[i].quickReplies[a].title === undefined ||
+            body.payload[i].quickReplies[a].title === '') return false
+          if (body.payload[i].quickReplies[a].payload === undefined) return false
+        }
+      }
     }
   }
 
