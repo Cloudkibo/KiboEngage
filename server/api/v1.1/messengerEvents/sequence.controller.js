@@ -167,7 +167,12 @@ exports.subscribeToSequence = (req, res) => {
     status: 'success',
     description: `received the payload`
   })
-  let resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  let resp
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   let pageQuery = [
@@ -243,7 +248,12 @@ exports.unsubscribeFromSequence = (req, res) => {
     status: 'success',
     description: `received the payload`
   })
-  let resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  let resp
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   let pageQuery = [

@@ -74,6 +74,7 @@ const _prepareBatchData = (module, payload, subscribers, page, user) => {
 const _prepareMessageData = (module, item, subscriber) => {
   let message = ['autoposting'].includes(module) ? JSON.stringify(item)
     : prepareMessageData.facebook(item, subscriber.firstName, subscriber.lastName)
+  console.log('prepareMessageData', message)
   return message
 }
 

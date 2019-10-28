@@ -16,6 +16,7 @@ const menuController = require('./menu.controller')
 const welcomeMessageController = require('./welcomeMessage.controller')
 const messengerAdsController = require('./messengerAds.controller')
 const shopifyController = require('./shopify.controller')
+const templatesController = require('./templates.controller')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
@@ -35,5 +36,6 @@ router.post('/welcomeMessage', auth.isItWebhookServer(), welcomeMessageControlle
 router.post('/messengerAdsReply', auth.isItWebhookServer(), messengerAdsController.index)
 router.post('/shopify', auth.isItWebhookServer(), shopifyController.shopify)
 router.post('/shopifyNewSubscriber', auth.isItWebhookServer(), shopifyController.shopifyNewSubscriber)
+router.post('/sendTemplateMessage', auth.isItWebhookServer(), templatesController.index)
 
 module.exports = router
