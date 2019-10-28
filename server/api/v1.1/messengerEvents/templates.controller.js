@@ -27,7 +27,6 @@ exports.index = function (req, res) {
   }
   callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
     .then(template => {
-      console.log('templateFound', template)
       callApi(`pages/aggregate`, 'post', aggregateData)
         .then(page => {
           page = page[0]
