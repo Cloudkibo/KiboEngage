@@ -518,4 +518,3 @@ exports.subscribertags = function (req, res) {
       sendErrorResponse(res, 500, '', `Internal server error in fetching tag subscribers. ${err}`)
     })
 }
-exports.assignTagToSubscribers = assignTagToSubscribers
