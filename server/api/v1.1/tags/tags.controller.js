@@ -91,7 +91,7 @@ exports.create = function (req, res) {
                     if (label.body.error) {
                       if (label.body.error.code === 100) {
                         needle('get', `https://graph.facebook.com/v2.11/me/custom_labels?fields=name&access_token=${page.accessToken}`)
-                          .then(Tags => { 
+                          .then(Tags => {
                             let default_tag = Tags.body.data.filter(data => data.name === req.body.tag)
                             let tagPayload = {
                               tag: req.body.tag,
@@ -100,7 +100,7 @@ exports.create = function (req, res) {
                               pageId: page._id,
                               labelFbId: default_tag[0].id
                             }
-                            createTag(req, res, tagPayload, pages, i)            
+                            createTag(req, res, tagPayload, pages, i)
                           })
                           .catch(err => {
                             logger.serverLog(TAG, `Error at find  tags from facebook ${err}`, 'error')
@@ -121,7 +121,7 @@ exports.create = function (req, res) {
                         pageId: page._id,
                         labelFbId: label.body.id
                       }
-                      createTag(req, res, tagPayload, pages, i)            
+                      createTag(req, res, tagPayload, pages, i)
                     }
                   })
                   .catch(err => {
@@ -343,7 +343,7 @@ function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
           let tagPayload = tags[existsTag.index]
           facebookApiCaller('v2.11', `${tagPayload.labelFbId}/label?access_token=${subscriber.pageId.accessToken}`, 'post', {'user': subscriber.senderId})
             .then(assignedLabel => {
-              if (assignedLabel.body.error) { 
+              if (assignedLabel.body.error) {
                 sendOpAlert(assignedLabel.body.error, 'tags controller in kiboengage', '', req.user._id, req.user.companyId)
                 callback(assignedLabel.body.error)
               }
@@ -518,3 +518,4 @@ exports.subscribertags = function (req, res) {
       sendErrorResponse(res, 500, '', `Internal server error in fetching tag subscribers. ${err}`)
     })
 }
+exports.assignTagToSubscribers = assignTagToSubscribers
