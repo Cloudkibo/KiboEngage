@@ -9,7 +9,7 @@ exports.facebookBroadcast = (body) => {
   if (body.payload.length === 0) {
     return false
   } else {
-    for (let i = 0; i < body.payload.length; i++) {
+    for (let i = 0; i < (body.payload.length - 1); i++) {
       if (body.payload[i].componentType === undefined) return false
       if (body.payload[i].componentType === 'text') {
         if (body.payload[i].text === undefined ||
@@ -74,14 +74,15 @@ exports.facebookBroadcast = (body) => {
           }
         }
       }
-      if (body.payload[i].quickReplies && body.payload[i].quickReplies.length > 0) {
-        for (let a = 0; a < body.payload[i].quickReplies.length; a++) {
-          if (body.payload[i].quickReplies[a].content_type === undefined ||
-            body.payload[i].quickReplies[a].content_type === '') return false
-          if (body.payload[i].quickReplies[a].title === undefined ||
-            body.payload[i].quickReplies[a].title === '') return false
-          if (body.payload[i].quickReplies[a].payload === undefined) return false
-        }
+    }
+    let quickReplies = body.payload[body.payload.length - 1].quickReplies
+    if (quickReplies && quickReplies.length > 0) {
+      for (let a = 0; a < quickReplies.length; a++) {
+        if (quickReplies[a].content_type === undefined ||
+          quickReplies[a].content_type === '') return false
+        if (quickReplies[a].title === undefined ||
+          quickReplies[a].title === '') return false
+        if (quickReplies[a].payload === undefined) return false
       }
     }
   }
