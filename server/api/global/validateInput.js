@@ -82,7 +82,6 @@ exports.facebookBroadcast = (body) => {
           quickReplies[a].content_type === '') return false
         if (quickReplies[a].title === undefined ||
           quickReplies[a].title === '') return false
-        if (quickReplies[a].payload === undefined) return false
       }
     }
   }
