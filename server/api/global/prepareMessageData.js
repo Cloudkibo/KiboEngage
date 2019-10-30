@@ -27,6 +27,9 @@ exports.facebook = (body, fname, lname) => {
     payload = {
       'text': text
     }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
     return JSON.stringify(payload)
   } else if (body.componentType === 'text' && body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
@@ -51,6 +54,9 @@ exports.facebook = (body, fname, lname) => {
         }
       }
     }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
     payload = {
@@ -60,6 +66,9 @@ exports.facebook = (body, fname, lname) => {
           'attachment_id': body.fileurl.attachment_id
         }
       }
+    }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
     }
     return JSON.stringify(payload)
     // todo test this one. we are not removing as we need to keep it for live chat
@@ -111,6 +120,9 @@ exports.facebook = (body, fname, lname) => {
         }
       }
     }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
   } else if (body.componentType === 'gallery') {
     var galleryCards = []
     if (body.cards && body.cards.length > 0) {
@@ -136,6 +148,9 @@ exports.facebook = (body, fname, lname) => {
         }
       }
     }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
   } else if (body.componentType === 'media') {
     payload = {
       'attachment': {
@@ -151,6 +166,9 @@ exports.facebook = (body, fname, lname) => {
           ]
         }
       }
+    }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
     }
   }
   return JSON.stringify(payload)
