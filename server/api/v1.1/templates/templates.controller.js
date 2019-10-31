@@ -17,43 +17,58 @@ exports.allPolls = function (req, res) {
 exports.getAllPolls = function (req, res) {
   if (req.body.first_page === 'first') {
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount(findCriteria)
-      .then(pollsCount => {
-        dataLayer.pollTemplateaggregateLimit({findCriteria, req})
-          .then(polls => {
-            sendSuccessResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''})
+    dataLayer.pollTemplateaggregateCount({})
+      .then(totalCount => {
+        dataLayer.pollTemplateaggregateCount(findCriteria)
+          .then(pollsCount => {
+            dataLayer.pollTemplateaggregateLimit({findCriteria, req})
+              .then(polls => {
+                sendSuccessResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+              })
+              .catch(err => {
+                sendErrorResponse(res, 500, JSON.stringify(err))
+              })
           })
           .catch(err => {
             sendErrorResponse(res, 500, JSON.stringify(err))
           })
       })
-      .catch(err => {
-        sendErrorResponse(res, 500, JSON.stringify(err))
-      })
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount(findCriteria)
-      .then(pollsCount => {
-        dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-          .then(polls => {
-            sendErrorResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : ''})
+    dataLayer.pollTemplateaggregateCount({})
+      .then(totalCount => {
+        dataLayer.pollTemplateaggregateCount(findCriteria)
+          .then(pollsCount => {
+            dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+              .then(polls => {
+                sendErrorResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+              })
+              .catch(error => {
+                sendErrorResponse(res, 500, JSON.stringify(error))
+              })
           })
           .catch(error => {
             sendErrorResponse(res, 500, JSON.stringify(error))
           })
       })
-      .catch(error => {
-        sendErrorResponse(res, 500, JSON.stringify(error))
+      .catch(err => {
+        sendErrorResponse(res, 500, JSON.stringify(err))
       })
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.pollTemplateaggregateCount(findCriteria)
-      .then(pollsCount => {
-        dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-          .then(polls => {
-            sendSuccessResponse(res, 200, {polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : ''})
+    dataLayer.pollTemplateaggregateCount({})
+      .then(totalCount => {
+        dataLayer.pollTemplateaggregateCount(findCriteria)
+          .then(pollsCount => {
+            dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+              .then(polls => {
+                sendSuccessResponse(res, 200, {polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+              })
+              .catch(error => {
+                sendErrorResponse(res, 500, JSON.stringify(error))
+              })
           })
           .catch(error => {
             sendErrorResponse(res, 500, JSON.stringify(error))
@@ -68,11 +83,17 @@ exports.getAllPolls = function (req, res) {
 exports.getAllSurveys = function (req, res) {
   if (req.body.first_page === 'first') {
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.surveyTemplateaggregateCount(findCriteria)
-      .then(surveysCount => {
-        dataLayer.surveyTemplateaggregateLimit({findCriteria, req})
-          .then(surveys => {
-            sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0})
+    dataLayer.surveyTemplateaggregateCount({})
+      .then(totalCount => {
+        dataLayer.surveyTemplateaggregateCount(findCriteria)
+          .then(surveysCount => {
+            dataLayer.surveyTemplateaggregateLimit({findCriteria, req})
+              .then(surveys => {
+                sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0, totalCount: totalCount[0] ? totalCount[0].count : 0})
+              })
+              .catch(err => {
+                sendErrorResponse(res, 500, err)
+              })
           })
           .catch(err => {
             sendErrorResponse(res, 500, err)
@@ -84,11 +105,17 @@ exports.getAllSurveys = function (req, res) {
   } else if (req.body.first_page === 'next') {
     let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.surveyTemplateaggregateCount(findCriteria)
-      .then(surveysCount => {
-        dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-          .then(surveys => {
-            sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : ''})
+    dataLayer.surveyTemplateaggregateCount({})
+      .then(totalCount => {
+        dataLayer.surveyTemplateaggregateCount(findCriteria)
+          .then(surveysCount => {
+            dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+              .then(surveys => {
+                sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+              })
+              .catch(err => {
+                sendErrorResponse(res, 500, err)
+              })
           })
           .catch(err => {
             sendErrorResponse(res, 500, err)
@@ -100,11 +127,17 @@ exports.getAllSurveys = function (req, res) {
   } else if (req.body.first_page === 'previous') {
     let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
     let findCriteria = logicLayer.getCriterias(req)
-    dataLayer.surveyTemplateaggregateCount(findCriteria)
-      .then(surveysCount => {
-        dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-          .then(surveys => {
-            sendSuccessResponse(res, 200, {surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : ''})
+    dataLayer.surveyTemplateaggregateCount({})
+      .then(totalCount => {
+        dataLayer.surveyTemplateaggregateCount(findCriteria)
+          .then(surveysCount => {
+            dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+              .then(surveys => {
+                sendSuccessResponse(res, 200, {surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+              })
+              .catch(err => {
+                sendErrorResponse(res, 500, err)
+              })
           })
           .catch(err => {
             sendErrorResponse(res, 500, err)
@@ -475,54 +508,79 @@ exports.getAllBroadcasts = function (req, res) {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      if (req.body.first_page === 'first') {
-        let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
-        dataLayer.broadcastTemplateaggregateCount(findCriteria)
-          .then(broadcastsCount => {
-            dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
-              .then(broadcasts => {
-                sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''})
-              })
-              .catch(err => {
-                sendErrorResponse(res, 500, err)
-              })
-          })
-          .catch(err => {
-            sendErrorResponse(res, 500, err)
-          })
-      } else if (req.body.first_page === 'next') {
-        let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-        let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
-        dataLayer.broadcastTemplateaggregateCount(findCriteria)
-          .then(broadcastsCount => {
-            dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-              .then(broadcasts => {
-                sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''})
-              })
-              .catch(err => {
-                sendErrorResponse(res, 500, err)
-              })
-          })
-          .catch(err => {
-            sendErrorResponse(res, 500, err)
-          })
-      } else if (req.body.first_page === 'previous') {
-        let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
-        let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
-        dataLayer.broadcastTemplateaggregateCount(findCriteria)
-          .then(broadcastsCount => {
-            dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
-              .then(broadcasts => {
-                sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: broadcasts.length > 0 ? broadcastsCount[0].count : ''})
-              })
-              .catch(err => {
-                sendErrorResponse(res, 500, err)
-              })
-          })
-          .catch(err => {
-            sendErrorResponse(res, 500, err)
-          })
-      }
+      dataLayer.broadcastTemplateaggregateCount({createdBySuperUser: true})
+        .then(superUserCount => {
+          dataLayer.broadcastTemplateaggregateCount({companyId: companyUser.companyId, createdBySuperUser: false})
+            .then(userCount => {
+              if (req.body.first_page === 'first') {
+                let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+                dataLayer.broadcastTemplateaggregateCount(findCriteria)
+                  .then(broadcastsCount => {
+                    dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
+                      .then(broadcasts => {
+                        sendSuccessResponse(res, 200, {
+                          broadcasts: broadcasts,
+                          count: broadcasts.length > 0 ? broadcastsCount[0].count : '',
+                          superUserCount: superUserCount[0] ? superUserCount[0].count : 0,
+                          userCount: userCount[0] ? userCount[0].count : 0
+                        })
+                      })
+                      .catch(err => {
+                        sendErrorResponse(res, 500, err)
+                      })
+                  })
+                  .catch(err => {
+                    sendErrorResponse(res, 500, err)
+                  })
+              } else if (req.body.first_page === 'next') {
+                let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
+                let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+                dataLayer.broadcastTemplateaggregateCount(findCriteria)
+                  .then(broadcastsCount => {
+                    dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+                      .then(broadcasts => {
+                        sendSuccessResponse(res, 200, {
+                          broadcasts: broadcasts,
+                          count: broadcasts.length > 0 ? broadcastsCount[0].count : '',
+                          superUserCount: superUserCount[0] ? superUserCount[0].count : 0,
+                          userCount: userCount[0] ? userCount[0].count : 0})
+                      })
+                      .catch(err => {
+                        sendErrorResponse(res, 500, err)
+                      })
+                  })
+                  .catch(err => {
+                    sendErrorResponse(res, 500, err)
+                  })
+              } else if (req.body.first_page === 'previous') {
+                let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
+                let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+                dataLayer.broadcastTemplateaggregateCount(findCriteria)
+                  .then(broadcastsCount => {
+                    dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+                      .then(broadcasts => {
+                        sendSuccessResponse(res, 200, {
+                          broadcasts: broadcasts,
+                          count: broadcasts.length > 0 ? broadcastsCount[0].count : '',
+                          superUserCount: superUserCount[0] ? superUserCount[0].count : 0,
+                          userCount: userCount[0] ? userCount[0].count : 0})
+                      })
+                      .catch(err => {
+                        sendErrorResponse(res, 500, err)
+                      })
+                  })
+                  .catch(err => {
+                    sendErrorResponse(res, 500, err)
+                  })
+              }
+            })
+            .catch(err => {
+              sendErrorResponse(res, 500, err)
+            })
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, err)
+        })
     })
 }
 
