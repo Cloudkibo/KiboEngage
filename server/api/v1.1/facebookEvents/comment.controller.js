@@ -10,55 +10,69 @@ exports.sendCommentReply = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
- // logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`, 'debug')
-  let send = true
   let postId = req.body.entry[0].changes[0].value.post_id
   let verb = req.body.entry[0].changes[0].value.verb
-  // comment_capture work
-  utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
-    .then(post => {
-      post = post[0]
-      let newPayload = req.body.entry[0].changes[0].value.verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: -1 } }
-      utility.callApi(`comment_capture/update`, 'put', {query: { post_id: postId }, newPayload: newPayload, options: {}})
-        .then(updated => {
-          if (post && post.pageId) {
-            send = commentCaptureLogicLayer.getSendValue(post, req.body)
-            logger.serverLog(TAG,
-              `send value ${JSON.stringify(send)}`, 'debug')
-            if (send) {
-              needle.get(
-                `https://graph.facebook.com/v2.10/${post.pageId.pageId}?fields=access_token&access_token=${post.userId.facebookInfo.fbToken}`,
-                (err, resp) => {
-                  if (err) {
-                    logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
-                  }
-                  if (resp.body.error) {
-                    sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
-                  }
-                  let messageData = { message: post.reply }
-                  needle.post(
-                    `https://graph.facebook.com/${req.body.entry[0].changes[0].value.comment_id}/private_replies?access_token=${resp.body.access_token}`,
-                    messageData, (err, resp) => {
-                      if (err) {
-                        logger.serverLog(TAG, err, 'error')
-                      }
-                      if (resp.body.error) {
-                        sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
-                      }
-                      logger.serverLog(TAG,
-                        `response from comment on facebook 2 ${JSON.stringify(resp.body)}`)
-                    })
-                })
-            }
-          }
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
-        })
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch facebook posts ${JSON.stringify(err)}`, 'error')
-    })
+  forTweetPost(postId, verb)
+  forCommentCapturePost(postId, verb, req.body)
+}
+
+// exports.sendCommentReply = function (req, res) {
+//   res.status(200).json({
+//     status: 'success',
+//     description: `received the payload`
+//   })
+//  // logger.serverLog(TAG, `in comment capture ${JSON.stringify(req.body)}`, 'debug')
+//   let send = true
+//   let postId = req.body.entry[0].changes[0].value.post_id
+//   let verb = req.body.entry[0].changes[0].value.verb
+//   // comment_capture work
+//   utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
+//     .then(post => {
+//       post = post[0]
+//       let newPayload = req.body.entry[0].changes[0].value.verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: -1 } }
+//       utility.callApi(`comment_capture/update`, 'put', {query: { post_id: postId }, newPayload: newPayload, options: {}})
+//         .then(updated => {
+//           if (post && post.pageId) {
+//             send = commentCaptureLogicLayer.getSendValue(post, req.body)
+//             logger.serverLog(TAG,
+//               `send value ${JSON.stringify(send)}`, 'debug')
+//             if (send) {
+//               needle.get(
+//                 `https://graph.facebook.com/v2.10/${post.pageId.pageId}?fields=access_token&access_token=${post.userId.facebookInfo.fbToken}`,
+//                 (err, resp) => {
+//                   if (err) {
+//                     logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
+//                   }
+//                   if (resp.body.error) {
+//                     sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
+//                   }
+//                   let messageData = { message: post.reply }
+//                   needle.post(
+//                     `https://graph.facebook.com/${req.body.entry[0].changes[0].value.comment_id}/private_replies?access_token=${resp.body.access_token}`,
+//                     messageData, (err, resp) => {
+//                       if (err) {
+//                         logger.serverLog(TAG, err, 'error')
+//                       }
+//                       if (resp.body.error) {
+//                         sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
+//                       }
+//                       logger.serverLog(TAG,
+//                         `response from comment on facebook 2 ${JSON.stringify(resp.body)}`)
+//                     })
+//                 })
+//             }
+//           }
+//         })
+//         .catch(err => {
+//           logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+//         })
+//     })
+//     .catch(err => {
+//       logger.serverLog(TAG, `Failed to fetch facebook posts ${JSON.stringify(err)}`, 'error')
+//     })
+// }
+
+function forTweetPost (postId, verb) {
   // increment comment count for tweet post
   let updateData = {
     purpose: 'updateAll',
@@ -68,14 +82,70 @@ exports.sendCommentReply = function (req, res) {
     updated: verb === 'add' ? {$inc: { comments: 1 }} : {$inc: { comments: -1 }},
     options: {}
   }
-  console.log('updateData', updateData)
   utility.callApi('autoposting_fb_post', 'put', updateData, 'kiboengage')
     .then(updated => {
-      console.log('comments updated successfully')
-      //logger.serverLog(TAG, 'Likes count updated successfully!')
     })
     .catch(err => {
-      console.log('comments not  updated', err)
       logger.serverLog(TAG, `Failed to update likes count ${err}`, 'error')
     })
+}
+function forCommentCapturePost (postId, verb, body) {
+  let pageId = postId.split('_')[0]
+  utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
+    .then(post => {
+      post = post[0]
+      if (post) {
+        updateCommentsCount(verb, post._id)
+        sendReply(post, body)
+      } else {
+        utility.callApi(`pages/query`, 'post', {pageId: pageId, connected: true})
+          .then(page => {
+            page = page[0]
+            if (page) {
+              utility.callApi(`comment_capture/query`, 'post', {pageId: page._id, post_id: {$exists: false}})
+                .then(post => {
+                  post = post[0]
+                  if (post) {
+                    updateCommentsCount(verb, post._id)
+                    sendReply(post, body)
+                  }
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to fetch post1 ${JSON.stringify(err)}`, 'error')
+                })
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch post ${JSON.stringify(err)}`, 'error')
+    })
+}
+function updateCommentsCount (verb, postId) {
+  let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: -1 } }
+  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+    .then(updated => {
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+    })
+}
+function sendReply (post, body) {
+  let send = true
+  send = commentCaptureLogicLayer.getSendValue(post, body)
+  if (send) {
+    let messageData = { message: post.reply }
+    needle.post(
+      `https://graph.facebook.com/${body.entry[0].changes[0].value.comment_id}/private_replies?access_token=${post.pageId.accessToken}`,
+      messageData, (err, resp) => {
+        if (err) {
+          logger.serverLog(TAG, err, 'error')
+        } else if (resp.body.error) {
+          sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
+        }
+      })
+  }
 }

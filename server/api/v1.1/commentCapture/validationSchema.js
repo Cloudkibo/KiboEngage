@@ -6,6 +6,10 @@ Now the middleware will automatically send error response if the payload fails
 exports.postPayload = {
   type: 'object',
   properties: {
+    title: {
+      type: 'string',
+      required: true
+    },
     pageId: {
       type: 'string',
       required: true
@@ -30,6 +34,10 @@ exports.postPayload = {
         type: 'string',
         required: true
       }
+    },
+    captureOption: {
+      type: 'string',
+      required: true
     }
   }
 }
