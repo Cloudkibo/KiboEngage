@@ -3,6 +3,7 @@ This file will contain the functions for logic layer.
 By separating it from controller, we are separating the concerns.
 Thus we can use it from other non express callers like cron etc
 */
+const URL = require('url')
 
 exports.setMessage = function (payload) {
   let messageData = {}
@@ -20,17 +21,34 @@ exports.setMessage = function (payload) {
   })
   return messageData
 }
-exports.getPostId = function (data, videoId) {
-  return new Promise(function (resolve, reject) {
-    let postId = ''
-    for (let i = 0; i < data.length; i++) {
-      if (data.type === 'video' && data.object_id === videoId) {
-        postId = data.id
-        break
+exports.getPostId = function (url) {
+  let postId = ''
+  let pathname
+  let result = URL.parse(url)
+  if (result.host === 'www.facebook.com' && result.query && result.pathname) {
+    let query = result.query.split('&')
+    if (query && query.length > 0) {
+      for (let i = 0; i < query.length; i++) {
+        if (query[i].includes('fbid=')) {
+          postId = query[i].substring(query[i].indexOf('fbid=') + 5)
+          break
+        } else if (query[i].includes('v=')) {
+          postId = query[i].substring(query[i].indexOf('v=') + 2)
+          break
+        } else {
+          pathname = result.pathname.split('/')
+          if (pathname[pathname.length - 1] !== '') {
+            postId = pathname[pathname.length - 1]
+            break
+          } else {
+            postId = pathname[pathname.length - 2]
+            break
+          }
+        }
       }
     }
-    resolve(postId)
-  })
+  }
+  return postId
 }
 exports.preparePayloadToPost = function (payload) {
   let textComponents = payload.filter(item => item.componentType === 'text')
@@ -54,7 +72,6 @@ function handleImage (imageComponents, textComponents) {
       type: 'image',
       payload: {
         'url': imageComponents[0].url
-        // 'caption': `${text}\n\nTweet link: https://twitter.com/${screenName}/status/${tweetId}`
       }
     }
     if (textComponents.length > 0) {
@@ -68,7 +85,6 @@ function handleImage (imageComponents, textComponents) {
     payload = {
       type: 'images',
       payload: {
-        // 'message': `${text}\n\nTweet link: https://twitter.com/${screenName}/status/${tweetId}`,
         'link': `https://kibopush.com`,
         'child_attachments': links
       }
@@ -123,3 +139,8 @@ function handleVideo (videoComponents, textComponents) {
   }
   return payload
 }
+
+exports.handleVideo = handleVideo
+exports.getMetaUrls = getMetaUrls
+exports.handleText = handleText
+exports.handleImage = handleImage

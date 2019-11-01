@@ -5,7 +5,6 @@ const utility = require('../utility/index.js')
 const logicLayer = require('./commentCapture.logiclayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
-const URL = require('url')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.index = function (req, res) {
@@ -81,7 +80,6 @@ function getPayloadToSave (user, body) {
           reject(err)
         })
     } else if (body.captureOption === 'new') {
-      // let messageData = logicLayer.setMessage(req.body.payload)
       postOnFacebook(body.payload, body.pageId)
         .then(postId => {
           payloadToSave.post_id = postId
@@ -96,7 +94,7 @@ function getPayloadToSave (user, body) {
 
 function getExistingPostId (url, pageId) {
   return new Promise(function (resolve, reject) {
-    let postId = getPostId(url)
+    let postId = logicLayer.getPostId(url)
     if (postId === '') {
       reject(new Error('Invalid URL'))
     } else {
@@ -225,34 +223,4 @@ exports.delete = function (req, res) {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to delete post ${JSON.stringify(error)}`)
     })
-}
-
-function getPostId (url) {
-  let postId = ''
-  let pathname
-  let result = URL.parse(url)
-  if (result.host === 'www.facebook.com' && result.query && result.pathname) {
-    let query = result.query.split('&')
-    if (query && query.length > 0) {
-      for (let i = 0; i < query.length; i++) {
-        if (query[i].includes('fbid=')) {
-          postId = query[i].substring(query[i].indexOf('fbid=') + 5)
-          break
-        } else if (query[i].includes('v=')) {
-          postId = query[i].substring(query[i].indexOf('v=') + 2)
-          break
-        } else {
-          pathname = result.pathname.split('/')
-          if (pathname[pathname.length - 1] !== '') {
-            postId = pathname[pathname.length - 1]
-            break
-          } else {
-            postId = pathname[pathname.length - 2]
-            break
-          }
-        }
-      }
-    }
-  }
-  return postId
 }
