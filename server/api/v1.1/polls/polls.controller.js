@@ -262,7 +262,7 @@ function populateResponses (responses, req) {
 }
 
 const _savePagePoll = (data) => {
-  PollPageDataLayer.createForBroadcastPage(data)
+  PollPageDataLayer.createForPollPage(data)
     .then(savedpagebroadcast => {
       require('../../global/messageStatistics').record('polls')
       logger.serverLog(TAG, 'page poll object saved in db')
