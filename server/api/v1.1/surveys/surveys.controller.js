@@ -385,7 +385,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                     .then(survey => {
                       const firstQuestion = questions[0]
                       const buttons = []
-                      const nextQuestionId = questions.length > 0 ? questions[1]._id : 'nil'
+                      const nextQuestionId = questions.length > 1 ? questions[1]._id : 'nil'
                       for (let x = 0; x < firstQuestion.options.length; x++) {
                         buttons.push({
                           type: 'postback',
