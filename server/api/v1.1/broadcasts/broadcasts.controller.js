@@ -708,6 +708,7 @@ exports.retrieveSubscribersCount = function (req, res) {
   let match = {
     pageId: req.body.pageId,
     companyId: req.user.companyId,
+    isSubscribed: true,
     lastMessagedAt: {
       $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
     }
