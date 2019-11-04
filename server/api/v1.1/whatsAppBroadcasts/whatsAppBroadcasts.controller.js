@@ -5,6 +5,7 @@ let config = require('./../../../config/environment')
 const logger = require('../../../components/logger')
 const TAG = 'whatsAppBroadcasts.controller.js'
 const async = require('async')
+let { sendOpAlert } = require('./../../global/operationalAlert')
 
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
@@ -65,6 +66,7 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
               })
           })
           .catch(error => {
+            sendOpAlert(error, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
             logger.serverLog(TAG, `error at sending message ${error}`, 'error')
           })
       }, ((contacts.length) * i + (j + 1)) * 1000)
