@@ -18,6 +18,8 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
+const mongoose = require('mongoose')
+const _ = require('lodash')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -439,6 +441,53 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                           })
                       } else {
                         let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+                        if (req.body.segmentationTags.length > 0 || req.body.segmentationSurvey.length > 0) {
+                          let requests = []
+                          requests.push(utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }))
+                          requests.push(surveyResponseDataLayer.genericFind({surveyId: {$in: req.body.segmentationSurvey}}))
+                          Promise.all(requests)
+                            .then(results => {
+                              let tagSubscribers = null
+                              let surveySubscribers = null
+                              if (req.body.segmentationTags.length > 0) {
+                                if (results[0].length > 0) {
+                                  tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
+                                } else {
+                                  sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                }
+                              }
+                              if (req.body.segmentationSurvey.length > 0) {
+                                if (results[1].length > 0) {
+                                  surveySubscribers = results[1].map((ss) => mongoose.Types.ObjectId(ss.subscriberId))
+                                } else {
+                                  sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                }
+                              }
+                              if (tagSubscribers && surveySubscribers) {
+                                let subscriberIds = _.intersection(tagSubscribers, surveySubscribers)
+                                if (subscriberIds.length > 0) {
+                                  subsFindCriteria['_id'] = {$in: subscriberIds}
+                                  sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                  sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                                } else {
+                                  sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                }
+                              } else if (tagSubscribers) {
+                                subsFindCriteria['_id'] = {$in: tagSubscribers}
+                                sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                              } else if (surveySubscribers) {
+                                subsFindCriteria['_id'] = {$in: surveySubscribers}
+                                sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                              }
+                            })
+                            .catch(err => {
+                              logger.serverLog(TAG, err)
+                              sendErrorResponse(res, 500, 'Failed to fetch tag subscribers or survey responses')
+                            })
+                        }
+
                         if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
                           utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
                             .then(tags => {
