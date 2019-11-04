@@ -80,7 +80,6 @@ exports.facebookBroadcast = (body) => {
             body.payload[i].quickReplies[a].content_type === '') return false
           if (body.payload[i].quickReplies[a].title === undefined ||
             body.payload[i].quickReplies[a].title === '') return false
-          if (body.payload[i].quickReplies[a].payload === undefined) return false
         }
       }
     }

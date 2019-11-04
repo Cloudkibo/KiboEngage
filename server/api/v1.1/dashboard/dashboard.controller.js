@@ -500,7 +500,7 @@ exports.stats = function (req, res) {
         .then((pages) => {
           populateIds(pages, true).then(result => {
             payload.pages = pages.length
-            callApi.callApi('pages/query', 'post', {companyId: companyUser.companyId})
+            callApi.callApi('pages/query', 'post', {companyId: companyUser.companyId, isApproved: true})
               .then(allPages => {
                 let removeDuplicates = (myArr, prop) => {
                   return myArr.filter((obj, pos, arr) => {
