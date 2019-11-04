@@ -18,6 +18,7 @@ exports.getCriterias = function (body, companyUser, seen, pageIds) {
 exports.queryForSubscribers = function (body, companyUser, isSubscribed, pageIds) {
   let query = [
     {$match: { companyId: companyUser.companyId,
+      completeInfo: true,
       'datetime': body.days === 'all' ? { $exists: true } : {
         $gte: new Date(
           (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),
@@ -39,6 +40,7 @@ exports.queryForSubscribers = function (body, companyUser, isSubscribed, pageIds
 exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pageIds) {
   let query = [
     {$match: { companyId: companyUser.companyId,
+      completeInfo: true,
       'datetime': body.days === 'all' ? { $exists: true } : {
         $gte: new Date(
           (new Date().getTime() - (body.days * 24 * 60 * 60 * 1000))),

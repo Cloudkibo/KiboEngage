@@ -417,7 +417,8 @@ exports.likesVsSubscribers = function (req, res) {
       callApi.callApi('subscribers/aggregate', 'post', [
         {
           $match: {
-            userId: req.params.userid
+            userId: req.params.userid,
+            completeInfo: true
           }
         }, {
           $group: {
@@ -509,9 +510,9 @@ exports.stats = function (req, res) {
                 }
                 let allPagesWithoutDuplicates = removeDuplicates(allPages, 'pageId')
                 payload.totalPages = allPagesWithoutDuplicates.length
-                callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isSubscribed: true, pageId: {$in: result.pageIds}})
+                callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, completeInfo: true, isSubscribed: true, pageId: {$in: result.pageIds}})
                   .then(subscribers => {
-                    //logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
+                    // logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
                     payload.subscribers = subscribers.length
                     BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
                       .then(recentBroadcasts => {
@@ -715,7 +716,7 @@ exports.toppages = function (req, res) {
       callApi.callApi('pages/query', 'post', {connected: true, companyId: companyUser.companyId})
         .then(pages => {
           callApi.callApi('subscribers/aggregate', 'post', [
-            {$match: {companyId: companyUser.companyId}}, {
+            {$match: {companyId: companyUser.companyId, completeInfo: true}}, {
               $group: {
                 _id: {pageId: '$pageId'},
                 count: {$sum: 1}
@@ -776,6 +777,7 @@ exports.getAllSubscribers = function (req, res) {
   let findCriteria = {
     pageId: req.params.pageid,
     companyId: req.user.companyId,
+    completeInfo: true,
     $or: [{firstName: {$regex: search}}, {lastName: {$regex: search}}],
     gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
     locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},

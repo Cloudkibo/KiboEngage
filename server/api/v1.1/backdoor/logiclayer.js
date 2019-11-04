@@ -376,6 +376,7 @@ exports.allUserPollsCriteria = function (userid, body, survey) {
 exports.getAllSubscribersCriteria = function (pageid, body) {
   let search = '.*' + body.filter_criteria.search_value + '.*'
   let findCriteria = {
+    completeInfo: true,
     pageId: pageid,
     fullName: {$regex: search, $options: 'i'},
     isSubscribed: true,
@@ -575,6 +576,7 @@ exports.getPageUsersCriteria = function (body) {
 }
 exports.topPagesCriteria = function (body) {
   let criteria = [
+    {$match: {completeInfo: true}},
     {$group: {
       _id: '$pageId',
       count: {$sum: 1}}

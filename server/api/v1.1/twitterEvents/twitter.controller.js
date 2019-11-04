@@ -118,7 +118,7 @@ const sendTweet = (postingItem, req) => {
 
 const sendToMessenger = (postingItem, page, req) => {
   let subscribersData = [
-    {$match: {pageId: page._id, companyId: page.companyId, isSubscribed: true}},
+    {$match: {pageId: page._id, companyId: page.companyId, isSubscribed: true, completeInfo: true}},
     {$group: {_id: null, count: {$sum: 1}}}
   ]
   utility.callApi('subscribers/aggregate', 'post', subscribersData)

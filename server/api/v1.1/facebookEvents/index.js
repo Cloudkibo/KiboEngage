@@ -14,6 +14,6 @@ router.post('/comment', auth.isItWebhookServer(), commentController.sendCommentR
 router.post('/changePageName', auth.isItWebhookServer(), changePageNameController.changePageName)
 router.post('/likes', auth.isItWebhookServer(), likesController.handleLikeEvent)
 router.post('/post', auth.isItWebhookServer(), postController.handlePostEvent)
-
+router.post('/sendSecondReplyToComment', auth.isItWebhookServer(), commentController.sendSecondReplyToComment)
 
 module.exports = router

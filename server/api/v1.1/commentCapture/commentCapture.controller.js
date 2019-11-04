@@ -60,6 +60,9 @@ function getPayloadToSave (user, body) {
       excludedKeywords: body.excludedKeywords,
       includedKeywords: body.includedKeywords
     }
+    if (body.secondReply) {
+      payloadToSave.secondReply = body.secondReply
+    }
     if (body.captureOption === 'global') {
       utility.callApi(`comment_capture/query`, 'post', {companyId: user.companyId, pageId: body.pageId, post_id: {$exists: false}})
         .then(post => {

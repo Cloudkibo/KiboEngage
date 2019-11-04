@@ -644,7 +644,6 @@ function getBatchData (payload, recipientId, page, sendBroadcast, fname, lname, 
     // let message = "message=" + encodeURIComponent(JSON.stringify(prepareSendAPIPayload(recipientId, item).message))
     let message = "message=" + encodeURIComponent(JSON.stringify(prepareMessageData(recipientId, item, fname, lname)))
     // let message = "message=" + JSON.stringify(prepareMessageData(recipientId, item, fname, lname))
-    console.log('message got again', message)
     if (index === 0) {
       batch.push({ "method": "POST", "name": `message${index + 1}`, "relative_url": "v2.6/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag})
 

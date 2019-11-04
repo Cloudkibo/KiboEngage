@@ -97,7 +97,7 @@ function _updateSequenceSubscriberMessage (data, next) {
     .then(pages => {
       const page = pages[0]
       if (page) {
-        utility.callApi(`subscribers/query`, 'post', { senderId: data.senderId, companyId: page.companyId })
+        utility.callApi(`subscribers/query`, 'post', { senderId: data.senderId, companyId: page.companyId, completeInfo: true })
           .then(subscribers => {
             const subscriber = subscribers[0]
             if (subscriber) {

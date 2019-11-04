@@ -19,6 +19,7 @@ exports.prepareSubscribersCriteria = (body, page, lists) => {
       pageId: page._id,
       companyId: page.companyId,
       isSubscribed: true,
+      completeInfo: true,
       lastMessagedAt: {
         $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
       }
