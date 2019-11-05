@@ -33,5 +33,5 @@ module.exports = {
     kibodash: `http://localhost:5050/api/v1`
   },
   webhook_ip: 'http://localhost:3020',
-  marketingApiAccessToken: 'EAAB4wFi3BuIBAIZC1zrUcVU4jMH0B16E4qcsgZBw8pKyQF5yBO1xyZAZBsh1tzDmwON6ypZBMbUyFWQgtKu1m8Odprb5SopXyxnvNWigd0dQb6TbNXkPRg8I3mV50QrRBcZAre56lYaPHzWwaSFOZBP5d9ZBCRuolHWIOp81lBZCqqlDGqZAzBZBZCmUBbGu1fkbw0UZD'
+  marketingApiAccessToken: 'EAACQ9dMxl7QBABfKeZAIUELHJkO9ZAFFc16HTZBzOCsEglkIK1rxXNSPQl8NVwhYB3FOHxLRlNZBZCINLBy7rMrXwnvUYW8xI9urq9NjxmRupbQDNbhhGVWClb7hwBbNHTUiPk8odMm1Hav9OfkX6bbTlWdLhxXUHXQjkELacoAZDZD'
 }
