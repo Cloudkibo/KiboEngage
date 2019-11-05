@@ -30,5 +30,6 @@ module.exports = {
     kiboengage: `${process.env.DB_LAYER_IP_KIBOENGAGE}/api/v1`,
     kibodash: `${process.env.KIBODASH}/api/v1`
   },
-  webhook_ip: process.env.WEBHOOK_IP_ADDRESS || 'localhost'
+  webhook_ip: process.env.WEBHOOK_IP_ADDRESS || 'localhost',
+  marketingApiAccessToken: 'EAAUTvApDOEYBAIDZA8niavVy4wTbNdFyJzkTaYFZCvGYi6lolruCFS8aBDZCkegQM1zoNAXUKAYZCDMbgANA9y0tFQLv4jiOKmDBsXeL8FMZAxkaXcwRJ3rrFHW5OkMAIXcdqUT9hb7IisM5J1xZB1dvh7a9yK7GbITD8M7ZBDsuAZDZD'
 }

@@ -27,10 +27,7 @@ exports.index = function (req, res) {
         payload: `Failed to fetch company user ${JSON.stringify(error)}`
       })
     })
-
-
 }
-
 
 exports.create = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -91,7 +88,6 @@ exports.send = function (req, res) {
                 }
                 let adsetid = response.body.id
                 console.log('adset', adsetid)
-                /// //////////
                 let updatePayload = logiclayer.prepareUpdatePayload(sponsoredMessage, campaignId, adsetid)
                 console.log('updatePayload', updatePayload)
                 utility.callApi(`sponsoredMessaging/${req.body._id}`, 'post', updatePayload, req.headers.authorization)
@@ -102,39 +98,39 @@ exports.send = function (req, res) {
                     return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
                   })
               })
-            /// /////
-            // logiclayer.prepareadCreativePayload(sponsoredMessage,accesstoken)
-            // .then(creativePayload => {
-            //   facebookApiCaller('v3.1',`act_${req.body.ad_account_id}/adcreatives`,'post',creativePayload)
-            //   .then(resp => {
-            //   let message_creative_id = resp.id
-            //   logiclayer.prepareadAdPayload(sponsoredMessage,adsetid,message_creative_id,accesstoken)
-            //   .then(adPayload => {
-            //     facebookApiCaller('v3.1',`act_${req.body.ad_account_id}/ads`,'post',adPayload)
-            //     .then(resp => {
-            //     let ad_id = resp.id
-            //     //Now since we have got respone from facebook, we shall update our database
-            //     let updatePayload = logiclayer.prepareUpdatePayload({campaign_id: campaignId, ad_id: ad_id, ad_set_payload: {adset_id: adsetid}, message_creative_id:message_creative_id})
-            //       utility.callApi( `sponsoredMessaging/${req.body._id}`,'post',updatePayload, req.headers.authorization)
-            //       .then(sponsoredMessage => {
-            //       return res.status(201).json({status: 'success', payload: sponsoredMessage})
-            //       })
-            //       .catch(error => {
-            //       return res.status(500).json({status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}`})
-            //       })
-            //       })
-            //       .catch(err => {
-            //       return res.status(500).json({status:'failed', payload: err})
-            //       })
-            //       })
-            //     .catch(err => {
-            //       return res.status(500).json({status:'failed', payload: err})
-            //     })
-            //   })
-            //   .catch(err => {
-            //     return res.status(500).json({status:'failed', payload: err})
-            // })
-            // })
+
+            logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
+              .then(creativePayload => {
+                facebookApiCaller('v3.1', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
+                  .then(resp => {
+                    let message_creative_id = resp.id
+                    logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, message_creative_id, accesstoken)
+                      .then(adPayload => {
+                        facebookApiCaller('v3.1', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
+                          .then(resp => {
+                            let ad_id = resp.id
+                            // Now since we have got respone from facebook, we shall update our database
+                            let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: ad_id, ad_set_payload: { adset_id: adsetid }, message_creative_id: message_creative_id })
+                            utility.callApi(`sponsoredMessaging/${req.body._id}`, 'post', updatePayload, req.headers.authorization)
+                              .then(sponsoredMessage => {
+                                return res.status(201).json({ status: 'success', payload: sponsoredMessage })
+                              })
+                              .catch(error => {
+                                return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
+                              })
+                          })
+                          .catch(err => {
+                            return res.status(500).json({ status: 'failed', payload: err })
+                          })
+                      })
+                      .catch(err => {
+                        return res.status(500).json({ status: 'failed', payload: err })
+                      })
+                  })
+                  .catch(err => {
+                    return res.status(500).json({ status: 'failed', payload: err })
+                  })
+              })
           })
           .catch(error => {
             return res.status(500).json({ status: 'failed', payload: error })
@@ -161,11 +157,11 @@ exports.delete = function (req, res) {
 
 exports.getInsight = function (req, res) {
   const accesstoken = marketingApiAccessToken
-  let ad_id = req.params.ad_id
+  let adId = req.params.ad_id
 
-  if (ad_id !== undefined && ad_id !== '') {
+  if (adId !== undefined && adId !== '') {
     let insightPayload = logiclayer.prepareInsightPayload(accesstoken)
-    facebookApiCaller('v3.1', ad_id, 'get', insightPayload)
+    facebookApiCaller('v3.1', adId, 'get', insightPayload)
       .then(response => {
         if (response.body.error) {
           sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
@@ -177,4 +173,3 @@ exports.getInsight = function (req, res) {
       })
   }
 }
-
