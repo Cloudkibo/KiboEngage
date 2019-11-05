@@ -318,14 +318,14 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
                   if (results[0].length > 0) {
                     tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
                   } else {
-                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                   }
                 }
                 if (req.body.segmentationPoll.length > 0) {
                   if (results[1].length > 0) {
                     pollSubscribers = results[1].map((pr) => pr.subscriberId)
                   } else {
-                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                   }
                 }
                 if (tagSubscribers && pollSubscribers) {
@@ -335,7 +335,7 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
                     sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
                     sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                   } else {
-                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                   }
                 } else if (tagSubscribers) {
                   subsFindCriteria['_id'] = {$in: tagSubscribers}
