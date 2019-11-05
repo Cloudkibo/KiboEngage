@@ -17,7 +17,7 @@ exports.surveyResponse = function (req, res) {
     let resp = JSON.parse(event.postback.payload)
     SurveysDataLayer.findOneSurvey(resp.survey_id)
       .then(survey => {
-        callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: survey.companyId })
+        callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: survey.companyId, completeInfo: true })
           .then(subscribers => {
             let subscriber = subscribers[0]
             if (subscriber) {

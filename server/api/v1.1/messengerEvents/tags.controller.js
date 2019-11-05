@@ -13,7 +13,7 @@ exports.assignTag = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId })
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
         .then(subscriber => {
           subscriber = subscriber[0]
           console.log('subscriber', subscriber)
@@ -61,7 +61,7 @@ exports.unAssignTag = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId })
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
         .then(subscriber => {
           subscriber = subscriber[0]
           if (subscriber) {

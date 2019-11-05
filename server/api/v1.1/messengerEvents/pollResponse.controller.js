@@ -15,7 +15,7 @@ exports.pollResponse = function (req, res) {
   let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
   PollsDataLayer.findOnePoll(resp.poll_id)
     .then(poll => {
-      callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: poll.companyId })
+      callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: poll.companyId, completeInfo: true })
         .then(subscribers => {
           let subscriber = subscribers[0]
           console.log('subscriber found', JSON.stringify(subscriber))

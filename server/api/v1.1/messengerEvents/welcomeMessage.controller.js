@@ -26,7 +26,7 @@ exports.index = function (req, res) {
       logger.serverLog(TAG, `pageId ${JSON.stringify(page._id)}`, 'debug')
       logger.serverLog(TAG, `companyId ${JSON.stringify(page.companyId)}`, 'debug')
       logger.serverLog(TAG, `senderId ${JSON.stringify(sender)}`, 'debug')
-      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId })
+      callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
         .then(subscriber => {
           subscriber = subscriber[0]
           logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
