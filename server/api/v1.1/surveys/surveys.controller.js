@@ -452,14 +452,14 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                 if (results[0].length > 0) {
                                   tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
                                 } else {
-                                  sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                  sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                                 }
                               }
                               if (req.body.segmentationSurvey.length > 0) {
                                 if (results[1].length > 0) {
                                   surveySubscribers = results[1].map((ss) => ss.subscriberId)
                                 } else {
-                                  sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                  sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                                 }
                               }
                               if (tagSubscribers && surveySubscribers) {
@@ -469,7 +469,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                   sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                                   sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                                 } else {
-                                  sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                  sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                                 }
                               } else if (tagSubscribers) {
                                 subsFindCriteria['_id'] = {$in: tagSubscribers}
@@ -483,7 +483,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                             })
                             .catch(err => {
                               logger.serverLog(TAG, err)
-                              sendErrorResponse(res, 500, 'Failed to fetch tag subscribers or survey responses')
+                              sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers or survey responses')
                             })
                         }
 
@@ -499,17 +499,17 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                     sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                                     sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                                   } else {
-                                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                                   }
                                 })
                                 .catch(err => {
                                   logger.serverLog(TAG, err)
-                                  sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+                                  sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers')
                                 })
                             })
                             .catch(err => {
                               logger.serverLog(TAG, err)
-                              sendErrorResponse(res, 500, 'Failed to fetch tags')
+                              sendErrorResponse(res, 500, '', 'Failed to fetch tags')
                             })
                         } else {
                           sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
@@ -519,28 +519,28 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                     })
                     .catch(err => {
                       logger.serverLog(TAG, err, 'error')
-                      sendErrorResponse(res, 500, 'Failed to fetch survey')
+                      sendErrorResponse(res, 500, '', 'Failed to fetch survey')
                     })
                 } else {
-                  sendErrorResponse(res, 500, 'Survey Questions not found!')
+                  sendErrorResponse(res, 500, '', 'Survey Questions not found!')
                 }
               })
               .catch(err => {
                 logger.serverLog(TAG, err, 'error')
-                sendErrorResponse(res, 500, 'Failed to fetch survey questions')
+                sendErrorResponse(res, 500, '', 'Failed to fetch survey questions')
               })
           })
           .catch(err => {
             logger.serverLog(TAG, err, 'error')
-            sendErrorResponse(res, 500, 'Failed to fetch user')
+            sendErrorResponse(res, 500, '', 'Failed to fetch user')
           })
       } else {
-        sendErrorResponse(res, 500, 'Page not found!')
+        sendErrorResponse(res, 500, '', 'Page not found!')
       }
     })
     .catch(err => {
       logger.serverLog(TAG, err, 'error')
-      sendErrorResponse(res, 500, 'Failed to fetch page')
+      sendErrorResponse(res, 500, '', 'Failed to fetch page')
     })
 }
 
