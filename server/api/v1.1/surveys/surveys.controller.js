@@ -428,7 +428,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                         errors: []
                       }
                       if (req.body.isList) {
-                        utility.callApi(`lists/query`, 'post', surveyLogicLayer.ListFindCriteria(req.body, req.user))
+                        callApi.callApi(`lists/query`, 'post', surveyLogicLayer.ListFindCriteria(req.body, req.user))
                           .then(lists => {
                             let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
                             sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
@@ -442,7 +442,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                         let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
                         if (req.body.segmentationTags.length > 0 || req.body.segmentationSurvey.length > 0) {
                           let requests = []
-                          requests.push(utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }))
+                          requests.push(callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }))
                           requests.push(surveyResponseDataLayer.genericFind({surveyId: {$in: req.body.segmentationSurvey}}))
                           Promise.all(requests)
                             .then(results => {
@@ -488,10 +488,10 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                         }
 
                         if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
-                          utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+                          callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
                             .then(tags => {
                               let tagIds = tags.map((t) => t._id)
-                              utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                              callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
                                 .then(tagSubscribers => {
                                   if (tagSubscribers.length > 0) {
                                     let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
