@@ -18,7 +18,6 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
-const mongoose = require('mongoose')
 const _ = require('lodash')
 
 exports.allSurveys = function (req, res) {
@@ -458,7 +457,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                               }
                               if (req.body.segmentationSurvey.length > 0) {
                                 if (results[1].length > 0) {
-                                  surveySubscribers = results[1].map((ss) => mongoose.Types.ObjectId(ss.subscriberId))
+                                  surveySubscribers = results[1].map((ss) => ss.subscriberId)
                                 } else {
                                   sendErrorResponse(res, 500, 'No subscribers match the given criteria')
                                 }

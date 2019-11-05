@@ -12,7 +12,6 @@ const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
-const mongoose = require('mongoose')
 const _ = require('lodash')
 
 exports.index = function (req, res) {
@@ -324,7 +323,7 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
                 }
                 if (req.body.segmentationPoll.length > 0) {
                   if (results[1].length > 0) {
-                    pollSubscribers = results[1].map((pr) => mongoose.Types.ObjectId(pr.subscriberId))
+                    pollSubscribers = results[1].map((pr) => pr.subscriberId)
                   } else {
                     sendErrorResponse(res, 500, 'No subscribers match the given criteria')
                   }
