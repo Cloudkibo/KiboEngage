@@ -311,11 +311,11 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
               let segmentationTags = tags.map(t => t._id)
               if (segmentationTags.length > 0 || req.body.segmentationPoll.length > 0) {
                 let requests = []
-                requests.push(utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tagId: { $in: segmentationTags } }))
+                requests.push(utility.callApi(`tags_subscriber/query`, 'post', { companyId: req.user.companyId, tagId: { $in: segmentationTags } }))
                 requests.push(PollResponseDataLayer.genericFindForPollResponse({pollId: {$in: req.body.segmentationPoll}}))
                 Promise.all(requests)
                   .then(results => {
-                    console.log('survey segmentation results', results)
+                    console.log('poll segmentation results', results)
                     let tagSubscribers = null
                     let pollSubscribers = null
                     if (segmentationTags.length > 0) {
