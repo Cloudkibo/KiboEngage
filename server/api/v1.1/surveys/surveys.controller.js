@@ -454,7 +454,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                   let surveySubscribers = null
                                   if (segmentationTags.length > 0) {
                                     if (results[0].length > 0) {
-                                      tagSubscribers = results[0].map((ts) => ts.subscriberId)
+                                      tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
                                     } else {
                                       sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                                     }
