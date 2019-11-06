@@ -33,7 +33,7 @@ exports.getAllUsers = function (req, res) {
                   for (let i = 0; i < pages.length; i++) {
                     pageIds.push(pages[i]._id)
                   }
-                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true})
+                  utility.callApi(`subscribers/query`, 'post', {pageId: pageIds, isSubscribed: true, completeInfo: true})
                     .then(subscribers => {
                       usersPayload.push({
                         _id: user._id,
@@ -477,7 +477,7 @@ exports.sessionsGraph = function (req, res) {
   startDate.setSeconds(0)
   let body = [
     {
-      $match: {'datetime': {$gte: startDate}}
+      $match: {'datetime': {$gte: startDate}, completeInfo: true}
     },
     {
       $group: {
@@ -590,7 +590,7 @@ exports.uploadFile = function (req, res) {
 exports.AllSubscribers = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      utility.callApi(`subscribers/query`, 'post', {pageId: req.params.pageid}) // fetch subscribers of company
+      utility.callApi(`subscribers/query`, 'post', {pageId: req.params.pageid, completeInfo: true}) // fetch subscribers of company
         .then(subscribers => {
           console.log('subscribers in All subscribers', subscribers)
           downloadSubscribersData(subscribers)
@@ -654,7 +654,7 @@ function downloadCSV (pages, req) {
     let usersPayload = []
     for (let i = 0; i < pages.length; i++) {
       if (pages[i].userId) {
-        utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true})
+        utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true, completeInfo: true})
           .then(subscribers => {
             DataLayer.findBroadcasts({pageIds: pages[i].pageId})
               .then(broadcasts => {
@@ -735,7 +735,7 @@ exports.sendEmail = function (req, res) {
         }
         utility.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email})
           .then(companyUser => {
-            utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true})
+            utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true, completeInfo: true})
               .then(subs => {
                 if (subs.length > 1) {
                   let subscriberAggregate = [
@@ -749,7 +749,7 @@ exports.sendEmail = function (req, res) {
                               (new Date().getTime()))
                           }
                           }, {companyId: companyUser.companyId},
-                          {isEnabledByPage: true}, {isSubscribed: true}]
+                          {isEnabledByPage: true}, {isSubscribed: true}, {completeInfo: true}]
                       }}
                   ]
                   utility.callApi(`subscribers/aggregate`, 'post', subscriberAggregate)
@@ -1887,7 +1887,6 @@ exports.topPages = function (req, res) {
     })
 }
 
-
 exports.fetchCompanyInfoNew = (req, res) => {
   console.log('fetching company info')
   let companyAggregation = [
@@ -1971,7 +1970,7 @@ exports.fetchCompanyInfoNew = (req, res) => {
 
           subscriberRequests.push(
             function (callback) {
-              utility.callApi(`subscribers/query`, 'post', {companyId: companies[i]._id}, 'accounts', req.headers.authorization)
+              utility.callApi(`subscribers/query`, 'post', {companyId: companies[i]._id, completeInfo: true}, 'accounts', req.headers.authorization)
                 .then(subscribers => {
                   callback(null, {numOfSubscribers: subscribers.length})
                 })
@@ -1980,7 +1979,6 @@ exports.fetchCompanyInfoNew = (req, res) => {
                 })
             }
           )
-
         }
         let totalRequests = userRequests.concat(pageRequests).concat(companyUserRequests).concat(subscriberRequests)
         async.parallelLimit(totalRequests, 30, function (err, results) {
@@ -2056,7 +2054,7 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
 function get10PageSubscribers (req, skip) {
   let aggregation = [
     {
-      '$match': {pageId: req.body.page_id}
+      '$match': {pageId: req.body.page_id, completeInfo: true}
     },
     {
       '$sort': {'_id': -1}
@@ -2266,7 +2264,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                 } else {
                   assignedTagsFound = true
                 }
-  
+
                 if (unassignedTags.length > 0) {
                   if (filteredUnassignedTags.length > 0) {
                     unassignedTagsFound = true
@@ -2274,7 +2272,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                 } else {
                   unassignedTagsFound = true
                 }
-  
+
                 let statusFilterSucceeded = true
                 if (req.body.status) {
                   if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
@@ -2285,7 +2283,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                     statusFilterSucceeded = false
                   }
                 }
-  
+
                 if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
                   callback(null, {
                     subscriber: subscribers[i],

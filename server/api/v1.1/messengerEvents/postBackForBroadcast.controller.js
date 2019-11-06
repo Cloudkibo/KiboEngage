@@ -23,7 +23,7 @@ function unsubscribeFromSequence (sequenceId, req) {
   SequencesDataLayer.genericFindForSequence({ _id: sequenceId })
     .then(sequence => {
       sequence = sequence[0]
-      callApi(`subscribers/query`, 'post', { senderId: req.sender.id, companyId: sequence.companyId })
+      callApi(`subscribers/query`, 'post', { senderId: req.sender.id, companyId: sequence.companyId, completeInfo: true })
         .then(subscribers => {
           let subscriber = subscribers[0]
           SequencesDataLayer.removeForSequenceSubscribers({ sequenceId: sequenceId }, subscriber._id)
@@ -60,7 +60,7 @@ function subscribeToSequence (sequenceId, req) {
   SequencesDataLayer.genericFindForSequence({ _id: sequenceId })
     .then(sequence => {
       sequence = sequence[0]
-      callApi(`subscribers/query`, 'post', { senderId: req.sender.id, companyId: sequence.companyId })
+      callApi(`subscribers/query`, 'post', { senderId: req.sender.id, companyId: sequence.companyId, completeInfo: true })
         .then(subscriber => {
           subscriber = subscriber[0]
           SequencesDataLayer.genericFindForSequenceSubscribers({ subscriberId: subscriber._id })

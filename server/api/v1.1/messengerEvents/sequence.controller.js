@@ -16,7 +16,7 @@ exports.index = function (req, res) {
 exports.subscriberJoins = function (req, res) {
   logger.serverLog(TAG, `in sequence subscriberJoins ${JSON.stringify(req.body)}`, 'debug')
 
-  callApi(`subscribers/query`, 'post', {senderId: req.body.senderId, pageId: req.body.pageId})
+  callApi(`subscribers/query`, 'post', {senderId: req.body.senderId, pageId: req.body.pageId, completeInfo: true})
     .then(subscribers => {
       let subscriber = subscribers[0]
       SequencesDataLayer.genericFindForSequence({companyId: req.body.companyId, 'trigger.event': 'subscriber_joins'})
@@ -163,6 +163,7 @@ exports.sendSequenceMessage = (req, res) => {
 }
 
 exports.subscribeToSequence = (req, res) => {
+  console.log('payload received in subscribeToSequence', req.body)
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -173,6 +174,7 @@ exports.subscribeToSequence = (req, res) => {
   } else {
     resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
   }
+  console.log('resp value in subscribe', resp)
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   let pageQuery = [
@@ -183,7 +185,7 @@ exports.subscribeToSequence = (req, res) => {
   callApi(`pages/aggregate`, 'post', pageQuery)
     .then(page => {
       page = page[0]
-      callApi(`subscribers/query`, 'post', {senderId: sender, pageId: page._id})
+      callApi(`subscribers/query`, 'post', {senderId: sender, pageId: page._id, completeInfo: true})
         .then(subscriber => {
           subscriber = subscriber[0]
           SequencesDataLayer.genericFindForSequenceMessages({sequenceId: resp.sequenceId})
@@ -264,7 +266,7 @@ exports.unsubscribeFromSequence = (req, res) => {
   callApi(`pages/aggregate`, 'post', pageQuery)
     .then(page => {
       page = page[0]
-      callApi(`subscribers/query`, 'post', {senderId: sender, pageId: page._id})
+      callApi(`subscribers/query`, 'post', {senderId: sender, pageId: page._id, completeInfo: true})
         .then(subscriber => {
           subscriber = subscriber[0]
           SequencesDataLayer.removeForSequenceSubscribers(resp.sequenceId, subscriber._id)

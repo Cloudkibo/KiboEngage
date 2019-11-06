@@ -30,7 +30,7 @@ exports.index = function (req, res) {
       callApi(`pages/aggregate`, 'post', aggregateData)
         .then(page => {
           page = page[0]
-          callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId })
+          callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
             .then(subscriber => {
               subscriber = subscriber[0]
               logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
