@@ -7,7 +7,12 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  let resp
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
@@ -31,13 +36,16 @@ exports.index = function (req, res) {
     })
 }
 function saveCustomFieldValue (subscriber, resp) {
+  console.log('resp.customFieldId', resp.customFieldId)
   callApi('custom_field_subscribers/query', 'post',
     { purpose: 'findOne', match: { customFieldId: resp.customFieldId, subscriberId: subscriber._id } })
     .then(customFieldSubscriber => {
+      console.log('customFieldSubscriber in saveCustomFieldValue controller', customFieldSubscriber)
       if (customFieldSubscriber) {
         let updatePayload = { purpose: 'updateOne', match: { customFieldId: resp.customFieldId, subscriberId: subscriber._id }, updated: { value: resp.customFieldValue } }
         callApi('custom_field_subscribers/', 'put', updatePayload)
           .then(updated => {
+            console.log('updated finally', updated)
           })
           .catch(err => {
             logger.serverLog(TAG, `Failed to save custom field value ${JSON.stringify(err)}`, 'error')
