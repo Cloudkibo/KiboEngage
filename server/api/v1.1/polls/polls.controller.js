@@ -315,6 +315,7 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
                 requests.push(PollResponseDataLayer.genericFindForPollResponse({pollId: {$in: req.body.segmentationPoll}}))
                 Promise.all(requests)
                   .then(results => {
+                    console.log('survey segmentation results', results)
                     let tagSubscribers = null
                     let pollSubscribers = null
                     if (segmentationTags.length > 0) {
