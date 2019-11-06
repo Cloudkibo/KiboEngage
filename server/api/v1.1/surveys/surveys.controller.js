@@ -446,6 +446,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                           requests.push(surveyResponseDataLayer.genericFind({surveyId: {$in: req.body.segmentationSurvey}}))
                           Promise.all(requests)
                             .then(results => {
+                              console.log('survey segmentation results', results)
                               let tagSubscribers = null
                               let surveySubscribers = null
                               if (req.body.segmentationTags.length > 0) {
@@ -485,35 +486,6 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                               logger.serverLog(TAG, err)
                               sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers or survey responses')
                             })
-                        }
-
-                        if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
-                          callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
-                            .then(tags => {
-                              let tagIds = tags.map((t) => t._id)
-                              callApi.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
-                                .then(tagSubscribers => {
-                                  if (tagSubscribers.length > 0) {
-                                    let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
-                                    subsFindCriteria['_id'] = {$in: subscriberIds}
-                                    sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
-                                    sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-                                  } else {
-                                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
-                                  }
-                                })
-                                .catch(err => {
-                                  logger.serverLog(TAG, err)
-                                  sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers')
-                                })
-                            })
-                            .catch(err => {
-                              logger.serverLog(TAG, err)
-                              sendErrorResponse(res, 500, '', 'Failed to fetch tags')
-                            })
-                        } else {
-                          sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
-                          sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                         }
                       }
                     })
