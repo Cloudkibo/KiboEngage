@@ -25,13 +25,10 @@ exports.prepareUpdatePayload = function (body, campaignId, adsetid) {
   //     payload.ad_id = body.ad_id
   // }
   if (campaignId !== null && campaignId !== '') {
-    console.log('hi', campaignId)
     payload.campaign_id = campaignId
-    console.log('hi', payload.campaign_id)
   }
   if (adsetid !== null && adsetid !== '') {
     payload.ad_set_payload.adset_id = adsetid
-    console.log('ppp', payload.ad_set_payload.adset_id)
   }
 
   return payload
