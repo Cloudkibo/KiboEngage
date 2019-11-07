@@ -1,4 +1,4 @@
-const { getPostId, handleVideo, getMetaUrls, handleText, handleImage, preparePayloadToPost } = require('./commentCapture.logiclayer.js')
+const { getPostId, handleVideo, getMetaUrls, handleText, handleImage, preparePayloadToPost, handleLinks, handleTextAndLinks } = require('./commentCapture.logiclayer.js')
 
 describe('Validate getPostId', () => {
   test('give correct postId', () => {
@@ -201,5 +201,81 @@ describe('Validate preparePayloadToPost', () => {
       }
     }
     expect(preparePayloadToPost(input)).toEqual(output)
+  })
+})
+describe('Validate handleLinks', () => {
+  test('gives prepared payload with single link and text', () => {
+    let textComponents = [{componentType: 'text', text: 'hi there'}]
+    let linkComponents = [{componentType: 'link', url: 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}]
+    let output = {
+      type: 'text',
+      payload: {
+        'message': 'hi there',
+        'link': 'https://www.dawn.com/news/1515424/the-maulana-puzzle'
+      }
+    }
+    expect(handleLinks(textComponents, linkComponents)).toEqual(output)
+  })
+  test('gives prepared payload with single link and no text', () => {
+    let textComponents = []
+    let linkComponents = [{componentType: 'link', url: 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}]
+    let output = {
+      type: 'text',
+      payload: {
+        'link': 'https://www.dawn.com/news/1515424/the-maulana-puzzle'
+      }
+    }
+    expect(handleLinks(textComponents, linkComponents)).toEqual(output)
+  })
+  test('gives prepared payload with multiple links and no text', () => {
+    let textComponents = []
+    let linkComponents = [{componentType: 'link', url: 'https://www.dawn.com/news/1515424/the-maulana-puzzle'},
+      {componentType: 'link', url: 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}]
+    let output = {
+      type: 'text',
+      payload: {
+        'link': 'https://kibopush.com',
+        'child_attachments': [{'link': 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}, {'link': 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}]
+      }
+    }
+    expect(handleLinks(textComponents, linkComponents)).toEqual(output)
+  })
+  test('gives prepared payload with multiple links and text', () => {
+    let textComponents = [{componentType: 'text', text: 'hi there'}]
+    let linkComponents = [{componentType: 'link', url: 'https://www.dawn.com/news/1515424/the-maulana-puzzle'},
+      {componentType: 'link', url: 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}]
+    let output = {
+      type: 'text',
+      payload: {
+        'message': 'hi there',
+        'link': 'https://kibopush.com',
+        'child_attachments': [{'link': 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}, {'link': 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}]
+      }
+    }
+    expect(handleLinks(textComponents, linkComponents)).toEqual(output)
+  })
+})
+describe('Validate handleTextAndLinks', () => {
+  test('gives prepared payload links', () => {
+    let textComponents = []
+    let linkComponents = [{componentType: 'link', url: 'https://www.dawn.com/news/1515424/the-maulana-puzzle'}]
+    let output = {
+      type: 'text',
+      payload: {
+        'link': 'https://www.dawn.com/news/1515424/the-maulana-puzzle'
+      }
+    }
+    expect(handleTextAndLinks(textComponents, linkComponents)).toEqual(output)
+  })
+  test('gives prepared payload with text', () => {
+    let textComponents = [{componentType: 'text', text: 'hi there'}]
+    let linkComponents = []
+    let output = {
+      type: 'text',
+      payload: {
+        'message': 'hi there'
+      }
+    }
+    expect(handleTextAndLinks(textComponents, linkComponents)).toEqual(output)
   })
 })
