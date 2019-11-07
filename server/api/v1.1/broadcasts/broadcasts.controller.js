@@ -111,7 +111,7 @@ exports.addButton = function (req, res) {
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId'))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body.payload, 'customFieldId'))
   ) {
     sendErrorResponse(res, 500, '', 'SequenceId & action & customFieldId are required for type postback')
   }
