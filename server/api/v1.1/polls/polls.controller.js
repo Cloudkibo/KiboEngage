@@ -306,55 +306,64 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
             })
         } else {
           let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
-          if (req.body.segmentationTags.length > 0 || req.body.segmentationPoll.length > 0) {
-            let requests = []
-            requests.push(utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } }))
-            requests.push(PollResponseDataLayer.genericFindForPollResponse({pollId: {$in: req.body.segmentationPoll}}))
-            Promise.all(requests)
-              .then(results => {
-                let tagSubscribers = null
-                let pollSubscribers = null
-                if (req.body.segmentationTags.length > 0) {
-                  if (results[0].length > 0) {
-                    tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
-                  } else {
-                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
-                  }
-                }
-                if (req.body.segmentationPoll.length > 0) {
-                  if (results[1].length > 0) {
-                    pollSubscribers = results[1].map((pr) => pr.subscriberId)
-                  } else {
-                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
-                  }
-                }
-                if (tagSubscribers && pollSubscribers) {
-                  let subscriberIds = _.intersection(tagSubscribers, pollSubscribers)
-                  if (subscriberIds.length > 0) {
-                    subsFindCriteria['_id'] = {$in: subscriberIds}
-                    sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
-                    sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-                  } else {
-                    sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
-                  }
-                } else if (tagSubscribers) {
-                  subsFindCriteria['_id'] = {$in: tagSubscribers}
-                  sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
-                  sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-                } else if (pollSubscribers) {
-                  subsFindCriteria['_id'] = {$in: pollSubscribers}
-                  sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
-                  sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-                }
-              })
-              .catch(err => {
-                logger.serverLog(TAG, err)
-                sendErrorResponse(res, 500, 'Failed to fetch tag subscribers or poll responses')
-              })
-          } else {
-            sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
-            sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-          }
+          utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+            .then(tags => {
+              let segmentationTags = tags.map(t => t._id)
+              if (segmentationTags.length > 0 || req.body.segmentationPoll.length > 0) {
+                let requests = []
+                requests.push(utility.callApi(`tags_subscriber/query`, 'post', { companyId: req.user.companyId, tagId: { $in: segmentationTags } }))
+                requests.push(PollResponseDataLayer.genericFindForPollResponse({pollId: {$in: req.body.segmentationPoll}}))
+                Promise.all(requests)
+                  .then(results => {
+                    console.log('poll segmentation results', results)
+                    let tagSubscribers = null
+                    let pollSubscribers = null
+                    if (segmentationTags.length > 0) {
+                      if (results[0].length > 0) {
+                        tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
+                      } else {
+                        sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
+                      }
+                    }
+                    if (req.body.segmentationPoll.length > 0) {
+                      if (results[1].length > 0) {
+                        pollSubscribers = results[1].map((pr) => pr.subscriberId)
+                      } else {
+                        sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
+                      }
+                    }
+                    if (tagSubscribers && pollSubscribers) {
+                      let subscriberIds = _.intersection(tagSubscribers, pollSubscribers)
+                      if (subscriberIds.length > 0) {
+                        subsFindCriteria['_id'] = {$in: subscriberIds}
+                        sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                        sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                      } else {
+                        sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
+                      }
+                    } else if (tagSubscribers) {
+                      subsFindCriteria['_id'] = {$in: tagSubscribers}
+                      sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                      sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                    } else if (pollSubscribers) {
+                      subsFindCriteria['_id'] = {$in: pollSubscribers}
+                      sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                      sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, err)
+                    sendErrorResponse(res, 500, 'Failed to fetch tag subscribers or poll responses')
+                  })
+              } else {
+                sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, err)
+              sendErrorResponse(res, 500, `Failed to fetch tags`)
+            })
         }
       } else {
         sendErrorResponse(res, 500, 'Page not found!')
