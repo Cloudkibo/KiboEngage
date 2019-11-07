@@ -95,6 +95,7 @@ function sendReply (post, body) {
         } else if (resp.body.error) {
           sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
         }
+        console.log('response from private reply', resp.body)
       })
     createSubscriber(post, body)
   }
