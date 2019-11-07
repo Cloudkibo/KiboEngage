@@ -1,5 +1,4 @@
 const logger = require('../../../components/logger')
-const needle = require('needle')
 const TAG = 'api/commentCapture/commentCapture.controller.js'
 const utility = require('../utility/index.js')
 const logicLayer = require('./commentCapture.logiclayer')
@@ -133,6 +132,7 @@ function postOnFacebook (payload, pageId) {
               if (response.body.error) {
                 sendOpAlert(response.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
                 logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                reject(JSON.stringify(response.body.error))
               } else {
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
                 logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
@@ -140,6 +140,7 @@ function postOnFacebook (payload, pageId) {
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              reject(err)
             })
         } else if (payloadToPost.type === 'image') {
           facebookApiCaller('v3.3', `${page.pageId}/photos?access_token=${page.accessToken}`, 'post', payloadToPost.payload)
@@ -147,6 +148,7 @@ function postOnFacebook (payload, pageId) {
               if (response.body.error) {
                 sendOpAlert(response.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
                 logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                reject(JSON.stringify(response.body.error))
               } else {
                 logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
@@ -154,6 +156,7 @@ function postOnFacebook (payload, pageId) {
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              reject(err)
             })
         } else if (payloadToPost.type === 'images') {
           facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', payloadToPost.payload)
@@ -161,6 +164,7 @@ function postOnFacebook (payload, pageId) {
               if (response.body.error) {
                 sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
                 logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                reject(JSON.stringify(response.body.error))
               } else {
                 logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
@@ -168,6 +172,7 @@ function postOnFacebook (payload, pageId) {
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              reject(err)
             })
         } else if (payloadToPost.type === 'video') {
           facebookApiCaller('v3.3', `${page.pageId}/videos?access_token=${page.accessToken}`, 'post', payloadToPost.payload)
@@ -175,6 +180,7 @@ function postOnFacebook (payload, pageId) {
               if (response.body.error) {
                 sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
                 logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                reject(JSON.stringify(response.body.error))
               } else {
                 logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
@@ -182,34 +188,19 @@ function postOnFacebook (payload, pageId) {
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              reject(err)
             })
         }
       })
   })
 }
 exports.edit = function (req, res) {
-  if (req.body.postText) {
-    var postText = {
-      message: req.body.postText
-    }
-    needle.post(
-      `https://graph.facebook.com/v4.0/${req.body.pagePostId}?access_token=${req.body.pageAccessToken}`,
-      postText, (err, resp) => {
-        if (err) {
-          logger.serverLog(TAG, err, 'error')
-        }
-      })
-  }
-
   var updatePayload = {
     includedKeywords: req.body.includedKeywords,
-    excludedKeywords: req.body.excludedKeywords
+    excludedKeywords: req.body.excludedKeywords,
+    secondReply: req.body.secondReply,
+    title: req.body.title
   }
-
-  if (req.body.postText) {
-    updatePayload.postText = req.body.postText
-  }
-
   utility.callApi(`comment_capture/updateone`, 'put', { query: {_id: req.body.postId}, newPayload: updatePayload, options: {} })
     .then(result => {
       sendSuccessResponse(res, 200, result)

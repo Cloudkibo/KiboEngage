@@ -100,38 +100,41 @@ function sendReply (post, body) {
   }
 }
 function createSubscriber (post, body) {
-  let senderId = body.entry[0].changes[0].value.from.id
-  utility.callApi(`subscribers/query`, 'post', {pageId: post.pageId._id, senderId: senderId})
-    .then(subscriber => {
-      subscriber = subscriber[0]
-      if (!subscriber) {
-        let payload = {
-          companyId: post.companyId._id,
-          senderId: senderId,
-          pageId: post.pageId._id,
-          isSubscribed: false,
-          awaitingCommentReply: {sendSecondMessage: true, postId: post._id},
-          completeInfo: false,
-          source: 'comment_capture'
+  if ((post.secondReply.action === 'reply' && post.secondReply.payload && post.secondReply.payload.length > 0) ||
+(post.secondReply.action === 'subscribe' && post.secondReply.sequenceId && post.secondReply.sequenceId !== '')) {
+    let senderId = body.entry[0].changes[0].value.from.id
+    utility.callApi(`subscribers/query`, 'post', {pageId: post.pageId._id, senderId: senderId})
+      .then(subscriber => {
+        subscriber = subscriber[0]
+        if (!subscriber) {
+          let payload = {
+            companyId: post.companyId._id,
+            senderId: senderId,
+            pageId: post.pageId._id,
+            isSubscribed: false,
+            awaitingCommentReply: {sendSecondMessage: true, postId: post._id},
+            completeInfo: false,
+            source: 'comment_capture'
+          }
+          utility.callApi(`subscribers`, 'post', payload)
+            .then(subscriberCreated => {
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')
+            })
+        } else {
+          utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
+            .then(updated => {
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+            })
         }
-        utility.callApi(`subscribers`, 'post', payload)
-          .then(subscriberCreated => {
-          })
-          .catch(err => {
-            logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')
-          })
-      } else {
-        utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
-          .then(updated => {
-          })
-          .catch(err => {
-            logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
-          })
-      }
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
-    })
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+      })
+  }
 }
 exports.sendSecondReplyToComment = function (req, res) {
   res.status(200).json({

@@ -52,6 +52,7 @@ exports.getPostId = function (url) {
 }
 exports.preparePayloadToPost = function (payload) {
   let textComponents = payload.filter(item => item.componentType === 'text')
+  let linkComponents = payload.filter(item => item.componentType === 'link')
   let imageComponents = payload.filter(item => item.componentType === 'image')
   let videoComponents = payload.filter(item => item.componentType === 'video')
   if (imageComponents.length > 0) {
@@ -61,7 +62,7 @@ exports.preparePayloadToPost = function (payload) {
     payload = handleVideo(videoComponents, textComponents)
     return payload
   } else {
-    payload = handleText(textComponents)
+    payload = handleTextAndLinks(textComponents, linkComponents)
     return payload
   }
 }
@@ -96,6 +97,16 @@ function handleImage (imageComponents, textComponents) {
   return payload
 }
 
+function handleTextAndLinks (textComponents, linkComponents) {
+  let payload
+  if (linkComponents.length > 0) {
+    payload = handleLinks(textComponents, linkComponents)
+    return payload
+  } else {
+    payload = handleText(textComponents)
+    return payload
+  }
+}
 function handleText (textComponents) {
   let payload = {
     type: 'text',
@@ -118,7 +129,36 @@ function handleText (textComponents) {
   }
   return payload
 }
-
+function handleLinks (textComponents, linkComponents) {
+  let payload = {}
+  if (linkComponents.length === 1) {
+    payload = {
+      type: 'text',
+      payload: {
+        'link': linkComponents[0].url
+      }
+    }
+    if (textComponents.length > 0) {
+      payload.payload.message = textComponents[0].text
+    }
+  } else if (linkComponents.length > 1) {
+    let links = []
+    for (let i = 0; i < linkComponents.length && i < 10; i++) {
+      links.push({'link': linkComponents[i].url})
+    }
+    payload = {
+      type: 'text',
+      payload: {
+        'link': `https://kibopush.com`,
+        'child_attachments': links
+      }
+    }
+    if (textComponents.length > 0) {
+      payload.payload.message = textComponents[0].text
+    }
+  }
+  return payload
+}
 function getMetaUrls (text) {
   /* eslint-disable */
   var urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
@@ -143,4 +183,6 @@ function handleVideo (videoComponents, textComponents) {
 exports.handleVideo = handleVideo
 exports.getMetaUrls = getMetaUrls
 exports.handleText = handleText
+exports.handleTextAndLinks = handleTextAndLinks
+exports.handleLinks = handleLinks
 exports.handleImage = handleImage

@@ -36,7 +36,6 @@ exports.index = function (req, res) {
     })
 }
 function saveCustomFieldValue (subscriber, resp) {
-  console.log('resp.customFieldId', resp.customFieldId)
   callApi('custom_field_subscribers/query', 'post',
     { purpose: 'findOne', match: { customFieldId: resp.customFieldId, subscriberId: subscriber._id } })
     .then(customFieldSubscriber => {
