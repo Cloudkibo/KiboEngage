@@ -166,6 +166,9 @@ exports.addButton = function (req, res) {
       })
       // buttonPayload.sequenceValue = req.body.sequenceId
       sendSuccessResponse(res, 200, buttonPayload)
+    } else if ((_.has(req.body.payload, 'customFieldId'))) {
+      buttonPayload.payload = JSON.stringify(req.body.payload)
+      sendSuccessResponse(res, 200, buttonPayload)
     } else {
       let buttonId = uniqid()
       buttonPayload.payload = JSON.stringify({
