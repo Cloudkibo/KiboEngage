@@ -105,6 +105,9 @@ exports.addButton = function (req, res) {
   if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
     sendErrorResponse(res, 500, '', 'Url is required for type web_url.')
   }
+  if (typeof req.body.payload === 'string') {
+    req.body.payload = JSON.parse(req.body.payload)
+  }
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
