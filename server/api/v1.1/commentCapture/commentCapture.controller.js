@@ -85,6 +85,7 @@ function getPayloadToSave (user, body) {
       postOnFacebook(body.payload, body.pageId)
         .then(postId => {
           payloadToSave.post_id = postId
+          payloadToSave.payload = body.payload
           resolve(payloadToSave)
         })
         .catch((err) => {

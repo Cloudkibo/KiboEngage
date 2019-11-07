@@ -94,7 +94,6 @@ function sendReply (post, body) {
         'text': post.reply
       }
     }
-    console.log('messageData in sendReply', messageData)
     needle.post(
       `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
       messageData, (err, resp) => {
@@ -103,7 +102,6 @@ function sendReply (post, body) {
         } else if (resp.body.error) {
           sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
         }
-        console.log('response from private reply', resp.body)
       })
     createSubscriber(post, body)
   }
