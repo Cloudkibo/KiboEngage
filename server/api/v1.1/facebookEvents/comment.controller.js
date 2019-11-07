@@ -88,10 +88,13 @@ function sendReply (post, body) {
   if (send) {
     // let messageData = { message: post.reply }
     let messageData = {
-      'recipient': JSON.stringify({
-        'comment_id': body.entry[0].changes[0].value.comment_id}),
-      'message': post.reply
+      'recipient': {
+        'comment_id': body.entry[0].changes[0].value.comment_id},
+      'message': {
+        'text': post.reply
+      }
     }
+    console.log('messageData in sendReply', messageData)
     needle.post(
       `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
       messageData, (err, resp) => {
