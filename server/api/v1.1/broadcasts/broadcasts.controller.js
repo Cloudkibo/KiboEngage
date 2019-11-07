@@ -108,9 +108,9 @@ exports.addButton = function (req, res) {
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId')))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId'))
   ) {
-    sendErrorResponse(res, 500, '', 'SequenceId & action are required for type postback')
+    sendErrorResponse(res, 500, '', 'SequenceId & action & customFieldId are required for type postback')
   }
   let buttonPayload = {
     title: req.body.title,
@@ -180,9 +180,9 @@ exports.editButton = function (req, res) {
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId')))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId'))
   ) {
-    sendErrorResponse(res, 400, '', 'SequenceId & action are required for type postback')
+    sendErrorResponse(res, 400, '', 'SequenceId & action & customFieldId are required for type postback')
   }
   let buttonPayload = {
     title: req.body.title,
