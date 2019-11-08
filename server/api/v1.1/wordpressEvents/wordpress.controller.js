@@ -34,7 +34,7 @@ exports.postPublish = function (req, res) {
           .then(pages => {
             pages.forEach(page => {
               let subscribersData = [
-                {$match: {pageId: page._id, companyId: page.companyId}},
+                {$match: {pageId: page._id, companyId: page.companyId, completeInfo: true}},
                 {$group: {_id: null, count: {$sum: 1}}}
               ]
               utility.callApi('subscribers/query', 'post', subscribersData)

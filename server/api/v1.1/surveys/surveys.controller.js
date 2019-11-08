@@ -18,6 +18,7 @@ const utility = require('./../broadcasts/broadcasts.utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
+const _ = require('lodash')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -427,7 +428,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                         errors: []
                       }
                       if (req.body.isList) {
-                        utility.callApi(`lists/query`, 'post', surveyLogicLayer.ListFindCriteria(req.body, req.user))
+                        callApi.callApi(`lists/query`, 'post', surveyLogicLayer.ListFindCriteria(req.body, req.user))
                           .then(lists => {
                             let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
                             sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
@@ -439,60 +440,90 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                           })
                       } else {
                         let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
-                        if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
-                          utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
-                            .then(tags => {
-                              let tagIds = tags.map((t) => t._id)
-                              utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
-                                .then(tagSubscribers => {
-                                  if (tagSubscribers.length > 0) {
-                                    let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
-                                    subsFindCriteria['_id'] = {$in: subscriberIds}
+                        callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+                          .then(tags => {
+                            let segmentationTags = tags.map(t => t._id)
+                            if (segmentationTags.length > 0 || req.body.segmentationSurvey.length > 0) {
+                              let requests = []
+                              requests.push(callApi.callApi(`tags_subscriber/query`, 'post', { companyId: req.user.companyId, tagId: { $in: segmentationTags } }))
+                              requests.push(surveyResponseDataLayer.genericFind({surveyId: {$in: req.body.segmentationSurvey}}))
+                              Promise.all(requests)
+                                .then(results => {
+                                  console.log('survey segmentation results', results)
+                                  let tagSubscribers = null
+                                  let surveySubscribers = null
+                                  if (segmentationTags.length > 0) {
+                                    if (results[0].length > 0) {
+                                      tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
+                                    } else {
+                                      sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
+                                    }
+                                  }
+                                  if (req.body.segmentationSurvey.length > 0) {
+                                    if (results[1].length > 0) {
+                                      surveySubscribers = results[1].map((ss) => ss.subscriberId)
+                                    } else {
+                                      sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
+                                    }
+                                  }
+                                  if (tagSubscribers && surveySubscribers) {
+                                    let subscriberIds = _.intersection(tagSubscribers, surveySubscribers)
+                                    if (subscriberIds.length > 0) {
+                                      subsFindCriteria['_id'] = {$in: subscriberIds}
+                                      sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                      sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                                    } else {
+                                      sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
+                                    }
+                                  } else if (tagSubscribers) {
+                                    subsFindCriteria['_id'] = {$in: tagSubscribers}
                                     sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                                     sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-                                  } else {
-                                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                                  } else if (surveySubscribers) {
+                                    subsFindCriteria['_id'] = {$in: surveySubscribers}
+                                    sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                    sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                                   }
                                 })
                                 .catch(err => {
                                   logger.serverLog(TAG, err)
-                                  sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+                                  sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers or survey responses')
                                 })
-                            })
-                            .catch(err => {
-                              logger.serverLog(TAG, err)
-                              sendErrorResponse(res, 500, 'Failed to fetch tags')
-                            })
-                        } else {
-                          sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
-                          sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-                        }
+                            } else {
+                              sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                              sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                            }
+                          })
+                          .catch(err => {
+                            logger.serverLog(TAG, err)
+                            sendErrorResponse(res, 500, `Failed to fetch tags`)
+                          })
                       }
                     })
                     .catch(err => {
                       logger.serverLog(TAG, err, 'error')
-                      sendErrorResponse(res, 500, 'Failed to fetch survey')
+                      sendErrorResponse(res, 500, '', 'Failed to fetch survey')
                     })
                 } else {
-                  sendErrorResponse(res, 500, 'Survey Questions not found!')
+                  sendErrorResponse(res, 500, '', 'Survey Questions not found!')
                 }
               })
               .catch(err => {
                 logger.serverLog(TAG, err, 'error')
-                sendErrorResponse(res, 500, 'Failed to fetch survey questions')
+                sendErrorResponse(res, 500, '', 'Failed to fetch survey questions')
               })
           })
           .catch(err => {
             logger.serverLog(TAG, err, 'error')
-            sendErrorResponse(res, 500, 'Failed to fetch user')
+            sendErrorResponse(res, 500, '', 'Failed to fetch user')
           })
       } else {
-        sendErrorResponse(res, 500, 'Page not found!')
+        sendErrorResponse(res, 500, '', 'Page not found!')
       }
     })
     .catch(err => {
       logger.serverLog(TAG, err, 'error')
-      sendErrorResponse(res, 500, 'Failed to fetch page')
+      sendErrorResponse(res, 500, '', 'Failed to fetch page')
     })
 }
 
