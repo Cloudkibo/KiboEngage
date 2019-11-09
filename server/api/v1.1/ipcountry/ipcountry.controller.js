@@ -1,15 +1,15 @@
 
 const logger = require('../../../components/logger')
 const TAG = 'api/ipcountry/ipcountry.controller.js'
-const IpCountryDataLayer = require('./ipcountry.datalayer')
 const callApi = require('../utility')
+const mongoose = require('mongoose')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.findIp = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', { companyId: mongoose.Types.ObjectId(req.body.company_id) })
     .then(company => {
-      if (!company) {
-        sendErrorResponse(res, 404, '', 'No registered company found.')
+      if (!company || company.length < 1) {
+        return sendErrorResponse(res, 404, '', 'No registered company found.')
       }
       let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress
       logger.serverLog(TAG, `IP found: ${ip}`, 'debug')
@@ -19,7 +19,7 @@ exports.findIp = function (req, res) {
       }
       let ip2number = (parseInt(ip.split('.')[0]) * 256 * 256 * 256) + (parseInt(ip.split('.')[1]) * 256 * 256) + (parseInt(ip.split('.')[2]) * 256) + (parseInt(ip.split('.')[3]))
 
-      IpCountryDataLayer.findOneIpCountryObjectUsingQuery({startipint: {$lte: ip2number}, endipint: {$gte: ip2number}})
+      callApi.callApi('ipcountry/findIp', 'post', { ip, ip2number }, 'accounts', req.headers.authorization)
         .then(gotLocation => {
           let response = {
             ip: ip
