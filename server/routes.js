@@ -68,7 +68,7 @@ module.exports = function (app) {
   app.use('/api/api_ngp', require('./api/v1.1/api_ngp'))
   app.use('/api/messageStatistics', require('./api/v1.1/messageStatistics'))
   app.use('/api/twilioEvents', require('./api/v1.1/twilioEvents'))
-  app.use('/api/ip2country', require('./api/v1.1/ip2country'))
+  app.use('/api/ip2country', require('./api/v1.1/ipcountry'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
