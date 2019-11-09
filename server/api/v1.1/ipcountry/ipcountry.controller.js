@@ -2,11 +2,10 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/ipcountry/ipcountry.controller.js'
 const callApi = require('../utility')
-const mongoose = require('mongoose')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.findIp = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', { companyId: mongoose.Types.ObjectId(req.body.company_id) })
+  callApi.callApi('companyuser/query', 'post', { companyId: req.body.company_id })
     .then(company => {
       if (!company || company.length < 1) {
         return sendErrorResponse(res, 404, '', 'No registered company found.')
