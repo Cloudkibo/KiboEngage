@@ -51,7 +51,7 @@ exports.create = function (req, res) {
 }
 
 exports.update = function (req, res) {
-  utility.callApi(`sponsoredMessaging/${req.body._id}`, 'post', req.body)
+  utility.callApi(`sponsoredMessaging/${req.params.id}`, 'post', req.body)
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
