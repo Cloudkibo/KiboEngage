@@ -89,7 +89,7 @@ function sendReply (post, body) {
     let messageData = {
       'recipient': {
         'comment_id': body.entry[0].changes[0].value.comment_id},
-      'message': broadcastUtility.prepareMessageData(null, post.reply[0])
+      'message': JSON.stringify(broadcastUtility.prepareMessageData(null, post.reply[0]))
     }
     console.log('final messageData', JSON.stringify(messageData))
     needle.post(
