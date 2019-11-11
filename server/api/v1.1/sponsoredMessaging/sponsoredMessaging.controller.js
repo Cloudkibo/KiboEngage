@@ -51,8 +51,7 @@ exports.create = function (req, res) {
 }
 
 exports.update = function (req, res) {
-  let updatePayload = logiclayer.prepareUpdatePayload(req.body)
-  utility.callApi(`sponsoredMessaging/${req.body._id}`, 'post', updatePayload)
+  utility.callApi(`sponsoredMessaging/${req.params.id}`, 'post', req.body)
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
