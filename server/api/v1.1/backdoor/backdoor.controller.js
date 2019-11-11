@@ -87,6 +87,7 @@ exports.getAllPages = function (req, res) {
               pagePic: pages[i].pagePic,
               connected: pages[i].connected,
               pageUserName: pages[i].pageUserName,
+              isApproved: pages[i].isApproved,
               likes: pages[i].likes,
               subscribers: subscribers.length
             })
