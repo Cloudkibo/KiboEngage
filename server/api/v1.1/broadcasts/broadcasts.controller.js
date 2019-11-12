@@ -105,12 +105,15 @@ exports.addButton = function (req, res) {
   if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
     sendErrorResponse(res, 500, '', 'Url is required for type web_url.')
   }
+  if (typeof req.body.payload === 'string') {
+    req.body.payload = JSON.parse(req.body.payload)
+  }
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId')))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body.payload, 'customFieldId'))
   ) {
-    sendErrorResponse(res, 500, '', 'SequenceId & action are required for type postback')
+    sendErrorResponse(res, 500, '', 'SequenceId & action & customFieldId are required for type postback')
   }
   let buttonPayload = {
     title: req.body.title,
@@ -163,6 +166,9 @@ exports.addButton = function (req, res) {
       })
       // buttonPayload.sequenceValue = req.body.sequenceId
       sendSuccessResponse(res, 200, buttonPayload)
+    } else if ((_.has(req.body.payload, 'customFieldId'))) {
+      buttonPayload.payload = JSON.stringify(req.body.payload)
+      sendSuccessResponse(res, 200, buttonPayload)
     } else {
       let buttonId = uniqid()
       buttonPayload.payload = JSON.stringify({
@@ -180,9 +186,9 @@ exports.editButton = function (req, res) {
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId')))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId'))
   ) {
-    sendErrorResponse(res, 400, '', 'SequenceId & action are required for type postback')
+    sendErrorResponse(res, 400, '', 'SequenceId & action & customFieldId are required for type postback')
   }
   let buttonPayload = {
     title: req.body.title,

@@ -11,7 +11,16 @@ exports.index = function (req, res) {
     .then(companyUser => {
       utility.callApi(`comment_capture/query`, 'post', {companyId: companyUser.companyId})
         .then(posts => {
-          sendSuccessResponse(res, 200, posts)
+          if (posts && posts.length > 0) {
+            for (let i = 0; i < posts.length; i++) {
+              posts[i].pageId = posts[i].pageId._id
+              if (i === posts.length - 1) {
+                sendSuccessResponse(res, 200, posts)
+              }
+            }
+          } else {
+            sendSuccessResponse(res, 200, [])
+          }
         })
         .catch(error => {
           sendErrorResponse(res, 500, `Failed to get fetch posts ${JSON.stringify(error)}`)
