@@ -376,10 +376,10 @@ exports.allUserPollsCriteria = function (userid, body, survey) {
 exports.getAllSubscribersCriteria = function (pageid, body) {
   let search = '.*' + body.filter_criteria.search_value + '.*'
   let findCriteria = {
-    completeInfo: true,
     pageId: pageid,
     fullName: {$regex: search, $options: 'i'},
     isSubscribed: true,
+    completeInfo: true,
     gender: body.filter_criteria.gender_value !== '' ? body.filter_criteria.gender_value : {$exists: true},
     locale: body.filter_criteria.locale_value !== '' ? body.filter_criteria.locale_value : {$exists: true}
   }
@@ -397,6 +397,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
       'locale': 1,
       'isSubscribed': 1,
       'pageId': 1,
+      'completeInfo': 1,
       'datetime': 1,
       'timezone': 1,
       'senderId': 1,
@@ -423,6 +424,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
         'locale': 1,
         'isSubscribed': 1,
         'pageId': 1,
+        'completeInfo': 1,
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
@@ -448,6 +450,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
         'locale': 1,
         'isSubscribed': 1,
         'pageId': 1,
+        'completeInfo': 1,
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
@@ -472,6 +475,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
         'gender': 1,
         'locale': 1,
         'isSubscribed': 1,
+        'completeInfo': 1,
         'pageId': 1,
         'datetime': 1,
         'timezone': 1,
