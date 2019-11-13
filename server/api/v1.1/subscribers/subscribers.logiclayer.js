@@ -103,6 +103,7 @@ exports.getCriterias = function (req, tagIDs) {
       'datetime': 1,
       'timezone': 1,
       'senderId': 1,
+      'siteInfo': 1,
       '_id': 1
     }},
     { $match: temp },
@@ -134,6 +135,7 @@ exports.getCriterias = function (req, tagIDs) {
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
+        'siteInfo': 1,
         '_id': 1
       }},
       { $match: temp },
@@ -162,6 +164,7 @@ exports.getCriterias = function (req, tagIDs) {
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
+        'siteInfo': 1,
         '_id': 1
       }},
       { $match: { $and: [temp, { _id: { $lt: req.body.last_id } }] } },
@@ -190,6 +193,7 @@ exports.getCriterias = function (req, tagIDs) {
         'datetime': 1,
         'timezone': 1,
         'senderId': 1,
+        'siteInfo': 1,
         '_id': 1
       }},
       { $match: { $and: [temp, { _id: { $gt: req.body.last_id } }] } },
@@ -248,9 +252,7 @@ exports.getCriteriasTags = function (req, tagIDs) {
       { $skip: recordsToSkip },
       { $limit: req.body.number_of_records }
     ]
-
-  }
-  else if (req.body.first_page === 'next') {
+  } else if (req.body.first_page === 'next') {
     recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
     finalCriteria = [
       { $match: {companyId: req.user.companyId, 'tagId': {$in: tagIDs}} },
@@ -267,8 +269,7 @@ exports.getCriteriasTags = function (req, tagIDs) {
       { $skip: recordsToSkip },
       { $limit: req.body.number_of_records }
     ]
-  }
-  else if (req.body.first_page === 'previous') {
+  } else if (req.body.first_page === 'previous') {
     recordsToSkip = Math.abs(req.body.requested_page * req.body.number_of_records)
     finalCriteria = [
       { $match: {companyId: req.user.companyId, 'tagId': {$in: tagIDs}} },
