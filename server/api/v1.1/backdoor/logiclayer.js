@@ -376,10 +376,10 @@ exports.allUserPollsCriteria = function (userid, body, survey) {
 exports.getAllSubscribersCriteria = function (pageid, body) {
   let search = '.*' + body.filter_criteria.search_value + '.*'
   let findCriteria = {
-    completeInfo: true,
     pageId: pageid,
     fullName: {$regex: search, $options: 'i'},
     isSubscribed: true,
+    completeInfo: true,
     gender: body.filter_criteria.gender_value !== '' ? body.filter_criteria.gender_value : {$exists: true},
     locale: body.filter_criteria.locale_value !== '' ? body.filter_criteria.locale_value : {$exists: true}
   }
