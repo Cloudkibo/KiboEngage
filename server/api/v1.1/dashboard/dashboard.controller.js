@@ -1104,10 +1104,8 @@ exports.fetchAutopostingDetails = function (req, res) {
   })
 }
 exports.integrationsData = function (req, res) {
-  console.log('in integrationsData')
   callApi.callApi('integrationUsage/query', 'post', {companyId: req.user.companyId})
     .then(integrationUsages => {
-      console.log('integrationUsages', integrationUsages)
       sendSuccessResponse(res, 200, integrationUsages)
     })
     .catch(err => {
