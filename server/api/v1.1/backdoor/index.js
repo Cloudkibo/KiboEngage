@@ -128,4 +128,8 @@ router.get('/fetchPageOwners/:pageId',
   auth.isAuthorizedSuperUser(),
   controller.fetchPageOwners)
 
+router.get('/integrationsData',
+  auth.isAuthorizedSuperUser(),
+  controller.integrationsData)
+
 module.exports = router
