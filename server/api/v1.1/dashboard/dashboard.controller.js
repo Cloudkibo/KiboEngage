@@ -1103,3 +1103,12 @@ exports.fetchAutopostingDetails = function (req, res) {
     }
   })
 }
+exports.integrationsData = function (req, res) {
+  callApi.callApi('integrationUsage/query', 'post', {companyId: req.user.companyId})
+    .then(integrationUsages => {
+      sendSuccessResponse(res, 200, integrationUsages)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
+    })
+}

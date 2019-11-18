@@ -7,6 +7,10 @@ const router = express.Router()
 const auth = require('../../../auth/auth.service')
 const controller = require('./dashboard.controller')
 
+router.get('/integrationsData',
+  auth.isAuthenticated(),
+  controller.integrationsData)
+
 router.get('/sentVsSeen/:pageId',
   auth.isAuthenticated(),
   // auth.doesPlanPermitsThisAction('dashboard'),
