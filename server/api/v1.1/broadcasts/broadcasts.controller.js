@@ -806,22 +806,7 @@ exports.retrieveSubscribersCount = function (req, res) {
             })
             .catch(err => {
               logger.serverLog(TAG, err)
-              //sendErrorResponse(res, 500, 'Failed to fetch tag subscribers or poll responses')
             })
-          // utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
-          //   .then(tagSubscribers => {
-          //     if (tagSubscribers.length > 0) {
-          //       let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
-          //       match['_id'] = {$in: subscriberIds}
-          //       _getSubscribersCount(match, res)
-          //     } else {
-          //       sendErrorResponse(res, 500, 'No subscribers match the given criteria')
-          //     }
-          //   })
-          //   .catch(err => {
-          //     logger.serverLog(TAG, err)
-          //     sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
-          //   })
         })
         .catch(err => {
           logger.serverLog(TAG, err)
