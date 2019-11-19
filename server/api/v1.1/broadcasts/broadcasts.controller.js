@@ -22,6 +22,8 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const urlMetadata = require('url-metadata')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
 const { prepareSubscribersCriteria } = require('../../global/utility')
+const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
+const surveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -711,6 +713,14 @@ exports.urlMetaData = (req, res) => {
 }
 
 exports.retrieveSubscribersCount = function (req, res) {
+  let segmentationPoll = []
+  let segmentationSurvey = []
+  if (req.body.segmentationPoll) {
+    segmentationPoll = req.body.segmentationPoll
+  }
+  if (req.body.segmentationSurvey) {
+    segmentationSurvey = req.body.segmentationSurvey
+  }
   let match = {
     pageId: req.body.pageId,
     companyId: req.user.companyId,
@@ -737,23 +747,65 @@ exports.retrieveSubscribersCount = function (req, res) {
   } else if (req.body.segmented) {
     if (req.body.segmentationGender.length > 0) match.gender = {$in: req.body.segmentationGender}
     if (req.body.segmentationLocale.length > 0) match.locale = {$in: req.body.segmentationLocale}
-    if (req.body.segmentationTags.length > 0) {
+    if (req.body.segmentationTags.length > 0 || segmentationPoll.length > 0 || segmentationSurvey.length > 0) {
       utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
         .then(tags => {
           let tagIds = tags.map((t) => t._id)
-          utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
-            .then(tagSubscribers => {
-              if (tagSubscribers.length > 0) {
-                let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+          let requests = []
+          console.log('condition true for tags', tagIds)
+          requests.push(utility.callApi(`tags_subscriber/query`, 'post', { companyId: req.user.companyId, tagId: { $in: tagIds } }))
+          requests.push(PollResponseDataLayer.genericFindForPollResponse({pollId: {$in: segmentationPoll}}))
+          requests.push(surveyResponseDataLayer.genericFind({surveyId: {$in: segmentationSurvey}}))
+          Promise.all(requests)
+            .then(results => {
+              console.log('segmentation results', results)
+              let tagSubscribers = []
+              let pollSubscribers = []
+              let surveySubscribers = []
+              if (req.body.segmentationTags.length > 0) {
+                if (results[0].length > 0) {
+                  tagSubscribers = results[0].map((ts) => ts.subscriberId._id)
+                }
+              }
+              if (segmentationPoll.length > 0) {
+                if (results[1].length > 0) {
+                  pollSubscribers = results[1].map((pr) => pr.subscriberId)
+                }
+              }
+              if (segmentationSurvey.length > 0) {
+                if (results[2].length > 0) {
+                  surveySubscribers = results[2].map((pr) => pr.subscriberId)
+                }
+              }
+              if (req.body.segmentationTags.length > 0 && segmentationPoll.length > 0) {
+                let subscriberIds = _.intersection(tagSubscribers, pollSubscribers)
                 match['_id'] = {$in: subscriberIds}
                 _getSubscribersCount(match, res)
-              } else {
-                sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+              }
+              else if (req.body.segmentationTags.length > 0 && segmentationSurvey.length > 0) {
+                let subscriberIds = _.intersection(tagSubscribers, surveySubscribers)
+                match['_id'] = {$in: subscriberIds}
+                _getSubscribersCount(match, res)
+              }
+              else if (segmentationSurvey.length > 0) {
+                match['_id'] = {$in: surveySubscribers}
+                _getSubscribersCount(match, res)
+              }
+              else if (segmentationPoll.length > 0) {
+                match['_id'] = {$in: pollSubscribers}
+                _getSubscribersCount(match, res)
+              }
+              else if (req.body.segmentationTags.length > 0) {
+                match['_id'] = {$in: tagSubscribers}
+                _getSubscribersCount(match, res)
+              }
+              else {
+                match['_id'] = []
+                _getSubscribersCount(match, res)
               }
             })
             .catch(err => {
               logger.serverLog(TAG, err)
-              sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
             })
         })
         .catch(err => {
