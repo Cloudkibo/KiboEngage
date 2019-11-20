@@ -111,7 +111,7 @@ exports.addButton = function (req, res) {
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId'))) && !(_.has(req.body.payload, 'customFieldId'))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body.payload, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction'))
   ) {
     sendErrorResponse(res, 500, '', 'SequenceId & action & customFieldId are required for type postback')
   }
@@ -167,6 +167,9 @@ exports.addButton = function (req, res) {
       // buttonPayload.sequenceValue = req.body.sequenceId
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'customFieldId'))) {
+      buttonPayload.payload = JSON.stringify(req.body.payload)
+      sendSuccessResponse(res, 200, buttonPayload)
+    } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else {
