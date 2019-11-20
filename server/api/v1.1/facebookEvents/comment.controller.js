@@ -228,6 +228,7 @@ function deleteComment (body) {
     .then(comment => {
       comment = comment[0]
       if (comment) {
+        updateCommentsCount(value.verb, comment.postId)
         utility.callApi(`comment_capture/comments/delete`, 'post', {commentFbId: value.comment_id})
           .then(deleted => {
           })
