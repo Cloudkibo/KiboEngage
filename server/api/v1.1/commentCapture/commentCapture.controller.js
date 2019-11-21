@@ -228,3 +228,21 @@ exports.delete = function (req, res) {
       sendErrorResponse(res, 500, `Failed to delete post ${JSON.stringify(error)}`)
     })
 }
+
+exports.postsAnalytics = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email})
+  .then(companyUser => {
+    var aggregateQuery = logicLayer.getAggregateQuery(companyUser.companyId)
+    utility.callApi(`comment_capture/aggregate`, 'post', aggregateQuery)
+      .then(analytics => {
+        logger.serverLog(TAG, `Analytics ${JSON.stringify(analytics)}`, 'success')
+        sendSuccessResponse(res, 200, analytics)
+      })
+      .catch(error => {
+        sendErrorResponse(res, 500, `Failed to get fetch posts ${JSON.stringify(error)}`)
+      })
+  })
+  .catch(error => {
+    sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+  })
+}

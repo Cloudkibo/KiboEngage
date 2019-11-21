@@ -2325,3 +2325,12 @@ exports.usersListForViewAs = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch users list for view as ${JSON.stringify(error)}`)
     })
 }
+exports.integrationsData = function (req, res) {
+  utility.callApi('integrationUsage/query', 'post', {})
+    .then(integrationUsages => {
+      sendSuccessResponse(res, 200, integrationUsages)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
+    })
+}
