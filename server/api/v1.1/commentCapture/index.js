@@ -27,4 +27,14 @@ router.delete('/delete/:id',
   auth.isAuthenticated(),
   controller.delete)
 
+router.post('/getComments',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.getCommentsPayload}),
+  controller.getComments)
+
+router.post('/getRepliesToComment',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.getRepliesToCommentPayload}),
+  controller.getRepliesToComment)
+
 module.exports = router

@@ -5,6 +5,46 @@ Thus we can use it from other non express callers like cron etc
 */
 const URL = require('url')
 
+exports.getCountForComments = (body) => {
+  let aggregateData = [
+    { $match: {postId: body.postId, parentId: {$exists: false}} },
+    { $group: {_id: null, count: { $sum: 1 }} }
+  ]
+  return aggregateData
+}
+
+exports.getComments = (body) => {
+  let aggregateData = [
+    { $match: {postId: body.postId, parentId: {$exists: false}} },
+    { $sort: {_id: body.sort_value} },
+    { $match: {
+      '_id': body.first_page ? {$exists: true} : body.sort_value === -1 ? {$lt: body.last_id} : {$gt: body.last_id}
+    } },
+    { $limit: body.number_of_records }
+  ]
+  return aggregateData
+}
+
+exports.getCountForReplies = (body) => {
+  let aggregateData = [
+    { $match: {parentId: body.commentId} },
+    { $group: {_id: null, count: { $sum: 1 }} }
+  ]
+  return aggregateData
+}
+
+exports.getReplies = (body) => {
+  let aggregateData = [
+    { $match: {parentId: body.commentId} },
+    { $sort: {_id: body.sort_value} },
+    { $match: {
+      '_id': body.first_page ? {$exists: true} : body.sort_value === -1 ? {$lt: body.last_id} : {$gt: body.last_id}
+    } },
+    { $limit: body.number_of_records }
+  ]
+  return aggregateData
+}
+
 exports.setMessage = function (payload) {
   let messageData = {}
   payload.map(payloadItem => {
