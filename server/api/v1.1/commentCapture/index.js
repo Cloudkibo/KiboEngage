@@ -10,6 +10,10 @@ router.get('/',
   auth.isAuthenticated(),
   controller.index)
 
+router.get('/fetchPostsAnalytics',
+  auth.isAuthenticated(),
+  controller.postsAnalytics)
+
 router.get('/:id',
   auth.isAuthenticated(),
   controller.viewPost)

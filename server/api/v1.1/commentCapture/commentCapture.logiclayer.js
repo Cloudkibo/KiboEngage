@@ -61,6 +61,20 @@ exports.setMessage = function (payload) {
   })
   return messageData
 }
+exports.getAggregateQuery = function (companyId) {
+  var aggregateQuery = {
+     match: { companyId: companyId},
+     group: { _id: "$companyId", 
+         count: { $sum: 1 },
+         commentsCount: { $sum: "$count" },
+         positiveMatchCount: { $sum: "$positiveMatchCount" },
+         conversionCount: {$sum: "$conversionCount"},
+         waitingReply: {$sum: "$waitingReply"}, 
+      } 
+  }
+  console.log('Aggregate Query', aggregateQuery)
+  return aggregateQuery
+}
 exports.getPostId = function (url) {
   let postId = ''
   let pathname
