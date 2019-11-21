@@ -88,6 +88,26 @@ function newComment (postId, verb, body) {
       logger.serverLog(TAG, `Failed to fetch post ${JSON.stringify(err)}`, 'error')
     })
 }
+function updatePositiveMatch (postId) {
+  let newPayload = { $inc: { positiveMatchCount : 1 } }
+  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+    .then(updated => {
+      logger.serverLog(TAG, `Match count updated ${JSON.stringify(err)}`, 'updated')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update Positive Match Count ${JSON.stringify(err)}`, 'error')
+    })
+}
+function updateConversionCount (postId) {
+  let newPayload = { $inc: { conversionCount : 1 } }
+  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+    .then(updated => {
+      logger.serverLog(TAG, `Conversion count updated ${JSON.stringify(err)}`, 'updated')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update conversion Count ${JSON.stringify(err)}`, 'error')
+    })
+}
 function updateCommentsCount (verb, postId, commentCountForPost) {
   let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: commentCountForPost ? commentCountForPost : -1 } }
   utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
@@ -116,6 +136,7 @@ function sendReply (post, body) {
           sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
         }
       })
+    updatePositiveMatch(post._id)
     createSubscriber(post, body)
   }
 }
@@ -138,6 +159,7 @@ function createSubscriber (post, body) {
           }
           utility.callApi(`subscribers`, 'post', payload)
             .then(subscriberCreated => {
+              updateConversionCount(post._id)
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')

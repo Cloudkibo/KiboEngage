@@ -3,6 +3,7 @@ This file will contain the functions for logic layer.
 By separating it from controller, we are separating the concerns.
 Thus we can use it from other non express callers like cron etc
 */
+const mongoose = require('mongoose')
 const URL = require('url')
 
 exports.setMessage = function (payload) {
@@ -20,6 +21,20 @@ exports.setMessage = function (payload) {
     }
   })
   return messageData
+}
+exports.getAggregateQuery = function (companyId) {
+  var aggregateQuery = {
+     match: { companyId: companyId},
+     group: { _id: "$companyId", 
+         count: { $sum: 1 },
+         commentsCount: { $sum: "$count" },
+         positiveMatchCount: { $sum: "$positiveMatchCount" },
+         conversionCount: {$sum: "$conversionCount"},
+         waitingReply: {$sum: "$waitingReply"}, 
+      } 
+  }
+  console.log('Aggregate Query', aggregateQuery)
+  return aggregateQuery
 }
 exports.getPostId = function (url) {
   let postId = ''
