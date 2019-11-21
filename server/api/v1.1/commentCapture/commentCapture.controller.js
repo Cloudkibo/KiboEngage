@@ -5,6 +5,7 @@ const logicLayer = require('./commentCapture.logiclayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const async = require('async')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email})
@@ -227,4 +228,69 @@ exports.delete = function (req, res) {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to delete post ${JSON.stringify(error)}`)
     })
+}
+
+exports.getComments = function (req, res) {
+  async.parallelLimit([
+    function (callback) {
+      let data = logicLayer.getCountForComments(req.body)
+      utility.callApi('comment_capture/comments/aggregate', 'post', data)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      let data = logicLayer.getComments(req.body)
+      utility.callApi('comment_capture/comments/aggregate', 'post', data)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      let countResponse = results[0]
+      let comments = results[1]
+      sendSuccessResponse(res, 200, {comments: comments, count: countResponse.length > 0 ? countResponse[0].count : 0})
+    }
+  })
+}
+exports.getRepliesToComment = function (req, res) {
+  async.parallelLimit([
+    function (callback) {
+      let data = logicLayer.getCountForReplies(req.body)
+      utility.callApi('comment_capture/comments/aggregate', 'post', data)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      let data = logicLayer.getReplies(req.body)
+      utility.callApi('comment_capture/comments/aggregate', 'post', data)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      let countResponse = results[0]
+      let comments = results[1]
+      sendSuccessResponse(res, 200, {replies: comments, count: countResponse.length > 0 ? countResponse[0].count : 0})
+    }
+  })
 }
