@@ -66,10 +66,10 @@ exports.getAggregateQuery = function (companyId) {
      match: { companyId: companyId},
      group: { _id: "$companyId", 
          count: { $sum: 1 },
-         commentsCount: { $sum: "$count" },
-         positiveMatchCount: { $sum: "$positiveMatchCount" },
-         conversionCount: {$sum: "$conversionCount"},
-         waitingReply: {$sum: "$waitingReply"}, 
+         totalComments: { $sum: "$count" },
+         totalRepliesSent: { $sum: "$positiveMatchCount" },
+         conversions: {$sum: "$conversionCount"},
+         waitingConversiond: {$sum: "$waitingReply"}, 
       } 
   }
   console.log('Aggregate Query', aggregateQuery)
