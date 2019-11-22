@@ -188,10 +188,13 @@ exports.editButton = function (req, res) {
   if (req.body.type === 'web_url' && !req.body.messenger_extensions && !(_.has(req.body, 'newUrl'))) {
     sendErrorResponse(res, 400, '', 'Url is required for type web_url.')
   }
+  if (typeof req.body.payload === 'string') {
+    req.body.payload = JSON.parse(req.body.payload)
+  }
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId'))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction'))
   ) {
     sendErrorResponse(res, 400, '', 'SequenceId & action & customFieldId are required for type postback')
   }
@@ -258,6 +261,9 @@ exports.editButton = function (req, res) {
       })
       buttonPayload.sequenceValue = req.body.sequenceId
       sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
+    } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
+      buttonPayload.payload = JSON.stringify(req.body.payload)
+      sendSuccessResponse(res, 200, buttonPayload)
     } else {
       buttonPayload.payload = JSON.stringify({
         messageId: req.body.messageId
