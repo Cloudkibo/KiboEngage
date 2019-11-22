@@ -69,7 +69,7 @@ exports.getAggregateQuery = function (companyId) {
          totalComments: { $sum: "$count" },
          totalRepliesSent: { $sum: "$positiveMatchCount" },
          conversions: {$sum: "$conversionCount"},
-         waitingConversiond: {$sum: "$waitingReply"}, 
+         waitingConversions: {$sum: "$waitingReply"}, 
       } 
   }
   console.log('Aggregate Query', aggregateQuery)
