@@ -10,6 +10,10 @@ router.get('/',
   auth.isAuthenticated(),
   controller.index)
 
+router.get('/fetchPostsAnalytics',
+  auth.isAuthenticated(),
+  controller.postsAnalytics)
+
 router.get('/:id',
   auth.isAuthenticated(),
   controller.viewPost)
@@ -26,5 +30,15 @@ router.post('/edit',
 router.delete('/delete/:id',
   auth.isAuthenticated(),
   controller.delete)
+
+router.post('/getComments',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.getCommentsPayload}),
+  controller.getComments)
+
+router.post('/getRepliesToComment',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.getRepliesToCommentPayload}),
+  controller.getRepliesToComment)
 
 module.exports = router

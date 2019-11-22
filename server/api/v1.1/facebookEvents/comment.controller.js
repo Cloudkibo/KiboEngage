@@ -36,45 +36,80 @@ function forTweetPost (postId, verb) {
     })
 }
 function forCommentCapturePost (postId, verb, body) {
-  let pageId = postId.split('_')[0]
-  let parentId = body.entry[0].changes[0].value.parent_id
-  if (parentId === postId) {
-    utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
-      .then(post => {
-        post = post[0]
-        if (post) {
-          updateCommentsCount(verb, post._id)
-          sendReply(post, body)
-        } else {
-          utility.callApi(`pages/query`, 'post', {pageId: pageId, connected: true})
-            .then(page => {
-              page = page[0]
-              if (page) {
-                utility.callApi(`comment_capture/query`, 'post', {pageId: page._id, post_id: {$exists: false}})
-                  .then(post => {
-                    post = post[0]
-                    if (post) {
-                      updateCommentsCount(verb, post._id)
-                      sendReply(post, body)
-                    }
-                  })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch post1 ${JSON.stringify(err)}`, 'error')
-                  })
-              }
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
-            })
-        }
-      })
-      .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch post ${JSON.stringify(err)}`, 'error')
-      })
+  if (verb === 'add') {
+    newComment(postId, verb, body)
+  } else if (verb === 'edited') {
+    editComment(body)
+  } else {
+    deleteComment(body)
   }
 }
-function updateCommentsCount (verb, postId) {
-  let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: -1 } }
+function newComment (postId, verb, body) {
+  let pageId = postId.split('_')[0]
+  let parentId = body.entry[0].changes[0].value.parent_id
+  utility.callApi(`comment_capture/query`, 'post', {post_id: postId})
+    .then(post => {
+      post = post[0]
+      if (post) {
+        updateCommentsCount(verb, post._id)
+        if (parentId === postId) {
+          sendReply(post, body)
+        } else {
+          saveComment(post, body, false)
+        }
+      } else {
+        utility.callApi(`pages/query`, 'post', {pageId: pageId, connected: true})
+          .then(page => {
+            page = page[0]
+            if (page) {
+              utility.callApi(`comment_capture/query`, 'post', {pageId: page._id, post_id: {$exists: false}})
+                .then(post => {
+                  post = post[0]
+                  if (post) {
+                    updateCommentsCount(verb, post._id)
+                    if (parentId === postId) {
+                      sendReply(post, body)
+                    } else {
+                      saveComment(post, body, false)
+                    }
+                  }
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to fetch post1 ${JSON.stringify(err)}`, 'error')
+                })
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch post ${JSON.stringify(err)}`, 'error')
+    })
+}
+function updatePositiveMatch (postId) {
+  let newPayload = { $inc: { positiveMatchCount : 1 } }
+  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+    .then(updated => {
+      logger.serverLog(TAG, `Match count updated ${JSON.stringify(err)}`, 'updated')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update Positive Match Count ${JSON.stringify(err)}`, 'error')
+    })
+}
+function updateConversionCount (postId) {
+  let newPayload = { $inc: { conversionCount : 1 } }
+  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+    .then(updated => {
+      logger.serverLog(TAG, `Conversion count updated ${JSON.stringify(err)}`, 'updated')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update conversion Count ${JSON.stringify(err)}`, 'error')
+    })
+}
+function updateCommentsCount (verb, postId, commentCountForPost) {
+  let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: commentCountForPost ? commentCountForPost : -1 } }
   utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
     .then(updated => {
     })
@@ -85,13 +120,13 @@ function updateCommentsCount (verb, postId) {
 function sendReply (post, body) {
   let send = true
   send = commentCaptureLogicLayer.getSendValue(post, body)
+  saveComment(post, body, send)
   if (send) {
     let messageData = {
       'recipient': {
         'comment_id': body.entry[0].changes[0].value.comment_id},
       'message': JSON.stringify(broadcastUtility.prepareMessageData(null, post.reply[0]))
     }
-    console.log('final messageData', JSON.stringify(messageData))
     needle.post(
       `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
       messageData, (err, resp) => {
@@ -100,8 +135,8 @@ function sendReply (post, body) {
         } else if (resp.body.error) {
           sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
         }
-        console.log('response from privatereply', resp.body)
       })
+    updatePositiveMatch(post._id)
     createSubscriber(post, body)
   }
 }
@@ -124,6 +159,7 @@ function createSubscriber (post, body) {
           }
           utility.callApi(`subscribers`, 'post', payload)
             .then(subscriberCreated => {
+              updateConversionCount(post._id)
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')
@@ -142,6 +178,158 @@ function createSubscriber (post, body) {
       })
   }
 }
+
+function saveComment (post, body, send) {
+  let value = body.entry[0].changes[0].value
+  commentCaptureLogicLayer.prepareCommentPayloadToSave(value, post.pageId.accessToken)
+    .then(commentPayload => {
+      let commentToSave = {
+        postId: post._id,
+        commentFbId: value.comment_id,
+        senderName: value.from.name,
+        senderFbId: value.from.id,
+        commentPayload: commentPayload,
+        postFbLink: value.post.permalink_url,
+        replySentOnMessenger: value.from.id === post.pageId.pageId ? false : send
+      }
+      checkParentOfComment(commentToSave, value)
+        .then(commentToSave => {
+          checkSubscriberOfComment(commentToSave, value, post)
+            .then(result => {
+              utility.callApi(`comment_capture/comments`, 'post', result)
+                .then(commentSaved => {
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to save comment ${JSON.stringify(err)}`, 'error')
+                })
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to find susbcriber of comment ${JSON.stringify(err)}`, 'error')
+            })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch parent comment ${JSON.stringify(err)}`, 'error')
+        })
+    })
+}
+
+function editComment (body) {
+  let value = body.entry[0].changes[0].value
+  utility.callApi(`comment_capture/comments/query`, 'post', {commentFbId: value.comment_id})
+    .then(comment => {
+      comment = comment[0]
+      if (comment) {
+        utility.callApi(`pages/query`, 'post', {_id: comment.postId.pageId})
+          .then(page => {
+            page = page[0]
+            if (page) {
+              commentCaptureLogicLayer.prepareCommentPayloadToSave(value, page.accessToken)
+                .then(commentPayload => {
+                  utility.callApi(`comment_capture/comments/update`, 'put', {query: { _id: comment._id }, newPayload: {commentPayload: commentPayload}, options: {}})
+                    .then(updated => {
+                    })
+                    .catch(err => {
+                      logger.serverLog(TAG, `Failed to update comment ${JSON.stringify(err)}`, 'error')
+                    })
+                })
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch comment ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+function deleteComment (body) {
+  let value = body.entry[0].changes[0].value
+  let commentCountForPost = -1
+  utility.callApi(`comment_capture/comments/query`, 'post', {commentFbId: value.comment_id})
+    .then(comment => {
+      comment = comment[0]
+      if (comment) {
+        utility.callApi(`comment_capture/comments/delete`, 'post', {commentFbId: value.comment_id})
+          .then(deleted => {
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+          })
+        if (comment.childCommentCount > 0) {
+          utility.callApi(`comment_capture/comments/delete`, 'post', {parentId: comment._id})
+            .then(deleted => {
+              commentCountForPost = commentCountForPost - deleted.deletedCount
+              updateCommentsCount(value.verb, comment.postId, commentCountForPost)
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+            })
+        } else {
+          updateCommentsCount(value.verb, comment.postId, commentCountForPost)
+        }
+        if (comment.parentId) {
+          utility.callApi(`comment_capture/comments/update`, 'put', {query: { _id: comment.parentId }, newPayload: { $inc: { childCommentCount: -1 } }, options: {}})
+            .then(updated => {
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+            })
+        }
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch comment ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+function checkParentOfComment (commentToSave, value) {
+  return new Promise(function (resolve, reject) {
+    if (value.comment_id !== value.parent_id) {
+      utility.callApi(`comment_capture/comments/query`, 'post', {commentFbId: value.parent_id})
+        .then(commentFound => {
+          commentFound = commentFound[0]
+          if (commentFound) {
+            commentToSave.parentId = commentFound._id
+            utility.callApi(`comment_capture/comments/update`, 'put', {query: { _id: commentFound._id }, newPayload: { $inc: { childCommentCount: 1 } }, options: {}})
+              .then(updated => {
+              })
+              .catch(err => {
+                reject(err)
+              })
+            resolve(commentToSave)
+          } else {
+            resolve(commentToSave)
+          }
+        })
+        .catch(err => {
+          reject(err)
+        })
+    } else {
+      resolve(commentToSave)
+    }
+  })
+}
+
+function checkSubscriberOfComment (commentToSave, value, post) {
+  return new Promise(function (resolve, reject) {
+    utility.callApi(`subscribers/query`, 'post', {pageId: post.pageId._id, senderId: value.from.id})
+      .then(subscriber => {
+        subscriber = subscriber[0]
+        if (subscriber) {
+          commentToSave.subscriberId = subscriber._id
+          resolve(commentToSave)
+        } else {
+          resolve(commentToSave)
+        }
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}
+
 exports.sendSecondReplyToComment = function (req, res) {
   res.status(200).json({
     status: 'success',

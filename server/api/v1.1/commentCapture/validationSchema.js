@@ -60,3 +60,49 @@ exports.postUpdatePayload = {
     }
   }
 }
+exports.getCommentsPayload = {
+  type: 'object',
+  properties: {
+    first_page: {
+      type: 'boolean',
+      required: true
+    },
+    last_id: {
+      type: 'string',
+      required: true
+    },
+    number_of_records: {
+      type: 'number',
+      required: true
+    },
+    postId: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+exports.getRepliesToCommentPayload = {
+  type: 'object',
+  properties: {
+    first_page: {
+      type: 'boolean',
+      required: true
+    },
+    last_id: {
+      type: 'string',
+      required: true
+    },
+    number_of_records: {
+      type: 'number',
+      required: true
+    },
+    commentId: {
+      type: 'string',
+      required: true
+    },
+    sort_value: {
+      type: 'number',
+      required: true
+    }
+  }
+}
