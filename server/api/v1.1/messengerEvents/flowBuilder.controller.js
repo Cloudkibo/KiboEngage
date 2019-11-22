@@ -1,8 +1,8 @@
 const {callApi} = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/flowBuilder.controller.js'
-const broadcastUtility = require('../broadcasts/broadcasts.utility')
-const messengerEventsUtility = require('./utility')
+const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
+const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -12,26 +12,46 @@ exports.index = function (req, res) {
   const sender = req.body.senderId
   const pageId = req.body.pageId
   const blockUniqueId = req.body.entry[0].messaging[0].postback.payload.blockUniqueId
+  let reportObj = {
+    successful: 0,
+    unsuccessful: 0,
+    errors: []
+  }
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      callApi(`subscribers/query`, 'post', { pageId: page._id, companyId: page.companyId, senderId: sender, completeInfo: true })
-        .then(subscriber => {
-          subscriber = subscriber[0]
-          callApi(`messageBlocks/query`, 'post', { _id: blockUniqueId }, 'kiboengage')
-            .then(messageBlock => {
-              messageBlock = messageBlock[0].payload
-              broadcastUtility.getBatchData(messageBlock, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch messageBlock in query ${JSON.stringify(err)}`, 'error')
-            })
+      let subsFindCriteria = { pageId: page._id, companyId: page.companyId, senderId: sender, completeInfo: true }
+      callApi(`messageBlocks/query`, 'post', { uniqueId: blockUniqueId }, 'kiboengage')
+        .then(messageBlock => {
+          messageBlock = messageBlock[0].payload
+          if (messageBlock.module.type === 'broadcast') {
+            let pageBroadcastData = {
+              pageId: page.pageId,
+              userId: page.userId,
+              broadcastId: messageBlock.module.id,
+              seen: false,
+              sent: false,
+              companyId: page.companyId
+            }
+            sendUsingBatchAPI('broadcast', messageBlock, subsFindCriteria, page, '', reportObj, _savePageBroadcast, pageBroadcastData)
+          }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+          logger.serverLog(TAG, `Failed to fetch messageBlock in query ${JSON.stringify(err)}`, 'error')
         })
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+const _savePageBroadcast = (data) => {
+  BroadcastPageDataLayer.createForBroadcastPage(data)
+    .then(savedpagebroadcast => {
+      require('../../global/messageStatistics').record('broadcast')
+      logger.serverLog(TAG, 'page broadcast object saved in db')
+    })
+    .catch(error => {
+      logger.serverLog(`Failed to create page_broadcast ${JSON.stringify(error)}`)
     })
 }
