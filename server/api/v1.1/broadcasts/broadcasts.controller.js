@@ -21,7 +21,7 @@ const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const urlMetadata = require('url-metadata')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
-const { prepareSubscribersCriteria } = require('../../global/utility')
+const { prepareSubscribersCriteria, createMessageBlocks } = require('../../global/utility')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const surveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 
@@ -494,74 +494,82 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
   BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
     .then(broadcast => {
       logger.serverLog(TAG, `broadcast created ${JSON.stringify(broadcast)}`, 'debug')
-      require('./../../../config/socketio').sendMessageToClient({
-        room_id: req.user.companyId,
-        body: {
-          action: 'new_broadcast',
-          payload: {
-            broadcast_id: broadcast._id,
-            user_id: req.user._id,
-            user_name: req.user.name
+      createMessageBlocks(req.body.linkedMessages, req.user, broadcast._id, 'broadcast')
+        .then(results => {
+          // ...
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: req.user.companyId,
+            body: {
+              action: 'new_broadcast',
+              payload: {
+                broadcast_id: broadcast._id,
+                user_id: req.user._id,
+                user_name: req.user.name
+              }
+            }
+          })
+          broadcastUtility.addModuleIdIfNecessary(payload, broadcast._id) // add module id in buttons for click count
+          let pageBroadcastData = {
+            pageId: page.pageId,
+            userId: req.user._id,
+            broadcastId: broadcast._id,
+            seen: false,
+            sent: false,
+            companyId: req.user.companyId
           }
-        }
-      })
-      broadcastUtility.addModuleIdIfNecessary(payload, broadcast._id) // add module id in buttons for click count
-      let pageBroadcastData = {
-        pageId: page.pageId,
-        userId: req.user._id,
-        broadcastId: broadcast._id,
-        seen: false,
-        sent: false,
-        companyId: req.user.companyId
-      }
-      let reportObj = {
-        successful: 0,
-        unsuccessful: 0,
-        errors: []
-      }
-      if (req.body.isList) {
-        utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
-          .then(lists => {
-            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
-            sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
-            sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-          })
-          .catch(error => {
-            logger.serverLog(TAG, error)
-            sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
-          })
-      } else {
-        let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
-        console.log('subsFindCriteria', subsFindCriteria)
-        if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
-          utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
-            .then(tags => {
-              let tagIds = tags.map((t) => t._id)
-              utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
-                .then(tagSubscribers => {
-                  if (tagSubscribers.length > 0) {
-                    let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
-                    subsFindCriteria['_id'] = {$in: subscriberIds}
-                    sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
-                    sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-                  } else {
-                    sendErrorResponse(res, 500, 'No subscribers match the given criteria')
-                  }
+          let reportObj = {
+            successful: 0,
+            unsuccessful: 0,
+            errors: []
+          }
+          if (req.body.isList) {
+            utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
+              .then(lists => {
+                let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
+                sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+                sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+              })
+              .catch(error => {
+                logger.serverLog(TAG, error)
+                sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
+              })
+          } else {
+            let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+            console.log('subsFindCriteria', subsFindCriteria)
+            if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
+              utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
+                .then(tags => {
+                  let tagIds = tags.map((t) => t._id)
+                  utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                    .then(tagSubscribers => {
+                      if (tagSubscribers.length > 0) {
+                        let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                        subsFindCriteria['_id'] = {$in: subscriberIds}
+                        sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+                        sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+                      } else {
+                        sendErrorResponse(res, 500, 'No subscribers match the given criteria')
+                      }
+                    })
+                    .catch(err => {
+                      logger.serverLog(TAG, err)
+                      sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+                    })
                 })
                 .catch(err => {
                   logger.serverLog(TAG, err)
-                  sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
+                  sendErrorResponse(res, 500, 'Failed to fetch tags')
                 })
-            })
-            .catch(err => {
-              logger.serverLog(TAG, err)
-              sendErrorResponse(res, 500, 'Failed to fetch tags')
-            })
-        } else {
-          sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
-          sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
-        }
-      }
+            } else {
+              sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+              sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
+            }
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, err)
+          sendErrorResponse(res, 500, `Failed to create linked message blocks ${err}`)
+        })
     })
     .catch(err => {
       logger.serverLog(TAG, err)
@@ -790,25 +798,20 @@ exports.retrieveSubscribersCount = function (req, res) {
                 let subscriberIds = _.intersection(tagSubscribers, pollSubscribers)
                 match['_id'] = {$in: subscriberIds}
                 _getSubscribersCount(match, res)
-              }
-              else if (req.body.segmentationTags.length > 0 && segmentationSurvey.length > 0) {
+              } else if (req.body.segmentationTags.length > 0 && segmentationSurvey.length > 0) {
                 let subscriberIds = _.intersection(tagSubscribers, surveySubscribers)
                 match['_id'] = {$in: subscriberIds}
                 _getSubscribersCount(match, res)
-              }
-              else if (segmentationSurvey.length > 0) {
+              } else if (segmentationSurvey.length > 0) {
                 match['_id'] = {$in: surveySubscribers}
                 _getSubscribersCount(match, res)
-              }
-              else if (segmentationPoll.length > 0) {
+              } else if (segmentationPoll.length > 0) {
                 match['_id'] = {$in: pollSubscribers}
                 _getSubscribersCount(match, res)
-              }
-              else if (req.body.segmentationTags.length > 0) {
+              } else if (req.body.segmentationTags.length > 0) {
                 match['_id'] = {$in: tagSubscribers}
                 _getSubscribersCount(match, res)
-              }
-              else {
+              } else {
                 match['_id'] = []
                 _getSubscribersCount(match, res)
               }

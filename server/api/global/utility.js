@@ -5,6 +5,26 @@ const nodemailer = require('nodemailer')
 const TAG = 'server/api/global/utility'
 const _ = require('lodash')
 
+exports.createMessageBlocks = (linkedMessages, user, moduleId, moduleType) => {
+  let messageBlockRequests = []
+  for (let i = 0; i < linkedMessages.length; i++) {
+    let linkedMessage = linkedMessages[i]
+    let data = {
+      module: {
+        id: moduleId,
+        type: moduleType
+      },
+      title: linkedMessage.title,
+      uniqueId: linkedMessage.id,
+      payload: linkedMessage.messageContent,
+      userId: user._id,
+      companyId: user.companyId
+    }
+    messageBlockRequests.push(callApi(`messageBlocks/create`, 'post', data, 'kiboengage'))
+  }
+  return Promise.all(messageBlockRequests)
+}
+
 exports.prepareSubscribersCriteria = (body, page, lists) => {
   if (
     !body ||
@@ -101,49 +121,49 @@ const getPlainEmailObject = (to, from, subject, text, errorMessage, codePart) =>
     '<p style="color: #ffffff"> KiboPush - Reconnect Facebook Account </p> </td></tr> </table> </td> </tr> </table> ' +
     '<!-- END: Social Icons --> </td> </tr> </table> </td> </tr> </table> ' +
     '<!-- END: Header Container --> </td> </tr> </table> <!-- END: Header --> <!-- BEGIN: Content --> <table class="container content" align="center"> <tr> <td> <table class="row note"> ' +
-    '<tr> <td class="wrapper last"> <p> Hello, <br> '+ text +'</p> <p> </p>  <!-- BEGIN: Note Panel --> <table class="twelve columns" style="margin-bottom: 10px"> ' +
-    '<tr> <td class="panel" style="background: #ECF8FF;border: 0;padding: 10px !important;"> </td> <td class="expander"> </td> </tr> </table> '+
+    '<tr> <td class="wrapper last"> <p> Hello, <br> ' + text + '</p> <p> </p>  <!-- BEGIN: Note Panel --> <table class="twelve columns" style="margin-bottom: 10px"> ' +
+    '<tr> <td class="panel" style="background: #ECF8FF;border: 0;padding: 10px !important;"> </td> <td class="expander"> </td> </tr> </table> ' +
     '<!-- END: Note Panel --> </td> </tr> </table><span class="devider" style="border-bottom: 1px solid #eee;margin: 15px -15px;display: block;"></span> <!-- END: Disscount Content --> </td> </tr> </table> </td> </tr> </table> <!-- END: Content --> <!-- BEGIN: Footer --> <table class="page-footer" align="center" style="width: 100%;background: #2f2f2f;"> <tr> <td class="center" align="center" style="vertical-align: middle;color: #fff;"> <table class="container" align="center"> <tr> <td style="vertical-align: middle;color: #fff;"> <!-- BEGIN: Unsubscribet --> <table class="row"> <tr> <td class="wrapper last" style="vertical-align: middle;color: #fff;"><span style="font-size:12px;"><i>This is a system generated email and reply is not required.</i></span> </td> </tr> </table> <!-- END: Unsubscribe --> ' +
     '<!-- END: Footer Panel List --> </td> </tr> </table> </td> </tr> </table> <!-- END: Footer --> </td> </tr></table></body>'
   return email
 }
 
-const passwordChangeEmailAlert = function(userId, userEmail){
+const passwordChangeEmailAlert = function (userId, userEmail) {
   let body = {
-    query:{
+    query: {
       _id: userId
     },
-    newPayload:{
+    newPayload: {
       connectFacebook: false
     }
   }
   callApi(`user/update`, 'post', body)
-  .then(response1 => {
-    //sucess... Email user to reconnect facebook account
-    let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
-    let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
-    let transporter = getMailTransporter()
+    .then(response1 => {
+    // sucess... Email user to reconnect facebook account
+      let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
+      let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
+      let transporter = getMailTransporter()
 
-    if (config.env === 'production') {
-      transporter.sendMail(email, function (err, data) {
-        if (err) {
-          logger.serverLog(TAG, `error in sending Alert email: ${JSON.stringify(err)}`, 'error')
-        }
-      })
-    }
-  })
-  .catch( error => {
-    logger.serverLog(TAG, `error: ${JSON.stringify(error)}`, 'error')
-  })
+      if (config.env === 'production') {
+        transporter.sendMail(email, function (err, data) {
+          if (err) {
+            logger.serverLog(TAG, `error in sending Alert email: ${JSON.stringify(err)}`, 'error')
+          }
+        })
+      }
+    })
+    .catch(error => {
+      logger.serverLog(TAG, `error: ${JSON.stringify(error)}`, 'error')
+    })
 }
 
-const getMailTransporter =  function(){
+const getMailTransporter = function () {
   let transporter = nodemailer.createTransport({
     service: config.nodemailer.service,
     auth: {
-        user: config.nodemailer.email,
-        pass: config.nodemailer.password
-      }
+      user: config.nodemailer.email,
+      pass: config.nodemailer.password
+    }
   })
   return transporter
 }
