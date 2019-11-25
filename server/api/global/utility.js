@@ -15,12 +15,12 @@ exports.createMessageBlocks = (linkedMessages, user, moduleId, moduleType) => {
         type: moduleType
       },
       title: linkedMessage.title,
-      uniqueId: linkedMessage.id,
+      uniqueId: linkedMessage.id.toString(),
       payload: linkedMessage.messageContent,
       userId: user._id,
       companyId: user.companyId
     }
-    messageBlockRequests.push(callApi(`messageBlocks/create`, 'post', data, 'kiboengage'))
+    messageBlockRequests.push(callApi(`messageBlocks/`, 'post', data, 'kiboengage'))
   }
   return Promise.all(messageBlockRequests)
 }

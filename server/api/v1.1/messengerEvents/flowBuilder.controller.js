@@ -21,9 +21,8 @@ exports.index = function (req, res) {
     .then(page => {
       page = page[0]
       let subsFindCriteria = { pageId: page._id, companyId: page.companyId, senderId: sender, completeInfo: true }
-      callApi(`messageBlocks/query`, 'post', { uniqueId: blockUniqueId }, 'kiboengage')
+      callApi(`messageBlocks/query`, 'post', { purpose: 'findOne', match: { uniqueId: blockUniqueId } }, 'kiboengage')
         .then(messageBlock => {
-          messageBlock = messageBlock[0].payload
           if (messageBlock.module.type === 'broadcast') {
             let pageBroadcastData = {
               pageId: page.pageId,
@@ -33,6 +32,7 @@ exports.index = function (req, res) {
               sent: false,
               companyId: page.companyId
             }
+            messageBlock = messageBlock.payload
             sendUsingBatchAPI('broadcast', messageBlock, subsFindCriteria, page, '', reportObj, _savePageBroadcast, pageBroadcastData)
           }
         })
