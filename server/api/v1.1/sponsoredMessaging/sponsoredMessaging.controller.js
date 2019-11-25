@@ -88,56 +88,46 @@ exports.send = function (req, res) {
                 console.log('response', response)
                 let adsetid = response.body.id
                 console.log('adset', adsetid)
-                logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
-                  .then(creativePayload => {
-                    facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
+                let creativePayload = logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
+                console.log('creativePayload', creativePayload)
+
+                facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
+                  .then(resp => {
+                    let messageCreativeId = resp.id
+                    let adPayload = logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
+                    console.log('adPayload', adPayload)
+
+                    facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
                       .then(resp => {
-                        let messageCreativeId = resp.id
-                        logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
-                          .then(adPayload => {
-                            facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
-                              .then(resp => {
-                                let ad_id = resp.id
-                                // Now since we have got respone from facebook, we shall update our database
-                                let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: ad_id, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
-                                utility.callApi(`sponsoredMessaging/${req.params._id}`, 'post', updatePayload, req.headers.authorization)
-                                  .then(sponsoredMessage => {
-                                    return res.status(201).json({ status: 'success', payload: sponsoredMessage })
-                                  })
-                                  .catch(error => {
-                                    return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
-                                  })
-                              })
-                              .catch(err => {
-                                return res.status(500).json({ status: 'failed', payload: err })
-                              })
+                        let ad_id = resp.id
+                        // Now since we have got respone from facebook, we shall update our database
+                        let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: ad_id, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
+                        utility.callApi(`sponsoredMessaging/${req.params._id}`, 'post', updatePayload, req.headers.authorization)
+                          .then(sponsoredMessage => {
+                            return res.status(201).json({ status: 'success', payload: sponsoredMessage })
                           })
-                          .catch(err => {
-                            return res.status(500).json({ status: 'failed', payload: err })
+                          .catch(error => {
+                            return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
                           })
                       })
                       .catch(err => {
                         return res.status(500).json({ status: 'failed', payload: err })
                       })
                   })
-                let updatePayload = logiclayer.prepareUpdatePayload(sponsoredMessage, campaignId, adsetid)
-                console.log('updatePayload', updatePayload)
-                utility.callApi(`sponsoredMessaging/${req.body._id}`, 'post', updatePayload, req.headers.authorization)
-                  .then(sponsoredMessage => {
-                    return res.status(201).json({ status: 'success', payload: sponsoredMessage })
+                  .catch(err => {
+                    return res.status(500).json({ status: 'failed', payload: err })
                   })
-                  .catch(error => {
-                    return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
-                  })
+              })
+              .catch(err => {
+                return res.status(500).json({ status: 'failed', payload: err })
               })
           })
           .catch(error => {
             return res.status(500).json({ status: 'failed', payload: error })
           })
-
-          .catch(error => {
-            return res.status(500).json({ status: 'failed', payload: error })
-          })
+      })
+      .catch(error => {
+        return res.status(500).json({ status: 'failed', payload: error })
       })
   } else {
     return res.status(500).json({ status: 'failed', payload: 'Failed to send sponsored message due to id' })
