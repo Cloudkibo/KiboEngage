@@ -1,3 +1,5 @@
+let { facebook } = require('../../global/prepareMessageData')
+
 exports.preparePayload = function (companyId, userId) {
   let payload = {
     companyId: companyId,
@@ -73,12 +75,15 @@ exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
   }
   return payload
 }
+// 'messenger_sponsored_message={"message":{"text":"Sample Text", "quick_replies":[{"title":"Quick Reply Text", "content_type":"text"}]}}
+// 'messenger_sponsored_message={"message":{"attachment":{"type":"template",   "payload":{"template_type":"generic", "elements":[{"title":"Image Text",   "buttons":[{"type":"web_url", "title":"button text", "url":"<URL>"}],   "image_hash":"<IMAGE_HASH>"}]}},"text":"Ad text"}}' \
 
 exports.prepareadCreativePayload = function (body, access_token) {
+  let data = facebook(body.payload[0])
   let payload = {
     object_id: body.pageId,
     object_type: 'SHARE',
-    messenger_sponsored_message: body.payload.newMesage,
+    messenger_sponsored_message: data,
     access_token: access_token
   }
 
@@ -99,9 +104,9 @@ exports.prepareadAdPayload = function (body, adset_id, message_creative_id, acce
   return payload
 }
 
-exports.prepareInsightPayload = function (access_token){
+exports.prepareInsightPayload = function (access_token) {
   let payload = {
-    fields: {name, insights},
+    fields: { name, insights },
     access_token: access_token
   }
   return payload

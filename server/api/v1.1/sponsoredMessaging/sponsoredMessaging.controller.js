@@ -85,7 +85,6 @@ exports.send = function (req, res) {
                 if (response.body.error) {
                   sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
                 }
-                console.log('response', response)
                 let adsetid = response.body.id
                 console.log('adset', adsetid)
                 let creativePayload = logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
@@ -94,12 +93,14 @@ exports.send = function (req, res) {
                 facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
                   .then(resp => {
                     let messageCreativeId = resp.id
+                    console.log('messageCreativeId', messageCreativeId)
                     let adPayload = logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
                     console.log('adPayload', adPayload)
 
                     facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
                       .then(resp => {
                         let ad_id = resp.id
+                        console.log('ad_id',  ad_id)
                         // Now since we have got respone from facebook, we shall update our database
                         let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: ad_id, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
                         utility.callApi(`sponsoredMessaging/${req.params._id}`, 'post', updatePayload, req.headers.authorization)
