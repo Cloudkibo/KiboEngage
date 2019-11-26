@@ -17,7 +17,7 @@ const controller = require('./sheetsIntegration.controller')
 // router.get('/install',
 //   controller.install)
 
-router.get('/auth', auth.isAuthenticated(), controller.auth)
+router.get('/auth', controller.auth)
 
 router.get('/callback', controller.callback)
 
