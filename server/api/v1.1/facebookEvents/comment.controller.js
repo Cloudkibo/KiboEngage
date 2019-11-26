@@ -51,7 +51,7 @@ function newComment (postId, verb, body) {
     .then(post => {
       post = post[0]
       if (post) {
-        updateCommentsCount(verb, post._id)
+        updateCommentsCount(body, verb, post._id)
         if (parentId === postId) {
           sendReply(post, body)
         } else {
@@ -66,7 +66,7 @@ function newComment (postId, verb, body) {
                 .then(post => {
                   post = post[0]
                   if (post) {
-                    updateCommentsCount(verb, post._id)
+                    updateCommentsCount(body, verb, post._id)
                     if (parentId === postId) {
                       sendReply(post, body)
                     } else {
@@ -92,80 +92,91 @@ function updatePositiveMatch (postId) {
   let newPayload = { $inc: { positiveMatchCount : 1 } }
   utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
     .then(updated => {
-      logger.serverLog(TAG, `Match count updated ${JSON.stringify(err)}`, 'updated')
+      logger.serverLog(TAG, `Match count updated ${JSON.stringify(updated)}`, 'updated')
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to update Positive Match Count ${JSON.stringify(err)}`, 'error')
     })
 }
-function updateCommentsCount (verb, postId, commentCountForPost) {
-  let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: commentCountForPost ? commentCountForPost : -1 } }
-  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
-    .then(updated => {
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
-    })
+function updateCommentsCount (body, verb, postId, commentCountForPost) {
+  let page = body.entry[0].changes[0].value.post_id.split('_')
+  if (page[0] !== body.entry[0].changes[0].value.from.id) {
+    let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: commentCountForPost ? commentCountForPost : -1 } }
+    utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+      .then(updated => {
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+      })
+  }
 }
 function sendReply (post, body) {
   let send = true
   send = commentCaptureLogicLayer.getSendValue(post, body)
   saveComment(post, body, send)
-  if (send) {
-    let messageData = {
-      'recipient': {
-        'comment_id': body.entry[0].changes[0].value.comment_id},
-      'message': JSON.stringify(broadcastUtility.prepareMessageData(null, post.reply[0]))
+  let page = body.entry[0].changes[0].value.post_id.split('_')
+  if (page[0] !== body.entry[0].changes[0].value.from.id) {
+    if (send) {
+      let messageData = {
+        'recipient': {
+          'comment_id': body.entry[0].changes[0].value.comment_id},
+        'message': JSON.stringify(broadcastUtility.prepareMessageData(null, post.reply[0]))
+      }
+      needle.post(
+        `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
+        messageData, (err, resp) => {
+          if (err) {
+            logger.serverLog(TAG, err, 'error')
+          } else if (resp.body.error) {
+            sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
+          }
+        })
+      updatePositiveMatch(post._id)
+      createSubscriber(post, body)
     }
-    needle.post(
-      `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
-      messageData, (err, resp) => {
-        if (err) {
-          logger.serverLog(TAG, err, 'error')
-        } else if (resp.body.error) {
-          sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
-        }
-      })
-    updatePositiveMatch(post._id)
-    createSubscriber(post, body)
   }
 }
+
 function createSubscriber (post, body) {
-  if ((post.secondReply.action === 'reply' && post.secondReply.payload && post.secondReply.payload.length > 0) ||
-(post.secondReply.action === 'subscribe' && post.secondReply.sequenceId && post.secondReply.sequenceId !== '')) {
-    let senderId = body.entry[0].changes[0].value.from.id
-    utility.callApi(`subscribers/query`, 'post', {pageId: post.pageId._id, senderId: senderId})
-      .then(subscriber => {
-        subscriber = subscriber[0]
-        if (!subscriber) {
-          let payload = {
-            companyId: post.companyId._id,
-            senderId: senderId,
-            pageId: post.pageId._id,
-            isSubscribed: false,
-            awaitingCommentReply: {sendSecondMessage: true, postId: post._id},
-            completeInfo: false,
-            source: 'comment_capture'
-          }
-          utility.callApi(`subscribers`, 'post', payload)
-            .then(subscriberCreated => {
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')
-            })
-        } else {
-          utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
-            .then(updated => {
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
-            })
+  let senderId = body.entry[0].changes[0].value.from.id
+  utility.callApi(`subscribers/query`, 'post', {pageId: post.pageId._id, senderId: senderId})
+    .then(subscriber => {
+      subscriber = subscriber[0]
+      if (!subscriber) {
+        let newPayload = { $inc: { waitingReply: 1 } }
+        utility.callApi(`comment_capture/update`, 'put', {query: { _id: post._id }, newPayload: newPayload, options: {}})
+          .then(updated => {
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+          })
+        let payload = {
+          companyId: post.companyId._id,
+          senderId: senderId,
+          pageId: post.pageId._id,
+          isSubscribed: false,
+          awaitingCommentReply: {sendSecondMessage: true, postId: post._id},
+          completeInfo: false,
+          source: 'comment_capture'
         }
-      })
-      .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
-      })
-  }
+        utility.callApi(`subscribers`, 'post', payload)
+          .then(subscriberCreated => {
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')
+          })
+      } else {
+        utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
+          .then(updated => {
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+    })
 }
 
 function saveComment (post, body, send) {
@@ -250,13 +261,13 @@ function deleteComment (body) {
           utility.callApi(`comment_capture/comments/delete`, 'post', {parentId: comment._id})
             .then(deleted => {
               commentCountForPost = commentCountForPost - deleted.deletedCount
-              updateCommentsCount(value.verb, comment.postId, commentCountForPost)
+              updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
             })
         } else {
-          updateCommentsCount(value.verb, comment.postId, commentCountForPost)
+          updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
         }
         if (comment.parentId) {
           utility.callApi(`comment_capture/comments/update`, 'put', {query: { _id: comment.parentId }, newPayload: { $inc: { childCommentCount: -1 } }, options: {}})

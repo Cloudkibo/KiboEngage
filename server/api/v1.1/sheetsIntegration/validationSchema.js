@@ -12,3 +12,25 @@ exports.createSchema = { // todo edit it
     }
   }
 }
+exports.fetchWorksheetsPayload = {
+  type: 'object',
+  properties: {
+    spreadsheetId: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+exports.fetchColumnsPayload = { // todo edit it
+  type: 'object',
+  properties: {
+    spreadsheetId: {
+      type: 'string',
+      required: true
+    },
+    sheetId: {
+      type: 'string',
+      required: true
+    }
+  }
+}
