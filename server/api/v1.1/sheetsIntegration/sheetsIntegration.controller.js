@@ -175,52 +175,59 @@ exports.callback = async function (req, res) {
   oauth2Client.setCredentials(tokens)
 
   let userId = req.cookies.userid
-  let companyId = req.cookies.companyId
-  dataLayer.index({
-    companyId,
-    userId,
-    integrationName: 'Google Sheets'
-  })
-    .then(integrations => {
-      if (integrations.length > 0) {
-        let newPayload = {
-          companyId: integrations[0].companyId,
-          userId: integrations[0].userId,
-          integrationName: integrations[0].integrationName,
-          integrationToken: tokens.access_token,
-          integrationPayload: tokens,
-          enabled: true
-        }
-        dataLayer.update(integrations[0]._id, newPayload)
-          .then(updated => {
-            res.redirect('/')
+  dataLayer.fetchUserCompany(userId)
+    .then(companyUser => {
+      if (companyUser) {
+        let companyId = companyUser.companyId
+        dataLayer.index({
+          companyId,
+          userId,
+          integrationName: 'Google Sheets'
+        })
+          .then(integrations => {
+            if (integrations.length > 0) {
+              let newPayload = {
+                companyId: integrations[0].companyId,
+                userId: integrations[0].userId,
+                integrationName: integrations[0].integrationName,
+                integrationToken: tokens.access_token,
+                integrationPayload: tokens,
+                enabled: true
+              }
+              dataLayer.update(integrations[0]._id, newPayload)
+                .then(updated => {
+                  res.redirect('/')
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+                  res.status(500).send('Internal Error Occurred.')
+                })
+            } else {
+              let payload = {
+                companyId,
+                userId,
+                integrationName: 'Google Sheets',
+                integrationToken: tokens.access_token,
+                integrationPayload: tokens,
+                enabled: true
+              }
+              dataLayer.create(payload)
+                .then(created => {
+                  res.redirect('/')
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+                  res.status(500).send('Internal Error Occurred.')
+                })
+            }
           })
           .catch(err => {
             logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
             res.status(500).send('Internal Error Occurred.')
           })
       } else {
-        let payload = {
-          companyId,
-          userId,
-          integrationName: 'Google Sheets',
-          integrationToken: tokens.access_token,
-          integrationPayload: tokens,
-          enabled: true
-        }
-        dataLayer.create(payload)
-          .then(created => {
-            res.redirect('/')
-          })
-          .catch(err => {
-            logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
-            res.status(500).send('Internal Error Occurred.')
-          })
+        res.status(500).send('Internal Error Occurred. Invalid user')
       }
-    })
-    .catch(err => {
-      logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
-      res.status(500).send('Internal Error Occurred.')
     })
 }
 
