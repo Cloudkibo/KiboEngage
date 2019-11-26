@@ -64,22 +64,17 @@ exports.update = function (req, res) {
 exports.send = function (req, res) {
   const accesstoken = marketingApiAccessToken
   let id = req.params.id
-  logger.serverLog('id', id)
-
   if (id !== undefined && id !== '') {
     utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
       .then(sponsoredMessages => {
         let sponsoredMessage = sponsoredMessages[0]
         let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
-        logger.serverLog('campaign paylaod', campaignPayload)
         facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
           .then(resp => {
             if (resp.body.error) {
               sendOpAlert(resp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
             }
-            logger.serverLog('campaignResponse', resp)
             let campaignId = resp.body.id
-            logger.serverLog('campaign id', campaignId)
             let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
             logger.serverLog('adsetPayload', adsetPayload)
             facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adsets`, 'post', adsetPayload)
@@ -87,25 +82,19 @@ exports.send = function (req, res) {
                 if (response.body.error) {
                   sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
                 }
-                logger.serverLog('adsetsResponse', response)
+                logger.serverLog(`adsetsResponse, ${JSON.stringify(response.body)}`)
                 let adsetid = response.body.id
                 logger.serverLog('adsetid', adsetid)
                 let creativePayload = logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
-                logger.serverLog('creativePayload', creativePayload)
 
                 facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
                   .then(resp => {
-                    logger.serverLog('messageCreativeResponse', resp)
                     let messageCreativeId = resp.id
-                    logger.serverLog('messageCreativeId', messageCreativeId)
                     let adPayload = logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
-                    logger.serverLog('adPayload', adPayload)
 
                     facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
                       .then(resp => {
-                        logger.serverLog('adsResponse', resp)
                         let ad_id = resp.id
-                        logger.serverLog('ad_id',  ad_id)
                         // Now since we have got respone from facebook, we shall update our database
                         let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: ad_id, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
                         utility.callApi(`sponsoredMessaging/${req.params._id}`, 'post', updatePayload, req.headers.authorization)
