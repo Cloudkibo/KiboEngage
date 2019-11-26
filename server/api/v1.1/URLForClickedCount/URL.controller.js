@@ -6,6 +6,7 @@ const SequenceMessagesDataLayer = require('./../sequenceMessaging/sequence.datal
 const logger = require('../../../components/logger')
 const sequenceUtility = require('./../sequenceMessaging/utility')
 const { sendErrorResponse } = require('../../global/response')
+const utility = require('../utility')
 
 exports.index = function (req, res) {
   URLDataLayer.findOneURL(req.params.id)
@@ -37,6 +38,42 @@ exports.broadcast = function (req, res) {
         if (URLObject) {
           logger.serverLog(TAG, `URLObject found, incrementing click ${JSON.stringify(URLObject)}`, 'debug')
           BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
+            .then(updatedData => {
+              res.writeHead(301, {Location: URLObject.originalURL.startsWith('http') ? URLObject.originalURL : `https://${URLObject.originalURL}`})
+              res.end()
+            })
+            .catch(err => {
+              if (err) {
+                sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
+              }
+            })
+        } else {
+          sendErrorResponse(res, 500, '', 'No URL found with id ' + req.params.id)
+        }
+      })
+      .catch(err => {
+        if (err) {
+          sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
+        }
+      })
+  }
+}
+
+exports.sponsorMessaging = function (req, res) {
+  logger.serverLog(TAG, `request headers ${JSON.stringify(req.headers)}`, 'debug')
+  if (!req.headers['user-agent'].startsWith('facebook')) {
+    logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
+    URLDataLayer.findOneURL(req.params.id)
+      .then(URLObject => {
+        if (URLObject) {
+          logger.serverLog(TAG, `URLObject found, incrementing click ${JSON.stringify(URLObject)}`, 'debug')
+          // BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
+          let query = {
+            purpose: 'updateAll',
+            match: {_id: URLObject.module.id},
+            updated: {$inc: {clicks: 1}}
+          }
+          utility.callApi(`sponsoredmessaging/clickCountUpdate`, 'put', query)
             .then(updatedData => {
               res.writeHead(301, {Location: URLObject.originalURL.startsWith('http') ? URLObject.originalURL : `https://${URLObject.originalURL}`})
               res.end()

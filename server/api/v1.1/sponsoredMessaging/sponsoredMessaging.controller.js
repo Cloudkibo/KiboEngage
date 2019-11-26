@@ -4,7 +4,8 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const { marketingApiAccessToken } = require('../../../config/environment')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 const logger = require('../../../components/logger')
-
+const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
+const TAG = 'api/sponsorMessaging/sponsorMessaging.controller.js'
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
@@ -60,7 +61,39 @@ exports.update = function (req, res) {
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
-
+function updateClickCountId (payload, sponsoredMessageID) {
+  for (let i = 0; i < payload.length; i++) {
+    logger.serverLog(TAG, `updateClickCountId ${sponsoredMessageID}`, 'debug')
+    for (let i = 0; i < payload.length; i++) {
+      if (payload[i].buttons && payload[i].buttons.length > 0) {
+        payload[i].buttons.forEach((button) => {
+          if (button.url && !button.messenger_extensions) {
+            let temp = button.newUrl.split('/')
+            let urlId = temp[temp.length - 1]
+            URLDataLayer.findOneURL(urlId)
+              .then(URLObject => {
+                let module = URLObject.module
+                module.id = sponsoredMessageID
+                logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
+                URLObject.module = module
+                logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
+                URLDataLayer.updateOneURL(URLObject._id, {'module': module})
+                  .then(savedurl => {
+                    logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
+                  })
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
+              })
+          }
+        })
+      }
+    }
+  }
+} 
 exports.send = function (req, res) {
   const accesstoken = marketingApiAccessToken
   let id = req.params.id
@@ -70,6 +103,8 @@ exports.send = function (req, res) {
     utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
       .then(sponsoredMessages => {
         let sponsoredMessage = sponsoredMessages[0]
+        console.log('sponsoredMessage payload', sponsoredMessage)
+        updateClickCountId(sponsoredMessage.payload, id)
         let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
         logger.serverLog('campaign paylaod', campaignPayload)
         facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
