@@ -33,7 +33,7 @@ exports.callback = async function (req, res) {
   let userId = req.cookies.userid
   let companyId = req.cookies.companyId
   if (!userId || !companyId) {
-    res.status(500).send('Internal Error Occurred. User not properly logged in.')
+    return res.status(500).send('Internal Error Occurred. User not properly logged in.')
   }
   dataLayer.index({
     companyId,
