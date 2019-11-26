@@ -111,10 +111,8 @@ function updateCommentsCount (body, verb, postId, commentCountForPost) {
   }
 }
 function sendReply (post, body) {
-  console.log('post mili', post)
   let send = true
   send = commentCaptureLogicLayer.getSendValue(post, body)
-  console.log('value of send', send)
   saveComment(post, body, send)
   let page = body.entry[0].changes[0].value.post_id.split('_')
   if (page[0] !== body.entry[0].changes[0].value.from.id) {
