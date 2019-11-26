@@ -240,7 +240,7 @@ exports.listSpreadSheets = (req, res) => {
     .then(function (integrations) {
       if (integrations.length > 0) {
         // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
-        oauth2Client.setCredentials(integrations[0].integrationPayload)
+        oauth2Client.setCredentials(integrations[0].integrationToken)
         const service = google.drive('v3', oauth2Client)
         service.files.list(
           {
