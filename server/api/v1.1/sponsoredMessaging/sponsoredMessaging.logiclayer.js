@@ -55,7 +55,6 @@ exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
     name: body.ad_set_payload.adset_name,
     optimization_goal: 'IMPRESSIONS',
     billing_event: 'IMPRESSIONS',
-    bid_strateg: 'LOWEST_COST_WITHOUT_CAP',
     bid_amount: bidAmount,
     daily_budget: budgetAmount,
     campaign_id: campaign_id,
