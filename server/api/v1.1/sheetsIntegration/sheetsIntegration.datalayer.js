@@ -5,9 +5,13 @@ exports.index = (payload) => {
 }
 
 exports.create = (payload) => {
-  return callApi(`integrations/`, 'post', payload, 'accounts')
+  return callApi(`integrations`, 'post', payload, 'accounts')
 }
 
 exports.update = (id, body) => {
   return callApi(`integrations/update`, 'put', {query: {_id: id}, newPayload: body, options: {}}, 'accounts')
+}
+
+exports.fetchUserCompany = (userId) => {
+  return callApi(`companyUser/query`, 'post', { userId: userId }, 'accounts')
 }
