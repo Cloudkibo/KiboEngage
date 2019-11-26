@@ -165,7 +165,6 @@ exports.auth = function (req, res) {
     // If you only need one scope you can pass it as a string
     scope: config.google.scopes
   })
-  res.cookie('sheetsCompanyId', req.user.companyId)
   res.redirect(url)
 }
 
@@ -176,8 +175,10 @@ exports.callback = async function (req, res) {
   oauth2Client.setCredentials(tokens)
 
   let userId = req.cookies.userid
-  let companyId = req.cookies.sheetsCompanyId
-  res.clearCookie('sheetsCompanyId')
+  let companyId = req.cookies.companyId
+  if (!userId || !companyId) {
+    return res.status(500).send('Internal Error Occurred. User not properly logged in.')
+  }
   dataLayer.index({
     companyId,
     userId,
