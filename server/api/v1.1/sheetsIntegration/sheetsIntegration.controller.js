@@ -237,7 +237,7 @@ exports.listSpreadSheets = (req, res) => {
     userId: req.user._id,
     integrationName: 'Google Sheets'
   })
-    .then(async function (integrations) {
+    .then(function (integrations) {
       if (integrations.length > 0) {
         // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
         oauth2Client.setCredentials(integrations[0].integrationPayload)
@@ -247,11 +247,11 @@ exports.listSpreadSheets = (req, res) => {
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
             fields: 'nextPageToken, files(id, name)'
           },
-          (err, res) => {
+          (err, response) => {
             if (err) {
               sendErrorResponse(res, 404, JSON.stringify(err), 'No integrations defined. Please enabled from settings.')
             }
-            const files = res.data.files
+            const files = response.data.files
             if (files.length === 0) {
               sendSuccessResponse(res, 200, files, 'Zero files found')
             } else {
