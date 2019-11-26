@@ -48,9 +48,6 @@ exports.prepareCampaignPayload = function (body, access_token) {
 }
 
 exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
-  console.log('body', JSON.stringify(body))
-  console.log('campaignid', campaign_id)
-  console.log('acc', access_token)
   let budgetAmount = parseInt(body.ad_set_payload.budget.amount, 10)
   let bidAmount = parseInt(body.ad_set_payload.bidAmount, 10)
 
