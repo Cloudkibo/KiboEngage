@@ -19,8 +19,11 @@ const validationSchema = require('./validationSchema')
 // router.get('/install',
 //   controller.install)
 
-// router.get('/callback',
-//   controller.callback)
+router.get('/auth', auth.isAuthenticated(), controller.auth)
+
+router.get('/callback', controller.callback)
+
+router.get('/listSpreadSheets', auth.isAuthenticated(), controller.listSpreadSheets)
 
 router.post('/fetchWorksheets',
   auth.isAuthenticated(),
