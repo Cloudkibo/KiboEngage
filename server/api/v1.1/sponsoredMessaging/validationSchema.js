@@ -23,3 +23,11 @@ exports.updatePayload = {
   }
 
 }
+
+exports.sendPayload = {
+  type: 'object',
+  ad_account_id: {
+    type: 'string',
+    required: true
+  }
+}

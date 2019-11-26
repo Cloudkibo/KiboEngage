@@ -245,6 +245,9 @@ exports.postsAnalytics = function (req, res) {
   })
   .catch(error => {
     sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+  })
+}
+
 exports.getComments = function (req, res) {
   async.parallelLimit([
     function (callback) {
