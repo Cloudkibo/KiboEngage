@@ -160,7 +160,7 @@ function populateGoogleColumns (dataToSend, googleData, sheetId) {
 exports.auth = function (req, res) {
   const url = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
-    access_type: 'offline',
+    access_type: 'online',
 
     // If you only need one scope you can pass it as a string
     scope: config.google.scopes
@@ -176,9 +176,6 @@ exports.callback = async function (req, res) {
 
   let userId = req.cookies.userid
   let companyId = req.cookies.companyId
-  if (!userId || !companyId) {
-    return res.status(500).send('Internal Error Occurred. User not properly logged in.')
-  }
   dataLayer.index({
     companyId,
     userId,
