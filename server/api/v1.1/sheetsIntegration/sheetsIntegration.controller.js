@@ -7,11 +7,6 @@ const { sendSuccessResponse, sendErrorResponse } = require('../../global/respons
 const dataLayer = require('./sheetsIntegration.datalayer')
 const {google} = require('googleapis')
 const config = require('./../../../config/environment')
-const oauth2Client = new google.auth.OAuth2(
-  config.google.client_id,
-  config.google.client_secret,
-  config.google.callbackURL
-)
 
 // controllers and install logic to go here
 var sheets = google.sheets('v4')
@@ -158,6 +153,12 @@ function populateGoogleColumns (dataToSend, googleData, sheetId) {
   })
 }
 exports.auth = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
+
   const url = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
@@ -170,6 +171,12 @@ exports.auth = function (req, res) {
 
 exports.callback = async function (req, res) {
   let code = req.query.code
+
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
 
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens)
@@ -232,6 +239,12 @@ exports.callback = async function (req, res) {
 }
 
 exports.listSpreadSheets = (req, res) => {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
+
   dataLayer.index({
     companyId: req.user.companyId,
     userId: req.user._id,
@@ -244,7 +257,6 @@ exports.listSpreadSheets = (req, res) => {
         const service = google.drive('v3', oauth2Client)
         service.files.list(
           {
-            auth: oauth2Client.credentials,
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
             fields: 'nextPageToken, files(id, name)',
             spaces: 'drive',
