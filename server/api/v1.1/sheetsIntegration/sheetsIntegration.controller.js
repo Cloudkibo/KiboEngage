@@ -235,7 +235,7 @@ exports.listSpreadSheets = (req, res) => {
   dataLayer.index({
     companyId: req.user.companyId,
     userId: req.user._id,
-    integrationName: 'google'
+    integrationName: 'Google Sheets'
   })
     .then(async function (integrations) {
       if (integrations.length > 0) {
