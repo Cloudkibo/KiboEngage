@@ -71,15 +71,48 @@ exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
   }
   return payload
 }
-// 'messenger_sponsored_message={"message":{"text":"Sample Text", "quick_replies":[{"title":"Quick Reply Text", "content_type":"text"}]}}
-// 'messenger_sponsored_message={"message":{"attachment":{"type":"template",   "payload":{"template_type":"generic", "elements":[{"title":"Image Text",   "buttons":[{"type":"web_url", "title":"button text", "url":"<URL>"}],   "image_hash":"<IMAGE_HASH>"}]}},"text":"Ad text"}}' \
+//     {
+//       "message":
+//       {
+//         "text":"Sample Text",
+//         "quick_replies":[{
+//           "title":"Quick Reply Text",
+//            "content_type":"text"
+//           }]
+//         }
+//       }
+// {
+//   "message":
+//   {
+//     "attachment":
+//     {
+//       "type":"template",
+//       "payload":
+//       {
+//         "template_type":"generic",
+//         "elements":[{
+//           "title":"Image Text",
+//           "buttons":[{
+//             "type":"web_url",
+//             "title":"button text",
+//             "url":"<URL>"
+//           }],   
+//           "image_hash":"<IMAGE_HASH>"
+//         }]
+//       }
+//     },
+//     "text":"Ad text"
+//   }
+// }
 
 exports.prepareadCreativePayload = function (body, access_token) {
   let data = facebook(body.payload[0])
+  data = {message: data}
+  console.log('prepareadCreativePayload', data)
   let payload = {
     object_id: body.pageId,
     object_type: 'SHARE',
-    messenger_sponsored_message: data,
+    messenger_sponsored_message: {message: data},
     access_token: access_token
   }
 
