@@ -244,6 +244,7 @@ exports.listSpreadSheets = (req, res) => {
         const service = google.drive('v3', oauth2Client)
         service.files.list(
           {
+            auth: oauth2Client,
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
             fields: 'nextPageToken, files(id, name)'
           },
