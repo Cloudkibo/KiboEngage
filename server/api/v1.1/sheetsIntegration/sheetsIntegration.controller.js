@@ -249,8 +249,10 @@ exports.listSpreadSheets = (req, res) => {
             fields: 'nextPageToken, files(id, name)'
           },
           (err, response) => {
+            console.log('sheets fetch response', response)
             if (err) {
-              sendErrorResponse(res, 404, JSON.stringify(err), 'No integrations defined. Please enabled from settings.')
+              console.log('sheets fetch error', err)
+              return sendErrorResponse(res, 404, JSON.stringify(err), 'No integrations defined. Please enabled from settings.')
             }
             const files = response.data.files
             if (files.length === 0) {
