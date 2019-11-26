@@ -107,8 +107,6 @@ exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
 
 exports.prepareadCreativePayload = function (body, access_token) {
   let data = facebook(body.payload[0])
-  data = {message: data}
-  console.log('prepareadCreativePayload', data)
   let payload = {
     object_id: body.pageId,
     object_type: 'SHARE',
