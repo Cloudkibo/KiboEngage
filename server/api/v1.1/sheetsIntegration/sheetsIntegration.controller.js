@@ -179,7 +179,7 @@ exports.callback = async function (req, res) {
   dataLayer.index({
     companyId,
     userId,
-    integrationName: 'google'
+    integrationName: 'Google Sheets'
   })
     .then(integrations => {
       if (integrations.length > 0) {
@@ -187,7 +187,8 @@ exports.callback = async function (req, res) {
           companyId: integrations[0].companyId,
           userId: integrations[0].userId,
           integrationName: integrations[0].integrationName,
-          integrationToken: tokens,
+          integrationToken: tokens.access_token,
+          integrationPayload: tokens,
           enabled: true
         }
         dataLayer.update(integrations[0]._id, newPayload)
@@ -202,8 +203,9 @@ exports.callback = async function (req, res) {
         let payload = {
           companyId,
           userId,
-          integrationName: 'google',
-          integrationToken: tokens,
+          integrationName: 'Google Sheets',
+          integrationToken: tokens.access_token,
+          integrationPayload: tokens,
           enabled: true
         }
         dataLayer.create(payload)
@@ -230,7 +232,7 @@ exports.listSpreadSheets = (req, res) => {
   })
     .then(async function (integrations) {
       if (integrations.length > 0) {
-        const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
+        const {tokens} = await oauth2Client.getToken(integrations[0].integrationPayload)
         oauth2Client.setCredentials(tokens)
         const service = google.drive('v3', oauth2Client)
         service.files.list(
