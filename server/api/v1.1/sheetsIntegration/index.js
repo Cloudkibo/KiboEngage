@@ -19,7 +19,7 @@ const validationSchema = require('./validationSchema')
 // router.get('/install',
 //   controller.install)
 
-router.get('/auth', controller.auth)
+router.get('/auth', auth.isAuthenticated(), controller.auth)
 
 router.get('/callback', controller.callback)
 
