@@ -37,6 +37,16 @@ const all = {
     app_host: 'https://skiboengage.cloudkibo.com',
     app_secret: 'f41a001b86c700915c9cedc52b955d35'
   },
+  google: {
+    client_id: process.env.GOOGLE_CLIENT_ID || '690982626012-5o9bk3t3bllluqqnhhcv3k2er3csau9d.apps.googleusercontent.com',
+    client_secret: process.env.GOOGLE_CLIENT_ID || 'rNU7h2P22JVSo7n7HpMuUk1B',
+    callbackURL: `${process.env.DOMAIN || 'https://kibopush-faizan.ngrok.io'}api/sheetsIntegrations/callback`,
+    scopes: [
+      'https://www.googleapis.com/auth/spreadsheets',
+      'https://www.googleapis.com/auth/drive',
+      'https://www.googleapis.com/auth/spreadsheets.readonly'
+    ]
+  },
   sendgrid: {
     username: 'cloudkibo',
     password: 'cl0udk1b0'

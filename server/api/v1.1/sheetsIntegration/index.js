@@ -17,7 +17,10 @@ const controller = require('./sheetsIntegration.controller')
 // router.get('/install',
 //   controller.install)
 
-// router.get('/callback',
-//   controller.callback)
+router.get('/auth', auth.isAuthenticated(), controller.auth)
+
+router.get('/callback', controller.callback)
+
+router.get('/listSpreadSheets', auth.isAuthenticated, controller.listSpreadSheets)
 
 module.exports = router
