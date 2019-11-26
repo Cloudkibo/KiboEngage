@@ -21,6 +21,6 @@ router.get('/auth', auth.isAuthenticated(), controller.auth)
 
 router.get('/callback', controller.callback)
 
-router.get('/listSpreadSheets', auth.isAuthenticated, controller.listSpreadSheets)
+router.get('/listSpreadSheets', auth.isAuthenticated(), controller.listSpreadSheets)
 
 module.exports = router
