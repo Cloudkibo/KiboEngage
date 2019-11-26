@@ -124,12 +124,16 @@ exports.send = function (req, res) {
 
                 facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
                   .then(resp => {
+                    logger.serverLog(`adcreatives, ${JSON.stringify(resp.body)}`)
                     let messageCreativeId = resp.id
+                    logger.serverLog('messageCreativeId', messageCreativeId)
                     let adPayload = logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
 
                     facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
                       .then(resp => {
+                        logger.serverLog(`ads, ${JSON.stringify(resp.body)}`)
                         let ad_id = resp.id
+                        logger.serverLog('ad_id', ad_id)
                         // Now since we have got respone from facebook, we shall update our database
                         let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: ad_id, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
                         utility.callApi(`sponsoredMessaging/${req.params._id}`, 'post', updatePayload, req.headers.authorization)
