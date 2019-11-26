@@ -9,6 +9,7 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../../../auth/auth.service')
 const controller = require('./sheetsIntegration.controller')
+var cors = require('cors')
 
 // router.post('/',
 //   auth.isAuthenticated(),
@@ -17,7 +18,7 @@ const controller = require('./sheetsIntegration.controller')
 // router.get('/install',
 //   controller.install)
 
-router.get('/auth', auth.isAuthenticated(), controller.auth)
+router.get('/auth', auth.isAuthenticated(), cors(), controller.auth)
 
 router.get('/callback', controller.callback)
 
