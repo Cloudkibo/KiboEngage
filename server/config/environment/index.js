@@ -40,7 +40,7 @@ const all = {
   google: {
     client_id: process.env.GOOGLE_CLIENT_ID || '690982626012-5o9bk3t3bllluqqnhhcv3k2er3csau9d.apps.googleusercontent.com',
     client_secret: process.env.GOOGLE_CLIENT_ID || 'rNU7h2P22JVSo7n7HpMuUk1B',
-    callbackURL: `${process.env.DOMAIN || 'https://kibopush-faizan.ngrok.io'}api/sheetsIntegrations/callback`,
+    callbackURL: `${process.env.DOMAIN || 'https://kibopush-faizan.ngrok.io'}/api/sheetsIntegrations/callback`,
     scopes: [
       'https://www.googleapis.com/auth/spreadsheets',
       'https://www.googleapis.com/auth/drive',
