@@ -241,12 +241,14 @@ exports.listSpreadSheets = (req, res) => {
       if (integrations.length > 0) {
         // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
         oauth2Client.setCredentials(integrations[0].integrationToken)
-        const service = google.drive('v3')
+        const service = google.drive('v3', oauth2Client)
         service.files.list(
           {
-            auth: oauth2Client,
+            auth: oauth2Client.credentials,
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
-            fields: 'nextPageToken, files(id, name)'
+            fields: 'nextPageToken, files(id, name)',
+            spaces: 'drive',
+            pageToken: null
           },
           (err, response) => {
             console.log('sheets fetch response', response)
