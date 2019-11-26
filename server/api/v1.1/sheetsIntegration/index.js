@@ -9,7 +9,6 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../../../auth/auth.service')
 const controller = require('./sheetsIntegration.controller')
-var cors = require('cors')
 const validate = require('express-jsonschema').validate
 const validationSchema = require('./validationSchema')
 
@@ -20,7 +19,7 @@ const validationSchema = require('./validationSchema')
 // router.get('/install',
 //   controller.install)
 
-router.get('/auth', auth.isAuthenticated(), cors(), controller.auth)
+router.get('/auth', controller.auth)
 
 router.get('/callback', controller.callback)
 

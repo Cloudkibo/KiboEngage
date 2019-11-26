@@ -160,12 +160,11 @@ function populateGoogleColumns (dataToSend, googleData, sheetId) {
 exports.auth = function (req, res) {
   const url = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
-    access_type: 'offline',
+    access_type: 'online',
 
     // If you only need one scope you can pass it as a string
     scope: config.google.scopes
   })
-  res.cookie('sheetsCompanyId', req.user.companyId)
   res.redirect(url)
 }
 
@@ -176,8 +175,7 @@ exports.callback = async function (req, res) {
   oauth2Client.setCredentials(tokens)
 
   let userId = req.cookies.userid
-  let companyId = req.cookies.sheetsCompanyId
-  res.clearCookie('sheetsCompanyId')
+  let companyId = req.cookies.companyId
   dataLayer.index({
     companyId,
     userId,
