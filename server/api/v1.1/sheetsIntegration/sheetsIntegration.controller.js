@@ -244,7 +244,7 @@ exports.listSpreadSheets = (req, res) => {
         const service = google.drive('v3', oauth2Client)
         service.files.list(
           {
-            auth: oauth2Client,
+            auth: oauth2Client.credentials,
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
             fields: 'nextPageToken, files(id, name)'
           },
@@ -252,7 +252,7 @@ exports.listSpreadSheets = (req, res) => {
             console.log('sheets fetch response', response)
             if (err) {
               console.log('sheets fetch error', err)
-              return sendErrorResponse(res, 404, JSON.stringify(err), 'No integrations defined. Please enabled from settings.')
+              return sendErrorResponse(res, 404, err, 'No integrations defined. Please enabled from settings.')
             }
             const files = response.data.files
             if (files.length === 0) {
