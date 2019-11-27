@@ -7,11 +7,6 @@ const { sendSuccessResponse, sendErrorResponse } = require('../../global/respons
 const dataLayer = require('./sheetsIntegration.datalayer')
 const {google} = require('googleapis')
 const config = require('./../../../config/environment')
-const oauth2Client = new google.auth.OAuth2(
-  config.google.client_id,
-  config.google.client_secret,
-  config.google.callbackURL
-)
 
 // controllers and install logic to go here
 var sheets = google.sheets('v4')
@@ -158,9 +153,15 @@ function populateGoogleColumns (dataToSend, googleData, sheetId) {
   })
 }
 exports.auth = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
+
   const url = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
-    access_type: 'online',
+    access_type: 'offline',
 
     // If you only need one scope you can pass it as a string
     scope: config.google.scopes
@@ -170,6 +171,12 @@ exports.auth = function (req, res) {
 
 exports.callback = async function (req, res) {
   let code = req.query.code
+
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
 
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens)
@@ -232,26 +239,36 @@ exports.callback = async function (req, res) {
 }
 
 exports.listSpreadSheets = (req, res) => {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
+
   dataLayer.index({
     companyId: req.user.companyId,
     userId: req.user._id,
     integrationName: 'Google Sheets'
   })
-    .then(async function (integrations) {
+    .then(function (integrations) {
       if (integrations.length > 0) {
-        const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
-        oauth2Client.setCredentials(tokens)
+        // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
+        oauth2Client.setCredentials(integrations[0].integrationPayload.refresh_token)
         const service = google.drive('v3', oauth2Client)
         service.files.list(
           {
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
-            fields: 'nextPageToken, files(id, name)'
+            fields: 'nextPageToken, files(id, name)',
+            spaces: 'drive',
+            pageToken: null
           },
-          (err, res) => {
+          (err, response) => {
+            console.log('sheets fetch response', response)
             if (err) {
-              sendErrorResponse(res, 404, JSON.stringify(err), 'No integrations defined. Please enabled from settings.')
+              console.log('sheets fetch error', err)
+              return sendErrorResponse(res, 404, err, 'No integrations defined. Please enabled from settings.')
             }
-            const files = res.data.files
+            const files = response.data.files
             if (files.length === 0) {
               sendSuccessResponse(res, 200, files, 'Zero files found')
             } else {
