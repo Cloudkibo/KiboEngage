@@ -292,23 +292,23 @@ function listMajors (auth) {
     {
       auth: auth,
       spreadsheetId: '1KO4Z683all-pThxpJ95fLok_ZHqhkVIHHwiR9cuvGvs',
-      range: 'Class Data!A2:E'
+      range: 'A1'
     },
     (err, res) => {
       if (err) {
         console.error('The API returned an error.')
-        throw err;
+        throw err
       }
       const rows = res.data.values
       if (rows.length === 0) {
         console.log('No data found.')
       } else {
-        console.log('Name, Major:');
+        console.log('Name, Major:')
         for (const row of rows) {
           // Print columns A and E, which correspond to indices 0 and 4.
           console.log(`${row[0]}, ${row[4]}`)
         }
       }
     }
-  );
+  )
 }
