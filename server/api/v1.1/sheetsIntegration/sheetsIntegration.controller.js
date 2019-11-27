@@ -185,9 +185,7 @@ exports.callback = async function (req, res) {
   )
 
   const {tokens} = await oauth2Client.getToken(code)
-  console.log('found tokens', tokens)
   oauth2Client.credentials = tokens
-  listMajors(oauth2Client)
 
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
@@ -260,8 +258,6 @@ exports.listSpreadSheets = (req, res) => {
   })
     .then(function (integrations) {
       if (integrations.length > 0) {
-        // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
-        // oauth2Client.setCredentials(integrations[0].integrationPayload.refresh_token)
         oauth2Client.credentials = integrations[0].integrationPayload
         const service = google.drive('v3')
         service.files.list(
@@ -273,19 +269,14 @@ exports.listSpreadSheets = (req, res) => {
             pageToken: null
           },
           (err, response) => {
-            console.log('sheets fetch response', response)
             if (err) {
-              console.log('sheets fetch error', err)
               return sendErrorResponse(res, 404, err, 'No integrations defined. Please enabled from settings.')
             }
             const files = response.data.files
             if (files.length === 0) {
               sendSuccessResponse(res, 200, files, 'Zero files found')
             } else {
-              sendSuccessResponse(res, 200, files, 'SpreadSheet files found')
-              for (const file of files) {
-                logger.serverLog(TAG, `Spreadsheet file ${file.name} (${file.id})`)
-              }
+              sendSuccessResponse(res, 200, files, 'SpreadSheet files of connected user')
             }
           }
         )
@@ -293,31 +284,4 @@ exports.listSpreadSheets = (req, res) => {
         sendErrorResponse(res, 404, null, 'No integrations defined. Please enabled from settings.')
       }
     })
-}
-
-function listMajors (auth) {
-  const sheets = google.sheets('v4')
-  sheets.spreadsheets.values.get(
-    {
-      auth: auth,
-      spreadsheetId: '1KO4Z683all-pThxpJ95fLok_ZHqhkVIHHwiR9cuvGvs',
-      range: 'A1'
-    },
-    (err, res) => {
-      if (err) {
-        console.error('The API returned an error.')
-        throw err
-      }
-      const rows = res.data.values
-      if (rows.length === 0) {
-        console.log('No data found.')
-      } else {
-        console.log('Name, Major:')
-        for (const row of rows) {
-          // Print columns A and E, which correspond to indices 0 and 4.
-          console.log(`${row[0]}, ${row[1]}`)
-        }
-      }
-    }
-  )
 }
