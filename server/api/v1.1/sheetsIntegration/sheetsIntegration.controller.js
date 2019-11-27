@@ -81,6 +81,7 @@ exports.fetchColumns = function (req, res) {
             if (err) {
               callback(err)
             } else {
+              console.log('resp for columns', response)
               callback(null, response)
             }
           })
@@ -104,8 +105,9 @@ exports.fetchColumns = function (req, res) {
         .then(dataToSend => {
           populateCustomFieldColumns(dataToSend, customFields)
             .then(dataToSend => {
-              populateGoogleColumns(dataToSend, googleData, req.bodt.sheetId)
+              populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
                 .then(dataToSend => {
+                  console.log('dataToSend3')
                   sendSuccessResponse(res, 200, dataToSend)
                 })
             })
@@ -148,6 +150,7 @@ function populateCustomFieldColumns (dataToSend, customFields) {
 }
 function populateGoogleColumns (dataToSend, googleData, sheetId) {
   return new Promise(function (resolve, reject) {
+    console.log('googleData', googleData)
     let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId === sheetId)[0]
     if (sheet) {
       if (sheet.data.length > 0 && sheet.data[0].rowData.length > 0) {
