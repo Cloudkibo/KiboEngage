@@ -7,11 +7,6 @@ const { sendSuccessResponse, sendErrorResponse } = require('../../global/respons
 const dataLayer = require('./sheetsIntegration.datalayer')
 const {google} = require('googleapis')
 const config = require('./../../../config/environment')
-const oauth2Client = new google.auth.OAuth2(
-  config.google.client_id,
-  config.google.client_secret,
-  config.google.callbackURL
-)
 
 // controllers and install logic to go here
 var sheets = google.sheets('v4')
@@ -19,15 +14,21 @@ const { callApi } = require('../utility')
 const async = require('async')
 
 exports.fetchWorksheets = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
   callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
     .then(integration => {
       integration = integration[0]
+      oauth2Client.credentials = integration.integrationPayload
       let request = {
         // The spreadsheet to request.
         spreadsheetId: req.body.spreadsheetId,
         ranges: [],
-        includeGridData: true,
-        auth: integration.integrationToken
+        includeGridData: false,
+        auth: oauth2Client
       }
       sheets.spreadsheets.get(request, function (err, response) {
         if (err) {
@@ -158,9 +159,15 @@ function populateGoogleColumns (dataToSend, googleData, sheetId) {
   })
 }
 exports.auth = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
+
   const url = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
-    access_type: 'online',
+    access_type: 'offline',
 
     // If you only need one scope you can pass it as a string
     scope: config.google.scopes
@@ -171,8 +178,16 @@ exports.auth = function (req, res) {
 exports.callback = async function (req, res) {
   let code = req.query.code
 
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
+
   const {tokens} = await oauth2Client.getToken(code)
-  oauth2Client.setCredentials(tokens)
+  console.log('found tokens', tokens)
+  oauth2Client.credentials = tokens
+  listMajors(oauth2Client)
 
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
@@ -232,28 +247,38 @@ exports.callback = async function (req, res) {
 }
 
 exports.listSpreadSheets = (req, res) => {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
+
   dataLayer.index({
     companyId: req.user.companyId,
     userId: req.user._id,
     integrationName: 'Google Sheets'
   })
-    .then(async function (integrations) {
+    .then(function (integrations) {
       if (integrations.length > 0) {
-        console.log
-        const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
-        console.log('tokens got', tokens)
-        oauth2Client.setCredentials(tokens)
-        const service = google.drive('v3', oauth2Client)
+        // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
+        // oauth2Client.setCredentials(integrations[0].integrationPayload.refresh_token)
+        oauth2Client.credentials = integrations[0].integrationPayload
+        const service = google.drive('v3')
         service.files.list(
           {
+            auth: oauth2Client,
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
-            fields: 'nextPageToken, files(id, name)'
+            fields: 'nextPageToken, files(id, name)',
+            spaces: 'drive',
+            pageToken: null
           },
-          (err, res) => {
+          (err, response) => {
+            console.log('sheets fetch response', response)
             if (err) {
-              sendErrorResponse(res, 404, JSON.stringify(err), 'No integrations defined. Please enabled from settings.')
+              console.log('sheets fetch error', err)
+              return sendErrorResponse(res, 404, err, 'No integrations defined. Please enabled from settings.')
             }
-            const files = res.data.files
+            const files = response.data.files
             if (files.length === 0) {
               sendSuccessResponse(res, 200, files, 'Zero files found')
             } else {
@@ -268,4 +293,31 @@ exports.listSpreadSheets = (req, res) => {
         sendErrorResponse(res, 404, null, 'No integrations defined. Please enabled from settings.')
       }
     })
+}
+
+function listMajors (auth) {
+  const sheets = google.sheets('v4')
+  sheets.spreadsheets.values.get(
+    {
+      auth: auth,
+      spreadsheetId: '1KO4Z683all-pThxpJ95fLok_ZHqhkVIHHwiR9cuvGvs',
+      range: 'A1'
+    },
+    (err, res) => {
+      if (err) {
+        console.error('The API returned an error.')
+        throw err
+      }
+      const rows = res.data.values
+      if (rows.length === 0) {
+        console.log('No data found.')
+      } else {
+        console.log('Name, Major:')
+        for (const row of rows) {
+          // Print columns A and E, which correspond to indices 0 and 4.
+          console.log(`${row[0]}, ${row[1]}`)
+        }
+      }
+    }
+  )
 }
