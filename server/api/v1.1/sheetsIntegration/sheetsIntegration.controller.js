@@ -26,7 +26,7 @@ exports.fetchWorksheets = function (req, res) {
         // The spreadsheet to request.
         spreadsheetId: req.body.spreadsheetId,
         ranges: [],
-        includeGridData: false,
+        includeGridData: true,
         auth: integration.integrationToken
       }
       sheets.spreadsheets.get(request, function (err, response) {
@@ -239,7 +239,9 @@ exports.listSpreadSheets = (req, res) => {
   })
     .then(async function (integrations) {
       if (integrations.length > 0) {
+        console.log
         const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
+        console.log('tokens got', tokens)
         oauth2Client.setCredentials(tokens)
         const service = google.drive('v3', oauth2Client)
         service.files.list(
