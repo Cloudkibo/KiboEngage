@@ -34,7 +34,6 @@ exports.fetchWorksheets = function (req, res) {
         if (err) {
           sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
         } else {
-          console.log('response from google data', response.data)
           let dataToSend = []
           for (let i = 0; i < response.data.sheets.length; i++) {
             dataToSend.push({sheetId: response.data.sheets[i].properties.sheetId, title: response.data.sheets[i].properties.title})
@@ -74,14 +73,13 @@ exports.fetchColumns = function (req, res) {
             // The spreadsheet to request.
             spreadsheetId: req.body.spreadsheetId,
             ranges: [],
-            includeGridData: false,
+            includeGridData: true,
             auth: oauth2Client
           }
           sheets.spreadsheets.get(request, function (err, response) {
             if (err) {
               callback(err)
             } else {
-              console.log('resp for columns', response)
               callback(null, response)
             }
           })
@@ -107,7 +105,6 @@ exports.fetchColumns = function (req, res) {
             .then(dataToSend => {
               populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
                 .then(dataToSend => {
-                  console.log('dataToSend3')
                   sendSuccessResponse(res, 200, dataToSend)
                 })
             })
@@ -150,8 +147,7 @@ function populateCustomFieldColumns (dataToSend, customFields) {
 }
 function populateGoogleColumns (dataToSend, googleData, sheetId) {
   return new Promise(function (resolve, reject) {
-    console.log('googleData', googleData)
-    let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId === sheetId)[0]
+    let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId.toString() === sheetId)[0]
     if (sheet) {
       if (sheet.data.length > 0 && sheet.data[0].rowData.length > 0) {
         for (let i = 0; i < sheet.data[0].rowData[0].values.length; i++) {
@@ -195,9 +191,7 @@ exports.callback = async function (req, res) {
   )
 
   const {tokens} = await oauth2Client.getToken(code)
-  console.log('found tokens', tokens)
   oauth2Client.credentials = tokens
-  listMajors(oauth2Client)
 
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
@@ -283,9 +277,7 @@ exports.listSpreadSheets = (req, res) => {
             pageToken: null
           },
           (err, response) => {
-            console.log('sheets fetch response', response)
             if (err) {
-              console.log('sheets fetch error', err)
               return sendErrorResponse(res, 404, err, 'No integrations defined. Please enabled from settings.')
             }
             const files = response.data.files
@@ -303,31 +295,4 @@ exports.listSpreadSheets = (req, res) => {
         sendErrorResponse(res, 404, null, 'No integrations defined. Please enabled from settings.')
       }
     })
-}
-
-function listMajors (auth) {
-  const sheets = google.sheets('v4')
-  sheets.spreadsheets.values.get(
-    {
-      auth: auth,
-      spreadsheetId: '1KO4Z683all-pThxpJ95fLok_ZHqhkVIHHwiR9cuvGvs',
-      range: 'A1'
-    },
-    (err, res) => {
-      if (err) {
-        console.error('The API returned an error.')
-        throw err
-      }
-      const rows = res.data.values
-      if (rows.length === 0) {
-        console.log('No data found.')
-      } else {
-        console.log('Name, Major:')
-        for (const row of rows) {
-          // Print columns A and E, which correspond to indices 0 and 4.
-          console.log(`${row[0]}, ${row[1]}`)
-        }
-      }
-    }
-  )
 }
