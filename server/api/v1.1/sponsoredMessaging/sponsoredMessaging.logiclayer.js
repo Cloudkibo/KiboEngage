@@ -113,7 +113,6 @@ exports.prepareadCreativePayload = function (body, access_token) {
     messenger_sponsored_message: {message: data},
     access_token: access_token
   }
-
   return payload
 }
 
