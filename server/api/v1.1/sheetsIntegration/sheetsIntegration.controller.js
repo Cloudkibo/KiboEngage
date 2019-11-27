@@ -14,15 +14,21 @@ const { callApi } = require('../utility')
 const async = require('async')
 
 exports.fetchWorksheets = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
   callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
     .then(integration => {
       integration = integration[0]
+      oauth2Client.credentials = integration.integrationPayload
       let request = {
         // The spreadsheet to request.
         spreadsheetId: req.body.spreadsheetId,
         ranges: [],
         includeGridData: false,
-        auth: integration.integrationToken
+        auth: oauth2Client
       }
       sheets.spreadsheets.get(request, function (err, response) {
         if (err) {
@@ -179,6 +185,7 @@ exports.callback = async function (req, res) {
   )
 
   const {tokens} = await oauth2Client.getToken(code)
+  console.log('found tokens', tokens)
   oauth2Client.credentials = tokens
   listMajors(oauth2Client)
 
@@ -254,10 +261,12 @@ exports.listSpreadSheets = (req, res) => {
     .then(function (integrations) {
       if (integrations.length > 0) {
         // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
-        oauth2Client.setCredentials(integrations[0].integrationPayload.refresh_token)
-        const service = google.drive('v3', oauth2Client)
+        // oauth2Client.setCredentials(integrations[0].integrationPayload.refresh_token)
+        oauth2Client.credentials = integrations[0].integrationPayload
+        const service = google.drive('v3')
         service.files.list(
           {
+            auth: oauth2Client,
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
             fields: 'nextPageToken, files(id, name)',
             spaces: 'drive',
@@ -306,7 +315,7 @@ function listMajors (auth) {
         console.log('Name, Major:')
         for (const row of rows) {
           // Print columns A and E, which correspond to indices 0 and 4.
-          console.log(`${row[0]}, ${row[4]}`)
+          console.log(`${row[0]}, ${row[1]}`)
         }
       }
     }
