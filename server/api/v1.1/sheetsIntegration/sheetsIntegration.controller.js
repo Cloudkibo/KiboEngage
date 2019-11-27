@@ -291,7 +291,7 @@ function listMajors (auth) {
   sheets.spreadsheets.values.get(
     {
       auth: auth,
-      spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
+      spreadsheetId: '1KO4Z683all-pThxpJ95fLok_ZHqhkVIHHwiR9cuvGvs',
       range: 'Class Data!A2:E'
     },
     (err, res) => {
