@@ -122,7 +122,7 @@ exports.send = function (req, res) {
                 logger.serverLog('adsetid', adsetid)
                 let creativePayload = logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
                 creativePayload = JSON.stringify(creativePayload)
-                logger.serverLog(`creativePayload, ${JSON.stringify(creativePayload)}`)
+                logger.serverLog('creativePayload', creativePayload)
                 facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
                   .then(resp => {
                     logger.serverLog(`adcreatives, ${JSON.stringify(resp.body)}`)

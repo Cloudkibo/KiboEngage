@@ -107,12 +107,14 @@ exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
 
 exports.prepareadCreativePayload = function (body, access_token) {
   let data = facebook(body.payload[0])
+  data = JSON.parse(data)
   let payload = {
     object_id: body.pageId,
     object_type: 'SHARE',
     messenger_sponsored_message: {message: data},
     access_token: access_token
   }
+  console.log('messenger_sponsored_message', payload)
   return payload
 }
 
