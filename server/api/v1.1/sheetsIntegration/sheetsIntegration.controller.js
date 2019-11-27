@@ -264,8 +264,6 @@ exports.listSpreadSheets = (req, res) => {
   })
     .then(function (integrations) {
       if (integrations.length > 0) {
-        // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
-        // oauth2Client.setCredentials(integrations[0].integrationPayload.refresh_token)
         oauth2Client.credentials = integrations[0].integrationPayload
         const service = google.drive('v3')
         service.files.list(
@@ -284,10 +282,7 @@ exports.listSpreadSheets = (req, res) => {
             if (files.length === 0) {
               sendSuccessResponse(res, 200, files, 'Zero files found')
             } else {
-              sendSuccessResponse(res, 200, files, 'SpreadSheet files found')
-              for (const file of files) {
-                logger.serverLog(TAG, `Spreadsheet file ${file.name} (${file.id})`)
-              }
+              sendSuccessResponse(res, 200, files, 'SpreadSheet files of connected user')
             }
           }
         )
