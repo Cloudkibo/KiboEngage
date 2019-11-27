@@ -27,7 +27,7 @@ exports.fetchWorksheets = function (req, res) {
         // The spreadsheet to request.
         spreadsheetId: req.body.spreadsheetId,
         ranges: [],
-        includeGridData: false,
+        includeGridData: true,
         auth: oauth2Client
       }
       sheets.spreadsheets.get(request, function (err, response) {
@@ -35,10 +35,10 @@ exports.fetchWorksheets = function (req, res) {
           sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
         } else {
           let dataToSend = []
-          for (let i = 0; i < response.sheets.length; i++) {
-            dataToSend.push({sheetId: response.sheets[i].properties.sheetId, title: response.sheets[i].properties.title})
+          for (let i = 0; i < response.data.sheets.length; i++) {
+            dataToSend.push({sheetId: response.data.sheets[i].properties.sheetId, title: response.data.sheets[i].properties.title})
           }
-          if (dataToSend.length === response.sheets.length) {
+          if (dataToSend.length === response.data.sheets.length) {
             sendSuccessResponse(res, 200, dataToSend)
           }
         }
@@ -49,6 +49,11 @@ exports.fetchWorksheets = function (req, res) {
     })
 }
 exports.fetchColumns = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
   async.parallelLimit([
     function (callback) {
       callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
@@ -63,12 +68,13 @@ exports.fetchColumns = function (req, res) {
       callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
         .then(integration => {
           integration = integration[0]
+          oauth2Client.credentials = integration.integrationPayload
           let request = {
             // The spreadsheet to request.
             spreadsheetId: req.body.spreadsheetId,
             ranges: [],
-            includeGridData: false,
-            auth: integration.integrationToken
+            includeGridData: true,
+            auth: oauth2Client
           }
           sheets.spreadsheets.get(request, function (err, response) {
             if (err) {
@@ -92,12 +98,12 @@ exports.fetchColumns = function (req, res) {
         googleSheetColumns: []
       }
       let customFields = results[0]
-      let googleData = results[1]
+      let googleData = results[1].data
       populateKiboPushColumns(dataToSend)
         .then(dataToSend => {
           populateCustomFieldColumns(dataToSend, customFields)
             .then(dataToSend => {
-              populateGoogleColumns(dataToSend, googleData, req.bodt.sheetId)
+              populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
                 .then(dataToSend => {
                   sendSuccessResponse(res, 200, dataToSend)
                 })
@@ -141,7 +147,7 @@ function populateCustomFieldColumns (dataToSend, customFields) {
 }
 function populateGoogleColumns (dataToSend, googleData, sheetId) {
   return new Promise(function (resolve, reject) {
-    let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId === sheetId)[0]
+    let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId.toString() === sheetId)[0]
     if (sheet) {
       if (sheet.data.length > 0 && sheet.data[0].rowData.length > 0) {
         for (let i = 0; i < sheet.data[0].rowData[0].values.length; i++) {
