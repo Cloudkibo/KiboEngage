@@ -179,7 +179,8 @@ exports.callback = async function (req, res) {
   )
 
   const {tokens} = await oauth2Client.getToken(code)
-  oauth2Client.setCredentials(tokens)
+  oauth2Client.credentials = tokens
+  listMajors(oauth2Client)
 
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
@@ -283,4 +284,31 @@ exports.listSpreadSheets = (req, res) => {
         sendErrorResponse(res, 404, null, 'No integrations defined. Please enabled from settings.')
       }
     })
+}
+
+function listMajors (auth) {
+  const sheets = google.sheets('v4')
+  sheets.spreadsheets.values.get(
+    {
+      auth: auth,
+      spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
+      range: 'Class Data!A2:E'
+    },
+    (err, res) => {
+      if (err) {
+        console.error('The API returned an error.')
+        throw err;
+      }
+      const rows = res.data.values
+      if (rows.length === 0) {
+        console.log('No data found.')
+      } else {
+        console.log('Name, Major:');
+        for (const row of rows) {
+          // Print columns A and E, which correspond to indices 0 and 4.
+          console.log(`${row[0]}, ${row[4]}`)
+        }
+      }
+    }
+  );
 }
