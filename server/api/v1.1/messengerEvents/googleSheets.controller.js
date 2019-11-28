@@ -114,7 +114,7 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
               if (type === 'get_row_by_value') {
                 getRowByValue(resp, subscriber, oauth2Client)
               } else if (type === 'update_row') {
-                updateRow(resp, subscriber, oauth2Client)
+                updateRow(resp, subscriber, oauth2Client, range)
               }
             }
           }
@@ -161,7 +161,7 @@ function _getDataForInsertRow (data, callback) {
 function getRowByValue (resp, subscriber, oauth2Client) {
 }
 
-function updateRow (resp, subscriber, oauth2Client) {
+function updateRow (resp, subscriber, oauth2Client, range) {
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -174,24 +174,24 @@ function updateRow (resp, subscriber, oauth2Client) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
-      // let data = resp.mapping.map(item => item.value)
-      // let dataToSend = [data]
-      // let request = {
-      //   spreadsheetId: resp.spreadSheet,
-      //   range: resp.worksheetName,
-      //   valueInputOption: 'RAW',
-      //   resource: {
-      //     'majorDimension': 'ROWS',
-      //     'range': `range${}`,
-      //     'values': dataToSend
-      //   },
-      //   auth: oauth2Client
-      // }
-      // sheets.spreadsheets.values.append(request, function (err, response) {
-      //   if (err) {
-      //     logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
-      //   }
-      // })
+      let data = resp.mapping.map(item => item.value)
+      let dataToSend = [data]
+      let request = {
+        spreadsheetId: resp.spreadSheet,
+        range: `${resp.worksheetName}!A${range.j + 1}`,
+        valueInputOption: 'RAW',
+        resource: {
+          'majorDimension': 'ROWS',
+          'range': `${resp.worksheetName}!A${range.j + 1}`,
+          'values': dataToSend
+        },
+        auth: oauth2Client
+      }
+      sheets.spreadsheets.values.update(request, function (err, response) {
+        if (err) {
+          logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+        }
+      })
     }
   })
 }
