@@ -150,27 +150,27 @@ function getRowByValue (resp, subscriber, oauth2Client) {
   })
 }
 function updateRow (resp, subscriber, oauth2Client) {
-  console.log('in updateRow')
   getLookUpValue(resp.lookUpValue, subscriber)
     .then(lookUpValue => {
-      console.log('lookUpValue fetched', lookUpValue)
-    })
-  let request = {
-    spreadsheetId: resp.spreadSheet,
-    ranges: [],
-    includeGridData: true,
-    auth: oauth2Client
-  }
-  sheets.spreadsheets.get(request, function (err, response) {
-    if (err) {
-      logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
-    } else {
-      let sheet = response.sheets.filter(sheet => sheet.properties.sheetId === resp.worksheet)[0]
-      if (sheet) {
-
+      if (lookUpValue !== '') {
+        var request = {
+          spreadsheetId: resp.spreadSheet,
+          range: resp.worksheetName,
+          majorDimension: 'COLUMNS',
+          auth: oauth2Client
+        }
+        sheets.spreadsheets.values.get(request, function (err, response) {
+          if (err) {
+            logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
+          } else {
+            let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
+            if (range) {
+              console.log('toletter', columnToLetter(range.i + 1))
+            }
+          }
+        })
       }
-    }
-  })
+    })
 }
 
 function getLookUpValue (lookUpValue, subscriber) {
@@ -196,8 +196,56 @@ function getLookUpValue (lookUpValue, subscriber) {
           resolve('')
         })
     } else {
-      lookUpValue = subscriber[lookUpValue]
-      resolve(lookUpValue)
+      if (subscriber[lookUpValue]) {
+        lookUpValue = subscriber[lookUpValue]
+        resolve(lookUpValue)
+      } else {
+        resolve('')
+      }
     }
   })
+}
+
+function getLookUpRange (lookUpColumn, lookUpValue, data) {
+  for (let i = 0; i < data.length; i++) {
+    if (data[i][0] === lookUpColumn) {
+      for (let j = 0; j < data[i].length; j++) {
+        if (typeof lookUpValue === 'string') {
+          let lookUpDateInEpoch = Date.parse(lookUpValue)
+          if (isNaN(lookUpDateInEpoch)) {
+            if (data[i][j].toLowerCase() === lookUpValue.toLowerCase()) {
+              return {i, j}
+            }
+          } else {
+            let mongoDBDate = new Date(lookUpValue)
+            let sheetDate = new Date(data[i][j])
+            mongoDBDate.setHours(0, 0, 0, 0)
+            sheetDate.setHours(0, 0, 0, 0)
+            if (mongoDBDate.valueOf() === sheetDate.valueOf()) {
+              return {i, j}
+            }
+          }
+        } else if (typeof lookUpValue === 'boolean') {
+          if (data[i][j].toLowerCase() === lookUpValue.toString().toLowerCase()) {
+            return {i, j}
+          }
+        } else if (typeof lookUpValue === 'number') {
+          if (data[i][j] === lookUpValue.toString()) {
+            return {i, j}
+          }
+        }
+      }
+    }
+  }
+}
+
+function columnToLetter (column) {
+  var temp = ''
+  var letter = ''
+  while (column > 0) {
+    temp = (column - 1) % 26
+    letter = String.fromCharCode(temp + 65) + letter
+    column = (column - temp - 1) / 26
+  }
+  return letter
 }

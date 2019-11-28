@@ -340,6 +340,7 @@ function isItWebhookServer () {
     // logger.serverLog(TAG, `config.webhook_ip ${config.webhook_ip}`)
     if (ip === '::ffff:' + config.webhook_ip) next()
     else res.send(403)
+    // next()
   })
 }
 // Auth for kibodash service
