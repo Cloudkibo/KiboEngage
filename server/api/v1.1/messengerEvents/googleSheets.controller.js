@@ -109,10 +109,9 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
             logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
           } else {
             let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
-            console.log('range got', range)
             if (range) {
               if (type === 'get_row_by_value') {
-                getRowByValue(resp, subscriber, oauth2Client)
+                getRowByValue(resp, subscriber, range, response.data.values)
               } else if (type === 'update_row') {
                 updateRow(resp, subscriber, oauth2Client)
               }
@@ -158,7 +157,43 @@ function _getDataForInsertRow (data, callback) {
   }
 }
 
-function getRowByValue (resp, subscriber, oauth2Client) {
+function getRowByValue (resp, subscriber, cellAddress, sheetData) {
+  let newSubscriberPayload = {}
+  for (let i = 0; i < resp.mapping.length; i++) {
+    let { kiboPushColumn, googleSheetColumn, customFieldColumn } = resp.mapping[i]
+    if (kiboPushColumn) {
+      for (let j = 0; j < sheetData.length; j++) {
+        if (googleSheetColumn === sheetData[j][0]) {
+          let newData = sheetData[j][cellAddress.j]
+          newSubscriberPayload[kiboPushColumn] = newData
+        }
+      }
+    } else if (customFieldColumn) {
+      for (let j = 0; j < sheetData.length; j++) {
+        if (googleSheetColumn === sheetData[j][0]) {
+          let newData = sheetData[j][cellAddress.j]
+          if (newData && newData !== '') {
+            let updatePayload = { purpose: 'updateOne', match: { customFieldId: customFieldColumn, subscriberId: subscriber._id }, updated: { value: newData } }
+            callApi('custom_field_subscribers/', 'put', updatePayload)
+              .then(updated => {
+                console.log('updated finally', updated)
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to save custom field value ${JSON.stringify(err)}`, 'error')
+              })
+          }
+        }
+      }
+    }
+  }
+  if (newSubscriberPayload > 0) {
+    callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: newSubscriberPayload, options: {}})
+      .then(updated => {
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+      })
+  }
 }
 
 function updateRow (resp, subscriber, oauth2Client) {
@@ -196,6 +231,7 @@ function updateRow (resp, subscriber, oauth2Client) {
   })
 }
 
+// Getting look up value from Google Sheet
 function getLookUpValue (lookUpValue, subscriber) {
   return new Promise(function (resolve, reject) {
     if (lookUpValue.match(/^[0-9a-fA-F]{24}$/)) {
@@ -229,6 +265,7 @@ function getLookUpValue (lookUpValue, subscriber) {
   })
 }
 
+// Getting look up value from System subscriber fields
 function getLookUpRange (lookUpColumn, lookUpValue, data) {
   for (let i = 0; i < data.length; i++) {
     if (data[i][0] === lookUpColumn) {
