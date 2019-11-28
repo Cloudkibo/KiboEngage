@@ -192,7 +192,6 @@ exports.callback = async function (req, res) {
 
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.credentials = tokens
-  console.log('tokens got from get token', tokens)
 
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
