@@ -179,14 +179,14 @@ function getRowByValue (resp, subscriber, cellAddress, sheetData) {
                 console.log('updated finally', updated)
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to save custom field value ${JSON.stringify(err)}`, 'error')
+                logger.serverLog(TAG, `Failed to update custom field value ${JSON.stringify(err)}`, 'error')
               })
           }
         }
       }
     }
   }
-  if (newSubscriberPayload > 0) {
+  if (Object.keys(newSubscriberPayload).length > 0) {
     callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: newSubscriberPayload, options: {}})
       .then(updated => {
       })
