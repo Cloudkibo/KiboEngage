@@ -4,6 +4,7 @@ const {callApi} = require('../utility')
 const async = require('async')
 const {google} = require('googleapis')
 var sheets = google.sheets('v4')
+const config = require('./../../../config/environment')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -30,11 +31,18 @@ exports.index = function (req, res) {
                 .then(integration => {
                   integration = integration[0]
                   if (integration) {
+                    const oauth2Client = new google.auth.OAuth2(
+                      config.google.client_id,
+                      config.google.client_secret,
+                      config.google.callbackURL
+                    )
+                    oauth2Client.credentials = integration.integrationPayload
                     if (resp.googleSheetAction === 'insert_row') {
-                      insertRow(resp, subscriber, integration)
+                      insertRow(resp, subscriber, oauth2Client)
                     } else if (resp.googleSheetAction === 'get_row_by_value') {
-                      getRowByValue(resp, subscriber, integration)
+                      getRowByValue(resp, subscriber, oauth2Client)
                     } else if (resp.googleSheetAction === 'update_row') {
+                      updateRow(resp, subscriber, oauth2Client)
                     }
                   }
                 })
@@ -52,7 +60,7 @@ exports.index = function (req, res) {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
     })
 }
-function insertRow (resp, subscriber, integration) {
+function insertRow (resp, subscriber, oauth2Client) {
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -69,15 +77,15 @@ function insertRow (resp, subscriber, integration) {
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
-        range: 'A1',
+        range: resp.worksheetName,
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS',
         resource: {
           'majorDimension': 'ROWS',
-          'range': 'A1',
+          'range': resp.worksheetName,
           'values': dataToSend
         },
-        auth: integration.integrationToken
+        auth: oauth2Client
       }
       sheets.spreadsheets.values.append(request, function (err, response) {
         if (err) {
@@ -122,7 +130,7 @@ function _getDataForInsertRow (data, callback) {
       })
   }
 }
-function getRowByValue (resp, subscriber, integration) {
+function getRowByValue (resp, subscriber, oauth2Client) {
   let request = {
     // The spreadsheet to request.
     spreadsheetId: resp.spreadSheet,
@@ -138,6 +146,58 @@ function getRowByValue (resp, subscriber, integration) {
       if (sheet) {
 
       }
+    }
+  })
+}
+function updateRow (resp, subscriber, oauth2Client) {
+  console.log('in updateRow')
+  getLookUpValue(resp.lookUpValue, subscriber)
+    .then(lookUpValue => {
+      console.log('lookUpValue fetched', lookUpValue)
+    })
+  let request = {
+    spreadsheetId: resp.spreadSheet,
+    ranges: [],
+    includeGridData: true,
+    auth: oauth2Client
+  }
+  sheets.spreadsheets.get(request, function (err, response) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
+    } else {
+      let sheet = response.sheets.filter(sheet => sheet.properties.sheetId === resp.worksheet)[0]
+      if (sheet) {
+
+      }
+    }
+  })
+}
+
+function getLookUpValue (lookUpValue, subscriber) {
+  return new Promise(function (resolve, reject) {
+    if (lookUpValue.match(/^[0-9a-fA-F]{24}$/)) {
+      callApi(
+        'custom_field_subscribers/query',
+        'post',
+        {
+          purpose: 'findOne',
+          match: { customFieldId: lookUpValue, subscriberId: subscriber._id }
+        }
+      )
+        .then(customFieldSubscriber => {
+          if (customFieldSubscriber) {
+            resolve(customFieldSubscriber.value)
+          } else {
+            resolve('')
+          }
+        })
+        .catch((err) => {
+          logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+          resolve('')
+        })
+    } else {
+      lookUpValue = subscriber[lookUpValue]
+      resolve(lookUpValue)
     }
   })
 }
