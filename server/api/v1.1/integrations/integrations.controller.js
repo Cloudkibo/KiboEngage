@@ -12,7 +12,6 @@ exports.index = function (req, res) {
 }
 exports.update = function (req, res) {
   if (!req.body.enabled) {
-    req.body.integrationPayload = null
     req.body.integrationToken = ''
   }
   callApi(`integrations/update`, 'put', {query: {_id: req.params.id}, newPayload: req.body, options: {}}, 'accounts', req.headers.authorization)
