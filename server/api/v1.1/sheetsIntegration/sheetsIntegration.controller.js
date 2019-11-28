@@ -186,18 +186,24 @@ exports.callback = async function (req, res) {
 
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.credentials = tokens
+  console.log('tokens got from get token', tokens)
+  console.log('oauth2Client', oauth2Client)
 
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
     .then(companyUser => {
       if (companyUser) {
         let companyId = companyUser.companyId
-        dataLayer.index({
-          companyId,
-          userId,
-          integrationName: 'Google Sheets'
-        })
+        dataLayer.index({ companyId, userId, integrationName: 'Google Sheets' })
           .then(integrations => {
+            oauth2Client.on('tokens', (tokens) => {
+              console.log('refresh tokens event called')
+              if (tokens.refresh_token) {
+                // store the refresh_token in my database!
+                console.log(tokens.refresh_token)
+              }
+              console.log(tokens.access_token)
+            })
             if (integrations.length > 0) {
               let newPayload = {
                 companyId: integrations[0].companyId,
