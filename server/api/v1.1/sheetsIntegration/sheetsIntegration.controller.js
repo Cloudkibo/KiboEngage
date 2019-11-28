@@ -216,7 +216,7 @@ exports.callback = async function (req, res) {
                   res.redirect('/')
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+                  logger.serverLog(TAG, 'Error in Integrations Sheets on update callback' + err, 'error')
                   res.status(500).send('Internal Error Occurred.')
                 })
             } else {
@@ -233,13 +233,13 @@ exports.callback = async function (req, res) {
                   res.redirect('/')
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+                  logger.serverLog(TAG, 'Error in Integrations Sheets on create callback' + err, 'error')
                   res.status(500).send('Internal Error Occurred.')
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+            logger.serverLog(TAG, 'Error in Integrations Sheets on fetch callback' + err, 'error')
             res.status(500).send('Internal Error Occurred.')
           })
       } else {
