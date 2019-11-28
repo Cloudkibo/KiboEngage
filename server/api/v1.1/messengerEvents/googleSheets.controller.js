@@ -39,10 +39,8 @@ exports.index = function (req, res) {
                     oauth2Client.credentials = integration.integrationPayload
                     if (resp.googleSheetAction === 'insert_row') {
                       insertRow(resp, subscriber, oauth2Client)
-                    } else if (resp.googleSheetAction === 'get_row_by_value') {
-                      getRowByValue(resp, subscriber, oauth2Client)
-                    } else if (resp.googleSheetAction === 'update_row') {
-                      updateRow(resp, subscriber, oauth2Client)
+                    } else {
+                      performGoogleSheetAction(resp.googleSheetAction, resp, subscriber, oauth2Client)
                     }
                   }
                 })
@@ -96,6 +94,35 @@ function insertRow (resp, subscriber, oauth2Client) {
   })
 }
 
+function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
+  getLookUpValue(resp.lookUpValue, subscriber)
+    .then(lookUpValue => {
+      if (lookUpValue !== '') {
+        var request = {
+          spreadsheetId: resp.spreadSheet,
+          range: resp.worksheetName,
+          majorDimension: 'COLUMNS',
+          auth: oauth2Client
+        }
+        sheets.spreadsheets.values.get(request, function (err, response) {
+          if (err) {
+            logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
+          } else {
+            let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
+            console.log('range got', range)
+            if (range) {
+              if (type === 'get_row_by_value') {
+                getRowByValue(resp, subscriber, oauth2Client)
+              } else if (type === 'update_row') {
+                updateRow(resp, subscriber, oauth2Client)
+              }
+            }
+          }
+        })
+      }
+    })
+}
+
 function _getDataForInsertRow (data, callback) {
   const { index, item, subscriber, mapping } = data
   if (item.kiboPushColumn) {
@@ -130,47 +157,43 @@ function _getDataForInsertRow (data, callback) {
       })
   }
 }
-function getRowByValue (resp, subscriber, oauth2Client) {
-  let request = {
-    // The spreadsheet to request.
-    spreadsheetId: resp.spreadSheet,
-    ranges: [],
-    includeGridData: true,
-    auth: integration.integrationToken
-  }
-  sheets.spreadsheets.get(request, function (err, response) {
-    if (err) {
-      logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
-    } else {
-      let sheet = response.sheets.filter(sheet => sheet.properties.sheetId === resp.worksheet)[0]
-      if (sheet) {
 
-      }
+function getRowByValue (resp, subscriber, oauth2Client) {
+}
+
+function updateRow (resp, subscriber, oauth2Client) {
+  async.eachOf(resp.mapping, function (item, index, cb) {
+    let data = {
+      mapping: resp.mapping,
+      item,
+      index,
+      subscriber
+    }
+    _getDataForInsertRow(data, cb)
+  }, function (err) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+    } else {
+      // let data = resp.mapping.map(item => item.value)
+      // let dataToSend = [data]
+      // let request = {
+      //   spreadsheetId: resp.spreadSheet,
+      //   range: resp.worksheetName,
+      //   valueInputOption: 'RAW',
+      //   resource: {
+      //     'majorDimension': 'ROWS',
+      //     'range': `range${}`,
+      //     'values': dataToSend
+      //   },
+      //   auth: oauth2Client
+      // }
+      // sheets.spreadsheets.values.append(request, function (err, response) {
+      //   if (err) {
+      //     logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+      //   }
+      // })
     }
   })
-}
-function updateRow (resp, subscriber, oauth2Client) {
-  getLookUpValue(resp.lookUpValue, subscriber)
-    .then(lookUpValue => {
-      if (lookUpValue !== '') {
-        var request = {
-          spreadsheetId: resp.spreadSheet,
-          range: resp.worksheetName,
-          majorDimension: 'COLUMNS',
-          auth: oauth2Client
-        }
-        sheets.spreadsheets.values.get(request, function (err, response) {
-          if (err) {
-            logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
-          } else {
-            let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
-            if (range) {
-              console.log('toletter', columnToLetter(range.i + 1))
-            }
-          }
-        })
-      }
-    })
 }
 
 function getLookUpValue (lookUpValue, subscriber) {
