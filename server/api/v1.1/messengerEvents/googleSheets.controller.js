@@ -154,6 +154,8 @@ function _getDataForInsertRow (data, callback) {
         logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
         callback(err)
       })
+  } else {
+    callback()
   }
 }
 
@@ -176,7 +178,6 @@ function getRowByValue (resp, subscriber, cellAddress, sheetData) {
             let updatePayload = { purpose: 'updateOne', match: { customFieldId: customFieldColumn, subscriberId: subscriber._id }, updated: { value: newData } }
             callApi('custom_field_subscribers/', 'put', updatePayload)
               .then(updated => {
-                console.log('updated finally', updated)
               })
               .catch(err => {
                 logger.serverLog(TAG, `Failed to update custom field value ${JSON.stringify(err)}`, 'error')
