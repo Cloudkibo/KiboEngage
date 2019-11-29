@@ -3,6 +3,37 @@ This file will contain the validation schemas.
 By separating it from controller, we are cleaning the code.
 Now the middleware will automatically send error response if the payload fails
 */
+exports.getPostsPayload = {
+  'type': 'object',
+  'properties': {
+    'last_id': {
+      'type': 'string'
+    },
+    'number_of_records': {
+      'type': 'integer'
+    },
+    'first_page': {
+      'type': 'string'
+    },
+    'search_value': {
+      'type': 'string'
+    },
+    'type_value': {
+      'type': 'string'
+    },
+    'startDate': {
+      'type': 'string'
+    },
+    'endDate': {
+      'type': 'string'
+    }
+  },
+  'required': [
+    'last_id',
+    'number_of_records',
+    'first_page'
+  ]
+}
 exports.postPayload = {
   type: 'object',
   properties: {
