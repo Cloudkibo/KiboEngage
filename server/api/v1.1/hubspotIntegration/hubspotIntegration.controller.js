@@ -9,10 +9,11 @@ const config = require('../../../config/environment')
 const request = require('request')
 
 exports.auth = function (req, res) {
+  console.log('config', config)
   // Build the auth URL
   const authUrl =
   'https://app.hubspot.com/oauth/authorize' +
-  `?client_id=${encodeURIComponent(config.hubpost.client_id)}` +
+  `?client_id=${encodeURIComponent(config.hubspot.client_id)}` +
   `&scope=${encodeURIComponent(config.hubspot.scopes)}` +
   `&redirect_uri=${encodeURIComponent(config.hubspot.callbackURL)}`
 
