@@ -14,25 +14,31 @@ const { callApi } = require('../utility')
 const async = require('async')
 
 exports.fetchWorksheets = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
   callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
     .then(integration => {
       integration = integration[0]
+      oauth2Client.credentials = integration.integrationPayload
       let request = {
         // The spreadsheet to request.
         spreadsheetId: req.body.spreadsheetId,
         ranges: [],
-        includeGridData: false,
-        auth: integration.integrationToken
+        includeGridData: true,
+        auth: oauth2Client
       }
       sheets.spreadsheets.get(request, function (err, response) {
         if (err) {
           sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
         } else {
           let dataToSend = []
-          for (let i = 0; i < response.sheets.length; i++) {
-            dataToSend.push({sheetId: response.sheets[i].properties.sheetId, title: response.sheets[i].properties.title})
+          for (let i = 0; i < response.data.sheets.length; i++) {
+            dataToSend.push({sheetId: response.data.sheets[i].properties.sheetId, title: response.data.sheets[i].properties.title})
           }
-          if (dataToSend.length === response.sheets.length) {
+          if (dataToSend.length === response.data.sheets.length) {
             sendSuccessResponse(res, 200, dataToSend)
           }
         }
@@ -43,6 +49,11 @@ exports.fetchWorksheets = function (req, res) {
     })
 }
 exports.fetchColumns = function (req, res) {
+  const oauth2Client = new google.auth.OAuth2(
+    config.google.client_id,
+    config.google.client_secret,
+    config.google.callbackURL
+  )
   async.parallelLimit([
     function (callback) {
       callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
@@ -57,12 +68,13 @@ exports.fetchColumns = function (req, res) {
       callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
         .then(integration => {
           integration = integration[0]
+          oauth2Client.credentials = integration.integrationPayload
           let request = {
             // The spreadsheet to request.
             spreadsheetId: req.body.spreadsheetId,
             ranges: [],
-            includeGridData: false,
-            auth: integration.integrationToken
+            includeGridData: true,
+            auth: oauth2Client
           }
           sheets.spreadsheets.get(request, function (err, response) {
             if (err) {
@@ -86,12 +98,12 @@ exports.fetchColumns = function (req, res) {
         googleSheetColumns: []
       }
       let customFields = results[0]
-      let googleData = results[1]
+      let googleData = results[1].data
       populateKiboPushColumns(dataToSend)
         .then(dataToSend => {
           populateCustomFieldColumns(dataToSend, customFields)
             .then(dataToSend => {
-              populateGoogleColumns(dataToSend, googleData, req.bodt.sheetId)
+              populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
                 .then(dataToSend => {
                   sendSuccessResponse(res, 200, dataToSend)
                 })
@@ -135,7 +147,7 @@ function populateCustomFieldColumns (dataToSend, customFields) {
 }
 function populateGoogleColumns (dataToSend, googleData, sheetId) {
   return new Promise(function (resolve, reject) {
-    let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId === sheetId)[0]
+    let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId.toString() === sheetId)[0]
     if (sheet) {
       if (sheet.data.length > 0 && sheet.data[0].rowData.length > 0) {
         for (let i = 0; i < sheet.data[0].rowData[0].values.length; i++) {
@@ -179,20 +191,17 @@ exports.callback = async function (req, res) {
   )
 
   const {tokens} = await oauth2Client.getToken(code)
-  oauth2Client.setCredentials(tokens)
+  oauth2Client.credentials = tokens
 
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
     .then(companyUser => {
       if (companyUser) {
         let companyId = companyUser.companyId
-        dataLayer.index({
-          companyId,
-          userId,
-          integrationName: 'Google Sheets'
-        })
+        dataLayer.index({ companyId, userId, integrationName: 'Google Sheets' })
           .then(integrations => {
             if (integrations.length > 0) {
+              tokens.refresh_token = integrations[0].integrationPayload.refresh_token
               let newPayload = {
                 companyId: integrations[0].companyId,
                 userId: integrations[0].userId,
@@ -206,7 +215,7 @@ exports.callback = async function (req, res) {
                   res.redirect('/')
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+                  logger.serverLog(TAG, 'Error in Integrations Sheets on update callback' + err, 'error')
                   res.status(500).send('Internal Error Occurred.')
                 })
             } else {
@@ -223,13 +232,13 @@ exports.callback = async function (req, res) {
                   res.redirect('/')
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+                  logger.serverLog(TAG, 'Error in Integrations Sheets on create callback' + err, 'error')
                   res.status(500).send('Internal Error Occurred.')
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, 'Error in Integrations Sheets callback' + JSON.stringify(err), 'error')
+            logger.serverLog(TAG, 'Error in Integrations Sheets on fetch callback' + err, 'error')
             res.status(500).send('Internal Error Occurred.')
           })
       } else {
@@ -252,30 +261,25 @@ exports.listSpreadSheets = (req, res) => {
   })
     .then(function (integrations) {
       if (integrations.length > 0) {
-        // const {tokens} = await oauth2Client.getToken(integrations[0].integrationToken)
-        oauth2Client.setCredentials(integrations[0].integrationPayload.refresh_token)
-        const service = google.drive('v3', oauth2Client)
+        oauth2Client.credentials = integrations[0].integrationPayload
+        const service = google.drive('v3')
         service.files.list(
           {
+            auth: oauth2Client,
             q: "mimeType='application/vnd.google-apps.spreadsheet'",
             fields: 'nextPageToken, files(id, name)',
             spaces: 'drive',
             pageToken: null
           },
           (err, response) => {
-            console.log('sheets fetch response', response)
             if (err) {
-              console.log('sheets fetch error', err)
               return sendErrorResponse(res, 404, err, 'No integrations defined. Please enabled from settings.')
             }
             const files = response.data.files
             if (files.length === 0) {
               sendSuccessResponse(res, 200, files, 'Zero files found')
             } else {
-              sendSuccessResponse(res, 200, files, 'SpreadSheet files found')
-              for (const file of files) {
-                logger.serverLog(TAG, `Spreadsheet file ${file.name} (${file.id})`)
-              }
+              sendSuccessResponse(res, 200, files, 'SpreadSheet files of connected user')
             }
           }
         )

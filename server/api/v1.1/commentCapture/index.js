@@ -6,8 +6,9 @@ const validate = require('express-jsonschema').validate
 const validationSchema = require('./validationSchema')
 const controller = require('./commentCapture.controller')
 
-router.get('/',
+router.post('/',
   auth.isAuthenticated(),
+  validate({body: validationSchema.getPostsPayload}),
   controller.index)
 
 router.get('/fetchPostsAnalytics',
