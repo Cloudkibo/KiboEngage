@@ -6,6 +6,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 let { sendOpAlert } = require('./../../global/operationalAlert')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
+const mongoose = require('mongoose')
 
 exports.index = function (req, res) {
   let criteria = logicLayer.getCriterias(req.body, req.user.companyId)
@@ -303,6 +304,15 @@ exports.getRepliesToComment = function (req, res) {
       sendSuccessResponse(res, 200, {replies: comments, count: countResponse.length > 0 ? countResponse[0].count : 0})
     }
   })
+}
+exports.fetchAllComments = function (req, res) {
+  utility.callApi('comment_capture/comments/query', 'post', {postId:  mongoose.Types.ObjectId(req.body.postId), })    
+    .then(comments => {
+      sendSuccessResponse(res, 200, comments)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, err)
+    })
 }
 exports.fetchPostData = function (req, res) {
   utility.callApi(`comment_capture/query`, 'post', {_id: req.params._id})
