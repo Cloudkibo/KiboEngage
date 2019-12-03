@@ -5,6 +5,7 @@ const async = require('async')
 const {google} = require('googleapis')
 var sheets = google.sheets('v4')
 const config = require('./../../../config/environment')
+const datalayer = require('./googleSheets.datalayer')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -175,13 +176,10 @@ function getRowByValue (resp, subscriber, cellAddress, sheetData) {
         if (googleSheetColumn === sheetData[j][0]) {
           let newData = sheetData[j][cellAddress.j]
           if (newData && newData !== '') {
-            let updatePayload = { purpose: 'updateOne', match: { customFieldId: customFieldColumn, subscriberId: subscriber._id }, updated: { value: newData } }
-            callApi('custom_field_subscribers/', 'put', updatePayload)
-              .then(updated => {
-              })
-              .catch(err => {
-                logger.serverLog(TAG, `Failed to update custom field value ${JSON.stringify(err)}`, 'error')
-              })
+            datalayer.genericUpdate({ customFieldId: customFieldColumn, subscriberId: subscriber._id },
+              { value: newData },
+              { upsert: true }
+            )
           }
         }
       }
