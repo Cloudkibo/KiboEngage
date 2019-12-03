@@ -137,3 +137,46 @@ exports.getRepliesToCommentPayload = {
     }
   }
 }
+exports.fetchGlobalPostDataPayload = {
+  type: 'object',
+  properties: {
+    pageId: {
+      type: 'string',
+      required: true
+    },
+    number_of_records: {
+      type: 'number',
+      required: true
+    }
+  }
+}
+exports.filterCommentsPayload = {
+  type: 'object',
+  properties: {
+    search_value: {
+      type: 'string'
+    },
+    startDate: {
+      type: 'string'
+    },
+    endDate: {
+      type: 'string'
+    },
+    postId: {
+      type: 'string',
+      required: true
+    },
+    first_page: {
+      type: 'boolean',
+      required: true
+    },
+    last_id: {
+      type: 'string',
+      required: true
+    },
+    number_of_records: {
+      type: 'number',
+      required: true
+    }
+  }
+}
