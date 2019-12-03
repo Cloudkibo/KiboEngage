@@ -42,4 +42,18 @@ router.post('/getRepliesToComment',
   validate({body: validationSchema.getRepliesToCommentPayload}),
   controller.getRepliesToComment)
 
+router.get('/fetchPostData/:_id',
+  auth.isAuthenticated(),
+  controller.fetchPostData)
+
+router.post('/fetchGlobalPostData',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.fetchGlobalPostDataPayload}),
+  controller.fetchGlobalPostData)
+
+router.post('/filterComments',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.filterCommentsPayload}),
+  controller.filterComments)
+
 module.exports = router
