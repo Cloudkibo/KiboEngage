@@ -15,6 +15,10 @@ router.get('/fetchPostsAnalytics',
   auth.isAuthenticated(),
   controller.postsAnalytics)
 
+router.post('/fetchAllComments',
+  auth.isAuthenticated(),
+  controller.fetchAllComments)
+
 router.get('/:id',
   auth.isAuthenticated(),
   controller.viewPost)
