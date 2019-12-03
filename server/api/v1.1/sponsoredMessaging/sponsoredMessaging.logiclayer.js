@@ -111,7 +111,7 @@ exports.prepareadCreativePayload = function (body, access_token) {
   let payload = {
     object_id: body.pageId,
     object_type: 'SHARE',
-    messenger_sponsored_message: {message: data},
+    messenger_sponsored_message: JSON.stringify({message: data}),
     access_token: access_token
   }
   console.log('messenger_sponsored_message', payload)
