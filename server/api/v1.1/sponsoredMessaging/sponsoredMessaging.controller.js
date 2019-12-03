@@ -62,7 +62,7 @@ exports.update = function (req, res) {
 }
 
 exports.send = function (req, res) {
-  const accesstoken = marketingApiAccessToken
+  const accesstoken = req.user.facebookInfo.fbToken
   let id = req.params.id
   if (id !== undefined && id !== '') {
     utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
