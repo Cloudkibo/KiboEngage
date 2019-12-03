@@ -21,6 +21,7 @@ const tagsController = require('./tags.controller')
 const customFieldsController = require('./customFields.controller')
 const flowBuilder = require('./flowBuilder.controller')
 const googleSheetsController = require('./googleSheets.controller')
+const hubspotController = require('./hubspot.controller')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
@@ -46,5 +47,6 @@ router.post('/unAssignTag', auth.isItWebhookServer(), tagsController.unAssignTag
 router.post('/setCustomField', auth.isItWebhookServer(), customFieldsController.index)
 router.post('/sendMessageBlock', auth.isItWebhookServer(), flowBuilder.index)
 router.post('/googleSheets', auth.isItWebhookServer(), googleSheetsController.index)
+router.post('/hubspot', auth.isItWebhookServer(), hubspotController.index)
 
 module.exports = router

@@ -31,7 +31,7 @@ exports.index = function (req, res) {
               callApi(`integrations/query`, 'post', { companyId: subscriber.companyId, integrationName: 'Google Sheets' })
                 .then(integration => {
                   integration = integration[0]
-                  if (integration) {
+                  if (integration && integration.enabled) {
                     const oauth2Client = new google.auth.OAuth2(
                       config.google.client_id,
                       config.google.client_secret,
@@ -59,6 +59,7 @@ exports.index = function (req, res) {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
     })
 }
+
 function insertRow (resp, subscriber, oauth2Client) {
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
