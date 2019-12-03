@@ -80,6 +80,9 @@ exports.getCountForComments = (body) => {
     { $match: {postId: body.postId, parentId: {$exists: false}} },
     { $group: {_id: null, count: { $sum: 1 }} }
   ]
+  if (body.post_id && body.post_id !== '') {
+    aggregateData[0].$match.postFbId = body.post_id
+  }
   return aggregateData
 }
 
@@ -92,6 +95,9 @@ exports.getComments = (body) => {
     } },
     { $limit: body.number_of_records }
   ]
+  if (body.post_id && body.post_id !== '') {
+    aggregateData[0].$match.postFbId = body.post_id
+  }
   return aggregateData
 }
 
@@ -301,6 +307,46 @@ function handleVideo (videoComponents, textComponents) {
     payload.payload.description = textComponents[0].text
   }
   return payload
+}
+
+exports.getCriteriasToFilterComments = function (body, companyId) {
+  let startDate = new Date(body.startDate) // Current date
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate) // Current date
+  endDate.setHours(0) // Set the hour, minute and second components to 0
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let findCriteria = {
+    postId: body.postId,
+    'datetime': body.startDate && body.startDate !== '' ? {
+      $gte: startDate,
+      $lt: endDate
+    } : { $exists: true }
+  }
+  if (body.search_value && body.search_value !== '') {
+    findCriteria['$or'] = [
+      {'commentPayload.0.text': { $regex: body.search_value, $options: 'i' }},
+      {'commentPayload.1.text': { $regex: body.search_value, $options: 'i' }}
+    ]
+  }
+  let aggregateQuery = [
+    { $match: findCriteria },
+    { $sort: {_id: body.sort_value} },
+    { $match: {
+      '_id': body.first_page ? {$exists: true} : body.sort_value === -1 ? {$lt: body.last_id} : {$gt: body.last_id}
+    } },
+    { $limit: body.number_of_records }
+  ]
+  let countQuery = [
+    { $match: findCriteria },
+    { $group: {_id: null, count: { $sum: 1 }} }
+  ]
+  return {
+    aggregateQuery,
+    countQuery
+  }
 }
 
 exports.handleVideo = handleVideo
