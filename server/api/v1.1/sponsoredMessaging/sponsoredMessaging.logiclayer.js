@@ -48,8 +48,8 @@ exports.prepareCampaignPayload = function (body, access_token) {
 }
 
 exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
-  let budgetAmount = parseInt(body.ad_set_payload.budget.amount, 10)
-  let bidAmount = parseInt(body.ad_set_payload.bidAmount, 10)
+  let budgetAmount = parseInt(body.ad_set_payload.budget.amount, 10) * 100
+  let bidAmount = parseInt(body.ad_set_payload.bidAmount, 10) * 100
 
   let payload = {
     name: body.ad_set_payload.adset_name,
