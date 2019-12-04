@@ -5,11 +5,84 @@ Thus we can use it from other non express callers like cron etc
 */
 const URL = require('url')
 
+exports.getCriterias = function (body, companyId) {
+  let startDate = new Date(body.startDate) // Current date
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate) // Current date
+  endDate.setHours(0) // Set the hour, minute and second components to 0
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  let findCriteria = {
+    companyId: companyId,
+    'datetime': body.startDate !== '' ? {
+      $gte: startDate,
+      $lt: endDate
+    } : { $exists: true },
+    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true }
+  }
+  if (body.type_value === 'any') {
+    findCriteria['payload.0'] = { $exists: false }
+    findCriteria['post_id'] = { $exists: false }
+  } else if (body.type_value === 'new') {
+    findCriteria['payload.0'] = { $exists: true }
+    findCriteria['post_id'] = { $exists: true }
+  } else if (body.type_value === 'existing') {
+    findCriteria['payload.0'] = { $exists: false }
+    findCriteria['post_id'] = { $exists: true }
+  }
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $match: findCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  }
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
+}
+
 exports.getCountForComments = (body) => {
   let aggregateData = [
     { $match: {postId: body.postId, parentId: {$exists: false}} },
     { $group: {_id: null, count: { $sum: 1 }} }
   ]
+  if (body.post_id && body.post_id !== '') {
+    aggregateData[0].$match.postFbId = body.post_id
+  }
   return aggregateData
 }
 
@@ -22,6 +95,9 @@ exports.getComments = (body) => {
     } },
     { $limit: body.number_of_records }
   ]
+  if (body.post_id && body.post_id !== '') {
+    aggregateData[0].$match.postFbId = body.post_id
+  }
   return aggregateData
 }
 
@@ -63,16 +139,15 @@ exports.setMessage = function (payload) {
 }
 exports.getAggregateQuery = function (companyId) {
   var aggregateQuery = {
-     match: { companyId: companyId},
-     group: { _id: "$companyId", 
-         count: { $sum: 1 },
-         totalComments: { $sum: "$count" },
-         totalRepliesSent: { $sum: "$positiveMatchCount" },
-         conversions: {$sum: "$conversionCount"},
-         waitingConversions: {$sum: "$waitingReply"}, 
-      } 
+    match: { companyId: companyId },
+    group: { _id: '$companyId',
+      count: { $sum: 1 },
+      totalComments: { $sum: '$count' },
+      totalRepliesSent: { $sum: '$positiveMatchCount' },
+      conversions: {$sum: '$conversionCount'},
+      waitingConversions: {$sum: '$waitingReply'}
+    }
   }
-  console.log('Aggregate Query', aggregateQuery)
   return aggregateQuery
 }
 exports.getPostId = function (url) {
@@ -232,6 +307,46 @@ function handleVideo (videoComponents, textComponents) {
     payload.payload.description = textComponents[0].text
   }
   return payload
+}
+
+exports.getCriteriasToFilterComments = function (body, companyId) {
+  let startDate = new Date(body.startDate) // Current date
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate) // Current date
+  endDate.setHours(0) // Set the hour, minute and second components to 0
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let findCriteria = {
+    postId: body.postId,
+    'datetime': body.startDate && body.startDate !== '' ? {
+      $gte: startDate,
+      $lt: endDate
+    } : { $exists: true }
+  }
+  if (body.search_value && body.search_value !== '') {
+    findCriteria['$or'] = [
+      {'commentPayload.0.text': { $regex: body.search_value, $options: 'i' }},
+      {'commentPayload.1.text': { $regex: body.search_value, $options: 'i' }}
+    ]
+  }
+  let aggregateQuery = [
+    { $match: findCriteria },
+    { $sort: {_id: body.sort_value} },
+    { $match: {
+      '_id': body.first_page ? {$exists: true} : body.sort_value === -1 ? {$lt: body.last_id} : {$gt: body.last_id}
+    } },
+    { $limit: body.number_of_records }
+  ]
+  let countQuery = [
+    { $match: findCriteria },
+    { $group: {_id: null, count: { $sum: 1 }} }
+  ]
+  return {
+    aggregateQuery,
+    countQuery
+  }
 }
 
 exports.handleVideo = handleVideo

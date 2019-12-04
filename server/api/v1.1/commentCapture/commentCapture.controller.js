@@ -8,27 +8,19 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email})
-    .then(companyUser => {
-      utility.callApi(`comment_capture/query`, 'post', {companyId: companyUser.companyId})
+  let criteria = logicLayer.getCriterias(req.body, req.user.companyId)
+  utility.callApi(`comment_capture/aggregate`, 'post', criteria.countCriteria)
+    .then(count => {
+      utility.callApi(`comment_capture/aggregate`, 'post', criteria.finalCriteria)
         .then(posts => {
-          if (posts && posts.length > 0) {
-            for (let i = 0; i < posts.length; i++) {
-              posts[i].pageId = posts[i].pageId._id
-              if (i === posts.length - 1) {
-                sendSuccessResponse(res, 200, posts)
-              }
-            }
-          } else {
-            sendSuccessResponse(res, 200, [])
-          }
+          sendSuccessResponse(res, 200, {posts, count: count.length > 0 ? count[0].count : 0})
         })
         .catch(error => {
-          sendErrorResponse(res, 500, `Failed to get fetch posts ${JSON.stringify(error)}`)
+          sendErrorResponse(res, 500, `Failed to fetch posts ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+      sendErrorResponse(res, 500, `Failed to get posts count ${JSON.stringify(error)}`)
     })
 }
 
@@ -232,20 +224,20 @@ exports.delete = function (req, res) {
 
 exports.postsAnalytics = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email})
-  .then(companyUser => {
-    var aggregateQuery = logicLayer.getAggregateQuery(companyUser.companyId)
-    utility.callApi(`comment_capture/aggregate`, 'post', aggregateQuery)
-      .then(analytics => {
-        logger.serverLog(TAG, `Analytics ${JSON.stringify(analytics)}`, 'success')
-        sendSuccessResponse(res, 200, analytics)
-      })
-      .catch(error => {
-        sendErrorResponse(res, 500, `Failed to get fetch posts ${JSON.stringify(error)}`)
-      })
-  })
-  .catch(error => {
-    sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
-  })
+    .then(companyUser => {
+      var aggregateQuery = logicLayer.getAggregateQuery(companyUser.companyId)
+      utility.callApi(`comment_capture/aggregate`, 'post', aggregateQuery)
+        .then(analytics => {
+          logger.serverLog(TAG, `Analytics ${JSON.stringify(analytics)}`, 'success')
+          sendSuccessResponse(res, 200, analytics)
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to get fetch posts ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+    })
 }
 
 exports.getComments = function (req, res) {
@@ -309,6 +301,129 @@ exports.getRepliesToComment = function (req, res) {
       let countResponse = results[0]
       let comments = results[1]
       sendSuccessResponse(res, 200, {replies: comments, count: countResponse.length > 0 ? countResponse[0].count : 0})
+    }
+  })
+}
+exports.fetchAllComments = function (req, res) {
+  utility.callApi('comment_capture/comments/query', 'post', {postId: req.body.postId})    
+    .then(comments => {
+      sendSuccessResponse(res, 200, comments)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, err)
+    })
+}
+exports.fetchPostData = function (req, res) {
+  utility.callApi(`comment_capture/query`, 'post', {_id: req.params._id})
+    .then(post => {
+      post = post[0]
+      facebookApiCaller('v3.3', `${post.post_id}?fields=message,attachments.limit(1){type},created_time&access_token=${post.pageId.accessToken}`, 'get', {})
+        .then(response => {
+          if (response.body.error) {
+            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
+          } else {
+            let dataToSend = {
+              attachments: response.body.attachments ? true : false,
+              message: response.body.message ? response.body.message : '',
+              datetime: response.body.created_time,
+              postLink: `https://www.facebook.com/${post.post_id}`
+            }
+            sendSuccessResponse(res, 200, dataToSend)
+          }
+        })
+        .catch((err) => {
+          sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to get posts ${JSON.stringify(error)}`)
+    })
+}
+exports.fetchGlobalPostData = function (req, res) {
+  utility.callApi(`pages/query`, 'post', {_id: req.body.pageId})
+    .then(page => {
+      page = page[0]
+      let paginiationQuery = req.body.after && req.body.after !== '' ? `&after=${req.body.after}` : undefined
+      facebookApiCaller('v3.3', `${page.pageId}/posts?fields=attachments.limit(1){type},message,created_time&limit=${req.body.number_of_records}&pretty=0${paginiationQuery}&access_token=${page.accessToken}`, 'get', {})
+        .then(response => {
+          if (response.body.error) {
+            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
+          } else {
+            if (response.body.data && response.body.data.length > 0) {
+              sendGlobalDataPayload(response.body)
+                .then(result => {
+                  sendSuccessResponse(res, 200, result)
+                })
+            } else {
+              sendSuccessResponse(res, 200, {posts: [], after: ''})
+            }
+          }
+        })
+        .catch((err) => {
+          sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to get posts ${JSON.stringify(error)}`)
+    })
+}
+
+function sendGlobalDataPayload (responseBody) {
+  return new Promise(function (resolve, reject) {
+    let data = responseBody.data
+    let dataToSend = []
+    for (let i = 0; i < data.length; i++) {
+      let aggregateData = [
+        { $match: {postFbId: data[i].id, parentId: {$exists: false}} },
+        { $group: {_id: null, count: { $sum: 1 }} }
+      ]
+      utility.callApi('comment_capture/comments/aggregate', 'post', aggregateData)
+        .then(commentsCount => {
+          commentsCount = commentsCount.length > 0 ? commentsCount[0].count : 0
+          dataToSend.push({
+            postLink: `https://www.facebook.com/${data[i].id}`,
+            commentsCount: commentsCount,
+            message: data[i].message ? data[i].message : '',
+            attachments: data[i].attachments ? true : false
+          })
+          if (dataToSend.length === data.length) {
+            resolve({posts: dataToSend, after: responseBody.paging && responseBody.paging.cursors && responseBody.paging.cursors.after ? responseBody.paging.cursors.after : ''})
+          }
+        })
+        .catch(err => {
+          reject(err)
+        })
+    }
+  })
+}
+exports.filterComments = function (req, res) {
+  let criteria = logicLayer.getCriteriasToFilterComments(req.body)
+  async.parallelLimit([
+    function (callback) {
+      utility.callApi('comment_capture/comments/aggregate', 'post', criteria.countQuery)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      utility.callApi('comment_capture/comments/aggregate', 'post', criteria.aggregateQuery)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      let countResponse = results[0]
+      let comments = results[1]
+      sendSuccessResponse(res, 200, {comments: comments, count: countResponse.length > 0 ? countResponse[0].count : 0})
     }
   })
 }

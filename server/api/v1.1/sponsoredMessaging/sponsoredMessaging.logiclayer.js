@@ -1,7 +1,10 @@
+let { facebook } = require('../../global/prepareMessageData')
+
 exports.preparePayload = function (companyId, userId) {
   let payload = {
     companyId: companyId,
-    userId: userId
+    userId: userId,
+    status: 'draft'
   }
 
   return payload
@@ -45,16 +48,15 @@ exports.prepareCampaignPayload = function (body, access_token) {
 }
 
 exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
-  console.log('body', JSON.stringify(body))
-  console.log('campaignid', campaign_id)
-  console.log('acc', access_token)
+  let budgetAmount = parseInt(body.ad_set_payload.budget.amount, 10) * 100
+  let bidAmount = parseInt(body.ad_set_payload.bidAmount, 10) * 100
 
   let payload = {
-    name: body.ad_set_payload.name,
+    name: body.ad_set_payload.adset_name,
     optimization_goal: 'IMPRESSIONS',
     billing_event: 'IMPRESSIONS',
-    bid_amount: body.ad_set_payload.bid_amount,
-    daily_budget: body.ad_set_payload.daily_budget,
+    bid_amount: bidAmount,
+    daily_budget: budgetAmount,
     campaign_id: campaign_id,
     targeting: {
       publisher_platforms: ['messenger'],
@@ -69,15 +71,50 @@ exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
   }
   return payload
 }
+//     {
+//       "message":
+//       {
+//         "text":"Sample Text",
+//         "quick_replies":[{
+//           "title":"Quick Reply Text",
+//            "content_type":"text"
+//           }]
+//         }
+//       }
+// {
+//   "message":
+//   {
+//     "attachment":
+//     {
+//       "type":"template",
+//       "payload":
+//       {
+//         "template_type":"generic",
+//         "elements":[{
+//           "title":"Image Text",
+//           "buttons":[{
+//             "type":"web_url",
+//             "title":"button text",
+//             "url":"<URL>"
+//           }],   
+//           "image_hash":"<IMAGE_HASH>"
+//         }]
+//       }
+//     },
+//     "text":"Ad text"
+//   }
+// }
 
 exports.prepareadCreativePayload = function (body, access_token) {
+  let data = facebook(body.payload[0])
+  data = JSON.parse(data)
   let payload = {
-    object_id: body.page_id,
+    object_id: body.pageId,
     object_type: 'SHARE',
-    messenger_sponsored_message: body.payload.newMesage,
+    messenger_sponsored_message: JSON.stringify({message: data}),
     access_token: access_token
   }
-
+  console.log('messenger_sponsored_message', payload)
   return payload
 }
 
@@ -95,9 +132,9 @@ exports.prepareadAdPayload = function (body, adset_id, message_creative_id, acce
   return payload
 }
 
-exports.prepareInsightPayload = function (access_token){
+exports.prepareInsightPayload = function (access_token) {
   let payload = {
-    fields: {name, insights},
+    fields: { name, insights },
     access_token: access_token
   }
   return payload

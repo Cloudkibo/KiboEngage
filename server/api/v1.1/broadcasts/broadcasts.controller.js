@@ -145,11 +145,11 @@ exports.addButton = function (req, res) {
       URLDataLayer.createURLObject({
         originalURL: req.body.url,
         module: {
-          type: 'broadcast'
+          type: req.body.module.type
         }
       })
         .then(savedurl => {
-          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+          let newURL = config.domain + `/api/URL/${req.body.module.type}/` + savedurl._id
           buttonPayload.newUrl = newURL
           buttonPayload.url = req.body.url
           sendSuccessResponse(res, 200, buttonPayload)
