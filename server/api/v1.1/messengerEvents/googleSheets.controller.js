@@ -60,6 +60,7 @@ exports.index = function (req, res) {
     })
 }
 function insertRow (resp, subscriber, oauth2Client) {
+  console.log('resp.mapping', resp.mapping)
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -73,7 +74,9 @@ function insertRow (resp, subscriber, oauth2Client) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
+      console.log('data', data)
       let dataToSend = [data]
+      console.log('dataToSend', dataToSend)
       let request = {
         spreadsheetId: resp.spreadSheet,
         range: resp.worksheetName,
