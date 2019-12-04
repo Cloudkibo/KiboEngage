@@ -18,4 +18,9 @@ router.get('/callback', controller.callback)
 
 router.get('/listForms', auth.isAuthenticated(), controller.getForms)
 
+router.post('/fetchFields',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.fetchColumnsPayload}),
+  controller.fetchFields)
+
 module.exports = router

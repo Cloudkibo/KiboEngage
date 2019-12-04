@@ -3,6 +3,7 @@ const TAG = 'api/messengerEvents/hubspotController.controller.js'
 const {callApi} = require('../utility')
 const config = require('./../../../config/environment')
 const async = require('async')
+const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspotIntegration/hubspotIntegration.controller')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -30,10 +31,12 @@ exports.index = function (req, res) {
                   integration = integration[0]
                   if (integration && integration.enabled) {
                     if (resp.hubspotAction === 'submit_form') {
-                      submitForm(resp, subscriber)
+                      submitForm(resp, subscriber, page, integration)
                     } else if (resp.hubspotAction === 'insert_contact') {
                       // performGoogleSheetAction(resp.googleSheetAction, resp, subscriber, oauth2Client)
                     } else if (resp.hubspotAction === 'update_contact') {
+                      // performGoogleSheetAction(resp.googleSheetAction, resp, subscriber, oauth2Client)
+                    } else if (resp.hubspotAction === 'get_contact') {
                       // performGoogleSheetAction(resp.googleSheetAction, resp, subscriber, oauth2Client)
                     }
                   }
@@ -53,7 +56,7 @@ exports.index = function (req, res) {
     })
 }
 
-function submitForm (resp, subscriber, oauth2Client) {
+function submitForm (resp, subscriber, page, integration) {
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -61,30 +64,52 @@ function submitForm (resp, subscriber, oauth2Client) {
       index,
       subscriber
     }
-    _getDataForInsertRow(data, cb)
+    _getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
-      let data = resp.mapping.map(item => item.value)
-      let dataToSend = [data]
-      let request = {
-        spreadsheetId: resp.spreadSheet,
-        range: resp.worksheetName,
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS',
-        resource: {
-          'majorDimension': 'ROWS',
-          'range': resp.worksheetName,
-          'values': dataToSend
-        },
-        auth: oauth2Client
+      let data = resp.mapping.map(item => {
+        return { name: item.hubspotColumn, value: item.value }
+      })
+      let payload = {
+        submittedAt: '' + Date.now(),
+        fields: data,
+        legalConsentOptions: { // Include this object when GDPR options are enabled
+          consent: {
+            consentToProcess: true,
+            text: 'I agree to allow ' + page.pageName + ' to store and process my personal data.',
+            communications: [
+              {
+                value: true,
+                subscriptionTypeId: 999,
+                text: 'I agree to receive marketing communications from ' + page.pageName + '.'
+              }
+            ]
+          }
+        }
       }
+      let hubspotUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${resp.portalId}/${resp.formId}`
+      let newTokens
+      refreshAuthToken(integration.integrationPayload.refresh_token)
+        .then(tokens => {
+          newTokens = tokens
+          return saveNewTokens(integration, tokens)
+        })
+        .then(updated => {
+          return callHubspotApi(hubspotUrl, 'post', payload, newTokens.access_token)
+        })
+        .then(form => {
+          logger.serverLog(TAG, `Success in sending data to hubspot form`)
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+        })
     }
   })
 }
 
-function _getDataForInsertRow (data, callback) {
+function _getDataForSubscriberValues (data, callback) {
   const { index, item, subscriber, mapping } = data
   if (item.kiboPushColumn) {
     if (subscriber[item.kiboPushColumn]) {
@@ -121,36 +146,36 @@ function _getDataForInsertRow (data, callback) {
   }
 }
 
-// Getting look up value from System subscriber fields
-function getLookUpRange (lookUpColumn, lookUpValue, data) {
-  for (let i = 0; i < data.length; i++) {
-    if (data[i][0] === lookUpColumn) {
-      for (let j = 0; j < data[i].length; j++) {
-        if (typeof lookUpValue === 'string') {
-          let lookUpDateInEpoch = Date.parse(lookUpValue)
-          if (isNaN(lookUpDateInEpoch)) {
-            if (data[i][j].toLowerCase() === lookUpValue.toLowerCase()) {
-              return {i, j}
-            }
-          } else {
-            let mongoDBDate = new Date(lookUpValue)
-            let sheetDate = new Date(data[i][j])
-            mongoDBDate.setHours(0, 0, 0, 0)
-            sheetDate.setHours(0, 0, 0, 0)
-            if (mongoDBDate.valueOf() === sheetDate.valueOf()) {
-              return {i, j}
-            }
-          }
-        } else if (typeof lookUpValue === 'boolean') {
-          if (data[i][j].toLowerCase() === lookUpValue.toString().toLowerCase()) {
-            return {i, j}
-          }
-        } else if (typeof lookUpValue === 'number') {
-          if (data[i][j] === lookUpValue.toString()) {
-            return {i, j}
-          }
+// Getting look up value from system subscriber fields
+function getLookUpValue (lookUpValue, subscriber) {
+  return new Promise(function (resolve, reject) {
+    if (lookUpValue.match(/^[0-9a-fA-F]{24}$/)) {
+      callApi(
+        'custom_field_subscribers/query',
+        'post',
+        {
+          purpose: 'findOne',
+          match: { customFieldId: lookUpValue, subscriberId: subscriber._id }
         }
+      )
+        .then(customFieldSubscriber => {
+          if (customFieldSubscriber) {
+            resolve(customFieldSubscriber.value)
+          } else {
+            resolve('')
+          }
+        })
+        .catch((err) => {
+          logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+          resolve('')
+        })
+    } else {
+      if (subscriber[lookUpValue]) {
+        lookUpValue = subscriber[lookUpValue]
+        resolve(lookUpValue)
+      } else {
+        resolve('')
       }
     }
-  }
+  })
 }

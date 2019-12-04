@@ -231,7 +231,7 @@ function updateRow (resp, subscriber, oauth2Client, range) {
   })
 }
 
-// Getting look up value from Google Sheet
+// Getting look up value from system subscriber fields
 function getLookUpValue (lookUpValue, subscriber) {
   return new Promise(function (resolve, reject) {
     if (lookUpValue.match(/^[0-9a-fA-F]{24}$/)) {
@@ -265,7 +265,7 @@ function getLookUpValue (lookUpValue, subscriber) {
   })
 }
 
-// Getting look up value from System subscriber fields
+// Getting look up value from Google sheets
 function getLookUpRange (lookUpColumn, lookUpValue, data) {
   for (let i = 0; i < data.length; i++) {
     if (data[i][0] === lookUpColumn) {
