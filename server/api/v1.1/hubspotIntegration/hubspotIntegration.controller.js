@@ -100,7 +100,7 @@ exports.getForms = function (req, res) {
     .then(function (integrations) {
       if (integrations.length > 0) {
         let newTokens
-        refreshAuthToken(integrations[0].refresh_token)
+        refreshAuthToken(integrations[0].integrationPayload.refresh_token)
           .then(tokens => {
             newTokens = tokens
             return saveNewTokens(integrations[0], tokens)
@@ -133,7 +133,11 @@ function returnAuthToken (formData) {
       if (error) {
         reject(error)
       } else {
-        resolve(data)
+        if (data.statusCode && data.statusCode === 200) {
+          resolve(JSON.parse(data.body))
+        } else {
+          reject(data)
+        }
       }
     })
   })
@@ -179,7 +183,11 @@ function callHubspotApi (url, method, body, accessToken) {
         if (error) {
           reject(error)
         } else {
-          resolve(data)
+          if (data.statusCode && data.statusCode === 200) {
+            resolve(data.body)
+          } else {
+            reject(data)
+          }
         }
       })
   })
