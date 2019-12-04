@@ -72,6 +72,7 @@ function insertRow (resp, subscriber, oauth2Client) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
+      console.log('resp.mapping', resp.mapping)
       let data = resp.mapping.map(item => item.value)
       let dataToSend = [data]
       let request = {
