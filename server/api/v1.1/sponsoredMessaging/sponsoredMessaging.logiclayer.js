@@ -134,7 +134,7 @@ exports.prepareadAdPayload = function (body, adset_id, message_creative_id, acce
 
 exports.prepareInsightPayload = function (access_token) {
   let payload = {
-    fields: { name, insights },
+    fields: ['impressions', 'ad_name', 'reach', 'clicks', 'spend', 'date_start', 'date_stop'],
     access_token: access_token
   }
   return payload
