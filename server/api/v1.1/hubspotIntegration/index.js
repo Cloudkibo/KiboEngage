@@ -16,4 +16,6 @@ router.get('/auth', controller.auth)
 
 router.get('/callback', controller.callback)
 
+router.get('/listForms', auth.isAuthenticated(), controller.getForms)
+
 module.exports = router
