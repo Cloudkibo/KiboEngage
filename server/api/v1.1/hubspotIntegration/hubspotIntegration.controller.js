@@ -134,9 +134,9 @@ function returnAuthToken (formData) {
         reject(error)
       } else {
         if (data.statusCode && data.statusCode === 200) {
-          resolve(JSON.stringify(data.body))
+          resolve(JSON.parse(data.body))
         } else {
-          reject(JSON.stringify(data))
+          reject(data)
         }
       }
     })
@@ -184,9 +184,9 @@ function callHubspotApi (url, method, body, accessToken) {
           reject(error)
         } else {
           if (data.statusCode && data.statusCode === 200) {
-            resolve(JSON.stringify(data.body))
+            resolve(JSON.parse(data.body))
           } else {
-            reject(JSON.stringify(data))
+            reject(data)
           }
         }
       })
