@@ -183,7 +183,7 @@ function callHubspotApi (url, method, body, accessToken) {
         if (error) {
           reject(error)
         } else {
-          console.log(data)
+          console.log(data.body)
           if (data.statusCode && data.statusCode === 200) {
             resolve(JSON.parse(data.body))
           } else {
