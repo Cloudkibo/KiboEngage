@@ -17,6 +17,8 @@ exports.auth = function (req, res) {
   `&scope=${encodeURIComponent(config.hubspot.scopes)}` +
   `&redirect_uri=${encodeURIComponent(config.hubspot.callbackURL)}`
 
+  let url = 'https://app.hubspot.com/oauth/authorize?client_id=7380eb30-23d2-4801-b772-a01f8ad3195f&redirect_uri=https://skiboengage.cloudkibo.com/api/hubspotIntegrations/callback&scope=contacts%20forms'
+
   // Redirect the user
   res.redirect(authUrl)
 }
