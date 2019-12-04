@@ -381,7 +381,7 @@ function sendGlobalDataPayload (responseBody) {
         .then(commentsCount => {
           commentsCount = commentsCount.length > 0 ? commentsCount[0].count : 0
           dataToSend.push({
-            postLink: `https://www.facebook.com/${data[i].id}`,
+            postId: data[i].id,
             commentsCount: commentsCount,
             message: data[i].message ? data[i].message : '',
             attachments: data[i].attachments ? true : false,
