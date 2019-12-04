@@ -26,7 +26,7 @@ module.exports = {
     client_id: process.env.HUBSPOT_CLIENT_ID || '7380eb30-23d2-4801-b772-a01f8ad3195f',
     client_secret: process.env.HUBSPOT_CLIENT_SECRET || 'eae28ea4-5e91-4a65-aa8b-3b2317fef2f7',
     callbackURL: `${process.env.DOMAIN || 'https://kibopush-faizan.ngrok.io'}/api/hubspotIntegrations/callback`,
-    scopes: 'contacts%20forms%20oauth'
+    scopes: 'contacts%20forms'
   },
   api_urls: {
     webhook: 'https://swebhook.cloudkibo.com',
