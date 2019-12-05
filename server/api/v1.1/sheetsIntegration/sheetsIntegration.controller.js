@@ -9,8 +9,7 @@ const {google} = require('googleapis')
 const config = require('./../../../config/environment')
 const {
   populateKiboPushColumns,
-  populateCustomFieldColumns,
-  fetchCustomFields
+  populateCustomFieldColumns
 } = require('./../../global/externalIntegrations')
 
 // controllers and install logic to go here
@@ -60,7 +59,15 @@ exports.fetchColumns = function (req, res) {
     config.google.callbackURL
   )
   async.parallelLimit([
-    fetchCustomFields,
+    function (callback) {
+      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+        .then(customFields => {
+          callback(null, customFields)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
     function (callback) {
       callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
         .then(integration => {

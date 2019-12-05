@@ -37,16 +37,6 @@ exports.populateCustomFieldColumns = (dataToSend, customFields) => {
   })
 }
 
-exports.fetchCustomFields = (callback) => {
-  callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
-    .then(customFields => {
-      callback(null, customFields)
-    })
-    .catch(err => {
-      callback(err)
-    })
-}
-
 // Getting look up value from system subscriber fields
 exports.getLookUpValue = (lookUpValue, subscriber) => {
   return new Promise(function (resolve, reject) {

@@ -11,8 +11,7 @@ const async = require('async')
 const {callApi} = require('../utility')
 const {
   populateKiboPushColumns,
-  populateCustomFieldColumns,
-  fetchCustomFields
+  populateCustomFieldColumns
 } = require('./../../global/externalIntegrations')
 
 exports.auth = function (req, res) {
@@ -135,7 +134,15 @@ exports.getForms = function (req, res) {
 
 exports.fetchColumns = function (req, res) {
   async.parallelLimit([
-    fetchCustomFields,
+    function (callback) {
+      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+        .then(customFields => {
+          callback(null, customFields)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
     function (callback) {
       callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Hubspot'}, 'accounts', req.headers.authorization)
         .then(integrations => {
