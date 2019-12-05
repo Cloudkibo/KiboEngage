@@ -99,7 +99,7 @@ exports.fetchColumns = function (req, res) {
       let dataToSend = {
         kiboPushColumns: populateKiboPushColumns(),
         customFieldColumns: [],
-        hubspotColumns: []
+        googleSheetColumns: []
       }
       let customFields = results[0]
       let googleData = results[1].data
