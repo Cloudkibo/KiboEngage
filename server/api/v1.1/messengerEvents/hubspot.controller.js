@@ -22,14 +22,17 @@ exports.index = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
+      console.log('page', page)
       if (page) {
         callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId })
           .then(subscriber => {
             subscriber = subscriber[0]
+            console.log('subscriber', subscriber)
             if (subscriber) {
               callApi(`integrations/query`, 'post', { companyId: subscriber.companyId, integrationName: 'Hubspot' })
                 .then(integration => {
                   integration = integration[0]
+                  console.log('integration', integration)
                   if (integration && integration.enabled) {
                     if (resp.hubspotAction === 'submit_form') {
                       submitForm(resp, subscriber, page, integration)
