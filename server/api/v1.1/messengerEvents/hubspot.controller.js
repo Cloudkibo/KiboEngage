@@ -11,7 +11,6 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  console.log('inside hubspot controller', req.body)
   let resp
   if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
     resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
@@ -59,6 +58,7 @@ exports.index = function (req, res) {
 }
 
 function submitForm (resp, subscriber, page, integration) {
+  console.log('inside submit form')
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -71,6 +71,8 @@ function submitForm (resp, subscriber, page, integration) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
+      console.log('inside else')
+      console.log(resp.mapping)
       let data = resp.mapping.map(item => {
         return { name: item.hubspotColumn, value: item.value }
       })
@@ -95,16 +97,20 @@ function submitForm (resp, subscriber, page, integration) {
       let newTokens
       refreshAuthToken(integration.integrationPayload.refresh_token)
         .then(tokens => {
+          console.log('tokens', tokens)
           newTokens = tokens
           return saveNewTokens(integration, tokens)
         })
         .then(updated => {
+          console.log('saved tokens', updated)
           return callHubspotApi(hubspotUrl, 'post', payload, newTokens.access_token)
         })
         .then(form => {
+          console.log('form sent', form)
           logger.serverLog(TAG, `Success in sending data to hubspot form`)
         })
         .catch(err => {
+          console.log('err', err)
           logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
         })
     }
