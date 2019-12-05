@@ -1,3 +1,5 @@
+const TAG = 'api/global/externalIntegrations.js'
+const logger = require('../../components/logger')
 const { callApi } = require('./../v1.1/utility')
 
 let kiboPushColumns = [
@@ -20,7 +22,7 @@ exports.populateKiboPushColumns = () => {
   return kiboPushColumns
 }
 
-exports.populateCustomFieldColumns = (dataToSend, customFields) {
+exports.populateCustomFieldColumns = (dataToSend, customFields) => {
   return new Promise(function (resolve, reject) {
     if (customFields && customFields.length > 0) {
       for (let i = 0; i < customFields.length; i++) {
