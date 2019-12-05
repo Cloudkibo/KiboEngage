@@ -11,6 +11,7 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
+  console.log('inside hubspot controller', req.body)
   let resp
   if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
     resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
