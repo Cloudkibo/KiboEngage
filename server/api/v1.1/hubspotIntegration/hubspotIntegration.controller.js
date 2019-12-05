@@ -9,6 +9,11 @@ const config = require('../../../config/environment')
 const request = require('request')
 const async = require('async')
 const {callApi} = require('../utility')
+const {
+  populateKiboPushColumns,
+  populateCustomFieldColumns,
+  fetchCustomFields
+} = require('./../../global/externalIntegrations')
 
 exports.auth = function (req, res) {
   // Build the auth URL
@@ -130,15 +135,7 @@ exports.getForms = function (req, res) {
 
 exports.fetchColumns = function (req, res) {
   async.parallelLimit([
-    function (callback) {
-      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
-        .then(customFields => {
-          callback(null, customFields)
-        })
-        .catch(err => {
-          callback(err)
-        })
-    },
+    fetchCustomFields,
     function (callback) {
       callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Hubspot'}, 'accounts', req.headers.authorization)
         .then(integrations => {
@@ -167,20 +164,17 @@ exports.fetchColumns = function (req, res) {
       sendErrorResponse(res, 500, '', `Failed to fetch columns ${err}`)
     } else {
       let dataToSend = {
-        kiboPushColumns: [],
+        kiboPushColumns: populateKiboPushColumns(),
         customFieldColumns: [],
         hubspotColumns: []
       }
       let customFields = results[0]
       let hubspotData = results[1].formFieldGroups
-      populateKiboPushColumns(dataToSend)
+      populateCustomFieldColumns(dataToSend, customFields)
         .then(dataToSend => {
-          populateCustomFieldColumns(dataToSend, customFields)
+          populateHubSpotColumns(dataToSend, hubspotData)
             .then(dataToSend => {
-              populateHubSpotColumns(dataToSend, hubspotData)
-                .then(dataToSend => {
-                  sendSuccessResponse(res, 200, dataToSend)
-                })
+              sendSuccessResponse(res, 200, dataToSend)
             })
         })
     }
@@ -250,40 +244,6 @@ function callHubspotApi (url, method, body, accessToken) {
           }
         }
       })
-  })
-}
-
-function populateKiboPushColumns (dataToSend) {
-  return new Promise(function (resolve, reject) {
-    dataToSend.kiboPushColumns.push({fieldName: 'firstName', title: 'First Name'})
-    dataToSend.kiboPushColumns.push({fieldName: 'lastName', title: 'Last Name'})
-    dataToSend.kiboPushColumns.push({fieldName: 'fullName', title: 'Full Name'})
-    dataToSend.kiboPushColumns.push({fieldName: 'locale', title: 'Locale'})
-    dataToSend.kiboPushColumns.push({fieldName: 'timezone', title: 'Timezone'})
-    dataToSend.kiboPushColumns.push({fieldName: 'email', title: 'Email'})
-    dataToSend.kiboPushColumns.push({fieldName: 'gender', title: 'Gender'})
-    dataToSend.kiboPushColumns.push({fieldName: 'profilePic', title: 'Profile Pic'})
-    dataToSend.kiboPushColumns.push({fieldName: 'phoneNumber', title: 'Phone Number'})
-    dataToSend.kiboPushColumns.push({fieldName: 'isSubscribed', title: 'Subscribed'})
-    dataToSend.kiboPushColumns.push({fieldName: 'last_activity_time', title: 'Last Interaction'})
-    dataToSend.kiboPushColumns.push({fieldName: 'lastMessagedAt', title: 'Last User Interaction'})
-    dataToSend.kiboPushColumns.push({fieldName: 'datetime', title: 'Subcription Date'})
-    resolve(dataToSend)
-  })
-}
-
-function populateCustomFieldColumns (dataToSend, customFields) {
-  return new Promise(function (resolve, reject) {
-    if (customFields && customFields.length > 0) {
-      for (let i = 0; i < customFields.length; i++) {
-        dataToSend.customFieldColumns.push({customFieldId: customFields[i]._id, title: customFields[i].name})
-        if (i === customFields.length - 1) {
-          resolve(dataToSend)
-        }
-      }
-    } else {
-      resolve(dataToSend)
-    }
   })
 }
 

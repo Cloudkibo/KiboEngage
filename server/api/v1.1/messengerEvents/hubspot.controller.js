@@ -4,6 +4,7 @@ const {callApi} = require('../utility')
 const config = require('./../../../config/environment')
 const async = require('async')
 const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspotIntegration/hubspotIntegration.controller')
+const { getDataForSubscriberValues } = require('./../../global/externalIntegrations')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -64,7 +65,7 @@ function submitForm (resp, subscriber, page, integration) {
       index,
       subscriber
     }
-    _getDataForSubscriberValues(data, cb)
+    getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
@@ -105,77 +106,6 @@ function submitForm (resp, subscriber, page, integration) {
         .catch(err => {
           logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
         })
-    }
-  })
-}
-
-function _getDataForSubscriberValues (data, callback) {
-  const { index, item, subscriber, mapping } = data
-  if (item.kiboPushColumn) {
-    if (subscriber[item.kiboPushColumn]) {
-      mapping[index]['value'] = subscriber[item.kiboPushColumn]
-      callback()
-    } else {
-      mapping[index]['value'] = ''
-      callback()
-    }
-  } else if (item.customFieldColumn) {
-    callApi(
-      'custom_field_subscribers/query',
-      'post',
-      {
-        purpose: 'findOne',
-        match: { customFieldId: item.customFieldColumn, subscriberId: subscriber._id }
-      }
-    )
-      .then(customFieldSubscriber => {
-        if (customFieldSubscriber) {
-          mapping[index]['value'] = customFieldSubscriber.value
-          callback()
-        } else {
-          mapping[index]['value'] = ''
-          callback()
-        }
-      })
-      .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
-        callback(err)
-      })
-  } else {
-    callback()
-  }
-}
-
-// Getting look up value from system subscriber fields
-function getLookUpValue (lookUpValue, subscriber) {
-  return new Promise(function (resolve, reject) {
-    if (lookUpValue.match(/^[0-9a-fA-F]{24}$/)) {
-      callApi(
-        'custom_field_subscribers/query',
-        'post',
-        {
-          purpose: 'findOne',
-          match: { customFieldId: lookUpValue, subscriberId: subscriber._id }
-        }
-      )
-        .then(customFieldSubscriber => {
-          if (customFieldSubscriber) {
-            resolve(customFieldSubscriber.value)
-          } else {
-            resolve('')
-          }
-        })
-        .catch((err) => {
-          logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
-          resolve('')
-        })
-    } else {
-      if (subscriber[lookUpValue]) {
-        lookUpValue = subscriber[lookUpValue]
-        resolve(lookUpValue)
-      } else {
-        resolve('')
-      }
     }
   })
 }
