@@ -168,7 +168,7 @@ exports.fetchColumns = function (req, res) {
     }
   ], 10, function (err, results) {
     if (err) {
-      sendErrorResponse(res, 500, '', `Failed to fetch columns ${err}`)
+      sendErrorResponse(res, 500, '', `Failed to fetch columns ${JSON.stringify(err)}`)
     } else {
       let dataToSend = {
         kiboPushColumns: populateKiboPushColumns(),
