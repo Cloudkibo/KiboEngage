@@ -102,10 +102,10 @@ exports.fetchColumns = function (req, res) {
         hubspotColumns: []
       }
       let customFields = results[0]
-      let hubspotData = results[1].formFieldGroups
+      let googleData = results[1].data
       populateCustomFieldColumns(dataToSend, customFields)
         .then(dataToSend => {
-          populateGoogleColumns(dataToSend, hubspotData)
+          populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
             .then(dataToSend => {
               sendSuccessResponse(res, 200, dataToSend)
             })
