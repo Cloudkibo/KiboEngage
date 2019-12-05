@@ -7,9 +7,15 @@ const { sendSuccessResponse, sendErrorResponse } = require('../../global/respons
 const dataLayer = require('./hubspotIntegration.datalayer')
 const config = require('../../../config/environment')
 const request = require('request')
+const async = require('async')
+const {callApi} = require('../utility')
+const {
+  populateKiboPushColumns,
+  populateCustomFieldColumns,
+  fetchCustomFields
+} = require('./../../global/externalIntegrations')
 
 exports.auth = function (req, res) {
-  console.log('config', config)
   // Build the auth URL
   const authUrl =
   'https://app.hubspot.com/oauth/authorize' +
@@ -127,6 +133,54 @@ exports.getForms = function (req, res) {
     })
 }
 
+exports.fetchColumns = function (req, res) {
+  async.parallelLimit([
+    fetchCustomFields,
+    function (callback) {
+      callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Hubspot'}, 'accounts', req.headers.authorization)
+        .then(integrations => {
+          let newTokens
+          refreshAuthToken(integrations[0].integrationPayload.refresh_token)
+            .then(tokens => {
+              newTokens = tokens
+              return saveNewTokens(integrations[0], tokens)
+            })
+            .then(updated => {
+              return callHubspotApi('https://api.hubapi.com//forms/v2/forms/' + req.body.formId, 'get', null, newTokens.access_token)
+            })
+            .then(form => {
+              callback(null, form)
+            })
+            .catch(err => {
+              callback(err)
+            })
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Failed to fetch columns ${err}`)
+    } else {
+      let dataToSend = {
+        kiboPushColumns: populateKiboPushColumns(),
+        customFieldColumns: [],
+        hubspotColumns: []
+      }
+      let customFields = results[0]
+      let hubspotData = results[1].formFieldGroups
+      populateCustomFieldColumns(dataToSend, customFields)
+        .then(dataToSend => {
+          populateHubSpotColumns(dataToSend, hubspotData)
+            .then(dataToSend => {
+              sendSuccessResponse(res, 200, dataToSend)
+            })
+        })
+    }
+  })
+}
+
 function returnAuthToken (formData) {
   return new Promise((resolve, reject) => {
     request.post('https://api.hubapi.com/oauth/v1/token', { form: formData }, (error, data) => {
@@ -192,3 +246,22 @@ function callHubspotApi (url, method, body, accessToken) {
       })
   })
 }
+
+function populateHubSpotColumns (dataToSend, hubspotData) {
+  return new Promise(function (resolve, reject) {
+    if (hubspotData.length > 0) {
+      for (let i = 0; i < hubspotData.length; i++) {
+        for (let j = 0; j < hubspotData[i].fields.length; j++) {
+          dataToSend.hubspotColumns.push({name: hubspotData[i].fields[j].name, displayLabel: hubspotData[i].fields[j].label})
+        }
+      }
+      resolve(dataToSend)
+    } else {
+      resolve(dataToSend)
+    }
+  })
+}
+
+exports.refreshAuthToken = refreshAuthToken
+exports.saveNewTokens = saveNewTokens
+exports.callHubspotApi = callHubspotApi

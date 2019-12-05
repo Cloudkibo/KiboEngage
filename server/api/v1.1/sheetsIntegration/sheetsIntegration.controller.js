@@ -7,6 +7,11 @@ const { sendSuccessResponse, sendErrorResponse } = require('../../global/respons
 const dataLayer = require('./sheetsIntegration.datalayer')
 const {google} = require('googleapis')
 const config = require('./../../../config/environment')
+const {
+  populateKiboPushColumns,
+  populateCustomFieldColumns,
+  fetchCustomFields
+} = require('./../../global/externalIntegrations')
 
 // controllers and install logic to go here
 var sheets = google.sheets('v4')
@@ -55,15 +60,7 @@ exports.fetchColumns = function (req, res) {
     config.google.callbackURL
   )
   async.parallelLimit([
-    function (callback) {
-      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
-        .then(customFields => {
-          callback(null, customFields)
-        })
-        .catch(err => {
-          callback(err)
-        })
-    },
+    fetchCustomFields,
     function (callback) {
       callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
         .then(integration => {
@@ -93,58 +90,23 @@ exports.fetchColumns = function (req, res) {
       sendErrorResponse(res, 500, '', `Failed to fetch columns ${err}`)
     } else {
       let dataToSend = {
-        kiboPushColumns: [],
+        kiboPushColumns: populateKiboPushColumns(),
         customFieldColumns: [],
-        googleSheetColumns: []
+        hubspotColumns: []
       }
       let customFields = results[0]
-      let googleData = results[1].data
-      populateKiboPushColumns(dataToSend)
+      let hubspotData = results[1].formFieldGroups
+      populateCustomFieldColumns(dataToSend, customFields)
         .then(dataToSend => {
-          populateCustomFieldColumns(dataToSend, customFields)
+          populateGoogleColumns(dataToSend, hubspotData)
             .then(dataToSend => {
-              populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
-                .then(dataToSend => {
-                  sendSuccessResponse(res, 200, dataToSend)
-                })
+              sendSuccessResponse(res, 200, dataToSend)
             })
         })
     }
   })
 }
 
-function populateKiboPushColumns (dataToSend) {
-  return new Promise(function (resolve, reject) {
-    dataToSend.kiboPushColumns.push({fieldName: 'firstName', title: 'First Name'})
-    dataToSend.kiboPushColumns.push({fieldName: 'lastName', title: 'Last Name'})
-    dataToSend.kiboPushColumns.push({fieldName: 'fullName', title: 'Full Name'})
-    dataToSend.kiboPushColumns.push({fieldName: 'locale', title: 'Locale'})
-    dataToSend.kiboPushColumns.push({fieldName: 'timezone', title: 'Timezone'})
-    dataToSend.kiboPushColumns.push({fieldName: 'email', title: 'Email'})
-    dataToSend.kiboPushColumns.push({fieldName: 'gender', title: 'Gender'})
-    dataToSend.kiboPushColumns.push({fieldName: 'profilePic', title: 'Profile Pic'})
-    dataToSend.kiboPushColumns.push({fieldName: 'phoneNumber', title: 'Phone Number'})
-    dataToSend.kiboPushColumns.push({fieldName: 'isSubscribed', title: 'Subscribed'})
-    dataToSend.kiboPushColumns.push({fieldName: 'last_activity_time', title: 'Last Interaction'})
-    dataToSend.kiboPushColumns.push({fieldName: 'lastMessagedAt', title: 'Last User Interaction'})
-    dataToSend.kiboPushColumns.push({fieldName: 'datetime', title: 'Subcription Date'})
-    resolve(dataToSend)
-  })
-}
-function populateCustomFieldColumns (dataToSend, customFields) {
-  return new Promise(function (resolve, reject) {
-    if (customFields && customFields.length > 0) {
-      for (let i = 0; i < customFields.length; i++) {
-        dataToSend.customFieldColumns.push({customFieldId: customFields[i]._id, title: customFields[i].name})
-        if (i === customFields.length - 1) {
-          resolve(dataToSend)
-        }
-      }
-    } else {
-      resolve(dataToSend)
-    }
-  })
-}
 function populateGoogleColumns (dataToSend, googleData, sheetId) {
   return new Promise(function (resolve, reject) {
     let sheet = googleData.sheets.filter(sheet => sheet.properties.sheetId.toString() === sheetId)[0]
