@@ -153,7 +153,7 @@ exports.fetchColumns = function (req, res) {
               return saveNewTokens(integrations[0], tokens)
             })
             .then(updated => {
-              return callHubspotApi('https://api.hubapi.com//forms/v2/forms/' + req.body.formId, 'get', null, newTokens.access_token)
+              return callHubspotApi('https://api.hubapi.com/forms/v2/forms/' + req.body.formId, 'get', null, newTokens.access_token)
             })
             .then(form => {
               callback(null, form)
