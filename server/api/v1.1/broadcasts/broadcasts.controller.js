@@ -113,7 +113,7 @@ exports.addButton = function (req, res) {
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId'))) && !(_.has(req.body.payload, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction'))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body.payload, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction')) && !(_.has(req.body.payload, 'hubspotAction'))
   ) {
     sendErrorResponse(res, 500, '', 'SequenceId & action & customFieldId are required for type postback')
   }
@@ -174,6 +174,9 @@ exports.addButton = function (req, res) {
     } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
+    } else if ((_.has(req.body.payload, 'hubspotAction'))) {
+      buttonPayload.payload = (req.body.payload)
+      sendSuccessResponse(res, 200, buttonPayload)
     } else {
       let buttonId = uniqid()
       buttonPayload.payload = JSON.stringify({
@@ -194,7 +197,7 @@ exports.editButton = function (req, res) {
   if (
     req.body.type === 'postback' &&
     ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction'))
+    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction')) && !(_.has(req.body.payload, 'hubspotAction'))
   ) {
     sendErrorResponse(res, 400, '', 'SequenceId & action & customFieldId are required for type postback')
   }
@@ -263,6 +266,9 @@ exports.editButton = function (req, res) {
       sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
     } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
+      sendSuccessResponse(res, 200, buttonPayload)
+    } else if ((_.has(req.body.payload, 'hubspotAction'))) {
+      buttonPayload.payload = (req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else {
       buttonPayload.payload = JSON.stringify({

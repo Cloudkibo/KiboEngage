@@ -6,6 +6,7 @@ const {google} = require('googleapis')
 var sheets = google.sheets('v4')
 const config = require('./../../../config/environment')
 const datalayer = require('./googleSheets.datalayer')
+const { getLookUpValue, getDataForSubscriberValues } = require('./../../global/externalIntegrations')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -31,7 +32,7 @@ exports.index = function (req, res) {
               callApi(`integrations/query`, 'post', { companyId: subscriber.companyId, integrationName: 'Google Sheets' })
                 .then(integration => {
                   integration = integration[0]
-                  if (integration) {
+                  if (integration && integration.enabled) {
                     const oauth2Client = new google.auth.OAuth2(
                       config.google.client_id,
                       config.google.client_secret,
@@ -59,6 +60,7 @@ exports.index = function (req, res) {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
     })
 }
+
 function insertRow (resp, subscriber, oauth2Client) {
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
@@ -67,7 +69,7 @@ function insertRow (resp, subscriber, oauth2Client) {
       index,
       subscriber
     }
-    _getDataForInsertRow(data, cb)
+    getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
@@ -121,43 +123,6 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
         })
       }
     })
-}
-
-function _getDataForInsertRow (data, callback) {
-  const { index, item, subscriber, mapping } = data
-  if (item.kiboPushColumn) {
-    if (subscriber[item.kiboPushColumn]) {
-      mapping[index]['value'] = subscriber[item.kiboPushColumn]
-      callback()
-    } else {
-      mapping[index]['value'] = ''
-      callback()
-    }
-  } else if (item.customFieldColumn) {
-    callApi(
-      'custom_field_subscribers/query',
-      'post',
-      {
-        purpose: 'findOne',
-        match: { customFieldId: item.customFieldColumn, subscriberId: subscriber._id }
-      }
-    )
-      .then(customFieldSubscriber => {
-        if (customFieldSubscriber) {
-          mapping[index]['value'] = customFieldSubscriber.value
-          callback()
-        } else {
-          mapping[index]['value'] = ''
-          callback()
-        }
-      })
-      .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
-        callback(err)
-      })
-  } else {
-    callback()
-  }
 }
 
 function getRowByValue (resp, subscriber, cellAddress, sheetData) {
@@ -230,41 +195,7 @@ function updateRow (resp, subscriber, oauth2Client, range) {
   })
 }
 
-// Getting look up value from Google Sheet
-function getLookUpValue (lookUpValue, subscriber) {
-  return new Promise(function (resolve, reject) {
-    if (lookUpValue.match(/^[0-9a-fA-F]{24}$/)) {
-      callApi(
-        'custom_field_subscribers/query',
-        'post',
-        {
-          purpose: 'findOne',
-          match: { customFieldId: lookUpValue, subscriberId: subscriber._id }
-        }
-      )
-        .then(customFieldSubscriber => {
-          if (customFieldSubscriber) {
-            resolve(customFieldSubscriber.value)
-          } else {
-            resolve('')
-          }
-        })
-        .catch((err) => {
-          logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
-          resolve('')
-        })
-    } else {
-      if (subscriber[lookUpValue]) {
-        lookUpValue = subscriber[lookUpValue]
-        resolve(lookUpValue)
-      } else {
-        resolve('')
-      }
-    }
-  })
-}
-
-// Getting look up value from System subscriber fields
+// Getting look up value from Google sheets
 function getLookUpRange (lookUpColumn, lookUpValue, data) {
   for (let i = 0; i < data.length; i++) {
     if (data[i][0] === lookUpColumn) {
@@ -296,15 +227,4 @@ function getLookUpRange (lookUpColumn, lookUpValue, data) {
       }
     }
   }
-}
-
-function columnToLetter (column) {
-  var temp = ''
-  var letter = ''
-  while (column > 0) {
-    temp = (column - 1) % 26
-    letter = String.fromCharCode(temp + 65) + letter
-    column = (column - temp - 1) / 26
-  }
-  return letter
 }

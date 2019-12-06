@@ -12,3 +12,13 @@ exports.createSchema = { // todo edit it
     }
   }
 }
+
+exports.fetchColumnsPayload = { // todo edit it
+  type: 'object',
+  properties: {
+    formId: {
+      type: 'string',
+      required: true
+    }
+  }
+}

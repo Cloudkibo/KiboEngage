@@ -305,7 +305,7 @@ exports.getRepliesToComment = function (req, res) {
   })
 }
 exports.fetchAllComments = function (req, res) {
-  utility.callApi('comment_capture/comments/query', 'post', {postId: req.body.postId})    
+  utility.callApi('comment_capture/comments/query', 'post', {postId: req.body.postId})
     .then(comments => {
       sendSuccessResponse(res, 200, comments)
     })
@@ -381,13 +381,14 @@ function sendGlobalDataPayload (responseBody) {
         .then(commentsCount => {
           commentsCount = commentsCount.length > 0 ? commentsCount[0].count : 0
           dataToSend.push({
-            postLink: `https://www.facebook.com/${data[i].id}`,
+            postId: data[i].id,
             commentsCount: commentsCount,
             message: data[i].message ? data[i].message : '',
-            attachments: data[i].attachments ? true : false
+            attachments: data[i].attachments ? true : false,
+            datetime: data[i].created_time
           })
           if (dataToSend.length === data.length) {
-            resolve({posts: dataToSend, after: responseBody.paging && responseBody.paging.cursors && responseBody.paging.cursors.after ? responseBody.paging.cursors.after : ''})
+            resolve({posts: dataToSend, after: responseBody.paging && responseBody.paging.next && responseBody.paging.cursors && responseBody.paging.cursors.after ? responseBody.paging.cursors.after : ''})
           }
         })
         .catch(err => {
