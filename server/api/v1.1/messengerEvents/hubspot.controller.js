@@ -22,17 +22,14 @@ exports.index = function (req, res) {
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      console.log('page', page)
       if (page) {
         callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId })
           .then(subscriber => {
             subscriber = subscriber[0]
-            console.log('subscriber', subscriber)
             if (subscriber) {
               callApi(`integrations/query`, 'post', { companyId: subscriber.companyId, integrationName: 'Hubspot' })
                 .then(integration => {
                   integration = integration[0]
-                  console.log('integration', integration)
                   if (integration && integration.enabled) {
                     if (resp.hubspotAction === 'submit_form') {
                       submitForm(resp, subscriber, page, integration)
@@ -61,7 +58,6 @@ exports.index = function (req, res) {
 }
 
 function submitForm (resp, subscriber, page, integration) {
-  console.log('inside submit form')
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -74,8 +70,6 @@ function submitForm (resp, subscriber, page, integration) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
-      console.log('inside else')
-      console.log(resp.mapping)
       let data = resp.mapping.map(item => {
         return { name: item.hubspotColumn, value: item.value }
       })
@@ -100,20 +94,16 @@ function submitForm (resp, subscriber, page, integration) {
       let newTokens
       refreshAuthToken(integration.integrationPayload.refresh_token)
         .then(tokens => {
-          console.log('tokens', tokens)
           newTokens = tokens
           return saveNewTokens(integration, tokens)
         })
         .then(updated => {
-          console.log('saved tokens', updated)
           return callHubspotApi(hubspotUrl, 'post', payload, newTokens.access_token)
         })
         .then(form => {
-          console.log('form sent', form)
           logger.serverLog(TAG, `Success in sending data to hubspot form`)
         })
         .catch(err => {
-          console.log('err', err)
           logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
         })
     }
