@@ -113,7 +113,9 @@ function insertContact (resp, subscriber, integration) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => {
-        return { property: item.hubspotColumn, value: item.value }
+        if (item.value !== undefined) {
+          return { property: item.hubspotColumn, value: item.value }
+        }
       })
       let payload = {
         properties: data
@@ -138,7 +140,9 @@ function updateContact (resp, subscriber, integration) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => {
-        return { property: item.hubspotColumn, value: item.value }
+        if (item.value !== undefined) {
+          return { property: item.hubspotColumn, value: item.value }
+        }
       })
       let payload = {
         properties: data
