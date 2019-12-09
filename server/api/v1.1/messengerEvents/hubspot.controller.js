@@ -1,7 +1,7 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/messengerEvents/hubspotController.controller.js'
 const {callApi} = require('../utility')
-const config = require('./../../../config/environment')
+const datalayer = require('./googleSheets.datalayer')
 const async = require('async')
 const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspotIntegration/hubspotIntegration.controller')
 const { getDataForSubscriberValues } = require('./../../global/externalIntegrations')
@@ -34,11 +34,11 @@ exports.index = function (req, res) {
                     if (resp.hubspotAction === 'submit_form') {
                       submitForm(resp, subscriber, page, integration)
                     } else if (resp.hubspotAction === 'insert_contact') {
-                      // performGoogleSheetAction(resp.googleSheetAction, resp, subscriber, oauth2Client)
+                      insertContact(resp, subscriber, integration)
                     } else if (resp.hubspotAction === 'update_contact') {
-                      // performGoogleSheetAction(resp.googleSheetAction, resp, subscriber, oauth2Client)
+                      updateContact(resp, subscriber, integration)
                     } else if (resp.hubspotAction === 'get_contact') {
-                      // performGoogleSheetAction(resp.googleSheetAction, resp, subscriber, oauth2Client)
+                      getContact(resp, subscriber, integration)
                     }
                   }
                 })
@@ -91,21 +91,116 @@ function submitForm (resp, subscriber, page, integration) {
         }
       }
       let hubspotUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${resp.portalId}/${resp.formId}`
-      let newTokens
-      refreshAuthToken(integration.integrationPayload.refresh_token)
-        .then(tokens => {
-          newTokens = tokens
-          return saveNewTokens(integration, tokens)
-        })
-        .then(updated => {
-          return callHubspotApi(hubspotUrl, 'post', payload, newTokens.access_token)
-        })
-        .then(form => {
-          logger.serverLog(TAG, `Success in sending data to hubspot form`)
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
-        })
+      sendToHubspot(integration, hubspotUrl, payload, 'post')
     }
+  })
+}
+
+function insertContact (resp, subscriber, integration) {
+  async.eachOf(resp.mapping, function (item, index, cb) {
+    let data = {
+      mapping: resp.mapping,
+      item,
+      index,
+      subscriber
+    }
+    getDataForSubscriberValues(data, cb)
+  }, function (err) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+    } else {
+      let data = resp.mapping.map(item => {
+        return { property: item.hubspotColumn, value: item.value }
+      })
+      let payload = {
+        properties: data
+      }
+      let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/`
+      sendToHubspot(integration, hubspotUrl, payload, 'post')
+    }
+  })
+}
+
+function updateContact (resp, subscriber, integration) {
+  async.eachOf(resp.mapping, function (item, index, cb) {
+    let data = {
+      mapping: resp.mapping,
+      item,
+      index,
+      subscriber
+    }
+    getDataForSubscriberValues(data, cb)
+  }, function (err) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+    } else {
+      let data = resp.mapping.map(item => {
+        return { property: item.hubspotColumn, value: item.value }
+      })
+      let payload = {
+        properties: data
+      }
+      let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/email/${resp.email}/profile`
+      sendToHubspot(integration, hubspotUrl, payload, 'post')
+    }
+  })
+}
+
+function getContact (resp, subscriber, integration) {
+  let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/email/${resp.email}/profile`
+  sendToHubspot(integration, hubspotUrl, null, 'get')
+    .then(hubspotContact => {
+      updateSubscriberData(resp, subscriber, hubspotContact.properties)
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+function updateSubscriberData (resp, subscriber, hubspotContact) {
+  let newSubscriberPayload = {}
+  for (let i = 0; i < resp.mapping.length; i++) {
+    let { kiboPushColumn, hubspotColumn, customFieldColumn } = resp.mapping[i]
+    if (kiboPushColumn) {
+      newSubscriberPayload[kiboPushColumn] = hubspotContact[hubspotColumn].value
+    } else if (customFieldColumn) {
+      let newData = hubspotContact[hubspotColumn].value
+      if (newData && newData !== '') {
+        datalayer.genericUpdate({ customFieldId: customFieldColumn, subscriberId: subscriber._id },
+          { value: newData },
+          { upsert: true }
+        )
+      }
+    }
+  }
+  if (Object.keys(newSubscriberPayload).length > 0) {
+    callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: newSubscriberPayload, options: {}})
+      .then(updated => {
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+      })
+  }
+}
+
+function sendToHubspot (integration, hubspotUrl, payload, method) {
+  return new Promise((resolve, reject) => {
+    let newTokens
+    refreshAuthToken(integration.integrationPayload.refresh_token)
+      .then(tokens => {
+        newTokens = tokens
+        return saveNewTokens(integration, tokens)
+      })
+      .then(updated => {
+        return callHubspotApi(hubspotUrl, method, payload, newTokens.access_token)
+      })
+      .then(result => {
+        resolve(result)
+        logger.serverLog(TAG, `Success in sending data to hubspot form`)
+      })
+      .catch(err => {
+        reject(err)
+        logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+      })
   })
 }
