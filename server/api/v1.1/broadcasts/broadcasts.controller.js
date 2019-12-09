@@ -175,7 +175,7 @@ exports.addButton = function (req, res) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'hubspotAction'))) {
-      buttonPayload.payload = (req.body.payload)
+      buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else {
       let buttonId = uniqid()
@@ -268,7 +268,7 @@ exports.editButton = function (req, res) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'hubspotAction'))) {
-      buttonPayload.payload = (req.body.payload)
+      buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else {
       buttonPayload.payload = JSON.stringify({
