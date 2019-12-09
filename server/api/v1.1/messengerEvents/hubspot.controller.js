@@ -17,7 +17,7 @@ exports.index = function (req, res) {
   } else {
     resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
   }
-  logger.serverLog(TAG, `Success in sending data ${resp}`)
+  logger.serverLog(TAG, `Success in sending data ${JSON.stringify(resp)}`)
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
