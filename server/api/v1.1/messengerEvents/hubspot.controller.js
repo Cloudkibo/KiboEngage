@@ -34,6 +34,8 @@ exports.index = function (req, res) {
                   if (integration && integration.enabled) {
                     if (resp.hubspotAction === 'submit_form') {
                       submitForm(resp, subscriber, page, integration)
+                    } else if (resp.hubspotAction === 'insert_update_contact') {
+                      insertOrUpdateContact(resp, subscriber, integration)
                     } else if (resp.hubspotAction === 'insert_contact') {
                       insertContact(resp, subscriber, integration)
                     } else if (resp.hubspotAction === 'update_contact') {
@@ -124,6 +126,38 @@ function insertContact (resp, subscriber, integration) {
   })
 }
 
+function insertOrUpdateContact (resp, subscriber, integration) {
+  getIdentityCustomFieldValue(resp.identityCustomFieldValue, subscriber)
+    .then(customFieldValue => {
+      async.eachOf(resp.mapping, function (item, index, cb) {
+        let data = {
+          mapping: resp.mapping,
+          item,
+          index,
+          subscriber
+        }
+        getDataForSubscriberValues(data, cb)
+      }, function (err) {
+        if (err) {
+          logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+        } else {
+          let data = resp.mapping.map(item => {
+            return { property: item.hubspotColumn, value: item.value }
+          })
+          data = data.filter(item => item.value !== undefined)
+          let payload = {
+            properties: data
+          }
+          let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${customFieldValue}/`
+          sendToHubspot(integration, hubspotUrl, payload, 'post')
+        }
+      })
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, `Failed to fetch custom field subscriber for hubspot ${JSON.stringify(err)}`, 'error')
+    })
+}
+
 function updateContact (resp, subscriber, integration) {
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
@@ -185,6 +219,30 @@ function updateSubscriberData (resp, subscriber, hubspotContact) {
         logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
       })
   }
+}
+
+function getIdentityCustomFieldValue (lookUpValue, subscriber) {
+  return new Promise(function (resolve, reject) {
+    callApi(
+      'custom_field_subscribers/query',
+      'post',
+      {
+        purpose: 'findOne',
+        match: { customFieldId: lookUpValue, subscriberId: subscriber._id }
+      }
+    )
+      .then(customFieldSubscriber => {
+        if (customFieldSubscriber) {
+          resolve(customFieldSubscriber.value)
+        } else {
+          resolve('')
+        }
+      })
+      .catch((err) => {
+        logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+        reject(err)
+      })
+  })
 }
 
 function sendToHubspot (integration, hubspotUrl, payload, method) {
