@@ -72,7 +72,9 @@ function submitForm (resp, subscriber, page, integration) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => {
-        return { name: item.hubspotColumn, value: item.value }
+        if (item.value !== undefined) {
+          return { name: item.hubspotColumn, value: item.value }
+        }
       })
       let payload = {
         submittedAt: '' + Date.now(),
