@@ -72,10 +72,9 @@ function submitForm (resp, subscriber, page, integration) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => {
-        if (item.value !== undefined) {
-          return { name: item.hubspotColumn, value: item.value }
-        }
+        return { name: item.hubspotColumn, value: item.value }
       })
+      data = data.filter(item => item.value !== undefined)
       let payload = {
         submittedAt: '' + Date.now(),
         fields: data,
@@ -113,10 +112,9 @@ function insertContact (resp, subscriber, integration) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => {
-        if (item.value !== undefined) {
-          return { property: item.hubspotColumn, value: item.value }
-        }
+        return { property: item.hubspotColumn, value: item.value }
       })
+      data = data.filter(item => item.value !== undefined)
       let payload = {
         properties: data
       }
@@ -140,10 +138,9 @@ function updateContact (resp, subscriber, integration) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => {
-        if (item.value !== undefined) {
-          return { property: item.hubspotColumn, value: item.value }
-        }
+        return { property: item.hubspotColumn, value: item.value }
       })
+      data = data.filter(item => item.value !== undefined)
       let payload = {
         properties: data
       }
