@@ -185,6 +185,7 @@ function updateSubscriberData (resp, subscriber, hubspotContact) {
 }
 
 function sendToHubspot (integration, hubspotUrl, payload, method) {
+  console.log('sendToHubspot', payload)
   return new Promise((resolve, reject) => {
     let newTokens
     refreshAuthToken(integration.integrationPayload.refresh_token)
