@@ -185,13 +185,19 @@ function updateContact (resp, subscriber, integration) {
 }
 
 function getContact (resp, subscriber, integration) {
-  let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/email/${resp.email}/profile`
-  sendToHubspot(integration, hubspotUrl, null, 'get')
-    .then(hubspotContact => {
-      updateSubscriberData(resp, subscriber, hubspotContact.properties)
+  getIdentityCustomFieldValue(resp.identityCustomFieldValue, subscriber)
+    .then(customFieldValue => {
+      let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/email/${customFieldValue}/profile`
+      sendToHubspot(integration, hubspotUrl, null, 'get')
+        .then(hubspotContact => {
+          updateSubscriberData(resp, subscriber, hubspotContact.properties)
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+        })
     })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+    .catch((err) => {
+      logger.serverLog(TAG, `Failed to work with data for hubspot ${JSON.stringify(err)}`, 'error')
     })
 }
 
