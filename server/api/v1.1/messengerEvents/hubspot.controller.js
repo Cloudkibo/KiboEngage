@@ -7,6 +7,7 @@ const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspo
 const { getDataForSubscriberValues } = require('./../../global/externalIntegrations')
 
 exports.index = function (req, res) {
+  console.log('called hubspot controller', req.body)
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -185,8 +186,10 @@ function updateContact (resp, subscriber, integration) {
 }
 
 function getContact (resp, subscriber, integration) {
+  console.log('resp.identityCustomFieldValue', resp.identityCustomFieldValue)
   getIdentityCustomFieldValue(resp.identityCustomFieldValue, subscriber)
     .then(customFieldValue => {
+      console.log('customFieldValue', customFieldValue)
       let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/email/${customFieldValue}/profile`
       sendToHubspot(integration, hubspotUrl, null, 'get')
         .then(hubspotContact => {
