@@ -315,9 +315,9 @@ exports.getCriteriasToFilterComments = function (body, companyId) {
   startDate.setMinutes(0)
   startDate.setSeconds(0)
   let endDate = new Date(body.endDate) // Current date
-  endDate.setHours(0) // Set the hour, minute and second components to 0
-  endDate.setMinutes(0)
-  endDate.setSeconds(0)
+  // endDate.setHours(0) // Set the hour, minute and second components to 0
+  // endDate.setMinutes(0)
+  // endDate.setSeconds(0)
   let findCriteria = {
     postId: body.postId,
     'datetime': body.startDate && body.startDate !== '' ? {
