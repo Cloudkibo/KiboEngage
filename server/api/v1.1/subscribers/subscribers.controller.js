@@ -60,7 +60,10 @@ exports.allSubscribers = function (req, res) {
 exports.allLocales = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      let aggregateObject = [{ $group: { _id: null, locales: { $addToSet: '$locale' } } }]
+      let aggregateObject = [
+        { $match: {companyId: req.user.companyId} },
+        { $group: { _id: null, locales: { $addToSet: '$locale' } } }
+      ]
       utility.callApi(`subscribers/aggregate`, 'post', aggregateObject) // fetch subscribers locales
         .then(locales => {
           sendSuccessResponse(res, 200, locales[0].locales)
