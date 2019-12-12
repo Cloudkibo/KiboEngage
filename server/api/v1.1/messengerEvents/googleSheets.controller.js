@@ -168,7 +168,7 @@ function updateRow (resp, subscriber, oauth2Client, range) {
       index,
       subscriber
     }
-    _getDataForInsertRow(data, cb)
+    getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
