@@ -132,6 +132,27 @@ exports.getForms = function (req, res) {
     })
 }
 
+exports.fetchHubspotDefaultColumns = function (req, res) {
+  let dataToSend = {
+    kiboPushColumns: populateKiboPushColumns(),
+    customFieldColumns: [],
+    hubSpotColumns: ['firstname', 'lastname', 'website', 'company', 'phone', 'address', 'city', 'state', 'zip']
+  }
+  callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+    .then(customFields => {
+      populateCustomFieldColumns(dataToSend, customFields)
+        .then(dataToSend => {
+          sendSuccessResponse(res, 200, dataToSend)
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, err, `failed to update custom fields ${err}`)
+        })
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, err, `failed to fetch custom fields ${err}`)
+    })
+}
+
 exports.fetchColumns = function (req, res) {
   async.parallelLimit([
     function (callback) {

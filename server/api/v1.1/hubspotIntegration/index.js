@@ -23,4 +23,8 @@ router.post('/fetchFields',
   validate({body: validationSchema.fetchColumnsPayload}),
   controller.fetchColumns)
 
+router.get('/fetchHubspotDefaultColumns',
+  auth.isAuthenticated(),
+  controller.fetchHubspotDefaultColumns)
+
 module.exports = router
