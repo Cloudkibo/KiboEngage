@@ -193,10 +193,11 @@ function getContact (resp, subscriber, integration) {
       let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/email/${customFieldValue}/profile`
       sendToHubspot(integration, hubspotUrl, null, 'get')
         .then(hubspotContact => {
+          console.log('hubspotContact', hubspotContact)
           updateSubscriberData(resp, subscriber, hubspotContact.properties)
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+          logger.serverLog(TAG, `Failed to send data to hubspot form ${(err)}`, 'error')
         })
     })
     .catch((err) => {
