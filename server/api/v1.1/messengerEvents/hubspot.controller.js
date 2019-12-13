@@ -193,7 +193,6 @@ function getContact (resp, subscriber, integration) {
       let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/email/${customFieldValue}/profile`
       sendToHubspot(integration, hubspotUrl, null, 'get')
         .then(hubspotContact => {
-          console.log('hubspotContact', hubspotContact)
           updateSubscriberData(resp, subscriber, hubspotContact.properties)
         })
         .catch(err => {
