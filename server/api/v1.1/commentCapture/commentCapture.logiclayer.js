@@ -89,7 +89,7 @@ exports.getCountForComments = (body) => {
 
 exports.getComments = (body) => {
   let aggregateData = [
-    { $match: {postId: body.postId, parentId: {$exists: false}} },
+    { $match: {parentId: {$exists: false}} },
     { $sort: {_id: body.sort_value} },
     { $match: {
       '_id': body.first_page ? {$exists: true} : body.sort_value === -1 ? {$lt: body.last_id} : {$gt: body.last_id}
@@ -98,6 +98,8 @@ exports.getComments = (body) => {
   ]
   if (body.post_id && body.post_id !== '') {
     aggregateData[0].$match.postFbId = body.post_id
+  } else { 
+    aggregateData[0].$match.postId = body.postId
   }
   return aggregateData
 }
@@ -274,7 +276,7 @@ function handleLinks (textComponents, linkComponents) {
   } else if (linkComponents.length > 1) {
     let links = []
     for (let i = 0; i < linkComponents.length && i < 10; i++) {
-      links.push({'link': linkComponents[i].url})
+      links.push({'link':linkComponents[i].url})
     }
     payload = {
       type: 'text',
