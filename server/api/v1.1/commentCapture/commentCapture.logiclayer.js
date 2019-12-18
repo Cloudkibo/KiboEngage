@@ -276,9 +276,8 @@ function handleLinks (textComponents, linkComponents) {
   } else if (linkComponents.length > 1) {
     let links = []
     for (let i = 0; i < linkComponents.length && i < 10; i++) {
-      links.push({'link': {'link':linkComponents[i].url, 'picture': linkComponents[i].card.image_url, 'name': linkComponents[i].card.title, 'description': linkComponents[i].card.subtitle}})
+      links.push({'link':linkComponents[i].url})
     }
-    console.log('Links', links)
     payload = {
       type: 'text',
       payload: {
