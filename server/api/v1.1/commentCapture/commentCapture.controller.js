@@ -201,6 +201,7 @@ exports.edit = function (req, res) {
   var updatePayload = {
     includedKeywords: req.body.includedKeywords,
     excludedKeywords: req.body.excludedKeywords,
+    reply: req.body.reply,
     secondReply: req.body.secondReply,
     title: req.body.title
   }

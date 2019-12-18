@@ -157,7 +157,7 @@ exports.getPostId = function (url) {
   let postId = ''
   let pathname
   let result = URL.parse(url)
-  if (result.host === 'www.facebook.com' && result.query && result.pathname) {
+  if ((result.host === 'www.facebook.com' || result.host=== 'web.facebook.com' )&& result.query && result.pathname) {
     let query = result.query.split('&')
     if (query && query.length > 0) {
       for (let i = 0; i < query.length; i++) {
@@ -276,7 +276,7 @@ function handleLinks (textComponents, linkComponents) {
   } else if (linkComponents.length > 1) {
     let links = []
     for (let i = 0; i < linkComponents.length && i < 10; i++) {
-      links.push({'link':linkComponents[i].url})
+      links.push({'link': linkComponents[i].url})
     }
     payload = {
       type: 'text',
