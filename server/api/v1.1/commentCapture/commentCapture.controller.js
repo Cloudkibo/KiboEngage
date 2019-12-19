@@ -318,6 +318,34 @@ exports.fetchPostData = function (req, res) {
   utility.callApi(`comment_capture/query`, 'post', {_id: req.params._id})
     .then(post => {
       post = post[0]
+      var isVideoPost = false
+      if (post.payload && post.payload.length > 0) {
+        for (var i=0; i < post.payload.length; i++) {
+          if (post.payload[i].componentType === 'video') {
+            isVideoPost = true
+            break
+          }
+        }
+      }
+      if (isVideoPost) {
+        facebookApiCaller('v3.3', `${post.post_id}?fields=description,created_time&access_token=${post.pageId.accessToken}`, 'get', {})
+        .then(response => {
+          if (response.body.error) {
+            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
+          } else {
+            let dataToSend = {
+              attachments: true,
+              message: response.body.description ? response.body.description : '',
+              datetime: response.body.created_time,
+              postLink: `https://www.facebook.com/${post.post_id}`
+            }
+            sendSuccessResponse(res, 200, dataToSend)
+          }
+        })
+        .catch((err) => {
+          sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
+        })
+      } else {
       facebookApiCaller('v3.3', `${post.post_id}?fields=message,attachments.limit(1){type},created_time&access_token=${post.pageId.accessToken}`, 'get', {})
         .then(response => {
           if (response.body.error) {
@@ -335,6 +363,7 @@ exports.fetchPostData = function (req, res) {
         .catch((err) => {
           sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
         })
+      }
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to get posts ${JSON.stringify(error)}`)
