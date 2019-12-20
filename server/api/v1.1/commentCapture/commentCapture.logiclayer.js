@@ -276,13 +276,13 @@ function handleLinks (textComponents, linkComponents) {
   } else if (linkComponents.length > 1) {
     let links = []
     for (let i = 0; i < linkComponents.length && i < 10; i++) {
-      links.push({'link': linkComponents[i].url})
+      links.push({'link': linkComponents[i].url, 'name': linkComponents[i].card.title, 'description': linkComponents[i].card.subtitle})
     }
     payload = {
       type: 'text',
       payload: {
-        'link': `https://kibopush.com`,
-        'child_attachments': links
+        "link": "www.kibopush.com",
+        "child_attachments": JSON.stringify(links)
       }
     }
     if (textComponents.length > 0) {
