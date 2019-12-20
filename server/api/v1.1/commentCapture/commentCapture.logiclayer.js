@@ -276,18 +276,28 @@ function handleLinks (textComponents, linkComponents) {
   } else if (linkComponents.length > 1) {
     let links = []
     for (let i = 0; i < linkComponents.length && i < 10; i++) {
-      links.push({'link': linkComponents[i].url})
+      links.push({'link': linkComponents[i].url, 'name': 'hey', description: 'yey'})
     }
     payload = {
       type: 'text',
       payload: {
-        'link': `https://kibopush.com`,
-        'child_attachments': links
+        "message": "",
+        "link": "www.kibopush.com",
+        "child_attachments": [
+          {
+            "link": "https://images.dawn.com/news/1184252/kamal-khans-next-project-is-a-short-film-about-partition",
+            "name": "HI",
+            "description": "Hey"
+          },
+          {
+            "link": "www.hotmail.com",
+            "name": "Hello",
+            "description": "yes"
+          }
+        ]
       }
     }
-    if (textComponents.length > 0) {
-      payload.payload.message = textComponents[0].text
-    }
+    payload.payload.message = textComponents.length > 0 ? textComponents[0].text : ""
   }
   return payload
 }
