@@ -285,9 +285,7 @@ function handleLinks (textComponents, linkComponents) {
         "child_attachments": JSON.stringify(links)
       }
     }
-    if (textComponents.length > 0) {
-      payload.payload.message = textComponents[0].text
-    }
+    payload.payload.message = textComponents.length > 0 ? textComponents[0].text : ""
   }
   return payload
 }
