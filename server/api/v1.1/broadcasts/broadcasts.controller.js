@@ -19,11 +19,11 @@ const validateInput = require('../../global/validateInput')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
-const urlMetadata = require('url-metadata')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
 const { prepareSubscribersCriteria, createMessageBlocks } = require('../../global/utility')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const surveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
+const ogs = require('open-graph-scraper')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -716,17 +716,33 @@ exports.urlMetaData = (req, res) => {
   let url = req.body.url
   // console.log('urlMetaData req.body', req.body)
   if (url) {
-    urlMetadata(url).then((metadata) => {
-      return res.status(200).json({
-        status: 'success',
-        payload: metadata
-      })
-    }, (err) => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to retrieve url ${err}`
-      })
+    let options = {url}
+    ogs(options, (error, results) => {
+      console.log('ogs error:', error)
+      if (!error) {
+        return res.status(200).json({
+          status: 'success',
+          payload: results.data
+        })
+      } else {
+        return res.status(500).json({
+          status: 'failed',
+          description: `Failed to retrieve url ${results.error}`
+        })
+      }
     })
+    // urlMetadata(url).then((metadata) => {
+    //   console.log('urlMetaData', metadata)
+    //   return res.status(200).json({
+    //     status: 'success',
+    //     payload: metadata
+    //   })
+    // }, (err) => {
+    //   return res.status(500).json({
+    //     status: 'failed',
+    //     description: `Failed to retrieve url ${err}`
+    //   })
+    // })
   } else {
     res.status(400).json({
       status: 'failed',
