@@ -714,11 +714,9 @@ exports.retrieveReachEstimation = (req, res) => {
 
 exports.urlMetaData = (req, res) => {
   let url = req.body.url
-  // console.log('urlMetaData req.body', req.body)
   if (url) {
     let options = {url}
     ogs(options, (error, results) => {
-      console.log('ogs error:', error)
       if (!error) {
         return res.status(200).json({
           status: 'success',
@@ -731,18 +729,6 @@ exports.urlMetaData = (req, res) => {
         })
       }
     })
-    // urlMetadata(url).then((metadata) => {
-    //   console.log('urlMetaData', metadata)
-    //   return res.status(200).json({
-    //     status: 'success',
-    //     payload: metadata
-    //   })
-    // }, (err) => {
-    //   return res.status(500).json({
-    //     status: 'failed',
-    //     description: `Failed to retrieve url ${err}`
-    //   })
-    // })
   } else {
     res.status(400).json({
       status: 'failed',
