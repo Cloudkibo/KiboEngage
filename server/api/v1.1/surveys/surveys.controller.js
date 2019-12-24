@@ -14,7 +14,7 @@ const surveyResponseDataLayer = require('./surveyresponse.datalayer')
 const callApi = require('../utility/index')
 const async = require('async')
 const needle = require('needle')
-const utility = require('./../broadcasts/broadcasts.utility')
+// const utility = require('./../broadcasts/broadcasts.utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
@@ -430,7 +430,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                       if (req.body.isList) {
                         callApi.callApi(`lists/query`, 'post', surveyLogicLayer.ListFindCriteria(req.body, req.user))
                           .then(lists => {
-                            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
+                            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, req.body.isApprovedForSMP)
                             sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                             sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                           })
@@ -439,7 +439,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                             sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
                           })
                       } else {
-                        let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+                        let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, req.body.isApprovedForSMP)
                         callApi.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
                           .then(tags => {
                             let segmentationTags = tags.map(t => t._id)

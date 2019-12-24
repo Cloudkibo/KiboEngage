@@ -20,6 +20,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
+const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 const { prepareSubscribersCriteria, createMessageBlocks } = require('../../global/utility')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const surveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
@@ -531,7 +532,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
           if (req.body.isList) {
             utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
               .then(lists => {
-                let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
+                let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, req.body.isApprovedForSMP)
                 sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
                 sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
               })
@@ -540,7 +541,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                 sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
               })
           } else {
-            let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, req.body.isApprovedForSMP)
             console.log('subsFindCriteria', subsFindCriteria)
             if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
               utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
@@ -763,7 +764,7 @@ exports.retrieveSubscribersCount = function (req, res) {
         lists = [].concat.apply([], lists)
         lists = lists.filter((item, i, arr) => arr.indexOf(item) === i)
         match['_id'] = {$in: lists}
-        _getSubscribersCount(match, res)
+        _getSubscribersCount(req.body.pageAccessToken, match, res)
       })
       .catch(err => {
         logger.serverLog(TAG, err)
@@ -777,7 +778,6 @@ exports.retrieveSubscribersCount = function (req, res) {
         .then(tags => {
           let tagIds = tags.map((t) => t._id)
           let requests = []
-          console.log('condition true for tags', tagIds)
           requests.push(utility.callApi(`tags_subscriber/query`, 'post', { companyId: req.user.companyId, tagId: { $in: tagIds } }))
           requests.push(PollResponseDataLayer.genericFindForPollResponse({pollId: {$in: segmentationPoll}}))
           requests.push(surveyResponseDataLayer.genericFind({surveyId: {$in: segmentationSurvey}}))
@@ -805,23 +805,23 @@ exports.retrieveSubscribersCount = function (req, res) {
               if (req.body.segmentationTags.length > 0 && segmentationPoll.length > 0) {
                 let subscriberIds = _.intersection(tagSubscribers, pollSubscribers)
                 match['_id'] = {$in: subscriberIds}
-                _getSubscribersCount(match, res)
+                _getSubscribersCount(req.body.pageAccessToken, match, res)
               } else if (req.body.segmentationTags.length > 0 && segmentationSurvey.length > 0) {
                 let subscriberIds = _.intersection(tagSubscribers, surveySubscribers)
                 match['_id'] = {$in: subscriberIds}
-                _getSubscribersCount(match, res)
+                _getSubscribersCount(req.body.pageAccessToken, match, res)
               } else if (segmentationSurvey.length > 0) {
                 match['_id'] = {$in: surveySubscribers}
-                _getSubscribersCount(match, res)
+                _getSubscribersCount(req.body.pageAccessToken, match, res)
               } else if (segmentationPoll.length > 0) {
                 match['_id'] = {$in: pollSubscribers}
-                _getSubscribersCount(match, res)
+                _getSubscribersCount(req.body.pageAccessToken, match, res)
               } else if (req.body.segmentationTags.length > 0) {
                 match['_id'] = {$in: tagSubscribers}
-                _getSubscribersCount(match, res)
+                _getSubscribersCount(req.body.pageAccessToken, match, res)
               } else {
                 match['_id'] = []
-                _getSubscribersCount(match, res)
+                _getSubscribersCount(req.body.pageAccessToken, match, res)
               }
             })
             .catch(err => {
@@ -833,26 +833,68 @@ exports.retrieveSubscribersCount = function (req, res) {
           sendErrorResponse(res, 500, 'Failed to fetch tags')
         })
     } else {
-      _getSubscribersCount(match, res)
+      _getSubscribersCount(req.body.pageAccessToken, match, res)
     }
   } else {
-    console.log('match criteria', JSON.stringify(match))
-    _getSubscribersCount(match, res)
+    _getSubscribersCount(req.body.pageAccessToken, match, res)
   }
 }
 
-const _getSubscribersCount = (match, res) => {
-  let criteria = [
-    {$match: match},
-    {$group: {_id: null, count: {$sum: 1}}}
-  ]
-  utility.callApi(`subscribers/aggregate`, 'post', criteria)
-    .then(response => {
-      let count = 0
-      if (response.length > 0) {
-        count = response[0].count
-      }
-      sendSuccessResponse(res, 200, {count})
+const _getSubscribersCount = (pageAccessToken, match, res) => {
+  isApprovedForSMP({accessToken: pageAccessToken})
+    .then(smpStatus => {
+      async.parallelLimit([
+        function (cb) {
+          let matchCriteria = Object.assign({}, match)
+          delete matchCriteria.lastMessagedAt
+          let criteria = [
+            {$match: matchCriteria},
+            {$group: {_id: null, count: {$sum: 1}}}
+          ]
+          utility.callApi(`subscribers/aggregate`, 'post', criteria)
+            .then(response => {
+              let count = 0
+              if (response.length > 0) {
+                count = response[0].count
+              }
+              cb(null, count)
+            })
+            .catch(err => {
+              cb(err)
+            })
+        },
+        function (cb) {
+          let matchCriteria = Object.assign({}, match)
+          if (smpStatus) delete matchCriteria.lastMessagedAt
+          let criteria = [
+            {$match: matchCriteria},
+            {$group: {_id: null, count: {$sum: 1}}}
+          ]
+          utility.callApi(`subscribers/aggregate`, 'post', criteria)
+            .then(response => {
+              let count = 0
+              if (response.length > 0) {
+                count = response[0].count
+              }
+              cb(null, count)
+            })
+            .catch(err => {
+              cb(err)
+            })
+        }
+      ], 10, function (err, results) {
+        if (err) {
+          logger.serverLog(TAG, err)
+          sendErrorResponse(res, 500, 'Failed to get subscribers count')
+        } else {
+          let payload = {
+            isApprovedForSMP: smpStatus,
+            totalCount: results[0],
+            count: results[1]
+          }
+          sendSuccessResponse(res, 200, payload)
+        }
+      })
     })
     .catch(err => {
       logger.serverLog(TAG, err)
