@@ -25,7 +25,7 @@ exports.createMessageBlocks = (linkedMessages, user, moduleId, moduleType) => {
   return Promise.all(messageBlockRequests)
 }
 
-exports.prepareSubscribersCriteria = (body, page, lists) => {
+exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
   if (
     !body ||
     (Object.entries(body).length === 0 && body.constructor === Object)
@@ -40,7 +40,7 @@ exports.prepareSubscribersCriteria = (body, page, lists) => {
       companyId: page.companyId,
       isSubscribed: true,
       completeInfo: true,
-      lastMessagedAt: {
+      lastMessagedAt: isApprovedForSMP && {
         $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
       }
     }
