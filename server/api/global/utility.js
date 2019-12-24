@@ -40,9 +40,9 @@ exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
       companyId: page.companyId,
       isSubscribed: true,
       completeInfo: true,
-      lastMessagedAt: (!isApprovedForSMP) && {
+      lastMessagedAt: (!isApprovedForSMP) ? {
         $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
-      }
+      } : undefined
     }
     if (body.isList) {
       if (
