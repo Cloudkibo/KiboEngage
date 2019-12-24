@@ -281,6 +281,7 @@ function handleLinks (textComponents, linkComponents) {
     payload = {
       type: 'text',
       payload: {
+        "message": '',
         "link": "www.kibopush.com",
         "child_attachments": JSON.stringify(links)
       }

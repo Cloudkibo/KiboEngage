@@ -173,3 +173,13 @@ exports.facebook = (body, fname, lname) => {
   }
   return JSON.stringify(payload)
 }
+
+const _updateButtonUrl = (data) => {
+  let buttons = [].concat(data)
+  let urlBtnIndex = buttons.findIndex((b) => b.type === 'web_url')
+  if (urlBtnIndex > -1 && buttons[urlBtnIndex].newUrl) {
+    buttons[urlBtnIndex].url = buttons[urlBtnIndex].newUrl
+    delete buttons[urlBtnIndex].newUrl
+  }
+  return buttons
+}

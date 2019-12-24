@@ -13,7 +13,7 @@ const {
   populateKiboPushColumns,
   populateCustomFieldColumns
 } = require('./../../global/externalIntegrations')
-
+const {defaultFieldcolumn} = require('./hubspotDefaultFields')
 exports.auth = function (req, res) {
   // Build the auth URL
   const authUrl =
@@ -136,7 +136,8 @@ exports.fetchHubspotDefaultColumns = function (req, res) {
   let dataToSend = {
     kiboPushColumns: populateKiboPushColumns(),
     customFieldColumns: [],
-    hubSpotColumns: ['firstname', 'lastname', 'website', 'company', 'phone', 'address', 'city', 'state', 'zip']
+    hubSpotColumns: defaultFieldcolumn.hubSpotColumns,
+    HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
   }
   callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
     .then(customFields => {
