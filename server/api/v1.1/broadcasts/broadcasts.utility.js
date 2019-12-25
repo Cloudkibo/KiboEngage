@@ -14,7 +14,7 @@ const request = require('request')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const needle = require('needle')
 let { sendOpAlert } = require('./../../global/operationalAlert')
-
+const {defaultFieldcolumn} = require('../hubspotIntegration/hubspotDefaultFields')
 function validateInput (body) {
   if (!_.has(body, 'platform')) return false
   if (!_.has(body, 'payload')) return false
@@ -694,12 +694,27 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
       }
     })
 }
-
+function remove_hubspot_data (payload) {
+  var HubspotMappingColumns = defaultFieldcolumn.HubspotMappingColumns
+  if(payload.mapping !== '' && payload.action!== 'submit_form') {
+    if(payload.hubspotAction === 'get_contact') {
+      payload.mapping = payload.mapping.filter(map=> map.customFieldColumn !== null)
+    }
+    console.log('payload after removing data', payload)
+    for (let i = 0; i < payload.mapping.length; i++) {
+      payload.mapping[i].hubspotColumn = HubspotMappingColumns[payload.mapping[i].hubspotColumn]
+    }
+  }
+  console.log('payload after mapping', payload)
+}
 function addModuleIdIfNecessary (payload, broadcastId) {
   logger.serverLog(TAG, `addModuleIdIfNecessary ${broadcastId}`, 'debug')
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
+        if(button.payload && button.payload.action === 'hubspot') {
+          remove_hubspot_data(button.payload)
+        }
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
