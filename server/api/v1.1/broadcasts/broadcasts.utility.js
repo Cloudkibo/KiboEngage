@@ -771,7 +771,6 @@ function addModuleIdIfNecessary (payload, broadcastId) {
       })
     }
   }
-  console.log('payload in addModuleIdIfNecessary', payload[0].buttons[0].payload)
 }
 function isWhiteListedDomain (domain, pageId, user) {
   return new Promise(function (resolve, reject) {
