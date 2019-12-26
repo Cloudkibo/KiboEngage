@@ -516,6 +516,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
             }
           })
           broadcastUtility.addModuleIdIfNecessary(payload, broadcast._id) // add module id in buttons for click count
+          console.log('payload after broadcastUtility', payload[0].buttons[0].payload)
           let pageBroadcastData = {
             pageId: page.pageId,
             userId: req.user._id,
