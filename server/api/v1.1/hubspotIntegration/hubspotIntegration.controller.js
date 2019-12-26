@@ -137,7 +137,7 @@ exports.fetchHubspotDefaultColumns = function (req, res) {
     kiboPushColumns: populateKiboPushColumns(),
     customFieldColumns: [],
     hubSpotColumns: defaultFieldcolumn.hubSpotColumns,
-    HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
+    //HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
   }
   callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
     .then(customFields => {

@@ -14,7 +14,7 @@ const request = require('request')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const needle = require('needle')
 let { sendOpAlert } = require('./../../global/operationalAlert')
-
+const {defaultFieldcolumn} = require('../hubspotIntegration/hubspotDefaultFields')
 function validateInput (body) {
   if (!_.has(body, 'platform')) return false
   if (!_.has(body, 'payload')) return false
@@ -694,12 +694,31 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
       }
     })
 }
-
+function remove_hubspot_data (payload) {
+  var HubspotMappingColumns = defaultFieldcolumn.HubspotMappingColumns
+  if (payload.mapping !== '' && payload.hubspotAction !== 'submit_form') {
+    if (payload.hubspotAction === 'get_contact') {
+      payload.mapping = payload.mapping.filter(map => map.customFieldColumn)
+    }
+    console.log('payload after removing data', payload)
+    for (let i = 0; i < payload.mapping.length; i++) {
+      payload.mapping[i].hubspotColumn = HubspotMappingColumns[payload.mapping[i].hubspotColumn]
+    }
+  }
+  console.log('payload after mapping', payload)
+  return payload
+}
 function addModuleIdIfNecessary (payload, broadcastId) {
   logger.serverLog(TAG, `addModuleIdIfNecessary ${broadcastId}`, 'debug')
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
+        var data = JSON.parse(button.payload)
+        console.log('button in addModuleIdIfNecessary', data)
+        if (data && data.action === 'hubspot') {
+          button.payload = JSON.stringify(remove_hubspot_data(data))
+          console.log('button.payload', button.payload)
+        }
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
@@ -747,6 +766,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
       })
     }
   }
+  console.log('payload in addModuleIdIfNecessary', payload[0].buttons[0].payload)
 }
 function isWhiteListedDomain (domain, pageId, user) {
   return new Promise(function (resolve, reject) {
