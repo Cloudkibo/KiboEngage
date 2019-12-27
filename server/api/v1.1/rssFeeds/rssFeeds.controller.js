@@ -68,6 +68,8 @@ function _checkDefaultFeed (data, next) {
         logger.serverLog(TAG, `Failed to update default values ${err}`)
         next(err)
       })
+  } else {
+    next(null)
   }
 }
 
