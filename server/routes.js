@@ -71,6 +71,7 @@ module.exports = function (app) {
   app.use('/api/integrations', require('./api/v1.1/integrations'))
   app.use('/api/sheetsIntegrations', require('./api/v1.1/sheetsIntegration'))
   app.use('/api/hubspotIntegrations', require('./api/v1.1/hubspotIntegration'))
+  app.use('/api/rssFeeds', require('./api/v1.1/rssFeeds'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
