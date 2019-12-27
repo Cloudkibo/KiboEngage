@@ -4,23 +4,17 @@ const LogicLayer = require('./rssFeeds.logiclayer')
 const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const feedparser = require('feedparser-promised')
 
 exports.create = function (req, res) {
-  if (req.body.isActive) {
-    DataLayer.countDocuments({companyId: req.user.companyId, isActive: true})
-      .then(rssFeeds => {
-        if (rssFeeds.length > 0 && rssFeeds[0].count >= 13) {
-          sendErrorResponse(res, 500, `Can not create more than 13 active Feeds at a time!`)
-        } else {
-          saveRSSFeed(req.body, req.user._id, req.user.companyId, res)
-        }
-      })
-      .catch(error => {
-        sendErrorResponse(res, 500, `Failed to fetch RSS Feeds ${JSON.stringify(error)}`)
-      })
-  } else {
-    saveRSSFeed(req.body, req.user._id, req.user.companyId, res)
-  }
+  checkValidations(req.body, req.user.companyId)
+    .then(result => {
+      saveRSSFeed(req.body, req.user._id, req.user.companyId, res)
+    })
+    .catch((err) => {
+      console.log('error got', err)
+      sendErrorResponse(res, 500, err.toString())
+    })
 }
 
 function saveRSSFeed (body, userId, companyId, res) {
@@ -87,6 +81,47 @@ function getSubscriptionsCount (pageIds, companyId) {
       .catch(err => {
         logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
         resolve(0)
+      })
+  })
+}
+
+function checkValidations (body, companyId) {
+  return new Promise(function (resolve, reject) {
+    DataLayer.countDocuments({companyId: companyId, title: {$regex: '.*' + body.title + '.*', $options: 'i'}})
+      .then(rssFeeds => {
+        if (rssFeeds.length > 0) {
+          reject(Error(`Can not create more RSS Feeds with the same Title`))
+        } else {
+          feedparser.parse(body.feedUrl)
+            .then(feed => {
+              if (feed) {
+                if (body.isActive) {
+                  DataLayer.countDocuments({companyId: companyId, isActive: true})
+                    .then(rssFeeds => {
+                      if (rssFeeds.length > 0 && rssFeeds[0].count >= 13) {
+                        reject(Error(`Can not create more than 13 active Feeds at a time!`))
+                      } else {
+                        resolve()
+                      }
+                    })
+                    .catch(error => {
+                      reject(Error(`Failed to fetch RSS Feeds ${error}`))
+                    })
+                } else {
+                  resolve()
+                }
+              } else {
+                reject(Error(`Invalid Feed URL provided`))
+              }
+            })
+            .catch((err) => {
+              logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
+              reject(Error(`Invalid Feed URL provided`))
+            })
+        }
+      })
+      .catch(error => {
+        reject(Error(`Failed to fetch RSS Feeds ${error}`))
       })
   })
 }
