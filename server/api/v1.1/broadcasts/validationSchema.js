@@ -138,6 +138,9 @@ exports.subscriberCountPayload = {
     'pageId': {
       'type': 'string'
     },
+    'pageAccessToken': {
+      'type': 'string'
+    },
     'segmented': {
       'type': 'boolean'
     },
@@ -159,6 +162,7 @@ exports.subscriberCountPayload = {
   },
   'required': [
     'pageId',
+    'pageAccessToken',
     'segmented',
     'isList'
   ]

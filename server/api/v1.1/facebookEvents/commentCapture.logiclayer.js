@@ -8,16 +8,14 @@ exports.getSendValue = function (post, body) {
     if (post.includedKeywords && post.includedKeywords.length > 0) {
       send = false
       for (let i = 0; i < post.includedKeywords.length; i++) {
-        if (body.entry[0].changes[0].value.message.toLowerCase().includes(post.includedKeywords[i].toLowerCase())) {
+        if (body.entry[0].changes[0].value.message.toLowerCase().includes(post.includedKeywords[i].toLowerCase().trim())) {
           send = true
           break
         }
       }
-    }
-    if (post.excludedKeywords && post.excludedKeywords.length > 0) {
-      send = true
+    } else if (post.excludedKeywords && post.excludedKeywords.length > 0) {
       for (let i = 0; i < post.excludedKeywords.length; i++) {
-        if (body.entry[0].changes[0].value.message.toLowerCase().includes(post.excludedKeywords[i].toLowerCase())) {
+        if (body.entry[0].changes[0].value.message.toLowerCase().includes(post.excludedKeywords[i].toLowerCase().trim())) {
           send = false
           break
         }

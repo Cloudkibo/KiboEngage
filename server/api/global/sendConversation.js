@@ -12,7 +12,7 @@ const sendUsingBatchAPI = (module, payload, subsCriteria, page, user, result, sa
         let batch = _prepareBatchData(module, payload, subscribers, page, user)
         _callBatchAPI(JSON.stringify(batch), page.accessToken)
           .then(response => {
-            logger.serverLog(TAG, JSON.stringify(response))
+            logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
             result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
             subsCriteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
             sendUsingBatchAPI(payload, subsCriteria, page.accessToken, result, saveMsgRecord, recordObj)

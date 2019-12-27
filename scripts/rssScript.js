@@ -5,8 +5,8 @@ const og = require('open-graph')
 const feedparser = require('feedparser-promised')
 const async = require('async')
 const _ = require('lodash')
-const broadcastApi = require('../server/api/global/broadcastApi')
-const { getScheduledTime } = require('../server/api/global/utility')
+const { prepareSubscribersCriteria, getScheduledTime } = require('../server/api/global/utility')
+const { sendUsingBatchAPI } = require('../server/api/global/sendConversation')
 const AutopostingDataLayer = require('../server/api/v1.1/autoposting/autoposting.datalayer')
 const { facebookApiCaller } = require('../server/api/global/facebookApiCaller')
 const AutoPostingMessage = require('../server/api/v1.1/autopostingMessages/autopostingMessages.datalayer')
@@ -202,7 +202,6 @@ const _sendRSSUpdates = (data, next) => {
   async.series([
     _parseFeed.bind(null, data),
     _prepareMessageData.bind(null, data),
-    _createMessageCreative.bind(null, data),
     _fetchTags.bind(null, data),
     _sendBroadcast.bind(null, data)
   ], function (err) {
@@ -215,83 +214,70 @@ const _sendRSSUpdates = (data, next) => {
 }
 
 const _sendBroadcast = (data, next) => {
-  const limit = Math.ceil(data.subscribersCount[0].count / 10000)
-  for (let i = 0; i < limit; i++) {
-    let labels = []
-    let unsubscribeTag = data.pageTags.filter((pt) => pt.tag === `_${data.page.pageId}_unsubscribe`)
-    let pageIdTag = data.pageTags.filter((pt) => pt.tag === `_${data.page.pageId}_${i + 1}`)
-    let notlabels = unsubscribeTag.length > 0 && [unsubscribeTag[0].labelFbId]
-    pageIdTag.length > 0 && labels.push(pageIdTag[0].labelFbId)
-    if (data.autoposting.segmentationGender.length > 0) {
-      let temp = data.pageTags.filter((pt) => data.autoposting.segmentationGender.includes(pt.tag)).map((pt) => pt.labelFbId)
-      labels = labels.concat(temp)
-    }
-    if (data.autoposting.segmentationLocale.length > 0) {
-      let temp = data.pageTags.filter((pt) => data.autoposting.segmentationLocale.includes(pt.tag)).map((pt) => pt.labelFbId)
-      labels = labels.concat(temp)
-    }
-    if (data.autoposting.segmentationTags.length > 0) {
-      let temp = data.pageTags.filter((pt) => data.autoposting.segmentationTags.includes(pt._id)).map((pt) => pt.labelFbId)
-      labels = labels.concat(temp)
-    }
-    broadcastApi.callBroadcastMessagesEndpoint(data.messageCreativeId, labels, notlabels, data.page.accessToken, data.page, 'rssScript.js')
-      .then(response => {
-        if (i === limit - 1) {
-          if (response.status === 'success') {
-            let newMsg = {
-              pageId: data.page._id,
-              companyId: data.page.companyId,
-              autoposting_type: 'rss',
-              autopostingId: data.autoposting._id,
-              sent: data.subscribersCount[0].count,
-              message_id: data.messageCreativeId,
-              payload: data.messageData,
-              seen: 0,
-              clicked: 0
+  let reportObj = {
+    successful: 0,
+    unsuccessful: 0,
+    errors: []
+  }
+  let subscriberCriteria = prepareSubscribersCriteria(
+    {
+      isList: false,
+      isSegmented: data.autoposting.isSegmented,
+      segmentationGender: data.autoposting.segmentationGender,
+      segmentationLocale: data.autoposting.segmentationLocale
+    },
+    data.page
+  )
+  if (data.autoposting.segmentationTags.length > 0) {
+    subscriberCriteria['_id'] = {$in: data.tagSubscriberIds}
+  }
+  sendUsingBatchAPI('autoposting', [data.messageData], subscriberCriteria, data.page, '', reportObj)
+  let newMsg = {
+    pageId: data.page._id,
+    companyId: data.page.companyId,
+    autoposting_type: 'rss',
+    autopostingId: data.autoposting._id,
+    sent: data.subscribersCount[0].count,
+    message_id: 'messageCreativeId',
+    payload: data.messageData,
+    seen: 0,
+    clicked: 0
+  }
+  AutoPostingMessage.createAutopostingMessage(newMsg)
+    .then(savedMsg => {
+      logger.serverLog(TAG, `rss broadcast successfully sent ${savedMsg}`, 'debug')
+      next()
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
+      next(err)
+    })
+}
+
+const _fetchTags = (data, next) => {
+  if (data.autoposting.segmentationTags.length > 0) {
+    callApi('tags/query', 'post', {companyId: data.page.companyId, tag: {$in: data.autoposting.segmentationTags}})
+      .then(tags => {
+        let tagIds = tags.map((t) => t._id)
+        callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+          .then(tagSubscribers => {
+            if (tagSubscribers.length > 0) {
+              data.tagSubscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+              next()
+            } else {
+              next()
             }
-            AutoPostingMessage.createAutopostingMessage(newMsg)
-              .then(savedMsg => {
-                logger.serverLog(TAG, `rss broadcast successfully sent ${savedMsg}`, 'debug')
-                next()
-              })
-              .catch(err => {
-                logger.serverLog(TAG, `Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
-              })
-          } else {
-            next('Failed to send broadcast.')
-          }
-        }
+          })
+          .catch(err => {
+            next(err)
+          })
       })
       .catch(err => {
         next(err)
       })
+  } else {
+    next()
   }
-}
-
-const _fetchTags = (data, next) => {
-  callApi('tags/query', 'post', {companyId: data.page.companyId, pageId: data.page._id})
-    .then(pageTags => {
-      data.pageTags = pageTags
-      next()
-    })
-    .catch(err => {
-      next(err)
-    })
-}
-
-const _createMessageCreative = (data, next) => {
-  broadcastApi.callMessageCreativesEndpoint(data.messageData, data.page.accessToken, data.page, 'rssScripts.js', 'autoposting')
-    .then(messageCreative => {
-      if (messageCreative.status === 'success') {
-        data.messageCreativeId = messageCreative.message_creative_id
-        next()
-      } else {
-        next('Failed to send broadcast.')
-      }
-    })
-    .catch(err => {
-      next(err)
-    })
 }
 
 const _parseFeed = (data, next) => {

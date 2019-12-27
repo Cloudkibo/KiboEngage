@@ -89,7 +89,7 @@ exports.getCountForComments = (body) => {
 
 exports.getComments = (body) => {
   let aggregateData = [
-    { $match: {postId: body.postId, parentId: {$exists: false}} },
+    { $match: {parentId: {$exists: false}} },
     { $sort: {_id: body.sort_value} },
     { $match: {
       '_id': body.first_page ? {$exists: true} : body.sort_value === -1 ? {$lt: body.last_id} : {$gt: body.last_id}
@@ -98,6 +98,8 @@ exports.getComments = (body) => {
   ]
   if (body.post_id && body.post_id !== '') {
     aggregateData[0].$match.postFbId = body.post_id
+  } else { 
+    aggregateData[0].$match.postId = body.postId
   }
   return aggregateData
 }
@@ -155,7 +157,7 @@ exports.getPostId = function (url) {
   let postId = ''
   let pathname
   let result = URL.parse(url)
-  if (result.host === 'www.facebook.com' && result.query && result.pathname) {
+  if ((result.host === 'www.facebook.com' || result.host=== 'web.facebook.com' )&& result.query && result.pathname) {
     let query = result.query.split('&')
     if (query && query.length > 0) {
       for (let i = 0; i < query.length; i++) {
@@ -274,18 +276,17 @@ function handleLinks (textComponents, linkComponents) {
   } else if (linkComponents.length > 1) {
     let links = []
     for (let i = 0; i < linkComponents.length && i < 10; i++) {
-      links.push({'link': linkComponents[i].url})
+      links.push({'link': linkComponents[i].url, 'name': linkComponents[i].card.title, 'description': linkComponents[i].card.subtitle })
     }
     payload = {
       type: 'text',
       payload: {
-        'link': `https://kibopush.com`,
-        'child_attachments': links
+        "message": "",
+        "link": "www.kibopush.com",
+        "child_attachments": JSON.stringify(links)
       }
     }
-    if (textComponents.length > 0) {
-      payload.payload.message = textComponents[0].text
-    }
+    payload.payload.message = textComponents.length > 0 ? textComponents[0].text : ""
   }
   return payload
 }

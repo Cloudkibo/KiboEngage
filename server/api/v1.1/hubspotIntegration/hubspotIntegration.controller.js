@@ -13,7 +13,7 @@ const {
   populateKiboPushColumns,
   populateCustomFieldColumns
 } = require('./../../global/externalIntegrations')
-
+const {defaultFieldcolumn} = require('./hubspotDefaultFields')
 exports.auth = function (req, res) {
   // Build the auth URL
   const authUrl =
@@ -129,6 +129,28 @@ exports.getForms = function (req, res) {
     })
     .catch(err => {
       sendErrorResponse(res, 500, err, 'Internal Server Error occurred. Please contact admin.')
+    })
+}
+
+exports.fetchHubspotDefaultColumns = function (req, res) {
+  let dataToSend = {
+    kiboPushColumns: populateKiboPushColumns(),
+    customFieldColumns: [],
+    hubSpotColumns: defaultFieldcolumn.hubSpotColumns,
+    //HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
+  }
+  callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+    .then(customFields => {
+      populateCustomFieldColumns(dataToSend, customFields)
+        .then(dataToSend => {
+          sendSuccessResponse(res, 200, dataToSend)
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, err, `failed to update custom fields ${err}`)
+        })
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, err, `failed to fetch custom fields ${err}`)
     })
 }
 

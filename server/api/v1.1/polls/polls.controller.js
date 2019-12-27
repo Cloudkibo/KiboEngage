@@ -296,7 +296,7 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
         if (req.body.isList) {
           utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user))
             .then(lists => {
-              let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists)
+              let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, req.body.isApprovedForSMP)
               sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
               sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
             })
@@ -305,7 +305,7 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
               sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
             })
         } else {
-          let subsFindCriteria = prepareSubscribersCriteria(req.body, page)
+          let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, req.body.isApprovedForSMP)
           utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
             .then(tags => {
               let segmentationTags = tags.map(t => t._id)

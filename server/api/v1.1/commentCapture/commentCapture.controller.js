@@ -77,8 +77,18 @@ function getPayloadToSave (user, body) {
     } else if (body.captureOption === 'existing') {
       getExistingPostId(body.existingPostUrl, body.pageId)
         .then(postId => {
-          payloadToSave.post_id = postId
-          resolve(payloadToSave)
+          utility.callApi(`comment_capture/query`, 'post', {companyId: user.companyId, pageId: body.pageId, post_id: postId})
+          .then(post => {
+            if (post.length > 0) {
+              reject(new Error('You can create only one comment capture rule for any Facebook post'))
+            } else {
+              payloadToSave.post_id = postId
+              resolve(payloadToSave)
+            }
+          })
+          .catch((err) => {
+            reject(err)
+          })
         })
         .catch((err) => {
           reject(err)
@@ -201,6 +211,7 @@ exports.edit = function (req, res) {
   var updatePayload = {
     includedKeywords: req.body.includedKeywords,
     excludedKeywords: req.body.excludedKeywords,
+    reply: req.body.reply,
     secondReply: req.body.secondReply,
     title: req.body.title
   }
@@ -317,6 +328,34 @@ exports.fetchPostData = function (req, res) {
   utility.callApi(`comment_capture/query`, 'post', {_id: req.params._id})
     .then(post => {
       post = post[0]
+      var isVideoPost = false
+      if (post.payload && post.payload.length > 0) {
+        for (var i=0; i < post.payload.length; i++) {
+          if (post.payload[i].componentType === 'video') {
+            isVideoPost = true
+            break
+          }
+        }
+      }
+      if (isVideoPost) {
+        facebookApiCaller('v3.3', `${post.post_id}?fields=description,created_time&access_token=${post.pageId.accessToken}`, 'get', {})
+        .then(response => {
+          if (response.body.error) {
+            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
+          } else {
+            let dataToSend = {
+              attachments: true,
+              message: response.body.description ? response.body.description : '',
+              datetime: response.body.created_time,
+              postLink: `https://www.facebook.com/${post.post_id}`
+            }
+            sendSuccessResponse(res, 200, dataToSend)
+          }
+        })
+        .catch((err) => {
+          sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
+        })
+      } else {
       facebookApiCaller('v3.3', `${post.post_id}?fields=message,attachments.limit(1){type},created_time&access_token=${post.pageId.accessToken}`, 'get', {})
         .then(response => {
           if (response.body.error) {
@@ -334,6 +373,7 @@ exports.fetchPostData = function (req, res) {
         .catch((err) => {
           sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
         })
+      }
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to get posts ${JSON.stringify(error)}`)
@@ -373,22 +413,31 @@ function sendGlobalDataPayload (responseBody) {
     let data = responseBody.data
     let dataToSend = []
     for (let i = 0; i < data.length; i++) {
-      let aggregateData = [
-        { $match: {postFbId: data[i].id, parentId: {$exists: false}} },
-        { $group: {_id: null, count: { $sum: 1 }} }
-      ]
-      utility.callApi('comment_capture/comments/aggregate', 'post', aggregateData)
-        .then(commentsCount => {
-          commentsCount = commentsCount.length > 0 ? commentsCount[0].count : 0
-          dataToSend.push({
-            postId: data[i].id,
-            commentsCount: commentsCount,
-            message: data[i].message ? data[i].message : '',
-            attachments: data[i].attachments ? true : false,
-            datetime: data[i].created_time
-          })
-          if (dataToSend.length === data.length) {
-            resolve({posts: dataToSend, after: responseBody.paging && responseBody.paging.next && responseBody.paging.cursors && responseBody.paging.cursors.after ? responseBody.paging.cursors.after : ''})
+      utility.callApi('comment_capture/query', 'post', {post_id: data[i].id})
+        .then(post => {
+          console.log('POST', post)
+          if (!(post.length > 0)) {
+            let aggregateData = [
+              { $match: {postFbId: data[i].id, parentId: {$exists: false}} },
+              { $group: {_id: null, count: { $sum: 1 }} }
+            ]
+            utility.callApi('comment_capture/comments/aggregate', 'post', aggregateData)
+              .then(commentsCount => {
+                commentsCount = commentsCount.length > 0 ? commentsCount[0].count : 0
+                dataToSend.push({
+                  postId: data[i].id,
+                  commentsCount: commentsCount,
+                  message: data[i].message ? data[i].message : '',
+                  attachments: data[i].attachments ? true : false,
+                  datetime: data[i].created_time
+                })
+                if (i === data.length - 1) {
+                  resolve({posts: dataToSend, after: responseBody.paging && responseBody.paging.next && responseBody.paging.cursors && responseBody.paging.cursors.after ? responseBody.paging.cursors.after : ''})
+                }
+              })
+              .catch(err => {
+                reject(err)
+              })
           }
         })
         .catch(err => {
