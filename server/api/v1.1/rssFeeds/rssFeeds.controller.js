@@ -1,0 +1,144 @@
+const logger = require('../../../components/logger')
+const DataLayer = require('./rssFeeds.datalayer')
+const LogicLayer = require('./rssFeeds.logiclayer')
+const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
+const utility = require('../utility')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const feedparser = require('feedparser-promised')
+const async = require('async')
+
+exports.create = function (req, res) {
+  let data = {
+    body: req.body,
+    companyId: req.user.companyId,
+    userId: req.user._id,
+    subscriptions: 0
+  }
+  async.series([
+    _validateFeedTitle.bind(null, data),
+    _validateFeedUrl.bind(null, data),
+    _validateActiveFeeds.bind(null, data),
+    _getSubscriptionsCount.bind(null, data),
+    _checkDefaultFeed.bind(null, data),
+    _saveRSSFeed.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200, data.savedFeed)
+    }
+  })
+}
+
+function _saveRSSFeed (data, next) {
+  let scheduledTime = new Date()
+  scheduledTime.setDate(scheduledTime.getDate() + 1)
+  scheduledTime.setHours(8)
+  scheduledTime.setMinutes(0)
+  scheduledTime.setMilliseconds(0)
+  let dataToSave = {
+    pageIds: data.body.pageIds,
+    companyId: data.companyId,
+    userId: data.userId,
+    feedUrl: data.body.feedUrl,
+    title: data.body.title,
+    subscriptions: data.subscriptions,
+    storiesCount: data.body.storiesCount,
+    defaultFeed: data.body.defaultFeed,
+    scheduledTime: scheduledTime,
+    isActive: data.body.isActive
+  }
+  DataLayer.createForRssFeeds(dataToSave)
+    .then(savedFeed => {
+      data.savedFeed = savedFeed
+      next(null)
+    })
+    .catch(error => {
+      next(error)
+    })
+}
+
+function _checkDefaultFeed (data, next) {
+  if (data.body.defaultFeed) {
+    DataLayer.genericUpdateRssFeed({companyId: data.companyId, defaultFeed: true}, {defaultFeed: false}, {})
+      .then(updated => {
+        next(null, data)
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to update default values ${err}`)
+        next(err)
+      })
+  } else {
+    next(null)
+  }
+}
+
+function _getSubscriptionsCount (data, next) {
+  let criteria = [
+    {$match: {
+      companyId: data.companyId,
+      isSubscribed: true,
+      completeInfo: true,
+      pageId: {$in: data.body.pageIds}}
+    },
+    {$group: {_id: null, count: {$sum: 1}}}
+  ]
+  utility.callApi(`subscribers/aggregate`, 'post', criteria)
+    .then(result => {
+      if (result.length > 0) {
+        data.subscriptions = result[0].count
+        next(null, data)
+      } else {
+        next(null, data)
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+      next(null, data)
+    })
+}
+
+const _validateFeedTitle = (data, next) => {
+  if (data.body.isActive) {
+    DataLayer.countDocuments({companyId: data.companyId, isActive: true})
+      .then(rssFeeds => {
+        if (rssFeeds.length > 0 && rssFeeds[0].count >= 14) {
+          next(`Can not create more than 14 active Feeds at a time!`)
+        } else {
+          next(null)
+        }
+      })
+      .catch(error => {
+        next(`Failed to fetch RSS Feeds ${error}`)
+      })
+  } else {
+    next(null)
+  }
+}
+const _validateActiveFeeds = (data, next) => {
+  DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    .then(rssFeeds => {
+      if (rssFeeds.length > 0) {
+        next('Can not create more RSS Feeds with the same Title')
+      } else {
+        next(null)
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
+}
+const _validateFeedUrl = (data, next) => {
+  feedparser.parse(data.body.feedUrl)
+    .then(feed => {
+      if (feed) {
+        next(null)
+      } else {
+        next(`Invalid Feed URL provided`)
+      }
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
+      next(`Invalid Feed URL provided`)
+    })
+}
