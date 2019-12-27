@@ -5,123 +5,138 @@ const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const feedparser = require('feedparser-promised')
+const async = require('async')
 
 exports.create = function (req, res) {
-  checkValidations(req.body, req.user.companyId)
-    .then(result => {
-      saveRSSFeed(req.body, req.user._id, req.user.companyId, res)
+  let data = {
+    body: req.body,
+    companyId: req.user.companyId,
+    userId: req.user._id,
+    subscriptions: 0
+  }
+  async.series([
+    _validateFeedTitle.bind(null, data),
+    _validateFeedUrl.bind(null, data),
+    _validateActiveFeeds.bind(null, data),
+    _getSubscriptionsCount.bind(null, data),
+    _checkDefaultFeed.bind(null, data),
+    _saveRSSFeed.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200, data.savedFeed)
+    }
+  })
+}
+
+function _saveRSSFeed (data, next) {
+  let scheduledTime = new Date()
+  scheduledTime.setDate(scheduledTime.getDate() + 1)
+  scheduledTime.setHours(8)
+  scheduledTime.setMinutes(0)
+  scheduledTime.setMilliseconds(0)
+  let dataToSave = {
+    pageIds: data.body.pageIds,
+    companyId: data.companyId,
+    userId: data.userId,
+    feedUrl: data.body.feedUrl,
+    title: data.body.title,
+    subscriptions: data.subscriptions,
+    storiesCount: data.body.storiesCount,
+    defaultFeed: data.body.defaultFeed,
+    scheduledTime: scheduledTime,
+    isActive: data.body.isActive
+  }
+  DataLayer.createForRssFeeds(dataToSave)
+    .then(savedFeed => {
+      data.savedFeed = savedFeed
+      next(null)
     })
-    .catch((err) => {
-      console.log('error got', err)
-      sendErrorResponse(res, 500, err.toString())
+    .catch(error => {
+      next(error)
     })
 }
 
-function saveRSSFeed (body, userId, companyId, res) {
-  getSubscriptionsCount(body.pageIds, companyId)
-    .then(subscriptions => {
-      let scheduledTime = new Date()
-      scheduledTime.setDate(scheduledTime.getDate() + 1)
-      scheduledTime.setHours(8)
-      scheduledTime.setMinutes(0)
-      scheduledTime.setMilliseconds(0)
-      let data = {
-        pageIds: body.pageIds,
-        companyId: companyId,
-        userId: userId,
-        feedUrl: body.feedUrl,
-        title: body.title,
-        subscriptions: subscriptions,
-        storiesCount: body.storiesCount,
-        defaultFeed: body.defaultFeed,
-        scheduledTime: scheduledTime,
-        isActive: body.isActive
-      }
-      DataLayer.createForRssFeeds(data)
-        .then(savedFeed => {
-          checkDefaultFeed(body, companyId, savedFeed._id)
-          sendSuccessResponse(res, 200, savedFeed)
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to fetch RSS Feeds ${JSON.stringify(error)}`)
-        })
-    })
-}
-
-function checkDefaultFeed (body, companyId, rssFeedId) {
-  if (body.defaultFeed) {
-    DataLayer.genericUpdateRssFeed({companyId: companyId, defaultFeed: true, _id: {$ne: rssFeedId}}, {defaultFeed: false}, {})
+function _checkDefaultFeed (data, next) {
+  if (data.body.defaultFeed) {
+    DataLayer.genericUpdateRssFeed({companyId: data.companyId, defaultFeed: true}, {defaultFeed: false}, {})
       .then(updated => {
+        next(null, data)
       })
       .catch(err => {
         logger.serverLog(TAG, `Failed to update default values ${err}`)
+        next(err)
       })
   }
 }
 
-function getSubscriptionsCount (pageIds, companyId) {
-  return new Promise(function (resolve, reject) {
-    let criteria = [
-      {$match: {
-        companyId: companyId,
-        isSubscribed: true,
-        completeInfo: true,
-        pageId: {$in: pageIds}}
-      },
-      {$group: {_id: null, count: {$sum: 1}}}
-    ]
-    utility.callApi(`subscribers/aggregate`, 'post', criteria)
-      .then(result => {
-        if (result.length > 0) {
-          resolve(result[0].count)
-        } else {
-          resolve(0)
-        }
-      })
-      .catch(err => {
-        logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
-        resolve(0)
-      })
-  })
+function _getSubscriptionsCount (data, next) {
+  let criteria = [
+    {$match: {
+      companyId: data.companyId,
+      isSubscribed: true,
+      completeInfo: true,
+      pageId: {$in: data.body.pageIds}}
+    },
+    {$group: {_id: null, count: {$sum: 1}}}
+  ]
+  utility.callApi(`subscribers/aggregate`, 'post', criteria)
+    .then(result => {
+      if (result.length > 0) {
+        data.subscriptions = result[0].count
+        next(null, data)
+      } else {
+        next(null, data)
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+      next(null, data)
+    })
 }
 
-function checkValidations (body, companyId) {
-  return new Promise(function (resolve, reject) {
-    DataLayer.countDocuments({companyId: companyId, title: {$regex: '.*' + body.title + '.*', $options: 'i'}})
+const _validateFeedTitle = (data, next) => {
+  if (data.body.isActive) {
+    DataLayer.countDocuments({companyId: data.companyId, isActive: true})
       .then(rssFeeds => {
-        if (rssFeeds.length > 0) {
-          reject(Error(`Can not create more RSS Feeds with the same Title`))
+        if (rssFeeds.length > 0 && rssFeeds[0].count >= 14) {
+          next(`Can not create more than 14 active Feeds at a time!`)
         } else {
-          feedparser.parse(body.feedUrl)
-            .then(feed => {
-              if (feed) {
-                if (body.isActive) {
-                  DataLayer.countDocuments({companyId: companyId, isActive: true})
-                    .then(rssFeeds => {
-                      if (rssFeeds.length > 0 && rssFeeds[0].count >= 13) {
-                        reject(Error(`Can not create more than 13 active Feeds at a time!`))
-                      } else {
-                        resolve()
-                      }
-                    })
-                    .catch(error => {
-                      reject(Error(`Failed to fetch RSS Feeds ${error}`))
-                    })
-                } else {
-                  resolve()
-                }
-              } else {
-                reject(Error(`Invalid Feed URL provided`))
-              }
-            })
-            .catch((err) => {
-              logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
-              reject(Error(`Invalid Feed URL provided`))
-            })
+          next(null)
         }
       })
       .catch(error => {
-        reject(Error(`Failed to fetch RSS Feeds ${error}`))
+        next(`Failed to fetch RSS Feeds ${error}`)
       })
-  })
+  } else {
+    next(null)
+  }
+}
+const _validateActiveFeeds = (data, next) => {
+  DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    .then(rssFeeds => {
+      if (rssFeeds.length > 0) {
+        next('Can not create more RSS Feeds with the same Title')
+      } else {
+        next(null)
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
+}
+const _validateFeedUrl = (data, next) => {
+  feedparser.parse(data.body.feedUrl)
+    .then(feed => {
+      if (feed) {
+        next(null)
+      } else {
+        next(`Invalid Feed URL provided`)
+      }
+    })
+    .catch((err) => {
+      logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
+      next(`Invalid Feed URL provided`)
+    })
 }
