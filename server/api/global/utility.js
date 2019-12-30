@@ -60,7 +60,11 @@ exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
       if (body.segmentationGender.length > 0) criteria = _.merge(criteria, {gender: {$in: body.segmentationGender}})
       if (body.segmentationLocale.length > 0) criteria = _.merge(criteria, {locale: {$in: body.segmentationLocale}})
     }
-    return criteria
+    let finalCriteria = [
+      {$match: criteria},
+      {$limit: 50 / body.payload.length}
+    ]
+    return finalCriteria
   }
 }
 

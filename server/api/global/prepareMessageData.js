@@ -11,6 +11,12 @@ exports.facebook = (body, fname, lname) => {
     payload = {
       attachment: body.attachment
     }
+  } else if (body.componentType === 'userInput') {
+    payload = {
+      'text': text,
+      'metadata': 'This is a meta data'
+    }
+    return payload
   } else if (body.componentType === 'text' && !body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
       text = text.replace(
