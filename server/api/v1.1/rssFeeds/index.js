@@ -13,4 +13,9 @@ router.post('/create',
   validate({body: validationSchema.createPayload}),
   controller.create)
 
+router.post('/rssFeedPosts',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.getRssFeedPostsPayload}),
+  controller.getRssFeedPosts)
+
 module.exports = router
