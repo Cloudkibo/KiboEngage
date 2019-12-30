@@ -11,13 +11,16 @@ const RssSubscriptionsDataLayer = require('../server/api/v1.1/rssFeeds/rssSubscr
 const request = require('request')
 
 exports.runRSSScript = () => {
-  console.log('script running')
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true})
     .then(rssFeeds => {
       rssFeeds.forEach(rssFeed => {
         if (new Date(rssFeed.scheduledTime).getTime() <=
           new Date().getTime()) {
-          callApi(`pages/query`, 'post', {_id: {$in: rssFeed.pageIds}, connected: true, companyId: rssFeed.companyId})
+          let pageQuery = {connected: true, companyId: rssFeed.companyId}
+          if (rssFeed.pageIds.length > 0) {
+            pageQuery['_id'] = {$in: rssFeed.pageIds}
+          }
+          callApi(`pages/query`, 'post', pageQuery)
             .then(pages => {
               pages.forEach(page => {
                 let data = {
@@ -253,7 +256,6 @@ const _saveRssFeedPost = (data, next) => {
   }
   RssFeedPostsDataLayer.createForRssFeedPosts(dataToSave)
     .then(saved => {
-      console.log('saved Successfully rss', saved)
       next()
     })
     .catch(err => {
