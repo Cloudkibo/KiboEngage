@@ -1,5 +1,6 @@
 const logger = require('../../../components/logger')
 const DataLayer = require('./rssFeeds.datalayer')
+const RssFeedPostsDataLayer = require('./rssFeedPosts.datalayer')
 const LogicLayer = require('./rssFeeds.logiclayer')
 const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
@@ -11,8 +12,7 @@ exports.create = function (req, res) {
   let data = {
     body: req.body,
     companyId: req.user.companyId,
-    userId: req.user._id,
-    subscriptions: 0
+    userId: req.user._id
   }
   async.series([
     _validateFeedTitle.bind(null, data),
@@ -118,28 +118,33 @@ function _checkDefaultFeed (data, next) {
 }
 
 function _getSubscriptionsCount (data, next) {
-  let criteria = [
-    {$match: {
-      companyId: data.companyId,
-      isSubscribed: true,
-      completeInfo: true,
-      pageId: {$in: data.body.pageIds}}
-    },
-    {$group: {_id: null, count: {$sum: 1}}}
-  ]
-  utility.callApi(`subscribers/aggregate`, 'post', criteria)
-    .then(result => {
-      if (result.length > 0) {
-        data.subscriptions = result[0].count
+  if (data.body.defaultFeed) {
+    let criteria = [
+      {$match: {
+        companyId: data.companyId,
+        isSubscribed: true,
+        completeInfo: true,
+        pageId: {$in: data.body.pageIds}}
+      },
+      {$group: {_id: null, count: {$sum: 1}}}
+    ]
+    utility.callApi(`subscribers/aggregate`, 'post', criteria)
+      .then(result => {
+        if (result.length > 0) {
+          data.subscriptions = result[0].count
+          next(null, data)
+        } else {
+          next(null, data)
+        }
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
         next(null, data)
-      } else {
-        next(null, data)
-      }
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
-      next(null, data)
-    })
+      })
+  } else {
+    data.subscriptions = 0
+    next(null, data)
+  }
 }
 
 const _validateFeedTitle = (data, next) => {
@@ -185,4 +190,35 @@ const _validateFeedUrl = (data, next) => {
       logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
       next(`Invalid Feed URL provided`)
     })
+}
+exports.getRssFeedPosts = function (req, res) {
+  let criterias = LogicLayer.getCriterias(req.body)
+  async.parallelLimit([
+    function (callback) {
+      RssFeedPostsDataLayer.countDocuments(criterias[0].$match)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias[0].$match, null, null, criterias[3].$limit, criterias[1].$sort, criterias[2].$skip)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      let countResponse = results[0]
+      let posts = results[1]
+      sendSuccessResponse(res, 200, {rssFeedPosts: posts, count: countResponse.length > 0 ? countResponse[0].count : 0})
+    }
+  })
 }

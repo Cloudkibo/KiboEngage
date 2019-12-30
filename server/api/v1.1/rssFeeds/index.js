@@ -21,5 +21,10 @@ router.post('/fetchFeeds',
 router.delete('/:id',
   auth.isAuthenticated(),
   controller.delete)
+  
+router.post('/rssFeedPosts',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.getRssFeedPostsPayload}),
+  controller.getRssFeedPosts)
 
 module.exports = router

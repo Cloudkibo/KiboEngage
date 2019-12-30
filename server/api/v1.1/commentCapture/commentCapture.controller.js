@@ -78,17 +78,17 @@ function getPayloadToSave (user, body) {
       getExistingPostId(body.existingPostUrl, body.pageId)
         .then(postId => {
           utility.callApi(`comment_capture/query`, 'post', {companyId: user.companyId, pageId: body.pageId, post_id: postId})
-          .then(post => {
-            if (post.length > 0) {
-              reject(new Error('You can create only one comment capture rule for any Facebook post'))
-            } else {
-              payloadToSave.post_id = postId
-              resolve(payloadToSave)
-            }
-          })
-          .catch((err) => {
-            reject(err)
-          })
+            .then(post => {
+              if (post.length > 0) {
+                reject(new Error('You can create only one comment capture rule for any Facebook post'))
+              } else {
+                payloadToSave.post_id = postId
+                resolve(payloadToSave)
+              }
+            })
+            .catch((err) => {
+              reject(err)
+            })
         })
         .catch((err) => {
           reject(err)

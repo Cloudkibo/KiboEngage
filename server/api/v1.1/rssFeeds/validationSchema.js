@@ -34,7 +34,6 @@ exports.createPayload = {
     'pageIds'
   ]
 }
-
 exports.fetchPayload = {
   'properties': {
     'last_id': {
@@ -54,6 +53,45 @@ exports.fetchPayload = {
     }
   },
   'required': [
+    'last_id',
+    'number_of_records',
+    'first_page'
+  ]
+} 
+
+exports.getRssFeedPostsPayload = {
+  'type': 'object',
+  'properties': {
+    'feedId': {
+      'type': 'string'
+    },
+    'requested_page': {
+      'type': 'integer'
+    },
+    'last_id': {
+      'type': 'string'
+    },
+    'current_page': {
+      'type': 'integer'
+    },
+    'number_of_records': {
+      'type': 'integer'
+    },
+    'first_page': {
+      'type': 'string'
+    },
+    'page_value': {
+      'type': 'string'
+    },
+    'startDate': {
+      'type': 'string'
+    },
+    'endDate': {
+      'type': 'string'
+    }
+  },
+  'required': [
+    'feedId',
     'last_id',
     'number_of_records',
     'first_page'
