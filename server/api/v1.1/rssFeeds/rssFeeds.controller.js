@@ -57,7 +57,51 @@ function _saveRSSFeed (data, next) {
       next(error)
     })
 }
-
+exports.fetchFeeds = function (req, res) {
+  var fetchCriteria = LogicLayer.fetchFeedsCriteria(req.body, req.user.companyId)
+  async.parallelLimit([
+    function (callback) {
+      DataLayer.countDocuments(fetchCriteria.countCriteria[0].$match)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      let match = fetchCriteria.finalCriteria[0].$match
+      let sort = fetchCriteria.finalCriteria[1].$sort
+      let skip = fetchCriteria.finalCriteria[2].$skip
+      let limit = fetchCriteria.finalCriteria[3].$limit
+      DataLayer.aggregateForRssFeeds(match, null, null, limit, sort, skip)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      let countResponse = results[0]
+      let rssFeeds = results[1]
+      sendSuccessResponse(res, 200, {rssFeeds: rssFeeds, count: countResponse.length > 0 ? countResponse[0].count : 0})
+    }
+  })
+}
+exports.delete = function (req, res) {
+  console.log('Kiboengage delete')
+  DataLayer.deleteForRssFeeds({_id:req.params.id})
+    .then(result => {
+      sendSuccessResponse(res, 200, result)  
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(error)}`)
+    })
+}
 function _checkDefaultFeed (data, next) {
   if (data.body.defaultFeed) {
     DataLayer.genericUpdateRssFeed({companyId: data.companyId, defaultFeed: true}, {defaultFeed: false}, {})

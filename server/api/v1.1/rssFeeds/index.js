@@ -13,4 +13,13 @@ router.post('/create',
   validate({body: validationSchema.createPayload}),
   controller.create)
 
+router.post('/fetchFeeds',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.fetchPayload}),
+  controller.fetchFeeds)
+
+router.delete('/:id',
+  auth.isAuthenticated(),
+  controller.delete)
+
 module.exports = router
