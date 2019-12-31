@@ -25,7 +25,7 @@ exports.createMessageBlocks = (linkedMessages, user, moduleId, moduleType) => {
   return Promise.all(messageBlockRequests)
 }
 
-exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
+exports.prepareSubscribersCriteria = (body, page, lists, payloadLength, isApprovedForSMP) => {
   if (
     !body ||
     (Object.entries(body).length === 0 && body.constructor === Object)
@@ -62,7 +62,7 @@ exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
     }
     let finalCriteria = [
       {$match: criteria},
-      {$limit: 50 / body.payload.length}
+      {$limit: 50 / payloadLength}
     ]
     return finalCriteria
   }

@@ -6,10 +6,11 @@ const prepareMessageData = require('./prepareMessageData')
 const { saveLiveChat, preparePayload } = require('./livechat')
 
 const sendUsingBatchAPI = (module, payload, subsCriteria, page, user, result, saveMsgRecord, recordObj) => {
+  console.log('called function sendUsingBatchAPI')
   callApi(`subscribers/aggregate`, 'post', subsCriteria)
     .then(subscribers => {
       if (subscribers.length > 0) {
-        let batch = _prepareBatchData(module, payload, subscribers, page, user)
+        let batch = _prepareBatchData(module, payload, subscribers, page, user, recordObj)
         _callBatchAPI(JSON.stringify(batch), page.accessToken)
           .then(response => {
             logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
@@ -46,21 +47,46 @@ const _callBatchAPI = (batch, accessToken) => {
 }
 
 /* eslint-disable */
-const _prepareBatchData = (module, payload, subscribers, page, user) => {
+const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) => {
+  let waitingForUserInput = {
+    expiresAt: new Date(),
+    broadcastId: recordObj.broadcastId,
+    componentIndex: -1,
+    incorrectTries: 3
+}
+console.log('_prepareBatchData called', waitingForUserInput)
   let batch = []
   for (let i = 0; i <= subscribers.length; i++) {
     if (i === subscribers.length) {
+      console.log('waitingForUserInput', waitingForUserInput)
+      let subscriberIds = subscribers.map(subscriber=> subscriber._id)
+      console.log('subscriberIds _prepareBatchData', subscriberIds)
+      callApi(`subscribers/updateAll`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
+      .then(updated => {
+        logger.serverLog(TAG, `Succesfully updated subscriber`)
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
+      })
       return batch
     } else {
+      console.log('subscriber_id called',subscribers[i]._id )
       let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": subscribers[i].senderId}))
       let tag = "tag=" + encodeURIComponent("NON_PROMOTIONAL_SUBSCRIPTION")
       let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
+     let flag = true
       payload.forEach((item, index) => {
-        let message = "message=" + encodeURIComponent(_prepareMessageData(module, item, subscribers[i]))
-        if (index === 0) {
-          batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
-        } else {
-          batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "depends_on": `${subscribers[i].senderId}${index}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
+        if (flag) {
+          let message = "message=" + encodeURIComponent(_prepareMessageData(module, item, subscribers[i]))
+          if (index === 0) {
+            batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
+          } else {
+            batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "depends_on": `${subscribers[i].senderId}${index}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
+          }
+          if (item.componentType === 'userInput') {
+            flag = false
+            waitingForUserInput.componentIndex= index
+          }
         }
         if (['polls', 'surveys'].includes(item.componentType)) {
           saveLiveChat(preparePayload(user, subscribers[i], page, item))
