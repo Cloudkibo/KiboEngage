@@ -15,8 +15,8 @@ exports.runRSSScript = () => {
     .then(rssFeeds => {
       async.eachOf(rssFeeds, function (rssFeed) {
       // rssFeeds.forEach(rssFeed => {
-        // if (new Date(rssFeed.scheduledTime).getTime() <=
-        //   new Date().getTime()) {
+        if (new Date(rssFeed.scheduledTime).getTime() <=
+          new Date().getTime()) {
           let pageQuery = {connected: true, companyId: rssFeed.companyId}
           if (rssFeed.pageIds.length > 0) {
             pageQuery['_id'] = {$in: rssFeed.pageIds}
@@ -43,7 +43,7 @@ exports.runRSSScript = () => {
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
             })
-        // }
+        }
       })
     })
     .catch(err => {
