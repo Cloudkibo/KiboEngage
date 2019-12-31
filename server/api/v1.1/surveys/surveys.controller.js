@@ -431,7 +431,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                         callApi.callApi(`lists/query`, 'post', surveyLogicLayer.ListFindCriteria(req.body, req.user))
                           .then(lists => {
                             let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, 1, req.body.isApprovedForSMP)
-                            sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                            sendUsingBatchAPI('survey', [messageData], {criteria: subsFindCriteria}, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                             sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                           })
                           .catch(error => {
@@ -470,18 +470,18 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                     let subscriberIds = _.intersection(tagSubscribers, surveySubscribers)
                                     if (subscriberIds.length > 0) {
                                       subsFindCriteria['_id'] = {$in: subscriberIds}
-                                      sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                      sendUsingBatchAPI('survey', [messageData], {criteri: subsFindCriteria}, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                                       sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                                     } else {
                                       sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                                     }
                                   } else if (tagSubscribers) {
                                     subsFindCriteria['_id'] = {$in: tagSubscribers}
-                                    sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                    sendUsingBatchAPI('survey', [messageData], {critera: subsFindCriteria}, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                                     sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                                   } else if (surveySubscribers) {
                                     subsFindCriteria['_id'] = {$in: surveySubscribers}
-                                    sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                                    sendUsingBatchAPI('survey', [messageData], {critera: subsFindCriteria}, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                                     sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                                   }
                                 })
@@ -490,7 +490,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                   sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers or survey responses')
                                 })
                             } else {
-                              sendUsingBatchAPI('survey', [messageData], subsFindCriteria, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
+                              sendUsingBatchAPI('survey', [messageData], {critera: subsFindCriteria}, page, req.user, reportObj, _savePageSurvey, pageSurveyData)
                               sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                             }
                           })

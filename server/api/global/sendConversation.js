@@ -5,9 +5,21 @@ const request = require('request')
 const prepareMessageData = require('./prepareMessageData')
 const { saveLiveChat, preparePayload } = require('./livechat')
 
-const sendUsingBatchAPI = (module, payload, subsCriteria, page, user, result, saveMsgRecord, recordObj) => {
-  console.log('called function sendUsingBatchAPI')
-  callApi(`subscribers/aggregate`, 'post', subsCriteria)
+const sendUsingBatchAPI = (module, payload, subscribers, page, user, result, saveMsgRecord, recordObj) => {
+  let subscribersPromise = new Promise((resolve, reject) => {
+    if (subscribers.data) {
+      resolve(subscribers.data)
+    } else if (subscribers.criteria) {
+      callApi(`subscribers/aggregate`, 'post', subscribers.criteria)
+        .then(subs => {
+          resolve(subs)
+        })
+        .catch(err => {
+          reject(err)
+        })
+    }
+  })
+  subscribersPromise
     .then(subscribers => {
       if (subscribers.length > 0) {
         let batch = _prepareBatchData(module, payload, subscribers, page, user, recordObj)
@@ -15,8 +27,10 @@ const sendUsingBatchAPI = (module, payload, subsCriteria, page, user, result, sa
           .then(response => {
             logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
             result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
-            subsCriteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
-            sendUsingBatchAPI(payload, subsCriteria, page.accessToken, result, saveMsgRecord, recordObj)
+            if (subscribers.criteria) {
+              subscribers.criteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
+              sendUsingBatchAPI(payload, subscribers, page.accessToken, result, saveMsgRecord, recordObj)
+            }
           })
           .catch(err => {
             logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
@@ -48,33 +62,25 @@ const _callBatchAPI = (batch, accessToken) => {
 
 /* eslint-disable */
 const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) => {
-  let waitingForUserInput = {
-    expiresAt: new Date(),
-    broadcastId: recordObj.broadcastId,
-    componentIndex: -1,
-    incorrectTries: 3
-}
-console.log('_prepareBatchData called', waitingForUserInput)
+    let waitingForUserInput = {
+      expiresAt: new Date(),
+      broadcastId: recordObj.broadcastId,
+      componentIndex: -1,
+      incorrectTries: 3
+  }
   let batch = []
+  let containsUserInput = false
   for (let i = 0; i <= subscribers.length; i++) {
     if (i === subscribers.length) {
-      console.log('waitingForUserInput', waitingForUserInput)
-      let subscriberIds = subscribers.map(subscriber=> subscriber._id)
-      console.log('subscriberIds _prepareBatchData', subscriberIds)
-      callApi(`subscribers/updateAll`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
-      .then(updated => {
-        logger.serverLog(TAG, `Succesfully updated subscriber`)
-      })
-      .catch(err => {
-        logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
-      })
+      if (containsUserInput) {
+        _updateSubsForUserInput(subscribers, waitingForUserInput)
+      }
       return batch
     } else {
-      console.log('subscriber_id called',subscribers[i]._id )
       let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": subscribers[i].senderId}))
       let tag = "tag=" + encodeURIComponent("NON_PROMOTIONAL_SUBSCRIPTION")
       let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
-     let flag = true
+      let flag = true
       payload.forEach((item, index) => {
         if (flag) {
           let message = "message=" + encodeURIComponent(_prepareMessageData(module, item, subscribers[i]))
@@ -85,7 +91,8 @@ console.log('_prepareBatchData called', waitingForUserInput)
           }
           if (item.componentType === 'userInput') {
             flag = false
-            waitingForUserInput.componentIndex= index
+            containsUserInput = true
+            waitingForUserInput.componentIndex = subscriber.waitingForUserInput ? subscriber.waitingForUserInput.componentIndex + index +  1 : index
           }
         }
         if (['polls', 'surveys'].includes(item.componentType)) {
@@ -129,6 +136,17 @@ const _prepareReport = (module, increment, data, subscribers, result, saveMsgRec
     }
   }
   return result
+}
+
+const _updateSubsForUserInput = (subscribers, waitingForUserInput) => {
+  let subscriberIds = subscribers.map(subscriber => subscriber._id)
+  callApi(`subscribers/updateAll`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
+    .then(updated => {
+      logger.serverLog(TAG, `Succesfully updated subscriber`)
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
+    })
 }
 
 exports.sendUsingBatchAPI = sendUsingBatchAPI
