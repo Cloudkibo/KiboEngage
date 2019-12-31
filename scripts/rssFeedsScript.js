@@ -17,7 +17,7 @@ exports.runRSSScript = () => {
       // rssFeeds.forEach(rssFeed => {
         if (new Date(rssFeed.scheduledTime).getTime() <=
           new Date().getTime()) {
-          let pageQuery = {connected: true, companyId: rssFeed.companyId}
+          let pageQuery = {connected: true, companyId: rssFeed.companyId, gotPageSubscriptionPermission: true}
           if (rssFeed.pageIds.length > 0) {
             pageQuery['_id'] = {$in: rssFeed.pageIds}
           }
