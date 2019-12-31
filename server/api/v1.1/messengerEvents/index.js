@@ -49,7 +49,7 @@ router.post('/setCustomField', auth.isItWebhookServer(), customFieldsController.
 router.post('/sendMessageBlock', auth.isItWebhookServer(), flowBuilder.index)
 router.post('/googleSheets', auth.isItWebhookServer(), googleSheetsController.index)
 router.post('/hubspot', auth.isItWebhookServer(), hubspotController.index)
-router.post('/rssFeeds/subscribeOrUnsubscribe', auth.isItWebhookServer(), rssFeedsController.subscribeOrUnsubscribe)
+router.post('/rssFeeds/changeSubscription', auth.isItWebhookServer(), rssFeedsController.changeSubscription)
 router.post('/rssFeeds/showMoreTopics', auth.isItWebhookServer(), rssFeedsController.showMoreTopics)
 router.post('/rssFeeds/sendTopicFeed', auth.isItWebhookServer(), rssFeedsController.sendTopicFeed)
 

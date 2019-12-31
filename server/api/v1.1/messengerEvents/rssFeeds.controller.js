@@ -7,7 +7,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
 
-exports.subscribeOrUnsubscribe = function (req, res) {
+exports.changeSubscription = function (req, res) {
   res.status(200).json({
     status: 'success',
     description: `received the payload`
