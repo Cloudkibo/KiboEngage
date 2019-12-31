@@ -99,7 +99,7 @@ exports.postPublish = function (req, res) {
                                       if (tagSubscribers.length > 0) {
                                         let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                                         subsFindCriteria['_id'] = {$in: subscriberIds}
-                                        sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                                        sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                                         logger.serverLog(TAG, 'Conversation sent successfully!')
                                       } else {
                                         logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
@@ -113,7 +113,7 @@ exports.postPublish = function (req, res) {
                                   logger.serverLog(TAG, err)
                                 })
                             } else {
-                              sendUsingBatchAPI('autoposting', messageData, subsFindCriteria, page, '', reportObj)
+                              sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                               logger.serverLog(TAG, 'Conversation sent successfully!')
                             }
                           })
