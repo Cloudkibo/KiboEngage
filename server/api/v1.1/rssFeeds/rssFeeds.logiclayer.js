@@ -1,5 +1,6 @@
 exports.fetchFeedsCriteria = function (body, companyId) {
     let finalCriteria = {}
+    let countCriteria = {}
     let recordsToSkip = 0
     let findCriteria = {
       companyId: companyId,

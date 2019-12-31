@@ -34,6 +34,21 @@ exports.createPayload = {
     'pageIds'
   ]
 }
+exports.editPayload = {
+  'type': 'object',
+  'properties': {
+    'feedId': {
+      'type': 'string'
+    },
+    'updatedObject': {
+      'type': 'object'
+    }
+  },
+  'required': [
+    'feedId',
+    'updatedObject'
+  ]
+}
 exports.fetchPayload = {
   'properties': {
     'last_id': {
