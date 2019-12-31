@@ -9,6 +9,7 @@ exports.getCriterias = function (body) {
   endDate.setMinutes(0)
   endDate.setSeconds(0)
   let finalCriteria = {}
+  let countCriteria = {}
   let recordsToSkip = 0
   let findCriteria = {
     rssFeedId: body.feedId,
@@ -48,5 +49,12 @@ exports.getCriterias = function (body) {
       { $limit: body.number_of_records }
     ]
   }
-  return finalCriteria
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
 }

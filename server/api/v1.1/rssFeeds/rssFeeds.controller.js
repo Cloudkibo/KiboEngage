@@ -151,7 +151,7 @@ exports.getRssFeedPosts = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
   async.parallelLimit([
     function (callback) {
-      RssFeedPostsDataLayer.countDocuments(criterias[0].$match)
+      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[0].$match)
         .then(result => {
           callback(null, result)
         })
@@ -160,7 +160,7 @@ exports.getRssFeedPosts = function (req, res) {
         })
     },
     function (callback) {
-      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias[0].$match, null, null, criterias[3].$limit, criterias[1].$sort, criterias[2].$skip)
+      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[0].$match, null, null, criterias.finalCriteria[3].$limit, criterias.finalCriteria[1].$sort, criterias.finalCriteria[2].$skip)
         .then(result => {
           callback(null, result)
         })
