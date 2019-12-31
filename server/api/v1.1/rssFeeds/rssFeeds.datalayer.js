@@ -50,8 +50,10 @@ exports.genericUpdateRssFeed = (queryObject, updated, options) => {
     match: queryObject,
     updated: updated
   }
-  if (options.upsert) query.upsert = options.upsert
-  if (options.new) query.new = options.new
-  if (options.multi) query.multi = options.multi
+  if (options) {
+    if (options.upsert) query.upsert = options.upsert
+    if (options.new) query.new = options.new
+    if (options.multi) query.multi = options.multi
+  }
   return callApi(`rssFeeds`, 'put', query, 'kiboengage')
 }
