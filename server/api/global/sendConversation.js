@@ -6,7 +6,7 @@ const prepareMessageData = require('./prepareMessageData')
 const { saveLiveChat, preparePayload } = require('./livechat')
 
 const sendUsingBatchAPI = (module, payload, subsCriteria, page, user, result, saveMsgRecord, recordObj) => {
-  callApi(`subscribers/query`, 'post', subsCriteria)
+  callApi(`subscribers/aggregate`, 'post', subsCriteria)
     .then(subscribers => {
       if (subscribers.length > 0) {
         let batch = _prepareBatchData(module, payload, subscribers, page, user)
