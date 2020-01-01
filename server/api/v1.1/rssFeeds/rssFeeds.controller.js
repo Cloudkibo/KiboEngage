@@ -29,6 +29,26 @@ exports.create = function (req, res) {
     }
   })
 }
+exports.edit = function (req, res) {
+  let data = {
+    body: req.body,
+    companyId: req.user.companyId,
+    userId: req.user._id
+  }
+  async.series([
+    _validateFeedTitle.bind(null, data),
+    _validateFeedUrl.bind(null, data),
+    _validateActiveFeeds.bind(null, data),
+    _checkDefaultFeed.bind(null, data),
+    _updateRSSFeed.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200, data.update)
+    }
+  })
+}
 
 function _saveRSSFeed (data, next) {
   let scheduledTime = new Date()
@@ -51,6 +71,17 @@ function _saveRSSFeed (data, next) {
   DataLayer.createForRssFeeds(dataToSave)
     .then(savedFeed => {
       data.savedFeed = savedFeed
+      next(null)
+    })
+    .catch(error => {
+      next(error)
+    })
+}
+function _updateRSSFeed (data, next) {
+  let dataToUpdate  = data.body.updatedObject
+  DataLayer.genericUpdateRssFeed({_id: data.body.feedId}, dataToUpdate)
+    .then(updated => {
+      data.update = updated
       next(null)
     })
     .catch(error => {
@@ -165,19 +196,24 @@ const _validateFeedTitle = (data, next) => {
   }
 }
 const _validateActiveFeeds = (data, next) => {
-  DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
-    .then(rssFeeds => {
-      if (rssFeeds.length > 0) {
-        next('Can not create more RSS Feeds with the same Title')
-      } else {
-        next(null)
-      }
-    })
-    .catch(error => {
-      next(error)
-    })
+  if (data.body.title) {
+    DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+      .then(rssFeeds => {
+        if (rssFeeds.length > 0) {
+          next('Can not create more RSS Feeds with the same Title')
+        } else {
+          next(null)
+        }
+      })
+      .catch(error => {
+        next(error)
+      })
+  } else {
+    next(null)
+  }
 }
 const _validateFeedUrl = (data, next) => {
+  if (data.body.feedUrl) {
   feedparser.parse(data.body.feedUrl)
     .then(feed => {
       if (feed) {
@@ -190,12 +226,15 @@ const _validateFeedUrl = (data, next) => {
       logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
       next(`Invalid Feed URL provided`)
     })
+  } else {
+    next(null)
+  }
 }
 exports.getRssFeedPosts = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
   async.parallelLimit([
     function (callback) {
-      RssFeedPostsDataLayer.countDocuments(criterias[0].$match)
+      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[0].$match)
         .then(result => {
           callback(null, result)
         })
@@ -204,7 +243,7 @@ exports.getRssFeedPosts = function (req, res) {
         })
     },
     function (callback) {
-      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias[0].$match, null, null, criterias[3].$limit, criterias[1].$sort, criterias[2].$skip)
+      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[0].$match, null, null, criterias.finalCriteria[3].$limit, criterias.finalCriteria[1].$sort, criterias.finalCriteria[2].$skip)
         .then(result => {
           callback(null, result)
         })

@@ -26,5 +26,10 @@ router.post('/rssFeedPosts',
   auth.isAuthenticated(),
   validate({body: validationSchema.getRssFeedPostsPayload}),
   controller.getRssFeedPosts)
+  
+router.post('/edit',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.editPayload}),
+  controller.edit)
 
 module.exports = router

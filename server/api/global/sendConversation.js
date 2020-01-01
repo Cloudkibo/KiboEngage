@@ -61,7 +61,7 @@ console.log('_prepareBatchData called', waitingForUserInput)
       console.log('waitingForUserInput', waitingForUserInput)
       let subscriberIds = subscribers.map(subscriber=> subscriber._id)
       console.log('subscriberIds _prepareBatchData', subscriberIds)
-      callApi(`subscribers/updateAll`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
+      callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
       .then(updated => {
         logger.serverLog(TAG, `Succesfully updated subscriber`)
       })

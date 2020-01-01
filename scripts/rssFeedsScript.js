@@ -13,16 +13,17 @@ const request = require('request')
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true})
     .then(rssFeeds => {
-      rssFeeds.forEach(rssFeed => {
+      async.eachOf(rssFeeds, function (rssFeed) {
+      // rssFeeds.forEach(rssFeed => {
         if (new Date(rssFeed.scheduledTime).getTime() <=
           new Date().getTime()) {
-          let pageQuery = {connected: true, companyId: rssFeed.companyId}
+          let pageQuery = {connected: true, companyId: rssFeed.companyId, gotPageSubscriptionPermission: true}
           if (rssFeed.pageIds.length > 0) {
             pageQuery['_id'] = {$in: rssFeed.pageIds}
           }
           callApi(`pages/query`, 'post', pageQuery)
             .then(pages => {
-              pages.forEach(page => {
+              async.eachOf(pages, function (page) {
                 let data = {
                   rssFeed: rssFeed,
                   page: page
@@ -86,12 +87,12 @@ const _checkRssSubscriptions = (data, next) => {
   if (data.rssFeed.defaultFeed) {
     RssSubscriptionsDataLayer.genericFindForRssSubscriptions({subscriberId: {$in: subscriberIds}, rssFeedId: data.rssFeed._id, subscription: false})
       .then(rssSubscriptions => {
-        let finalSubscribersList = []
+        let finalSubscribersList = data.subscribers
         if (rssSubscriptions.length > 0) {
           for (let i = 0; i < data.subscribers.length; i++) {
             for (let j = 0; j < rssSubscriptions.length; j++) {
-              if (data.subscribers[i] !== rssSubscriptions[j]) {
-                finalSubscribersList.push(data.subscribers[i])
+              if (data.subscribers[i]._id === rssSubscriptions[j].subscriberId) {
+                finalSubscribersList.splice(i, 1)
               }
             }
           }
@@ -109,7 +110,7 @@ const _checkRssSubscriptions = (data, next) => {
         if (rssSubscriptions.length > 0) {
           for (let i = 0; i < data.subscribers.length; i++) {
             for (let j = 0; j < rssSubscriptions.length; j++) {
-              if (data.subscribers[i] === rssSubscriptions[j]) {
+              if (data.subscribers[i]._id === rssSubscriptions[j].subscriberId) {
                 finalSubscribersList.push(data.subscribers[i])
               }
             }
@@ -262,3 +263,5 @@ const _saveRssFeedPost = (data, next) => {
       next(err)
     })
 }
+exports._parseFeed = _parseFeed
+exports.getMetaData = getMetaData
