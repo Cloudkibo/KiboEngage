@@ -31,14 +31,16 @@ exports.create = function (req, res) {
 }
 exports.edit = function (req, res) {
   let data = {
-    body: req.body,
+    feedId: req.body.feedId,
+    body: req.body.updatedObject,
     companyId: req.user.companyId,
     userId: req.user._id
   }
   async.series([
+    _fetchFeedToUpdate.bind(null, data),
     _validateFeedTitle.bind(null, data),
     _validateFeedUrl.bind(null, data),
-    _validateActiveFeeds.bind(null, data),
+    _validateTitleforEditFeed.bind(null, data),
     _checkDefaultFeed.bind(null, data),
     _updateRSSFeed.bind(null, data)
   ], function (err) {
@@ -50,6 +52,20 @@ exports.edit = function (req, res) {
   })
 }
 
+function _fetchFeedToUpdate (data, next) {
+  DataLayer.genericFindForRssFeeds({_id: data.feedId})
+  .then(rssFeeds => {
+    if (rssFeeds[0]) {
+      data.feed = rssFeeds[0]
+      next(null)
+    } else {
+      next('Unable to fetch current feed')
+    }
+  })
+  .catch(error => {
+    next(error)
+  })
+}
 function _saveRSSFeed (data, next) {
   let scheduledTime = new Date()
   scheduledTime.setDate(scheduledTime.getDate() + 1)
@@ -78,8 +94,8 @@ function _saveRSSFeed (data, next) {
     })
 }
 function _updateRSSFeed (data, next) {
-  let dataToUpdate  = data.body.updatedObject
-  DataLayer.genericUpdateRssFeed({_id: data.body.feedId}, dataToUpdate)
+  let dataToUpdate  = data.body
+  DataLayer.genericUpdateRssFeed({_id: data.feedId}, dataToUpdate)
     .then(updated => {
       data.update = updated
       next(null)
@@ -195,6 +211,23 @@ const _validateFeedTitle = (data, next) => {
     next(null)
   }
 }
+const _validateTitleforEditFeed = (data, next) => {
+  if (data.body.title.toLowerCase().trim() === data.feed.title.toLowerCase().trim()) {
+    next(null)
+  } else {
+    DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    .then(rssFeeds => {
+      if (rssFeeds.length > 0) {
+        next('Can not create more RSS Feeds with the same Title')
+      } else {
+        next(null)
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
+  }
+}
 const _validateActiveFeeds = (data, next) => {
   if (data.body.title) {
     DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
@@ -212,6 +245,7 @@ const _validateActiveFeeds = (data, next) => {
     next(null)
   }
 }
+
 const _validateFeedUrl = (data, next) => {
   if (data.body.feedUrl) {
   feedparser.parse(data.body.feedUrl)
