@@ -19,7 +19,7 @@ exports.testCommonBatchAPI = function (req, res) {
     {$match: {companyId: req.body.companyId, pageId: req.body.pageId}},
     {$limit: Math.floor(50 / payload.length)}
   ]
-  sendUsingBatchAPI(payload, subsCriteria, accessToken, req.body.count, {successful: 0, unsuccessful: 0, errors: []})
+  sendUsingBatchAPI(payload, {criteria: subsCriteria}, accessToken, req.body.count, {successful: 0, unsuccessful: 0, errors: []})
   return res.status(200).json({status: 'success'})
 }
 

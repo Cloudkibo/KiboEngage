@@ -536,7 +536,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
             utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
               .then(lists => {
                 let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, payload.length, req.body.isApprovedForSMP)
-                sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+                sendUsingBatchAPI('broadcast', payload, {criteria: subsFindCriteria}, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
                 sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
               })
               .catch(error => {
@@ -555,7 +555,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                       if (tagSubscribers.length > 0) {
                         let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                         subsFindCriteria['_id'] = {$in: subscriberIds}
-                        sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+                        sendUsingBatchAPI('broadcast', payload, {criteria: subsFindCriteria}, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
                         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                       } else {
                         sendErrorResponse(res, 500, 'No subscribers match the given criteria')
@@ -571,7 +571,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                   sendErrorResponse(res, 500, 'Failed to fetch tags')
                 })
             } else {
-              sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+              sendUsingBatchAPI('broadcast', payload, {criteria: subsFindCriteria}, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
               sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
             }
           }
