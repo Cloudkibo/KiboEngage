@@ -92,7 +92,12 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
           if (item.componentType === 'userInput') {
             flag = false
             containsUserInput = true
-            waitingForUserInput.componentIndex = subscriber.waitingForUserInput ? subscriber.waitingForUserInput.componentIndex + index +  1 : index
+            if(module === 'update_broadcast') {
+              waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
+            }
+            else {
+              waitingForUserInput.componentIndex=index
+            }
           }
         }
         if (['polls', 'surveys'].includes(item.componentType)) {
@@ -140,7 +145,7 @@ const _prepareReport = (module, increment, data, subscribers, result, saveMsgRec
 
 const _updateSubsForUserInput = (subscribers, waitingForUserInput) => {
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
-  callApi(`subscribers/updateAll`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
+  callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
       logger.serverLog(TAG, `Succesfully updated subscriber`)
     })

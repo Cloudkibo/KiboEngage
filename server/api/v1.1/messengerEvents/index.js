@@ -23,6 +23,7 @@ const flowBuilder = require('./flowBuilder.controller')
 const googleSheetsController = require('./googleSheets.controller')
 const hubspotController = require('./hubspot.controller')
 const userInputController = require('./userInput.controller')
+const rssFeedsController = require('./rssFeeds.controller')
 
 router.post('/seen', auth.isItWebhookServer(), seenController.index)
 router.post('/delivery', auth.isItWebhookServer(), deliveryController.index)
@@ -50,5 +51,8 @@ router.post('/sendMessageBlock', auth.isItWebhookServer(), flowBuilder.index)
 router.post('/googleSheets', auth.isItWebhookServer(), googleSheetsController.index)
 router.post('/hubspot', auth.isItWebhookServer(), hubspotController.index)
 router.post('/userInput', auth.isItWebhookServer(), userInputController.index)
+router.post('/rssFeeds/changeSubscription', auth.isItWebhookServer(), rssFeedsController.changeSubscription)
+router.post('/rssFeeds/showMoreTopics', auth.isItWebhookServer(), rssFeedsController.showMoreTopics)
+router.post('/rssFeeds/sendTopicFeed', auth.isItWebhookServer(), rssFeedsController.sendTopicFeed)
 
 module.exports = router
