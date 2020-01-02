@@ -37,8 +37,7 @@ exports.runRSSScript = () => {
 }
 
 const _handleRSSFeed = (rssFeed, next) => {
-  let x = true
-  if (x || new Date(rssFeed.scheduledTime).getTime() <= new Date().getTime()) {
+  if (new Date(rssFeed.scheduledTime).getTime() <= new Date().getTime()) {
     let data = {
       rssFeed: rssFeed
     }
