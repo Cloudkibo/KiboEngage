@@ -33,7 +33,7 @@ exports.index = function (req, res) {
                     console.log('False _checkTypeValidation')
                     waitingForUserInput.incorrectTries = waitingForUserInput.incorrectTries - 1
                     _subscriber_update(subscriber, waitingForUserInput)
-                    let validationMessage = _createValidationMessage(broadcast_payload.retryMessage)
+                    let validationMessage = _createValidationMessage(broadcast_payload.retryMessage, broadcast_payload.skipButtonText)
                     sendUsingBatchAPI('broadcast', validationMessage, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
                   }
                   else {
@@ -82,10 +82,21 @@ const _checkTypeValidation = (payload, message) => {
   }
 }
 
-const _createValidationMessage = (message) => {
+const _createValidationMessage = (message, skipButtonText) => {
   let data = [{
     text: message,
-    componentType: 'text'
+    componentType: 'text',
+    quickReplies: [
+      {
+        'content_type': 'text',
+        'title': skipButtonText,
+        'payload': JSON.stringify(
+          {
+            option: skipButtonText
+          }
+        )
+      }
+    ]
   }]
   return data
 }

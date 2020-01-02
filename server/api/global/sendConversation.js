@@ -75,6 +75,9 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
       if (containsUserInput) {
         _updateSubsForUserInput(subscribers, waitingForUserInput)
       }
+      else {
+        _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
+      }
       return batch
     } else {
       let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": subscribers[i].senderId}))
@@ -148,6 +151,17 @@ const _updateSubsForUserInput = (subscribers, waitingForUserInput) => {
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
       logger.serverLog(TAG, `Succesfully updated subscriber`)
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
+    })
+}
+
+const _removeSubsWaitingForUserInput = (subscribers, waitingForUserInput) => {
+  let subscriberIds = subscribers.map(subscriber => subscriber._id)
+  callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds, waitingForUserInput: { '$ne': null }}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
+    .then(updated => {
+      logger.serverLog(TAG, `Succesfully updated subscriber _removeSubsWaitingForUserInput`)
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
