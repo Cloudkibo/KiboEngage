@@ -172,7 +172,13 @@ const getMailTransporter = function () {
   return transporter
 }
 
+const isEmailAddress = function (str) {
+  var pattern = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+  return pattern.test(str)  
+}
+
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject
 exports.passwordChangeEmailAlert = passwordChangeEmailAlert
 exports.getMailTransporter = getMailTransporter
+exports.isEmailAddress = isEmailAddress
