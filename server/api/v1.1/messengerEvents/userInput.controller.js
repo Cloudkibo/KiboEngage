@@ -4,7 +4,7 @@ const TAG = 'api/messengerEvents/userInput.controller.js'
 const logger = require('../../../components/logger')
 const {sendUsingBatchAPI} = require('../../global/sendConversation')
 const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
-const {isEmailAddress} = require('../../global/utility')
+const {isEmailAddress, isWebURL} = require('../../global/utility')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -32,13 +32,13 @@ exports.index = function (req, res) {
                   if (waitingForUserInput.incorrectTries > 0) {
                     console.log('False _checkTypeValidation')
                     waitingForUserInput.incorrectTries = waitingForUserInput.incorrectTries - 1
-                    _subscriber_update(subscriber, waitingForUserInput)
+                    _subscriberUpdate(subscriber, waitingForUserInput)
                     let validationMessage = _createValidationMessage(broadcast_payload.retryMessage, broadcast_payload.skipButtonText)
-                    sendUsingBatchAPI('broadcast', validationMessage, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
+                    sendUsingBatchAPI('broadcast_message', validationMessage, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
                   }
                   else {
                     waitingForUserInput.componentIndex = -1
-                    _subscriber_update(subscriber, waitingForUserInput)
+                    _subscriberUpdate(subscriber, waitingForUserInput)
                   }
                 }
               })
@@ -49,7 +49,7 @@ exports.index = function (req, res) {
           else {
             console.log('called function component index')
             waitingForUserInput.componentIndex = -1
-            _subscriber_update(subscriber, waitingForUserInput)
+            _subscriberUpdate(subscriber, waitingForUserInput)
           }
         })
         .catch(err => {
@@ -80,6 +80,9 @@ const _checkTypeValidation = (payload, message) => {
   if (payload.type === 'email') {
     return isEmailAddress(message.text)
   }
+  if (payload.type === 'url') {
+    return isWebURL(message.text)
+  }
 }
 
 const _createValidationMessage = (message, skipButtonText) => {
@@ -101,8 +104,7 @@ const _createValidationMessage = (message, skipButtonText) => {
   return data
 }
 
-const _subscriber_update = (subscriber, waitingForUserInput) => {
-
+const _subscriberUpdate = (subscriber, waitingForUserInput) => {
   callApi(`subscribers/update`, 'put', {query: {_id: subscriber.data[0]._id}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
     .then(updated => {
       logger.serverLog(TAG, `Succesfully updated subscriber`)
