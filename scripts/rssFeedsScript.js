@@ -13,117 +13,188 @@ const request = require('request')
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true})
     .then(rssFeeds => {
-      async.eachOf(rssFeeds, function (rssFeed) {
-      // rssFeeds.forEach(rssFeed => {
-        if (new Date(rssFeed.scheduledTime).getTime() <=
-          new Date().getTime()) {
-          let pageQuery = {connected: true, companyId: rssFeed.companyId, gotPageSubscriptionPermission: true}
-          if (rssFeed.pageIds.length > 0) {
-            pageQuery['_id'] = {$in: rssFeed.pageIds}
-          }
-          callApi(`pages/query`, 'post', pageQuery)
-            .then(pages => {
-              async.eachOf(pages, function (page) {
-                let data = {
-                  rssFeed: rssFeed,
-                  page: page
-                }
-                async.series([
-                  _performAction.bind(null, data),
-                  _updateScheduledTime.bind(null, data)
-                ], function (err) {
-                  if (err) {
-                    logger.serverLog(TAG, `Failed to send rss updates. ${JSON.stringify(err)}`)
-                  } else {
-                    logger.serverLog(TAG, `RSS updates sent Successfullyf for url ${rssFeed.feedUrl}`)
-                  }
-                })
-              })
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
-            })
-        }
-      })
+      let defaultFeeds = rssFeeds.filter(feed => feed.defaultFeed === true)
+      let nonDefaultFeeds = rssFeeds.filter(feed => feed.defaultFeed === false)
+      let nonDefaultFeedIds = nonDefaultFeeds.map(feed => feed._id)
+      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({rssFeedId: {$in: nonDefaultFeedIds}, subscription: true})
+        .then(rssSubscriptions => {
+          let rssSubscriptionIds = rssSubscriptions.map(rssSubscription => rssSubscription.rssFeedId)
+          nonDefaultFeeds = nonDefaultFeeds.filter(feed => rssSubscriptionIds.includes(feed._id))
+          rssFeeds = defaultFeeds.concat(nonDefaultFeeds)
+          async.eachSeries(rssFeeds, _handleRSSFeed, function (err) {
+            if (err) {
+              logger.serverLog(TAG, err, 'error')
+            }
+          })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch rss subscription ${err}`, 'error')
+        })
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch rss feeds ${err}`, 'error')
     })
 }
 
-const _performAction = (data, next) => {
-  async.series([
-    _getSubscribers.bind(null, data),
-    _checkRssSubscriptions.bind(null, data),
-    _parseFeed.bind(null, data),
-    _prepareMessageData.bind(null, data),
-    _prepareBatchData.bind(null, data),
-    _callBatchAPI.bind(null, data),
-    _saveRssFeedPost.bind(null, data)
-  ], function (err) {
-    if (err) {
-      next(err)
-    } else {
+const _handleRSSFeed = (rssFeed, next) => {
+  if (new Date(rssFeed.scheduledTime).getTime() <= new Date().getTime()) {
+    let data = {
+      rssFeed: rssFeed
+    }
+    async.series([
+      _parseFeed.bind(null, data),
+      _fetchPage.bind(null, data),
+      _prepareMessageData.bind(null, data),
+      _handleFeed.bind(null, data),
+      _updateScheduledTime.bind(null, data)
+    ], function (err) {
+      if (err) {
+        next(err)
+      } else {
+        next()
+      }
+    })
+  } else {
+    next()
+  }
+}
+
+const _fetchPage = (data, next) => {
+  callApi(`pages/query`, 'post', {_id: data.rssFeed.pageIds[0]})
+    .then(pages => {
+      data.page = pages[0]
       next()
+    })
+    .catch((err) => {
+      next(err)
+    })
+}
+
+// route = https://kiboengage.com/clicked?r=originalUrl&m=rss&id=post_id
+
+const _handleFeed = (data, next) => {
+  if (data.rssFeed.defaultFeed) {
+    const criteria = [
+      {$match: {pageId: {$in: data.rssFeed.pageIds}, companyId: data.rssFeed.companyId, isSubscribed: true, completeInfo: true}},
+      {$limit: 50}
+    ]
+    sendFeed('default', criteria, data.messageData, data.page, data.rssFeed)
+    next()
+  } else {
+    const criteria = {
+      purpose: 'aggregate',
+      match: {subscription: true, rssFeedId: data.rssFeed._id},
+      limit: 50
+    }
+    sendFeed('nonDefault', criteria, data.messageData, data.page)
+    next()
+  }
+}
+
+const sendFeed = (type, criteria, payload, page, feed) => {
+  let subscribersPromise = new Promise((resolve, reject) => {
+    if (type === 'default') {
+      callApi('subscribers/aggregate', 'post', criteria)
+        .then(subscribers => {
+          if (subscribers.length > 0) {
+            callApi('rssSubscriptions/query', 'post', {purpose: 'findAll', match: {feedId: feed._id, subscription: false}}, 'kiboengage')
+              .then(result => {
+                if (result && result.length > 0) {
+                  let subIds = result.map(r => r.subscriberId._id)
+                  subscribers = subscribers.filter(s => !subIds.includes(s._id))
+                  if (subscribers.length > 0) resolve(subscribers, subscribers[subscribers.length - 1]._id)
+                  else resolve(subscribers)
+                } else {
+                  resolve(subscribers)
+                }
+              })
+          } else {
+            resolve(subscribers)
+          }
+        })
+        .catch((err) => {
+          reject(err)
+        })
+    } else {
+      callApi('rssSubscriptions/query', 'post', criteria, 'kiboengage')
+        .then(subscriptions => {
+          if (subscriptions.length > 0) {
+            let subscribers = subscriptions.map(s => s.subscriberId)
+            resolve(subscribers, subscriptions[subscriptions.length - 1]._id)
+          } else {
+            resolve(subscriptions)
+          }
+        })
+        .catch((err) => {
+          reject(err)
+        })
+    }
+  })
+
+  subscribersPromise
+    .then((subscribers, lastId) => {
+      if (subscribers.length > 0) {
+        prepareBatchData(subscribers, payload)
+          .then(batch => {
+            return callBatchAPI(page, batch)
+          })
+          .then(response => {
+            if (criteria.match) criteria.match._id = {$gt: lastId}
+            else if (criteria[0].$match) criteria[0].$match._id = {$gt: lastId}
+            sendFeed(type, criteria, payload, page, feed)
+          })
+          .catch(err => {
+            logger.serverLog(TAG, err, 'error')
+          })
+      } else {
+        logger.serverLog(TAG, 'Feed sent successfully!')
+      }
+      return prepareBatchData(subscribers, payload)
+    })
+    .catch(err => {
+      logger.serverLog(TAG, err, 'error')
+    })
+}
+
+const prepareBatchData = (subscribers, messageData) => {
+  return new Promise((resolve, reject) => {
+    let batch = []
+    for (let i = 0; i <= subscribers.length; i++) {
+      if (i === subscribers.length) {
+        resolve(JSON.stringify(batch))
+      } else {
+        let recipient = 'recipient=' + encodeURIComponent(JSON.stringify({'id': subscribers[i].senderId}))
+        let tag = 'tag=' + encodeURIComponent('NON_PROMOTIONAL_SUBSCRIPTION')
+        let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
+        messageData.forEach((item, index) => {
+          let message = 'message=' + encodeURIComponent(JSON.stringify(item))
+          if (index === 0) {
+            batch.push({ 'method': 'POST', 'name': `${subscribers[i].senderId}${index + 1}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
+          } else {
+            batch.push({ 'method': 'POST', 'name': `${subscribers[i].senderId}${index + 1}`, 'depends_on': `${subscribers[i].senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
+          }
+        })
+      }
     }
   })
 }
 
-const _getSubscribers = (data, next) => {
-  let subscribersData = [
-    {$match: {pageId: data.page._id, companyId: data.page.companyId, isSubscribed: true, completeInfo: true}}
-  ]
-  callApi('subscribers/aggregate', 'post', subscribersData)
-    .then(subscribers => {
-      data.subscribers = subscribers
-      next()
+const callBatchAPI = (page, batch) => {
+  return new Promise((resolve, reject) => {
+    const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
+      if (err) {
+        reject(err)
+      } else {
+        body = JSON.parse(body)
+        resolve('success')
+      }
     })
-    .catch(err => {
-      next(err)
-    })
+    const form = r.form()
+    form.append('access_token', page.accessToken)
+    form.append('batch', batch)
+  })
 }
-const _checkRssSubscriptions = (data, next) => {
-  let subscriberIds = data.subscribers.map(subscriber => subscriber._id)
-  if (data.rssFeed.defaultFeed) {
-    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({subscriberId: {$in: subscriberIds}, rssFeedId: data.rssFeed._id, subscription: false})
-      .then(rssSubscriptions => {
-        let finalSubscribersList = data.subscribers
-        if (rssSubscriptions.length > 0) {
-          for (let i = 0; i < data.subscribers.length; i++) {
-            for (let j = 0; j < rssSubscriptions.length; j++) {
-              if (data.subscribers[i]._id === rssSubscriptions[j].subscriberId) {
-                finalSubscribersList.splice(i, 1)
-              }
-            }
-          }
-          data.subscribers = finalSubscribersList
-        }
-        next()
-      })
-      .catch(err => {
-        next(err)
-      })
-  } else {
-    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({subscriberId: {$in: subscriberIds}, rssFeedId: data.rssFeed._id, subscription: true})
-      .then(rssSubscriptions => {
-        let finalSubscribersList = []
-        if (rssSubscriptions.length > 0) {
-          for (let i = 0; i < data.subscribers.length; i++) {
-            for (let j = 0; j < rssSubscriptions.length; j++) {
-              if (data.subscribers[i]._id === rssSubscriptions[j].subscriberId) {
-                finalSubscribersList.push(data.subscribers[i])
-              }
-            }
-          }
-        }
-        data.subscribers = finalSubscribersList
-        next()
-      })
-      .catch(err => {
-        next(err)
-      })
-  }
-}
+
 const _parseFeed = (data, next) => {
   feedparser.parse(data.rssFeed.feedUrl)
     .then(feed => {
@@ -135,35 +206,48 @@ const _parseFeed = (data, next) => {
     })
 }
 const _prepareMessageData = (data, next) => {
-  let quickReplies = [{
-    content_type: 'text',
-    title: 'Unsubscribe from News Feed',
-    payload: JSON.stringify([{action: 'unsubscribe_from_rssFeed', rssFeedId: data.rssFeed._id}])
-  },
-  {
-    content_type: 'text',
-    title: 'Show More Topics',
-    payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
-  }
-  ]
-  getMetaData(data.feed, data.rssFeed)
-    .then(gallery => {
-      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
-      let messageData = [{
-        text: `Here are your daily updates from ${data.rssFeed.title} News:`
-      },
-      {
-        attachment: {
-          type: 'template',
-          payload: {
-            template_type: 'generic',
-            elements: gallery
-          }
-        },
-        quick_replies: quickReplies
-      }]
-      data.messageData = messageData
-      next()
+  RSSFeedsDataLayer.genericFindForRssFeeds({
+    companyId: data.rssFeed.companyId,
+    _id: {$ne: data.rssFeed._id},
+    defaultFeed: false,
+    isActive: true,
+    pageIds: data.page._id
+  })
+    .then(rssFeeds => {
+      let quickReplies = [{
+        content_type: 'text',
+        title: 'Unsubscribe from News Feed',
+        payload: JSON.stringify([{action: 'unsubscribe_from_rssFeed', rssFeedId: data.rssFeed._id}])
+      }
+      ]
+      if (rssFeeds.length > 0) {
+        quickReplies.push({
+          content_type: 'text',
+          title: 'Show More Topics',
+          payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
+        })
+      }
+      getMetaData(data.feed, data.rssFeed)
+        .then(gallery => {
+          logger.serverLog(TAG, `gallery.length ${gallery.length}`)
+          let messageData = [{
+            text: `Here are your daily updates from ${data.rssFeed.title} News:`
+          }, {
+            attachment: {
+              type: 'template',
+              payload: {
+                template_type: 'generic',
+                elements: gallery
+              }
+            },
+            quick_replies: quickReplies
+          }]
+          data.messageData = messageData
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
     })
     .catch(err => {
       next(err)
@@ -171,7 +255,6 @@ const _prepareMessageData = (data, next) => {
 }
 function getMetaData (feed, rssFeed) {
   return new Promise((resolve, reject) => {
-    logger.serverLog(TAG, `feed.length ${feed.length}`)
     let gallery = []
     let length = rssFeed.storiesCount
     for (let i = 0; i < length; i++) {
@@ -213,46 +296,12 @@ const _updateScheduledTime = (data, next) => {
       next(err)
     })
 }
-const _prepareBatchData = (data, next) => {
-  let batch = []
-  for (let i = 0; i <= data.subscribers.length; i++) {
-    if (i === data.subscribers.length) {
-      data.batch = JSON.stringify(batch)
-      next()
-    } else {
-      let recipient = 'recipient=' + encodeURIComponent(JSON.stringify({'id': data.subscribers[i].senderId}))
-      let tag = 'tag=' + encodeURIComponent('NON_PROMOTIONAL_SUBSCRIPTION')
-      let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
-      data.messageData.forEach((item, index) => {
-        let message = 'message=' + encodeURIComponent(JSON.stringify(item))
-        if (index === 0) {
-          batch.push({ 'method': 'POST', 'name': `${data.subscribers[i].senderId}${index + 1}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
-        } else {
-          batch.push({ 'method': 'POST', 'name': `${data.subscribers[i].senderId}${index + 1}`, 'depends_on': `${data.subscribers[i].senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
-        }
-      })
-    }
-  }
-}
-const _callBatchAPI = (data, next) => {
-  const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-    if (err) {
-      next(err)
-    } else {
-      body = JSON.parse(body)
-      next()
-    }
-  })
-  const form = r.form()
-  form.append('access_token', data.page.accessToken)
-  form.append('batch', data.batch)
-}
+
 const _saveRssFeedPost = (data, next) => {
   let dataToSave = {
     rssFeedId: data.rssFeed._id,
     pageId: data.page._id,
-    companyId: data.rssFeed.companyId,
-    sent: data.subscribers.length
+    companyId: data.rssFeed.companyId
 
   }
   RssFeedPostsDataLayer.createForRssFeedPosts(dataToSave)

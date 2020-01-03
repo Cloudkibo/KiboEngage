@@ -85,11 +85,18 @@ const _fetchSubscriber = (data, next) => {
 }
 const _updateSubscription = (data, next) => {
   let updateData = {
-    subscriberId: data.subscriber._id,
+    subscriberId: {
+      _id: data.subscriber._id,
+      firstName: data.subscriber.firstName,
+      lastName: data.subscriber.lastName,
+      gender: data.subscriber.gender,
+      locale: data.subscriber.locale,
+      senderId: data.subscriber.senderId
+    },
     rssFeedId: data.resp.rssFeedId,
     subscription: data.resp.action === 'subscribe_to_rssFeed' ? true : false
   }
-  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({subscriberId: data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
+  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
     .then(rssSubscription => {
       next()
     })
@@ -102,6 +109,7 @@ const _fetchFeeds = (data, next) => {
     companyId: data.page.companyId,
     _id: {$ne: data.resp.rssFeedId},
     defaultFeed: false,
+    isActive: true,
     $or: [{pageIds: data.page._id}, {pageIds: []}]
   })
     .then(rssFeeds => {
@@ -192,7 +200,6 @@ exports.sendTopicFeed = function (req, res) {
       logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
     } else {
       logger.serverLog(TAG, 'Subscrption successfully')
-      console.log('data got', data.feed)
     }
   })
 }

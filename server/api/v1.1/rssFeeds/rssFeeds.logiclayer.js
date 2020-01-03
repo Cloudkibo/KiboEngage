@@ -49,7 +49,7 @@ exports.fetchFeedsCriteria = function (body, companyId) {
       countCriteria
     }
   }
-  
+
 exports.getCriterias = function (body) {
   let startDate = new Date(body.startDate) // Current date
   startDate.setHours(0) // Set the hour, minute and second components to 0
