@@ -75,7 +75,7 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
       if (containsUserInput) {
         _updateSubsForUserInput(subscribers, waitingForUserInput)
       }
-      else {
+      else if(module !== 'broadcast_message') {
         _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
       }
       return batch
