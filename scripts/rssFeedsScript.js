@@ -210,7 +210,6 @@ const _prepareMessageData = (data, next) => {
   RSSFeedsDataLayer.genericFindForRssFeeds({
     companyId: data.rssFeed.companyId,
     _id: {$ne: data.rssFeed._id},
-    defaultFeed: false,
     isActive: true,
     pageIds: data.page._id
   })

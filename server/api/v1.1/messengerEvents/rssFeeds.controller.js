@@ -108,7 +108,6 @@ const _fetchFeeds = (data, next) => {
   RssFeedsDataLayer.genericFindForRssFeeds({
     companyId: data.page.companyId,
     _id: {$ne: data.resp.rssFeedId},
-    defaultFeed: false,
     isActive: true,
     $or: [{pageIds: data.page._id}, {pageIds: []}]
   })
@@ -191,6 +190,7 @@ exports.sendTopicFeed = function (req, res) {
   }
   async.series([
     _fetchPage.bind(null, data),
+    _fetchSubscriber.bind(null, data),
     _fetchFeed.bind(null, data),
     rssScriptFunctions._parseFeed.bind(null, data),
     _prepareMessageData.bind(null, data),
@@ -216,35 +216,50 @@ const _fetchFeed = (data, next) => {
     })
 }
 const _prepareMessageData = (data, next) => {
-  let quickReplies = [{
-    content_type: 'text',
-    title: `Subscribe to ${data.rssFeed.title}`,
-    payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
-  },
-  {
-    content_type: 'text',
-    title: 'Show More Topics',
-    payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
-  }
+  let quickReplies = [
+    {
+      content_type: 'text',
+      title: 'Show More Topics',
+      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
+    }
   ]
-  rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
-    .then(gallery => {
-      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
-      let messageData = {
-        'recipient': {'id': data.sender},
-        'message': JSON.stringify({
-          attachment: {
-            type: 'template',
-            payload: {
-              template_type: 'generic',
-              elements: gallery
-            }
-          },
-          quick_replies: quickReplies
+  RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
+    .then(rssSubscription => {
+      if (rssSubscription.length > 0 && rssSubscription[0].subscription) {
+        quickReplies.push({
+          content_type: 'text',
+          title: `UnSubscribe from ${data.rssFeed.title}`,
+          payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+        })
+      } else {
+        quickReplies.push({
+          content_type: 'text',
+          title: `Subscribe to ${data.rssFeed.title}`,
+          payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
         })
       }
-      data.messageData = messageData
-      next()
+      rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
+        .then(gallery => {
+          logger.serverLog(TAG, `gallery.length ${gallery.length}`)
+          let messageData = {
+            'recipient': {'id': data.sender},
+            'message': JSON.stringify({
+              attachment: {
+                type: 'template',
+                payload: {
+                  template_type: 'generic',
+                  elements: gallery
+                }
+              },
+              quick_replies: quickReplies
+            })
+          }
+          data.messageData = messageData
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
     })
     .catch(err => {
       next(err)
