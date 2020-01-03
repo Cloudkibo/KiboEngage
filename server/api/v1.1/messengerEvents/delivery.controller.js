@@ -151,11 +151,11 @@ function _updateSequenceSubscriberMessage (data, next) {
     })
 }
 function _updateRssFeedSent (data, next) {
-  utility.callApi(`pages/query`, 'post', {pageId: data.recipient.id, connected: true})
+  utility.callApi(`pages/query`, 'post', {pageId: data.recipientId, connected: true})
     .then(pages => {
       const page = pages[0]
       if (page) {
-        utility.callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: data.sender.id, companyId: page.companyId, completeInfo: true })
+        utility.callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: data.senderId, companyId: page.companyId, completeInfo: true })
           .then(subscribers => {
             const subscriber = subscribers[0]
             if (subscriber) {

@@ -25,7 +25,7 @@ exports.index = function (req, res) {
     _updateRssFeedSeen.bind(null, data)
   ], 10, function (err) {
     if (err) {
-      logger.serverLog(TAG, `ERROR at seen controller ${JSON.stringify(err)}`, 'error')
+      logger.serverLog(TAG, `ERROR at seen controller ${err}`, 'error')
     } else {
       logger.serverLog(TAG, 'seen controller updated the seen count successfully!')
     }

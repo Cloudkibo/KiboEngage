@@ -7,8 +7,11 @@ const async = require('async')
 const { getScheduledTime } = require('../server/api/global/utility')
 const RSSFeedsDataLayer = require('../server/api/v1.1/rssFeeds/rssFeeds.datalayer')
 const RssFeedPostsDataLayer = require('../server/api/v1.1/rssFeeds/rssFeedPosts.datalayer')
+const RssFeedPostSubscribers = require('../server/api/v1.1/rssFeeds/rssFeedPostSubscribers.datalayer')
 const RssSubscriptionsDataLayer = require('../server/api/v1.1/rssFeeds/rssSubscriptions.datalayer')
 const request = require('request')
+const config = require('../server/config/environment/index')
+const URLDataLayer = require('../server/api/v1.1/URLForClickedCount/URL.datalayer')
 
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true})
@@ -45,6 +48,7 @@ const _handleRSSFeed = (rssFeed, next) => {
     async.series([
       _parseFeed.bind(null, data),
       _fetchPage.bind(null, data),
+      _saveRssFeedPost.bind(null, data),
       _prepareMessageData.bind(null, data),
       _handleFeed.bind(null, data),
       _updateScheduledTime.bind(null, data)
@@ -79,7 +83,7 @@ const _handleFeed = (data, next) => {
       {$match: {pageId: {$in: data.rssFeed.pageIds}, companyId: data.rssFeed.companyId, isSubscribed: true, completeInfo: true}},
       {$limit: 50}
     ]
-    sendFeed('default', criteria, data.messageData, data.page, data.rssFeed)
+    sendFeed('default', criteria, data.messageData, data.page, data.rssFeed, data.rssFeedPost)
     next()
   } else {
     const criteria = {
@@ -87,12 +91,12 @@ const _handleFeed = (data, next) => {
       match: {subscription: true, rssFeedId: data.rssFeed._id},
       limit: 50
     }
-    sendFeed('nonDefault', criteria, data.messageData, data.page)
+    sendFeed('nonDefault', criteria, data.messageData, data.page, data.rssFeed, data.rssFeedPost)
     next()
   }
 }
 
-const sendFeed = (type, criteria, payload, page, feed) => {
+const sendFeed = (type, criteria, payload, page, feed, rssFeedPost) => {
   let subscribersPromise = new Promise((resolve, reject) => {
     if (type === 'default') {
       callApi('subscribers/aggregate', 'post', criteria)
@@ -135,14 +139,14 @@ const sendFeed = (type, criteria, payload, page, feed) => {
   subscribersPromise
     .then((subscribers, lastId) => {
       if (subscribers.length > 0) {
-        prepareBatchData(subscribers, payload)
+        prepareBatchData(subscribers, payload, page, rssFeedPost)
           .then(batch => {
             return callBatchAPI(page, batch)
           })
           .then(response => {
             if (criteria.match) criteria.match._id = {$gt: lastId}
             else if (criteria[0].$match) criteria[0].$match._id = {$gt: lastId}
-            sendFeed(type, criteria, payload, page, feed)
+            sendFeed(type, criteria, payload, page, feed, rssFeedPost)
           })
           .catch(err => {
             logger.serverLog(TAG, err, 'error')
@@ -150,14 +154,14 @@ const sendFeed = (type, criteria, payload, page, feed) => {
       } else {
         logger.serverLog(TAG, 'Feed sent successfully!')
       }
-      return prepareBatchData(subscribers, payload)
+      // return prepareBatchData(subscribers, payload, page, rssFeedPost)
     })
     .catch(err => {
       logger.serverLog(TAG, err, 'error')
     })
 }
 
-const prepareBatchData = (subscribers, messageData) => {
+const prepareBatchData = (subscribers, messageData, page, rssFeedPost) => {
   return new Promise((resolve, reject) => {
     let batch = []
     for (let i = 0; i <= subscribers.length; i++) {
@@ -175,6 +179,7 @@ const prepareBatchData = (subscribers, messageData) => {
             batch.push({ 'method': 'POST', 'name': `${subscribers[i].senderId}${index + 1}`, 'depends_on': `${subscribers[i].senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
           }
         })
+        saveRssFeedPostSubscriber(subscribers[i]._id, page, rssFeedPost)
       }
     }
   })
@@ -227,7 +232,7 @@ const _prepareMessageData = (data, next) => {
           payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
         })
       }
-      getMetaData(data.feed, data.rssFeed)
+      getMetaData(data.feed, data.rssFeed, data.rssFeedPost)
         .then(gallery => {
           logger.serverLog(TAG, `gallery.length ${gallery.length}`)
           let messageData = [{
@@ -253,7 +258,7 @@ const _prepareMessageData = (data, next) => {
       next(err)
     })
 }
-function getMetaData (feed, rssFeed) {
+function getMetaData (feed, rssFeed, rssFeedPost) {
   return new Promise((resolve, reject) => {
     let gallery = []
     let length = rssFeed.storiesCount
@@ -263,20 +268,32 @@ function getMetaData (feed, rssFeed) {
           logger.serverLog(TAG, 'error in fetching metdata', 'error')
         }
         if (meta && meta.title && meta.image) {
-          gallery.push({
-            title: meta.title,
-            subtitle: meta.description ? meta.description : '',
-            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
-            buttons: [
-              {
-                type: 'web_url',
-                title: 'Read More...',
-                url: feed[i].link
+          let URLObject = {
+            originalURL: feed[i].link,
+            module: {
+              id: rssFeedPost._id,
+              type: 'rss'
+            }
+          }
+          URLDataLayer.createURLObject(URLObject)
+            .then(savedurl => {
+              gallery.push({
+                title: meta.title,
+                subtitle: meta.description ? meta.description : '',
+                image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+                buttons: [
+                  {
+                    type: 'web_url',
+                    title: 'Read More...',
+                    url: config.domain + '/api/URL/rss/' + savedurl._id
+                  }
+                ]
+              })
+              if (i === length - 1) {
+                resolve(gallery)
               }
-            ]
-          })
-        }
-        if (i === length - 1) {
+            })
+        } else if (i === length - 1) {
           resolve(gallery)
         }
       })
@@ -306,10 +323,29 @@ const _saveRssFeedPost = (data, next) => {
   }
   RssFeedPostsDataLayer.createForRssFeedPosts(dataToSave)
     .then(saved => {
+      data.rssFeedPost = saved
       next()
     })
     .catch(err => {
       next(err)
+    })
+}
+const saveRssFeedPostSubscriber = (subscriberId, page, rssFeedPost) => {
+  let dataToSave = {
+    rssFeedId: rssFeedPost.rssFeedId,
+    rssFeedPostId: rssFeedPost._id,
+    companyId: page.companyId,
+    pageId: page._id,
+    subscriberId: subscriberId,
+    sent: 0,
+    seen: 0,
+    clicked: 0
+  }
+  RssFeedPostSubscribers.create(dataToSave)
+    .then(saved => {
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to save RssFeedPostSubscriber ${err}`, 'error')
     })
 }
 exports._parseFeed = _parseFeed

@@ -143,7 +143,7 @@ exports.delete = function (req, res) {
   console.log('Kiboengage delete')
   DataLayer.deleteForRssFeeds({_id:req.params.id})
     .then(result => {
-      sendSuccessResponse(res, 200, result)  
+      sendSuccessResponse(res, 200, result)
     })
     .catch(err => {
       sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(error)}`)
@@ -268,7 +268,7 @@ exports.getRssFeedPosts = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
   async.parallelLimit([
     function (callback) {
-      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[0].$match)
+      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[3].$match)
         .then(result => {
           callback(null, result)
         })
@@ -277,7 +277,7 @@ exports.getRssFeedPosts = function (req, res) {
         })
     },
     function (callback) {
-      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[0].$match, null, null, criterias.finalCriteria[3].$limit, criterias.finalCriteria[1].$sort, criterias.finalCriteria[2].$skip)
+      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[3].$match, criterias.finalCriteria[2].$group, criterias.finalCriteria[0].$lookup, criterias.finalCriteria[6].$limit, criterias.finalCriteria[4].$sort, criterias.finalCriteria[5].$skip, criterias.finalCriteria[1].$unwind)
         .then(result => {
           callback(null, result)
         })
