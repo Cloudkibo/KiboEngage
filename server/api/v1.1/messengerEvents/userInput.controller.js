@@ -24,7 +24,7 @@ exports.index = function (req, res) {
             let broadcast_payload = payload[waitingForUserInput.componentIndex]
             callApi(`pages/query`, 'post', {_id: req.body.payload.pageId})
               .then(pages => {
-                if (_checkTypeValidation(broadcast_payload, req.body.message)) {
+                if (_checkTypeValidation(broadcast_payload, req.body.message) || req.body.message.quick_reply) {
                   console.log('True _checkTypeValidation', payload)
                   payload.splice(0, waitingForUserInput.componentIndex + 1)
                   sendUsingBatchAPI('update_broadcast', payload, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
@@ -95,7 +95,7 @@ const _createValidationMessage = (message, skipButtonText) => {
         'title': skipButtonText,
         'payload': JSON.stringify(
           {
-            option: skipButtonText
+            option: 'userInputSkip'
           }
         )
       }
