@@ -99,10 +99,8 @@ const _handleFeed = (data, next) => {
 const sendFeed = (type, criteria, payload, page, feed, rssFeedPost) => {
   let subscribersPromise = new Promise((resolve, reject) => {
     if (type === 'default') {
-      console.log('query in subscribers', criteria)
       callApi('subscribers/aggregate', 'post', criteria)
         .then(subscribers => {
-          console.log('subs gotted', subscribers.length)
           if (subscribers.length > 0) {
             callApi('rssSubscriptions/query', 'post', {purpose: 'findAll', match: {feedId: feed._id, subscription: false}}, 'kiboengage')
               .then(result => {
@@ -166,7 +164,6 @@ const sendFeed = (type, criteria, payload, page, feed, rssFeedPost) => {
 const prepareBatchData = (subscribers, messageData, page, rssFeedPost) => {
   return new Promise((resolve, reject) => {
     let batch = []
-    console.log('subs.length', subscribers.length)
     for (let i = 0; i <= subscribers.length; i++) {
       if (i === subscribers.length) {
         resolve(JSON.stringify(batch))
@@ -182,7 +179,6 @@ const prepareBatchData = (subscribers, messageData, page, rssFeedPost) => {
             batch.push({ 'method': 'POST', 'name': `${subscribers[i].senderId}${index + 1}`, 'depends_on': `${subscribers[i].senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
           }
         })
-        console.log('value of i', i)
         saveRssFeedPostSubscriber(subscribers[i]._id, page, rssFeedPost)
       }
     }
