@@ -225,7 +225,7 @@ const _prepareMessageData = (data, next) => {
   ]
   RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
     .then(rssSubscription => {
-      if (rssSubscription.length > 0 && rssSubscription[0].subscription) {
+      if ((rssSubscription.length > 0 && rssSubscription[0].subscription)) {
         quickReplies.push({
           content_type: 'text',
           title: `UnSubscribe from ${data.rssFeed.title}`,
