@@ -24,13 +24,13 @@ exports.index = function (req, res) {
             let broadcast_payload = payload[waitingForUserInput.componentIndex]
             callApi(`pages/query`, 'post', {_id: req.body.payload.pageId})
               .then(pages => {
-                if (_checkTypeValidation(broadcast_payload, req.body.message)) {
-                  console.log('True _checkTypeValidation', payload)
+                if (_checkTypeValidation(broadcast_payload, req.body.message) || req.body.message.quick_reply) {
+                  logger.serverLog(TAG, `True _checkTypeValidation ${JSON.stringify(payload)}`)
                   payload.splice(0, waitingForUserInput.componentIndex + 1)
                   sendUsingBatchAPI('update_broadcast', payload, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
                 } else {
                   if (waitingForUserInput.incorrectTries > 0) {
-                    console.log('False _checkTypeValidation')
+                    logger.serverLog(TAG, `False _checkTypeValidation`)
                     waitingForUserInput.incorrectTries = waitingForUserInput.incorrectTries - 1
                     _subscriberUpdate(subscriber, waitingForUserInput)
                     let validationMessage = _createValidationMessage(broadcast_payload.retryMessage, broadcast_payload.skipButtonText)
@@ -73,7 +73,6 @@ const _savePageBroadcast = (data) => {
 }
 
 const _checkTypeValidation = (payload, message) => {
-  console.log('print message in check type_validation', message)
   if (payload.type === 'text') {
     return message.text
   }
@@ -95,7 +94,7 @@ const _createValidationMessage = (message, skipButtonText) => {
         'title': skipButtonText,
         'payload': JSON.stringify(
           {
-            option: skipButtonText
+            option: 'userInputSkip'
           }
         )
       }
