@@ -193,6 +193,8 @@ exports.sendTopicFeed = function (req, res) {
     _fetchSubscriber.bind(null, data),
     _fetchFeed.bind(null, data),
     rssScriptFunctions._parseFeed.bind(null, data),
+    _fetchFeeds.bind(null, data),
+    _prepareQuickReplies.bind(null, data),
     _prepareMessageData.bind(null, data),
     _sendMessage.bind(null, data)
   ], function (err) {
@@ -215,51 +217,80 @@ const _fetchFeed = (data, next) => {
       next(err)
     })
 }
-const _prepareMessageData = (data, next) => {
-  let quickReplies = [
-    {
+const _prepareQuickReplies = (data, next) => {
+  let quickReplies = []
+  if (data.rssFeeds.length > 0) {
+    quickReplies.push({
       content_type: 'text',
       title: 'Show More Topics',
       payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
-    }
-  ]
-  RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
-    .then(rssSubscription => {
-      if ((rssSubscription.length > 0 && rssSubscription[0].subscription)) {
-        quickReplies.push({
-          content_type: 'text',
-          title: `UnSubscribe from ${data.rssFeed.title}`,
-          payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
-        })
-      } else {
-        quickReplies.push({
-          content_type: 'text',
-          title: `Subscribe to ${data.rssFeed.title}`,
-          payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+    })
+  }
+  if (data.rssFeed.defaultFeed) {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id, subscription: false})
+      .then(rssSubscription => {
+        if (rssSubscription.length > 0) {
+          quickReplies.push({
+            content_type: 'text',
+            title: `Subscribe to ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        } else {
+          quickReplies.push({
+            content_type: 'text',
+            title: `UnSubscribe from ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        }
+        data.quickReplies = quickReplies
+        next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  } else {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
+      .then(rssSubscription => {
+        if (rssSubscription.length > 0 && rssSubscription[0].subscription) {
+          quickReplies.push({
+            content_type: 'text',
+            title: `Unsubscribe from ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        } else {
+          quickReplies.push({
+            content_type: 'text',
+            title: `Subscribe to ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        }
+        data.quickReplies = quickReplies
+        next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  }
+}
+const _prepareMessageData = (data, next) => {
+  rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
+    .then(gallery => {
+      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
+      let messageData = {
+        'recipient': {'id': data.sender},
+        'message': JSON.stringify({
+          attachment: {
+            type: 'template',
+            payload: {
+              template_type: 'generic',
+              elements: gallery
+            }
+          },
+          quick_replies: data.quickReplies
         })
       }
-      rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
-        .then(gallery => {
-          logger.serverLog(TAG, `gallery.length ${gallery.length}`)
-          let messageData = {
-            'recipient': {'id': data.sender},
-            'message': JSON.stringify({
-              attachment: {
-                type: 'template',
-                payload: {
-                  template_type: 'generic',
-                  elements: gallery
-                }
-              },
-              quick_replies: quickReplies
-            })
-          }
-          data.messageData = messageData
-          next()
-        })
-        .catch(err => {
-          next(err)
-        })
+      data.messageData = messageData
+      next()
     })
     .catch(err => {
       next(err)

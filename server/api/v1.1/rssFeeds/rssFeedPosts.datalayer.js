@@ -12,7 +12,7 @@ exports.genericFindForRssFeedPosts = (queryObject) => {
   }
   return callApi(`rssFeedPosts/query`, 'post', query, 'kiboengage')
 }
-exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip) => {
+exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unwind) => {
   let query = {
     purpose: 'aggregate',
     match: match
@@ -22,6 +22,7 @@ exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip) => 
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
+  if (unwind) query.unwind = unwind
 
   return callApi(`rssFeedPosts/query`, 'post', query, 'kiboengage')
 }
