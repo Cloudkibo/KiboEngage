@@ -15,9 +15,9 @@ exports.create = function (req, res) {
     userId: req.user._id
   }
   async.series([
-    _validateFeedTitle.bind(null, data),
-    _validateFeedUrl.bind(null, data),
     _validateActiveFeeds.bind(null, data),
+    _validateFeedUrl.bind(null, data),
+    _validateFeedTitle.bind(null, data),
     _getSubscriptionsCount.bind(null, data),
     _checkDefaultFeed.bind(null, data),
     _saveRSSFeed.bind(null, data)
@@ -38,7 +38,7 @@ exports.edit = function (req, res) {
   }
   async.series([
     _fetchFeedToUpdate.bind(null, data),
-    _validateFeedTitle.bind(null, data),
+    _validateActiveFeeds.bind(null, data),
     _validateFeedUrl.bind(null, data),
     _validateTitleforEditFeed.bind(null, data),
     _checkDefaultFeed.bind(null, data),
@@ -194,7 +194,7 @@ function _getSubscriptionsCount (data, next) {
   }
 }
 
-const _validateFeedTitle = (data, next) => {
+const _validateActiveFeeds = (data, next) => {
   if (data.body.isActive) {
     DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], isActive: true})
       .then(rssFeeds => {
@@ -212,11 +212,10 @@ const _validateFeedTitle = (data, next) => {
   }
 }
 const _validateTitleforEditFeed = (data, next) => {
-  if (data.body.title && data.body.title.toLowerCase().trim() === data.feed.title.toLowerCase().trim()) {
-    next(null)
-  } else {
-    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    console.log('Data Edit', data)
+    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}, _id: {$ne: data.feed._id}})
     .then(rssFeeds => {
+      console.log('RssFeeds', rssFeeds)
       if (rssFeeds.length > 0) {
         next('An Rss feed with a similar title is already connected with this page')
       } else {
@@ -226,9 +225,8 @@ const _validateTitleforEditFeed = (data, next) => {
     .catch(error => {
       next(error)
     })
-  }
 }
-const _validateActiveFeeds = (data, next) => {
+const _validateFeedTitle = (data, next) => {
   if (data.body.title) {
     DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
       .then(rssFeeds => {
