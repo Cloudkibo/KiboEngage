@@ -16,13 +16,8 @@ exports.createPayload = {
     'isActive': {
       'type': 'boolean'
     },
-    'pageIds': {
-      'type': 'array',
-      'items': [
-        {
-          'type': 'string'
-        }
-      ]
+    'pageId': {
+      'type': 'string',
     }
   },
   'required': [
@@ -31,7 +26,7 @@ exports.createPayload = {
     'storiesCount',
     'defaultFeed',
     'isActive',
-    'pageIds'
+    'pageId'
   ]
 }
 exports.editPayload = {

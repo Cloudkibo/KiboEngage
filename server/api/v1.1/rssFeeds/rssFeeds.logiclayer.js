@@ -9,6 +9,9 @@ exports.fetchFeedsCriteria = function (body, companyId) {
     if (body.status_value !== '') {
       findCriteria['isActive'] = body.status_value === 'true' ? true : false
     }
+    if (body.page_value !== '') {
+      findCriteria['pageId'] = body.page_value
+    }
     console.log('Number of records', body.number_of_records)
     if (body.first_page === 'first') {
       finalCriteria = [

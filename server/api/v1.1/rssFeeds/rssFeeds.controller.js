@@ -73,7 +73,7 @@ function _saveRSSFeed (data, next) {
   scheduledTime.setMinutes(0)
   scheduledTime.setMilliseconds(0)
   let dataToSave = {
-    pageIds: data.body.pageIds,
+    pageId: data.body.pageId,
     companyId: data.companyId,
     userId: data.userId,
     feedUrl: data.body.feedUrl,
@@ -151,7 +151,7 @@ exports.delete = function (req, res) {
 }
 function _checkDefaultFeed (data, next) {
   if (data.body.defaultFeed) {
-    DataLayer.genericUpdateRssFeed({companyId: data.companyId, defaultFeed: true}, {defaultFeed: false}, {})
+    DataLayer.genericUpdateRssFeed({companyId: data.companyId, pageId: data.body.pageId, defaultFeed: true}, {defaultFeed: false}, {})
       .then(updated => {
         next(null, data)
       })
@@ -171,7 +171,7 @@ function _getSubscriptionsCount (data, next) {
         companyId: data.companyId,
         isSubscribed: true,
         completeInfo: true,
-        pageId: {$in: data.body.pageIds}}
+        pageId: data.body.pageId}
       },
       {$group: {_id: null, count: {$sum: 1}}}
     ]
@@ -196,10 +196,10 @@ function _getSubscriptionsCount (data, next) {
 
 const _validateFeedTitle = (data, next) => {
   if (data.body.isActive) {
-    DataLayer.countDocuments({companyId: data.companyId, isActive: true})
+    DataLayer.countDocuments({companyId: data.companyId, pageId: data.body.pageId, isActive: true})
       .then(rssFeeds => {
-        if (rssFeeds.length > 0 && rssFeeds[0].count >= 14) {
-          next(`Can not create more than 14 active Feeds at a time!`)
+        if (rssFeeds.length > 0 && rssFeeds[0].count >= 13) {
+          next(`Can not create more than 13 active Feeds for one news page at a time!`)
         } else {
           next(null)
         }
@@ -212,13 +212,13 @@ const _validateFeedTitle = (data, next) => {
   }
 }
 const _validateTitleforEditFeed = (data, next) => {
-  if (data.body.title.toLowerCase().trim() === data.feed.title.toLowerCase().trim()) {
+  if (data.body.title && data.body.title.toLowerCase().trim() === data.feed.title.toLowerCase().trim()) {
     next(null)
   } else {
-    DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    DataLayer.countDocuments({companyId: data.companyId, pageId: data.body.pageId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
     .then(rssFeeds => {
       if (rssFeeds.length > 0) {
-        next('Can not create more RSS Feeds with the same Title')
+        next('An Rss feed with a similar title is already connected with this page')
       } else {
         next(null)
       }
@@ -230,10 +230,10 @@ const _validateTitleforEditFeed = (data, next) => {
 }
 const _validateActiveFeeds = (data, next) => {
   if (data.body.title) {
-    DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    DataLayer.countDocuments({companyId: data.companyId, pageId: data.body.pageId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
-          next('Can not create more RSS Feeds with the same Title')
+          next('An Rss feed with a similar title is already connected with this page')
         } else {
           next(null)
         }
