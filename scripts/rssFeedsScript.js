@@ -102,7 +102,7 @@ const sendFeed = (type, criteria, payload, page, feed, rssFeedPost) => {
       callApi('subscribers/aggregate', 'post', criteria)
         .then(subscribers => {
           if (subscribers.length > 0) {
-            callApi('rssSubscriptions/query', 'post', {purpose: 'findAll', match: {feedId: feed._id, subscription: false}}, 'kiboengage')
+            callApi('rssSubscriptions/query', 'post', {purpose: 'findAll', match: {rssFeedId: feed._id, subscription: false}}, 'kiboengage')
               .then(result => {
                 if (result && result.length > 0) {
                   let subIds = result.map(r => r.subscriberId._id)

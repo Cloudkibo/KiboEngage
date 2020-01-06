@@ -26,7 +26,7 @@ exports.createPayload = {
     'storiesCount',
     'defaultFeed',
     'isActive',
-    'pageId'
+    'pageIds'
   ]
 }
 exports.editPayload = {

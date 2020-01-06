@@ -15,9 +15,9 @@ exports.create = function (req, res) {
     userId: req.user._id
   }
   async.series([
-    _validateFeedTitle.bind(null, data),
-    _validateFeedUrl.bind(null, data),
     _validateActiveFeeds.bind(null, data),
+    _validateFeedUrl.bind(null, data),
+    _validateFeedTitle.bind(null, data),
     _getSubscriptionsCount.bind(null, data),
     _checkDefaultFeed.bind(null, data),
     _saveRSSFeed.bind(null, data)
@@ -38,7 +38,7 @@ exports.edit = function (req, res) {
   }
   async.series([
     _fetchFeedToUpdate.bind(null, data),
-    _validateFeedTitle.bind(null, data),
+    _validateActiveFeeds.bind(null, data),
     _validateFeedUrl.bind(null, data),
     _validateTitleforEditFeed.bind(null, data),
     _checkDefaultFeed.bind(null, data),
@@ -54,17 +54,17 @@ exports.edit = function (req, res) {
 
 function _fetchFeedToUpdate (data, next) {
   DataLayer.genericFindForRssFeeds({_id: data.feedId})
-  .then(rssFeeds => {
-    if (rssFeeds[0]) {
-      data.feed = rssFeeds[0]
-      next(null)
-    } else {
-      next('Unable to fetch current feed')
-    }
-  })
-  .catch(error => {
-    next(error)
-  })
+    .then(rssFeeds => {
+      if (rssFeeds[0]) {
+        data.feed = rssFeeds[0]
+        next(null)
+      } else {
+        next('Unable to fetch current feed')
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
 }
 function _saveRSSFeed (data, next) {
   let scheduledTime = new Date()
@@ -94,7 +94,7 @@ function _saveRSSFeed (data, next) {
     })
 }
 function _updateRSSFeed (data, next) {
-  let dataToUpdate  = data.body
+  let dataToUpdate = data.body
   DataLayer.genericUpdateRssFeed({_id: data.feedId}, dataToUpdate)
     .then(updated => {
       data.update = updated
@@ -141,12 +141,12 @@ exports.fetchFeeds = function (req, res) {
 }
 exports.delete = function (req, res) {
   console.log('Kiboengage delete')
-  DataLayer.deleteForRssFeeds({_id:req.params.id})
+  DataLayer.deleteForRssFeeds({_id: req.params.id})
     .then(result => {
       sendSuccessResponse(res, 200, result)
     })
     .catch(err => {
-      sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(error)}`)
+      sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(err)}`)
     })
 }
 function _checkDefaultFeed (data, next) {
@@ -194,7 +194,7 @@ function _getSubscriptionsCount (data, next) {
   }
 }
 
-const _validateFeedTitle = (data, next) => {
+const _validateActiveFeeds = (data, next) => {
   if (data.body.isActive) {
     DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], isActive: true})
       .then(rssFeeds => {
@@ -212,11 +212,9 @@ const _validateFeedTitle = (data, next) => {
   }
 }
 const _validateTitleforEditFeed = (data, next) => {
-  if (data.body.title && data.body.title.toLowerCase().trim() === data.feed.title.toLowerCase().trim()) {
-    next(null)
-  } else {
-    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+  DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: data.body.title, $options: 'i'}, _id: {$ne: data.feed._id}})
     .then(rssFeeds => {
+      console.log('RssFeeds', rssFeeds)
       if (rssFeeds.length > 0) {
         next('An Rss feed with a similar title is already connected with this page')
       } else {
@@ -226,11 +224,10 @@ const _validateTitleforEditFeed = (data, next) => {
     .catch(error => {
       next(error)
     })
-  }
 }
-const _validateActiveFeeds = (data, next) => {
+const _validateFeedTitle = (data, next) => {
   if (data.body.title) {
-    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: data.body.title, $options: 'i'}})
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
           next('An Rss feed with a similar title is already connected with this page')
@@ -248,18 +245,18 @@ const _validateActiveFeeds = (data, next) => {
 
 const _validateFeedUrl = (data, next) => {
   if (data.body.feedUrl) {
-  feedparser.parse(data.body.feedUrl)
-    .then(feed => {
-      if (feed) {
-        next(null)
-      } else {
+    feedparser.parse(data.body.feedUrl)
+      .then(feed => {
+        if (feed) {
+          next(null)
+        } else {
+          next(`Invalid Feed URL provided`)
+        }
+      })
+      .catch((err) => {
+        logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
         next(`Invalid Feed URL provided`)
-      }
-    })
-    .catch((err) => {
-      logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
-      next(`Invalid Feed URL provided`)
-    })
+      })
   } else {
     next(null)
   }

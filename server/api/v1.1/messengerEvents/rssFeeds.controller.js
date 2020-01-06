@@ -6,6 +6,7 @@ const RssFeedsDataLayer = require('../rssFeeds/rssFeeds.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
+const og = require('open-graph')
 
 exports.changeSubscription = function (req, res) {
   res.status(200).json({
@@ -273,7 +274,7 @@ const _prepareQuickReplies = (data, next) => {
   }
 }
 const _prepareMessageData = (data, next) => {
-  rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
+  getMetaData(data.feed, data.rssFeed)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
@@ -295,4 +296,36 @@ const _prepareMessageData = (data, next) => {
     .catch(err => {
       next(err)
     })
+}
+function getMetaData (feed, rssFeed) {
+  return new Promise((resolve, reject) => {
+    let gallery = []
+    let length = rssFeed.storiesCount
+    for (let i = 0; i < length; i++) {
+      og(feed[i].link, (err, meta) => {
+        if (err) {
+          logger.serverLog(TAG, 'error in fetching metdata', 'error')
+        }
+        if (meta && meta.title && meta.image) {
+          gallery.push({
+            title: meta.title,
+            subtitle: meta.description ? meta.description : '',
+            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+            buttons: [
+              {
+                type: 'web_url',
+                title: 'Read More...',
+                url: rssFeed.feedUrl
+              }
+            ]
+          })
+          if (i === length - 1) {
+            resolve(gallery)
+          }
+        } else if (i === length - 1) {
+          resolve(gallery)
+        }
+      })
+    }
+  })
 }
