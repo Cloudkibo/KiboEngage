@@ -315,7 +315,7 @@ function getMetaData (feed, rssFeed) {
               {
                 type: 'web_url',
                 title: 'Read More...',
-                url: rssFeed.feedUrl
+                url: feed[i].link
               }
             ]
           })

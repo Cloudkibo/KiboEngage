@@ -29,7 +29,6 @@ cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midn
 cron.schedule('* * * * *', abandonedCartScript.runScript)
 cron.schedule('0 */1 * * *', rssScript.runRSSScript) // after 1 hour
 cron.schedule('0 8 * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
-// cron.schedule('* * * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
