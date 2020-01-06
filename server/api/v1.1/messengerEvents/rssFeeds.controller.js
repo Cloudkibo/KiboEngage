@@ -85,11 +85,18 @@ const _fetchSubscriber = (data, next) => {
 }
 const _updateSubscription = (data, next) => {
   let updateData = {
-    subscriberId: data.subscriber._id,
+    subscriberId: {
+      _id: data.subscriber._id,
+      firstName: data.subscriber.firstName,
+      lastName: data.subscriber.lastName,
+      gender: data.subscriber.gender,
+      locale: data.subscriber.locale,
+      senderId: data.subscriber.senderId
+    },
     rssFeedId: data.resp.rssFeedId,
     subscription: data.resp.action === 'subscribe_to_rssFeed' ? true : false
   }
-  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({subscriberId: data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
+  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
     .then(rssSubscription => {
       next()
     })
@@ -101,7 +108,7 @@ const _fetchFeeds = (data, next) => {
   RssFeedsDataLayer.genericFindForRssFeeds({
     companyId: data.page.companyId,
     _id: {$ne: data.resp.rssFeedId},
-    defaultFeed: false,
+    isActive: true,
     $or: [{pageIds: data.page._id}, {pageIds: []}]
   })
     .then(rssFeeds => {
@@ -183,8 +190,11 @@ exports.sendTopicFeed = function (req, res) {
   }
   async.series([
     _fetchPage.bind(null, data),
+    _fetchSubscriber.bind(null, data),
     _fetchFeed.bind(null, data),
     rssScriptFunctions._parseFeed.bind(null, data),
+    _fetchFeeds.bind(null, data),
+    _prepareQuickReplies.bind(null, data),
     _prepareMessageData.bind(null, data),
     _sendMessage.bind(null, data)
   ], function (err) {
@@ -192,7 +202,6 @@ exports.sendTopicFeed = function (req, res) {
       logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
     } else {
       logger.serverLog(TAG, 'Subscrption successfully')
-      console.log('data got', data.feed)
     }
   })
 }
@@ -208,18 +217,62 @@ const _fetchFeed = (data, next) => {
       next(err)
     })
 }
-const _prepareMessageData = (data, next) => {
-  let quickReplies = [{
-    content_type: 'text',
-    title: `Subscribe to ${data.rssFeed.title}`,
-    payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
-  },
-  {
-    content_type: 'text',
-    title: 'Show More Topics',
-    payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
+const _prepareQuickReplies = (data, next) => {
+  let quickReplies = []
+  if (data.rssFeeds.length > 0) {
+    quickReplies.push({
+      content_type: 'text',
+      title: 'Show More Topics',
+      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
+    })
   }
-  ]
+  if (data.rssFeed.defaultFeed) {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id, subscription: false})
+      .then(rssSubscription => {
+        if (rssSubscription.length > 0) {
+          quickReplies.push({
+            content_type: 'text',
+            title: `Subscribe to ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        } else {
+          quickReplies.push({
+            content_type: 'text',
+            title: `UnSubscribe from ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        }
+        data.quickReplies = quickReplies
+        next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  } else {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
+      .then(rssSubscription => {
+        if (rssSubscription.length > 0 && rssSubscription[0].subscription) {
+          quickReplies.push({
+            content_type: 'text',
+            title: `Unsubscribe from ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        } else {
+          quickReplies.push({
+            content_type: 'text',
+            title: `Subscribe to ${data.rssFeed.title}`,
+            payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+          })
+        }
+        data.quickReplies = quickReplies
+        next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  }
+}
+const _prepareMessageData = (data, next) => {
   rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
@@ -233,7 +286,7 @@ const _prepareMessageData = (data, next) => {
               elements: gallery
             }
           },
-          quick_replies: quickReplies
+          quick_replies: data.quickReplies
         })
       }
       data.messageData = messageData

@@ -7,6 +7,7 @@ const PollPageDataLayer = require('../page_poll/page_poll.datalayer')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
+const RssFeedPostSubscribersDataLayer = require('../rssFeeds/rssFeedPostSubscribers.datalayer')
 const async = require('async')
 
 exports.index = function (req, res) {
@@ -20,10 +21,11 @@ exports.index = function (req, res) {
     _updateBroadcastSeen.bind(null, data),
     _updatePollSeen.bind(null, data),
     _updateSurveySeen.bind(null, data),
-    _updateSequenceSeen.bind(null, data)
+    _updateSequenceSeen.bind(null, data),
+    _updateRssFeedSeen.bind(null, data)
   ], 10, function (err) {
     if (err) {
-      logger.serverLog(TAG, `ERROR at seen controller ${JSON.stringify(err)}`, 'error')
+      logger.serverLog(TAG, `ERROR at seen controller ${err}`, 'error')
     } else {
       logger.serverLog(TAG, 'seen controller updated the seen count successfully!')
     }
@@ -233,3 +235,30 @@ function _updateSequenceSeen (data, next) {
 //       }
 //     })
 // }
+function _updateRssFeedSeen (data, next) {
+  utility.callApi(`pages/query`, 'post', {pageId: data.recipient.id, connected: true})
+    .then(pages => {
+      const page = pages[0]
+      if (page) {
+        utility.callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: data.sender.id, companyId: page.companyId, completeInfo: true })
+          .then(subscribers => {
+            const subscriber = subscribers[0]
+            if (subscriber) {
+              RssFeedPostSubscribersDataLayer.genericUpdate({ pageId: page._id, subscriberId: subscriber._id }, {seen: true}, { multi: true })
+                .then(updated => {
+                  next(null)
+                })
+                .catch(err => {
+                  next(err)
+                })
+            }
+          })
+          .catch(err => {
+            next(err)
+          })
+      }
+    })
+    .catch(err => {
+      next(err)
+    })
+}

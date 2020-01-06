@@ -198,7 +198,7 @@ exports.getInsight = function (req, res) {
 
   if (adId !== undefined && adId !== '') {
     let insightPayload = logiclayer.prepareInsightPayload(accesstoken)
-    facebookApiCaller('v3.1', adId, 'get', insightPayload)
+    facebookApiCaller(`v4.0/${adId}/insights`, 'post', insightPayload)
       .then(response => {
         if (response.body.error) {
           sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)

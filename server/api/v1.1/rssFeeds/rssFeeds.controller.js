@@ -31,14 +31,16 @@ exports.create = function (req, res) {
 }
 exports.edit = function (req, res) {
   let data = {
-    body: req.body,
+    feedId: req.body.feedId,
+    body: req.body.updatedObject,
     companyId: req.user.companyId,
     userId: req.user._id
   }
   async.series([
+    _fetchFeedToUpdate.bind(null, data),
     _validateFeedTitle.bind(null, data),
     _validateFeedUrl.bind(null, data),
-    _validateActiveFeeds.bind(null, data),
+    _validateTitleforEditFeed.bind(null, data),
     _checkDefaultFeed.bind(null, data),
     _updateRSSFeed.bind(null, data)
   ], function (err) {
@@ -50,6 +52,20 @@ exports.edit = function (req, res) {
   })
 }
 
+function _fetchFeedToUpdate (data, next) {
+  DataLayer.genericFindForRssFeeds({_id: data.feedId})
+  .then(rssFeeds => {
+    if (rssFeeds[0]) {
+      data.feed = rssFeeds[0]
+      next(null)
+    } else {
+      next('Unable to fetch current feed')
+    }
+  })
+  .catch(error => {
+    next(error)
+  })
+}
 function _saveRSSFeed (data, next) {
   let scheduledTime = new Date()
   scheduledTime.setDate(scheduledTime.getDate() + 1)
@@ -57,7 +73,7 @@ function _saveRSSFeed (data, next) {
   scheduledTime.setMinutes(0)
   scheduledTime.setMilliseconds(0)
   let dataToSave = {
-    pageIds: data.body.pageIds,
+    pageId: data.body.pageId,
     companyId: data.companyId,
     userId: data.userId,
     feedUrl: data.body.feedUrl,
@@ -78,8 +94,8 @@ function _saveRSSFeed (data, next) {
     })
 }
 function _updateRSSFeed (data, next) {
-  let dataToUpdate  = data.body.updatedObject
-  DataLayer.genericUpdateRssFeed({_id: data.body.feedId}, dataToUpdate)
+  let dataToUpdate  = data.body
+  DataLayer.genericUpdateRssFeed({_id: data.feedId}, dataToUpdate)
     .then(updated => {
       data.update = updated
       next(null)
@@ -127,7 +143,7 @@ exports.delete = function (req, res) {
   console.log('Kiboengage delete')
   DataLayer.deleteForRssFeeds({_id:req.params.id})
     .then(result => {
-      sendSuccessResponse(res, 200, result)  
+      sendSuccessResponse(res, 200, result)
     })
     .catch(err => {
       sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(error)}`)
@@ -135,7 +151,7 @@ exports.delete = function (req, res) {
 }
 function _checkDefaultFeed (data, next) {
   if (data.body.defaultFeed) {
-    DataLayer.genericUpdateRssFeed({companyId: data.companyId, defaultFeed: true}, {defaultFeed: false}, {})
+    DataLayer.genericUpdateRssFeed({companyId: data.companyId, pageId: data.body.pageId, defaultFeed: true}, {defaultFeed: false}, {})
       .then(updated => {
         next(null, data)
       })
@@ -155,7 +171,7 @@ function _getSubscriptionsCount (data, next) {
         companyId: data.companyId,
         isSubscribed: true,
         completeInfo: true,
-        pageId: {$in: data.body.pageIds}}
+        pageId: data.body.pageId}
       },
       {$group: {_id: null, count: {$sum: 1}}}
     ]
@@ -180,10 +196,10 @@ function _getSubscriptionsCount (data, next) {
 
 const _validateFeedTitle = (data, next) => {
   if (data.body.isActive) {
-    DataLayer.countDocuments({companyId: data.companyId, isActive: true})
+    DataLayer.countDocuments({companyId: data.companyId, pageId: data.body.pageId, isActive: true})
       .then(rssFeeds => {
-        if (rssFeeds.length > 0 && rssFeeds[0].count >= 14) {
-          next(`Can not create more than 14 active Feeds at a time!`)
+        if (rssFeeds.length > 0 && rssFeeds[0].count >= 13) {
+          next(`Can not create more than 13 active Feeds for one news page at a time!`)
         } else {
           next(null)
         }
@@ -195,12 +211,29 @@ const _validateFeedTitle = (data, next) => {
     next(null)
   }
 }
+const _validateTitleforEditFeed = (data, next) => {
+  if (data.body.title && data.body.title.toLowerCase().trim() === data.feed.title.toLowerCase().trim()) {
+    next(null)
+  } else {
+    DataLayer.countDocuments({companyId: data.companyId, pageId: data.body.pageId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    .then(rssFeeds => {
+      if (rssFeeds.length > 0) {
+        next('An Rss feed with a similar title is already connected with this page')
+      } else {
+        next(null)
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
+  }
+}
 const _validateActiveFeeds = (data, next) => {
   if (data.body.title) {
-    DataLayer.countDocuments({companyId: data.companyId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
+    DataLayer.countDocuments({companyId: data.companyId, pageId: data.body.pageId, title: {$regex: '.*' + data.body.title + '.*', $options: 'i'}})
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
-          next('Can not create more RSS Feeds with the same Title')
+          next('An Rss feed with a similar title is already connected with this page')
         } else {
           next(null)
         }
@@ -212,6 +245,7 @@ const _validateActiveFeeds = (data, next) => {
     next(null)
   }
 }
+
 const _validateFeedUrl = (data, next) => {
   if (data.body.feedUrl) {
   feedparser.parse(data.body.feedUrl)
@@ -234,7 +268,7 @@ exports.getRssFeedPosts = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
   async.parallelLimit([
     function (callback) {
-      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[0].$match)
+      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[3].$match)
         .then(result => {
           callback(null, result)
         })
@@ -243,7 +277,7 @@ exports.getRssFeedPosts = function (req, res) {
         })
     },
     function (callback) {
-      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[0].$match, null, null, criterias.finalCriteria[3].$limit, criterias.finalCriteria[1].$sort, criterias.finalCriteria[2].$skip)
+      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[3].$match, criterias.finalCriteria[2].$group, criterias.finalCriteria[0].$lookup, criterias.finalCriteria[6].$limit, criterias.finalCriteria[4].$sort, criterias.finalCriteria[5].$skip, criterias.finalCriteria[1].$unwind)
         .then(result => {
           callback(null, result)
         })
