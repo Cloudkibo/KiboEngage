@@ -16,8 +16,8 @@ exports.createPayload = {
     'isActive': {
       'type': 'boolean'
     },
-    'pageId': {
-      'type': 'string',
+    'pageIds': {
+      'type': 'array'
     }
   },
   'required': [
@@ -67,7 +67,7 @@ exports.fetchPayload = {
     'number_of_records',
     'first_page'
   ]
-} 
+}
 
 exports.getRssFeedPostsPayload = {
   'type': 'object',
