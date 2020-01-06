@@ -182,9 +182,15 @@ const isWebURL = function (str) {
   return regexp.test(str)
 }
 
+const isNumber = function (str) {
+  var regexp = /^\d+$/
+  return regexp.test(str)
+}
+
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject
 exports.passwordChangeEmailAlert = passwordChangeEmailAlert
 exports.getMailTransporter = getMailTransporter
 exports.isEmailAddress = isEmailAddress
 exports.isWebURL = isWebURL
+exports.isNumber = isNumber
