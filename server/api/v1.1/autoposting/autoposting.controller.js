@@ -9,6 +9,7 @@ const feedparser = require('feedparser-promised')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { getScheduledTime } = require('../../global/utility')
+const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
@@ -17,13 +18,20 @@ exports.index = function (req, res) {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: companyUser.companyId}, req.headers.authorization)
-        .then(autoposting => {
-          sendSuccessResponse(res, 200, autoposting)
+      _checkSMP(req, res)
+        .then(statusArray => {
+          console.log('statusArray', statusArray)
         })
-        .catch(err => {
+        .catch((err) => {
           sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
         })
+    //   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({ companyId: companyUser.companyId }, req.headers.authorization)
+    //     .then(autoposting => {
+    //       sendSuccessResponse(res, 200, autoposting)
+    //     })
+    //     .catch(err => {
+    //       sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
+    //     })
     })
     .catch(err => {
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
@@ -46,7 +54,7 @@ const _fetchCompanyUser = (data, next) => {
 }
 
 const _fetchPlanUsage = (data, next) => {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: data.companyUser.companyId.planId})
+  utility.callApi(`featureUsage/planQuery`, 'post', { planId: data.companyUser.companyId.planId })
     .then(planUsage => {
       data.planUsage = planUsage
       next()
@@ -57,7 +65,7 @@ const _fetchPlanUsage = (data, next) => {
 }
 
 const _fetchCompanyUsage = (data, next) => {
-  utility.callApi('featureUsage/companyQuery', 'post', {companyId: data.companyUser.companyId._id})
+  utility.callApi('featureUsage/companyQuery', 'post', { companyId: data.companyUser.companyId._id })
     .then(companyUsage => {
       data.companyUsage = companyUsage
       next()
@@ -68,7 +76,7 @@ const _fetchCompanyUsage = (data, next) => {
 }
 
 const _countAutoposting = (data, next) => {
-  AutopostingDataLayer.countAutopostingDocuments({companyId: data.companyUser.companyId._id, subscriptionType: data.subscriptionType})
+  AutopostingDataLayer.countAutopostingDocuments({ companyId: data.companyUser.companyId._id, subscriptionType: data.subscriptionType })
     .then(gotCount => {
       if (gotCount > 0 && !data.companyUser.enableMoreAutoPostingIntegration) {
         next('Cannot add more integrations. Please contact support or remove existing ones')
@@ -82,7 +90,7 @@ const _countAutoposting = (data, next) => {
 }
 
 const _checkAutopostingExistStatus = (data, next) => {
-  AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({companyId: data.companyUser.companyId._id, subscriptionUrl: data.subscriptionUrl})
+  AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({ companyId: data.companyUser.companyId._id, subscriptionUrl: data.subscriptionUrl })
     .then(autoposting => {
       if (autoposting && autoposting.length > 0) {
         next('Feed already exist')
@@ -117,7 +125,7 @@ const _addTwitterAccount = (data, next) => {
       autoPostingPayload.payload = payload
       AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
         .then(result => {
-          utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: data.companyUser.companyId._id}, newPayload: {$inc: { twitter_autoposting: 1 }}, options: {}})
+          utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { twitter_autoposting: 1 } }, options: {} })
             .then(updated => {
               data.result = result
               next()
@@ -246,7 +254,7 @@ const _addWordpressAccount = (data, next) => {
   autoPostingPayload.accountUniqueName = wordpressUniqueId
   AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
     .then(result => {
-      utility.callApi('featureUsage/updateCompany', 'put', {query: {companyId: data.companyUser.companyId._id}, newPayload: {$inc: { wordpress_autoposting: 1 }}, options: {}})
+      utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { wordpress_autoposting: 1 } }, options: {} })
         .then(result => {
           require('./../../../config/socketio').sendMessageToClient({
             room_id: data.companyUser.companyId._id,
@@ -300,7 +308,7 @@ exports.create = function (req, res) {
   ], function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
-     // console.log('Failed to create autoposting', err)
+      // console.log('Failed to create autoposting', err)
       sendErrorResponse(res, 500, '', err)
     } else {
       sendSuccessResponse(res, 200, data.result)
@@ -318,7 +326,7 @@ exports.edit = function (req, res) {
       if (req.body.subscriptionType === 'rss') {
         autoposting.scheduledTime = getScheduledTime(autoposting.scheduledInterval)
       }
-      AutopostingDataLayer.genericFindByIdAndUpdate({_id: req.body._id}, autoposting)
+      AutopostingDataLayer.genericFindByIdAndUpdate({ _id: req.body._id }, autoposting)
         .then(autopostingUpdated => {
           if (!autoposting) {
             sendErrorResponse(res, 404, '', 'Record not found')
@@ -387,7 +395,7 @@ exports.handleTweetModeration = function (req, res) {
       'tweet.id_str': payload.tweetId
     }
   }
-  AutopostingDataLayer.findOneAutopostingObjectUsingQuery({_id: payload.autopostingId})
+  AutopostingDataLayer.findOneAutopostingObjectUsingQuery({ _id: payload.autopostingId })
     .then(postingItem => {
       // send response to user on messenger
       let messageData = {
@@ -427,10 +435,10 @@ exports.handleTweetModeration = function (req, res) {
             }
             sendTweet(postingItem, req)
             deleteTweetQueue(query)
-            AutopostingDataLayer.findOneAutopostingObjectAndUpdate({_id: postingItem._id}, {$inc: {tweetsForwarded: 1}}, {})
+            AutopostingDataLayer.findOneAutopostingObjectAndUpdate({ _id: postingItem._id }, { $inc: { tweetsForwarded: 1 } }, {})
           } else if (payload.action === 'do_not_send_tweet') {
             deleteTweetQueue(query)
-            AutopostingDataLayer.findOneAutopostingObjectAndUpdate({_id: postingItem._id}, {$inc: {tweetsIgnored: -1}}, {})
+            AutopostingDataLayer.findOneAutopostingObjectAndUpdate({ _id: postingItem._id }, { $inc: { tweetsIgnored: -1 } }, {})
           }
         })
         .catch(err => {
@@ -452,3 +460,28 @@ const deleteTweetQueue = (query) => {
       logger.serverLog(TAG, `Failed to delete tweet queue object ${err}`, 'error')
     })
 }
+
+const _checkSMP = (req, res) => {
+  utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, connected: true })
+    .then(connectedPages => {
+      let statusArray = []
+      for (let i = 0; i < connectedPages.length; i++) {
+        isApprovedForSMP(connectedPages[0])
+          .then(smpStatus => {
+            statusArray.push({ pageId: connectedPages[0]._id, smpStatus: smpStatus })
+            if (i === connectedPages.length - 1) {
+              return statusArray
+            }
+          })
+          .catch(() => {
+            return undefined
+          })
+      }
+    })
+    .catch(() => {
+      return undefined
+    })
+}
+// page A  (no Applied)
+// page B  (Pending)
+// Page C  (APPROVED)
