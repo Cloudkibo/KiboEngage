@@ -188,7 +188,7 @@ const isNumber = function (str) {
 }
 
 const isPhoneNumber = function (str) {
-  var regexp = /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
+  var regexp = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im
   return regexp.test(str)
 }
 exports.getEmailObject = getEmailObject
