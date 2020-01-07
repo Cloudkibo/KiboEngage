@@ -47,7 +47,7 @@ exports.setCustomFieldValue = function (req, res) {
             }
           })
           .then(setCustomFieldValue => {
-            // logger.serverLog(customField, `set custom field value for subscriber ${util.inspect(setCustomFieldValue)}`, 'debug')
+            logger.serverLog(customField, `set custom field value for subscriber ${util.inspect(setCustomFieldValue)}`, 'debug')
             require('./../../../config/socketio').sendMessageToClient({
               room_id: req.user.companyId,
               body: {
@@ -58,7 +58,9 @@ exports.setCustomFieldValue = function (req, res) {
               }
             })
             if (index === req.body.subscriberIds.length - 1) {
-              sendSuccessResponse(res, 200, setCustomFieldValue)
+              if (!req.body.user_input) {
+                sendSuccessResponse(res, 200, setCustomFieldValue)
+              }
             }
           })
           .catch(err => {
@@ -68,6 +70,7 @@ exports.setCustomFieldValue = function (req, res) {
     }
   })
     .catch(err => {
+      console.log(`customFieldResponse, ${(err)}`)
       sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
     })
 }

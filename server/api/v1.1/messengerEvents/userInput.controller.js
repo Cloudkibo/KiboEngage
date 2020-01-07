@@ -5,6 +5,9 @@ const logger = require('../../../components/logger')
 const {sendUsingBatchAPI} = require('../../global/sendConversation')
 const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
 const {isEmailAddress, isWebURL, isNumber} = require('../../global/utility')
+const {setCustomFieldValue} = require('../custom_field_subscribers/custom_field_subscriber.controller')
+const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspotIntegration/hubspotIntegration.controller')
+const {defaultFieldcolumn} = require('../hubspotIntegration/hubspotDefaultFields')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -99,14 +102,23 @@ const _sendNextMessage = (req, res) => {
         .then(broadcast => {
           broadcast.broadcastId = broadcast._id
           let payload = broadcast.payload
-          if (waitingForUserInput.componentIndex < payload.length - 1) {
-            let broadcast_payload = payload[waitingForUserInput.componentIndex]
+          let broadcast_payload = payload[waitingForUserInput.componentIndex]
+          if ((waitingForUserInput.componentIndex < payload.length - 1) || broadcast_payload.componentType === 'userInput') {
             callApi(`pages/query`, 'post', {_id: req.body.payload.pageId})
               .then(pages => {
                 if (_checkTypeValidation(broadcast_payload, req.body.message) || req.body.message.quick_reply) {
                   logger.serverLog(TAG, `True _checkTypeValidation ${JSON.stringify(payload)}`)
+                  if (!req.body.message.quick_reply) {
+                    _saveData(req, res, broadcast_payload, sub, req.body.message, pages[0])
+                  }
                   payload.splice(0, waitingForUserInput.componentIndex + 1)
-                  sendUsingBatchAPI('update_broadcast', payload, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
+                  if (payload.length === 0) {
+                    waitingForUserInput.componentIndex = -1
+                    _subscriberUpdate(subscriber, waitingForUserInput)
+                  }
+                  else {
+                    sendUsingBatchAPI('update_broadcast', payload, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
+                  }
                 } else {
                   if (waitingForUserInput.incorrectTries > 0) {
                     logger.serverLog(TAG, `False _checkTypeValidation`)
@@ -138,4 +150,106 @@ const _sendNextMessage = (req, res) => {
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
     })
+}
+
+const _saveData = (req, res, broadcastPayload, subscribers, message, page) => { 
+
+  if (broadcastPayload.action) {
+    if (broadcastPayload.action.type === 'custom_fields') {
+      _saveIntoCustomField(req, res, broadcastPayload, subscribers, message)
+    } else if (broadcastPayload.action.type === 'hubspot') {
+      _saveIntoHubspot(req, res, broadcastPayload, subscribers, message, page)
+    } else if (broadcastPayload.action.type === 'google_sheets') {
+      _saveIntoGoogleSheet(req, res, broadcastPayload, subscribers, message)
+    }
+  }
+}
+
+const _saveIntoCustomField = (req, res, broadcastPayload, subscribers, message) => { 
+  let user = {
+    companyId: subscribers[0].companyId
+  }
+  req.user = user
+  req.body.user_input = true
+  req.body.customFieldId = broadcastPayload.action.customFieldId
+  req.body.value = message.text
+  req.body.subscriberIds = subscribers.map(subscriber => subscriber._id)
+  setCustomFieldValue(req, res)
+}
+
+const _saveIntoHubspot = (req, res, broadcastPayload, subscribers, message, page) => {
+  callApi(`integrations/query`, 'post', { companyId: subscribers[0].companyId, integrationName: 'Hubspot' })
+    .then(integration => {
+      integration = integration[0]
+      if (integration && integration.enabled) { 
+        if (broadcastPayload.action.hubspotAction === 'submit_form') {
+          _submitForm(req, res, broadcastPayload, subscribers, message, page, integration)
+        }
+      }
+    }).catch(err => {
+      logger.serverLog(TAG, `Failed to fetch integrations ${err}`, 'error')
+    })
+}
+
+const _submitForm = (req, res, broadcastPayload, subscribers, message, page, integration) => {
+  let payload = {
+    submittedAt: '' + Date.now(),
+    fields: _createPayloadForm(broadcastPayload.action.hubspotColumn, subscribers, message.text),
+    legalConsentOptions: { // Include this object when GDPR options are enabled
+      consent: {
+        consentToProcess: true,
+        text: 'I agree to allow ' + page.pageName + ' to store and process my personal data.',
+        communications: [
+          {
+            value: true,
+            subscriptionTypeId: 999,
+            text: 'I agree to receive marketing communications from ' + page.pageName + '.'
+          }
+        ]
+      }
+    }
+  }
+  let hubspotUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${resp.portalId}/${resp.formId}`
+  _sendToHubspot(integration, hubspotUrl, payload, 'post')
+}
+
+function _sendToHubspot (integration, hubspotUrl, payload, method) {
+  console.log('sendToHubspot', payload)
+  return new Promise((resolve, reject) => {
+    let newTokens
+    refreshAuthToken(integration.integrationPayload.refresh_token)
+      .then(tokens => {
+        newTokens = tokens
+        return saveNewTokens(integration, tokens)
+      })
+      .then(updated => {
+        return callHubspotApi(hubspotUrl, method, payload, newTokens.access_token)
+      })
+      .then(result => {
+        resolve(result)
+        logger.serverLog(TAG, `Success in sending data to hubspot form`)
+      })
+      .catch(err => {
+        reject(err)
+        logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+      })
+  })
+}
+
+const _createPayloadForm = (FieldName, subscribers, message) => {
+  let allPayload = []
+  let HubspotMappingColumns = defaultFieldcolumn.HubspotMappingColumns
+  let payload = {
+    name: 'email',
+    value: subscribers[0].email
+  }
+  allPayload.push(payload)
+  payload = {
+    name: HubspotMappingColumns[FieldName],
+    value: message
+  }
+  allPayload.push(payload)
+  return allPayload
+}
+const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) => {
 }
