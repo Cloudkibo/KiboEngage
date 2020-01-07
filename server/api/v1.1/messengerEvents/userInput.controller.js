@@ -57,8 +57,7 @@ const _checkTypeValidation = (payload, message) => {
     return isWebURL(message.text)
   } else if (payload.type === 'number') {
     return isNumber(message.text)
-  }
-  else if (payload.type === 'phoneNumber') {
+  } else if (payload.type === 'phoneNumber') {
     return isPhoneNumber(message.text)
   }
 }
