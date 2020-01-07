@@ -12,7 +12,6 @@ const RssFeedPostSubscribers = require('../server/api/v1.1/rssFeeds/rssFeedPostS
 const RssSubscriptionsDataLayer = require('../server/api/v1.1/rssFeeds/rssSubscriptions.datalayer')
 const request = require('request')
 const config = require('../server/config/environment/index')
-const URLDataLayer = require('../server/api/v1.1/URLForClickedCount/URL.datalayer')
 
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true})
@@ -194,7 +193,7 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
       let redirectUrl = button.url
       let query = url.parse(redirectUrl, true).query
       if (query && query.sId) {
-        elements[i].buttons[0].url = new URL(`/clicked?r=${query.r}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`, config.domain).href
+        elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`, config.domain).href
       } else {
         elements[i].buttons[0].url = config.domain + `/clicked?r=${redirectUrl}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`
       }
