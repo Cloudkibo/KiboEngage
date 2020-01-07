@@ -187,6 +187,10 @@ const isNumber = function (str) {
   return regexp.test(str)
 }
 
+const isPhoneNumber = function (str) {
+  var regexp = /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/
+  return regexp.test(str)
+}
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject
 exports.passwordChangeEmailAlert = passwordChangeEmailAlert
@@ -194,3 +198,4 @@ exports.getMailTransporter = getMailTransporter
 exports.isEmailAddress = isEmailAddress
 exports.isWebURL = isWebURL
 exports.isNumber = isNumber
+exports.isPhoneNumber = isPhoneNumber

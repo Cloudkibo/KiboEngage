@@ -4,7 +4,7 @@ const TAG = 'api/messengerEvents/userInput.controller.js'
 const logger = require('../../../components/logger')
 const {sendUsingBatchAPI} = require('../../global/sendConversation')
 const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
-const {isEmailAddress, isWebURL, isNumber} = require('../../global/utility')
+const {isEmailAddress, isWebURL, isNumber, isPhoneNumber} = require('../../global/utility')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -57,6 +57,9 @@ const _checkTypeValidation = (payload, message) => {
     return isWebURL(message.text)
   } else if (payload.type === 'number') {
     return isNumber(message.text)
+  }
+  else if (payload.type === 'phoneNumber') {
+    return isPhoneNumber(message.text)
   }
 }
 
