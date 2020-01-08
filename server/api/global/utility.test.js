@@ -101,7 +101,7 @@ describe('Validate Number test in utility', () => {
   test('should validate correct Number', () => {
     expect(isNumber('034030')).toBe(true)
     expect(isNumber('12345')).toBe(true)
-    expect(isWebisNumberURL('98765')).toBe(true)
+    expect(isNumber('98765')).toBe(true)
   })
   test('should invalidate Number', () => {
     expect(isNumber('no')).toBe(false)
