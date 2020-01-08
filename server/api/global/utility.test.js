@@ -1,4 +1,4 @@
-const { prepareSubscribersCriteria } = require('./utility.js')
+const { prepareSubscribersCriteria, isEmailAddress, isWebURL, isNumber } = require('./utility.js')
 
 describe('Validate prepareSubscribersCriteria in global/utility', () => {
   test('validate undefined body', () => {
@@ -70,5 +70,41 @@ describe('Validate prepareSubscribersCriteria in global/utility', () => {
       _id: {$in: ['sub1', 'sub2', 'sub3']}
     }
     expect(result).toMatchObject(expectedObject)
+  })
+})
+
+describe('Validate email test in utility', () => {
+  test('should validate correct Urls', () => {
+    expect(isEmailAddress('dummy@gmail.com')).toBe(true)
+    expect(isEmailAddress('dummy@hotmail.com')).toBe(true)
+    expect(isEmailAddress('dummy@yahoo.com')).toBe(true)
+  })
+  test('should invalidate email', () => {
+    expect(isEmailAddress('gmail.com')).toBe(false)
+    expect(isEmailAddress('dummy@gmail')).toBe(false)
+    expect(isEmailAddress('dummy@com')).toBe(false)
+  })
+})
+describe('Validate weburl test in utility', () => {
+  test('should validate correct Urls', () => {
+    expect(isWebURL('www.google.com')).toBe(true)
+    expect(isWebURL('google.com')).toBe(true)
+    expect(isWebURL('https://app.yahoo.com')).toBe(true)
+  })
+  test('should invalidate weburl', () => {
+    expect(isWebURL('htt://app.yahoo.com')).toBe(false)
+    expect(isWebURL('https://appcom')).toBe(false)
+  })
+})
+
+describe('Validate Number test in utility', () => {
+  test('should validate correct Number', () => {
+    expect(isNumber('034030')).toBe(true)
+    expect(isNumber('12345')).toBe(true)
+    expect(isWebisNumberURL('98765')).toBe(true)
+  })
+  test('should invalidate Number', () => {
+    expect(isNumber('no')).toBe(false)
+    expect(isNumber('+92340')).toBe(false)
   })
 })
