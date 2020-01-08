@@ -375,7 +375,7 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
     },
     auth: oauth2Client
   }
-  sheets.spreadsheets.values.append(request, function (err, response) {
+  sheets.spreadsheets.values.update(request, function (err, response) {
     if (err) {
       logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
     }
