@@ -70,7 +70,6 @@ exports.setCustomFieldValue = function (req, res) {
     }
   })
     .catch(err => {
-      console.log(`customFieldResponse, ${(err)}`)
       sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
     })
 }
