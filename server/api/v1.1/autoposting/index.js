@@ -8,9 +8,11 @@ const controller = require('./autoposting.controller')
 const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
 const validate = require('express-jsonschema').validate
+const { checkSMP } = require('../../middleware/SMPStatus.middleware')
 
 router.get('/',
   auth.isAuthenticated(),
+  checkSMP(),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
   controller.index)

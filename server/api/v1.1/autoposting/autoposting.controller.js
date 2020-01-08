@@ -18,20 +18,13 @@ exports.index = function (req, res) {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      _checkSMP(req, res)
-        .then(statusArray => {
-          console.log('statusArray', statusArray)
+      AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({ companyId: companyUser.companyId }, req.headers.authorization)
+        .then(autoposting => {
+          sendSuccessResponse(res, 200, autoposting)
         })
-        .catch((err) => {
+        .catch(err => {
           sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
         })
-    //   AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({ companyId: companyUser.companyId }, req.headers.authorization)
-    //     .then(autoposting => {
-    //       sendSuccessResponse(res, 200, autoposting)
-    //     })
-    //     .catch(err => {
-    //       sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
-    //     })
     })
     .catch(err => {
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
