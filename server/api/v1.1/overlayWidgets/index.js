@@ -8,7 +8,7 @@ const validationSchema = require('./validationSchema')
 var router = express.Router()
 const auth = require('../../../auth/auth.service')
 
-router.post('/delete/:id',
+router.delete('/delete/:id',
   auth.isAuthenticated(),
   controller.delete)
 
