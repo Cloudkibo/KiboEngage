@@ -8,6 +8,12 @@ const {isEmailAddress, isWebURL, isNumber} = require('../../global/utility')
 const {setCustomFieldValue} = require('../custom_field_subscribers/custom_field_subscriber.controller')
 const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspotIntegration/hubspotIntegration.controller')
 const {defaultFieldcolumn} = require('../hubspotIntegration/hubspotDefaultFields')
+const config = require('./../../../config/environment')
+const {fetchColumns} = require('../sheetsIntegration/sheetsIntegration.controller')
+const {google} = require('googleapis')
+var sheets = google.sheets('v4')
+const {getLookUpValue} = require('./../../global/externalIntegrations')
+const {getLookUpRange} = require('./googleSheets.controller')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -183,7 +189,9 @@ const _saveIntoHubspot = (req, res, broadcastPayload, subscribers, message, page
       integration = integration[0]
       if (integration && integration.enabled) { 
         if (broadcastPayload.action.hubspotAction === 'submit_form') {
-          _submitForm(req, res, broadcastPayload, subscribers, message, page, integration)
+          _submitForm(broadcastPayload, subscribers, message, page, integration)
+        } else if (broadcastPayload.action.hubspotAction === 'insert_update_contact') {
+          _insertOrUpdateContact(broadcastPayload, subscribers, message, integration)
         }
       }
     }).catch(err => {
@@ -191,7 +199,21 @@ const _saveIntoHubspot = (req, res, broadcastPayload, subscribers, message, page
     })
 }
 
-const _submitForm = (req, res, broadcastPayload, subscribers, message, page, integration) => {
+const _insertOrUpdateContact = (broadcastPayload, subscribers, message, integration) => {
+  _getIdentityCustomFieldValue(broadcastPayload.action.identityCustomFieldValue, subscribers[0])
+    .then(customFieldValue => {
+      let HubspotMappingColumns = defaultFieldcolumn.HubspotMappingColumns
+      let data = [{property: HubspotMappingColumns[broadcastPayload.action.hubspotColumn], value: message.text}]
+      let payload = {
+        properties: data
+      }
+      let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${customFieldValue}/`
+      _sendToHubspot(integration, hubspotUrl, payload, 'post')
+    }).catch((err) => {
+      logger.serverLog(TAG, `Failed to fetch custom field subscriber for hubspot ${JSON.stringify(err)}`, 'error')
+    })
+}
+const _submitForm = (broadcastPayload, subscribers, message, page, integration) => {
   let payload = {
     submittedAt: '' + Date.now(),
     fields: _createPayloadForm(broadcastPayload.action.hubspotColumn, subscribers, message.text),
@@ -236,7 +258,7 @@ function _sendToHubspot (integration, hubspotUrl, payload, method) {
   })
 }
 
-const _createPayloadForm = (FieldName, subscribers, message) => {
+const _createPayloadForm = (huspotFieldName, subscribers, message) => {
   let allPayload = []
   let HubspotMappingColumns = defaultFieldcolumn.HubspotMappingColumns
   let payload = {
@@ -245,11 +267,155 @@ const _createPayloadForm = (FieldName, subscribers, message) => {
   }
   allPayload.push(payload)
   payload = {
-    name: HubspotMappingColumns[FieldName],
+    name: HubspotMappingColumns[huspotFieldName],
     value: message
   }
   allPayload.push(payload)
   return allPayload
 }
+
+function _getIdentityCustomFieldValue (lookUpValue, subscriber) {
+  return new Promise(function (resolve, reject) {
+    callApi(
+      'custom_field_subscribers/query',
+      'post',
+      {
+        purpose: 'findOne',
+        match: { customFieldId: lookUpValue, subscriberId: subscriber._id }
+      }
+    )
+      .then(customFieldSubscriber => {
+        if (customFieldSubscriber) {
+          resolve(customFieldSubscriber.value)
+        } else {
+          resolve('')
+        }
+      })
+      .catch((err) => {
+        logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+        reject(err)
+      })
+  })
+}
+
 const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) => {
+  callApi(`integrations/query`, 'post', {companyId: subscribers[0].companyId, integrationName: 'Google Sheets'})
+    .then(integration => {
+      integration = integration[0]
+      if (integration && integration.enabled) {
+        const oauth2Client = new google.auth.OAuth2(
+          config.google.client_id,
+          config.google.client_secret,
+          config.google.callbackURL
+        )
+        oauth2Client.credentials = integration.integrationPayload
+        if (integration && integration.enabled) { 
+          if (broadcastPayload.action.googleSheetAction === 'insert_row') {
+            _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client)
+          } else if (broadcastPayload.action.googleSheetAction === 'update_row') {
+            let resp = broadcastPayload.action
+            getLookUpValue(resp.lookUpValue, subscribers[0])
+              .then(lookUpValue => {
+                if (lookUpValue !== '') {
+                  var request = {
+                    spreadsheetId: resp.spreadSheet,
+                    range: resp.worksheetName,
+                    majorDimension: 'COLUMNS',
+                    auth: oauth2Client
+                  }
+                  sheets.spreadsheets.values.get(request, function (err, response) {
+                    if (err) {
+                      logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
+                    } else {
+                      let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
+                      if (range) {
+                        _updateRow(req, res, range, broadcastPayload, subscribers, message, oauth2Client)
+                      }
+                    }
+                  })
+                }
+              }).catch(err => {
+                logger.serverLog(TAG, `Failed to get LookUp Value ${err}`, 'error')
+              })
+          }
+        }
+      }
+    }).catch(err => {
+      logger.serverLog(TAG, `Failed to fetch integrations ${err}`, 'error')
+    })
+}
+
+const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oauth2Client) => {
+  let resp = broadcastPayload.action
+  let user = {
+    companyId: subscribers[0].companyId
+  }
+  req.user = user
+  req.body.user_input = true
+  req.body.spreadsheetId = resp.spreadSheet
+  req.body.sheetId = resp.worksheet
+  let Columns = fetchColumns(req, res)
+  let data = []
+  for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
+    if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
+      data.push(message.text)
+    } else {
+      data.push('')
+    }
+  }
+  let dataToSend = [data]
+  let request = {
+    spreadsheetId: resp.spreadSheet,
+    range: `${resp.worksheetName}!A${range.j + 1}`,
+    valueInputOption: 'RAW',
+    resource: {
+      'majorDimension': 'ROWS',
+      'range': `${resp.worksheetName}!A${range.j + 1}`,
+      'values': dataToSend
+    },
+    auth: oauth2Client
+  }
+  sheets.spreadsheets.values.append(request, function (err, response) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+    }
+  })
+}
+
+const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Client) => {
+  let resp = broadcastPayload.action
+  let user = {
+    companyId: subscribers[0].companyId
+  }
+  req.user = user
+  req.body.user_input = true
+  req.body.spreadsheetId = resp.spreadSheet
+  req.body.sheetId = resp.worksheet
+  let Columns = fetchColumns(req, res)
+  let data = []
+  for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
+    if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
+      data.push(message.text)
+    } else {
+      data.push('')
+    }
+  }
+  let dataToSend = [data]
+  let request = {
+    spreadsheetId: resp.spreadSheet,
+    range: resp.worksheetName,
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    resource: {
+      'majorDimension': 'ROWS',
+      'range': resp.worksheetName,
+      'values': dataToSend
+    },
+    auth: oauth2Client
+  }
+  sheets.spreadsheets.values.append(request, function (err, response) {
+    if (err) {
+      logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+    }
+  })
 }
