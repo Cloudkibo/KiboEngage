@@ -66,6 +66,9 @@ const _getBroadcastsCount = (criteria, next) => {
     })
 }
 
+exports.sendUserInputComponent = function (req, res) {
+  console.log('sendUserInputComponent called')
+}
 const _getBroadcastsData = (aggregateData, next) => {
   BroadcastDataLayer.aggregateForBroadcasts(aggregateData.match,
     undefined,
@@ -532,8 +535,8 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
           if (req.body.isList) {
             utility.callApi(`lists/query`, 'post', BroadcastLogicLayer.ListFindCriteria(req.body, req.user))
               .then(lists => {
-                let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, req.body.isApprovedForSMP)
-                sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+                let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, payload.length, req.body.isApprovedForSMP)
+                sendUsingBatchAPI('broadcast', payload, {criteria: subsFindCriteria}, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
                 sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
               })
               .catch(error => {
@@ -541,7 +544,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                 sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
               })
           } else {
-            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, req.body.isApprovedForSMP)
+            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, payload.length, req.body.isApprovedForSMP)
             console.log('subsFindCriteria', subsFindCriteria)
             if (req.body.isSegmented && req.body.segmentationTags.length > 0) {
               utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
@@ -552,7 +555,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                       if (tagSubscribers.length > 0) {
                         let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                         subsFindCriteria['_id'] = {$in: subscriberIds}
-                        sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+                        sendUsingBatchAPI('broadcast', payload, {criteria: subsFindCriteria}, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
                         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                       } else {
                         sendErrorResponse(res, 500, 'No subscribers match the given criteria')
@@ -568,7 +571,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                   sendErrorResponse(res, 500, 'Failed to fetch tags')
                 })
             } else {
-              sendUsingBatchAPI('broadcast', payload, subsFindCriteria, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
+              sendUsingBatchAPI('broadcast', payload, {criteria: subsFindCriteria}, page, req.user, reportObj, _savePageBroadcast, pageBroadcastData)
               sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
             }
           }

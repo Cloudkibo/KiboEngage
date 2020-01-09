@@ -296,8 +296,8 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
         if (req.body.isList) {
           utility.callApi(`lists/query`, 'post', PollLogicLayer.ListFindCriteria(req.body, req.user))
             .then(lists => {
-              let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, req.body.isApprovedForSMP)
-              sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+              let subsFindCriteria = prepareSubscribersCriteria(req.body, page, lists, 1, req.body.isApprovedForSMP)
+              sendUsingBatchAPI('poll', [messageData], {criteria: subsFindCriteria}, page, req.user, reportObj, _savePagePoll, pagePollData)
               sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
             })
             .catch(error => {
@@ -305,7 +305,7 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
               sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
             })
         } else {
-          let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, req.body.isApprovedForSMP)
+          let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, 1, req.body.isApprovedForSMP)
           utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: req.body.segmentationTags } })
             .then(tags => {
               let segmentationTags = tags.map(t => t._id)
@@ -336,18 +336,18 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
                       let subscriberIds = _.intersection(tagSubscribers, pollSubscribers)
                       if (subscriberIds.length > 0) {
                         subsFindCriteria['_id'] = {$in: subscriberIds}
-                        sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                        sendUsingBatchAPI('poll', [messageData], {criteria: subsFindCriteria}, page, req.user, reportObj, _savePagePoll, pagePollData)
                         sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                       } else {
                         sendErrorResponse(res, 500, '', 'No subscribers match the given criteria')
                       }
                     } else if (tagSubscribers) {
                       subsFindCriteria['_id'] = {$in: tagSubscribers}
-                      sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                      sendUsingBatchAPI('poll', [messageData], {criteria: subsFindCriteria}, page, req.user, reportObj, _savePagePoll, pagePollData)
                       sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                     } else if (pollSubscribers) {
                       subsFindCriteria['_id'] = {$in: pollSubscribers}
-                      sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                      sendUsingBatchAPI('poll', [messageData], {criteria: subsFindCriteria}, page, req.user, reportObj, _savePagePoll, pagePollData)
                       sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                     }
                   })
@@ -356,7 +356,7 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
                     sendErrorResponse(res, 500, 'Failed to fetch tag subscribers or poll responses')
                   })
               } else {
-                sendUsingBatchAPI('poll', [messageData], subsFindCriteria, page, req.user, reportObj, _savePagePoll, pagePollData)
+                sendUsingBatchAPI('poll', [messageData], {criteria: subsFindCriteria}, page, req.user, reportObj, _savePagePoll, pagePollData)
                 sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
               }
             })

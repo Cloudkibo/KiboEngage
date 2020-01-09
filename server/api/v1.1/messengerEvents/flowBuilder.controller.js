@@ -34,7 +34,7 @@ exports.index = function (req, res) {
               companyId: page.companyId
             }
             messageBlock = messageBlock.payload
-            sendUsingBatchAPI('broadcast', messageBlock, subsFindCriteria, page, '', reportObj, _savePageBroadcast, pageBroadcastData)
+            sendUsingBatchAPI('broadcast', messageBlock, {criteria: subsFindCriteria}, page, '', reportObj, _savePageBroadcast, pageBroadcastData)
           }
         })
         .catch(err => {
