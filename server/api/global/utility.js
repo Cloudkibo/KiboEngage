@@ -35,12 +35,16 @@ exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
     (Object.entries(page).length === 0 && page.constructor === Object)
   ) throw Error('page is required and cannot be empty!')
   else {
+    let smp = false
+    if ((isApprovedForSMP === 'approved')) {
+      smp = true
+    }
     let criteria = {
       pageId: page._id,
       companyId: page.companyId,
       isSubscribed: true,
       completeInfo: true,
-      lastMessagedAt: (!isApprovedForSMP) ? {
+      lastMessagedAt: (!smp) ? {
         $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
       } : undefined
     }

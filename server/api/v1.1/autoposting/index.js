@@ -8,9 +8,11 @@ const controller = require('./autoposting.controller')
 const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
 const validate = require('express-jsonschema').validate
+const { checkSMP } = require('../../middleware/SMPStatus.middleware')
 
 router.get('/',
   auth.isAuthenticated(),
+  checkSMP(),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
   controller.index)
@@ -19,14 +21,14 @@ router.post('/create',
   auth.isAuthenticated(),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
-  validate({body: validationSchema.createPayload}),
+  validate({ body: validationSchema.createPayload }),
   controller.create)
 
 router.post('/edit',
   auth.isAuthenticated(),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
-  validate({body: validationSchema.editPayload}),
+  validate({ body: validationSchema.editPayload }),
   controller.edit)
 
 router.delete('/:id',
