@@ -4,7 +4,7 @@ const TAG = 'api/messengerEvents/userInput.controller.js'
 const logger = require('../../../components/logger')
 const {sendUsingBatchAPI} = require('../../global/sendConversation')
 const BroadcastPageDataLayer = require('../page_broadcast/page_broadcast.datalayer')
-const {isEmailAddress, isWebURL, isNumber} = require('../../global/utility')
+const {isEmailAddress, isWebURL, isNumber, isPhoneNumber} = require('../../global/utility')
 const {setCustomFieldValue} = require('../custom_field_subscribers/custom_field_subscriber.controller')
 const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspotIntegration/hubspotIntegration.controller')
 const {defaultFieldcolumn} = require('../hubspotIntegration/hubspotDefaultFields')
@@ -66,6 +66,8 @@ const _checkTypeValidation = (payload, message) => {
     return isWebURL(message.text)
   } else if (payload.type === 'number') {
     return isNumber(message.text)
+  } else if (payload.type === 'phoneNumber') {
+    return isPhoneNumber(message.text)
   }
 }
 
