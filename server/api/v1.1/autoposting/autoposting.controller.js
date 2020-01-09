@@ -9,7 +9,6 @@ const feedparser = require('feedparser-promised')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { getScheduledTime } = require('../../global/utility')
-const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
@@ -23,7 +22,7 @@ exports.index = function (req, res) {
         .then(autoposting => {
           let data = {
             autoposting: autoposting,
-            SMPStatus: req.user.SMPStatus
+            SMPStatus: req.SMPStatus
           }
           sendSuccessResponse(res, 200, data)
         })

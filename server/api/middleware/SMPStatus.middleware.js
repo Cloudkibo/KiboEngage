@@ -17,7 +17,7 @@ exports.checkSMP = () => {
         if (connectedPages.length > 0) {
           checkStatusForEachPage(connectedPages)
             .then(statusArray => {
-              req.user.SMPStatus = statusArray
+              req.SMPStatus = statusArray
               next()
             })
         }
