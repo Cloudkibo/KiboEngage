@@ -1,4 +1,4 @@
-const { prepareSubscribersCriteria, isEmailAddress, isWebURL, isNumber } = require('./utility.js')
+const { prepareSubscribersCriteria, isEmailAddress, isWebURL, isNumber, isPhoneNumber } = require('./utility.js')
 
 describe('Validate prepareSubscribersCriteria in global/utility', () => {
   test('validate undefined body', () => {
@@ -106,5 +106,19 @@ describe('Validate Number test in utility', () => {
   test('should invalidate Number', () => {
     expect(isNumber('no')).toBe(false)
     expect(isNumber('+92340')).toBe(false)
+  })
+})
+
+describe('Validate PhoneNumber test in utility', () => {
+  test('should validate correct PhoneNumber', () => {
+    expect(isPhoneNumber('+923403630780')).toBe(true)
+    expect(isPhoneNumber('03403630780')).toBe(true)
+    expect(isPhoneNumber('123-345-3456')).toBe(true)
+  })
+  test('should invalidate PhoneNumber', () => {
+    expect(isPhoneNumber('number')).toBe(false)
+    expect(isPhoneNumber('1234')).toBe(false)
+    expect(isPhoneNumber('+92340')).toBe(false)
+
   })
 })
