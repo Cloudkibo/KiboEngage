@@ -458,28 +458,3 @@ const deleteTweetQueue = (query) => {
       logger.serverLog(TAG, `Failed to delete tweet queue object ${err}`, 'error')
     })
 }
-
-const _checkSMP = (req, res) => {
-  utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, connected: true })
-    .then(connectedPages => {
-      let statusArray = []
-      for (let i = 0; i < connectedPages.length; i++) {
-        isApprovedForSMP(connectedPages[0])
-          .then(smpStatus => {
-            statusArray.push({ pageId: connectedPages[0]._id, smpStatus: smpStatus })
-            if (i === connectedPages.length - 1) {
-              return statusArray
-            }
-          })
-          .catch(() => {
-            return undefined
-          })
-      }
-    })
-    .catch(() => {
-      return undefined
-    })
-}
-// page A  (no Applied)
-// page B  (Pending)
-// Page C  (APPROVED)
