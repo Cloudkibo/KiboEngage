@@ -107,7 +107,11 @@ exports.fetchColumns = function (req, res) {
         .then(dataToSend => {
           populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
             .then(dataToSend => {
-              sendSuccessResponse(res, 200, dataToSend)
+              if (req.body.user_input) {
+                return dataToSend
+              } else {
+                sendSuccessResponse(res, 200, dataToSend)
+              }
             })
         })
     }

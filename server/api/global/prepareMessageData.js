@@ -13,7 +13,10 @@ exports.facebook = (body, fname, lname) => {
     }
   } else if (body.componentType === 'userInput') {
     payload = {
-      'text': text
+      'text': body.question
+    }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
     }
     return JSON.stringify(payload)
   } else if (body.componentType === 'text' && !body.buttons) {
