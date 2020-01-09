@@ -15,7 +15,6 @@ exports.fetchFeedsCriteria = function (body, companyId) {
   if (body.page_value !== '') {
     findCriteria['pageIds'] = body.page_value
   }
-  console.log('Number of records', body.number_of_records)
   if (body.first_page === 'first') {
     finalCriteria = [
       { $match: findCriteria },
@@ -176,8 +175,6 @@ exports.getMetaData = function(feed, body) {
 
 exports.prepareBatchData = function (subscriber, messageData) {
   return new Promise((resolve, reject) => {
-    console.log('In prepare batch data', JSON.stringify(messageData))
-    console.log('In prepare batch data', JSON.stringify(subscriber))
     let batch = []
     let recipient = 'recipient=' + encodeURIComponent(JSON.stringify({'id': subscriber.subscriberId}))
     let tag = 'tag=' + encodeURIComponent('NON_PROMOTIONAL_SUBSCRIPTION')
@@ -196,7 +193,6 @@ exports.prepareBatchData = function (subscriber, messageData) {
 exports.callBatchAPI = (page, batch) => {
   return new Promise((resolve, reject) => {
     const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-      console.log('body', body)
       if (err) {
         reject(err)
       } else {

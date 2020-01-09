@@ -37,7 +37,6 @@ exports.preview = function (req, res) {
     companyId: req.user.companyId,
     userId: req.user._id
   }
-  console.log('data', data)
   async.series([
     _validateFeedUrl.bind(null, data),
     _parseFeed.bind(null, data),
@@ -164,8 +163,7 @@ exports.fetchFeeds = function (req, res) {
     }
   })
 }
-exports.delete = function (req, res) {
-  console.log('Kiboengage delete')
+exports.delete = function (req, res) {ss
   DataLayer.deleteForRssFeeds({_id: req.params.id})
     .then(result => {
       sendSuccessResponse(res, 200, result)
@@ -239,7 +237,6 @@ const _validateActiveFeeds = (data, next) => {
 const _validateTitleforEditFeed = (data, next) => {
   DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: data.body.title, $options: 'i'}, _id: {$ne: data.feed._id}})
     .then(rssFeeds => {
-      console.log('RssFeeds', rssFeeds)
       if (rssFeeds.length > 0) {
         next('An Rss feed with a similar title is already connected with this page')
       } else {
