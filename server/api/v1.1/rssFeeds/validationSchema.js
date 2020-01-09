@@ -29,6 +29,29 @@ exports.createPayload = {
     'pageIds'
   ]
 }
+exports.previewPayload = {
+  'type': 'object',
+  'properties': {
+    'feedUrl': {
+      'type': 'string'
+    },
+    'title': {
+      'type': 'string'
+    },
+    'storiesCount': {
+      'type': 'integer'
+    },
+    'pageIds': {
+      'type': 'array'
+    }
+  },
+  'required': [
+    'feedUrl',
+    'title',
+    'storiesCount',
+    'pageIds'
+  ]
+}
 exports.editPayload = {
   'type': 'object',
   'properties': {
