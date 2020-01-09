@@ -6,7 +6,9 @@ const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const feedparser = require('feedparser-promised')
+const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const async = require('async')
+
 
 exports.create = function (req, res) {
   let data = {
@@ -26,6 +28,29 @@ exports.create = function (req, res) {
       sendErrorResponse(res, 500, err)
     } else {
       sendSuccessResponse(res, 200, data.savedFeed)
+    }
+  })
+}
+exports.preview = function (req, res) {
+  let data = {
+    body: req.body,
+    companyId: req.user.companyId,
+    userId: req.user._id
+  }
+  console.log('data', data)
+  async.series([
+    _validateFeedUrl.bind(null, data),
+    _parseFeed.bind(null, data),
+    _fetchPage.bind(null, data),
+    _fetchAdminSubscription.bind(null, data),
+    _prepareMessageData.bind(null, data),
+    _prepareBatch.bind(null, data),
+    _sendPreviewMessage.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      sendSuccessResponse(res, 200, data.sentResponse)
     }
   })
 }
@@ -262,6 +287,80 @@ const _validateFeedUrl = (data, next) => {
     next(null)
   }
 }
+const _parseFeed = (data, next) => {
+  feedparser.parse(data.body.feedUrl)
+    .then(feed => {
+      data.feed = feed
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+const _fetchPage = (data, next) => {
+  utility.callApi(`pages/query`, 'post', {_id: data.body.pageIds[0]})
+    .then(pages => {
+      data.page = pages[0]
+      next()
+    })
+    .catch((err) => {
+      next(err)
+    })
+}
+const _fetchAdminSubscription = (data, next) => {
+  PageAdminSubscriptionDataLayer.genericFind({companyId: data.companyId, pageId: data.body.pageIds[0], userId: data.userId})
+  .then(subscriptionUser => {
+    data.subscriptionUser = subscriptionUser[0]
+    next()
+  })
+  .catch(err => {
+    next(err)
+  })
+}
+const _prepareMessageData = (data, next) => {
+  LogicLayer.getMetaData(data.feed, data.body)
+  .then(gallery => {
+    logger.serverLog(TAG, `gallery.length ${gallery.length}`)
+    let messageData = [{
+      text: `Here are your daily updates from ${data.body.title} News:`
+    }, {
+      attachment: {
+        type: 'template',
+        payload: {
+          template_type: 'generic',
+          elements: gallery
+        }
+      }
+    }]
+    data.messageData = messageData
+    next()
+  })
+  .catch(err => {
+    next(err)
+  })
+}
+const _prepareBatch = (data, next) => {
+  LogicLayer.prepareBatchData(data.subscriptionUser, data.messageData)
+  .then(batch => {
+    data.batch = batch
+    next()
+  }) 
+  .catch(err => {
+    next(err)
+  })
+}
+
+const _sendPreviewMessage = (data, next) => {
+  LogicLayer.callBatchAPI(data.page, data.batch)
+  .then(sentResponse => {
+    data.sentResponse = sentResponse
+    next()
+  }) 
+  .catch(err => {
+    next(err)
+  })
+}
+
 exports.getRssFeedPosts = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
   async.parallelLimit([
