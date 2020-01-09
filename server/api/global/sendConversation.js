@@ -96,11 +96,11 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
             containsUserInput = true
             if(module === 'update_broadcast') {
               waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
-              waitingForUserInput.incorrectTries = item.incorrectTries
+              waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
             }
             else {
               waitingForUserInput.componentIndex=index
-              waitingForUserInput.incorrectTries = item.incorrectTries
+              waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
             }
           }
         }
