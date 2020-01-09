@@ -73,7 +73,7 @@ exports.getCriterias = function (body) {
       _id: '$_id',
       seen: {$sum: {$cond: ['$rssFeedPost.seen', 1, 0]}},
       sent: {$sum: {$cond: ['$rssFeedPost.sent', 1, 0]}},
-      clicked: {'$first': '$clicked'},
+      clicked: {$sum: {$cond: ['$rssFeedPost.clicked', 1, 0]}},
       rssFeedId: { '$first': '$rssFeedId' },
       pageId: {'$first': '$pageId'},
       companyId: {'$first': '$companyId'},

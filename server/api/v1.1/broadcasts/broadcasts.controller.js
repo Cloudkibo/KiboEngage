@@ -843,6 +843,10 @@ exports.retrieveSubscribersCount = function (req, res) {
 const _getSubscribersCount = (pageAccessToken, match, res) => {
   isApprovedForSMP({accessToken: pageAccessToken})
     .then(smpStatus => {
+      let smp = false
+      if ((smpStatus === 'approved')) {
+        smp = true
+      }
       async.parallelLimit([
         function (cb) {
           let matchCriteria = Object.assign({}, match)
@@ -865,7 +869,7 @@ const _getSubscribersCount = (pageAccessToken, match, res) => {
         },
         function (cb) {
           let matchCriteria = Object.assign({}, match)
-          if (smpStatus) delete matchCriteria.lastMessagedAt
+          if (smp) delete matchCriteria.lastMessagedAt
           let criteria = [
             {$match: matchCriteria},
             {$group: {_id: null, count: {$sum: 1}}}
@@ -888,7 +892,7 @@ const _getSubscribersCount = (pageAccessToken, match, res) => {
           sendErrorResponse(res, 500, 'Failed to get subscribers count')
         } else {
           let payload = {
-            isApprovedForSMP: smpStatus,
+            isApprovedForSMP: smp,
             totalCount: results[0],
             count: results[1]
           }

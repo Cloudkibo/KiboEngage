@@ -17,9 +17,13 @@ exports.isApprovedForSMP = (page) => {
           let data = response.body.data
           let smp = data.filter((d) => d.feature === 'subscription_messaging')
           if (smp.length > 0 && smp[0].status.toLowerCase() === 'approved') {
-            resolve(true)
+            resolve('approved')
+          } else if (smp.length > 0 && smp[0].status.toLowerCase() === 'rejected') {
+            resolve('rejected')
+          } else if (smp.length > 0 && smp[0].status.toLowerCase() === 'pending') {
+            resolve('pending')
           } else {
-            resolve(false)
+            resolve('notApplied')
           }
         }
       })

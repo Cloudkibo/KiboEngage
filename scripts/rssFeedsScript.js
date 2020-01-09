@@ -2,6 +2,7 @@ const { callApi } = require('../server/api/v1.1/utility')
 const logger = require('../server/components/logger')
 const TAG = 'scripts/rssScript.js'
 const og = require('open-graph')
+const url = require('url')
 const feedparser = require('feedparser-promised')
 const async = require('async')
 const { getScheduledTime } = require('../server/api/global/utility')
@@ -11,7 +12,6 @@ const RssFeedPostSubscribers = require('../server/api/v1.1/rssFeeds/rssFeedPostS
 const RssSubscriptionsDataLayer = require('../server/api/v1.1/rssFeeds/rssSubscriptions.datalayer')
 const request = require('request')
 const config = require('../server/config/environment/index')
-const URLDataLayer = require('../server/api/v1.1/URLForClickedCount/URL.datalayer')
 
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true})
@@ -102,7 +102,7 @@ const sendFeed = (type, criteria, payload, page, feed, rssFeedPost) => {
       callApi('subscribers/aggregate', 'post', criteria)
         .then(subscribers => {
           if (subscribers.length > 0) {
-            callApi('rssSubscriptions/query', 'post', {purpose: 'findAll', match: {feedId: feed._id, subscription: false}}, 'kiboengage')
+            callApi('rssSubscriptions/query', 'post', {purpose: 'findAll', match: {rssFeedId: feed._id, subscription: false}}, 'kiboengage')
               .then(result => {
                 if (result && result.length > 0) {
                   let subIds = result.map(r => r.subscriberId._id)
@@ -172,7 +172,7 @@ const prepareBatchData = (subscribers, messageData, page, rssFeedPost) => {
         let tag = 'tag=' + encodeURIComponent('NON_PROMOTIONAL_SUBSCRIPTION')
         let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
         messageData.forEach((item, index) => {
-          let message = 'message=' + encodeURIComponent(JSON.stringify(item))
+          let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscribers[i])))
           if (index === 0) {
             batch.push({ 'method': 'POST', 'name': `${subscribers[i].senderId}${index + 1}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
           } else {
@@ -183,6 +183,23 @@ const prepareBatchData = (subscribers, messageData, page, rssFeedPost) => {
       }
     }
   })
+}
+
+const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
+  if (item.attachment) {
+    let elements = item.attachment.payload.elements
+    for (let i = 0; i < elements.length; i++) {
+      let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
+      let redirectUrl = button.url
+      let query = url.parse(redirectUrl, true).query
+      if (query && query.sId) {
+        elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`, config.domain).href
+      } else {
+        elements[i].buttons[0].url = config.domain + `/clicked?r=${redirectUrl}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`
+      }
+    }
+  }
+  return item
 }
 
 const callBatchAPI = (page, batch) => {
@@ -268,31 +285,21 @@ function getMetaData (feed, rssFeed, rssFeedPost) {
           logger.serverLog(TAG, 'error in fetching metdata', 'error')
         }
         if (meta && meta.title && meta.image) {
-          let URLObject = {
-            originalURL: feed[i].link,
-            module: {
-              id: rssFeedPost._id,
-              type: 'rss'
-            }
-          }
-          URLDataLayer.createURLObject(URLObject)
-            .then(savedurl => {
-              gallery.push({
-                title: meta.title,
-                subtitle: meta.description ? meta.description : '',
-                image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
-                buttons: [
-                  {
-                    type: 'web_url',
-                    title: 'Read More...',
-                    url: config.domain + '/api/URL/rss/' + savedurl._id
-                  }
-                ]
-              })
-              if (i === length - 1) {
-                resolve(gallery)
+          gallery.push({
+            title: meta.title,
+            subtitle: meta.description ? meta.description : '',
+            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+            buttons: [
+              {
+                type: 'web_url',
+                title: 'Read More...',
+                url: feed[i].link
               }
-            })
+            ]
+          })
+          if (i === length - 1) {
+            resolve(gallery)
+          }
         } else if (i === length - 1) {
           resolve(gallery)
         }

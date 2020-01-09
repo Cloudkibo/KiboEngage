@@ -6,40 +6,59 @@ const RssFeedsDataLayer = require('../rssFeeds/rssFeeds.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
+const og = require('open-graph')
 
 exports.changeSubscription = function (req, res) {
   res.status(200).json({
     status: 'success',
     description: `received the payload`
   })
-
-  let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  let resp
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
-  let data = {
-    sender: sender,
-    pageId: pageId,
-    resp: resp
-  }
-  async.series([
-    _fetchPage.bind(null, data),
-    _fetchSubscriber.bind(null, data),
-    _updateSubscription.bind(null, data),
-    _sendSubscriptionMessage.bind(null, data)
-  ], function (err) {
-    if (err) {
-      logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
-    } else {
-      logger.serverLog(TAG, 'Subscrption successfully')
-    }
-  })
+  RssFeedsDataLayer.genericFindForRssFeeds({_id: resp.rssFeedId})
+    .then(rssFeeds => {
+      if (rssFeeds.length > 0) {
+        let data = {
+          sender: sender,
+          pageId: pageId,
+          resp: resp,
+          rssFeed: rssFeeds[0]
+        }
+        async.series([
+          _fetchPage.bind(null, data),
+          _fetchSubscriber.bind(null, data),
+          _updateSubscription.bind(null, data),
+          _sendSubscriptionMessage.bind(null, data)
+        ], function (err) {
+          if (err) {
+            logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
+          } else {
+            logger.serverLog(TAG, 'Subscrption successfully')
+          }
+        })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch feed ${err}`, 'error')
+    })
 }
 exports.showMoreTopics = function (req, res) {
   res.status(200).json({
     status: 'success',
     description: `received the payload`
   })
-  let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  let resp
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   let data = {
@@ -154,10 +173,27 @@ const _sendMessage = (data, next) => {
     })
 }
 const _sendSubscriptionMessage = (data, next) => {
+  let buttons = [
+    {title: data.resp.action === 'subscribe_to_rssFeed' ? 'Unsubscribe from ' : 'Subscribe to ' + data.rssFeed.title,
+      type: 'postback',
+      payload: JSON.stringify({action: data.resp.action === 'subscribe_to_rssFeed' ? 'unsubscribe_from_rssFeed' : 'subscribe_to_rssFeed', rssFeedId: data.resp.rssFeedId})
+    },
+    {title: 'Show More Topics',
+      type: 'postback',
+      payload: JSON.stringify({action: 'show_more_topics', rssFeedId: data.resp.rssFeedId})
+    }
+  ]
   let messageData = {
     'recipient': {'id': data.sender},
     'message': JSON.stringify({
-      'text': data.resp.action === 'subscribe_to_rssFeed' ? 'Subscribed Successfully' : 'Unsubscribed Successfully'
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'button',
+          'text': data.resp.action === 'subscribe_to_rssFeed' ? 'Subscribed Successfully' : 'Unsubscribed Successfully',
+          'buttons': buttons
+        }
+      }
     })
   }
   facebookApiCaller('v3.3', `me/messages?access_token=${data.page.accessToken}`, 'post', messageData)
@@ -273,7 +309,7 @@ const _prepareQuickReplies = (data, next) => {
   }
 }
 const _prepareMessageData = (data, next) => {
-  rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
+  getMetaData(data.feed, data.rssFeed)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
@@ -295,4 +331,36 @@ const _prepareMessageData = (data, next) => {
     .catch(err => {
       next(err)
     })
+}
+function getMetaData (feed, rssFeed) {
+  return new Promise((resolve, reject) => {
+    let gallery = []
+    let length = rssFeed.storiesCount
+    for (let i = 0; i < length; i++) {
+      og(feed[i].link, (err, meta) => {
+        if (err) {
+          logger.serverLog(TAG, 'error in fetching metdata', 'error')
+        }
+        if (meta && meta.title && meta.image) {
+          gallery.push({
+            title: meta.title,
+            subtitle: meta.description ? meta.description : '',
+            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+            buttons: [
+              {
+                type: 'web_url',
+                title: 'Read More...',
+                url: feed[i].link
+              }
+            ]
+          })
+          if (i === length - 1) {
+            resolve(gallery)
+          }
+        } else if (i === length - 1) {
+          resolve(gallery)
+        }
+      })
+    }
+  })
 }
