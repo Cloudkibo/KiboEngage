@@ -18,9 +18,14 @@ exports.index = function (req, res) {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
+      console.log('statusArrayinController', req.user.SMPStatus)
       AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({ companyId: companyUser.companyId }, req.headers.authorization)
         .then(autoposting => {
-          sendSuccessResponse(res, 200, autoposting)
+          let data = {
+            autoposting: autoposting,
+            SMPStatus: req.user.SMPStatus
+          }
+          sendSuccessResponse(res, 200, data)
         })
         .catch(err => {
           sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)

@@ -14,31 +14,35 @@ exports.checkSMP = () => {
               description: 'Fatal Error. There is no connected page with your app.'
             })
         }
-        let statusArray = []
         if (connectedPages.length > 0) {
-          for (let i = 0; i < connectedPages.length; i++) {
-            isApprovedForSMP(connectedPages[i])
-              .then(smpStatus => {
-                if (smpStatus === 'approved') {
-                  next()
-                } else {
-                  statusArray.push({ pageId: connectedPages[i]._id, smpStatus: smpStatus })
-                  if (i === connectedPages.length - 1) {
-                    return res.status(500)
-                      .json({ status: 'failed', description: 'No any connected page have subscription permission approved', statusArray: statusArray })
-                  }
-                }
-              })
-              .catch(err => {
-                return res.status(500)
-                  .json({ status: 'failed', description: `Internal Server Error: ${err}` })
-              })
-          }
+          checkStatusForEachPage(connectedPages)
+            .then(statusArray => {
+              req.user.SMPStatus = statusArray
+              next()
+            })
         }
       })
       .catch(err => {
         return res.status(500)
           .json({ status: 'failed', description: `Internal Server Error: ${err}` })
       })
+  })
+}
+
+function checkStatusForEachPage (connectedPages) {
+  return new Promise((resolve, reject) => {
+    let statusArray = []
+    for (let i = 0; i < connectedPages.length; i++) {
+      isApprovedForSMP(connectedPages[i])
+        .then(smpStatus => {
+          statusArray.push({ pageId: connectedPages[i]._id, smpStatus: smpStatus })
+          if (i === connectedPages.length - 1) {
+            resolve(statusArray)
+          }
+        })
+        .catch(err => {
+          reject(err)
+        })
+    }
   })
 }
