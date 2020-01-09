@@ -63,7 +63,6 @@ const _callBatchAPI = (batch, accessToken) => {
 /* eslint-disable */
 const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) => {
     let waitingForUserInput = {
-      expiresAt: new Date(),
       broadcastId: recordObj.broadcastId,
       componentIndex: -1,
       incorrectTries: 3
@@ -97,9 +96,11 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
             containsUserInput = true
             if(module === 'update_broadcast') {
               waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
+              waitingForUserInput.incorrectTries = item.incorrectTries
             }
             else {
               waitingForUserInput.componentIndex=index
+              waitingForUserInput.incorrectTries = item.incorrectTries
             }
           }
         }
