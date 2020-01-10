@@ -471,9 +471,6 @@ exports.uploadForTemplate = function (req, res) {
 exports.sendConversation = function (req, res) {
   if (req.body.segmentationPageIds.length !== 1) { // restrict to one page
     sendErrorResponse(res, 400, '', 'Please select only one page')
-  } else if (req.body.payload.length > 3) { // check components restriction
-    logger.serverLog(TAG, 'Recieved more than 3 components', 'error')
-    sendErrorResponse(res, 400, '', 'Recieved more than 3 components')
   } else if (!validateInput.facebookBroadcast(req.body)) { // validate broadcast
     logger.serverLog(TAG, 'Parameters are missing.', 'error')
     sendErrorResponse(res, 400, '', 'Please fill all the required fields')
