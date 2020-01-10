@@ -223,7 +223,6 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
 }
 
 const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rssFeedIds) => {
-  console.log('data.parsed', parsedFeeds)
   return new Promise((resolve, reject) => {
     let batch = []
     async.each(subscribers, function (subscriber, callback) {
@@ -232,7 +231,6 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
       let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
       prepareMessage(subscriber, parsedFeeds, feed, rssFeedIds)
         .then(payload => {
-          console.log('messageData', payload.data)
           payload.data.forEach((item, index) => {
             let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
             if (index === 0) {
@@ -378,33 +376,6 @@ function getMetaData (feed, rssFeed, rssFeedPosts) {
       }
     })
   })
-    // for (let i = 0; i < length; i++) {
-    //   og(feed[i].link, (err, meta) => {
-    //     if (err) {
-    //       logger.serverLog(TAG, 'error in fetching metdata', 'error')
-    //     }
-    //     if (meta && meta.title && meta.image) {
-    //       console.log('gallery for', rssFeed.title)
-    //       gallery.push({
-    //         title: meta.title,
-    //         subtitle: meta.description ? meta.description : '',
-    //         image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
-    //         buttons: [
-    //           {
-    //             type: 'web_url',
-    //             title: 'Read More...',
-    //             url: config.domain + `/clicked?r=${feed[i].link}&m=rss&id=${rssFeedPost.rssFeedPostId}`
-    //           }
-    //         ]
-    //       })
-    //       if (i === length - 1) {
-    //         resolve(gallery)
-    //       }
-    //     } else if (i === length - 1) {
-    //       resolve(gallery)
-    //     }
-    //   })
-    // }
 }
 const _updateScheduledTime = (data, next) => {
   RSSFeedsDataLayer.genericUpdateRssFeed(
@@ -449,7 +420,6 @@ const _saveRssFeedPost = (data, next) => {
 }
 const saveRssFeedPostSubscribers = (postSubscribers) => {
   async.each(postSubscribers, function (postSubscriber, next) {
-    console.log('postSubscriber object', postSubscriber)
     RssFeedPostSubscribers.create(postSubscriber)
       .then(saved => {
         next()
@@ -460,8 +430,6 @@ const saveRssFeedPostSubscribers = (postSubscribers) => {
   }, function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to save RssFeedPostSubscribers ${err}`, 'error')
-    } else {
-      logger.serverLog(TAG, 'RssFeedPostSubscribers saved successfully!', 'debug')
     }
   })
 }

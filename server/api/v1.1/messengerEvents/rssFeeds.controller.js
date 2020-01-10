@@ -125,7 +125,6 @@ const _updateSubscription = (data, next) => {
     })
 }
 const _updateSubscriptionCount = (data, next) => {
-  console.log('in _updateSubscriptionCount')
   if (data.resp.action === 'subscribe_to_rssFeed') {
     RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: true})
       .then(rssSubscriptions => {
@@ -145,11 +144,9 @@ const _updateSubscriptionCount = (data, next) => {
   } else {
     RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: false})
       .then(rssSubscriptions => {
-        console.log('rssSubscriptions found', rssSubscriptions)
         if (rssSubscriptions.length === 0) {
           RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: -1 } }, {})
             .then(updated => {
-              console.log('updated', updated)
               next()
             })
             .catch(err => {
