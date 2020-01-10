@@ -1,6 +1,7 @@
 const logger = require('../../../components/logger')
 const DataLayer = require('./rssFeeds.datalayer')
 const RssFeedPostsDataLayer = require('./rssFeedPosts.datalayer')
+const RssSubscriptionsDataLayer = require('./rssSubscriptions.datalayer')
 const LogicLayer = require('./rssFeeds.logiclayer')
 const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
@@ -65,6 +66,7 @@ exports.edit = function (req, res) {
     _validateFeedUrl.bind(null, data),
     _validateTitleforEditFeed.bind(null, data),
     _checkDefaultFeed.bind(null, data),
+    _updateSubscriptionCount.bind(null, data),
     _updateRSSFeed.bind(null, data)
   ], function (err) {
     if (err) {
@@ -88,6 +90,56 @@ function _fetchFeedToUpdate (data, next) {
     .catch(error => {
       next(error)
     })
+}
+function _updateSubscriptionCount (data, next) {
+  if (data.body.defaultFeed !== data.feed.defaultFeed) {
+    if (data.body.defaultFeed) {
+      let criteria = [
+        {$match: {
+          companyId: data.feed.companyId,
+          isSubscribed: true,
+          completeInfo: true,
+          pageId: data.feed.pageIds[0]}
+        },
+        {$group: {_id: '$_id', count: {$sum: 1}}}
+      ]
+      utility.callApi(`subscribers/aggregate`, 'post', criteria)
+        .then(result => {
+          if (result.length > 0) {
+            RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: false}, { _id: null, count: { $sum: 1 } })
+              .then(rssSubscriptions => {
+                if (rssSubscriptions.length > 0) {
+                  data.body.subscriptions = result.length - rssSubscriptions[0].count
+                } else {
+                  data.body.subscriptions = result.length
+                }
+                next()
+              })
+              .catch(err => {
+                next(err)
+              })
+          } else {
+            data.body.subscriptions = 0
+            next(null, data)
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+          next(err)
+        })
+    } else {
+      RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+        .then(rssSubscriptions => {
+          data.body.subscriptions = rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
+    }
+  } else {
+    next()
+  }
 }
 function _saveRSSFeed (data, next) {
   let scheduledTime = new Date()
@@ -173,19 +225,35 @@ exports.delete = function (req, res) {
 }
 function _checkDefaultFeed (data, next) {
   if (data.body.defaultFeed) {
-    DataLayer.genericUpdateRssFeed({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true}, {defaultFeed: false}, {})
-      .then(updated => {
-        next(null, data)
+    DataLayer.genericFindForRssFeeds({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true})
+      .then(rssFeeds => {
+        if (rssFeeds.length > 0) {
+          rssFeeds = rssFeeds[0]
+          RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: rssFeeds._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+            .then(rssSubscriptions => {
+              DataLayer.genericUpdateRssFeed({_id: rssFeeds._id}, {defaultFeed: false, subscriptions: rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0}, {})
+                .then(updated => {
+                  next(null, data)
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to update default values ${err}`)
+                  next(err)
+                })
+            })
+            .catch(err => {
+              next(err)
+            })
+        } else {
+          next()
+        }
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to update default values ${err}`)
         next(err)
       })
   } else {
     next(null)
   }
 }
-
 function _getSubscriptionsCount (data, next) {
   if (data.body.defaultFeed) {
     let criteria = [
