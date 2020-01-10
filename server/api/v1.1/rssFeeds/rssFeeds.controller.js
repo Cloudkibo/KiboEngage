@@ -9,7 +9,6 @@ const feedparser = require('feedparser-promised')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const async = require('async')
 
-
 exports.create = function (req, res) {
   let data = {
     body: req.body,
@@ -163,7 +162,7 @@ exports.fetchFeeds = function (req, res) {
     }
   })
 }
-exports.delete = function (req, res) {ss
+exports.delete = function (req, res) {
   DataLayer.deleteForRssFeeds({_id: req.params.id})
     .then(result => {
       sendSuccessResponse(res, 200, result)
@@ -188,7 +187,6 @@ function _checkDefaultFeed (data, next) {
 }
 
 function _getSubscriptionsCount (data, next) {
-  console.log('in get subscribers', data.body)
   if (data.body.defaultFeed) {
     let criteria = [
       {$match: {
@@ -201,7 +199,6 @@ function _getSubscriptionsCount (data, next) {
     ]
     utility.callApi(`subscribers/aggregate`, 'post', criteria)
       .then(result => {
-        console.log('got subscribers', result)
         if (result.length > 0) {
           data.subscriptions = result[0].count
           next(null, data)
@@ -308,56 +305,56 @@ const _fetchPage = (data, next) => {
 }
 const _fetchAdminSubscription = (data, next) => {
   PageAdminSubscriptionDataLayer.genericFind({companyId: data.companyId, pageId: data.body.pageIds[0], userId: data.userId})
-  .then(subscriptionUser => {
-    data.subscriptionUser = subscriptionUser[0]
-    next()
-  })
-  .catch(err => {
-    next(err)
-  })
+    .then(subscriptionUser => {
+      data.subscriptionUser = subscriptionUser[0]
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 const _prepareMessageData = (data, next) => {
   LogicLayer.getMetaData(data.feed, data.body)
-  .then(gallery => {
-    logger.serverLog(TAG, `gallery.length ${gallery.length}`)
-    let messageData = [{
-      text: `Here are your daily updates from ${data.body.title} News:`
-    }, {
-      attachment: {
-        type: 'template',
-        payload: {
-          template_type: 'generic',
-          elements: gallery
+    .then(gallery => {
+      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
+      let messageData = [{
+        text: `Here are your daily updates from ${data.body.title} News:`
+      }, {
+        attachment: {
+          type: 'template',
+          payload: {
+            template_type: 'generic',
+            elements: gallery
+          }
         }
-      }
-    }]
-    data.messageData = messageData
-    next()
-  })
-  .catch(err => {
-    next(err)
-  })
+      }]
+      data.messageData = messageData
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 const _prepareBatch = (data, next) => {
   LogicLayer.prepareBatchData(data.subscriptionUser, data.messageData)
-  .then(batch => {
-    data.batch = batch
-    next()
-  }) 
-  .catch(err => {
-    next(err)
-  })
+    .then(batch => {
+      data.batch = batch
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 
 const _sendPreviewMessage = (data, next) => {
   LogicLayer.callBatchAPI(data.page, data.batch)
-  .then(sentResponse => {
-    data.sentResponse = sentResponse
-    next()
-  }) 
-  .catch(err => {
-    next(err)
-  })
+    .then(sentResponse => {
+      data.sentResponse = sentResponse
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 
 exports.getRssFeedPosts = function (req, res) {
