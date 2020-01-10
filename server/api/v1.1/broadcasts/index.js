@@ -89,4 +89,8 @@ router.post('/urlMetaData/',
   auth.isAuthenticated(),
   controller.urlMetaData)
 
+router.post('/sendUserInputComponent/',
+  auth.isAuthenticated(),
+  controller.sendUserInputComponent)
+
 module.exports = router
