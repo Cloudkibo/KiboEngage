@@ -356,32 +356,36 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
   req.body.user_input = true
   req.body.spreadsheetId = resp.spreadSheet
   req.body.sheetId = resp.worksheet
-  let Columns = fetchColumns(req, res)
-  let data = []
-  for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
-    if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
-      data.push(message.text)
-    } else {
-      data.push('')
-    }
-  }
-  let dataToSend = [data]
-  let request = {
-    spreadsheetId: resp.spreadSheet,
-    range: `${resp.worksheetName}!A${range.j + 1}`,
-    valueInputOption: 'RAW',
-    resource: {
-      'majorDimension': 'ROWS',
-      'range': `${resp.worksheetName}!A${range.j + 1}`,
-      'values': dataToSend
-    },
-    auth: oauth2Client
-  }
-  sheets.spreadsheets.values.update(request, function (err, response) {
-    if (err) {
-      logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
-    }
-  })
+  fetchColumns(req, res)
+    .then(Columns => {
+      let data = []
+      for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
+        if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
+          data.push(message.text)
+        } else {
+          data.push('')
+        }
+      }
+      let dataToSend = [data]
+      let request = {
+        spreadsheetId: resp.spreadSheet,
+        range: `${resp.worksheetName}!A${range.j + 1}`,
+        valueInputOption: 'RAW',
+        resource: {
+          'majorDimension': 'ROWS',
+          'range': `${resp.worksheetName}!A${range.j + 1}`,
+          'values': dataToSend
+        },
+        auth: oauth2Client
+      }
+      sheets.spreadsheets.values.update(request, function (err, response) {
+        if (err) {
+          logger.serverLog(TAG, `Failed to update row ${JSON.stringify(err)}`, 'error')
+        }
+      })
+    }).catch(err => {
+      logger.serverLog(TAG, `Failed to fetch columns in update row ${err}`, 'error')
+    })
 }
 
 const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Client) => {
@@ -393,31 +397,36 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
   req.body.user_input = true
   req.body.spreadsheetId = resp.spreadSheet
   req.body.sheetId = resp.worksheet
-  let Columns = fetchColumns(req, res)
-  let data = []
-  for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
-    if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
-      data.push(message.text)
-    } else {
-      data.push('')
-    }
-  }
-  let dataToSend = [data]
-  let request = {
-    spreadsheetId: resp.spreadSheet,
-    range: resp.worksheetName,
-    valueInputOption: 'RAW',
-    insertDataOption: 'INSERT_ROWS',
-    resource: {
-      'majorDimension': 'ROWS',
-      'range': resp.worksheetName,
-      'values': dataToSend
-    },
-    auth: oauth2Client
-  }
-  sheets.spreadsheets.values.append(request, function (err, response) {
-    if (err) {
-      logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
-    }
-  })
-}
+  fetchColumns(req, res)
+    .then(Columns => {
+      logger.serverLog(TAG, `fetchColumns ${JSON.stringify(Columns)}`, 'error')
+      let data = []
+      for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
+        if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
+          data.push(message.text)
+        } else {
+          data.push('')
+        }
+      }
+      let dataToSend = [data]
+      let request = {
+        spreadsheetId: resp.spreadSheet,
+        range: resp.worksheetName,
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        resource: {
+          'majorDimension': 'ROWS',
+          'range': resp.worksheetName,
+          'values': dataToSend
+        },
+        auth: oauth2Client
+      }
+      sheets.spreadsheets.values.append(request, function (err, response) {
+        if (err) {
+          logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+        }
+      })
+    }).catch(err => {
+      logger.serverLog(TAG, `Failed to fetch columns in insert row ${err}`, 'error')
+    })
+} 
