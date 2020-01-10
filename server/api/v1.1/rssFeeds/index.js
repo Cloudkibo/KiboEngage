@@ -32,4 +32,9 @@ router.post('/edit',
   validate({body: validationSchema.editPayload}),
   controller.edit)
 
+router.post('/preview',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.previewPayload}),
+  controller.preview)
+
 module.exports = router

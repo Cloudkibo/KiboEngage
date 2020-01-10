@@ -25,7 +25,7 @@ exports.createMessageBlocks = (linkedMessages, user, moduleId, moduleType) => {
   return Promise.all(messageBlockRequests)
 }
 
-exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
+exports.prepareSubscribersCriteria = (body, page, lists, payloadLength, isApprovedForSMP) => {
   if (
     !body ||
     (Object.entries(body).length === 0 && body.constructor === Object)
@@ -35,12 +35,16 @@ exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
     (Object.entries(page).length === 0 && page.constructor === Object)
   ) throw Error('page is required and cannot be empty!')
   else {
+    let smp = false
+    if ((isApprovedForSMP === 'approved')) {
+      smp = true
+    }
     let criteria = {
       pageId: page._id,
       companyId: page.companyId,
       isSubscribed: true,
       completeInfo: true,
-      lastMessagedAt: (!isApprovedForSMP) ? {
+      lastMessagedAt: (!smp) ? {
         $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
       } : undefined
     }
@@ -60,7 +64,11 @@ exports.prepareSubscribersCriteria = (body, page, lists, isApprovedForSMP) => {
       if (body.segmentationGender.length > 0) criteria = _.merge(criteria, {gender: {$in: body.segmentationGender}})
       if (body.segmentationLocale.length > 0) criteria = _.merge(criteria, {locale: {$in: body.segmentationLocale}})
     }
-    return criteria
+    let finalCriteria = [
+      {$match: criteria},
+      {$limit: 50 / payloadLength}
+    ]
+    return finalCriteria
   }
 }
 
@@ -168,7 +176,30 @@ const getMailTransporter = function () {
   return transporter
 }
 
+const isEmailAddress = function (str) {
+  var pattern = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+  return pattern.test(str)  
+}
+
+const isWebURL = function (str) {
+  let regexp = /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/\S*)?$/
+  return regexp.test(str)
+}
+
+const isNumber = function (str) {
+  var regexp = /^\d+$/
+  return regexp.test(str)
+}
+
+const isPhoneNumber = function (str) {
+  var regexp = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im
+  return regexp.test(str)
+}
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject
 exports.passwordChangeEmailAlert = passwordChangeEmailAlert
 exports.getMailTransporter = getMailTransporter
+exports.isEmailAddress = isEmailAddress
+exports.isWebURL = isWebURL
+exports.isNumber = isNumber
+exports.isPhoneNumber = isPhoneNumber

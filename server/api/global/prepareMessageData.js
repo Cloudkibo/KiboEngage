@@ -11,6 +11,14 @@ exports.facebook = (body, fname, lname) => {
     payload = {
       attachment: body.attachment
     }
+  } else if (body.componentType === 'userInput') {
+    payload = {
+      'text': body.question
+    }
+    if (body.quickReplies && body.quickReplies.length > 0) {
+      payload.quick_replies = body.quickReplies
+    }
+    return JSON.stringify(payload)
   } else if (body.componentType === 'text' && !body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
       text = text.replace(

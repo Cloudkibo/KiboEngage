@@ -58,59 +58,65 @@ exports.fetchColumns = function (req, res) {
     config.google.client_secret,
     config.google.callbackURL
   )
-  async.parallelLimit([
-    function (callback) {
-      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
-        .then(customFields => {
-          callback(null, customFields)
-        })
-        .catch(err => {
-          callback(err)
-        })
-    },
-    function (callback) {
-      callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
-        .then(integration => {
-          integration = integration[0]
-          oauth2Client.credentials = integration.integrationPayload
-          let request = {
-            // The spreadsheet to request.
-            spreadsheetId: req.body.spreadsheetId,
-            ranges: [],
-            includeGridData: true,
-            auth: oauth2Client
-          }
-          sheets.spreadsheets.get(request, function (err, response) {
-            if (err) {
-              callback(err)
-            } else {
-              callback(null, response)
-            }
+  return new Promise((resolve, reject) => {
+    async.parallelLimit([
+      function (callback) {
+        callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+          .then(customFields => {
+            callback(null, customFields)
           })
-        })
-        .catch(err => {
-          sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
-        })
-    }
-  ], 10, function (err, results) {
-    if (err) {
-      sendErrorResponse(res, 500, '', `Failed to fetch columns ${err}`)
-    } else {
-      let dataToSend = {
-        kiboPushColumns: populateKiboPushColumns(),
-        customFieldColumns: [],
-        googleSheetColumns: []
-      }
-      let customFields = results[0]
-      let googleData = results[1].data
-      populateCustomFieldColumns(dataToSend, customFields)
-        .then(dataToSend => {
-          populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
-            .then(dataToSend => {
-              sendSuccessResponse(res, 200, dataToSend)
+          .catch(err => {
+            callback(err)
+          })
+      },
+      function (callback) {
+        callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
+          .then(integration => {
+            integration = integration[0]
+            oauth2Client.credentials = integration.integrationPayload
+            let request = {
+              // The spreadsheet to request.
+              spreadsheetId: req.body.spreadsheetId,
+              ranges: [],
+              includeGridData: true,
+              auth: oauth2Client
+            }
+            sheets.spreadsheets.get(request, function (err, response) {
+              if (err) {
+                callback(err)
+              } else {
+                callback(null, response)
+              }
             })
-        })
-    }
+          })
+          .catch(err => {
+            sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
+          })
+      }
+    ], 10, function (err, results) {
+      if (err) {
+        sendErrorResponse(res, 500, '', `Failed to fetch columns ${err}`)
+      } else {
+        let dataToSend = {
+          kiboPushColumns: populateKiboPushColumns(),
+          customFieldColumns: [],
+          googleSheetColumns: []
+        }
+        let customFields = results[0]
+        let googleData = results[1].data
+        populateCustomFieldColumns(dataToSend, customFields)
+          .then(dataToSend => {
+            populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
+              .then(dataToSend => {
+                if (req.body.user_input) {
+                  resolve(dataToSend)
+                } else {
+                  sendSuccessResponse(res, 200, dataToSend)
+                }
+              })
+          })
+      }
+    })
   })
 }
 

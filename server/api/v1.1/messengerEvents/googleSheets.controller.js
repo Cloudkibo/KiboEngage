@@ -228,3 +228,4 @@ function getLookUpRange (lookUpColumn, lookUpValue, data) {
     }
   }
 }
+exports.getLookUpRange = getLookUpRange
