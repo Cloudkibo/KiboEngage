@@ -176,7 +176,7 @@ exports.addButton = function (req, res) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
-      buttonPayload.payload = req.body.payload
+      buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'hubspotAction'))) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
@@ -269,7 +269,7 @@ exports.editButton = function (req, res) {
       buttonPayload.sequenceValue = req.body.sequenceId
       sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
     } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
-      buttonPayload.payload = req.body.payload
+      buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'hubspotAction'))) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
