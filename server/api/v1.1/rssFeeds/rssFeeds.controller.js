@@ -165,28 +165,31 @@ function _checkDefaultFeed (data, next) {
 }
 
 function _getSubscriptionsCount (data, next) {
+  console.log('in get subscribers', data.body)
   if (data.body.defaultFeed) {
     let criteria = [
       {$match: {
         companyId: data.companyId,
         isSubscribed: true,
         completeInfo: true,
-        pageIds: data.body.pageIds[0]}
+        pageId: data.body.pageIds[0]}
       },
       {$group: {_id: null, count: {$sum: 1}}}
     ]
     utility.callApi(`subscribers/aggregate`, 'post', criteria)
       .then(result => {
+        console.log('got subscribers', result)
         if (result.length > 0) {
           data.subscriptions = result[0].count
           next(null, data)
         } else {
+          data.subscriptions = 0
           next(null, data)
         }
       })
       .catch(err => {
         logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
-        next(null, data)
+        next(err)
       })
   } else {
     data.subscriptions = 0

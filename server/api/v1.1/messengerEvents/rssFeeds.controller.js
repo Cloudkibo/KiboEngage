@@ -33,6 +33,7 @@ exports.changeSubscription = function (req, res) {
         async.series([
           _fetchPage.bind(null, data),
           _fetchSubscriber.bind(null, data),
+          _updateSubscriptionCount.bind(null, data),
           _updateSubscription.bind(null, data),
           _sendSubscriptionMessage.bind(null, data)
         ], function (err) {
@@ -123,6 +124,44 @@ const _updateSubscription = (data, next) => {
       next(err)
     })
 }
+const _updateSubscriptionCount = (data, next) => {
+  console.log('in _updateSubscriptionCount')
+  if (data.resp.action === 'subscribe_to_rssFeed') {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: true})
+      .then(rssSubscriptions => {
+        if (rssSubscriptions.length === 0) {
+          RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: 1 } }, {})
+            .then(updated => {
+              next()
+            })
+            .catch(err => {
+              next(err)
+            })
+        } else next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  } else {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: false})
+      .then(rssSubscriptions => {
+        console.log('rssSubscriptions found', rssSubscriptions)
+        if (rssSubscriptions.length === 0) {
+          RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: -1 } }, {})
+            .then(updated => {
+              console.log('updated', updated)
+              next()
+            })
+            .catch(err => {
+              next(err)
+            })
+        } else next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  }
+}
 const _fetchFeeds = (data, next) => {
   RssFeedsDataLayer.genericFindForRssFeeds({
     companyId: data.page.companyId,
@@ -174,7 +213,7 @@ const _sendMessage = (data, next) => {
 }
 const _sendSubscriptionMessage = (data, next) => {
   let buttons = [
-    {title: data.resp.action === 'subscribe_to_rssFeed' ? 'Unsubscribe from ' : 'Subscribe to ' + data.rssFeed.title,
+    {title: (data.resp.action === 'subscribe_to_rssFeed' ? 'Unsubscribe from ' : 'Subscribe to ') + data.rssFeed.title,
       type: 'postback',
       payload: JSON.stringify({action: data.resp.action === 'subscribe_to_rssFeed' ? 'unsubscribe_from_rssFeed' : 'subscribe_to_rssFeed', rssFeedId: data.resp.rssFeedId})
     },
