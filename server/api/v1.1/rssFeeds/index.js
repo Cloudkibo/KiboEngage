@@ -7,6 +7,12 @@ const validate = require('express-jsonschema').validate
 const controller = require('./rssFeeds.controller')
 const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
+const { checkSMP } = require('../../middleware/SMPStatus.middleware')
+
+router.get('/checkSMP',
+  auth.isAuthenticated(),
+  checkSMP(),
+  controller.checkSMP)
 
 router.post('/create',
   auth.isAuthenticated(),
