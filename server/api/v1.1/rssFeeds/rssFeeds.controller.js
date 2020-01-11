@@ -1,6 +1,7 @@
 const logger = require('../../../components/logger')
 const DataLayer = require('./rssFeeds.datalayer')
 const RssFeedPostsDataLayer = require('./rssFeedPosts.datalayer')
+const RssSubscriptionsDataLayer = require('./rssSubscriptions.datalayer')
 const LogicLayer = require('./rssFeeds.logiclayer')
 const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
@@ -9,7 +10,6 @@ const feedparser = require('feedparser-promised')
 const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const async = require('async')
-
 
 exports.create = function (req, res) {
   let data = {
@@ -68,6 +68,7 @@ exports.edit = function (req, res) {
     _validateFeedUrl.bind(null, data),
     _validateTitleforEditFeed.bind(null, data),
     _checkDefaultFeed.bind(null, data),
+    _updateSubscriptionCount.bind(null, data),
     _updateRSSFeed.bind(null, data)
   ], function (err) {
     if (err) {
@@ -91,6 +92,56 @@ function _fetchFeedToUpdate (data, next) {
     .catch(error => {
       next(error)
     })
+}
+function _updateSubscriptionCount (data, next) {
+  if (data.body.defaultFeed !== data.feed.defaultFeed) {
+    if (data.body.defaultFeed) {
+      let criteria = [
+        {$match: {
+          companyId: data.feed.companyId,
+          isSubscribed: true,
+          completeInfo: true,
+          pageId: data.feed.pageIds[0]}
+        },
+        {$group: {_id: '$_id', count: {$sum: 1}}}
+      ]
+      utility.callApi(`subscribers/aggregate`, 'post', criteria)
+        .then(result => {
+          if (result.length > 0) {
+            RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: false}, { _id: null, count: { $sum: 1 } })
+              .then(rssSubscriptions => {
+                if (rssSubscriptions.length > 0) {
+                  data.body.subscriptions = result.length - rssSubscriptions[0].count
+                } else {
+                  data.body.subscriptions = result.length
+                }
+                next()
+              })
+              .catch(err => {
+                next(err)
+              })
+          } else {
+            data.body.subscriptions = 0
+            next(null, data)
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+          next(err)
+        })
+    } else {
+      RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+        .then(rssSubscriptions => {
+          data.body.subscriptions = rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
+    }
+  } else {
+    next()
+  }
 }
 function _saveRSSFeed (data, next) {
   let scheduledTime = new Date()
@@ -174,7 +225,7 @@ exports.checkSMP = function (req, res) {
   }
 }
 
-exports.delete = function (req, res) {ss
+exports.delete = function (req, res) {
   DataLayer.deleteForRssFeeds({_id: req.params.id})
     .then(result => {
       sendSuccessResponse(res, 200, result)
@@ -185,19 +236,35 @@ exports.delete = function (req, res) {ss
 }
 function _checkDefaultFeed (data, next) {
   if (data.body.defaultFeed) {
-    DataLayer.genericUpdateRssFeed({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true}, {defaultFeed: false}, {})
-      .then(updated => {
-        next(null, data)
+    DataLayer.genericFindForRssFeeds({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true})
+      .then(rssFeeds => {
+        if (rssFeeds.length > 0) {
+          rssFeeds = rssFeeds[0]
+          RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: rssFeeds._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+            .then(rssSubscriptions => {
+              DataLayer.genericUpdateRssFeed({_id: rssFeeds._id}, {defaultFeed: false, subscriptions: rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0}, {})
+                .then(updated => {
+                  next(null, data)
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to update default values ${err}`)
+                  next(err)
+                })
+            })
+            .catch(err => {
+              next(err)
+            })
+        } else {
+          next()
+        }
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to update default values ${err}`)
         next(err)
       })
   } else {
     next(null)
   }
 }
-
 function _getSubscriptionsCount (data, next) {
   if (data.body.defaultFeed) {
     let criteria = [
@@ -205,7 +272,7 @@ function _getSubscriptionsCount (data, next) {
         companyId: data.companyId,
         isSubscribed: true,
         completeInfo: true,
-        pageIds: data.body.pageIds[0]}
+        pageId: data.body.pageIds[0]}
       },
       {$group: {_id: null, count: {$sum: 1}}}
     ]
@@ -215,12 +282,13 @@ function _getSubscriptionsCount (data, next) {
           data.subscriptions = result[0].count
           next(null, data)
         } else {
+          data.subscriptions = 0
           next(null, data)
         }
       })
       .catch(err => {
         logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
-        next(null, data)
+        next(err)
       })
   } else {
     data.subscriptions = 0
@@ -328,56 +396,56 @@ const _fetchRssFeeds = (data, next) => {
 }
 const _fetchAdminSubscription = (data, next) => {
   PageAdminSubscriptionDataLayer.genericFind({companyId: data.companyId, pageId: data.body.pageIds[0], userId: data.userId})
-  .then(subscriptionUser => {
-    data.subscriptionUser = subscriptionUser[0]
-    next()
-  })
-  .catch(err => {
-    next(err)
-  })
+    .then(subscriptionUser => {
+      data.subscriptionUser = subscriptionUser[0]
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 const _prepareMessageData = (data, next) => {
   LogicLayer.getMetaData(data.feed, data.body)
-  .then(gallery => {
-    logger.serverLog(TAG, `gallery.length ${gallery.length}`)
-    let messageData = [{
-      text: `Here are your daily updates from ${data.body.title} News:`
-    }, {
-      attachment: {
-        type: 'template',
-        payload: {
-          template_type: 'generic',
-          elements: gallery
+    .then(gallery => {
+      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
+      let messageData = [{
+        text: `Here are your daily updates from ${data.body.title} News:`
+      }, {
+        attachment: {
+          type: 'template',
+          payload: {
+            template_type: 'generic',
+            elements: gallery
+          }
         }
-      }
-    }]
-    data.messageData = messageData
-    next()
-  })
-  .catch(err => {
-    next(err)
-  })
+      }]
+      data.messageData = messageData
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 const _prepareBatch = (data, next) => {
   LogicLayer.prepareBatchData(data.subscriptionUser, data.messageData)
-  .then(batch => {
-    data.batch = batch
-    next()
-  }) 
-  .catch(err => {
-    next(err)
-  })
+    .then(batch => {
+      data.batch = batch
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 
 const _sendPreviewMessage = (data, next) => {
   LogicLayer.callBatchAPI(data.page, data.batch)
-  .then(sentResponse => {
-    data.sentResponse = sentResponse
-    next()
-  }) 
-  .catch(err => {
-    next(err)
-  })
+    .then(sentResponse => {
+      data.sentResponse = sentResponse
+      next()
+    })
+    .catch(err => {
+      next(err)
+    })
 }
 
 exports.getRssFeedPosts = function (req, res) {
