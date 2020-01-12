@@ -7,6 +7,7 @@ const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const feedparser = require('feedparser-promised')
+const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const async = require('async')
 
@@ -42,6 +43,7 @@ exports.preview = function (req, res) {
     _parseFeed.bind(null, data),
     _fetchPage.bind(null, data),
     _fetchAdminSubscription.bind(null, data),
+    _fetchRssFeeds.bind(null, data),
     _prepareMessageData.bind(null, data),
     _prepareBatch.bind(null, data),
     _sendPreviewMessage.bind(null, data)
@@ -214,6 +216,15 @@ exports.fetchFeeds = function (req, res) {
     }
   })
 }
+
+exports.checkSMP = function (req, res) {
+  if (req.user.SMPStatus) {
+    sendSuccessResponse(res, 200, req.user.SMPStatus)
+  } else {
+    sendErrorResponse(res, 500, `Failed to fetch subscription messaging status`)
+  }
+}
+
 exports.delete = function (req, res) {
   DataLayer.deleteForRssFeeds({_id: req.params.id})
     .then(result => {
@@ -365,6 +376,18 @@ const _fetchPage = (data, next) => {
   utility.callApi(`pages/query`, 'post', {_id: data.body.pageIds[0]})
     .then(pages => {
       data.page = pages[0]
+      next()
+    })
+    .catch((err) => {
+      next(err)
+    })
+}
+const _fetchRssFeeds = (data, next) => {
+  DataLayer.genericFindForRssFeeds({companyId: data.companyId,
+    isActive: true,
+    pageIds: {$in: [data.body.pageIds[0]]}})
+    .then(rssFeeds => {
+      data.rssFeeds = rssFeeds
       next()
     })
     .catch((err) => {
