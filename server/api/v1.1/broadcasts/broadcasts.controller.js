@@ -176,7 +176,7 @@ exports.addButton = function (req, res) {
       buttonPayload.payload = JSON.stringify(req.body.payload)
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
-      buttonPayload.payload = JSON.stringify(req.body.payload)
+      buttonPayload.payload = req.body.payload
       sendSuccessResponse(res, 200, buttonPayload)
     } else if ((_.has(req.body.payload, 'hubspotAction'))) {
       buttonPayload.payload = JSON.stringify(req.body.payload)

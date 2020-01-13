@@ -721,15 +721,15 @@ function addModuleIdIfNecessary (payload, broadcastId) {
   for (let i = 0; i < payload.length; i++) {
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
-        if (button.payload) {
-          data = JSON.parse(button.payload)
-        }
-        if (data && data.action === 'hubspot') {
-          button.payload = remove_hubspot_data(data)
-        }
-        if (button.payload) {
-          button.payload = JSON.stringify(button.payload)
-        }
+        // if (button.payload) {
+        //   data = JSON.parse(button.payload)
+        // }
+        // if (data && data.action === 'hubspot') {
+        //   button.payload = remove_hubspot_data(data)
+        // }
+        // if (button.payload) {
+        //   button.payload = JSON.stringify(button.payload)
+        // }
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
           let urlId = temp[temp.length - 1]
