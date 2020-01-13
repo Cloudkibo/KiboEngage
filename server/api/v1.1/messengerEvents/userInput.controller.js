@@ -101,7 +101,7 @@ const _subscriberUpdate = (subscriber, waitingForUserInput) => {
           require('./../../../config/socketio').sendMessageToClient({
             room_id: sub.companyId,
             body: {
-              action: 'new_chat',
+              action: 'user_input_updated',
               payload: {
                 subscriber_id: sub._id,
                 name: sub.firstName + ' ' + sub.lastName,
