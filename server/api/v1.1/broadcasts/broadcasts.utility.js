@@ -726,9 +726,9 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         }
         if (data && data.action === 'hubspot') {
           button.payload = remove_hubspot_data(data)
-        }
-        if (button.payload) {
-          button.payload = JSON.stringify(button.payload)
+          if (button.payload) {
+            button.payload = JSON.stringify(button.payload)
+          }
         }
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
