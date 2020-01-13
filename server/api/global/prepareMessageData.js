@@ -58,7 +58,7 @@ exports.facebook = (body, fname, lname) => {
         'payload': {
           'template_type': 'button',
           'text': text,
-          'buttons': body.buttons
+          'buttons': _updateButtonUrl(body.buttons)
         }
       }
     }
