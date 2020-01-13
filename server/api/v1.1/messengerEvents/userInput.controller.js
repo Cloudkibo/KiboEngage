@@ -95,6 +95,7 @@ const _subscriberUpdate = (subscriber, waitingForUserInput) => {
     .then(updated => {
       callApi('subscribers/query', 'post', {_id: subscriber._id})
         .then(sub => {
+          console.log('userInput _subscriberUpdate', sub)
           require('./../../../config/socketio').sendMessageToClient({
             room_id: sub.companyId,
             body: {
