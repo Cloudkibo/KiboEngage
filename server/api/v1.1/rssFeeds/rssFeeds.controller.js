@@ -405,6 +405,14 @@ const _fetchAdminSubscription = (data, next) => {
     })
 }
 const _prepareMessageData = (data, next) => {
+  var quickReplies = []
+  if (data.rssFeeds.length > 0) {
+    quickReplies.push({
+      content_type: 'text',
+      title: 'Show More Topics',
+      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: ''}])
+    })
+  }
   LogicLayer.getMetaData(data.feed, data.body)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
@@ -417,7 +425,8 @@ const _prepareMessageData = (data, next) => {
             template_type: 'generic',
             elements: gallery
           }
-        }
+        },
+        quick_replies: quickReplies
       }]
       data.messageData = messageData
       next()
