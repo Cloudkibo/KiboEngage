@@ -17,4 +17,13 @@ router.post('/create',
   validate({body: validationSchema.createPayload}),
   controller.create)
 
+router.post('/fetchWidgets',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.fetchPayload}),
+  controller.fetchWidgets)
+
+router.post('/update/:id',
+  auth.isAuthenticated(),
+  controller.update)
+
 module.exports = router
