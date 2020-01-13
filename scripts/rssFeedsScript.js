@@ -225,6 +225,10 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
 const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rssFeedIds) => {
   return new Promise((resolve, reject) => {
     let batch = []
+    let waitingForUserInput = {
+      componentIndex: -1
+    }
+    _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
     async.each(subscribers, function (subscriber, callback) {
       let recipient = 'recipient=' + encodeURIComponent(JSON.stringify({'id': subscriber.senderId}))
       let tag = 'tag=' + encodeURIComponent('NON_PROMOTIONAL_SUBSCRIPTION')
@@ -443,6 +447,16 @@ function parseFeed (feed) {
         reject(err)
       })
   })
+}
+const _removeSubsWaitingForUserInput = (subscribers, waitingForUserInput) => {
+  let subscriberIds = subscribers.map(subscriber => subscriber._id)
+  callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds, waitingForUserInput: { '$ne': null }}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
+    .then(updated => {
+      logger.serverLog(TAG, `Succesfully updated subscriber _removeSubsWaitingForUserInput in RSS Feed`)
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update subscriber in RSS FEED ${JSON.stringify(err)}`)
+    })
 }
 exports._parseFeed = _parseFeed
 exports.getMetaData = getMetaData
