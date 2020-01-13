@@ -91,9 +91,10 @@ const _createValidationMessage = (message, skipButtonText) => {
 }
 
 const _subscriberUpdate = (subscriber, waitingForUserInput) => {
+  console.log('_subscriberUpdate', subscriber)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriber.data[0]._id}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
     .then(updated => {
-      callApi('subscribers/query', 'post', {_id: subscriber._id})
+      callApi('subscribers/query', 'post', {_id: subscriber.data[0]._id})
         .then(sub => {
           console.log('userInput _subscriberUpdate', sub)
           require('./../../../config/socketio').sendMessageToClient({
