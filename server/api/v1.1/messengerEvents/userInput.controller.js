@@ -93,6 +93,23 @@ const _createValidationMessage = (message, skipButtonText) => {
 const _subscriberUpdate = (subscriber, waitingForUserInput) => {
   callApi(`subscribers/update`, 'put', {query: {_id: subscriber.data[0]._id}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
     .then(updated => {
+      callApi('subscribers/query', 'post', {_id: subscriber._id})
+        .then(sub => {
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: sub.companyId,
+            body: {
+              action: 'new_chat',
+              payload: {
+                subscriber_id: sub._id,
+                name: sub.firstName + ' ' + sub.lastName,
+                subscriber: sub
+              }
+            }
+          })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+        })
       logger.serverLog(TAG, `Succesfully updated subscriber`)
     })
     .catch(err => {
@@ -104,7 +121,7 @@ const _sendNextMessage = (req, res) => {
   callApi(`subscribers/query`, 'post', {pageId: req.body.payload.pageId, senderId: req.body.payload.senderId, companyId: req.body.payload.companyId})
     .then(sub => {
       let subscriber = {}
-      subscriber.data = sub 
+      subscriber.data = sub
       let waitingForUserInput = subscriber.data[0].waitingForUserInput
       broadcastDataLayer.findBroadcast({_id: waitingForUserInput.broadcastId, companyId: req.body.payload.companyId})
         .then(broadcast => {
@@ -123,8 +140,7 @@ const _sendNextMessage = (req, res) => {
                   if (payload.length === 0) {
                     waitingForUserInput.componentIndex = -1
                     _subscriberUpdate(subscriber, waitingForUserInput)
-                  }
-                  else {
+                  } else {
                     sendUsingBatchAPI('update_broadcast', payload, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
                   }
                 } else {
@@ -134,8 +150,7 @@ const _sendNextMessage = (req, res) => {
                     _subscriberUpdate(subscriber, waitingForUserInput)
                     let validationMessage = _createValidationMessage(broadcast_payload.retryMessage, broadcast_payload.skipButtonText)
                     sendUsingBatchAPI('broadcast_message', validationMessage, subscriber, pages[0], req.user, '', _savePageBroadcast, broadcast)
-                  }
-                  else {
+                  } else {
                     waitingForUserInput.componentIndex = -1
                     _subscriberUpdate(subscriber, waitingForUserInput)
                   }
@@ -144,8 +159,7 @@ const _sendNextMessage = (req, res) => {
               .catch(err => {
                 logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
               })
-          }
-          else {
+          } else {
             console.log('called function component index')
             waitingForUserInput.componentIndex = -1
             _subscriberUpdate(subscriber, waitingForUserInput)
@@ -160,8 +174,7 @@ const _sendNextMessage = (req, res) => {
     })
 }
 
-const _saveData = (req, res, broadcastPayload, subscribers, message, page) => { 
-
+const _saveData = (req, res, broadcastPayload, subscribers, message, page) => {
   if (broadcastPayload.action) {
     if (broadcastPayload.action.type === 'custom_fields') {
       _saveIntoCustomField(req, res, broadcastPayload, subscribers, message)
@@ -173,7 +186,7 @@ const _saveData = (req, res, broadcastPayload, subscribers, message, page) => {
   }
 }
 
-const _saveIntoCustomField = (req, res, broadcastPayload, subscribers, message) => { 
+const _saveIntoCustomField = (req, res, broadcastPayload, subscribers, message) => {
   let user = {
     companyId: subscribers[0].companyId
   }
@@ -189,7 +202,7 @@ const _saveIntoHubspot = (req, res, broadcastPayload, subscribers, message, page
   callApi(`integrations/query`, 'post', { companyId: subscribers[0].companyId, integrationName: 'Hubspot' })
     .then(integration => {
       integration = integration[0]
-      if (integration && integration.enabled) { 
+      if (integration && integration.enabled) {
         if (broadcastPayload.action.hubspotAction === 'submit_form') {
           _submitForm(broadcastPayload, subscribers, message, page, integration)
         } else if (broadcastPayload.action.hubspotAction === 'insert_update_contact') {
@@ -311,7 +324,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
           config.google.callbackURL
         )
         oauth2Client.credentials = integration.integrationPayload
-        if (integration && integration.enabled) { 
+        if (integration && integration.enabled) {
           if (broadcastPayload.action.googleSheetAction === 'insert_row') {
             _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client)
           } else if (broadcastPayload.action.googleSheetAction === 'update_row') {
@@ -429,4 +442,4 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
     }).catch(err => {
       logger.serverLog(TAG, `Failed to fetch columns in insert row ${err}`, 'error')
     })
-} 
+}
