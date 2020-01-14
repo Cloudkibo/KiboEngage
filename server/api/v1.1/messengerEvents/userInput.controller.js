@@ -360,9 +360,10 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
         if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
           data.push(message.text)
         } else {
-          data.push('')
+          data.push(null)
         }
       }
+      logger.serverLog(TAG, ` data to send update row userinput controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -402,9 +403,10 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
         if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
           data.push(message.text)
         } else {
-          data.push('')
+          data.push(null)
         }
       }
+      logger.serverLog(TAG, ` data to send insert row userinput controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
