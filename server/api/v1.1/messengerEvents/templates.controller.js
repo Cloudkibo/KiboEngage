@@ -37,7 +37,7 @@ exports.index = function (req, res) {
               logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
               if (template.payload.length > 0 && template.payload[0].fileurl && template.payload[0].fileurl.url) {
                 let dataToSend = {
-                  pages: [page],
+                  pages: [page._id],
                   url: template.payload[0].fileurl.url,
                   componentType: template.payload[0].componentType,
                   id: template.payload[0].fileurl.id,
