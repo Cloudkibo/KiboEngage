@@ -63,7 +63,7 @@ const _checkTypeValidation = (payload, message) => {
   } else if (payload.type === 'email') {
     return isEmailAddress(message.text)
   } else if (payload.type === 'url') {
-    return isWebURL(message.text)
+    return isWebURL(message.text.toLowerCase())
   } else if (payload.type === 'number') {
     return isNumber(message.text)
   } else if (payload.type === 'phoneNumber') {
@@ -316,6 +316,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
             getLookUpValue(resp.lookUpValue, subscribers[0])
               .then(lookUpValue => {
                 if (lookUpValue !== '') {
+                  logger.serverLog(TAG, `lookUpValue userInput Controller ${JSON.stringify(lookUpValue)}`)
                   var request = {
                     spreadsheetId: resp.spreadSheet,
                     range: resp.worksheetName,
@@ -360,9 +361,10 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
         if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
           data.push(message.text)
         } else {
-          data.push('')
+          data.push(null)
         }
       }
+      logger.serverLog(TAG, ` data to send update row userinput controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -402,9 +404,10 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
         if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
           data.push(message.text)
         } else {
-          data.push('')
+          data.push(null)
         }
       }
+      logger.serverLog(TAG, ` data to send insert row userinput controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,

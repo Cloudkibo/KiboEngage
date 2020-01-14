@@ -1,5 +1,5 @@
 const logger = require('../../../components/logger')
-const TAG = 'api/messengerEvents/customFieldsController.controller.js'
+const TAG = 'api/messengerEvents/googleSheetsController.controller.js'
 const {callApi} = require('../utility')
 const async = require('async')
 const {google} = require('googleapis')
@@ -76,7 +76,7 @@ function insertRow (resp, subscriber, oauth2Client) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
-      logger.serverLog(TAG, ` data to send ${JSON.stringify(data)}`)
+      logger.serverLog(TAG, ` data to send in Insert Row googleSheet Controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -102,6 +102,7 @@ function insertRow (resp, subscriber, oauth2Client) {
 function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
   getLookUpValue(resp.lookUpValue, subscriber)
     .then(lookUpValue => {
+      logger.serverLog(TAG, `lookUpValue google sheets data ${JSON.stringify(lookUpValue)}`)
       if (lookUpValue !== '') {
         var request = {
           spreadsheetId: resp.spreadSheet,
@@ -176,6 +177,7 @@ function updateRow (resp, subscriber, oauth2Client, range) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
+      logger.serverLog(TAG, ` data to send in updateRow googleSheet Controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
