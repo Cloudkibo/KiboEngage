@@ -39,7 +39,7 @@ exports.index = function (req, res) {
                 let dataToSend = {
                   pages: [page._id],
                   url: template.payload[0].fileurl.url,
-                  componentType: template.payload[0].componentType,
+                  componentType: (template.payload[0].componentType === 'media') ? template.payload[0].image_url ? 'image' : 'video' : template.payload[0].componentType,
                   id: template.payload[0].fileurl.id,
                   name: template.payload[0].fileurl.name
                 }
