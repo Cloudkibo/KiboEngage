@@ -28,9 +28,8 @@ cron.schedule('*/5 * * * * *', SequenceScript.runSequenceMessageQueueScript) // 
 cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midnight
 cron.schedule('* * * * *', abandonedCartScript.runScript)
 cron.schedule('0 */1 * * *', rssScript.runRSSScript) // after 1 hour
-// cron.schedule('0 8 * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
-// cron.schedule('* * * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
-cron.schedule('0 */2 * * *', rssFeedsScript.runRSSScript) //  after every 2 hours for testing
+cron.schedule('0 8 * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
+// cron.schedule('0 */2 * * *', rssFeedsScript.runRSSScript) //  after every 2 hours for testing
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
