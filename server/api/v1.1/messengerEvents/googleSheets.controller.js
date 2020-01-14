@@ -102,6 +102,7 @@ function insertRow (resp, subscriber, oauth2Client) {
 function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
   getLookUpValue(resp.lookUpValue, subscriber)
     .then(lookUpValue => {
+      logger.serverLog(TAG, `lookUpValue google sheets data ${JSON.stringify(lookUpValue)}`)
       if (lookUpValue !== '') {
         var request = {
           spreadsheetId: resp.spreadSheet,
