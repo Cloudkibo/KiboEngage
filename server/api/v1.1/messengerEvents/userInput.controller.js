@@ -94,25 +94,6 @@ const _subscriberUpdate = (subscriber, waitingForUserInput) => {
   console.log('_subscriberUpdate', subscriber)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriber.data[0]._id}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
     .then(updated => {
-      callApi('subscribers/query', 'post', {_id: subscriber.data[0]._id})
-        .then(sub => {
-          sub = sub[0]
-          console.log('userInput _subscriberUpdate', sub)
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: sub.companyId,
-            body: {
-              action: 'user_input_updated',
-              payload: {
-                subscriber_id: sub._id,
-                name: sub.firstName + ' ' + sub.lastName,
-                subscriber: sub
-              }
-            }
-          })
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
-        })
       logger.serverLog(TAG, `Succesfully updated subscriber`)
     })
     .catch(err => {
