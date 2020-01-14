@@ -35,14 +35,14 @@ exports.index = function (req, res) {
             .then(subscriber => {
               subscriber = subscriber[0]
               logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
-              if (template.payload.fileurl && template.payload.fileurl.url) {
+              if (template.payload.length > 0 && template.payload[0].fileurl && template.payload[0].fileurl.url) {
                 logger.serverLog(TAG, `template payload contains fileurl ${JSON.stringify(template.payload)}`, 'debug')
                 let dataToSend = {
                   pages: [page],
-                  url: template.payload.fileurl.url,
-                  componentType: template.payload.componentType,
-                  id: template.payload.fileurl.id,
-                  name: template.payload.fileurl.name
+                  url: template.payload[0].fileurl.url,
+                  componentType: template.payload[0].componentType,
+                  id: template.payload[0].fileurl.id,
+                  name: template.payload[0].fileurl.name
                 }
                 callApi('uploadTemplate', 'post', dataToSend, 'accounts')
                   .then(uploadedResponse => {
