@@ -260,7 +260,16 @@ exports.deleteList = function (req, res) {
               sendSuccessResponse(res, 200, 'List has been deleted successfully!')
             })
           } else {
-            sendErrorResponse(res, 404, '', 'Tag not found')
+            async.parallelLimit([
+              function (callback) {
+                deleteListFromLocal(req, callback)
+              }
+            ], 10, function (err, results) {
+              if (err) {
+                sendErrorResponse(res, 50, `Failed to find list ${err}`)
+              }
+              sendSuccessResponse(res, 200, 'List has been deleted successfully!')
+            })
           }
         })
         .catch(err => {
