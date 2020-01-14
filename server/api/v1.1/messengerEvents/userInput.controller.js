@@ -63,7 +63,7 @@ const _checkTypeValidation = (payload, message) => {
   } else if (payload.type === 'email') {
     return isEmailAddress(message.text)
   } else if (payload.type === 'url') {
-    return isWebURL(message.text)
+    return isWebURL(message.text.toLowerCase())
   } else if (payload.type === 'number') {
     return isNumber(message.text)
   } else if (payload.type === 'phoneNumber') {
