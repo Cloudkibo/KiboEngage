@@ -35,104 +35,76 @@ exports.index = function (req, res) {
             .then(subscriber => {
               subscriber = subscriber[0]
               logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
-              if (template.payload.length > 0 && template.payload[0].fileurl && template.payload[0].fileurl.url) {
-                let dataToSend = {
-                  pages: [page._id],
-                  url: template.payload[0].fileurl.url,
-                  componentType: (template.payload[0].componentType === 'media') ? template.payload[0].image_url ? 'image' : 'video' : template.payload[0].componentType,
-                  id: template.payload[0].fileurl.id,
-                  name: template.payload[0].fileurl.name
-                }
-                logger.serverLog(TAG, `uploading template ${JSON.stringify(dataToSend)}`, 'debug')
-                callApi('uploadTemplate', 'post', dataToSend, 'accounts')
-                  .then(uploadedResponse => {
-                    logger.serverLog(TAG, `retrieved facebook attachment id ${JSON.stringify(uploadedResponse)}`, 'debug')
-                    template.payload[0].fileurl = uploadedResponse
-                    let payloadToSend = template.payload
-                    logger.serverLog(TAG, `sending template payload ${JSON.stringify(payloadToSend)}`, 'debug')
-                    if (subscriber) {
-                      broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-                    } else {
-                      needle.get(
-                        `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
-                        (err, resp2) => {
-                          if (err) {
-                            logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
-                          }
-                          if (resp2.body.error && resp2.body.error.code === 190) {
-                            passwordChangeEmailAlert(page.userId._id, page.userId.email)
-                          } else if (resp2.body.error) {
-                            sendOpAlert(JSON.stringify(resp2.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
-                          }
-                          logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
-                          let pageAccessToken = resp2.body.access_token
-                          if (pageAccessToken) {
-                            const options = {
-                              url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
-                              qs: { access_token: page.accessToken },
-                              method: 'GET'
 
-                            }
-                            logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
-                            needle.get(options.url, options, (error, response) => {
-                              if (error) {
-                              } else {
-                                if (response.body.error) {
-                                  sendOpAlert(JSON.stringify(response.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
-                                }
-                                broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-                              }
-                            })
-                          } else {
-                            logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'error')
-                          }
-                        })
-                    }
-                  })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to upload template ${err}`, 'error')
-                  })
-              } else {
-                let payloadToSend = template.payload
-                if (subscriber) {
-                  broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-                } else {
-                  needle.get(
-                    `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
-                    (err, resp2) => {
-                      if (err) {
-                        logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
-                      }
-                      if (resp2.body.error && resp2.body.error.code === 190) {
-                        passwordChangeEmailAlert(page.userId._id, page.userId.email)
-                      } else if (resp2.body.error) {
-                        sendOpAlert(JSON.stringify(resp2.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
-                      }
-                      logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
-                      let pageAccessToken = resp2.body.access_token
-                      if (pageAccessToken) {
-                        const options = {
-                          url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
-                          qs: { access_token: page.accessToken },
-                          method: 'GET'
-
-                        }
-                        logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
-                        needle.get(options.url, options, (error, response) => {
-                          if (error) {
-                          } else {
-                            if (response.body.error) {
-                              sendOpAlert(JSON.stringify(response.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
-                            }
-                            broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
-                          }
-                        })
-                      } else {
-                        logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'error')
-                      }
-                    })
+              let attachmentIdRequests = []
+              for (let i = 0; i < template.payload.length; i++) {
+                if (template.payload[i].fileurl && template.payload[i].fileurl.url) {
+                  let dataToSend = {
+                    pages: [page._id],
+                    url: template.payload[i].fileurl.url,
+                    componentType: (template.payload[i].componentType === 'media') ? template.payload[i].image_url ? 'image' : 'video' : template.payload[i].componentType,
+                    id: template.payload[i].fileurl.id,
+                    name: template.payload[i].fileurl.name
+                  }
+                  logger.serverLog(TAG, `uploading template ${JSON.stringify(dataToSend)}`, 'debug')
+                  attachmentIdRequests.push(new Promise((resolve, reject) => {
+                    callApi('uploadTemplate', 'post', dataToSend, 'accounts')
+                      .then(uploadedResponse => {
+                        template.payload[i].fileurl = uploadedResponse
+                        resolve(uploadedResponse)
+                      })
+                      .catch(err => {
+                        logger.serverLog(TAG, `Failed to upload template ${err}`, 'error')
+                        reject(err)
+                      })
+                  }))
                 }
               }
+              Promise.all(attachmentIdRequests)
+                .then(results => {
+                  let payloadToSend = template.payload
+                  if (subscriber) {
+                    broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                  } else {
+                    needle.get(
+                      `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
+                      (err, resp2) => {
+                        if (err) {
+                          logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
+                        }
+                        if (resp2.body.error && resp2.body.error.code === 190) {
+                          passwordChangeEmailAlert(page.userId._id, page.userId.email)
+                        } else if (resp2.body.error) {
+                          sendOpAlert(JSON.stringify(resp2.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
+                        }
+                        logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
+                        let pageAccessToken = resp2.body.access_token
+                        if (pageAccessToken) {
+                          const options = {
+                            url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name,locale,profile_pic,timezone&access_token=${pageAccessToken}`,
+                            qs: { access_token: page.accessToken },
+                            method: 'GET'
+
+                          }
+                          logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
+                          needle.get(options.url, options, (error, response) => {
+                            if (error) {
+                            } else {
+                              if (response.body.error) {
+                                sendOpAlert(JSON.stringify(response.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
+                              }
+                              broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                            }
+                          })
+                        } else {
+                          logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'error')
+                        }
+                      })
+                  }
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to retrieve attachment id ${err}`, 'error')
+                })
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
