@@ -47,7 +47,7 @@ exports.index = function (req, res) {
                 callApi('uploadTemplate', 'post', dataToSend, 'accounts')
                   .then(uploadedResponse => {
                     logger.serverLog(TAG, `retrieved facebook attachment id ${JSON.stringify(uploadedResponse)}`, 'debug')
-                    template.payload.fileurl = uploadedResponse
+                    template.payload[0].fileurl = uploadedResponse
                     let payloadToSend = template.payload
                     logger.serverLog(TAG, `sending template payload ${JSON.stringify(payloadToSend)}`, 'debug')
                     if (subscriber) {
