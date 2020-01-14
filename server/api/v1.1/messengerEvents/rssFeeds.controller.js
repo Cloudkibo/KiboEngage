@@ -6,40 +6,60 @@ const RssFeedsDataLayer = require('../rssFeeds/rssFeeds.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
+const og = require('open-graph')
 
 exports.changeSubscription = function (req, res) {
   res.status(200).json({
     status: 'success',
     description: `received the payload`
   })
-
-  let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  let resp
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
-  let data = {
-    sender: sender,
-    pageId: pageId,
-    resp: resp
-  }
-  async.series([
-    _fetchPage.bind(null, data),
-    _fetchSubscriber.bind(null, data),
-    _updateSubscription.bind(null, data),
-    _sendSubscriptionMessage.bind(null, data)
-  ], function (err) {
-    if (err) {
-      logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
-    } else {
-      logger.serverLog(TAG, 'Subscrption successfully')
-    }
-  })
+  RssFeedsDataLayer.genericFindForRssFeeds({_id: resp.rssFeedId})
+    .then(rssFeeds => {
+      if (rssFeeds.length > 0) {
+        let data = {
+          sender: sender,
+          pageId: pageId,
+          resp: resp,
+          rssFeed: rssFeeds[0]
+        }
+        async.series([
+          _fetchPage.bind(null, data),
+          _fetchSubscriber.bind(null, data),
+          _updateSubscriptionCount.bind(null, data),
+          _updateSubscription.bind(null, data),
+          _sendSubscriptionMessage.bind(null, data)
+        ], function (err) {
+          if (err) {
+            logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
+          } else {
+            logger.serverLog(TAG, 'Subscrption successfully')
+          }
+        })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch feed ${err}`, 'error')
+    })
 }
 exports.showMoreTopics = function (req, res) {
   res.status(200).json({
     status: 'success',
     description: `received the payload`
   })
-  let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  let resp
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   let data = {
@@ -85,11 +105,18 @@ const _fetchSubscriber = (data, next) => {
 }
 const _updateSubscription = (data, next) => {
   let updateData = {
-    subscriberId: data.subscriber._id,
+    subscriberId: {
+      _id: data.subscriber._id,
+      firstName: data.subscriber.firstName,
+      lastName: data.subscriber.lastName,
+      gender: data.subscriber.gender,
+      locale: data.subscriber.locale,
+      senderId: data.subscriber.senderId
+    },
     rssFeedId: data.resp.rssFeedId,
     subscription: data.resp.action === 'subscribe_to_rssFeed' ? true : false
   }
-  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({subscriberId: data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
+  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
     .then(rssSubscription => {
       next()
     })
@@ -97,13 +124,51 @@ const _updateSubscription = (data, next) => {
       next(err)
     })
 }
+const _updateSubscriptionCount = (data, next) => {
+  if (data.resp.action === 'subscribe_to_rssFeed') {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: true})
+      .then(rssSubscriptions => {
+        if (rssSubscriptions.length === 0) {
+          RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: 1 } }, {})
+            .then(updated => {
+              next()
+            })
+            .catch(err => {
+              next(err)
+            })
+        } else next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  } else {
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: false})
+      .then(rssSubscriptions => {
+        if (rssSubscriptions.length === 0) {
+          RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: -1 } }, {})
+            .then(updated => {
+              next()
+            })
+            .catch(err => {
+              next(err)
+            })
+        } else next()
+      })
+      .catch(err => {
+        next(err)
+      })
+  }
+}
 const _fetchFeeds = (data, next) => {
-  RssFeedsDataLayer.genericFindForRssFeeds({
+  var query = {
     companyId: data.page.companyId,
-    _id: {$ne: data.resp.rssFeedId},
-    defaultFeed: false,
-    $or: [{pageIds: data.page._id}, {pageIds: []}]
-  })
+    isActive: true,
+    pageIds: {$in: [data.page._id]}
+  }
+  if (data.resp.rssFeedId && data.resp.rssFeedId !== '') {
+    query['_id'] ={$ne: data.resp.rssFeedId}
+  }
+  RssFeedsDataLayer.genericFindForRssFeeds(query)
     .then(rssFeeds => {
       data.rssFeeds = rssFeeds
       next()
@@ -147,10 +212,30 @@ const _sendMessage = (data, next) => {
     })
 }
 const _sendSubscriptionMessage = (data, next) => {
+  let buttons = []
+  if (data.resp.rssFeedId && data.resp.rssFeedId !== '') {
+    buttons.push({title: (data.resp.action === 'subscribe_to_rssFeed' ? 'Unsubscribe from ' : 'Subscribe to ') + data.rssFeed.title,
+    type: 'postback',
+    payload: JSON.stringify({action: data.resp.action === 'subscribe_to_rssFeed' ? 'unsubscribe_from_rssFeed' : 'subscribe_to_rssFeed', rssFeedId: data.resp.rssFeedId})
+    })
+  }
+  buttons.push(
+    {title: 'Show More Topics',
+      type: 'postback',
+      payload: JSON.stringify({action: 'show_more_topics', rssFeedId: data.resp.rssFeedId})
+    }
+  )
   let messageData = {
     'recipient': {'id': data.sender},
     'message': JSON.stringify({
-      'text': data.resp.action === 'subscribe_to_rssFeed' ? 'Subscribed Successfully' : 'Unsubscribed Successfully'
+      'attachment': {
+        'type': 'template',
+        'payload': {
+          'template_type': 'button',
+          'text': data.resp.action === 'subscribe_to_rssFeed' ? 'Subscribed Successfully' : 'Unsubscribed Successfully',
+          'buttons': buttons
+        }
+      }
     })
   }
   facebookApiCaller('v3.3', `me/messages?access_token=${data.page.accessToken}`, 'post', messageData)
@@ -183,8 +268,11 @@ exports.sendTopicFeed = function (req, res) {
   }
   async.series([
     _fetchPage.bind(null, data),
+    _fetchSubscriber.bind(null, data),
     _fetchFeed.bind(null, data),
     rssScriptFunctions._parseFeed.bind(null, data),
+    _fetchFeeds.bind(null, data),
+    _prepareQuickReplies.bind(null, data),
     _prepareMessageData.bind(null, data),
     _sendMessage.bind(null, data)
   ], function (err) {
@@ -192,7 +280,6 @@ exports.sendTopicFeed = function (req, res) {
       logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
     } else {
       logger.serverLog(TAG, 'Subscrption successfully')
-      console.log('data got', data.feed)
     }
   })
 }
@@ -208,19 +295,68 @@ const _fetchFeed = (data, next) => {
       next(err)
     })
 }
-const _prepareMessageData = (data, next) => {
-  let quickReplies = [{
-    content_type: 'text',
-    title: `Subscribe to ${data.rssFeed.title}`,
-    payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
-  },
-  {
-    content_type: 'text',
-    title: 'Show More Topics',
-    payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
+const _prepareQuickReplies = (data, next) => {
+  let quickReplies = []
+  if (data.rssFeeds.length > 0) {
+    quickReplies.push({
+      content_type: 'text',
+      title: 'Show More Topics',
+      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
+    })
   }
-  ]
-  rssScriptFunctions.getMetaData(data.feed, data.rssFeed)
+  if (data.subscriber) {
+    if (data.rssFeed.defaultFeed) {
+      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id, subscription: false})
+        .then(rssSubscription => {
+          if (rssSubscription.length > 0) {
+            quickReplies.push({
+              content_type: 'text',
+              title: `Subscribe to ${data.rssFeed.title}`,
+              payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+            })
+          } else {
+            quickReplies.push({
+              content_type: 'text',
+              title: `UnSubscribe from ${data.rssFeed.title}`,
+              payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+            })
+          }
+          data.quickReplies = quickReplies
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
+    } else {
+      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
+        .then(rssSubscription => {
+          if (rssSubscription.length > 0 && rssSubscription[0].subscription) {
+            quickReplies.push({
+              content_type: 'text',
+              title: `Unsubscribe from ${data.rssFeed.title}`,
+              payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+            })
+          } else {
+            quickReplies.push({
+              content_type: 'text',
+              title: `Subscribe to ${data.rssFeed.title}`,
+              payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+            })
+          }
+          data.quickReplies = quickReplies
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
+    }
+  } else {
+    data.quickReplies = quickReplies
+    next()
+  }
+}
+const _prepareMessageData = (data, next) => {
+  getMetaData(data.feed, data.rssFeed)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
@@ -233,7 +369,7 @@ const _prepareMessageData = (data, next) => {
               elements: gallery
             }
           },
-          quick_replies: quickReplies
+          quick_replies: data.quickReplies
         })
       }
       data.messageData = messageData
@@ -242,4 +378,36 @@ const _prepareMessageData = (data, next) => {
     .catch(err => {
       next(err)
     })
+}
+function getMetaData (feed, rssFeed) {
+  return new Promise((resolve, reject) => {
+    let gallery = []
+    let length = rssFeed.storiesCount
+    for (let i = 0; i < length; i++) {
+      og(feed[i].link, (err, meta) => {
+        if (err) {
+          logger.serverLog(TAG, 'error in fetching metdata', 'error')
+        }
+        if (meta && meta.title && meta.image) {
+          gallery.push({
+            title: meta.title,
+            subtitle: meta.description ? meta.description : '',
+            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+            buttons: [
+              {
+                type: 'web_url',
+                title: 'Read More...',
+                url: feed[i].link
+              }
+            ]
+          })
+          if (i === length - 1) {
+            resolve(gallery)
+          }
+        } else if (i === length - 1) {
+          resolve(gallery)
+        }
+      })
+    }
+  })
 }

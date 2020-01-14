@@ -76,7 +76,11 @@ exports.getDataForSubscriberValues = (data, callback) => {
       mapping[index]['value'] = subscriber[item.kiboPushColumn]
       callback()
     } else {
-      mapping[index]['value'] = ''
+      if (item.kiboPushColumn === 'fullName') {
+        mapping[index]['value'] = subscriber['firstName'] + ' ' + subscriber['lastName']
+      } else {
+        mapping[index]['value'] = ''
+      }
       callback()
     }
   } else if (item.customFieldColumn) {

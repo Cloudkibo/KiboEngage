@@ -17,12 +17,7 @@ exports.createPayload = {
       'type': 'boolean'
     },
     'pageIds': {
-      'type': 'array',
-      'items': [
-        {
-          'type': 'string'
-        }
-      ]
+      'type': 'array'
     }
   },
   'required': [
@@ -31,6 +26,29 @@ exports.createPayload = {
     'storiesCount',
     'defaultFeed',
     'isActive',
+    'pageIds'
+  ]
+}
+exports.previewPayload = {
+  'type': 'object',
+  'properties': {
+    'feedUrl': {
+      'type': 'string'
+    },
+    'title': {
+      'type': 'string'
+    },
+    'storiesCount': {
+      'type': 'integer'
+    },
+    'pageIds': {
+      'type': 'array'
+    }
+  },
+  'required': [
+    'feedUrl',
+    'title',
+    'storiesCount',
     'pageIds'
   ]
 }
@@ -72,7 +90,7 @@ exports.fetchPayload = {
     'number_of_records',
     'first_page'
   ]
-} 
+}
 
 exports.getRssFeedPostsPayload = {
   'type': 'object',

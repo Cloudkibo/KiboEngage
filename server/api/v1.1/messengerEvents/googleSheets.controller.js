@@ -62,6 +62,7 @@ exports.index = function (req, res) {
 }
 
 function insertRow (resp, subscriber, oauth2Client) {
+  logger.serverLog(TAG, ` Mapping response from Facebook ${JSON.stringify(resp)}`)
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -75,6 +76,7 @@ function insertRow (resp, subscriber, oauth2Client) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
+      logger.serverLog(TAG, ` data to send ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -228,3 +230,4 @@ function getLookUpRange (lookUpColumn, lookUpValue, data) {
     }
   }
 }
+exports.getLookUpRange = getLookUpRange

@@ -6,6 +6,7 @@ const logger = require('../../../components/logger')
 const SequenceUtility = require('../sequenceMessaging/utility')
 const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
+const RssFeedPostSubscribersDataLayer = require('../rssFeeds/rssFeedPostSubscribers.datalayer')
 const utility = require('../utility')
 const async = require('async')
 
@@ -14,7 +15,7 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  //logger.serverLog(TAG, `in delivery' ${JSON.stringify(req.body)}`)
+  //  logger.serverLog(TAG, `in delivery' ${JSON.stringify(req.body)}`)
   let data = {
     recipientId: req.body.entry[0].messaging[0].recipient.id,
     senderId: req.body.entry[0].messaging[0].sender.id,
@@ -24,7 +25,8 @@ exports.index = function (req, res) {
     _updateBroadcastSent.bind(null, data),
     _updatePollSent.bind(null, data),
     _updateSurveySent.bind(null, data),
-    _updateSequenceSubscriberMessage.bind(null, data)
+    _updateSequenceSubscriberMessage.bind(null, data),
+    _updateRssFeedSent.bind(null, data)
   ], 10, function (err) {
     if (err) {
       logger.serverLog(TAG, `ERROR at delivery controller ${JSON.stringify(err)}`, 'error')
@@ -133,6 +135,33 @@ function _updateSequenceSubscriberMessage (data, next) {
                     .catch(err => {
                       next(err)
                     })
+                })
+                .catch(err => {
+                  next(err)
+                })
+            }
+          })
+          .catch(err => {
+            next(err)
+          })
+      }
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+function _updateRssFeedSent (data, next) {
+  utility.callApi(`pages/query`, 'post', {pageId: data.recipientId, connected: true})
+    .then(pages => {
+      const page = pages[0]
+      if (page) {
+        utility.callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: data.senderId, companyId: page.companyId, completeInfo: true })
+          .then(subscribers => {
+            const subscriber = subscribers[0]
+            if (subscriber) {
+              RssFeedPostSubscribersDataLayer.genericUpdate({ pageId: page._id, subscriberId: subscriber._id }, {sent: true}, { multi: true })
+                .then(updated => {
+                  next(null)
                 })
                 .catch(err => {
                   next(err)

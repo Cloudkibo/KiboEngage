@@ -450,6 +450,13 @@ function applyPollFilterIfNecessary (req, subscribers, fn) {
 function prepareMessageData (subscriberId, body, fname, lname) {
   let payload = {}
   let text = body.text
+  if (body.componentType === 'userInput') {
+    payload = {
+      'text': text,
+      'metadata': 'This is a meta data'
+    }
+    return payload
+  }
   if (body.componentType === 'text' && !body.buttons) {
     if (body.text.includes('{{user_full_name}}') || body.text.includes('[Username]')) {
       text = text.replace(
@@ -719,9 +726,9 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         }
         if (data && data.action === 'hubspot') {
           button.payload = remove_hubspot_data(data)
-        }
-        if (button.payload) {
-          button.payload = JSON.stringify(button.payload)
+          if (button.payload) {
+            button.payload = JSON.stringify(button.payload)
+          }
         }
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
