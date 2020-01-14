@@ -76,7 +76,7 @@ function insertRow (resp, subscriber, oauth2Client) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
-      logger.serverLog(TAG, ` data to send ${JSON.stringify(data)}`)
+      logger.serverLog(TAG, ` data to send in Insert Row googleSheet Controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -177,6 +177,7 @@ function updateRow (resp, subscriber, oauth2Client, range) {
       logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
+      logger.serverLog(TAG, ` data to send in updateRow googleSheet Controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
