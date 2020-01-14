@@ -1,5 +1,5 @@
 const logger = require('../../../components/logger')
-const TAG = 'api/messengerEvents/welcomeMessage.controller.js'
+const TAG = 'api/messengerEvents/templates.controller.js'
 const {callApi} = require('../utility')
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 let { passwordChangeEmailAlert } = require('../../global/utility')
@@ -36,6 +36,7 @@ exports.index = function (req, res) {
               subscriber = subscriber[0]
               logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
               if (template.payload.fileurl && template.payload.fileurl.url) {
+                logger.serverLog(TAG, `template payload contains fileurl ${JSON.stringify(template.payload)}`, 'debug')
                 let dataToSend = {
                   pages: [page],
                   url: template.payload.fileurl.url,
@@ -47,7 +48,7 @@ exports.index = function (req, res) {
                   .then(uploadedResponse => {
                     template.payload.fileurl = uploadedResponse.payload
                     let payloadToSend = template.payload
-                    logger.serverLog(TAG, `sending template payload ${JSON.stringify(template.payload)}`, 'debug')
+                    logger.serverLog(TAG, `sending template payload ${JSON.stringify(payloadToSend)}`, 'debug')
                     if (subscriber) {
                       broadcastUtility.getBatchData(payloadToSend, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                     } else {
