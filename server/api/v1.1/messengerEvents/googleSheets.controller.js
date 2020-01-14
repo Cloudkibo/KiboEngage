@@ -1,5 +1,5 @@
 const logger = require('../../../components/logger')
-const TAG = 'api/messengerEvents/customFieldsController.controller.js'
+const TAG = 'api/messengerEvents/googleSheetsController.controller.js'
 const {callApi} = require('../utility')
 const async = require('async')
 const {google} = require('googleapis')

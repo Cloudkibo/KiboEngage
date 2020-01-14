@@ -316,6 +316,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
             getLookUpValue(resp.lookUpValue, subscribers[0])
               .then(lookUpValue => {
                 if (lookUpValue !== '') {
+                  logger.serverLog(TAG, `lookUpValue userInput Controller ${JSON.stringify(lookUpValue)}`)
                   var request = {
                     spreadsheetId: resp.spreadSheet,
                     range: resp.worksheetName,
