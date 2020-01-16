@@ -69,10 +69,12 @@ const _prepareFeeds = (data, next) => {
             callback()
           })
           .catch((err) => {
+            logger.serverLog(TAG, err, `In Prepare Message Data Rss Integration ${err}`)
             callback(err)
           })
       })
       .catch((err) => {
+        logger.serverLog(TAG, err, `In Parse Feed Rss Integration ${err}`)
         callback(err)
       })
   }, function (err) {
@@ -92,6 +94,7 @@ const _fetchNonDefaultFeeds = (data, next) => {
       next()
     })
     .catch((err) => {
+      logger.serverLog(TAG, err, `In Fetch Non Default Feeds Rss Integration ${err}`)
       next(err)
     })
 }
@@ -106,6 +109,7 @@ const _shouldShowMoreTopics = (data, next) => {
       next()
     })
     .catch((err) => {
+      logger.serverLog(TAG, err, 'In Prepare Message Data Rss Integration')
       next(err)
     })
 }
@@ -116,6 +120,7 @@ const _fetchPage = (data, next) => {
       next()
     })
     .catch((err) => {
+      logger.serverLog(TAG, err, `In fetch page Rss Integration ${err}`)
       next(err)
     })
 }
@@ -138,6 +143,7 @@ const sendFeed = (criteria, page, feed, rssFeedPost, parsedFeeds, rssFeedIds) =>
         else resolve(subscribers)
       })
       .catch((err) => {
+        logger.serverLog(TAG, err, `In Send Feed Rss Integration ${err}`)
         reject(err)
       })
   })
@@ -154,7 +160,7 @@ const sendFeed = (criteria, page, feed, rssFeedPost, parsedFeeds, rssFeedIds) =>
             sendFeed(criteria, page, feed, rssFeedPost, parsedFeeds, rssFeedIds)
           })
           .catch(err => {
-            logger.serverLog(TAG, err, 'error')
+            logger.serverLog(TAG, err, `In Prepare Batch Data ${err}`)
           })
       } else {
         logger.serverLog(TAG, 'Feed sent successfully!')
@@ -217,6 +223,7 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
         }
       })
       .catch((err) => {
+        logger.serverLog(TAG, err, `In Prepare Message ${err}`)
         reject(err)
       })
   })
@@ -247,6 +254,7 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
           callback()
         })
         .catch((err) => {
+          logger.serverLog(TAG, err, `In Prepare Message ${err}`)
           callback(err)
         })
     }, function (err) {
@@ -300,6 +308,7 @@ const _parseFeed = (data, next) => {
       next()
     })
     .catch(err => {
+      logger.serverLog(TAG, err, `In Parse Feed ${err}`)
       next(err)
     })
 }
@@ -336,6 +345,7 @@ const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page
         resolve(messageData)
       })
       .catch(err => {
+        logger.serverLog(TAG, err, `In Prepare Message Data ${err}`)
         reject(err)
       })
   })
@@ -413,6 +423,7 @@ const _saveRssFeedPost = (data, next) => {
           }
         })
         .catch(err => {
+          logger.serverLog(TAG, err, 'In Save rss feed post Rss Integration')
           next(err)
         })
     } else {
@@ -429,6 +440,7 @@ const saveRssFeedPostSubscribers = (postSubscribers) => {
         next()
       })
       .catch(err => {
+        logger.serverLog(TAG, err, 'In save rss eed Rss Integration')
         next(err)
       })
   }, function (err) {
@@ -444,6 +456,7 @@ function parseFeed (feed) {
         resolve(feed)
       })
       .catch(err => {
+        logger.serverLog(TAG, err, 'In Parse Feed Rss Integration')
         reject(err)
       })
   })
