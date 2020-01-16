@@ -3,7 +3,6 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/clickedCount/clickedCount.controller.js'
 
 exports.updateClickedCount = function (req, res) {
-  console.log('in clickedCount')
   if (!req.headers['user-agent'].startsWith('facebook')) {
     if (req.query.m === 'rss') {
       RssFeedPostSubscribersDataLayer.genericUpdate({rssFeedPostId: req.query.id, subscriberId: req.query.sId}, {clicked: true}, {})
