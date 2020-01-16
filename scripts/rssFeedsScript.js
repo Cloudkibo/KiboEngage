@@ -352,7 +352,6 @@ function getMetaData (feed, rssFeed, rssFeedPosts, page) {
             logger.serverLog(TAG, 'error in fetching metdata', 'error')
           }
           if (meta && meta.title) {
-            console.log('metagot', meta)
             gallery.push({
               title: meta.title,
               subtitle: meta.description ? meta.description : '',
