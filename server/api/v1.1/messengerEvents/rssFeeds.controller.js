@@ -50,6 +50,7 @@ exports.changeSubscription = function (req, res) {
     })
 }
 exports.showMoreTopics = function (req, res) {
+  console.log('in showMoreTopics')
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -356,7 +357,7 @@ const _prepareQuickReplies = (data, next) => {
   }
 }
 const _prepareMessageData = (data, next) => {
-  getMetaData(data.feed, data.rssFeed)
+  getMetaData(data.feed, data.rssFeed, data.page)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
@@ -379,35 +380,43 @@ const _prepareMessageData = (data, next) => {
       next(err)
     })
 }
-function getMetaData (feed, rssFeed) {
+function getMetaData (feed, rssFeed, page) {
   return new Promise((resolve, reject) => {
     let gallery = []
     let length = rssFeed.storiesCount
-    for (let i = 0; i < length; i++) {
-      og(feed[i].link, (err, meta) => {
-        if (err) {
-          logger.serverLog(TAG, 'error in fetching metdata', 'error')
-        }
-        if (meta && meta.title && meta.image) {
-          gallery.push({
-            title: meta.title,
-            subtitle: meta.description ? meta.description : '',
-            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
-            buttons: [
-              {
-                type: 'web_url',
-                title: 'Read More...',
-                url: feed[i].link
-              }
-            ]
-          })
-          if (i === length - 1) {
-            resolve(gallery)
+    async.eachOfSeries(feed, function (value, key, callback) {
+      if (key < length) {
+        og(value.link, (err, meta) => {
+          if (err) {
+            logger.serverLog(TAG, 'error in fetching metdata', 'error')
           }
-        } else if (i === length - 1) {
-          resolve(gallery)
-        }
-      })
-    }
+          if (meta && meta.title && meta.image) {
+            gallery.push({
+              title: meta.title,
+              subtitle: meta.description ? meta.description : '',
+              image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
+              buttons: [
+                {
+                  type: 'web_url',
+                  title: 'Read More...',
+                  url: value.link
+                }
+              ]
+            })
+            callback()
+          } else {
+            callback()
+          }
+        })
+      } else {
+        callback()
+      }
+    }, function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(gallery)
+      }
+    })
   })
 }
