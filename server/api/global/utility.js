@@ -178,7 +178,7 @@ const getMailTransporter = function () {
 
 const isEmailAddress = function (str) {
   var pattern = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-  return pattern.test(str)  
+  return pattern.test(str)
 }
 
 const isWebURL = function (str) {
@@ -195,6 +195,16 @@ const isPhoneNumber = function (str) {
   var regexp = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im
   return regexp.test(str)
 }
+
+const domainName = function (url) {
+  var match = url.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/i)
+  if (match != null && match.length > 2 && typeof match[2] === 'string' && match[2].length > 0) {
+    return match[2]
+  } else {
+    return null
+  }
+}
+exports.domainName = domainName
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject
 exports.passwordChangeEmailAlert = passwordChangeEmailAlert
