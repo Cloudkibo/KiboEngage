@@ -1,6 +1,7 @@
 const og = require('open-graph')
 const request = require('request')
 const async = require('async')
+const {domainName} = require('../../global/utility')
 
 exports.fetchFeedsCriteria = function (body, companyId) {
   let finalCriteria = {}
@@ -154,7 +155,7 @@ exports.getMetaData = function (feed, body) {
           if (meta && meta.title && meta.image) {
             gallery.push({
               title: meta.title,
-              subtitle: meta.description ? meta.description : '',
+              subtitle: meta.description ? meta.description : domainName(value.link),
               image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
               buttons: [
                 {

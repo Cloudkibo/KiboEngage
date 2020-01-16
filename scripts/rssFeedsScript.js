@@ -4,7 +4,7 @@ const TAG = 'scripts/rssScript.js'
 const og = require('open-graph')
 const feedparser = require('feedparser-promised')
 const async = require('async')
-const { getScheduledTime } = require('../server/api/global/utility')
+const { getScheduledTime, domainName } = require('../server/api/global/utility')
 const RSSFeedsDataLayer = require('../server/api/v1.1/rssFeeds/rssFeeds.datalayer')
 const RssFeedPostsDataLayer = require('../server/api/v1.1/rssFeeds/rssFeedPosts.datalayer')
 const RssFeedPostSubscribers = require('../server/api/v1.1/rssFeeds/rssFeedPostSubscribers.datalayer')
@@ -354,7 +354,7 @@ function getMetaData (feed, rssFeed, rssFeedPosts, page) {
           if (meta && meta.title) {
             gallery.push({
               title: meta.title,
-              subtitle: meta.description ? meta.description : '',
+              subtitle: meta.description ? meta.description : domainName(value.link),
               image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
               buttons: [
                 {

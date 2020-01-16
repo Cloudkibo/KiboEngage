@@ -7,6 +7,7 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
 const og = require('open-graph')
+const {domainName} = require('../../global/utility')
 
 exports.changeSubscription = function (req, res) {
   res.status(200).json({
@@ -35,6 +36,7 @@ exports.changeSubscription = function (req, res) {
           _fetchSubscriber.bind(null, data),
           _updateSubscriptionCount.bind(null, data),
           _updateSubscription.bind(null, data),
+          _fetchFeeds.bind(null, data),
           _sendSubscriptionMessage.bind(null, data)
         ], function (err) {
           if (err) {
@@ -50,7 +52,6 @@ exports.changeSubscription = function (req, res) {
     })
 }
 exports.showMoreTopics = function (req, res) {
-  console.log('in showMoreTopics')
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -216,16 +217,18 @@ const _sendSubscriptionMessage = (data, next) => {
   let buttons = []
   if (data.resp.rssFeedId && data.resp.rssFeedId !== '') {
     buttons.push({title: (data.resp.action === 'subscribe_to_rssFeed' ? 'Unsubscribe from ' : 'Subscribe to ') + data.rssFeed.title,
-    type: 'postback',
-    payload: JSON.stringify({action: data.resp.action === 'subscribe_to_rssFeed' ? 'unsubscribe_from_rssFeed' : 'subscribe_to_rssFeed', rssFeedId: data.resp.rssFeedId})
+      type: 'postback',
+      payload: JSON.stringify({action: data.resp.action === 'subscribe_to_rssFeed' ? 'unsubscribe_from_rssFeed' : 'subscribe_to_rssFeed', rssFeedId: data.resp.rssFeedId})
     })
   }
-  buttons.push(
-    {title: 'Show More Topics',
-      type: 'postback',
-      payload: JSON.stringify({action: 'show_more_topics', rssFeedId: data.resp.rssFeedId})
-    }
-  )
+  if (data.rssFeeds.length > 0) {
+    buttons.push(
+      {title: 'Show More Topics',
+        type: 'postback',
+        payload: JSON.stringify({action: 'show_more_topics', rssFeedId: data.resp.rssFeedId})
+      }
+    )
+  }
   let messageData = {
     'recipient': {'id': data.sender},
     'message': JSON.stringify({
@@ -393,7 +396,7 @@ function getMetaData (feed, rssFeed, page) {
           if (meta && meta.title && meta.image) {
             gallery.push({
               title: meta.title,
-              subtitle: meta.description ? meta.description : '',
+              subtitle: meta.description ? meta.description : domainName(value.link),
               image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
               buttons: [
                 {
