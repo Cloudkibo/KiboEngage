@@ -1,5 +1,6 @@
 const og = require('open-graph')
 const request = require('request')
+const async = require('async')
 
 exports.fetchFeedsCriteria = function (body, companyId) {
   let finalCriteria = {}
@@ -140,36 +141,44 @@ exports.getCriterias = function (body) {
   }
 }
 
-exports.getMetaData = function(feed, body) {
+exports.getMetaData = function (feed, body) {
   return new Promise((resolve, reject) => {
     let gallery = []
     let length = body.storiesCount
-    for (let i = 0; i < length; i++) {
-      og(feed[i].link, (err, meta) => {
-        if (err) {
-          logger.serverLog(TAG, 'error in fetching metdata', 'error')
-        }
-        if (meta && meta.title && meta.image) {
-          gallery.push({
-            title: meta.title,
-            subtitle: meta.description ? meta.description : '',
-            image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
-            buttons: [
-              {
-                type: 'web_url',
-                title: 'Read More...',
-                url: feed[i].link
-              }
-            ]
-          })
-          if (i === length - 1) {
-            resolve(gallery)
+    async.eachOfSeries(feed, function (value, key, callback) {
+      if (key < length) {
+        og(value.link, (err, meta) => {
+          if (err) {
+            callback(err)
           }
-        } else if (i === length - 1) {
-          resolve(gallery)
-        }
-      })
-    }
+          if (meta && meta.title && meta.image) {
+            gallery.push({
+              title: meta.title,
+              subtitle: meta.description ? meta.description : '',
+              image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+              buttons: [
+                {
+                  type: 'web_url',
+                  title: 'Read More...',
+                  url: value.link
+                }
+              ]
+            })
+            callback()
+          } else {
+            callback()
+          }
+        })
+      } else {
+        callback()
+      }
+    }, function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(gallery)
+      }
+    })
   })
 }
 

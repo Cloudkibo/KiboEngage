@@ -57,7 +57,7 @@ const _prepareFeeds = (data, next) => {
   async.each(data.feeds, function (feed, callback) {
     parseFeed(feed)
       .then(parsedFeed => {
-        prepareMessageData(parsedFeed, feed, data.showMoreTopics, data.rssFeedPosts)
+        prepareMessageData(parsedFeed, feed, data.showMoreTopics, data.rssFeedPosts, data.page)
           .then(preparedData => {
             data.parsedFeeds[feed._id] = {
               data: preparedData,
@@ -303,7 +303,7 @@ const _parseFeed = (data, next) => {
       next(err)
     })
 }
-const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts) => {
+const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page) => {
   return new Promise((resolve, reject) => {
     let quickReplies = [{
       content_type: 'text',
@@ -318,9 +318,9 @@ const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts) => {
         payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: feed._id}])
       })
     }
-    getMetaData(parsedFeed, feed, rssFeedPosts)
+    getMetaData(parsedFeed, feed, rssFeedPosts, page)
       .then(gallery => {
-        logger.serverLog(TAG, `gallery.length ${gallery.length}`)
+        logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title`)
         let messageData = [{
           text: `Here are your daily updates from ${feed.title} News:`
         }, {
@@ -340,22 +340,23 @@ const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts) => {
       })
   })
 }
-function getMetaData (feed, rssFeed, rssFeedPosts) {
+function getMetaData (feed, rssFeed, rssFeedPosts, page) {
   return new Promise((resolve, reject) => {
     let rssFeedPost = rssFeedPosts.filter(r => r.rssFeedId === rssFeed._id)[0]
     let gallery = []
     let length = rssFeed.storiesCount
-    async.eachOf(feed, function (value, key, callback) {
+    async.eachOfSeries(feed, function (value, key, callback) {
       if (key < length) {
         og(value.link, (err, meta) => {
           if (err) {
             logger.serverLog(TAG, 'error in fetching metdata', 'error')
           }
-          if (meta && meta.title && meta.image) {
+          if (meta && meta.title) {
+            console.log('metagot', meta)
             gallery.push({
               title: meta.title,
               subtitle: meta.description ? meta.description : '',
-              image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+              image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
               buttons: [
                 {
                   type: 'web_url',
