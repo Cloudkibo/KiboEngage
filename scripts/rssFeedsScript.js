@@ -242,6 +242,7 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
       let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
       prepareMessage(subscriber, parsedFeeds, feed, rssFeedIds)
         .then(payload => {
+          console.log('payload.postSubscribers', JSON.stringify(payload.postSubscribers))
           payload.data.forEach((item, index) => {
             let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
             if (index === 0) {
@@ -425,6 +426,7 @@ const _saveRssFeedPost = (data, next) => {
     if (err) {
       next(err)
     } else {
+      console.log('rssFeedPosts', rssFeedPosts)
       data.rssFeedPosts = rssFeedPosts
       next()
     }
