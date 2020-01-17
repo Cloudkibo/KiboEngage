@@ -237,6 +237,7 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
     }
     _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
     async.each(subscribers, function (subscriber, callback) {
+      console.log('subscriberId', subscriber._id)
       let recipient = 'recipient=' + encodeURIComponent(JSON.stringify({'id': subscriber.senderId}))
       let tag = 'tag=' + encodeURIComponent('NON_PROMOTIONAL_SUBSCRIPTION')
       let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
