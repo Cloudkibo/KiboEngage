@@ -237,12 +237,12 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
     }
     _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
     async.each(subscribers, function (subscriber, callback) {
-      console.log('subscriberId', subscriber._id)
       let recipient = 'recipient=' + encodeURIComponent(JSON.stringify({'id': subscriber.senderId}))
       let tag = 'tag=' + encodeURIComponent('NON_PROMOTIONAL_SUBSCRIPTION')
       let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
       prepareMessage(subscriber, parsedFeeds, feed, rssFeedIds)
         .then(payload => {
+          console.log('subscriberId', subscriber._id)
           console.log('payload.postSubscribers', JSON.stringify(payload.postSubscribers))
           payload.data.forEach((item, index) => {
             let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
@@ -251,9 +251,11 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
             } else {
               batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'depends_on': `${subscriber.senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
             }
+            if (index === (payload.data.length - 1)) {
+              saveRssFeedPostSubscribers(payload.postSubscribers)
+              callback()
+            }
           })
-          saveRssFeedPostSubscribers(payload.postSubscribers)
-          callback()
         })
         .catch((err) => {
           logger.serverLog(TAG, err, `In Prepare Message ${err}`)
