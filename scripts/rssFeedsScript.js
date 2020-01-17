@@ -244,18 +244,22 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
         .then(payload => {
           console.log('subscriberId', subscriber._id)
           console.log('payload.postSubscribers', JSON.stringify(payload.postSubscribers))
-          payload.data.forEach((item, index) => {
-            let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
-            if (index === 0) {
-              batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
-            } else {
-              batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'depends_on': `${subscriber.senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
-            }
-            if (index === (payload.data.length - 1)) {
-              saveRssFeedPostSubscribers(payload.postSubscribers)
-              callback()
-            }
-          })
+          if (payload.data.length > 0) {
+            payload.data.forEach((item, index) => {
+              let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
+              if (index === 0) {
+                batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
+              } else {
+                batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'depends_on': `${subscriber.senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
+              }
+              if (index === (payload.data.length - 1)) {
+                saveRssFeedPostSubscribers(payload.postSubscribers)
+                callback()
+              }
+            })
+          } else {
+            callback()
+          }
         })
         .catch((err) => {
           logger.serverLog(TAG, err, `In Prepare Message ${err}`)
@@ -276,6 +280,7 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
     let elements = item.attachment.payload.elements
     for (let i = 0; i < elements.length; i++) {
       elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      console.log('button url', elements[i].buttons[0].url)
       // let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
       // let redirectUrl = button.url
       // let query = url.parse(redirectUrl, true).query
