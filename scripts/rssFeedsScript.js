@@ -407,31 +407,28 @@ const _updateScheduledTime = (data, next) => {
 
 const _saveRssFeedPost = (data, next) => {
   let rssFeedPosts = []
-  for (let i = 0; i < data.feeds.length; i++) {
-    if (data.feeds[i].subscriptions > 0) {
-      let dataToSave = {
-        rssFeedId: data.feeds[i]._id,
-        pageId: data.page._id,
-        companyId: data.feeds[i].companyId
-      }
-      RssFeedPostsDataLayer.createForRssFeedPosts(dataToSave)
-        .then(saved => {
-          rssFeedPosts.push({rssFeedId: data.feeds[i]._id, rssFeedPostId: saved._id})
-          if (i === data.feeds.length - 1) {
-            data.rssFeedPosts = rssFeedPosts
-            next()
-          }
-        })
-        .catch(err => {
-          logger.serverLog(TAG, err, 'In Save rss feed post Rss Integration')
-          next(err)
-        })
-    } else {
-      if (i === data.feeds.length - 1) {
-        next()
-      }
+  async.each(data.feeds, function (feed, callback) {
+    let dataToSave = {
+      rssFeedId: feed._id,
+      pageId: data.page._id,
+      companyId: feed.companyId
     }
-  }
+    RssFeedPostsDataLayer.createForRssFeedPosts(dataToSave)
+      .then(saved => {
+        rssFeedPosts.push({rssFeedId: feed._id, rssFeedPostId: saved._id})
+        callback()
+      })
+      .catch(err => {
+        callback(err)
+      })
+  }, function (err) {
+    if (err) {
+      next(err)
+    } else {
+      data.rssFeedPosts = rssFeedPosts
+      next()
+    }
+  })
 }
 const saveRssFeedPostSubscribers = (postSubscribers) => {
   async.each(postSubscribers, function (postSubscriber, next) {
