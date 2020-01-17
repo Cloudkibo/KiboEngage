@@ -188,18 +188,18 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
     RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': subscriber._id, rssFeedId: {$in: rssFeedIds}})
       .then(rssSubscriptions => {
         if (rssSubscriptions.length > 0) {
-          let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => s.rssFeedId === feed._id && !s.subscription)
+          let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => (s.rssFeedId === feed._id && !s.subscription))
           if (isDefaultUnsubscribed === -1) {
             messageData = messageData.concat(parsedFeeds[feed._id].data)
-            postSubscribers.push(Object.assign(parsedFeeds[feed._id].postSubscriber, remainingPostSubscriberData))
+            postSubscribers.push(Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber))
           }
-          const subscribedFeeds = rssSubscriptions.filter((s) => s.subscription && s.rssFeedId !== feed._id)
+          const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
           if (subscribedFeeds.length > 0) {
             const feedIds = subscribedFeeds.map((f) => f.rssFeedId)
             for (let [key, value] of Object.entries(parsedFeeds)) {
               if (feedIds.includes(key)) {
                 messageData = messageData.concat(value.data)
-                postSubscribers.push(Object.assign(value.postSubscriber, remainingPostSubscriberData))
+                postSubscribers.push(Object.assign(remainingPostSubscriberData, value.postSubscriber))
               }
             }
             payload = {
@@ -217,7 +217,7 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
         } else {
           payload = {
             data: parsedFeeds[feed._id].data,
-            postSubscribers: [Object.assign(parsedFeeds[feed._id].postSubscriber, remainingPostSubscriberData)]
+            postSubscribers: [Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber)]
           }
           resolve(payload)
         }
