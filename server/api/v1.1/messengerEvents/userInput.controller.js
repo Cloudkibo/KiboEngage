@@ -330,6 +330,8 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                       let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
                       if (range) {
                         _updateRow(req, res, range, broadcastPayload, subscribers, message, oauth2Client)
+                      } else { 
+                        _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client, true)   
                       }
                     }
                   })
@@ -387,7 +389,7 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
     })
 }
 
-const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Client) => {
+const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Client, updateRow) => {
   let resp = broadcastPayload.action
   let user = {
     companyId: subscribers[0].companyId
@@ -399,34 +401,85 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
   fetchColumns(req, res)
     .then(Columns => {
       logger.serverLog(TAG, `fetchColumns ${JSON.stringify(Columns)}`, 'error')
-      let data = []
-      for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
-        if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
-          data.push(message.text)
-        } else {
-          data.push(null)
+      createDataInsertRow(resp, Columns, subscribers, message, updateRow).then(data => {
+        logger.serverLog(TAG, ` data to send insert row userinput controller ${JSON.stringify(data)}`)
+        let dataToSend = [data]
+        let request = {
+          spreadsheetId: resp.spreadSheet,
+          range: resp.worksheetName,
+          valueInputOption: 'RAW',
+          insertDataOption: 'INSERT_ROWS',
+          resource: {
+            'majorDimension': 'ROWS',
+            'range': resp.worksheetName,
+            'values': dataToSend
+          },
+          auth: oauth2Client
         }
-      }
-      logger.serverLog(TAG, ` data to send insert row userinput controller ${JSON.stringify(data)}`)
-      let dataToSend = [data]
-      let request = {
-        spreadsheetId: resp.spreadSheet,
-        range: resp.worksheetName,
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS',
-        resource: {
-          'majorDimension': 'ROWS',
-          'range': resp.worksheetName,
-          'values': dataToSend
-        },
-        auth: oauth2Client
-      }
-      sheets.spreadsheets.values.append(request, function (err, response) {
-        if (err) {
-          logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
-        }
+        sheets.spreadsheets.values.append(request, function (err, response) {
+          if (err) {
+            logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+          }
+        })
+      }).catch(err => {
+        logger.serverLog(TAG, `Failed to create data  for insert row ${err}`, 'error')
       })
     }).catch(err => {
       logger.serverLog(TAG, `Failed to fetch columns in insert row ${err}`, 'error')
     })
+}
+
+const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => {
+  let data = []
+  let requests = []
+  for (var i = 0; i < Columns.googleSheetColumns.length; i++) {
+    requests.push(new Promise((resolve, reject) => {
+      if (Columns.googleSheetColumns[i] === resp.googleSheetColumn) {
+        data.push(message.text)
+        resolve(message.text)
+      } else {
+        if (updateRow) {
+          if (Columns.googleSheetColumns[i] === resp.lookUpColumn) {
+            if (subscribers[0][resp.lookUpValue] || resp.lookUpValue === 'fullName') {
+              if (resp.lookUpValue === 'fullName') {
+                //data.push(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
+                resolve(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
+              }
+              else {
+                //data.push(subscribers[0][resp.lookUpValue])
+                resolve(subscribers[0][resp.lookUpValue])
+              }
+            } else {
+              callApi(
+                'custom_field_subscribers/query',
+                'post',
+                {
+                  purpose: 'findOne',
+                  match: { customFieldId: resp.lookUpValue, subscriberId: subscribers[0]._id }
+                }
+              )
+                .then(customFieldSubscriber => {
+                  if (customFieldSubscriber) {
+                    //data.push(customFieldSubscriber.value)
+                    resolve(customFieldSubscriber.value)
+                  }
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+                })
+            }
+          } else {
+            //data.push(null)
+            resolve(null)
+          }
+        } else {
+          //data.push(null)
+          resolve(null)
+        }
+      }
+    }))
+  }
+  return Promise.all(requests).then(results => {
+    return results
+  })
 }
