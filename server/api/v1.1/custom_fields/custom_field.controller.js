@@ -13,7 +13,7 @@ exports.index = function (req, res) {
       callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: companyUser.companyId } })
         .then(customFields => {
           logger.serverLog(CUSTOMFIELD, `got custom fields ${customFields}`, 'debug')
-          callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { isDefault: true } })
+          callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { default: true } })
             .then(defaultFields => {
               logger.serverLog(CUSTOMFIELD, `got default fields ${defaultFields}`, 'debug')
               sendSuccessResponse(res, 200, _.concat(customFields, defaultFields))
