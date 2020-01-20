@@ -116,6 +116,7 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
           } else {
             let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
             if (range) {
+              logger.serverLog(TAG, `lookUpValue google sheets range ${JSON.stringify(range)}`)
               if (type === 'get_row_by_value') {
                 getRowByValue(resp, subscriber, range, response.data.values)
               } else if (type === 'update_row') {
