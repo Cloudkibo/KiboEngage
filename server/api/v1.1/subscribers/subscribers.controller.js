@@ -147,13 +147,9 @@ const getAllSubscribers = function (subscribers, count, req, res) {
                 .then(customFieldSubscribers => {
                   dt = new Date()
                   utcDate = dt.toUTCString()
-                  logger.serverLog(TAG, `customFieldSubscribers/query ${utcDate}`, 'info')
-                  logger.serverLog(TAG, `customFieldSubscribers: ${util.inspect(customFieldSubscribers)}`, 'debug')
                   let finalPayload = logicLayer.getFinalPayload(subscribersPayload, customFields, customFieldSubscribers)
-                  logger.serverLog(TAG, `subscribersFinalPayload: ${util.inspect(finalPayload)}`, 'debug')
                   dt = new Date()
                   utcDate = dt.toUTCString()
-                  logger.serverLog(TAG, `before send success response ${utcDate}`, 'info')
                   sendSuccessResponse(res, 200, {subscribers: finalPayload, count: count.length > 0 ? count[0].count : 0})
                 })
                 .catch(error => {
