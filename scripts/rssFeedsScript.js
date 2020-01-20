@@ -11,6 +11,7 @@ const RssFeedPostSubscribers = require('../server/api/v1.1/rssFeeds/rssFeedPostS
 const RssSubscriptionsDataLayer = require('../server/api/v1.1/rssFeeds/rssSubscriptions.datalayer')
 const request = require('request')
 const config = require('../server/config/environment/index')
+const url = require('url')
 
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: true})
@@ -279,11 +280,12 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
   if (item.attachment) {
     let elements = item.attachment.payload.elements
     for (let i = 0; i < elements.length; i++) {
-      // elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
-      // console.log('button url', elements[i].buttons[0].url)
-      // let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
-      // let redirectUrl = button.url
-      // let query = url.parse(redirectUrl, true).query
+      elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      console.log('button url', elements[i].buttons[0].url)
+      let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
+      let redirectUrl = button.url
+      let query = url.parse(redirectUrl, true).query
+      console.log('query got', query)
       // if (query && query.sId) {
       //   elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`, config.domain).href
       // } else {
