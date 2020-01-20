@@ -191,19 +191,16 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
         if (rssSubscriptions.length > 0) {
           let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => (s.rssFeedId === feed._id && !s.subscription))
           if (isDefaultUnsubscribed === -1) {
-            console.log('in isDefaultUnsubscribed')
             messageData = messageData.concat(parsedFeeds[feed._id].data)
             postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
             postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
             postSubscribers.push(JSON.parse(JSON.stringify(postSubscriberData)))
-            console.log('parsedFeeds[feed._id].postSubscriber', parsedFeeds[feed._id].postSubscriber)
           }
           const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
           if (subscribedFeeds.length > 0) {
             const feedIds = subscribedFeeds.map((f) => f.rssFeedId)
             for (let [key, value] of Object.entries(parsedFeeds)) {
               if (feedIds.includes(key)) {
-                console.log('in subscribedFeeds')
                 messageData = messageData.concat(value.data)
                 postSubscriberData.rssFeedId = value.postSubscriber.rssFeedId
                 postSubscriberData.rssFeedPostId = value.postSubscriber.rssFeedPostId
@@ -214,14 +211,12 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
               data: messageData,
               postSubscribers
             }
-            console.log('resolve payload1', postSubscribers)
             resolve(payload)
           } else {
             payload = {
               data: messageData,
               postSubscribers
             }
-            console.log('resolve payload2', postSubscribers)
             resolve(payload)
           }
         } else {
@@ -231,7 +226,6 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
             data: parsedFeeds[feed._id].data,
             postSubscribers: [postSubscriberData]
           }
-          console.log('resolve payload3', payload.postSubscribers)
           resolve(payload)
         }
       })
@@ -255,8 +249,6 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
       let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
       prepareMessage(subscriber, parsedFeeds, feed, rssFeedIds)
         .then(payload => {
-          console.log('subscriberId', subscriber._id)
-          console.log('payload.postSubscribers', JSON.stringify(payload.postSubscribers))
           if (payload.data.length > 0) {
             payload.data.forEach((item, index) => {
               let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
@@ -447,18 +439,15 @@ const _saveRssFeedPost = (data, next) => {
     if (err) {
       next(err)
     } else {
-      console.log('rssFeedPosts', rssFeedPosts)
       data.rssFeedPosts = rssFeedPosts
       next()
     }
   })
 }
 const saveRssFeedPostSubscribers = (postSubscribers) => {
-  console.log('in saveRssFeedPostSubscribers', postSubscribers)
   async.each(postSubscribers, function (postSubscriber, next) {
     RssFeedPostSubscribers.create(postSubscriber)
       .then(saved => {
-        console.log('created postSubscriber', saved)
         next()
       })
       .catch(err => {
