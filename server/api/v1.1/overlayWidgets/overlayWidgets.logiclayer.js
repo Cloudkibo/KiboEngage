@@ -6,7 +6,8 @@ exports.fetchCriteria = function (body, companyId) {
     companyId: companyId,
     isActive: body.status_value !== '' ? (body.status_value === 'true') : {$exists: true},
     pageId: body.page_value !== '' ? body.page_value : {$exists: true},
-    widgetType: body.type_value !== '' ? body.type_value : {$exists: true}
+    widgetType: body.type_value !== '' ? body.type_value : {$exists: true},
+    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true }
   }
   if (body.first_page === 'first') {
     finalCriteria = [
