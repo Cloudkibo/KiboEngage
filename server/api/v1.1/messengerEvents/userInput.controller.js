@@ -330,22 +330,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                       let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
                       if (range) {
                         _updateRow(req, res, range, broadcastPayload, subscribers, message, oauth2Client)
-                      }
-                      else { 
-                        // let subscriber = subscribers[0]
-                        // for (let i = 0; i < resp.mapping.length; i++) {
-                        //   if (resp.lookUpColumn === resp.mapping[i].googleSheetColumn) {
-                        //     if (!resp.mapping[i].kiboPushColumn && !resp.mapping[i].customFieldColumn) {
-                        //       if (subscriber[resp.lookUpValue] || resp.lookUpValue === 'fullName') {
-                        //         resp.mapping[i].kiboPushColumn = resp.lookUpValue
-                        //       }
-                        //       else {
-                        //         resp.mapping[i].customFieldColumn = resp.lookUpValue
-                        //       }
-                        //     }
-                        //   }
-                        // }
-                        // logger.serverLog(TAG, `mapping google sheets  ${JSON.stringify(resp.mapping)}`)
+                      } else { 
                         _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client, true)   
                       }
                     }
@@ -457,12 +442,12 @@ const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => 
           if (Columns.googleSheetColumns[i] === resp.lookUpColumn) {
             if (subscribers[0][resp.lookUpValue] || resp.lookUpValue === 'fullName') {
               if (resp.lookUpValue === 'fullName') {
-                data.push(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
-                resolve(message.text)
+                //data.push(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
+                resolve(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
               }
               else {
-                data.push(subscribers[0][resp.lookUpValue])
-                resolve(message.text)
+                //data.push(subscribers[0][resp.lookUpValue])
+                resolve(subscribers[0][resp.lookUpValue])
               }
             } else {
               callApi(
@@ -475,7 +460,7 @@ const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => 
               )
                 .then(customFieldSubscriber => {
                   if (customFieldSubscriber) {
-                    data.push(customFieldSubscriber.value)
+                    //data.push(customFieldSubscriber.value)
                     resolve(customFieldSubscriber.value)
                   }
                 })
@@ -484,17 +469,17 @@ const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => 
                 })
             }
           } else {
-            data.push(null)
-            resolve(message.text)
+            //data.push(null)
+            resolve(null)
           }
         } else {
-          data.push(null)
-          resolve(message.text)
+          //data.push(null)
+          resolve(null)
         }
       }
     }))
   }
   return Promise.all(requests).then(results => {
-    return data
+    return results
   })
 }
