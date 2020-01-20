@@ -188,18 +188,18 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
     RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': subscriber._id, rssFeedId: {$in: rssFeedIds}})
       .then(rssSubscriptions => {
         if (rssSubscriptions.length > 0) {
-          let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => s.rssFeedId === feed._id && !s.subscription)
+          let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => (s.rssFeedId === feed._id && !s.subscription))
           if (isDefaultUnsubscribed === -1) {
             messageData = messageData.concat(parsedFeeds[feed._id].data)
-            postSubscribers.push(Object.assign(parsedFeeds[feed._id].postSubscriber, remainingPostSubscriberData))
+            postSubscribers.push(Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber))
           }
-          const subscribedFeeds = rssSubscriptions.filter((s) => s.subscription && s.rssFeedId !== feed._id)
+          const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
           if (subscribedFeeds.length > 0) {
             const feedIds = subscribedFeeds.map((f) => f.rssFeedId)
             for (let [key, value] of Object.entries(parsedFeeds)) {
               if (feedIds.includes(key)) {
                 messageData = messageData.concat(value.data)
-                postSubscribers.push(Object.assign(value.postSubscriber, remainingPostSubscriberData))
+                postSubscribers.push(Object.assign(remainingPostSubscriberData, value.postSubscriber))
               }
             }
             payload = {
@@ -217,7 +217,7 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
         } else {
           payload = {
             data: parsedFeeds[feed._id].data,
-            postSubscribers: [Object.assign(parsedFeeds[feed._id].postSubscriber, remainingPostSubscriberData)]
+            postSubscribers: [Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber)]
           }
           resolve(payload)
         }
@@ -242,16 +242,24 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
       let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
       prepareMessage(subscriber, parsedFeeds, feed, rssFeedIds)
         .then(payload => {
-          payload.data.forEach((item, index) => {
-            let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
-            if (index === 0) {
-              batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
-            } else {
-              batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'depends_on': `${subscriber.senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
-            }
-          })
-          saveRssFeedPostSubscribers(payload.postSubscribers)
-          callback()
+          console.log('subscriberId', subscriber._id)
+          console.log('payload.postSubscribers', JSON.stringify(payload.postSubscribers))
+          if (payload.data.length > 0) {
+            payload.data.forEach((item, index) => {
+              let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
+              if (index === 0) {
+                batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
+              } else {
+                batch.push({ 'method': 'POST', 'name': `${subscriber.senderId}${index + 1}`, 'depends_on': `${subscriber.senderId}${index}`, 'relative_url': 'v4.0/me/messages', 'body': recipient + '&' + message + '&' + messagingType + '&' + tag })
+              }
+              if (index === (payload.data.length - 1)) {
+                saveRssFeedPostSubscribers(payload.postSubscribers)
+                callback()
+              }
+            })
+          } else {
+            callback()
+          }
         })
         .catch((err) => {
           logger.serverLog(TAG, err, `In Prepare Message ${err}`)
@@ -272,6 +280,7 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
     let elements = item.attachment.payload.elements
     for (let i = 0; i < elements.length; i++) {
       elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      console.log('button url', elements[i].buttons[0].url)
       // let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
       // let redirectUrl = button.url
       // let query = url.parse(redirectUrl, true).query
@@ -407,31 +416,29 @@ const _updateScheduledTime = (data, next) => {
 
 const _saveRssFeedPost = (data, next) => {
   let rssFeedPosts = []
-  for (let i = 0; i < data.feeds.length; i++) {
-    if (data.feeds[i].subscriptions > 0) {
-      let dataToSave = {
-        rssFeedId: data.feeds[i]._id,
-        pageId: data.page._id,
-        companyId: data.feeds[i].companyId
-      }
-      RssFeedPostsDataLayer.createForRssFeedPosts(dataToSave)
-        .then(saved => {
-          rssFeedPosts.push({rssFeedId: data.feeds[i]._id, rssFeedPostId: saved._id})
-          if (i === data.feeds.length - 1) {
-            data.rssFeedPosts = rssFeedPosts
-            next()
-          }
-        })
-        .catch(err => {
-          logger.serverLog(TAG, err, 'In Save rss feed post Rss Integration')
-          next(err)
-        })
-    } else {
-      if (i === data.feeds.length - 1) {
-        next()
-      }
+  async.each(data.feeds, function (feed, callback) {
+    let dataToSave = {
+      rssFeedId: feed._id,
+      pageId: data.page._id,
+      companyId: feed.companyId
     }
-  }
+    RssFeedPostsDataLayer.createForRssFeedPosts(dataToSave)
+      .then(saved => {
+        rssFeedPosts.push({rssFeedId: feed._id, rssFeedPostId: saved._id})
+        callback()
+      })
+      .catch(err => {
+        callback(err)
+      })
+  }, function (err) {
+    if (err) {
+      next(err)
+    } else {
+      console.log('rssFeedPosts', rssFeedPosts)
+      data.rssFeedPosts = rssFeedPosts
+      next()
+    }
+  })
 }
 const saveRssFeedPostSubscribers = (postSubscribers) => {
   async.each(postSubscribers, function (postSubscriber, next) {

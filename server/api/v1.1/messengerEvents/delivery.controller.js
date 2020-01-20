@@ -159,7 +159,7 @@ function _updateRssFeedSent (data, next) {
           .then(subscribers => {
             const subscriber = subscribers[0]
             if (subscriber) {
-              RssFeedPostSubscribersDataLayer.genericUpdate({ pageId: page._id, subscriberId: subscriber._id }, {sent: true}, { multi: true })
+              RssFeedPostSubscribersDataLayer.genericUpdate({ pageId: page._id, subscriberId: subscriber._id, sent: false }, {sent: true}, { multi: true })
                 .then(updated => {
                   next(null)
                 })

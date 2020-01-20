@@ -21,8 +21,8 @@ exports.index = function (req, res) {
     _updateBroadcastSeen.bind(null, data),
     _updatePollSeen.bind(null, data),
     _updateSurveySeen.bind(null, data),
-    _updateSequenceSeen.bind(null, data),
-    _updateRssFeedSeen.bind(null, data)
+    _updateRssFeedSeen.bind(null, data),
+    _updateSequenceSeen.bind(null, data)
   ], 10, function (err) {
     if (err) {
       logger.serverLog(TAG, `ERROR at seen controller ${err}`, 'error')
@@ -101,43 +101,44 @@ function _updateSequenceSeen (data, next) {
             if (subscriber) {
               SequencesDataLayer.genericFindForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }})
                 .then(seqSubMsg => {
-                  console.log('seqSubMsg', seqSubMsg)
-                  SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }},
-                    { seen: true }, { multi: true })
-                    .then(updated => {
-                      SequencesDataLayer.genericUpdateForSequenceMessages({_id: seqSubMsg[0].messageId}, {$inc: { seen: 1 }}, {})
-                        .then(updated => {
-                          for (let k = 0; k < seqSubMsg.length; k++) {
-                            // check queue for trigger - sees the message
-                            SequenceMessageQueueDataLayer.genericFind({ subscriberId: subscriber._id, companyId: subscriber.companyId })
-                              .then(seqQueue => {
-                                if (seqQueue.length > 0) {
-                                  for (let i = 0; i < seqQueue.length; i++) {
-                                    if (seqQueue[i].sequenceMessageId.trigger.event === 'sees' && seqQueue[i].sequenceMessageId.trigger.value === seqSubMsg[k].messageId) {
-                                      let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
-                                      SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
-                                        .then(updated => {
-                                          next(null)
-                                        })
-                                        .catch(err => {
-                                          next(err)
-                                        })
+                  if (seqSubMsg.length > 0) {
+                    SequencesDataLayer.genericUpdateForSubscriberMessages({subscriberId: subscriber._id, seen: false, datetime: { $lte: new Date(data.read.watermark) }},
+                      { seen: true }, { multi: true })
+                      .then(updated => {
+                        SequencesDataLayer.genericUpdateForSequenceMessages({_id: seqSubMsg[0].messageId}, {$inc: { seen: 1 }}, {})
+                          .then(updated => {
+                            for (let k = 0; k < seqSubMsg.length; k++) {
+                              // check queue for trigger - sees the message
+                              SequenceMessageQueueDataLayer.genericFind({ subscriberId: subscriber._id, companyId: subscriber.companyId })
+                                .then(seqQueue => {
+                                  if (seqQueue.length > 0) {
+                                    for (let i = 0; i < seqQueue.length; i++) {
+                                      if (seqQueue[i].sequenceMessageId.trigger.event === 'sees' && seqQueue[i].sequenceMessageId.trigger.value === seqSubMsg[k].messageId) {
+                                        let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
+                                        SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
+                                          .then(updated => {
+                                            next(null)
+                                          })
+                                          .catch(err => {
+                                            next(err)
+                                          })
+                                      }
                                     }
                                   }
-                                }
-                              })
-                              .catch(err => {
-                                next(err)
-                              })
-                          }
-                        })
-                        .catch(err => {
-                          next(err)
-                        })
-                    })
-                    .catch(err => {
-                      next(err)
-                    })
+                                })
+                                .catch(err => {
+                                  next(err)
+                                })
+                            }
+                          })
+                          .catch(err => {
+                            next(err)
+                          })
+                      })
+                      .catch(err => {
+                        next(err)
+                      })
+                  }
                 })
                 // work for seen_all_sequence_messages trigger
                 // let query = {
