@@ -178,7 +178,7 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
     let messageData = []
     let postSubscribers = []
     let payload = {}
-    let remainingPostSubscriberData = {
+    let postSubscriberData = {
       companyId: subscriber.companyId,
       pageId: subscriber.pageId,
       subscriberId: subscriber._id,
@@ -193,7 +193,9 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
           if (isDefaultUnsubscribed === -1) {
             console.log('in isDefaultUnsubscribed')
             messageData = messageData.concat(parsedFeeds[feed._id].data)
-            postSubscribers.push(Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber))
+            postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
+            postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
+            postSubscribers.push(postSubscriberData)
             console.log('parsedFeeds[feed._id].postSubscriber', parsedFeeds[feed._id].postSubscriber)
           }
           const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
@@ -203,7 +205,9 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
               if (feedIds.includes(key)) {
                 console.log('in subscribedFeeds')
                 messageData = messageData.concat(value.data)
-                postSubscribers.push(Object.assign(remainingPostSubscriberData, value.postSubscriber))
+                postSubscriberData.rssFeedId = value.postSubscriber.rssFeedId
+                postSubscriberData.rssFeedPostId = value.postSubscriber.rssFeedPostId
+                postSubscribers.push(postSubscriberData)
               }
             }
             payload = {
@@ -221,9 +225,11 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
             resolve(payload)
           }
         } else {
+          postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
+          postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
           payload = {
             data: parsedFeeds[feed._id].data,
-            postSubscribers: [Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber)]
+            postSubscribers: [postSubscriberData]
           }
           console.log('resolve payload3', payload.postSubscribers)
           resolve(payload)
