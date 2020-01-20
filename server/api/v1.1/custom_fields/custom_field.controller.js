@@ -20,6 +20,7 @@ exports.index = function (req, res) {
             })
             .catch(err => {
               if (err) {
+                logger.serverLog(CUSTOMFIELD, `got default fields err ${JSON.stringify(err)}`, 'debug')
                 sendErrorResponse(res, 500, '', `Internal Server Error in fetching default customFields${JSON.stringify(err)}`)
               }
             })
