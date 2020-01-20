@@ -191,14 +191,17 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
         if (rssSubscriptions.length > 0) {
           let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => (s.rssFeedId === feed._id && !s.subscription))
           if (isDefaultUnsubscribed === -1) {
+            console.log('in isDefaultUnsubscribed')
             messageData = messageData.concat(parsedFeeds[feed._id].data)
             postSubscribers.push(Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber))
+            console.log('parsedFeeds[feed._id].postSubscriber', parsedFeeds[feed._id].postSubscriber)
           }
           const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
           if (subscribedFeeds.length > 0) {
             const feedIds = subscribedFeeds.map((f) => f.rssFeedId)
             for (let [key, value] of Object.entries(parsedFeeds)) {
               if (feedIds.includes(key)) {
+                console.log('in subscribedFeeds')
                 messageData = messageData.concat(value.data)
                 postSubscribers.push(Object.assign(remainingPostSubscriberData, value.postSubscriber))
               }
@@ -207,12 +210,14 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
               data: messageData,
               postSubscribers
             }
+            console.log('resolve payload1', postSubscribers)
             resolve(payload)
           } else {
             payload = {
               data: messageData,
               postSubscribers
             }
+            console.log('resolve payload2', postSubscribers)
             resolve(payload)
           }
         } else {
@@ -220,6 +225,7 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
             data: parsedFeeds[feed._id].data,
             postSubscribers: [Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber)]
           }
+          console.log('resolve payload3', payload.postSubscribers)
           resolve(payload)
         }
       })
@@ -285,13 +291,11 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
       let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
       let redirectUrl = button.url
       let query = url.parse(redirectUrl, true).query
-      console.log('query got', query)
       if (query && query.sId) {
         elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${query.id}&sId=${subscriber._id}`, config.domain).href
       } else {
         elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
       }
-      console.log('elements[i].buttons[0].url', elements[i].buttons[0].url)
     }
   }
   return item
