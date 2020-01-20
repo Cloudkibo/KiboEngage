@@ -330,22 +330,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                       let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
                       if (range) {
                         _updateRow(req, res, range, broadcastPayload, subscribers, message, oauth2Client)
-                      }
-                      else { 
-                        // let subscriber = subscribers[0]
-                        // for (let i = 0; i < resp.mapping.length; i++) {
-                        //   if (resp.lookUpColumn === resp.mapping[i].googleSheetColumn) {
-                        //     if (!resp.mapping[i].kiboPushColumn && !resp.mapping[i].customFieldColumn) {
-                        //       if (subscriber[resp.lookUpValue] || resp.lookUpValue === 'fullName') {
-                        //         resp.mapping[i].kiboPushColumn = resp.lookUpValue
-                        //       }
-                        //       else {
-                        //         resp.mapping[i].customFieldColumn = resp.lookUpValue
-                        //       }
-                        //     }
-                        //   }
-                        // }
-                        // logger.serverLog(TAG, `mapping google sheets  ${JSON.stringify(resp.mapping)}`)
+                      } else { 
                         _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client, true)   
                       }
                     }
