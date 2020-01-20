@@ -12,15 +12,15 @@ exports.index = function (req, res) {
       }
       callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: companyUser.companyId } })
         .then(customFields => {
-          callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: companyUser.companyId } })
-          .then(defaultFields => {
-            sendSuccessResponse(res, 200, _.concat(customFields, defaultFields))
-          })
-          .catch(err => {
-            if (err) {
-              sendErrorResponse(res, 500, '', `Internal Server Error in fetching default customFields${JSON.stringify(err)}`)
-            }
-          })
+          callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { default: false } })
+            .then(defaultFields => {
+              sendSuccessResponse(res, 200, _.concat(customFields, defaultFields))
+            })
+            .catch(err => {
+              if (err) {
+                sendErrorResponse(res, 500, '', `Internal Server Error in fetching default customFields${JSON.stringify(err)}`)
+              }
+            })
         })
         .catch(err => {
           if (err) {
