@@ -279,8 +279,8 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
   if (item.attachment) {
     let elements = item.attachment.payload.elements
     for (let i = 0; i < elements.length; i++) {
-      elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
-      console.log('button url', elements[i].buttons[0].url)
+      // elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      // console.log('button url', elements[i].buttons[0].url)
       // let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
       // let redirectUrl = button.url
       // let query = url.parse(redirectUrl, true).query
@@ -441,9 +441,11 @@ const _saveRssFeedPost = (data, next) => {
   })
 }
 const saveRssFeedPostSubscribers = (postSubscribers) => {
+  console.log('in saveRssFeedPostSubscribers', postSubscribers)
   async.each(postSubscribers, function (postSubscriber, next) {
     RssFeedPostSubscribers.create(postSubscriber)
       .then(saved => {
+        console.log('created postSubscriber', saved)
         next()
       })
       .catch(err => {
