@@ -7,7 +7,6 @@ const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const feedparser = require('feedparser-promised')
-const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const async = require('async')
 
@@ -40,6 +39,7 @@ exports.preview = function (req, res) {
   }
   async.series([
     _validateFeedUrl.bind(null, data),
+    _validateFeedTitle.bind(null, data),
     _parseFeed.bind(null, data),
     _fetchPage.bind(null, data),
     _fetchAdminSubscription.bind(null, data),
@@ -425,9 +425,11 @@ const _prepareMessageData = (data, next) => {
             template_type: 'generic',
             elements: gallery
           }
-        },
-        quick_replies: quickReplies
+        }
       }]
+      if (quickReplies.length > 0) {
+        messageData[1]['quick_replies'] = quickReplies
+      }
       data.messageData = messageData
       next()
     })

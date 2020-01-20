@@ -2,6 +2,8 @@ const og = require('open-graph')
 const request = require('request')
 const async = require('async')
 const {domainName} = require('../../global/utility')
+const logger = require('../../../components/logger')
+const TAG = 'api/v1/rssFeeds/rssFeeds.logiclayer.js'
 
 exports.fetchFeedsCriteria = function (body, companyId) {
   let finalCriteria = {}
@@ -150,7 +152,7 @@ exports.getMetaData = function (feed, body) {
       if (key < length) {
         og(value.link, (err, meta) => {
           if (err) {
-            callback(err)
+            logger.serverLog(TAG, `Error from open graph ${err}`)
           }
           if (meta && meta.title && meta.image) {
             gallery.push({
