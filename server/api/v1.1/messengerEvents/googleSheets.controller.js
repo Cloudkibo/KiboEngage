@@ -115,11 +115,30 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
             logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
           } else {
             let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
+            logger.serverLog(TAG, `lookUpValue google sheets range ${JSON.stringify(range)}`)
             if (range) {
               if (type === 'get_row_by_value') {
                 getRowByValue(resp, subscriber, range, response.data.values)
               } else if (type === 'update_row') {
                 updateRow(resp, subscriber, oauth2Client, range)
+              }
+            }
+            else {
+              if (type === 'update_row') { 
+                for (let i = 0; i < resp.mapping.length; i++) {
+                  if (resp.lookUpColumn === resp.mapping[i].googleSheetColumn) {
+                    if (!resp.mapping[i].kiboPushColumn && !resp.mapping[i].customFieldColumn) {
+                      if (subscriber[resp.lookUpValue] || resp.lookUpValue === 'fullName') {
+                        resp.mapping[i].kiboPushColumn = resp.lookUpValue
+                      }
+                      else {
+                        resp.mapping[i].customFieldColumn = resp.lookUpValue
+                      }
+                    }
+                  }
+                }
+                logger.serverLog(TAG, `mapping google sheets  ${JSON.stringify(resp.mapping)}`)
+                insertRow(resp, subscriber, oauth2Client)
               }
             }
           }
