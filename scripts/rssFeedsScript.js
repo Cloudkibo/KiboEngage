@@ -195,7 +195,7 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
             messageData = messageData.concat(parsedFeeds[feed._id].data)
             postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
             postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
-            postSubscribers.push(postSubscriberData)
+            postSubscribers.push(JSON.parse(JSON.stringify(postSubscriberData)))
             console.log('parsedFeeds[feed._id].postSubscriber', parsedFeeds[feed._id].postSubscriber)
           }
           const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
