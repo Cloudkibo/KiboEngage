@@ -280,17 +280,18 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
   if (item.attachment) {
     let elements = item.attachment.payload.elements
     for (let i = 0; i < elements.length; i++) {
-      elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
-      console.log('button url', elements[i].buttons[0].url)
+      // elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      // console.log('button url', elements[i].buttons[0].url)
       let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
       let redirectUrl = button.url
       let query = url.parse(redirectUrl, true).query
       console.log('query got', query)
-      // if (query && query.sId) {
-      //   elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`, config.domain).href
-      // } else {
-      //   elements[i].buttons[0].url = config.domain + `/clicked?r=${redirectUrl}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`
-      // }
+      if (query && query.sId) {
+        elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${query.id}&sId=${subscriber._id}`, config.domain).href
+      } else {
+        elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      }
+      console.log('elements[i].buttons[0].url', elements[i].buttons[0].url)
     }
   }
   return item
