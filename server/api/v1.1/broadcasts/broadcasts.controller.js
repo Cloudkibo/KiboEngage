@@ -108,179 +108,124 @@ exports.delete = function (req, res) {
   })
 }
 exports.addButton = function (req, res) {
-  if (req.body.type === 'web_url' && !(_.has(req.body, 'url'))) {
-    sendErrorResponse(res, 500, '', 'Url is required for type web_url.')
-  }
-  if (typeof req.body.payload === 'string') {
-    req.body.payload = JSON.parse(req.body.payload)
-  }
-  if (
-    req.body.type === 'postback' &&
-    ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId'))) && !(_.has(req.body.payload, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction')) && !(_.has(req.body.payload, 'hubspotAction'))
-  ) {
-    sendErrorResponse(res, 500, '', 'SequenceId & action & customFieldId are required for type postback')
-  }
-  let buttonPayload = {
-    title: req.body.title,
-    type: req.body.type
-  }
-  if (req.body.type === 'web_url') {
-    if (req.body.messenger_extensions || req.body.webview_height_ratio) {
-      if (!broadcastUtility.isWebView(req.body)) {
-        sendErrorResponse(res, 400, `parameters are missing`)
+  BroadcastLogicLayer.isValidButtonPayload(req.body)
+    .then(result => {
+      if (!result) {
+        return sendErrorResponse(res, 500, '', 'Invalid Payload')
       }
-      broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
-        .then(result => {
-          if (result.returnValue) {
-            var webViewPayload = {
-              type: req.body.type,
-              url: req.body.url, // User defined link,
-              title: req.body.title, // User defined label
-              messenger_extensions: req.body.messenger_extensions,
-              webview_height_ratio: req.body.webview_height_ratio
-            }
-            sendSuccessResponse(res, 200, webViewPayload)
-          } else {
-            sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
+      let buttonPayload = {
+        title: req.body.title,
+        type: req.body.type
+      }
+      if (req.body.type === 'web_url') {
+        if (req.body.messenger_extensions || req.body.webview_height_ratio) {
+          if (!broadcastUtility.isWebView(req.body)) {
+            return sendErrorResponse(res, 400, `parameters are missing`)
           }
-        })
-    } else {
-      URLDataLayer.createURLObject({
-        originalURL: req.body.url,
-        module: {
-          type: req.body.module.type
+          broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+            .then(result => {
+              if (result.returnValue) {
+                var webViewPayload = {
+                  type: req.body.type,
+                  url: req.body.url, // User defined link,
+                  title: req.body.title, // User defined label
+                  messenger_extensions: req.body.messenger_extensions,
+                  webview_height_ratio: req.body.webview_height_ratio
+                }
+                sendSuccessResponse(res, 200, webViewPayload)
+              } else {
+                sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
+              }
+            })
+        } else {
+          URLDataLayer.createURLObject({
+            originalURL: req.body.url,
+            module: {
+              type: req.body.module.type
+            }
+          })
+            .then(savedurl => {
+              let newURL = config.domain + `/api/URL/${req.body.module.type}/` + savedurl._id
+              buttonPayload.newUrl = newURL
+              buttonPayload.url = req.body.url
+              sendSuccessResponse(res, 200, buttonPayload)
+            })
+            .catch(error => {
+              sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
+            })
         }
-      })
-        .then(savedurl => {
-          let newURL = config.domain + `/api/URL/${req.body.module.type}/` + savedurl._id
-          buttonPayload.newUrl = newURL
-          buttonPayload.url = req.body.url
-          sendSuccessResponse(res, 200, buttonPayload)
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
-        })
-    }
-  } else {
-    if (req.body.module && req.body.module.type === 'sequenceMessaging') {
-      let buttonId = uniqid()
-      buttonPayload.payload = JSON.stringify({
-        sequenceId: req.body.sequenceId,
-        action: req.body.action,
-        buttonId: buttonId
-      })
-      // buttonPayload.sequenceValue = req.body.sequenceId
-      sendSuccessResponse(res, 200, buttonPayload)
-    } else if ((_.has(req.body.payload, 'customFieldId'))) {
-      buttonPayload.payload = JSON.stringify(req.body.payload)
-      sendSuccessResponse(res, 200, buttonPayload)
-    } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
-      buttonPayload.payload = JSON.stringify(req.body.payload)
-      sendSuccessResponse(res, 200, buttonPayload)
-    } else if ((_.has(req.body.payload, 'hubspotAction'))) {
-      buttonPayload.payload = JSON.stringify(req.body.payload)
-      sendSuccessResponse(res, 200, buttonPayload)
-    } else {
-      let buttonId = uniqid()
-      buttonPayload.payload = JSON.stringify({
-        messageId: req.body.messageId,
-        buttonId: buttonId
-      })
-      sendSuccessResponse(res, 200, buttonPayload)
-    }
-  }
+      } else {
+        buttonPayload.payload = JSON.stringify(req.body.payload)
+        sendSuccessResponse(res, 200, buttonPayload)
+      }
+    })
 }
 exports.editButton = function (req, res) {
-  if (req.body.type === 'web_url' && !req.body.messenger_extensions && !(_.has(req.body, 'newUrl'))) {
-    sendErrorResponse(res, 400, '', 'Url is required for type web_url.')
-  }
-  if (typeof req.body.payload === 'string') {
-    req.body.payload = JSON.parse(req.body.payload)
-  }
-  if (
-    req.body.type === 'postback' &&
-    ((!(_.has(req.body, 'sequenceId')) && !(_.has(req.body, 'action'))) &&
-    !(_.has(req.body, 'messageId'))) && !(_.has(req.body, 'customFieldId')) && !(_.has(req.body.payload, 'googleSheetAction')) && !(_.has(req.body.payload, 'hubspotAction'))
-  ) {
-    sendErrorResponse(res, 400, '', 'SequenceId & action & customFieldId are required for type postback')
-  }
-  let buttonPayload = {
-    title: req.body.title,
-    type: req.body.type
-  }
-  if (req.body.type === 'web_url' && !req.body.messenger_extensions) {
-    // TODO save module id when sending broadcast
-    if (req.body.oldUrl && req.body.oldUrl !== '') {
-      let temp = req.body.oldUrl.split('/')
-      let id = temp[temp.length - 1]
-      URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
-        .then(savedurl => {
-          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-          buttonPayload.newUrl = newURL
-          buttonPayload.url = req.body.newUrl
-          sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
-        })
-    } else {
-      URLDataLayer.createURLObject({
-        originalURL: req.body.newUrl,
-        module: {
-          type: 'broadcast'
-        }
-      })
-        .then(savedurl => {
-          let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
-          buttonPayload.newUrl = newURL
-          buttonPayload.url = req.body.newUrl
-          sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
-        })
-    }
-  } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
-    if (!broadcastUtility.isWebView(req.body)) {
-      sendErrorResponse(res, 400, `parameters are missing`)
-    }
-    broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
-      .then(result => {
-        if (result.returnValue) {
-          var webViewPayload = {
-            type: req.body.type,
-            url: req.body.url, // User defined link,
-            title: req.body.title, // User defined label
-            messenger_extensions: req.body.messenger_extensions,
-            webview_height_ratio: req.body.webview_height_ratio
-          }
-          sendSuccessResponse(res, 200, {id: req.body.id, button: webViewPayload})
+  BroadcastLogicLayer.isValidButtonPayload(req.body)
+    .then(result => {
+      if (!result) {
+        return sendErrorResponse(res, 500, '', 'Invalid Payload')
+      }
+      let buttonPayload = {
+        title: req.body.title,
+        type: req.body.type
+      }
+      if (req.body.type === 'web_url' && !req.body.messenger_extensions) {
+        // TODO save module id when sending broadcast
+        if (req.body.oldUrl && req.body.oldUrl !== '') {
+          let temp = req.body.oldUrl.split('/')
+          let id = temp[temp.length - 1]
+          URLDataLayer.updateOneURL(id, {originalURL: req.body.newUrl})
+            .then(savedurl => {
+              let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+              buttonPayload.newUrl = newURL
+              buttonPayload.url = req.body.newUrl
+              sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
+            })
+            .catch(error => {
+              sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
+            })
         } else {
-          sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
+          URLDataLayer.createURLObject({
+            originalURL: req.body.newUrl,
+            module: {
+              type: 'broadcast'
+            }
+          })
+            .then(savedurl => {
+              let newURL = config.domain + '/api/URL/broadcast/' + savedurl._id
+              buttonPayload.newUrl = newURL
+              buttonPayload.url = req.body.newUrl
+              sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
+            })
+            .catch(error => {
+              sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
+            })
         }
-      })
-  } else {
-    if (req.body.module && req.body.module.type === 'sequenceMessaging') {
-      buttonPayload.payload = JSON.stringify({
-        sequenceId: req.body.sequenceId,
-        action: req.body.action
-      })
-      buttonPayload.sequenceValue = req.body.sequenceId
-      sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
-    } else if ((_.has(req.body.payload, 'googleSheetAction'))) {
-      buttonPayload.payload = JSON.stringify(req.body.payload)
-      sendSuccessResponse(res, 200, buttonPayload)
-    } else if ((_.has(req.body.payload, 'hubspotAction'))) {
-      buttonPayload.payload = JSON.stringify(req.body.payload)
-      sendSuccessResponse(res, 200, buttonPayload)
-    } else {
-      buttonPayload.payload = JSON.stringify({
-        messageId: req.body.messageId
-      })
-      sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
-    }
-  }
+      } else if (req.body.type === 'web_url' && (req.body.messenger_extensions || req.body.webview_height_ratio)) {
+        if (!broadcastUtility.isWebView(req.body)) {
+          sendErrorResponse(res, 400, `parameters are missing`)
+        }
+        broadcastUtility.isWhiteListedDomain(req.body.url, req.body.pageId, req.user)
+          .then(result => {
+            if (result.returnValue) {
+              var webViewPayload = {
+                type: req.body.type,
+                url: req.body.url, // User defined link,
+                title: req.body.title, // User defined label
+                messenger_extensions: req.body.messenger_extensions,
+                webview_height_ratio: req.body.webview_height_ratio
+              }
+              sendSuccessResponse(res, 200, {id: req.body.id, button: webViewPayload})
+            } else {
+              sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
+            }
+          })
+      } else {
+        buttonPayload.payload = JSON.stringify(req.body.payload)
+        sendSuccessResponse(res, 200, buttonPayload)
+      }
+    })
 }
 exports.deleteButton = function (req, res) {
   URLDataLayer.deleteOneURL(req.params.id)
