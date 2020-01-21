@@ -108,11 +108,9 @@ exports.delete = function (req, res) {
   })
 }
 exports.addButton = function (req, res) {
-  console.log('in add button1', req.body)
   BroadcastLogicLayer.isValidButtonPayload(req.body)
     .then(result => {
       if (!result) {
-        console.log('in else')
         return sendErrorResponse(res, 500, '', 'Invalid Payload')
       }
       let buttonPayload = {
@@ -120,7 +118,6 @@ exports.addButton = function (req, res) {
         type: req.body.type
       }
       if (req.body.type === 'web_url') {
-        console.log('in web_url3')
         if (req.body.messenger_extensions || req.body.webview_height_ratio) {
           if (!broadcastUtility.isWebView(req.body)) {
             return sendErrorResponse(res, 400, `parameters are missing`)
