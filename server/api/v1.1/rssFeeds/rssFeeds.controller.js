@@ -37,6 +37,9 @@ exports.preview = function (req, res) {
     companyId: req.user.companyId,
     userId: req.user._id
   }
+  if (req.body.feedId) {
+    data.feedId = req.body.feedId
+  }
   async.series([
     _validateFeedUrl.bind(null, data),
     _validateFeedTitle.bind(null, data),
@@ -66,7 +69,7 @@ exports.edit = function (req, res) {
     _fetchFeedToUpdate.bind(null, data),
     _validateActiveFeeds.bind(null, data),
     _validateFeedUrl.bind(null, data),
-    _validateTitleforEditFeed.bind(null, data),
+    _validateFeedTitle.bind(null, data),
     _checkDefaultFeed.bind(null, data),
     _updateSubscriptionCount.bind(null, data),
     _updateRSSFeed.bind(null, data)
@@ -313,22 +316,18 @@ const _validateActiveFeeds = (data, next) => {
     next(null)
   }
 }
-const _validateTitleforEditFeed = (data, next) => {
-  DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: data.body.title, $options: 'i'}, _id: {$ne: data.feed._id}})
-    .then(rssFeeds => {
-      if (rssFeeds.length > 0) {
-        next('An Rss feed with a similar title is already connected with this page')
-      } else {
-        next(null)
-      }
-    })
-    .catch(error => {
-      next(error)
-    })
-}
+
 const _validateFeedTitle = (data, next) => {
   if (data.body.title) {
-    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], title: {$regex: data.body.title, $options: 'i'}})
+    var query = { 
+      companyId: data.companyId, 
+      pageIds: data.body.pageIds[0], 
+      title: {$regex: data.body.title, $options: 'i'}
+    }
+    if (data.feedId) {
+      query['_id'] =  {$ne: data.feedId}
+    }
+    DataLayer.countDocuments(query)
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
           next('An Rss feed with a similar title is already connected with this page')
