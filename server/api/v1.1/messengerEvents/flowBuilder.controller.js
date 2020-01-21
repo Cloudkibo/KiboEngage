@@ -10,18 +10,26 @@ exports.index = function (req, res) {
   })
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
-  const parsedPayload = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  let parsedPayload
+  if (req.body.entry[0].messaging[0].message && req.body.entry[0].messaging[0].message.quick_reply) {
+    parsedPayload = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
+  } else {
+    parsedPayload = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
+  }
   const blockUniqueId = parsedPayload.blockUniqueId
   let reportObj = {
     successful: 0,
     unsuccessful: 0,
     errors: []
   }
-  console.log('WE CAME HERE')
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
     .then(page => {
       page = page[0]
-      let subsFindCriteria = { pageId: page._id, companyId: page.companyId, senderId: sender, completeInfo: true }
+      let subsFindCriteria = [
+        {$match:
+          { pageId: page._id, companyId: page.companyId, senderId: sender, completeInfo: true }
+        }
+      ]
       callApi(`messageBlocks/query`, 'post', { purpose: 'findOne', match: { uniqueId: '' + blockUniqueId } }, 'kiboengage')
         .then(messageBlock => {
           if (messageBlock.module.type === 'broadcast') {
@@ -52,6 +60,6 @@ const _savePageBroadcast = (data) => {
       logger.serverLog(TAG, 'page broadcast object saved in db')
     })
     .catch(error => {
-      logger.serverLog(`Failed to create page_broadcast ${JSON.stringify(error)}`)
+      logger.serverLog(`Failed to create page_broadcast ${error}`)
     })
 }
