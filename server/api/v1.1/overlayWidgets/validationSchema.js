@@ -1,6 +1,10 @@
 exports.createPayload = {
   type: 'object',
   properties: {
+    title: {
+      type: 'string',
+      required: true
+    },
     widgetType: {
       type: 'string',
       required: true

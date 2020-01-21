@@ -14,6 +14,7 @@ exports.delete = function (req, res) {
 }
 exports.create = function (req, res) {
   let dataToSave = {
+    title: req.body.title,
     widgetType: req.body.widgetType,
     companyId: req.user.companyId,
     userId: req.user._id,
@@ -32,7 +33,6 @@ exports.create = function (req, res) {
     })
 }
 exports.fetchWidgets = function (req, res) {
-  console.log('in controller')
   let criteria = LogicLayer.fetchCriteria(req.body, req.user.companyId)
   async.parallelLimit([
     function (callback) {
