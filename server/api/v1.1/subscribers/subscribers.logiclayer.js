@@ -74,7 +74,8 @@ exports.getCriterias = function (req, tagIDs) {
       gender: req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
       locale: req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
       isSubscribed: req.body.filter_criteria.status_value !== '' ? req.body.filter_criteria.status_value : {$exists: true},
-      pageId: req.body.filter_criteria.page_value !== '' ? req.body.filter_criteria.page_value : {$exists: true}
+      pageId: req.body.filter_criteria.page_value !== '' ? req.body.filter_criteria.page_value : {$exists: true},
+      source: req.body.filter_criteria.source_value !== '' ? req.body.filter_criteria.source_value : {$exists: true}
     }
     if (req.body.filter_criteria.tag_value) {
       findCriteria['tags_subscriber.tagId'] = { $in: tagIDs }
@@ -216,7 +217,8 @@ exports.getCriteriasTags = function (req, tagIDs) {
     'Subscribers.gender': req.body.filter_criteria.gender_value !== '' ? req.body.filter_criteria.gender_value : {$exists: true},
     'Subscribers.locale': req.body.filter_criteria.locale_value !== '' ? req.body.filter_criteria.locale_value : {$exists: true},
     'Subscribers.isSubscribed': req.body.filter_criteria.status_value !== '' ? req.body.filter_criteria.status_value : {$exists: true},
-    'Subscribers.pageId': req.body.filter_criteria.page_value !== '' ? req.body.filter_criteria.page_value : {$exists: true}
+    'Subscribers.pageId': req.body.filter_criteria.page_value !== '' ? req.body.filter_criteria.page_value : {$exists: true},
+    'Subscribers.source': req.body.filter_criteria.source_value !== '' ? req.body.filter_criteria.source_value : {$exists: true}
   }
 
   let countCriteria = [
