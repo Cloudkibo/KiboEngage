@@ -12,7 +12,6 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  console.log('req.body in menu controller', req.body)
   let replyPayload = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
@@ -23,47 +22,29 @@ exports.index = function (req, res) {
         .then(subscriber => {
           subscriber = subscriber[0]
           if (subscriber) {
-            //  sendMenuReplyToSubscriber(replyPayload, subscriber.senderId, subscriber.firstName, subscriber.lastName, subscriber.pageId.accessToken)
-            broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+            callApi('menu/query', 'post', {pageId: page._id, companyId: page.companyId})
+              .then(menu => {
+                menu = menu[0]
+                if (menu) {
+                  if (replyPayload.action && menu.jsonStructure[replyPayload.index]) {
+                    broadcastUtility.getBatchData(JSON.parse(menu.jsonStructure[replyPayload.index].payload), subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                  } else {
+                    broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                  }
+                } else {
+                  broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+                }
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to fetch menu ${err}`, 'error')
+              })
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
         })
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
     })
-}
-
-function sendMenuReplyToSubscriber (replyPayload, senderId, firstName, lastName, accessToken, page) {
-  for (let i = 0; i < replyPayload.length; i++) {
-    logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
-      .then(result => {
-        // let messageData = logicLayer.prepareSendAPIPayload(senderId, replyPayload[i], firstName, lastName, true)
-        // logger.serverLog(TAG, `messageData ${JSON.stringify(messageData)}`)
-        // console.log('messageData in sendMenuReplyToSubscriber', messageData)
-        request(
-          {
-            'method': 'POST',
-            'json': true,
-            'formData': result.payload,
-            'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' + accessToken
-          },
-          (err, res) => {
-            if (err) {
-            } else {
-              if (res.body.error) {
-                sendOpAlert(res.body.error, 'Menu controller in KiboEngage', page._id, page.userId, page.companyId)
-              }
-              if (res.statusCode !== 200) {
-                logger.serverLog(TAG,
-                  `At send message landingPage ${JSON.stringify(
-                    res.body.error)}`, 'error')
-              }
-              logger.serverLog(TAG, `At sendMenuReplyToSubscriber response ${JSON.stringify(res.body)}`)
-            }
-          })
-      })
-  }
 }
