@@ -95,6 +95,7 @@ exports.getTwilioNumbers = function (req, res) {
         })
     })
     .catch(error => {
+      logger.serverLog(TAG, `error at  getTwilioNumbers ${error}`, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
