@@ -1,5 +1,5 @@
-// const logger = require('../../../components/logger')
-// const CUSTOMFIELD = 'api/custom_field/custom_field.controller.js'
+const logger = require('../../../components/logger')
+const CUSTOMFIELD = 'api/custom_field/custom_field.controller.js'
 const callApi = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const _ = require('lodash')
@@ -12,15 +12,18 @@ exports.index = function (req, res) {
       }
       callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: companyUser.companyId } })
         .then(customFields => {
-          callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: companyUser.companyId } })
-          .then(defaultFields => {
-            sendSuccessResponse(res, 200, _.concat(customFields, defaultFields))
-          })
-          .catch(err => {
-            if (err) {
-              sendErrorResponse(res, 500, '', `Internal Server Error in fetching default customFields${JSON.stringify(err)}`)
-            }
-          })
+          logger.serverLog(CUSTOMFIELD, `got custom fields ${customFields}`, 'debug')
+          callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { default: true } })
+            .then(defaultFields => {
+              logger.serverLog(CUSTOMFIELD, `got default fields ${defaultFields}`, 'debug')
+              sendSuccessResponse(res, 200, _.concat(customFields, defaultFields))
+            })
+            .catch(err => {
+              if (err) {
+                logger.serverLog(CUSTOMFIELD, `got default fields err ${JSON.stringify(err)}`, 'debug')
+                sendErrorResponse(res, 500, '', `Internal Server Error in fetching default customFields${JSON.stringify(err)}`)
+              }
+            })
         })
         .catch(err => {
           if (err) {

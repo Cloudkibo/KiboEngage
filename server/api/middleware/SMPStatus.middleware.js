@@ -2,6 +2,7 @@
 const compose = require('composable-middleware')
 const utility = require('../v1.1/utility')
 const { isApprovedForSMP } = require('../global/subscriptionMessaging')
+const async = require('async')
 
 exports.checkSMP = () => {
   return compose().use((req, res, next) => {
@@ -32,17 +33,22 @@ exports.checkSMP = () => {
 function checkStatusForEachPage (connectedPages) {
   return new Promise((resolve, reject) => {
     let statusArray = []
-    for (let i = 0; i < connectedPages.length; i++) {
-      isApprovedForSMP(connectedPages[i])
+      async.each(connectedPages, function (connectedPage, next) {
+        isApprovedForSMP(connectedPage)
         .then(smpStatus => {
-          statusArray.push({ pageId: connectedPages[i]._id, smpStatus: smpStatus })
-          if (i === connectedPages.length - 1) {
-            resolve(statusArray)
-          }
+          statusArray.push({ pageId: connectedPage._id, smpStatus: smpStatus })
+          next()
         })
         .catch(err => {
           reject(err)
         })
-    }
-  })
+      }, function (err) {
+        if (err) {
+          logger.serverLog(TAG, `Failed to fetch subscription messaging status of connected pages ${err}`, 'error')
+          reject(err)
+        } else {
+          resolve(statusArray)
+        }
+      })
+    })
 }

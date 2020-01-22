@@ -11,6 +11,7 @@ const RssFeedPostSubscribers = require('../server/api/v1.1/rssFeeds/rssFeedPostS
 const RssSubscriptionsDataLayer = require('../server/api/v1.1/rssFeeds/rssSubscriptions.datalayer')
 const request = require('request')
 const config = require('../server/config/environment/index')
+const url = require('url')
 
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: true})
@@ -177,7 +178,7 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
     let messageData = []
     let postSubscribers = []
     let payload = {}
-    let remainingPostSubscriberData = {
+    let postSubscriberData = {
       companyId: subscriber.companyId,
       pageId: subscriber.pageId,
       subscriberId: subscriber._id,
@@ -191,7 +192,9 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
           let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => (s.rssFeedId === feed._id && !s.subscription))
           if (isDefaultUnsubscribed === -1) {
             messageData = messageData.concat(parsedFeeds[feed._id].data)
-            postSubscribers.push(Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber))
+            postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
+            postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
+            postSubscribers.push(JSON.parse(JSON.stringify(postSubscriberData)))
           }
           const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
           if (subscribedFeeds.length > 0) {
@@ -199,7 +202,9 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
             for (let [key, value] of Object.entries(parsedFeeds)) {
               if (feedIds.includes(key)) {
                 messageData = messageData.concat(value.data)
-                postSubscribers.push(Object.assign(remainingPostSubscriberData, value.postSubscriber))
+                postSubscriberData.rssFeedId = value.postSubscriber.rssFeedId
+                postSubscriberData.rssFeedPostId = value.postSubscriber.rssFeedPostId
+                postSubscribers.push(postSubscriberData)
               }
             }
             payload = {
@@ -215,9 +220,11 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
             resolve(payload)
           }
         } else {
+          postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
+          postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
           payload = {
             data: parsedFeeds[feed._id].data,
-            postSubscribers: [Object.assign(remainingPostSubscriberData, parsedFeeds[feed._id].postSubscriber)]
+            postSubscribers: [postSubscriberData]
           }
           resolve(payload)
         }
@@ -242,8 +249,6 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
       let messagingType = 'messaging_type=' + encodeURIComponent('MESSAGE_TAG')
       prepareMessage(subscriber, parsedFeeds, feed, rssFeedIds)
         .then(payload => {
-          console.log('subscriberId', subscriber._id)
-          console.log('payload.postSubscribers', JSON.stringify(payload.postSubscribers))
           if (payload.data.length > 0) {
             payload.data.forEach((item, index) => {
               let message = 'message=' + encodeURIComponent(JSON.stringify(changeUrlForClicked(item, rssFeedPost, subscriber)))
@@ -279,16 +284,16 @@ const changeUrlForClicked = (item, rssFeedPost, subscriber) => {
   if (item.attachment) {
     let elements = item.attachment.payload.elements
     for (let i = 0; i < elements.length; i++) {
-      elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
-      console.log('button url', elements[i].buttons[0].url)
-      // let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
-      // let redirectUrl = button.url
-      // let query = url.parse(redirectUrl, true).query
-      // if (query && query.sId) {
-      //   elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`, config.domain).href
-      // } else {
-      //   elements[i].buttons[0].url = config.domain + `/clicked?r=${redirectUrl}&m=rss&id=${rssFeedPost._id}&sId=${subscriber._id}`
-      // }
+      // elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      // console.log('button url', elements[i].buttons[0].url)
+      let button = JSON.parse(JSON.stringify(elements[i].buttons[0]))
+      let redirectUrl = button.url
+      let query = url.parse(redirectUrl, true).query
+      if (query && query.sId) {
+        elements[i].buttons[0].url = new url.URL(`/clicked?r=${query.r}&m=rss&id=${query.id}&sId=${subscriber._id}`, config.domain).href
+      } else {
+        elements[i].buttons[0].url = elements[i].buttons[0].url + `&sId=${subscriber._id}`
+      }
     }
   }
   return item
@@ -434,7 +439,6 @@ const _saveRssFeedPost = (data, next) => {
     if (err) {
       next(err)
     } else {
-      console.log('rssFeedPosts', rssFeedPosts)
       data.rssFeedPosts = rssFeedPosts
       next()
     }

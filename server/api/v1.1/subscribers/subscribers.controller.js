@@ -136,7 +136,7 @@ const getAllSubscribers = function (subscribers, count, req, res) {
           let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, tagIds, req.body.filter_criteria.tag_value)
           // logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
           // start append custom Fields
-          utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+          utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: req.user.companyId}, {default: true}] } })
             .then(customFields => {
               dt = new Date()
               utcDate = dt.toUTCString()
@@ -147,13 +147,9 @@ const getAllSubscribers = function (subscribers, count, req, res) {
                 .then(customFieldSubscribers => {
                   dt = new Date()
                   utcDate = dt.toUTCString()
-                  logger.serverLog(TAG, `customFieldSubscribers/query ${utcDate}`, 'info')
-                  logger.serverLog(TAG, `customFieldSubscribers: ${util.inspect(customFieldSubscribers)}`, 'debug')
                   let finalPayload = logicLayer.getFinalPayload(subscribersPayload, customFields, customFieldSubscribers)
-                  logger.serverLog(TAG, `subscribersFinalPayload: ${util.inspect(finalPayload)}`, 'debug')
                   dt = new Date()
                   utcDate = dt.toUTCString()
-                  logger.serverLog(TAG, `before send success response ${utcDate}`, 'info')
                   sendSuccessResponse(res, 200, {subscribers: finalPayload, count: count.length > 0 ? count[0].count : 0})
                 })
                 .catch(error => {
