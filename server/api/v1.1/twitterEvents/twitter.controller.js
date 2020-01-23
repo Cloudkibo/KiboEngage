@@ -150,10 +150,6 @@ const sendToMessenger = (postingItem, page, req) => {
                     if ((smpStatus === 'approved')) {
                       smp = true
                     }
-                    console.log('smpStatus calling from autopost', smpStatus)
-                    console.log('smp calling from autopost', smp)
-                    console.log(' page.accessToken calling from autopost', page.accessToken)
-                    console.log('pageName calling from autopost', page.pageName)
                     let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, messageData.length, smp)
                     if (postingItem.isSegmented && postingItem.segmentationTags.length > 0) {
                       utility.callApi(`tags/query`, 'post', { companyId: page.companyId, tag: { $in: postingItem.segmentationTags } })
