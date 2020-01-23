@@ -279,7 +279,6 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
     callApi.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
         let existsTag = isTagExists(subscriber.pageId._id, tags)
-        console.log('existsTag', existsTag)
         if (existsTag.status) {
           let tagPayload = tags[existsTag.index]
           callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id})
