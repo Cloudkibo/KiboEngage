@@ -33,7 +33,7 @@ exports.getCriterias = function (req) {
       if (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') {
         findCriteria = {
           companyId: req.user.companyId,
-          $and: [{'payload.0.componentType': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
+          $and: [{'payload.0.componentName': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
           messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
           title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
           'datetime': req.body.filter_criteria.days !== '0' ? {
@@ -44,7 +44,7 @@ exports.getCriterias = function (req) {
       else {
         findCriteria = {
           companyId: req.user.companyId,
-          'payload.0.componentType': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true },
+          'payload.0.componentName': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true },
           messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
           title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
           'datetime': req.body.filter_criteria.days !== '0' ? {
