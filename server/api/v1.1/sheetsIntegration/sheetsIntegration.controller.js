@@ -61,7 +61,7 @@ exports.fetchColumns = function (req, res) {
   return new Promise((resolve, reject) => {
     async.parallelLimit([
       function (callback) {
-        callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+        callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: req.user.companyId}, {default: true}] } })
           .then(customFields => {
             callback(null, customFields)
           })
