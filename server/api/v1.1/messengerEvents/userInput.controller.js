@@ -199,7 +199,7 @@ const _saveIntoHubspot = (req, res, broadcastPayload, subscribers, message, page
 }
 
 const _insertOrUpdateContact = (broadcastPayload, subscribers, message, integration) => {
-  _getIdentityCustomFieldValue(broadcastPayload.action.identityCustomFieldValue, subscribers[0])
+  _getIdentityCustomFieldValue(broadcastPayload.action.identityFieldValue, subscribers[0])
     .then(customFieldValue => {
       let HubspotMappingColumns = defaultFieldcolumn.HubspotMappingColumns
       let data = [{property: HubspotMappingColumns[broadcastPayload.action.hubspotColumn], value: message.text}]
