@@ -136,10 +136,10 @@ exports.fetchHubspotDefaultColumns = function (req, res) {
   let dataToSend = {
     kiboPushColumns: populateKiboPushColumns(),
     customFieldColumns: [],
-    hubSpotColumns: defaultFieldcolumn.hubSpotColumns,
-    //HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
+    hubSpotColumns: defaultFieldcolumn.hubSpotColumns
+    // HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
   }
-  callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+  callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: req.user.companyId}, {default: true}] } })
     .then(customFields => {
       populateCustomFieldColumns(dataToSend, customFields)
         .then(dataToSend => {
@@ -157,7 +157,7 @@ exports.fetchHubspotDefaultColumns = function (req, res) {
 exports.fetchColumns = function (req, res) {
   async.parallelLimit([
     function (callback) {
-      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: req.user.companyId}, {default: true}] } })
         .then(customFields => {
           callback(null, customFields)
         })
