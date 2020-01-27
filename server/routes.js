@@ -138,9 +138,6 @@ module.exports = function (app) {
     res.render('landingPage', { landingPage })
   })
 
-  app.post('/settings', (req, res) => {
-    res.redirect('/settings')
-  })
 
   app.get('/demoSSA', (req, res) => {
     res.cookie('environment', config.env,
@@ -160,6 +157,11 @@ module.exports = function (app) {
     res.status(404).send({url: `${req.originalUrl} not found`})
   })
 
+  app.route('/settings').get((req, res) => {
+    res.redirect('/settings')
+  }).post((req, res) => {
+    res.redirect('/settings')
+  })
   app.route('/*').get((req, res) => {
     res.redirect('/')
   }).post((req, res) => {
