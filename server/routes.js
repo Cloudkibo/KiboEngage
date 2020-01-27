@@ -150,10 +150,6 @@ module.exports = function (app) {
     res.sendFile(path.join(config.root, 'client/index.html'))
   })
 
-  app.get('/hubspotSetting', (req, res) => {
-    res.redirect(302, '/')
-  })
-
   app.route('/:url(api|auth)/*').get((req, res) => {
     res.status(404).send({url: `${req.originalUrl} not found`})
   }).post((req, res) => {
