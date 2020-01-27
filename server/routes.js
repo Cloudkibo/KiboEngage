@@ -138,6 +138,10 @@ module.exports = function (app) {
     res.render('landingPage', { landingPage })
   })
 
+  app.post('/settings', (req, res) => {
+    res.redirect('/settings')
+  })
+
   app.get('/demoSSA', (req, res) => {
     res.cookie('environment', config.env,
       {expires: new Date(Date.now() + 900000)})
