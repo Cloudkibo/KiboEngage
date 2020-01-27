@@ -57,7 +57,7 @@ exports.callback = function (req, res) {
                   }
                   dataLayer.update(integrations[0]._id, newPayload)
                     .then(updated => {
-                      res.redirect('/settings')
+                      res.redirect('/')
                     })
                     .catch(err => {
                       logger.serverLog(TAG, 'Error in Integrations Hubspot on update callback' + err, 'error')
@@ -74,7 +74,7 @@ exports.callback = function (req, res) {
                   }
                   dataLayer.create(payload)
                     .then(created => {
-                      res.redirect('/settings')
+                      res.redirect('/')
                     })
                     .catch(err => {
                       logger.serverLog(TAG, 'Error in Integrations Hubspot on create callback' + err, 'error')
