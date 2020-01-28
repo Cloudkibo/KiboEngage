@@ -74,7 +74,7 @@ module.exports = function (app) {
   app.use('/api/rssFeeds', require('./api/v1.1/rssFeeds'))
   app.use('/clicked', require('./api/v1.1/clickedCount/clickedCount.controller').updateClickedCount)
   app.use('/api/overlayWidgets', require('./api/v1.1/overlayWidgets'))
-
+  app.use('/api/appMaker', require('./api/appMaker'))
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
 
