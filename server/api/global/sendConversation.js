@@ -63,7 +63,7 @@ const _callBatchAPI = (batch, accessToken) => {
 /* eslint-disable */
 const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) => {
     let waitingForUserInput = {
-      broadcastId: recordObj.broadcastId,
+      broadcastId: recordObj ? recordObj.broadcastId: '',
       componentIndex: -1,
       incorrectTries: 3
   }

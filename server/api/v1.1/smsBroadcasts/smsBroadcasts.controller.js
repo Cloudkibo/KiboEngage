@@ -78,14 +78,17 @@ exports.sendBroadcast = function (req, res) {
     })
 }
 exports.getTwilioNumbers = function (req, res) {
+  logger.serverLog(TAG, `called function getTwilioNumbers`)
   let numbers = []
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }) // fetch company user
     .then(companyuser => {
+      logger.serverLog(TAG, `called function after fetching companyUser ${companyuser}`)
       let accountSid = companyuser.companyId.twilio.accountSID
       let authToken = companyuser.companyId.twilio.authToken
       let client = require('twilio')(accountSid, authToken)
       client.incomingPhoneNumbers
         .list().then((incomingPhoneNumbers) => {
+          logger.serverLog(TAG, `incomingPhoneNumbers ${incomingPhoneNumbers}`)
           for (let i = 0; i < incomingPhoneNumbers.length; i++) {
             numbers.push(incomingPhoneNumbers[i].phoneNumber)
             if (i === incomingPhoneNumbers.length - 1) {
@@ -95,6 +98,7 @@ exports.getTwilioNumbers = function (req, res) {
         })
     })
     .catch(error => {
+      logger.serverLog(TAG, `error at  getTwilioNumbers ${error}`, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
