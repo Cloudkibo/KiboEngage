@@ -11,7 +11,8 @@ exports.fetchFeedsCriteria = function (body, companyId) {
   let recordsToSkip = 0
   let findCriteria = {
     companyId: companyId,
-    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true }
+    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true },
+    defaultFeed: body.type_value !== '' ? body.type_value === 'default' : { $exists: true }
   }
   if (body.status_value !== '') {
     findCriteria['isActive'] = body.status_value === 'true' ? true : false
