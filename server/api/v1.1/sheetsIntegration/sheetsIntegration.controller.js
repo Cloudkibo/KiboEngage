@@ -189,9 +189,10 @@ exports.callback = async function (req, res) {
               }
               dataLayer.update(integrations[0]._id, newPayload)
                 .then(updated => {
-                  res.redirect('/')
+                  res.redirect('/successMessage')
                 })
                 .catch(err => {
+                  res.redirect('/ErrorMessage')
                   logger.serverLog(TAG, 'Error in Integrations Sheets on update callback' + err, 'error')
                   res.status(500).send('Internal Error Occurred.')
                 })
@@ -206,19 +207,22 @@ exports.callback = async function (req, res) {
               }
               dataLayer.create(payload)
                 .then(created => {
-                  res.redirect('/')
+                  res.redirect('/successMessage')
                 })
                 .catch(err => {
+                  res.redirect('/ErrorMessage')
                   logger.serverLog(TAG, 'Error in Integrations Sheets on create callback' + err, 'error')
                   res.status(500).send('Internal Error Occurred.')
                 })
             }
           })
           .catch(err => {
+            res.redirect('/ErrorMessage')
             logger.serverLog(TAG, 'Error in Integrations Sheets on fetch callback' + err, 'error')
             res.status(500).send('Internal Error Occurred.')
           })
       } else {
+        res.redirect('/ErrorMessage')
         res.status(500).send('Internal Error Occurred. Invalid user')
       }
     })
