@@ -60,6 +60,7 @@ exports.callback = function (req, res) {
                       res.redirect('/successMessage')
                     })
                     .catch(err => {
+                      res.redirect('/ErrorMessage')
                       logger.serverLog(TAG, 'Error in Integrations Hubspot on update callback' + err, 'error')
                       res.status(500).send('Internal Error Occurred.')
                     })
@@ -77,21 +78,25 @@ exports.callback = function (req, res) {
                       res.redirect('/successMessage')
                     })
                     .catch(err => {
+                      res.redirect('/ErrorMessage')
                       logger.serverLog(TAG, 'Error in Integrations Hubspot on create callback' + err, 'error')
                       res.status(500).send('Internal Error Occurred.')
                     })
                 }
               })
               .catch(err => {
+                res.redirect('/ErrorMessage')
                 logger.serverLog(TAG, 'Error in Integrations Hubspot on fetch callback' + err, 'error')
                 res.status(500).send('Internal Error Occurred.')
               })
           } else {
+            res.redirect('/ErrorMessage')
             res.status(500).send('Internal Error Occurred. Invalid user')
           }
         })
     })
     .catch(err => {
+      res.redirect('/ErrorMessage')
       sendErrorResponse(res, 500, err, 'Internal Server Error occurred. Please contact admin.')
     })
 }
