@@ -94,7 +94,8 @@ function updateClickCountId (payload, sponsoredMessageID) {
       }
     }
   }
-} 
+}
+
 exports.send = function (req, res) {
   const accesstoken = req.user.facebookInfo.fbToken
   let id = req.params.id
@@ -142,13 +143,13 @@ exports.send = function (req, res) {
                                 return res.status(500).json({ status: 'failed', payload: `Failed to create Ads ${JSON.stringify(adsResp.body.error)}` })
                               } else {
                                 logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
-                                let ad_id = adsResp.id
-                                logger.serverLog(TAG, `ad_id ${ad_id}`)
+                                let adId = adsResp.body.id
+                                logger.serverLog(TAG, `ad_id ${adId}`)
                                 // Now since we have got respone from facebook, we shall update our database
-                                let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: ad_id, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
-                                utility.callApi(`sponsoredMessaging/${req.params._id}`, 'post', updatePayload, req.headers.authorization)
+                                let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
+                                utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload, req.headers.authorization)
                                   .then(sponsoredMessage => {
-                                    return res.status(201).json({ status: 'success', payload: sponsoredMessage })
+                                    return res.status(200).json({ status: 'success', payload: sponsoredMessage })
                                   })
                                   .catch(error => {
                                     return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })

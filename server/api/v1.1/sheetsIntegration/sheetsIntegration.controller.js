@@ -26,6 +26,7 @@ exports.fetchWorksheets = function (req, res) {
   callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
     .then(integration => {
       integration = integration[0]
+      integration.integrationPayload.refresh_token = integration.integrationToken
       oauth2Client.credentials = integration.integrationPayload
       let request = {
         // The spreadsheet to request.
@@ -73,6 +74,7 @@ exports.fetchColumns = function (req, res) {
         callApi(`integrations/query`, 'post', {companyId: req.user.companyId, integrationName: 'Google Sheets'}, 'accounts', req.headers.authorization)
           .then(integration => {
             integration = integration[0]
+            integration.integrationPayload.refresh_token = integration.integrationToken
             oauth2Client.credentials = integration.integrationPayload
             let request = {
               // The spreadsheet to request.
@@ -176,12 +178,12 @@ exports.callback = async function (req, res) {
         dataLayer.index({ companyId, userId, integrationName: 'Google Sheets' })
           .then(integrations => {
             if (integrations.length > 0) {
-              tokens.refresh_token = integrations[0].integrationPayload.refresh_token
+              tokens.refresh_token = tokens.refresh_token || integrations[0].integrationPayload.refresh_token
               let newPayload = {
                 companyId: integrations[0].companyId,
                 userId: integrations[0].userId,
                 integrationName: integrations[0].integrationName,
-                integrationToken: tokens.access_token,
+                integrationToken: tokens.refresh_token,
                 integrationPayload: tokens,
                 enabled: true
               }
@@ -198,7 +200,7 @@ exports.callback = async function (req, res) {
                 companyId,
                 userId,
                 integrationName: 'Google Sheets',
-                integrationToken: tokens.access_token,
+                integrationToken: tokens.refresh_token,
                 integrationPayload: tokens,
                 enabled: true
               }
@@ -236,6 +238,7 @@ exports.listSpreadSheets = (req, res) => {
   })
     .then(function (integrations) {
       if (integrations.length > 0) {
+        integrations[0].integrationPayload.refresh_token = integrations[0].integrationToken
         oauth2Client.credentials = integrations[0].integrationPayload
         const service = google.drive('v3')
         service.files.list(
