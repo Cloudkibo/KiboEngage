@@ -17,11 +17,9 @@ exports.index = function (req, res) {
       let queryData = {companyId: companyUser.companyId}
       callApi.callApi('tags/query', 'post', queryData)
         .then(tags => {
-          console.log('tags', tags)
           async.each(tags, (singleTag, callback) => {
             callApi.callApi('tags_subscriber/query', 'post', {tagId: singleTag._id})
               .then(tagsSubscribers => {
-                console.log('tagsSubscribers', tagsSubscribers)
                 for (let i = 0; i < tags.length; i++) {
                   if (tags[i]._id === singleTag._id) {
                     tags[i].status = tagsSubscribers.length > 0 ? 'Assigned' : 'Unassigned'
@@ -38,7 +36,6 @@ exports.index = function (req, res) {
                 description: `Internal Server Error in fetching tags${JSON.stringify(err)}`
               })
             }
-            console.log('tags final', tags)
             res.status(200).json({status: 'success', payload: tags})
           })
         })
