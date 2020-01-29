@@ -5,16 +5,16 @@ const og = require('open-graph')
 const feedparser = require('feedparser-promised')
 const async = require('async')
 const { getScheduledTime, domainName } = require('../server/api/global/utility')
-const RSSFeedsDataLayer = require('../server/api/v1.1/rssFeeds/rssFeeds.datalayer')
-const RssFeedPostsDataLayer = require('../server/api/v1.1/rssFeeds/rssFeedPosts.datalayer')
-const RssFeedPostSubscribers = require('../server/api/v1.1/rssFeeds/rssFeedPostSubscribers.datalayer')
-const RssSubscriptionsDataLayer = require('../server/api/v1.1/rssFeeds/rssSubscriptions.datalayer')
+const RSSFeedsDataLayer = require('../server/api/v1.1/newsSections/newsSections.datalayer')
+const RssFeedPostsDataLayer = require('../server/api/v1.1/newsSections/newsPosts.datalayer')
+const RssFeedPostSubscribers = require('../server/api/v1.1/newsSections/newsPostSubscribers.datalayer')
+const RssSubscriptionsDataLayer = require('../server/api/v1.1/newsSections/newsSubscriptions.datalayer')
 const request = require('request')
 const config = require('../server/config/environment/index')
 const url = require('url')
 
 exports.runRSSScript = () => {
-  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: true})
+  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: true, integrationType: 'rss'})
     .then(rssFeeds => {
       async.eachSeries(rssFeeds, _handleRSSFeed, function (err) {
         if (err) {
@@ -88,7 +88,7 @@ const _prepareFeeds = (data, next) => {
 }
 
 const _fetchNonDefaultFeeds = (data, next) => {
-  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id, subscriptions: {$gt: 0}})
+  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id, subscriptions: {$gt: 0}, integrationType: 'rss'})
     .then(rssFeeds => {
       data.feeds = rssFeeds
       data.feeds.unshift(data.rssFeed)
@@ -100,7 +100,7 @@ const _fetchNonDefaultFeeds = (data, next) => {
     })
 }
 const _shouldShowMoreTopics = (data, next) => {
-  RSSFeedsDataLayer.aggregateForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id}, { _id: null, count: { $sum: 1 } })
+  RSSFeedsDataLayer.aggregateForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id, integrationType: 'rss'}, { _id: null, count: { $sum: 1 } })
     .then(rssFeeds => {
       if (rssFeeds.length > 0) {
         data.showMoreTopics = true
@@ -186,24 +186,24 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
       seen: 0,
       clicked: 0
     }
-    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': subscriber._id, rssFeedId: {$in: rssFeedIds}})
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': subscriber._id, newsSectionId: {$in: rssFeedIds}})
       .then(rssSubscriptions => {
         if (rssSubscriptions.length > 0) {
-          let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => (s.rssFeedId === feed._id && !s.subscription))
+          let isDefaultUnsubscribed = rssSubscriptions.findIndex((s) => (s.newsSectionId === feed._id && !s.subscription))
           if (isDefaultUnsubscribed === -1) {
             messageData = messageData.concat(parsedFeeds[feed._id].data)
-            postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
-            postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
+            postSubscriberData.newsSectionId = parsedFeeds[feed._id].postSubscriber.rssFeedId
+            postSubscriberData.newsPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
             postSubscribers.push(JSON.parse(JSON.stringify(postSubscriberData)))
           }
-          const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.rssFeedId !== feed._id))
+          const subscribedFeeds = rssSubscriptions.filter((s) => (s.subscription && s.newsSectionId !== feed._id))
           if (subscribedFeeds.length > 0) {
-            const feedIds = subscribedFeeds.map((f) => f.rssFeedId)
+            const feedIds = subscribedFeeds.map((f) => f.newsSectionId)
             for (let [key, value] of Object.entries(parsedFeeds)) {
               if (feedIds.includes(key)) {
                 messageData = messageData.concat(value.data)
-                postSubscriberData.rssFeedId = value.postSubscriber.rssFeedId
-                postSubscriberData.rssFeedPostId = value.postSubscriber.rssFeedPostId
+                postSubscriberData.newsSectionId = value.postSubscriber.rssFeedId
+                postSubscriberData.newsPostId = value.postSubscriber.rssFeedPostId
                 postSubscribers.push(postSubscriberData)
               }
             }
@@ -220,8 +220,8 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
             resolve(payload)
           }
         } else {
-          postSubscriberData.rssFeedId = parsedFeeds[feed._id].postSubscriber.rssFeedId
-          postSubscriberData.rssFeedPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
+          postSubscriberData.newsSectionId = parsedFeeds[feed._id].postSubscriber.rssFeedId
+          postSubscriberData.newsPostId = parsedFeeds[feed._id].postSubscriber.rssFeedPostId
           payload = {
             data: parsedFeeds[feed._id].data,
             postSubscribers: [postSubscriberData]
@@ -423,7 +423,7 @@ const _saveRssFeedPost = (data, next) => {
   let rssFeedPosts = []
   async.each(data.feeds, function (feed, callback) {
     let dataToSave = {
-      rssFeedId: feed._id,
+      newsSectionId: feed._id,
       pageId: data.page._id,
       companyId: feed.companyId
     }

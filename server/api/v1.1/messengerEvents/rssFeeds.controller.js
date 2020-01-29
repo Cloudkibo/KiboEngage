@@ -1,8 +1,8 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/messengerEvents/rssFeeds.controller.js'
 const {callApi} = require('../utility')
-const RssSubscriptionsDataLayer = require('../rssFeeds/rssSubscriptions.datalayer')
-const RssFeedsDataLayer = require('../rssFeeds/rssFeeds.datalayer')
+const RssSubscriptionsDataLayer = require('../newsSections/newsSubscriptions.datalayer')
+const RssFeedsDataLayer = require('../newsSections/newsSections.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
@@ -115,10 +115,10 @@ const _updateSubscription = (data, next) => {
       locale: data.subscriber.locale,
       senderId: data.subscriber.senderId
     },
-    rssFeedId: data.resp.rssFeedId,
+    newsSectionId: data.resp.rssFeedId,
     subscription: data.resp.action === 'subscribe_to_rssFeed' ? true : false
   }
-  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
+  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.resp.rssFeedId}, updateData, {upsert: true})
     .then(rssSubscription => {
       next()
     })
@@ -128,7 +128,7 @@ const _updateSubscription = (data, next) => {
 }
 const _updateSubscriptionCount = (data, next) => {
   if (data.resp.action === 'subscribe_to_rssFeed') {
-    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: true})
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.resp.rssFeedId, subscription: true})
       .then(rssSubscriptions => {
         if (rssSubscriptions.length === 0) {
           RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: 1 } }, {})
@@ -144,7 +144,7 @@ const _updateSubscriptionCount = (data, next) => {
         next(err)
       })
   } else {
-    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: false})
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.resp.rssFeedId, subscription: false})
       .then(rssSubscriptions => {
         if (rssSubscriptions.length === 0) {
           RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: -1 } }, {})
@@ -310,7 +310,7 @@ const _prepareQuickReplies = (data, next) => {
   }
   if (data.subscriber) {
     if (data.rssFeed.defaultFeed) {
-      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id, subscription: false})
+      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.rssFeed._id, subscription: false})
         .then(rssSubscription => {
           if (rssSubscription.length > 0) {
             quickReplies.push({
@@ -332,7 +332,7 @@ const _prepareQuickReplies = (data, next) => {
           next(err)
         })
     } else {
-      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
+      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.rssFeed._id})
         .then(rssSubscription => {
           if (rssSubscription.length > 0 && rssSubscription[0].subscription) {
             quickReplies.push({

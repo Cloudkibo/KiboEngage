@@ -6,7 +6,7 @@ const logger = require('../../../components/logger')
 const SequenceUtility = require('../sequenceMessaging/utility')
 const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
-const RssFeedPostSubscribersDataLayer = require('../rssFeeds/rssFeedPostSubscribers.datalayer')
+const RssFeedPostSubscribersDataLayer = require('../newsSections/newsPostSubscribers.datalayer')
 const utility = require('../utility')
 const async = require('async')
 

@@ -8,6 +8,5 @@ router.get('/:id', controller.index)
 router.get('/broadcast/:id', controller.broadcast)
 router.get('/sponsorMessaging/:id', controller.sponsorMessaging)
 router.get('/sequence/:id', controller.sequence)
-router.get('/rss/:id', controller.rss)
 
 module.exports = router

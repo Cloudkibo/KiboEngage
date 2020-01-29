@@ -5,14 +5,14 @@ Thus we can use it from other non express callers like cron etc
 */
 const { callApi } = require('../utility')
 
-exports.genericFind = (queryObject) => {
+exports.genericFindForRssFeedPosts = (queryObject) => {
   let query = {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`rssFeedPostSubscribers/query`, 'post', query, 'kiboengage')
+  return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
-exports.aggregate = (match, group, lookup, limit, sort, skip) => {
+exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unwind) => {
   let query = {
     purpose: 'aggregate',
     match: match
@@ -22,18 +22,19 @@ exports.aggregate = (match, group, lookup, limit, sort, skip) => {
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
+  if (unwind) query.unwind = unwind
 
-  return callApi(`rssFeedPostSubscribers/query`, 'post', query, 'kiboengage')
+  return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
-exports.create = (payload) => {
-  return callApi(`rssFeedPostSubscribers`, 'post', payload, 'kiboengage')
+exports.createForRssFeedPosts = (payload) => {
+  return callApi(`newsPosts`, 'post', payload, 'kiboengage')
 }
-exports.delete = (queryObject) => {
+exports.deleteForRssFeedPosts = (queryObject) => {
   let query = {
     purpose: 'deleteMany',
     match: queryObject
   }
-  return callApi(`rssFeedPostSubscribers`, 'delete', query, 'kiboengage')
+  return callApi(`newsPosts`, 'delete', query, 'kiboengage')
 }
 
 exports.countDocuments = (filter) => {
@@ -42,9 +43,9 @@ exports.countDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`rssFeedPostSubscribers/query`, 'post', query, 'kiboengage')
+  return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
-exports.genericUpdate = (queryObject, updated, options) => {
+exports.genericUpdateRssFeedPosts = (queryObject, updated, options) => {
   let query = {
     purpose: 'updateAll',
     match: queryObject,
@@ -53,5 +54,5 @@ exports.genericUpdate = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`rssFeedPostSubscribers`, 'put', query, 'kiboengage')
+  return callApi(`newsPosts`, 'put', query, 'kiboengage')
 }
