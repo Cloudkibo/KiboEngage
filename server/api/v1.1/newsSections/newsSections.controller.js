@@ -11,7 +11,6 @@ const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pagead
 const async = require('async')
 
 exports.create = function (req, res) {
-  console.log('in controller')
   let data = {
     body: req.body,
     companyId: req.user.companyId,
@@ -170,7 +169,6 @@ function _saveRSSFeed (data, next) {
   } else if (data.body.integrationType === 'manual') {
     dataToSave.stories = data.body.stories
   }
-  console.log('Datato save', dataToSave)
   DataLayer.createForRssFeeds(dataToSave)
     .then(savedFeed => {
       data.savedFeed = savedFeed
