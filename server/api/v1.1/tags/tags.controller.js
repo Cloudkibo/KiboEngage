@@ -17,7 +17,6 @@ exports.index = function (req, res) {
       let queryData = {companyId: companyUser.companyId}
       callApi.callApi('tags/query', 'post', queryData)
         .then(tags => {
-          tags = tags.map((t) => t.doc)
           console.log('tags', tags)
           async.each(tags, (singleTag, callback) => {
             callApi.callApi('tags_subscriber/query', 'post', {tagId: singleTag._id})
