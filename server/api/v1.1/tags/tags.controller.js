@@ -9,10 +9,7 @@ exports.index = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
+        return sendErrorResponse(res, 404, {}, 'The user account does not belong to any company. Please contact support')
       }
       let queryData = {companyId: companyUser.companyId}
       callApi.callApi('tags/query', 'post', queryData)
@@ -31,29 +28,20 @@ exports.index = function (req, res) {
               .catch(err => callback(err))
           }, (err) => {
             if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Internal Server Error in fetching tags${JSON.stringify(err)}`
-              })
+              return sendErrorResponse(res, 500, {}, `Internal Server Error in fetching tags ${JSON.stringify(err)}`)
             }
-            res.status(200).json({status: 'success', payload: tags})
+            return sendSuccessResponse(res, 200, tags)
           })
         })
         .catch(err => {
           if (err) {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Internal Server Error in fetching tags${JSON.stringify(err)}`
-            })
+            return sendErrorResponse(res, 500, {}, `Internal Server Error in fetching tags ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          status: 'failed',
-          description: `Internal Server Error in fetching customer${JSON.stringify(err)}`
-        })
+        return sendErrorResponse(res, 500, {}, `Internal Server Error in fetching tags ${JSON.stringify(err)}`)
       }
     })
 }
