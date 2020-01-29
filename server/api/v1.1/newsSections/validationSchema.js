@@ -24,9 +24,7 @@ exports.createPayload = {
     }
   },
   'required': [
-    'feedUrl',
     'title',
-    'storiesCount',
     'defaultFeed',
     'isActive',
     'pageIds',
