@@ -21,13 +21,15 @@ exports.index = function (req, res) {
       callApi.callApi('tags/aggregate', 'post', aggregateData)
         .then(tags => {
           tags = tags.map((t) => t.doc)
-          let finalTags = []
           async.each(tags, (singleTag, callback) => {
             callApi.callApi('tags_subscriber/query', 'post', {tagId: singleTag._id})
               .then(tagsSubscribers => {
-                singleTag.status = tagsSubscribers.length > 0 ? 'Assigned' : 'Unassigned'
-                singleTag.subscribersCount = tagsSubscribers.length
-                finalTags.push(singleTag)
+                for (let i = 0; i < tags.length; i++) {
+                  if (tags[i]._id === singleTag._id) {
+                    tags[i].status = tagsSubscribers.length > 0 ? 'Assigned' : 'Unassigned'
+                    tags[i].subscribersCount = tagsSubscribers.length
+                  }
+                }
                 callback()
               })
               .catch(err => callback(err))
@@ -38,7 +40,7 @@ exports.index = function (req, res) {
                 description: `Internal Server Error in fetching tags${JSON.stringify(err)}`
               })
             }
-            res.status(200).json({status: 'success', payload: finalTags})
+            res.status(200).json({status: 'success', payload: tags})
           })
         })
         .catch(err => {
