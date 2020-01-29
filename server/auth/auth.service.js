@@ -11,6 +11,9 @@ const util = require('util')
 const logger = require('../components/logger')
 const requestPromise = require('request-promise')
 const TAG = 'auth/auth.service.js'
+const exec = require('child_process').exec
+const ip = require('ip')
+
 /**
  * Attaches the user object to the request if authenticated
  * Otherwise returns 403
@@ -19,51 +22,57 @@ function isAuthenticated () {
   return compose()
   // Validate jwt or api keys
     .use((req, res, next) => {
-      let headers = {
-        'content-type': 'application/json',
-        'Authorization': req.headers.authorization
+      if (req.headers.hasOwnProperty('is_gam_request')) {
+        isAuthorizedGAMRequest(req, res, next)
+      } else {
+        let headers = {
+          'content-type': 'application/json',
+          'Authorization': req.headers.authorization
+        }
+        // allow access_token to be passed through query parameter as well
+        if (req.query && req.query.hasOwnProperty('access_token')) {
+          headers = _.merge(headers, {
+            Authorization: `Bearer ${req.query.access_token}`
+          })
+        }
+        if (req.headers.hasOwnProperty('consumer_id') && isAuthorizedKiboAPITrigger(req)) {
+          headers = _.merge(headers, {
+            consumer_id: req.headers.consumer_id
+          })
+        }
+        let path = config.api_urls['accounts'].slice(0, config.api_urls['accounts'].length - 7)
+        let options = {
+          method: 'GET',
+          uri: `${path}/auth/verify`,
+          headers,
+          json: true
+        }
+        requestPromise(options)
+          .then(result => {
+            // logger.serverLog(TAG, `response got ${result}`)
+            if (result.status === 'success') {
+              req.user = result.user
+              next()
+            } else {
+              return res.status(401)
+                .json({status: 'failed', description: 'Unauthorized'})
+            }
+          })
+          .catch(err => {
+            if (err.statusCode && err.statusCode === 401) {
+              return res.status(401)
+                .json({status: 'Unauthorized', description: 'jwt expired'})
+            } else {
+              return res.status(500)
+                .json({status: 'failed', description: `Internal Server Error: ${err}`})
+            }
+          })
       }
-      // allow access_token to be passed through query parameter as well
-      if (req.query && req.query.hasOwnProperty('access_token')) {
-        headers = _.merge(headers, {
-          Authorization: `Bearer ${req.query.access_token}`
-        })
-      }
-      if (req.headers.hasOwnProperty('consumer_id') && isAuthorizedKiboAPITrigger(req)) {
-        headers = _.merge(headers, {
-          consumer_id: req.headers.consumer_id
-        })
-      }
-      let path = config.api_urls['accounts'].slice(0, config.api_urls['accounts'].length - 7)
-      let options = {
-        method: 'GET',
-        uri: `${path}/auth/verify`,
-        headers,
-        json: true
-      }
-      requestPromise(options)
-        .then(result => {
-          // logger.serverLog(TAG, `response got ${result}`)
-          if (result.status === 'success') {
-            req.user = result.user
-            next()
-          } else {
-            return res.status(401)
-              .json({status: 'failed', description: 'Unauthorized'})
-          }
-        })
-        .catch(err => {
-          if (err.statusCode && err.statusCode === 401) {
-            return res.status(401)
-              .json({status: 'Unauthorized', description: 'jwt expired'})
-          } else {
-            return res.status(500)
-              .json({status: 'failed', description: `Internal Server Error: ${err}`})
-          }
-        })
     })
     .use(function isSuperUserActingAsCustomer (req, res, next) {
-      if (req.user.isSuperUser) {
+      if (req.GAMRequest) {
+        next()
+      } else if (req.user.isSuperUser) {
         if (req.headers.hasOwnProperty('actingasuser')) {
           let actUserAs
           apiCaller.callApi(`user/query`, 'post', {domain_email: req.headers.actingasuser})
@@ -113,6 +122,37 @@ function isAuthenticated () {
       next()
     })
 }
+
+function isAuthorizedGAMRequest (req, res, next) {
+  console.log('inside isAuthorizedGAMRequest')
+  exec('sh GAM_ip_list.sh', function (err, stdout, stderr) {
+    if (err) {
+      logger.serverLog(TAG, err, 'error')
+      return res.status(500).json({message: 'An unexpected error occurred!'})
+    } else {
+      const ipRanges = stdout.toString().split('\n')
+      const addr = (req.headers['x-forwarded-for'] || '').split(',').pop() ||
+                  req.connection.remoteAddress ||
+                  req.socket.remoteAddress ||
+                  (req.connection.socket ? req.connection.socket.remoteAddress : null)
+      try {
+        const ipIndex = ipRanges.findIndex((range) => ip.cidrSubnet(range).contains(addr.trim()))
+        if (ipIndex > -1) {
+          req.GAMRequest = true
+          next()
+        } else {
+          return res.status(401).json({message: 'Unauthorized Request!'})
+        }
+      } catch (err) {
+        if (err) {
+          logger.serverLog(TAG, err, 'error')
+          return res.status(500).json({message: 'An unexpected error occurred!'})
+        }
+      }
+    }
+  })
+}
+
 /**
  * Checks if the user role meets the minimum requirements of the route
  */

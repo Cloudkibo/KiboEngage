@@ -57,9 +57,10 @@ exports.callback = function (req, res) {
                   }
                   dataLayer.update(integrations[0]._id, newPayload)
                     .then(updated => {
-                      res.redirect('/')
+                      res.redirect('/successMessage')
                     })
                     .catch(err => {
+                      res.redirect('/ErrorMessage')
                       logger.serverLog(TAG, 'Error in Integrations Hubspot on update callback' + err, 'error')
                       res.status(500).send('Internal Error Occurred.')
                     })
@@ -74,24 +75,28 @@ exports.callback = function (req, res) {
                   }
                   dataLayer.create(payload)
                     .then(created => {
-                      res.redirect('/')
+                      res.redirect('/successMessage')
                     })
                     .catch(err => {
+                      res.redirect('/ErrorMessage')
                       logger.serverLog(TAG, 'Error in Integrations Hubspot on create callback' + err, 'error')
                       res.status(500).send('Internal Error Occurred.')
                     })
                 }
               })
               .catch(err => {
+                res.redirect('/ErrorMessage')
                 logger.serverLog(TAG, 'Error in Integrations Hubspot on fetch callback' + err, 'error')
                 res.status(500).send('Internal Error Occurred.')
               })
           } else {
+            res.redirect('/ErrorMessage')
             res.status(500).send('Internal Error Occurred. Invalid user')
           }
         })
     })
     .catch(err => {
+      res.redirect('/ErrorMessage')
       sendErrorResponse(res, 500, err, 'Internal Server Error occurred. Please contact admin.')
     })
 }
@@ -136,10 +141,10 @@ exports.fetchHubspotDefaultColumns = function (req, res) {
   let dataToSend = {
     kiboPushColumns: populateKiboPushColumns(),
     customFieldColumns: [],
-    hubSpotColumns: defaultFieldcolumn.hubSpotColumns,
-    //HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
+    hubSpotColumns: defaultFieldcolumn.hubSpotColumns
+    // HubspotMappingColumns: defaultFieldcolumn.HubspotMappingColumns
   }
-  callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+  callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: req.user.companyId}, {default: true}] } })
     .then(customFields => {
       populateCustomFieldColumns(dataToSend, customFields)
         .then(dataToSend => {
@@ -157,7 +162,7 @@ exports.fetchHubspotDefaultColumns = function (req, res) {
 exports.fetchColumns = function (req, res) {
   async.parallelLimit([
     function (callback) {
-      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { companyId: req.user.companyId } })
+      callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: req.user.companyId}, {default: true}] } })
         .then(customFields => {
           callback(null, customFields)
         })

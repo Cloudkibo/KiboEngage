@@ -319,13 +319,13 @@ const _validateActiveFeeds = (data, next) => {
 
 const _validateFeedTitle = (data, next) => {
   if (data.body.title) {
-    var query = { 
-      companyId: data.companyId, 
-      pageIds: data.body.pageIds[0], 
+    var query = {
+      companyId: data.companyId,
+      pageIds: data.body.pageIds[0],
       title: {$regex: data.body.title, $options: 'i'}
     }
     if (data.feedId) {
-      query['_id'] =  {$ne: data.feedId}
+      query['_id'] = {$ne: data.feedId}
     }
     DataLayer.countDocuments(query)
       .then(rssFeeds => {

@@ -83,6 +83,9 @@ exports.fetchPayload = {
     },
     'status_value': {
       'type': 'string'
+    },
+    'type_value': {
+      'type': 'string'
     }
   },
   'required': [
