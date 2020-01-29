@@ -14,11 +14,8 @@ exports.index = function (req, res) {
           description: 'The user account does not belong to any company. Please contact support'
         })
       }
-      let aggregateData = [
-        {$match: {companyId: companyUser.companyId, defaultTag: false, isList: false}},
-        {$group: {_id: '$tag', doc: {$first: '$$ROOT'}}}
-      ]
-      callApi.callApi('tags/aggregate', 'post', aggregateData)
+      let queryData = {companyId: companyUser.companyId}
+      callApi.callApi('tags/query', 'post', queryData)
         .then(tags => {
           tags = tags.map((t) => t.doc)
           console.log('tags', tags)
