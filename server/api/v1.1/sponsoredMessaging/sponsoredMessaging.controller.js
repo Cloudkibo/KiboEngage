@@ -6,6 +6,7 @@ let { sendOpAlert } = require('./../../global/operationalAlert')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.controller.js'
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
+const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -110,7 +111,7 @@ exports.send = function (req, res) {
           .then(campaignResp => {
             if (campaignResp.body.error) {
               sendOpAlert(campaignResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-              return res.status(500).json({ status: 'failed', payload: `Failed to create campaign ${JSON.stringify(campaignResp.body.error)}` })
+              return sendErrorResponse(res, 500, campaignResp.body.error)
             } else {
               let campaignId = campaignResp.body.id
               let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
@@ -119,7 +120,7 @@ exports.send = function (req, res) {
                 .then(adsetResp => {
                   if (adsetResp.body.error) {
                     sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                    return res.status(500).json({ status: 'failed', payload: `Failed to create Adset ${JSON.stringify(adsetResp.body.error)}` })
+                    return sendErrorResponse(res, 500, adsetResp.body.error)
                   } else {
                     logger.serverLog(TAG, `adsetsResponse ${JSON.stringify(adsetResp.body)}`)
                     let adsetid = adsetResp.body.id
@@ -130,7 +131,7 @@ exports.send = function (req, res) {
                       .then(adCreativeResp => {
                         if (adCreativeResp.body.error) {
                           sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                          return res.status(500).json({ status: 'failed', payload: `Failed to create Ad creative ${JSON.stringify(adCreativeResp.body.error)}` })
+                          return sendErrorResponse(res, 500, adCreativeResp.body.error)
                         } else {
                           logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
                           let messageCreativeId = adCreativeResp.body.id
@@ -140,46 +141,46 @@ exports.send = function (req, res) {
                             .then(adsResp => {
                               if (adsResp.body.error) {
                                 sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                                return res.status(500).json({ status: 'failed', payload: `Failed to create Ads ${JSON.stringify(adsResp.body.error)}` })
+                                return sendErrorResponse(res, 500, adsResp.body.error)
                               } else {
                                 logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
                                 let adId = adsResp.body.id
                                 logger.serverLog(TAG, `ad_id ${adId}`)
                                 // Now since we have got respone from facebook, we shall update our database
                                 let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
-                                utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload, req.headers.authorization)
+                                utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload)
                                   .then(sponsoredMessage => {
-                                    return res.status(200).json({ status: 'success', payload: sponsoredMessage })
+                                    sendSuccessResponse(res, 200, sponsoredMessage)
                                   })
                                   .catch(error => {
-                                    return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
+                                    return sendErrorResponse(res, 500, error)
                                   })
                               }
                             })
                             .catch(err => {
-                              return res.status(500).json({ status: 'failed', payload: err })
+                              return sendErrorResponse(res, 500, err)
                             })
                         }
                       })
                       .catch(err => {
-                        return res.status(500).json({ status: 'failed', payload: err })
+                        return sendErrorResponse(res, 500, err)
                       })
                   }
                 })
                 .catch(err => {
-                  return res.status(500).json({ status: 'failed', payload: err })
+                  return sendErrorResponse(res, 500, err)
                 })
             }
           })
           .catch(error => {
-            return res.status(500).json({ status: 'failed', payload: error })
+            return sendErrorResponse(res, 500, error)
           })
       })
       .catch(error => {
-        return res.status(500).json({ status: 'failed', payload: error })
+        return sendErrorResponse(res, 500, error)
       })
   } else {
-    return res.status(500).json({ status: 'failed', payload: 'Failed to send sponsored message due to id' })
+    return sendErrorResponse(res, 500, 'Failed to send sponsored message due to id')
   }
 }
 
