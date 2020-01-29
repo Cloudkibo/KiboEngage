@@ -12,6 +12,18 @@ exports.facebook = (body, fname, lname) => {
       attachment: body.attachment
     }
   } else if (body.componentType === 'userInput') {
+    if (body.question.includes('{{user_full_name}}') || body.question.includes('[Username]')) {
+      text = text.replace(
+        '{{user_full_name}}', fname + ' ' + lname)
+    }
+    if (body.question.includes('{{user_first_name}}')) {
+      text = text.replace(
+        '{{user_first_name}}', fname)
+    }
+    if (body.question.includes('{{user_last_name}}')) {
+      body.question = body.question.replace(
+        '{{user_last_name}}', lname)
+    }
     payload = {
       'text': body.question
     }
