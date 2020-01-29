@@ -175,60 +175,22 @@ exports.delete = function (req, res) {
     })
 }
 
-function isTagExists (pageId, tags) {
-  let temp = tags.map((t) => t.pageId)
-  let index = temp.indexOf(pageId)
-  if (index > -1) {
-    return {status: true, index}
-  } else {
-    return {status: false}
-  }
-}
-
-function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
-  let tags = []
+function assignTagToSubscribers (subscribers, tagId, req, callback) {
   subscribers.forEach((subscriberId, i) => {
     callApi.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
-        let existsTag = isTagExists(subscriber.pageId._id, tags)
-        if (existsTag.status) {
-          let tagPayload = tags[existsTag.index]
-          let subscriberTagsPayload = {
-            tagId: tagPayload._id,
-            subscriberId: subscriber._id,
-            companyId: req.user.companyId
-          }
-          if (flag) {
-            callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
-              .then(newRecord => {
-                if (i === subscribers.length - 1) {
-                  callback(null, 'success')
-                }
-              })
-              .catch(err => callback(err))
-          }
-        } else {
-          callApi.callApi('tags/query', 'post', {tag, companyId: req.user.companyId})
-            .then(tagPayload => {
-              tagPayload = tagPayload[0]
-              tags.push(tagPayload)
-              let subscriberTagsPayload = {
-                tagId: tagPayload._id,
-                subscriberId: subscriber._id,
-                companyId: req.user.companyId
-              }
-              if (flag) {
-                callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
-                  .then(newRecord => {
-                    if (i === subscribers.length - 1) {
-                      callback(null, 'success')
-                    }
-                  })
-                  .catch(err => callback(err))
-              }
-            })
-            .catch(err => callback(err))
+        let subscriberTagsPayload = {
+          tagId: tagId,
+          subscriberId: subscriber._id,
+          companyId: req.user.companyId
         }
+        callApi.callApi(`tags_subscriber/`, 'post', subscriberTagsPayload)
+          .then(newRecord => {
+            if (i === subscribers.length - 1) {
+              callback(null, 'success')
+            }
+          })
+          .catch(err => callback(err))
       })
       .catch(err => callback(err))
   })
@@ -236,10 +198,10 @@ function assignTagToSubscribers (subscribers, tag, req, callback, flag) {
 
 exports.assign = function (req, res) {
   let subscribers = req.body.subscribers
-  let tag = req.body.tag
+  let tagId = req.body.tagId
   async.parallelLimit([
     function (callback) {
-      assignTagToSubscribers(subscribers, tag, req, callback, true)
+      assignTagToSubscribers(subscribers, tagId, req, callback)
     }
   ], 10, function (err, results) {
     if (err) {
@@ -259,36 +221,17 @@ exports.assign = function (req, res) {
   })
 }
 
-function unassignTagFromSubscribers (subscribers, tag, req, callback) {
-  let tags = []
+function unassignTagFromSubscribers (subscribers, tagId, req, callback) {
   subscribers.forEach((subscriberId, i) => {
     callApi.callApi(`subscribers/${subscriberId}`, 'get', {})
       .then(subscriber => {
-        let existsTag = isTagExists(subscriber.pageId._id, tags)
-        if (existsTag.status) {
-          let tagPayload = tags[existsTag.index]
-          callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id})
-            .then(deleteRecord => {
-              if (i === subscribers.length - 1) {
-                callback(null, 'success')
-              }
-            })
-            .catch(err => callback(err))
-        } else {
-          callApi.callApi('tags/query', 'post', {tag, companyId: req.user.companyId})
-            .then(tagPayload => {
-              tagPayload = tagPayload[0]
-              tags.push(tagPayload)
-              callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagPayload._id, subscriberId: subscriber._id})
-                .then(deleteRecord => {
-                  if (i === subscribers.length - 1) {
-                    callback(null, 'success')
-                  }
-                })
-                .catch(err => callback(err))
-            })
-            .catch(err => callback(err))
-        }
+        callApi.callApi(`tags_subscriber/deleteMany`, 'post', {tagId: tagId, subscriberId: subscriber._id})
+          .then(deleteRecord => {
+            if (i === subscribers.length - 1) {
+              callback(null, 'success')
+            }
+          })
+          .catch(err => callback(err))
       })
       .catch(err => {
         callback(err)
@@ -298,10 +241,10 @@ function unassignTagFromSubscribers (subscribers, tag, req, callback) {
 
 exports.unassign = function (req, res) {
   let subscribers = req.body.subscribers
-  let tag = req.body.tag
+  let tagId = req.body.tagId
   async.parallelLimit([
     function (callback) {
-      unassignTagFromSubscribers(subscribers, tag, req, callback)
+      unassignTagFromSubscribers(subscribers, tagId, req, callback)
     }
   ], 10, function (err, results) {
     if (err) {
