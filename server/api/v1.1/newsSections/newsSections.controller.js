@@ -1,9 +1,9 @@
 const logger = require('../../../components/logger')
-const DataLayer = require('./rssFeeds.datalayer')
-const RssFeedPostsDataLayer = require('./rssFeedPosts.datalayer')
-const RssSubscriptionsDataLayer = require('./rssSubscriptions.datalayer')
-const LogicLayer = require('./rssFeeds.logiclayer')
-const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
+const DataLayer = require('./newsSections.datalayer')
+const RssFeedPostsDataLayer = require('./newsPosts.datalayer')
+const RssSubscriptionsDataLayer = require('./newsSubscriptions.datalayer')
+const LogicLayer = require('./newsSections.logiclayer')
+const TAG = 'api/v1/newsSections/newsSections.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const feedparser = require('feedparser-promised')
@@ -111,7 +111,7 @@ function _updateSubscriptionCount (data, next) {
       utility.callApi(`subscribers/aggregate`, 'post', criteria)
         .then(result => {
           if (result.length > 0) {
-            RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: false}, { _id: null, count: { $sum: 1 } })
+            RssSubscriptionsDataLayer.aggregateForRssSubscriptions({newsSectionId: data.feed._id, subscription: false}, { _id: null, count: { $sum: 1 } })
               .then(rssSubscriptions => {
                 if (rssSubscriptions.length > 0) {
                   data.body.subscriptions = result.length - rssSubscriptions[0].count
@@ -133,7 +133,7 @@ function _updateSubscriptionCount (data, next) {
           next(err)
         })
     } else {
-      RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+      RssSubscriptionsDataLayer.aggregateForRssSubscriptions({newsSectionId: data.feed._id, subscription: true}, { _id: null, count: { $sum: 1 } })
         .then(rssSubscriptions => {
           data.body.subscriptions = rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0
           next()
@@ -162,7 +162,8 @@ function _saveRSSFeed (data, next) {
     storiesCount: data.body.storiesCount,
     defaultFeed: data.body.defaultFeed,
     scheduledTime: scheduledTime,
-    isActive: data.body.isActive
+    isActive: data.body.isActive,
+    integrationType: data.body.integrationType
   }
   DataLayer.createForRssFeeds(dataToSave)
     .then(savedFeed => {
@@ -243,7 +244,7 @@ function _checkDefaultFeed (data, next) {
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
           rssFeeds = rssFeeds[0]
-          RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: rssFeeds._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+          RssSubscriptionsDataLayer.aggregateForRssSubscriptions({newsSectionId: rssFeeds._id, subscription: true}, { _id: null, count: { $sum: 1 } })
             .then(rssSubscriptions => {
               DataLayer.genericUpdateRssFeed({_id: rssFeeds._id}, {defaultFeed: false, subscriptions: rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0}, {})
                 .then(updated => {

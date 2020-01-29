@@ -12,7 +12,8 @@ exports.fetchFeedsCriteria = function (body, companyId) {
   let findCriteria = {
     companyId: companyId,
     title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true },
-    defaultFeed: body.type_value !== '' ? body.type_value === 'default' : { $exists: true }
+    defaultFeed: body.type_value !== '' ? body.type_value === 'default' : { $exists: true },
+    integrationType: body.integrationType
   }
   if (body.status_value !== '') {
     findCriteria['isActive'] = body.status_value === 'true' ? true : false
@@ -71,28 +72,28 @@ exports.getCriterias = function (body) {
   endDate.setMinutes(0)
   endDate.setSeconds(0)
   let finalCriteria = [
-    { $lookup: { from: 'rssfeedpostsubscribers', localField: '_id', foreignField: 'rssFeedPostId', as: 'rssFeedPost' } },
-    { $unwind: '$rssFeedPost' },
+    { $lookup: { from: 'newspostsubscribers', localField: '_id', foreignField: 'newsPostId', as: 'newsPost' } },
+    { $unwind: '$newsPost' },
     {$group: {
       _id: '$_id',
-      seen: {$sum: {$cond: ['$rssFeedPost.seen', 1, 0]}},
-      sent: {$sum: {$cond: ['$rssFeedPost.sent', 1, 0]}},
-      clicked: {$sum: {$cond: ['$rssFeedPost.clicked', 1, 0]}},
-      rssFeedId: { '$first': '$rssFeedId' },
+      seen: {$sum: {$cond: ['$newsPost.seen', 1, 0]}},
+      sent: {$sum: {$cond: ['$newsPost.sent', 1, 0]}},
+      clicked: {$sum: {$cond: ['$newsPost.clicked', 1, 0]}},
+      newsSectionId: { '$first': '$newsSectionId' },
       pageId: {'$first': '$pageId'},
       companyId: {'$first': '$companyId'},
       datetime: {'$first': '$datetime'}
     }}
   ]
   let countCriteria = [
-    { $lookup: { from: 'rssfeedpostsubscribers', localField: '_id', foreignField: 'rssFeedPostId', as: 'rssFeedPost' } },
-    { $unwind: '$rssFeedPost' },
+    { $lookup: { from: 'newspostsubscribers', localField: '_id', foreignField: 'newsPostId', as: 'newsPost' } },
+    { $unwind: '$newsPost' },
     {$group: {
       _id: '$_id',
-      seen: {$sum: {$cond: ['$rssFeedPost.seen', 1, 0]}},
-      sent: {$sum: {$cond: ['$rssFeedPost.sent', 1, 0]}},
-      clicked: {$sum: {$cond: ['$rssFeedPost.clicked', 1, 0]}},
-      rssFeedId: { '$first': '$rssFeedId' },
+      seen: {$sum: {$cond: ['$newsPost.seen', 1, 0]}},
+      sent: {$sum: {$cond: ['$newsPost.sent', 1, 0]}},
+      clicked: {$sum: {$cond: ['$newsPost.clicked', 1, 0]}},
+      newsSectionId: { '$first': '$newsSectionId' },
       pageId: {'$first': '$pageId'},
       companyId: {'$first': '$companyId'},
       datetime: {'$first': '$datetime'}
@@ -100,7 +101,7 @@ exports.getCriterias = function (body) {
   ]
   let recordsToSkip = 0
   let findCriteria = {
-    rssFeedId: body.feedId,
+    newsSectionId: body.feedId,
     'datetime': body.startDate && body.startDate !== '' && body.endDate && body.endDate !== '' ? {
       $gte: startDate,
       $lt: endDate

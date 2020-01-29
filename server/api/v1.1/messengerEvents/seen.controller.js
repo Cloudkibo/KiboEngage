@@ -7,7 +7,7 @@ const PollPageDataLayer = require('../page_poll/page_poll.datalayer')
 const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const SequencesDataLayer = require('../sequenceMessaging/sequence.datalayer')
 const SequenceMessageQueueDataLayer = require('../sequenceMessageQueue/sequenceMessageQueue.datalayer')
-const RssFeedPostSubscribersDataLayer = require('../rssFeeds/rssFeedPostSubscribers.datalayer')
+const RssFeedPostSubscribersDataLayer = require('../newsSections/newsPostSubscribers.datalayer')
 const async = require('async')
 
 exports.index = function (req, res) {

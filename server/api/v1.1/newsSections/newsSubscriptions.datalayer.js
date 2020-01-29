@@ -10,7 +10,7 @@ exports.genericFindForRssSubscriptions = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`rssSubscriptions/query`, 'post', query, 'kiboengage')
+  return callApi(`newsSubscriptions/query`, 'post', query, 'kiboengage')
 }
 exports.aggregateForRssSubscriptions = (match, group, lookup, limit, sort, skip) => {
   let query = {
@@ -23,7 +23,7 @@ exports.aggregateForRssSubscriptions = (match, group, lookup, limit, sort, skip)
   if (sort) query.sort = sort
   if (skip) query.skip = skip
 
-  return callApi(`rssSubscriptions/query`, 'post', query, 'kiboengage')
+  return callApi(`newsSubscriptions/query`, 'post', query, 'kiboengage')
 }
 exports.createForRssSubscriptions = (payload) => {
   return callApi(`rssSubscriptions`, 'post', payload, 'kiboengage')
@@ -33,7 +33,7 @@ exports.deleteForRssSubscriptions = (queryObject) => {
     purpose: 'deleteMany',
     match: queryObject
   }
-  return callApi(`rssSubscriptions`, 'delete', query, 'kiboengage')
+  return callApi(`newsSubscriptions`, 'delete', query, 'kiboengage')
 }
 
 exports.countDocuments = (filter) => {
@@ -42,7 +42,7 @@ exports.countDocuments = (filter) => {
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`rssSubscriptions/query`, 'post', query, 'kiboengage')
+  return callApi(`newsSubscriptions/query`, 'post', query, 'kiboengage')
 }
 exports.genericUpdateRssSubscriptions = (queryObject, updated, options) => {
   let query = {
@@ -53,5 +53,5 @@ exports.genericUpdateRssSubscriptions = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`rssSubscriptions`, 'put', query, 'kiboengage')
+  return callApi(`newsSubscriptions`, 'put', query, 'kiboengage')
 }
