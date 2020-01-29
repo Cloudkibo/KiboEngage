@@ -105,7 +105,7 @@ exports.send = function (req, res) {
       .then(sponsoredMessages => {
         let sponsoredMessage = sponsoredMessages[0]
         console.log('sponsoredMessage payload', sponsoredMessage)
-        updateClickCountId(sponsoredMessage.payload, id)
+        updateClickCountId(sponsoredMessage, id)
         let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
         facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
           .then(campaignResp => {
@@ -180,7 +180,7 @@ exports.send = function (req, res) {
         return sendErrorResponse(res, 500, error)
       })
   } else {
-    return sendErrorResponse(res, 500, 'Failed to send sponsored message due to id')
+    return sendErrorResponse(res, 500, {message: 'Failed to send sponsored message due missing account_id'})
   }
 }
 
