@@ -13,11 +13,11 @@ exports.facebook = (body, fname, lname) => {
     }
   } else if (body.componentType === 'userInput') {
     if (body.question.includes('{{user_full_name}}') || body.question.includes('[Username]')) {
-      text = text.replace(
+      body.question = body.question.replace(
         '{{user_full_name}}', fname + ' ' + lname)
     }
     if (body.question.includes('{{user_first_name}}')) {
-      text = text.replace(
+      body.question = body.question.replace(
         '{{user_first_name}}', fname)
     }
     if (body.question.includes('{{user_last_name}}')) {
