@@ -40,23 +40,41 @@ exports.preview = function (req, res) {
   if (req.body.feedId) {
     data.feedId = req.body.feedId
   }
-  async.series([
-    _validateFeedUrl.bind(null, data),
-    _validateFeedTitle.bind(null, data),
-    _parseFeed.bind(null, data),
-    _fetchPage.bind(null, data),
-    _fetchAdminSubscription.bind(null, data),
-    _fetchRssFeeds.bind(null, data),
-    _prepareMessageData.bind(null, data),
-    _prepareBatch.bind(null, data),
-    _sendPreviewMessage.bind(null, data)
-  ], function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, err)
-    } else {
-      sendSuccessResponse(res, 200, data.sentResponse)
-    }
-  })
+  if (req.body.integrationType === 'rss') {
+    async.series([
+      _validateFeedUrl.bind(null, data),
+      _validateFeedTitle.bind(null, data),
+      _parseFeed.bind(null, data),
+      _fetchPage.bind(null, data),
+      _fetchAdminSubscription.bind(null, data),
+      _fetchRssFeeds.bind(null, data),
+      _prepareMessageData.bind(null, data),
+      _prepareBatch.bind(null, data),
+      _sendPreviewMessage.bind(null, data)
+    ], function (err) {
+      if (err) {
+        sendErrorResponse(res, 500, err)
+      } else {
+        sendSuccessResponse(res, 200, data.sentResponse)
+      }
+    })
+  } else if (req.body.integrationType === 'manual') {
+    async.series([
+      _validateFeedTitle.bind(null, data),
+      _fetchPage.bind(null, data),
+      _fetchAdminSubscription.bind(null, data),
+      _fetchRssFeeds.bind(null, data),
+      _prepareMessageData.bind(null, data),
+      _prepareBatch.bind(null, data),
+      _sendPreviewMessage.bind(null, data)
+    ], function (err) {
+      if (err) {
+        sendErrorResponse(res, 500, err)
+      } else {
+        sendSuccessResponse(res, 200, data.sentResponse)
+      }
+    })
+  }
 }
 exports.edit = function (req, res) {
   let data = {
@@ -323,6 +341,7 @@ const _validateFeedTitle = (data, next) => {
     var query = {
       companyId: data.companyId,
       pageIds: data.body.pageIds[0],
+      integrationType: data.body.integrationType,
       title: {$regex: data.body.title, $options: 'i'}
     }
     if (data.feedId) {
@@ -385,7 +404,9 @@ const _fetchPage = (data, next) => {
 const _fetchRssFeeds = (data, next) => {
   DataLayer.genericFindForRssFeeds({companyId: data.companyId,
     isActive: true,
-    pageIds: {$in: [data.body.pageIds[0]]}})
+    pageIds: {$in: [data.body.pageIds[0]]},
+    integrationType: data.body.integrationType
+  })
     .then(rssFeeds => {
       data.rssFeeds = rssFeeds
       next()
@@ -410,10 +431,10 @@ const _prepareMessageData = (data, next) => {
     quickReplies.push({
       content_type: 'text',
       title: 'Show More Topics',
-      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: ''}])
+      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: '', type: data.body.integrationType}])
     })
   }
-  LogicLayer.getMetaData(data.feed, data.body)
+  LogicLayer.getMetaData(data.body.stories ? data.body.stories : data.feed, data.body)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = [{

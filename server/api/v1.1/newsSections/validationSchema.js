@@ -50,9 +50,7 @@ exports.previewPayload = {
     }
   },
   'required': [
-    'feedUrl',
     'title',
-    'storiesCount',
     'pageIds'
   ]
 }

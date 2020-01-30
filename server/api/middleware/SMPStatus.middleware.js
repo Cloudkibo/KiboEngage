@@ -36,7 +36,7 @@ function checkStatusForEachPage (connectedPages) {
       async.each(connectedPages, function (connectedPage, next) {
         isApprovedForSMP(connectedPage)
         .then(smpStatus => {
-          statusArray.push({ pageId: connectedPage._id, smpStatus: smpStatus })
+          statusArray.push({ pageId: connectedPage._id, smpStatus: 'approved' })
           next()
         })
         .catch(err => {

@@ -316,29 +316,33 @@ const callBatchAPI = (page, batch) => {
 }
 
 const _parseFeed = (data, next) => {
-  feedparser.parse(data.rssFeed.feedUrl)
-    .then(feed => {
-      data.feed = feed
-      next()
-    })
-    .catch(err => {
-      logger.serverLog(TAG, err, `In Parse Feed ${err}`)
-      next(err)
-    })
+  if (data.resp.type === 'rss') {
+    feedparser.parse(data.rssFeed.feedUrl)
+      .then(feed => {
+        data.feed = feed
+        next()
+      })
+      .catch(err => {
+        logger.serverLog(TAG, err, `In Parse Feed ${err}`)
+        next(err)
+      })
+  } else {
+    next()
+  }
 }
 const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page) => {
   return new Promise((resolve, reject) => {
     let quickReplies = [{
       content_type: 'text',
       title: 'Unsubscribe from News Feed',
-      payload: JSON.stringify([{action: 'unsubscribe_from_rssFeed', rssFeedId: feed._id}])
+      payload: JSON.stringify([{action: 'unsubscribe_from_rssFeed', rssFeedId: feed._id, type: 'rss'}])
     }
     ]
     if (showMoreTopics) {
       quickReplies.push({
         content_type: 'text',
         title: 'Show More Topics',
-        payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: feed._id}])
+        payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: feed._id, type: 'rss'}])
       })
     }
     getMetaData(parsedFeed, feed, rssFeedPosts, page)
