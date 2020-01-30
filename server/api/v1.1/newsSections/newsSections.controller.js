@@ -174,14 +174,18 @@ function _saveRSSFeed (data, next) {
     pageIds: data.body.pageIds,
     companyId: data.companyId,
     userId: data.userId,
-    feedUrl: data.body.feedUrl,
     title: data.body.title,
     subscriptions: data.subscriptions,
-    storiesCount: data.body.storiesCount,
     defaultFeed: data.body.defaultFeed,
     scheduledTime: scheduledTime,
     isActive: data.body.isActive,
     integrationType: data.body.integrationType
+  }
+  if (data.body.integrationType === 'rss') {
+    dataToSave.feedUrl = data.body.feedUrl
+    dataToSave.storiesCount = data.body.storiesCount
+  } else if (data.body.integrationType === 'manual') {
+    dataToSave.stories = data.body.stories
   }
   DataLayer.createForRssFeeds(dataToSave)
     .then(savedFeed => {
@@ -258,7 +262,7 @@ exports.delete = function (req, res) {
 }
 function _checkDefaultFeed (data, next) {
   if (data.body.defaultFeed) {
-    DataLayer.genericFindForRssFeeds({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true})
+    DataLayer.genericFindForRssFeeds({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true, integrationType: data.body.integrationType})
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
           rssFeeds = rssFeeds[0]
@@ -320,7 +324,7 @@ function _getSubscriptionsCount (data, next) {
 
 const _validateActiveFeeds = (data, next) => {
   if (data.body.isActive) {
-    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], isActive: true})
+    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], isActive: true, integrationType: data.body.integrationType})
       .then(rssFeeds => {
         if (rssFeeds.length > 0 && rssFeeds[0].count >= 13) {
           next(`Can not create more than 13 active Feeds for one news page at a time!`)
