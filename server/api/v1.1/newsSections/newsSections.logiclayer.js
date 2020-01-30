@@ -149,23 +149,24 @@ exports.getCriterias = function (body) {
 exports.getMetaData = function (feed, body) {
   return new Promise((resolve, reject) => {
     let gallery = []
-    let length = body.storiesCount
+    let length = body.storiesCount ? body.storiesCount : feed.length
     async.eachOfSeries(feed, function (value, key, callback) {
       if (key < length) {
-        og(value.link, (err, meta) => {
+        let valueGot = Object.keys(value).length > 0 && value.constructor === Object ? value.link : value
+        og(valueGot, (err, meta) => {
           if (err) {
             logger.serverLog(TAG, `Error from open graph ${err}`)
           }
           if (meta && meta.title && meta.image) {
             gallery.push({
               title: meta.title,
-              subtitle: meta.description ? meta.description : domainName(value.link),
+              subtitle: meta.description ? meta.description : domainName(valueGot),
               image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
               buttons: [
                 {
                   type: 'web_url',
                   title: 'Read More...',
-                  url: value.link
+                  url: valueGot
                 }
               ]
             })
