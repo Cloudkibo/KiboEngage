@@ -13,16 +13,16 @@ exports.facebook = (body, fname, lname) => {
     }
   } else if (body.componentType === 'userInput') {
     let question = body.question
-    if (body.question.includes('{{user_full_name}}') || body.question.includes('[Username]')) {
-      question = body.question.replace(
+    if (question.includes('{{user_full_name}}') || question.includes('[Username]')) {
+      question = question.replace(
         '{{user_full_name}}', fname + ' ' + lname)
     }
-    if (body.question.includes('{{user_first_name}}')) {
-      question = body.question.replace(
+    if (question.includes('{{user_first_name}}')) {
+      question = question.replace(
         '{{user_first_name}}', fname)
     }
-    if (body.question.includes('{{user_last_name}}')) {
-      question = body.question.replace(
+    if (question.includes('{{user_last_name}}')) {
+      question = question.replace(
         '{{user_last_name}}', lname)
     }
     payload = {
