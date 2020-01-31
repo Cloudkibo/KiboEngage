@@ -77,4 +77,8 @@ router.post('/fetchAutopostingDetails',
   auth.isAuthenticated(),
   controller.fetchAutopostingDetails)
 
+router.post('/fetchNewsIntegrations',
+  auth.isAuthenticated(),
+  controller.fetchNewsIntegrations)
+
 module.exports = router
