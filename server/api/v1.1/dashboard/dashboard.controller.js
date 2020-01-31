@@ -9,6 +9,9 @@ const PageBroadcastDataLayer = require('../page_broadcast/page_broadcast.datalay
 const PageSurveyDataLayer = require('../page_survey/page_survey.datalayer')
 const PagePollDataLayer = require('../page_poll/page_poll.datalayer')
 const SequenceDataLayer = require('../sequenceMessaging/sequence.datalayer')
+const NewsSectionsDataLayer = require('../newsSections/newsSections.datalayer')
+const NewsPostsDataLayer = require('../newsSections/newsPosts.datalayer')
+const NewsPostSubscribersDataLayer = require('../newsSections/newsPostSubscribers.datalayer')
 const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const TAG = 'api/pages/dashboard.controller.js'
@@ -1111,4 +1114,61 @@ exports.integrationsData = function (req, res) {
     .catch(err => {
       sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
     })
+}
+exports.fetchNewsIntegrations = function (req, res) {
+  let groupCriteria = { _id: null, count: { $sum: 1 } }
+  async.parallelLimit([
+    function (callback) {
+      NewsSectionsDataLayer.aggregateForRssFeeds(LogicLayer.getCriteriasForNewsSections(req, 'news'), groupCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      NewsPostsDataLayer.aggregateForRssFeedPosts(LogicLayer.getCriteriasForNewsSections(req, 'posts'), groupCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      NewsPostSubscribersDataLayer.aggregate(LogicLayer.getCriteriasForNewsSections(req, 'seen'), groupCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      NewsPostSubscribersDataLayer.aggregate(LogicLayer.getCriteriasForNewsSections(req, 'clicked'), groupCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Failed to fetch news integrations ${err}`)
+    } else {
+      let newsSections = results[0]
+      let storiesSent = results[1]
+      let seen = results[2]
+      let clicked = results[3]
+      let payload = {
+        newsSections: newsSections.length > 0 ? newsSections[0].count : 0,
+        storiesSent: storiesSent.length > 0 ? storiesSent[0].count : 0,
+        storiesSeen: seen.length > 0 ? seen[0].count : 0,
+        storiesClicked: clicked.length > 0 ? clicked[0].count : 0
+      }
+      sendSuccessResponse(res, 200, payload)
+    }
+  })
 }
