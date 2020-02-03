@@ -82,38 +82,43 @@ exports.updatePlatform = function (req, res) {
             sendErrorResponse(res, 401, '', 'unable to authenticate twilio account')
           }
           if (resp.statusCode === 200) {
-            utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}})
-              .then(updatedProfile => {
-                if (req.body.twilio.platform) {
-                  utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.twilio.platform}, options: {}})
-                    .then(updated => {
+            let accountSid = req.body.twilio.accountSID
+            let authToken = req.body.twilio.authToken
+            let client = require('twilio')(accountSid, authToken)
+            client.incomingPhoneNumbers
+              .list().then((incomingPhoneNumbers) => {
+                console.log('incomingPhoneNumbers', incomingPhoneNumbers)
+                if (incomingPhoneNumbers && incomingPhoneNumbers.length > 0) {  
+                  utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}})
+                    .then(updatedProfile => {
+                      sendSuccessResponse(res, 200, updatedProfile)
+                      if (req.body.twilio.platform) {
+                        utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.twilio.platform}, options: {}})
+                          .then(updated => {
+                          })
+                          .catch(err => {
+                            sendErrorResponse(res, 500, '', err)
+                          })
+                      }
                     })
                     .catch(err => {
-                      sendErrorResponse(res, 500, err)
+                      sendErrorResponse(res, 500, '', `Failed to update company profile ${err}`)
                     })
+                  for (let i = 0; i < incomingPhoneNumbers.length; i++) {
+                    client.incomingPhoneNumbers(incomingPhoneNumbers[i].sid)
+                      .update({
+                        accountSid: req.body.twilio.accountSID,
+                        smsUrl: `${config.api_urls['webhook']}/webhooks/twilio/receiveSms`
+                      })
+                      .then(result => {
+                      })
+                  }
+                } else {
+                  sendErrorResponse(res, 500, '', 'Please purchase at least one twilio number')
                 }
-                let accountSid = req.body.twilio.accountSID
-                let authToken = req.body.twilio.authToken
-                let client = require('twilio')(accountSid, authToken)
-                client.incomingPhoneNumbers
-                  .list().then((incomingPhoneNumbers) => {
-                    for (let i = 0; i < incomingPhoneNumbers.length; i++) {
-                      client.incomingPhoneNumbers(incomingPhoneNumbers[i].sid)
-                        .update({
-                          accountSid: req.body.twilio.accountSID,
-                          smsUrl: `${config.api_urls['webhook']}/webhooks/twilio/receiveSms`
-                        })
-                        .then(result => {
-                        })
-                    }
-                  })
-                sendSuccessResponse(res, 200, updatedProfile)
-              })
-              .catch(err => {
-                sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
               })
           } else {
-            sendErrorResponse(res, 404, 'Twilio account not found. Please enter correct details')
+            sendErrorResponse(res, 404, '', 'Twilio account not found. Please enter correct details')
           }
         })
     })
