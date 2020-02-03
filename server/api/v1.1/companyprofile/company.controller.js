@@ -114,7 +114,7 @@ exports.updatePlatform = function (req, res) {
                       })
                   }
                 } else {
-                  sendErrorResponse(res, 500, '', 'Please purchase at least one twilio number')
+                  sendErrorResponse(res, 500, '', 'The twilio account doesnot have any twilio number')
                 }
               })
           } else {
