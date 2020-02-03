@@ -1,4 +1,5 @@
 let _ = require('lodash')
+const async = require('async')
 
 exports.getCriterias = function (req) {
   let findCriteria = {}
@@ -22,7 +23,7 @@ exports.getCriterias = function (req) {
       findCriteria = {
         companyId: req.user.companyId,
         'payload.1': { $exists: true },
-        messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
+        messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },
         title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
         'datetime': req.body.filter_criteria.days !== '0' ? {
           $gte: startDate
@@ -161,4 +162,32 @@ function exists (list, content) {
     }
   }
   return false
+}
+exports.isValidButtonPayload = function (body) {
+  return new Promise(function (resolve, reject) {
+    if (body.type === 'web_url' && !body.url && !body.oldUrl) {
+      resolve(false)
+    } else if (body.type === 'postback') {
+      if (!(_.has(body, 'payload'))) {
+        resolve(false)
+      } else {
+        body.payload = JSON.parse(body.payload)
+        async.each(body.payload, function (item, cb) {
+          if (!(_.has(item, 'action'))) {
+            cb(new Error('Invalid Payload'))
+          } else {
+            cb()
+          }
+        }, function (err) {
+          if (err) {
+            resolve(false)
+          } else {
+            resolve(true)
+          }
+        })
+      }
+    } else {
+      resolve(true)
+    }
+  })
 }
