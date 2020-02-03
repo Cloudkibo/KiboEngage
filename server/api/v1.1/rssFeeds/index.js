@@ -27,12 +27,12 @@ router.post('/fetchFeeds',
 router.delete('/:id',
   auth.isAuthenticated(),
   controller.delete)
-  
+
 router.post('/rssFeedPosts',
   auth.isAuthenticated(),
   validate({body: validationSchema.getRssFeedPostsPayload}),
   controller.getRssFeedPosts)
-  
+
 router.post('/edit',
   auth.isAuthenticated(),
   validate({body: validationSchema.editPayload}),

@@ -12,8 +12,21 @@ exports.facebook = (body, fname, lname) => {
       attachment: body.attachment
     }
   } else if (body.componentType === 'userInput') {
+    let question = body.question
+    if (question.includes('{{user_full_name}}') || question.includes('[Username]')) {
+      question = question.replace(
+        '{{user_full_name}}', fname + ' ' + lname)
+    }
+    if (question.includes('{{user_first_name}}')) {
+      question = question.replace(
+        '{{user_first_name}}', fname)
+    }
+    if (question.includes('{{user_last_name}}')) {
+      question = question.replace(
+        '{{user_last_name}}', lname)
+    }
     payload = {
-      'text': body.question
+      'text': question
     }
     if (body.quickReplies && body.quickReplies.length > 0) {
       payload.quick_replies = body.quickReplies

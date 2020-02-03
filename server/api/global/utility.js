@@ -36,7 +36,7 @@ exports.prepareSubscribersCriteria = (body, page, lists, payloadLength, isApprov
   ) throw Error('page is required and cannot be empty!')
   else {
     let smp = false
-    if ((isApprovedForSMP === 'approved')) {
+    if ((isApprovedForSMP === 'approved') || isApprovedForSMP) {
       smp = true
     }
     let criteria = {

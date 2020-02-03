@@ -74,7 +74,7 @@ module.exports = function (app) {
   app.use('/api/rssFeeds', require('./api/v1.1/rssFeeds'))
   app.use('/clicked', require('./api/v1.1/clickedCount/clickedCount.controller').updateClickedCount)
   app.use('/api/overlayWidgets', require('./api/v1.1/overlayWidgets'))
-
+  app.use('/api/appMaker', require('./api/appMaker'))
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
 
@@ -139,6 +139,42 @@ module.exports = function (app) {
   })
 
   app.get('/demoSSA', (req, res) => {
+    res.cookie('environment', config.env,
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_development', 'http://localhost:3021',
+      {expires: new Date(Date.now() + 900000)})
+    res.sendFile(path.join(config.root, 'client/index.html'))
+  })
+
+  app.get('/successMessage', (req, res) => {
+    res.cookie('environment', config.env,
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_development', 'http://localhost:3021',
+      {expires: new Date(Date.now() + 900000)})
+    res.sendFile(path.join(config.root, 'client/index.html'))
+  })
+
+  app.get('/successMessage', (req, res) => {
+    res.cookie('environment', config.env,
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
+      {expires: new Date(Date.now() + 900000)})
+    res.cookie('url_development', 'http://localhost:3021',
+      {expires: new Date(Date.now() + 900000)})
+    res.sendFile(path.join(config.root, 'client/index.html'))
+  })
+
+  app.get('/ErrorMessage', (req, res) => {
     res.cookie('environment', config.env,
       {expires: new Date(Date.now() + 900000)})
     res.cookie('url_production', 'https://kiboengage.cloudkibo.com',

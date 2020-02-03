@@ -29,7 +29,7 @@ exports.getPosts = function (req, res) {
     if (err) {
       sendErrorResponse(res, 500, '', `Failed to fetch facebook posts ${err}`)
     } else {
-      let count = results[0].length > 0 ? results[0].count : 0
+      let count = results[0].length > 0 ? results[0][0].count : 0
       let posts = results[1]
       populatePages(posts, req)
         .then(result => {
@@ -46,23 +46,26 @@ function populatePages (posts, req) {
   return new Promise(function (resolve, reject) {
     let sendPayload = []
     if (posts && posts.length > 0) {
-      for (let i = 0; i < posts.length; i++) {
-        utility.callApi(`pages/query`, 'post', {_id: posts[i].pageId, companyId: posts[i].companyId})
+      async.each(posts, function (post, next) {
+        utility.callApi(`pages/query`, 'post', {_id: post.pageId, companyId: post.companyId})
           .then(pages => {
-            let post = posts[i]
             post.pageId = pages[0]
             sendPayload.push(post)
-            if (sendPayload.length === (posts.length - 1)) {
-              sendPayload.sort(function (a, b) {
-                return new Date(b.datetime) - new Date(a.datetime)
-              })
-              resolve({posts: sendPayload})
-            }
+            next()
           })
           .catch(err => {
-            reject(err)
+            next(err)
           })
-      }
+      }, function (err) {
+        if (err) {
+          reject(err)
+        } else {
+          sendPayload = sendPayload.sort(function (a, b) {
+            return new Date(b.datetime) - new Date(a.datetime)
+          })
+          resolve({posts: sendPayload})
+        }
+      })
     } else {
       resolve({posts: []})
     }

@@ -6,6 +6,7 @@ const TAG = 'api/v1/facebookEvents/autoposting.controller.js'
 const utility = require('../utility')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
+const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 
 exports.autoposting = function (req, res) {
   res.status(200).json({
@@ -44,33 +45,42 @@ exports.autoposting = function (req, res) {
                               unsuccessful: 0,
                               errors: []
                             }
-                            let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, messageData.length)
-                            if (postingItem.isSegmented && postingItem.segmentationTags.length > 0) {
-                              utility.callApi(`tags/query`, 'post', { companyId: page.companyId, tag: { $in: postingItem.segmentationTags } })
-                                .then(tags => {
-                                  let tagIds = tags.map((t) => t._id)
-                                  utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
-                                    .then(tagSubscribers => {
-                                      if (tagSubscribers.length > 0) {
-                                        let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
-                                        subsFindCriteria['_id'] = {$in: subscriberIds}
-                                        sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
-                                        logger.serverLog(TAG, 'Conversation sent successfully!')
-                                      } else {
-                                        logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
-                                      }
+                            isApprovedForSMP({accessToken: page.accessToken})
+                              .then(smpStatus => {
+                                let smp = false
+                                if ((smpStatus === 'approved')) {
+                                  smp = true
+                                }
+                                let subsFindCriteria = prepareSubscribersCriteria(req.body, page, undefined, messageData.length, smp)
+                                if (postingItem.isSegmented && postingItem.segmentationTags.length > 0) {
+                                  utility.callApi(`tags/query`, 'post', { companyId: page.companyId, tag: { $in: postingItem.segmentationTags } })
+                                    .then(tags => {
+                                      let tagIds = tags.map((t) => t._id)
+                                      utility.callApi(`tags_subscriber/query`, 'post', { tagId: { $in: tagIds } })
+                                        .then(tagSubscribers => {
+                                          if (tagSubscribers.length > 0) {
+                                            let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
+                                            subsFindCriteria['_id'] = {$in: subscriberIds}
+                                            sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
+                                            logger.serverLog(TAG, 'Conversation sent successfully!')
+                                          } else {
+                                            logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
+                                          }
+                                        })
+                                        .catch(err => {
+                                          logger.serverLog(TAG, err)
+                                        })
                                     })
                                     .catch(err => {
                                       logger.serverLog(TAG, err)
                                     })
-                                })
-                                .catch(err => {
-                                  logger.serverLog(TAG, err)
-                                })
-                            } else {
-                              sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
-                              logger.serverLog(TAG, 'Conversation sent successfully!')
-                            }
+                                } else {
+                                  sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
+                                  logger.serverLog(TAG, 'Conversation sent successfully!')
+                                }
+                              }).catch(err => {
+                                logger.serverLog(TAG, err)
+                              })
                           })
                           .catch(err => {
                             logger.serverLog(`Failed to prepare data`, err)
