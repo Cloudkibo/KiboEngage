@@ -111,11 +111,13 @@ exports.getCriteriasForNewsSections = function (req, type) {
     }
   }
   if (type === 'news') {
-    matchAggregate.pageIds = req.body.pageId !== '' ? req.body.pageId : {$exists: true}
+    matchAggregate.pageIds = req.body.pageId !== 'all' ? req.body.pageId : {$exists: true}
   } else {
-    matchAggregate.pageId = req.body.pageId !== '' ? req.body.pageId : {$exists: true}
+    matchAggregate.pageId = req.body.pageId !== 'all' ? req.body.pageId : {$exists: true}
     if (type === 'seen') {
       matchAggregate.seen = true
+    } else if (type === 'sent') {
+      matchAggregate.sent = true
     } else if (type === 'clicked') {
       matchAggregate.clicked = true
     }

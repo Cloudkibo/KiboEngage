@@ -1128,7 +1128,7 @@ exports.fetchNewsIntegrations = function (req, res) {
         })
     },
     function (callback) {
-      NewsPostsDataLayer.aggregateForRssFeedPosts(LogicLayer.getCriteriasForNewsSections(req, 'posts'), groupCriteria)
+      NewsPostSubscribersDataLayer.aggregate(LogicLayer.getCriteriasForNewsSections(req, 'sent'), groupCriteria)
         .then(result => {
           callback(null, result)
         })
