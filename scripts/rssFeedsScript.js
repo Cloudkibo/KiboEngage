@@ -383,7 +383,7 @@ function getMetaData (feed, rssFeed, rssFeedPosts, page) {
             gallery.push({
               title: meta.title,
               subtitle: meta.description ? meta.description : domainName(value.link),
-              image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
+              image_url: meta.image && meta.image.url ? meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url : page.pagePic,
               buttons: [
                 {
                   type: 'web_url',

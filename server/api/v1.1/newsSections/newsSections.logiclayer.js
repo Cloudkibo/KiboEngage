@@ -146,7 +146,7 @@ exports.getCriterias = function (body) {
   }
 }
 
-exports.getMetaData = function (feed, body) {
+exports.getMetaData = function (feed, body, page) {
   return new Promise((resolve, reject) => {
     let gallery = []
     let length = body.storiesCount ? body.storiesCount : feed.length
@@ -157,11 +157,11 @@ exports.getMetaData = function (feed, body) {
           if (err) {
             logger.serverLog(TAG, `Error from open graph ${err}`)
           }
-          if (meta && meta.title && meta.image) {
+          if (meta && meta.title) {
             gallery.push({
               title: meta.title,
               subtitle: meta.description ? meta.description : domainName(valueGot),
-              image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
+              image_url: meta.image && meta.image.url ? meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url : page.pagePic,
               buttons: [
                 {
                   type: 'web_url',
