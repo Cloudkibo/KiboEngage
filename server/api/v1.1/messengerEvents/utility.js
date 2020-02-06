@@ -11,6 +11,7 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     if (body.error) {
       sendOpAlert(body.error, 'in utility of messengerevents in kiboengage', page._id, page.userId, page.companyId)
     }
+    logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
   })
   const form = r.form()
   form.append('access_token', page.accessToken)

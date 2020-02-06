@@ -438,7 +438,7 @@ const _prepareMessageData = (data, next) => {
       payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: '', type: data.body.integrationType}])
     })
   }
-  LogicLayer.getMetaData(data.body.stories ? data.body.stories : data.feed, data.body)
+  LogicLayer.getMetaData(data.body.stories ? data.body.stories : data.feed, data.body, data.page)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = [{

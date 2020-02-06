@@ -395,11 +395,11 @@ function getMetaData (feed, rssFeed, page) {
           if (err) {
             logger.serverLog(TAG, 'error in fetching metdata', 'error')
           }
-          if (meta && meta.title && meta.image) {
+          if (meta && meta.title) {
             gallery.push({
               title: meta.title,
               subtitle: meta.description ? meta.description : domainName(valueGot),
-              image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
+              image_url: meta.image && meta.image.url ? meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url : page.pagePic,
               buttons: [
                 {
                   type: 'web_url',
