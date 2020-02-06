@@ -100,3 +100,25 @@ exports.getCriteriasForAutopostingByTypethatCame = function (req, type) {
   }
   return matchAggregate
 }
+exports.getCriteriasForNewsSections = function (req, type) {
+  let matchAggregate = {
+    companyId: req.user.companyId,
+    'datetime': req.body.days === 'all' ? { $exists: true } : {
+      $gte: new Date(
+        (new Date().getTime() - (req.body.days * 24 * 60 * 60 * 1000))),
+      $lt: new Date(
+        (new Date().getTime()))
+    }
+  }
+  if (type === 'news') {
+    matchAggregate.pageIds = req.body.pageId !== '' ? req.body.pageId : {$exists: true}
+  } else {
+    matchAggregate.pageId = req.body.pageId !== '' ? req.body.pageId : {$exists: true}
+    if (type === 'seen') {
+      matchAggregate.seen = true
+    } else if (type === 'clicked') {
+      matchAggregate.clicked = true
+    }
+  }
+  return matchAggregate
+}

@@ -1,8 +1,8 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/messengerEvents/rssFeeds.controller.js'
 const {callApi} = require('../utility')
-const RssSubscriptionsDataLayer = require('../rssFeeds/rssSubscriptions.datalayer')
-const RssFeedsDataLayer = require('../rssFeeds/rssFeeds.datalayer')
+const RssSubscriptionsDataLayer = require('../newsSections/newsSubscriptions.datalayer')
+const RssFeedsDataLayer = require('../newsSections/newsSections.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
@@ -115,10 +115,10 @@ const _updateSubscription = (data, next) => {
       locale: data.subscriber.locale,
       senderId: data.subscriber.senderId
     },
-    rssFeedId: data.resp.rssFeedId,
+    newsSectionId: data.resp.rssFeedId,
     subscription: data.resp.action === 'subscribe_to_rssFeed' ? true : false
   }
-  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId}, updateData, {upsert: true})
+  RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.resp.rssFeedId}, updateData, {upsert: true})
     .then(rssSubscription => {
       next()
     })
@@ -128,7 +128,7 @@ const _updateSubscription = (data, next) => {
 }
 const _updateSubscriptionCount = (data, next) => {
   if (data.resp.action === 'subscribe_to_rssFeed') {
-    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: true})
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.resp.rssFeedId, subscription: true})
       .then(rssSubscriptions => {
         if (rssSubscriptions.length === 0) {
           RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: 1 } }, {})
@@ -144,7 +144,7 @@ const _updateSubscriptionCount = (data, next) => {
         next(err)
       })
   } else {
-    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.resp.rssFeedId, subscription: false})
+    RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.resp.rssFeedId, subscription: false})
       .then(rssSubscriptions => {
         if (rssSubscriptions.length === 0) {
           RssFeedsDataLayer.genericUpdateRssFeed({_id: data.resp.rssFeedId}, { $inc: { subscriptions: -1 } }, {})
@@ -165,10 +165,11 @@ const _fetchFeeds = (data, next) => {
   var query = {
     companyId: data.page.companyId,
     isActive: true,
-    pageIds: {$in: [data.page._id]}
+    pageIds: {$in: [data.page._id]},
+    integrationType: data.resp.type ? data.resp.type : data.rssFeed.integrationType
   }
   if (data.resp.rssFeedId && data.resp.rssFeedId !== '') {
-    query['_id'] ={$ne: data.resp.rssFeedId}
+    query['_id'] = {$ne: data.resp.rssFeedId}
   }
   RssFeedsDataLayer.genericFindForRssFeeds(query)
     .then(rssFeeds => {
@@ -185,7 +186,7 @@ const _prepareMoreTopics = (data, next) => {
     quickReplies.push({
       content_type: 'text',
       title: data.rssFeeds[i].title,
-      payload: JSON.stringify([{action: 'send_topic_feed', rssFeedId: data.rssFeeds[i]._id}])
+      payload: JSON.stringify([{action: 'send_topic_feed', rssFeedId: data.rssFeeds[i]._id, type: data.resp.type}])
     })
   }
   let messageData = {
@@ -218,14 +219,14 @@ const _sendSubscriptionMessage = (data, next) => {
   if (data.resp.rssFeedId && data.resp.rssFeedId !== '') {
     buttons.push({title: (data.resp.action === 'subscribe_to_rssFeed' ? 'Unsubscribe from ' : 'Subscribe to ') + data.rssFeed.title,
       type: 'postback',
-      payload: JSON.stringify({action: data.resp.action === 'subscribe_to_rssFeed' ? 'unsubscribe_from_rssFeed' : 'subscribe_to_rssFeed', rssFeedId: data.resp.rssFeedId})
+      payload: JSON.stringify({action: data.resp.action === 'subscribe_to_rssFeed' ? 'unsubscribe_from_rssFeed' : 'subscribe_to_rssFeed', rssFeedId: data.resp.rssFeedId, type: data.resp.type})
     })
   }
   if (data.rssFeeds.length > 0) {
     buttons.push(
       {title: 'Show More Topics',
         type: 'postback',
-        payload: JSON.stringify({action: 'show_more_topics', rssFeedId: data.resp.rssFeedId})
+        payload: JSON.stringify({action: 'show_more_topics', rssFeedId: data.resp.rssFeedId, type: data.resp.type})
       }
     )
   }
@@ -274,16 +275,16 @@ exports.sendTopicFeed = function (req, res) {
     _fetchPage.bind(null, data),
     _fetchSubscriber.bind(null, data),
     _fetchFeed.bind(null, data),
-    rssScriptFunctions._parseFeed.bind(null, data),
     _fetchFeeds.bind(null, data),
     _prepareQuickReplies.bind(null, data),
+    rssScriptFunctions._parseFeed.bind(null, data),
     _prepareMessageData.bind(null, data),
     _sendMessage.bind(null, data)
   ], function (err) {
     if (err) {
       logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
     } else {
-      logger.serverLog(TAG, 'Subscrption successfully')
+      logger.serverLog(TAG, 'Topic feed sent successfully')
     }
   })
 }
@@ -305,24 +306,24 @@ const _prepareQuickReplies = (data, next) => {
     quickReplies.push({
       content_type: 'text',
       title: 'Show More Topics',
-      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id}])
+      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: data.rssFeed._id, type: data.resp.type}])
     })
   }
   if (data.subscriber) {
     if (data.rssFeed.defaultFeed) {
-      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id, subscription: false})
+      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.rssFeed._id, subscription: false})
         .then(rssSubscription => {
           if (rssSubscription.length > 0) {
             quickReplies.push({
               content_type: 'text',
               title: `Subscribe to ${data.rssFeed.title}`,
-              payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+              payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id, type: data.resp.type}])
             })
           } else {
             quickReplies.push({
               content_type: 'text',
               title: `UnSubscribe from ${data.rssFeed.title}`,
-              payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+              payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id, type: data.resp.type}])
             })
           }
           data.quickReplies = quickReplies
@@ -332,19 +333,19 @@ const _prepareQuickReplies = (data, next) => {
           next(err)
         })
     } else {
-      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, rssFeedId: data.rssFeed._id})
+      RssSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.rssFeed._id})
         .then(rssSubscription => {
           if (rssSubscription.length > 0 && rssSubscription[0].subscription) {
             quickReplies.push({
               content_type: 'text',
               title: `Unsubscribe from ${data.rssFeed.title}`,
-              payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id}])
+              payload: JSON.stringify([{action: `unsubscribe_from_rssFeed`, rssFeedId: data.rssFeed._id, type: data.resp.type}])
             })
           } else {
             quickReplies.push({
               content_type: 'text',
               title: `Subscribe to ${data.rssFeed.title}`,
-              payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id}])
+              payload: JSON.stringify([{action: `subscribe_to_rssFeed`, rssFeedId: data.rssFeed._id, type: data.resp.type}])
             })
           }
           data.quickReplies = quickReplies
@@ -360,7 +361,7 @@ const _prepareQuickReplies = (data, next) => {
   }
 }
 const _prepareMessageData = (data, next) => {
-  getMetaData(data.feed, data.rssFeed, data.page)
+  getMetaData(data.feed ? data.feed : data.rssFeed.stories, data.rssFeed, data.page)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
@@ -386,23 +387,24 @@ const _prepareMessageData = (data, next) => {
 function getMetaData (feed, rssFeed, page) {
   return new Promise((resolve, reject) => {
     let gallery = []
-    let length = rssFeed.storiesCount
+    let length = rssFeed.storiesCount ? rssFeed.storiesCount : rssFeed.stories.length
     async.eachOfSeries(feed, function (value, key, callback) {
       if (key < length) {
-        og(value.link, (err, meta) => {
+        let valueGot = Object.keys(value).length > 0 && value.constructor === Object ? value.link : value
+        og(valueGot, (err, meta) => {
           if (err) {
             logger.serverLog(TAG, 'error in fetching metdata', 'error')
           }
           if (meta && meta.title && meta.image) {
             gallery.push({
               title: meta.title,
-              subtitle: meta.description ? meta.description : domainName(value.link),
+              subtitle: meta.description ? meta.description : domainName(valueGot),
               image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
               buttons: [
                 {
                   type: 'web_url',
                   title: 'Read More...',
-                  url: value.link
+                  url: valueGot
                 }
               ]
             })

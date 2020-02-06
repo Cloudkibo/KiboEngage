@@ -18,15 +18,17 @@ exports.createPayload = {
     },
     'pageIds': {
       'type': 'array'
+    },
+    'integrationType': {
+      'type': 'string'
     }
   },
   'required': [
-    'feedUrl',
     'title',
-    'storiesCount',
     'defaultFeed',
     'isActive',
-    'pageIds'
+    'pageIds',
+    'integrationType'
   ]
 }
 exports.previewPayload = {
@@ -46,9 +48,7 @@ exports.previewPayload = {
     }
   },
   'required': [
-    'feedUrl',
     'title',
-    'storiesCount',
     'pageIds'
   ]
 }
@@ -85,6 +85,9 @@ exports.fetchPayload = {
       'type': 'string'
     },
     'type_value': {
+      'type': 'string'
+    },
+    integrationType: {
       'type': 'string'
     }
   },

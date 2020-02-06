@@ -2,7 +2,6 @@ const { callApi } = require('../server/api/v1.1/utility')
 const logger = require('../server/components/logger')
 const TAG = 'scripts/rssScript.js'
 const og = require('open-graph')
-const feedparser = require('feedparser-promised')
 const async = require('async')
 const { getScheduledTime, domainName } = require('../server/api/global/utility')
 const RSSFeedsDataLayer = require('../server/api/v1.1/newsSections/newsSections.datalayer')
@@ -13,8 +12,8 @@ const request = require('request')
 const config = require('../server/config/environment/index')
 const url = require('url')
 
-exports.runRSSScript = () => {
-  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: true, integrationType: 'rss'})
+exports.runScript = () => {
+  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: true, integrationType: 'manual'})
     .then(rssFeeds => {
       async.eachSeries(rssFeeds, _handleRSSFeed, function (err) {
         if (err) {
@@ -56,26 +55,19 @@ const _handleRSSFeed = (rssFeed, next) => {
 const _prepareFeeds = (data, next) => {
   data.parsedFeeds = {}
   async.each(data.feeds, function (feed, callback) {
-    parseFeed(feed)
-      .then(parsedFeed => {
-        prepareMessageData(parsedFeed, feed, data.showMoreTopics, data.rssFeedPosts, data.page)
-          .then(preparedData => {
-            data.parsedFeeds[feed._id] = {
-              data: preparedData,
-              postSubscriber: {
-                rssFeedId: feed._id,
-                rssFeedPostId: data.rssFeedPosts.filter((item) => item.rssFeedId === feed._id)[0].rssFeedPostId
-              }
-            }
-            callback()
-          })
-          .catch((err) => {
-            logger.serverLog(TAG, err, `In Prepare Message Data Rss Integration ${err}`)
-            callback(err)
-          })
+    prepareMessageData(feed, data.showMoreTopics, data.rssFeedPosts, data.page)
+      .then(preparedData => {
+        data.parsedFeeds[feed._id] = {
+          data: preparedData,
+          postSubscriber: {
+            rssFeedId: feed._id,
+            rssFeedPostId: data.rssFeedPosts.filter((item) => item.rssFeedId === feed._id)[0].rssFeedPostId
+          }
+        }
+        callback()
       })
       .catch((err) => {
-        logger.serverLog(TAG, err, `In Parse Feed Rss Integration ${err}`)
+        logger.serverLog(TAG, err, `In Prepare Message Data Rss Integration ${err}`)
         callback(err)
       })
   }, function (err) {
@@ -88,7 +80,7 @@ const _prepareFeeds = (data, next) => {
 }
 
 const _fetchNonDefaultFeeds = (data, next) => {
-  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id, subscriptions: {$gt: 0}, integrationType: 'rss'})
+  RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id, subscriptions: {$gt: 0}, integrationType: 'manual'})
     .then(rssFeeds => {
       data.feeds = rssFeeds
       data.feeds.unshift(data.rssFeed)
@@ -100,7 +92,7 @@ const _fetchNonDefaultFeeds = (data, next) => {
     })
 }
 const _shouldShowMoreTopics = (data, next) => {
-  RSSFeedsDataLayer.aggregateForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id, integrationType: 'rss'}, { _id: null, count: { $sum: 1 } })
+  RSSFeedsDataLayer.aggregateForRssFeeds({isActive: true, defaultFeed: false, pageIds: data.page._id, integrationType: 'manual'}, { _id: null, count: { $sum: 1 } })
     .then(rssFeeds => {
       if (rssFeeds.length > 0) {
         data.showMoreTopics = true
@@ -315,37 +307,22 @@ const callBatchAPI = (page, batch) => {
   })
 }
 
-const _parseFeed = (data, next) => {
-  if (data.resp.type === 'rss') {
-    feedparser.parse(data.rssFeed.feedUrl)
-      .then(feed => {
-        data.feed = feed
-        next()
-      })
-      .catch(err => {
-        logger.serverLog(TAG, err, `In Parse Feed ${err}`)
-        next(err)
-      })
-  } else {
-    next()
-  }
-}
-const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page) => {
+const prepareMessageData = (feed, showMoreTopics, rssFeedPosts, page) => {
   return new Promise((resolve, reject) => {
     let quickReplies = [{
       content_type: 'text',
       title: 'Unsubscribe from News Feed',
-      payload: JSON.stringify([{action: 'unsubscribe_from_rssFeed', rssFeedId: feed._id, type: 'rss'}])
+      payload: JSON.stringify([{action: 'unsubscribe_from_rssFeed', rssFeedId: feed._id, type: 'manual'}])
     }
     ]
     if (showMoreTopics) {
       quickReplies.push({
         content_type: 'text',
         title: 'Show More Topics',
-        payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: feed._id, type: 'rss'}])
+        payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: feed._id, type: 'manual'}])
       })
     }
-    getMetaData(parsedFeed, feed, rssFeedPosts, page)
+    getMetaData(feed, rssFeedPosts, page)
       .then(gallery => {
         logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title`)
         let messageData = [{
@@ -368,27 +345,27 @@ const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page
       })
   })
 }
-function getMetaData (feed, rssFeed, rssFeedPosts, page) {
+function getMetaData (rssFeed, rssFeedPosts, page) {
   return new Promise((resolve, reject) => {
     let rssFeedPost = rssFeedPosts.filter(r => r.rssFeedId === rssFeed._id)[0]
     let gallery = []
-    let length = rssFeed.storiesCount
-    async.eachOfSeries(feed, function (value, key, callback) {
+    let length = rssFeed.stories.length
+    async.eachOfSeries(rssFeed.stories, function (value, key, callback) {
       if (key < length) {
-        og(value.link, (err, meta) => {
+        og(value, (err, meta) => {
           if (err) {
             logger.serverLog(TAG, 'error in fetching metdata', 'error')
           }
           if (meta && meta.title) {
             gallery.push({
               title: meta.title,
-              subtitle: meta.description ? meta.description : domainName(value.link),
+              subtitle: meta.description ? meta.description : domainName(value),
               image_url: meta.image && meta.image.url ? meta.image.url : page.pagePic,
               buttons: [
                 {
                   type: 'web_url',
                   title: 'Read More...',
-                  url: config.domain + `/clicked?r=${value.link}&m=rss&id=${rssFeedPost.rssFeedPostId}`
+                  url: config.domain + `/clicked?r=${value}&m=rss&id=${rssFeedPost.rssFeedPostId}`
                 }
               ]
             })
@@ -464,18 +441,7 @@ const saveRssFeedPostSubscribers = (postSubscribers) => {
     }
   })
 }
-function parseFeed (feed) {
-  return new Promise((resolve, reject) => {
-    feedparser.parse(feed.feedUrl)
-      .then(feed => {
-        resolve(feed)
-      })
-      .catch(err => {
-        logger.serverLog(TAG, err, 'In Parse Feed Rss Integration')
-        reject(err)
-      })
-  })
-}
+
 const _removeSubsWaitingForUserInput = (subscribers, waitingForUserInput) => {
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds, waitingForUserInput: { '$ne': null }}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
@@ -486,5 +452,4 @@ const _removeSubsWaitingForUserInput = (subscribers, waitingForUserInput) => {
       logger.serverLog(TAG, `Failed to update subscriber in RSS FEED ${JSON.stringify(err)}`)
     })
 }
-exports._parseFeed = _parseFeed
 exports.getMetaData = getMetaData
