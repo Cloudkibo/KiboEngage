@@ -35,7 +35,7 @@ exports.getCriterias = function (req) {
         findCriteria = {
           companyId: req.user.companyId,
           $and: [{'payload.0.componentName': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true }}, {'payload.1': { $exists: false }}],
-          messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
+          messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },
           title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
           'datetime': req.body.filter_criteria.days !== '0' ? {
             $gte: startDate
@@ -46,7 +46,7 @@ exports.getCriterias = function (req) {
         findCriteria = {
           companyId: req.user.companyId,
           'payload.0.componentName': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true },
-          messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },            
+          messageType: (req.body.filter_criteria.messageType === '' || req.body.filter_criteria.messageType === 'all') ? { $in: [null, 'non promotional', 'promotional'] } : req.body.filter_criteria.messageType === 'non promotional' ? { $in: [null, 'non promotional'] } : { $in: ['promotional'] },
           title: req.body.filter_criteria.search_value !== '' ? { $regex: req.body.filter_criteria.search_value } : { $exists: true },
           'datetime': req.body.filter_criteria.days !== '0' ? {
             $gte: startDate
@@ -165,7 +165,7 @@ function exists (list, content) {
 }
 exports.isValidButtonPayload = function (body) {
   return new Promise(function (resolve, reject) {
-    if (body.type === 'web_url' && !body.url && !body.oldUrl) {
+    if (body.type === 'web_url' && !body.url && !body.oldUrl && !body.newUrl) {
       resolve(false)
     } else if (body.type === 'postback') {
       if (!(_.has(body, 'payload'))) {
