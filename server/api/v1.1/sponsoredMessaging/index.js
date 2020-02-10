@@ -27,6 +27,12 @@ router.post('/send/:id',
   controller.send
 )
 
+router.post('/sendInSandbox/:id',
+  // auth.isAuthenticated(),
+  validate({ body: validationSchema.updatePayload }),
+  controller.sendInSandbox
+)
+
 router.delete('/:_id',
   auth.isAuthenticated(),
   controller.delete)
