@@ -62,6 +62,8 @@ exports.fetchFeedsCriteria = function (body, companyId) {
 }
 
 exports.getCriterias = function (body) {
+  console.log('startDate got from client', body.startDate)
+  console.log('endDate got from client', body.endDate)
   let startDate = new Date(body.startDate) // Current date
   startDate.setHours(0) // Set the hour, minute and second components to 0
   startDate.setMinutes(0)
@@ -71,6 +73,8 @@ exports.getCriterias = function (body) {
   endDate.setHours(0) // Set the hour, minute and second components to 0
   endDate.setMinutes(0)
   endDate.setSeconds(0)
+  console.log('startDate after conversion', startDate)
+  console.log('endDate after conversion', endDate)
   let finalCriteria = [
     { $lookup: { from: 'newspostsubscribers', localField: '_id', foreignField: 'newsPostId', as: 'newsPost' } },
     { $unwind: '$newsPost' },
