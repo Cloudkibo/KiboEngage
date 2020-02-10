@@ -100,7 +100,7 @@ function updateClickCountId (payload, sponsoredMessageID) {
 exports.send = function (req, res) {
   const accesstoken = req.user.facebookInfo.fbToken
   let id = req.params.id
-  if (id !== undefined && id !== '') {
+  if (id !== undefined && id !== '' && req.body.ad_account_id) {
     utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
       .then(sponsoredMessages => {
         let sponsoredMessage = sponsoredMessages[0]
@@ -180,7 +180,7 @@ exports.send = function (req, res) {
         return sendErrorResponse(res, 500, error)
       })
   } else {
-    return sendErrorResponse(res, 500, {message: 'Failed to send sponsored message due missing account_id'})
+    return sendErrorResponse(res, 500, {message: 'Account id is missing. Cannot send ad'})
   }
 }
 
