@@ -107,8 +107,8 @@ exports.getCriterias = function (body) {
   let findCriteria = {
     newsSectionId: body.feedId,
     'datetime': body.startDate && body.startDate !== '' && body.endDate && body.endDate !== '' ? {
-      $gte: startDate,
-      $lt: endDate
+      $gte: startDate.toUTCString(),
+      $lt: endDate.toUTCString()
     } : { $exists: true },
     pageId: body.page_value && body.page_value !== '' ? body.page_value : { $exists: true }
   }
