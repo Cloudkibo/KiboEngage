@@ -276,30 +276,36 @@ exports.sendInSandbox = function (req, res) {
                                     sendSuccessResponse(res, 200, sponsoredMessage)
                                   })
                                   .catch(error => {
+                                    console.log(error)
                                     return sendErrorResponse(res, 500, error)
                                   })
                               }
                             })
                             .catch(err => {
+                              console.log(err)
                               return sendErrorResponse(res, 500, err)
                             })
                         }
                       })
                       .catch(err => {
+                        console.log(err)
                         return sendErrorResponse(res, 500, err)
                       })
                   }
                 })
                 .catch(err => {
+                  console.log(err)
                   return sendErrorResponse(res, 500, err)
                 })
             }
           })
           .catch(error => {
+            console.log(error)
             return sendErrorResponse(res, 500, error)
           })
       })
       .catch(error => {
+        console.log(error)
         return sendErrorResponse(res, 500, error)
       })
   } else {
