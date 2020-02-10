@@ -100,6 +100,9 @@ function updateClickCountId (payload, sponsoredMessageID) {
 exports.send = function (req, res) {
   const accesstoken = req.user.facebookInfo.fbToken
   let id = req.params.id
+  if (!req.body.ad_account_id) {
+    return sendErrorResponse(res, 500, {message: 'Ad account id is must. Ad is not sent to facebook.'})
+  }
   if (id !== undefined && id !== '') {
     utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
       .then(sponsoredMessages => {
@@ -111,7 +114,7 @@ exports.send = function (req, res) {
           .then(campaignResp => {
             if (campaignResp.body.error) {
               sendOpAlert(campaignResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-              return sendErrorResponse(res, 500, campaignResp.body.error)
+              return sendErrorResponse(res, 500, {message: campaignResp.body.error.error_user_msg})
             } else {
               let campaignId = campaignResp.body.id
               let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
@@ -120,7 +123,7 @@ exports.send = function (req, res) {
                 .then(adsetResp => {
                   if (adsetResp.body.error) {
                     sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                    return sendErrorResponse(res, 500, adsetResp.body.error)
+                    return sendErrorResponse(res, 500, {message: adsetResp.body.error.error_user_msg})
                   } else {
                     logger.serverLog(TAG, `adsetsResponse ${JSON.stringify(adsetResp.body)}`)
                     let adsetid = adsetResp.body.id
@@ -131,7 +134,7 @@ exports.send = function (req, res) {
                       .then(adCreativeResp => {
                         if (adCreativeResp.body.error) {
                           sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                          return sendErrorResponse(res, 500, adCreativeResp.body.error)
+                          return sendErrorResponse(res, 500, {message: adCreativeResp.body.error.error_user_msg})
                         } else {
                           logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
                           let messageCreativeId = adCreativeResp.body.id
@@ -141,7 +144,7 @@ exports.send = function (req, res) {
                             .then(adsResp => {
                               if (adsResp.body.error) {
                                 sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                                return sendErrorResponse(res, 500, adsResp.body.error)
+                                return sendErrorResponse(res, 500, {message: adsResp.body.error.error_user_msg})
                               } else {
                                 logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
                                 let adId = adsResp.body.id
