@@ -215,3 +215,94 @@ exports.getInsight = function (req, res) {
       })
   }
 }
+
+exports.sendInSandbox = function (req, res) {
+  const accesstoken = req.body.fbToken
+  let id = req.params.id
+  req.user = {_id: 'testAPI', companyId: 'testAPI'}
+  if (!req.body.ad_account_id) {
+    return sendErrorResponse(res, 500, {message: 'Ad account id is must. Ad is not sent to facebook.'})
+  }
+  if (id !== undefined && id !== '') {
+    utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
+      .then(sponsoredMessages => {
+        let sponsoredMessage = sponsoredMessages[0]
+        console.log('sponsoredMessage payload', sponsoredMessage)
+        updateClickCountId(sponsoredMessage, id)
+        let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
+        facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
+          .then(campaignResp => {
+            if (campaignResp.body.error) {
+              sendOpAlert(campaignResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+              return sendErrorResponse(res, 500, {message: campaignResp.body.error.error_user_msg})
+            } else {
+              let campaignId = campaignResp.body.id
+              let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
+              logger.serverLog(TAG, `adsetPayload ${adsetPayload}`)
+              facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adsets`, 'post', adsetPayload)
+                .then(adsetResp => {
+                  if (adsetResp.body.error) {
+                    sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+                    return sendErrorResponse(res, 500, {message: adsetResp.body.error.error_user_msg})
+                  } else {
+                    logger.serverLog(TAG, `adsetsResponse ${JSON.stringify(adsetResp.body)}`)
+                    let adsetid = adsetResp.body.id
+                    logger.serverLog(TAG, `adsetid ${adsetid}`)
+                    let creativePayload = logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
+                    logger.serverLog(TAG, `creativePayload ${creativePayload}`)
+                    facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
+                      .then(adCreativeResp => {
+                        if (adCreativeResp.body.error) {
+                          sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+                          return sendErrorResponse(res, 500, {message: adCreativeResp.body.error.error_user_msg})
+                        } else {
+                          logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
+                          let messageCreativeId = adCreativeResp.body.id
+                          logger.serverLog(TAG, `messageCreativeId ${messageCreativeId}`)
+                          let adPayload = logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
+                          facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
+                            .then(adsResp => {
+                              if (adsResp.body.error) {
+                                sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+                                return sendErrorResponse(res, 500, {message: adsResp.body.error.error_user_msg})
+                              } else {
+                                logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
+                                let adId = adsResp.body.id
+                                logger.serverLog(TAG, `ad_id ${adId}`)
+                                // Now since we have got respone from facebook, we shall update our database
+                                let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
+                                utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload)
+                                  .then(sponsoredMessage => {
+                                    sendSuccessResponse(res, 200, sponsoredMessage)
+                                  })
+                                  .catch(error => {
+                                    return sendErrorResponse(res, 500, error)
+                                  })
+                              }
+                            })
+                            .catch(err => {
+                              return sendErrorResponse(res, 500, err)
+                            })
+                        }
+                      })
+                      .catch(err => {
+                        return sendErrorResponse(res, 500, err)
+                      })
+                  }
+                })
+                .catch(err => {
+                  return sendErrorResponse(res, 500, err)
+                })
+            }
+          })
+          .catch(error => {
+            return sendErrorResponse(res, 500, error)
+          })
+      })
+      .catch(error => {
+        return sendErrorResponse(res, 500, error)
+      })
+  } else {
+    return sendErrorResponse(res, 500, {message: 'Failed to send sponsored message due missing account_id'})
+  }
+}
