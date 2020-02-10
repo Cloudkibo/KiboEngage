@@ -65,14 +65,14 @@ exports.getCriterias = function (body) {
   console.log('startDate got from client', body.startDate)
   console.log('endDate got from client', body.endDate)
   let startDate = new Date(body.startDate) // Current date
-  startDate.setHours(0) // Set the hour, minute and second components to 0
-  startDate.setMinutes(0)
-  startDate.setSeconds(0)
+  // startDate.setHours(0) // Set the hour, minute and second components to 0
+  // startDate.setMinutes(0)
+  // startDate.setSeconds(0)
   let endDate = new Date(body.endDate) // Current date
   endDate.setDate(endDate.getDate() + 1)
-  endDate.setHours(0) // Set the hour, minute and second components to 0
-  endDate.setMinutes(0)
-  endDate.setSeconds(0)
+  // endDate.setHours(0) // Set the hour, minute and second components to 0
+  // endDate.setMinutes(0)
+  // endDate.setSeconds(0)
   console.log('startDate after conversion', startDate)
   console.log('endDate after conversion', endDate)
   let finalCriteria = [
