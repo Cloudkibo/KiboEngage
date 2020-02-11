@@ -110,16 +110,16 @@ exports.getCriterias = function (body) {
   }
   if (body.startDate && body.startDate !== '' && body.endDate && body.endDate !== '') {
     findCriteria.month = {
-      $gte: startDate.getMonth() + 1,
-      $lte: endDate.getMonth() + 1
+      $gte: startDate.getUTCMonth() + 1,
+      $lte: endDate.getUTCMonth() + 1
     }
     findCriteria.day = {
-      $gte: startDate.getDate(),
-      $lte: endDate.getDate()
+      $gte: startDate.getUTCDate(),
+      $lte: endDate.getUTCDate()
     }
     findCriteria.year = {
-      $gte: startDate.getFullYear(),
-      $lte: endDate.getFullYear()
+      $gte: startDate.getUTCFullYear(),
+      $lte: endDate.getUTCFullYear()
     }
   }
   if (body.first_page === 'first') {
