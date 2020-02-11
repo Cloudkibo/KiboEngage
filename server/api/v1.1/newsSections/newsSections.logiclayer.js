@@ -62,19 +62,8 @@ exports.fetchFeedsCriteria = function (body, companyId) {
 }
 
 exports.getCriterias = function (body) {
-  console.log('startDate got from client', body.startDate)
-  console.log('endDate got from client', body.endDate)
-  let startDate = new Date(body.startDate) // Current date
-  startDate.setHours(startDate.getUTCHours()) // Set the hour, minute and second components to 0
-  // startDate.setMinutes(0)
-  // startDate.setSeconds(0)
-  let endDate = new Date(body.endDate) // Current date
-  endDate.setDate(endDate.getDate() + 1)
-  endDate.setHours(endDate.getUTCHours()) // Set the hour, minute and second components to 0
-  // endDate.setMinutes(0)
-  // endDate.setSeconds(0)
-  console.log('startDate after conversion', startDate)
-  console.log('endDate after conversion', endDate)
+  let startDate = new Date(body.startDate)
+  let endDate = new Date(body.endDate)
   let finalCriteria = [
     { $lookup: { from: 'newspostsubscribers', localField: '_id', foreignField: 'newsPostId', as: 'newsPost' } },
     { $unwind: '$newsPost' },
@@ -87,30 +76,51 @@ exports.getCriterias = function (body) {
       pageId: {'$first': '$pageId'},
       companyId: {'$first': '$companyId'},
       datetime: {'$first': '$datetime'}
-    }}
+    }},
+    { $project:
+         {
+           year: { $year: '$datetime' },
+           month: { $month: '$datetime' },
+           day: { $dayOfMonth: '$datetime' },
+           pageId: 1,
+           newsSectionId: 1,
+           datetime: 1,
+           companyId: 1
+         }
+    }
   ]
   let countCriteria = [
-    { $lookup: { from: 'newspostsubscribers', localField: '_id', foreignField: 'newsPostId', as: 'newsPost' } },
-    { $unwind: '$newsPost' },
-    {$group: {
-      _id: '$_id',
-      seen: {$sum: {$cond: ['$newsPost.seen', 1, 0]}},
-      sent: {$sum: {$cond: ['$newsPost.sent', 1, 0]}},
-      clicked: {$sum: {$cond: ['$newsPost.clicked', 1, 0]}},
-      newsSectionId: { '$first': '$newsSectionId' },
-      pageId: {'$first': '$pageId'},
-      companyId: {'$first': '$companyId'},
-      datetime: {'$first': '$datetime'}
-    }}
+    { $project:
+         {
+           doc: '$$ROOT',
+           year: { $year: '$datetime' },
+           month: { $month: '$datetime' },
+           day: { $dayOfMonth: '$datetime' },
+           pageId: 1,
+           newsSectionId: 1,
+           datetime: 1,
+           companyId: 1
+         }
+    }
   ]
   let recordsToSkip = 0
   let findCriteria = {
     newsSectionId: body.feedId,
-    'datetime': body.startDate && body.startDate !== '' && body.endDate && body.endDate !== '' ? {
-      $gte: startDate.toUTCString(),
-      $lt: endDate.toUTCString()
-    } : { $exists: true },
     pageId: body.page_value && body.page_value !== '' ? body.page_value : { $exists: true }
+  }
+  if (body.startDate && body.startDate !== '' && body.endDate && body.endDate !== '') {
+    findCriteria.month = {
+      $gte: startDate.getMonth() + 1,
+      $lte: endDate.getMonth() + 1
+    }
+    findCriteria.day = {
+      $gte: startDate.getDate(),
+      $lte: endDate.getDate()
+    }
+    findCriteria.year = {
+      $gte: startDate.getFullYear(),
+      $lte: endDate.getFullYear()
+    }
   }
   if (body.first_page === 'first') {
     finalCriteria.push(
