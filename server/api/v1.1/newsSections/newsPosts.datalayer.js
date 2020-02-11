@@ -12,7 +12,7 @@ exports.genericFindForRssFeedPosts = (queryObject) => {
   }
   return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
-exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unwind) => {
+exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unwind, project) => {
   let query = {
     purpose: 'aggregate',
     match: match
@@ -23,6 +23,7 @@ exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unw
   if (sort) query.sort = sort
   if (skip) query.skip = skip
   if (unwind) query.unwind = unwind
+  if (project) query.project = project
 
   return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
@@ -37,12 +38,13 @@ exports.deleteForRssFeedPosts = (queryObject) => {
   return callApi(`newsPosts`, 'delete', query, 'kiboengage')
 }
 
-exports.countDocuments = (filter) => {
+exports.countDocuments = (filter, project) => {
   let query = {
     purpose: 'aggregate',
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
+  if (project) query.project = project
   return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
 exports.genericUpdateRssFeedPosts = (queryObject, updated, options) => {
