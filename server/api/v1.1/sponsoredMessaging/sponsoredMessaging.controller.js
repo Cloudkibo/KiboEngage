@@ -149,17 +149,24 @@ exports.send = function (req, res) {
                                 logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
                                 let adId = adsResp.body.id
                                 logger.serverLog(TAG, `ad_id ${adId}`)
+                                
+                                // NOTE: The following code is breaking the sponsored messages
+                                // when we are trying to send the same ad again. This is actually
+                                // removing the payload of ad_set_payload and thus, we get undefined
+                                // error next time when we send same ad to facebook. This is not clear
+                                // why this code was written, therefore, I am not removing the code and
+                                // when FAIZAN is back, I will discuss with him. (SOJHARO)
+
                                 // Now since we have got respone from facebook, we shall update our database
-                                let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
-                                console.log(updatePayload)
-                                utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload)
-                                  .then(sponsoredMessage => {
-                                    sendSuccessResponse(res, 200, sponsoredMessage)
-                                  })
-                                  .catch(error => {
-                                    console.log(error)
-                                    return sendErrorResponse(res, 500, error)
-                                  })
+                                // let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
+                                // utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload)
+                                //   .then(sponsoredMessage => {
+                                //     sendSuccessResponse(res, 200, sponsoredMessage)
+                                //   })
+                                //   .catch(error => {
+                                //     console.log(error)
+                                //     return sendErrorResponse(res, 500, error)
+                                //   })
                               }
                             })
                             .catch(err => {
