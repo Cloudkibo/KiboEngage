@@ -151,6 +151,7 @@ exports.send = function (req, res) {
                                 logger.serverLog(TAG, `ad_id ${adId}`)
                                 // Now since we have got respone from facebook, we shall update our database
                                 let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
+                                console.log(updatePayload)
                                 utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload)
                                   .then(sponsoredMessage => {
                                     sendSuccessResponse(res, 200, sponsoredMessage)
