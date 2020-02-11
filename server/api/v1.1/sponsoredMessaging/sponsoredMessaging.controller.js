@@ -149,7 +149,9 @@ exports.send = function (req, res) {
                                 logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
                                 let adId = adsResp.body.id
                                 logger.serverLog(TAG, `ad_id ${adId}`)
-                                
+
+                                sendSuccessResponse(res, 200, {description: 'Your ad is sent to Facebook.'})
+
                                 // NOTE: The following code is breaking the sponsored messages
                                 // when we are trying to send the same ad again. This is actually
                                 // removing the payload of ad_set_payload and thus, we get undefined
