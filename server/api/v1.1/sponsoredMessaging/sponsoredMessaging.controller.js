@@ -107,7 +107,6 @@ exports.send = function (req, res) {
     utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
       .then(sponsoredMessages => {
         let sponsoredMessage = sponsoredMessages[0]
-        console.log('sponsoredMessage payload', sponsoredMessage)
         updateClickCountId(sponsoredMessage, id)
         let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
         facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
@@ -172,30 +171,25 @@ exports.send = function (req, res) {
                               }
                             })
                             .catch(err => {
-                              console.log(err)
                               return sendErrorResponse(res, 500, err)
                             })
                         }
                       })
                       .catch(err => {
-                        console.log(err)
                         return sendErrorResponse(res, 500, err)
                       })
                   }
                 })
                 .catch(err => {
-                  console.log(err)
                   return sendErrorResponse(res, 500, err)
                 })
             }
           })
           .catch(error => {
-            console.log(error)
             return sendErrorResponse(res, 500, error)
           })
       })
       .catch(error => {
-        console.log(error)
         return sendErrorResponse(res, 500, error)
       })
   } else {
@@ -292,36 +286,30 @@ exports.sendInSandbox = function (req, res) {
                                     sendSuccessResponse(res, 200, sponsoredMessage)
                                   })
                                   .catch(error => {
-                                    console.log(error)
                                     return sendErrorResponse(res, 500, error)
                                   })
                               }
                             })
                             .catch(err => {
-                              console.log(err)
                               return sendErrorResponse(res, 500, err)
                             })
                         }
                       })
                       .catch(err => {
-                        console.log(err)
                         return sendErrorResponse(res, 500, err)
                       })
                   }
                 })
                 .catch(err => {
-                  console.log(err)
                   return sendErrorResponse(res, 500, err)
                 })
             }
           })
           .catch(error => {
-            console.log(error)
             return sendErrorResponse(res, 500, error)
           })
       })
       .catch(error => {
-        console.log(error)
         return sendErrorResponse(res, 500, error)
       })
   } else {
