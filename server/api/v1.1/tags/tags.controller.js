@@ -47,7 +47,7 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  callApi.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: {$regex: req.body.tag, $options: 'i'}})
+  callApi.callApi(`tags/query`, 'post', {companyId: req.user.companyId, tag: req.body.tag})
     .then(tags => {
       if (tags.length > 0) {
         sendErrorResponse(res, 500, '', `Tag with similar name already exists`)
