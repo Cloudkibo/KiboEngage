@@ -61,7 +61,8 @@ const _callBatchAPI = (batch, accessToken) => {
 }
 
 /* eslint-disable */
-const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) => {
+const _prepareBatchData = (moduleComponent, payload, subscribers, page, user, recordObj) => {
+  console.log('module_broadcast', moduleComponent)
     let waitingForUserInput = {
       broadcastId: recordObj ? recordObj.broadcastId: '',
       componentIndex: -1,
@@ -74,7 +75,7 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
       if (containsUserInput) {
         _updateSubsForUserInput(subscribers, waitingForUserInput)
       }
-      else if(module !== 'broadcast_message') {
+      else if(moduleComponent !== 'broadcast_message') {
         _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
       }
       return batch
@@ -85,7 +86,7 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
       let flag = true
       payload.forEach((item, index) => {
         if (flag) {
-          let message = "message=" + encodeURIComponent(_prepareMessageData(module, item, subscribers[i]))
+          let message = "message=" + encodeURIComponent(_prepareMessageData(moduleComponent, item, subscribers[i]))
           if (index === 0) {
             batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
           } else {
@@ -94,7 +95,7 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
           if (item.componentType === 'userInput') {
             flag = false
             containsUserInput = true
-            if(module === 'update_broadcast') {
+            if(moduleComponent === 'update_broadcast') {
               waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
               waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
             }
