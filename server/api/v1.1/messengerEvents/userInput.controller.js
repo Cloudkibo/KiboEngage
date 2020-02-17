@@ -430,7 +430,10 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
             let waitingForUserInput = subscribers[0].waitingForUserInput
             waitingForUserInput.googleSheetRange = response.data.updates.updatedRange.split(':')[0]
             logger.serverLog(TAG, ` waitingForUserInput after response ${waitingForUserInput}`)
-            _subscriberUpdate(subscribers[0], waitingForUserInput)
+            let subscriber = {
+              data: subscribers
+            } 
+            _subscriberUpdate(subscriber, waitingForUserInput)
           }
         })
       }).catch(err => {
