@@ -310,7 +310,12 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
         oauth2Client.credentials = integration.integrationPayload
         if (integration && integration.enabled) {
           if (broadcastPayload.action.googleSheetAction === 'insert_row') {
-            _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client)
+            if (subscribers[0].waitingForUserInput.googleSheetRange) {
+              _updateRow(req, res, subscribers[0].waitingForUserInput.googleSheetRange, broadcastPayload, subscribers, message, oauth2Client, true)
+            }
+            else {
+              _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client)
+            }
           } else if (broadcastPayload.action.googleSheetAction === 'update_row') {
             let resp = broadcastPayload.action
             getLookUpValue(resp.lookUpValue, subscribers[0])
@@ -347,7 +352,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
     })
 }
 
-const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oauth2Client) => {
+const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oauth2Client, insertRow) => {
   let resp = broadcastPayload.action
   let user = {
     companyId: subscribers[0].companyId
@@ -366,15 +371,16 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
           data.push(null)
         }
       }
+      logger.serverLog(TAG, ` range in updateRow function ${range}`)
       logger.serverLog(TAG, ` data to send update row userinput controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
-        range: `${resp.worksheetName}!A${range.j + 1}`,
+        range: insertRow ? range : `${resp.worksheetName}!A${range.j + 1}`,
         valueInputOption: 'RAW',
         resource: {
           'majorDimension': 'ROWS',
-          'range': `${resp.worksheetName}!A${range.j + 1}`,
+          'range': insertRow ? range : `${resp.worksheetName}!A${range.j + 1}`,
           'values': dataToSend
         },
         auth: oauth2Client
@@ -419,6 +425,12 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
         sheets.spreadsheets.values.append(request, function (err, response) {
           if (err) {
             logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+          }
+          else {
+            let waitingForUserInput = subscribers[0].waitingForUserInput
+            waitingForUserInput.googleSheetRange = response.data.updates.updatedRange.split(':')[0]
+            logger.serverLog(TAG, ` waitingForUserInput after response ${waitingForUserInput}`)
+            _subscriberUpdate(subscribers[0], waitingForUserInput)
           }
         })
       }).catch(err => {
