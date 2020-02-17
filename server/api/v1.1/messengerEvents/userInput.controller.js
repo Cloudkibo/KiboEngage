@@ -430,13 +430,20 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
             logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
           }
           else {
-            let waitingForUserInput = subscribers[0].waitingForUserInput
-            waitingForUserInput.googleSheetRange = response.data.updates.updatedRange.split(':')[0]
-            logger.serverLog(TAG, ` waitingForUserInput after response ${waitingForUserInput}`)
-            let subscriber = {
-              data: subscribers
-            }
-            _subscriberUpdate(subscriber, waitingForUserInput)
+            callApi(`subscribers/query`, 'post', {pageId: subscribers[0].pageId, senderId: subscribers[0].senderId, companyId: subscribers[0].companyId})
+              .then(sub => {
+                console.log('subscribers userInput', sub[0].waitingForUserInput)
+                let waitingForUserInput = sub[0].waitingForUserInput
+                waitingForUserInput.googleSheetRange = response.data.updates.updatedRange.split(':')[0]
+                logger.serverLog(TAG, ` waitingForUserInput after response ${waitingForUserInput}`)
+                let subscriber = {
+                  data: sub
+                }
+                _subscriberUpdate(subscriber, waitingForUserInput)
+
+              }).catch(err => {
+                logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+              })
           }
         })
       }).catch(err => {
