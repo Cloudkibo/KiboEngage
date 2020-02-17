@@ -371,6 +371,7 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
           data.push(null)
         }
       }
+      logger.serverLog(TAG, ` resp.googleSheetColumn updateRow function ${resp.googleSheetColumn}`)
       logger.serverLog(TAG, ` range in updateRow function ${range}`)
       logger.serverLog(TAG, ` data to send update row userinput controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
