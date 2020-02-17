@@ -206,29 +206,39 @@ const domainName = function (url) {
   }
 }
 
-const attachCompanyUserInfo = function () {
+const attachBuyerInfo = function () {
   return compose().use((req, res, next) => {
-    callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
-      .then(companyUser => {
-        if (!companyUser) {
+    callApi(`companyUser/query`, 'post', { companyId: req.user.companyId, role: 'buyer' })
+      .then(buyerInfo => {
+        if (!buyerInfo) {
           return res.status(404).json({
             status: 'failed',
-            description: 'The user account does not belong to any company. Please contact support'
+            description: 'The buyer account has some technical problems. Please contact support'
           })
         }
-        req.user.companyUser = companyUser
+        return callApi(`user/query`, 'post', {domain_email: buyerInfo.domain_email})
+      })
+      .then(buyerInfo => {
+        buyerInfo = buyerInfo[0]
+        if (!buyerInfo) {
+          return res.status(404).json({
+            status: 'failed',
+            description: 'The buyer account has some technical problems. Please contact support'
+          })
+        }
+        req.user.buyerInfo = buyerInfo
         next()
       })
       .catch(error => {
         return res.status(500).json({
           status: 'failed',
-          payload: `Failed to fetch company user ${JSON.stringify(error)}`
+          payload: `Failed to fetch buyer account ${JSON.stringify(error)}`
         })
       })
   })
 }
 
-exports.attachCompanyUserInfo = attachCompanyUserInfo
+exports.attachBuyerInfo = attachBuyerInfo
 exports.domainName = domainName
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject

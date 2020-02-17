@@ -35,5 +35,4 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
       }
     })
   })
-    .catch(err => console.log(err.response))
 }

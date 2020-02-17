@@ -10,7 +10,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const { kiboengage } = require('../../global/constants').serverConstants
 
 exports.index = function (req, res) {
-  utility.callApi(`sponsoredMessaging/query`, 'get', { companyId: req.user.companyUser.companyId }, kiboengage)
+  utility.callApi(`sponsoredMessaging/query`, 'get', { companyId: req.user.companyId }, kiboengage)
     .then(sponsoredMessages => {
       return res.status(200).json({ status: 'success', payload: sponsoredMessages })
     })
@@ -20,7 +20,7 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  let payload = logiclayer.preparePayload(req.user.companyUser.companyId, req.user._id, req.body.status)
+  let payload = logiclayer.preparePayload(req.user.companyId, req.user._id, req.body.status)
   utility.callApi(`sponsoredMessaging`, 'post', payload, kiboengage)
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
@@ -299,24 +299,10 @@ exports.sendInSandbox = function (req, res) {
 }
 
 exports.adAccounts = function (req, res) {
-  if (req.user.role === 'buyer') {
-    _getAdAccounts(req, res, req.user.facebookInfo)
-  } else {
-    utility.callApi(`companyUser/query`, 'post', { companyId: req.user.companyUser.companyId, role: 'buyer' })
-      .then(userFound => {
-        if (userFound && userFound[0]) {
-          _getAdAccounts(req, res, userFound[0].facebookInfo)
-        } else {
-          return sendErrorResponse(res, 500, {message: 'Internal Error occurred. Please contact admin'})
-        }
-      })
-      .catch(error => {
-        return sendErrorResponse(res, 500, error)
-      })
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
   }
-}
-
-function _getAdAccounts (req, res, facebookInfo) {
   facebookApiCaller('v6.0', `${facebookInfo.fbId}/adaccounts?fields=name,account_id,id,currency,account_status&access_token=${facebookInfo.fbToken}`, 'get')
     .then(response => {
       if (response.body.error) {
@@ -331,24 +317,10 @@ function _getAdAccounts (req, res, facebookInfo) {
 }
 
 exports.campaigns = function (req, res) {
-  if (req.user.role === 'buyer') {
-    _getCampaigns(req, res, req.user.facebookInfo)
-  } else {
-    utility.callApi(`companyUser/query`, 'post', { companyId: req.user.companyUser.companyId, role: 'buyer' })
-      .then(userFound => {
-        if (userFound && userFound[0]) {
-          _getCampaigns(req, res, userFound[0].facebookInfo)
-        } else {
-          return sendErrorResponse(res, 500, {message: 'Internal Error occurred. Please contact admin'})
-        }
-      })
-      .catch(error => {
-        return sendErrorResponse(res, 500, error)
-      })
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
   }
-}
-
-function _getCampaigns (req, res, facebookInfo) {
   facebookApiCaller('v6.0', `${req.params.ad_account_id}/campaigns?fields=name,id,status&access_token=${facebookInfo.fbToken}`, 'get')
     .then(response => {
       if (response.body.error) {
@@ -363,24 +335,10 @@ function _getCampaigns (req, res, facebookInfo) {
 }
 
 exports.adSets = function (req, res) {
-  if (req.user.role === 'buyer') {
-    _getAdSets(req, res, req.user.facebookInfo)
-  } else {
-    utility.callApi(`companyUser/query`, 'post', { companyId: req.user.companyUser.companyId, role: 'buyer' })
-      .then(userFound => {
-        if (userFound && userFound[0]) {
-          _getAdSets(req, res, userFound[0].facebookInfo)
-        } else {
-          return sendErrorResponse(res, 500, {message: 'Internal Error occurred. Please contact admin'})
-        }
-      })
-      .catch(error => {
-        return sendErrorResponse(res, 500, error)
-      })
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
   }
-}
-
-function _getAdSets (req, res, facebookInfo) {
   facebookApiCaller('v6.0', `${req.params.ad_campaign_id}/adsets?fields=id,name,start_time,end_time,daily_budget,lifetime_budget&access_token=${facebookInfo.fbToken}`, 'get')
     .then(response => {
       if (response.body.error) {
