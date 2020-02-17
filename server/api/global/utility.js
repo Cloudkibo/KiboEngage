@@ -1,4 +1,5 @@
 const {callApi} = require('../v1.1/utility')
+const compose = require('composable-middleware')
 const logger = require('../../components/logger')
 const config = require('./../../config/environment')
 const nodemailer = require('nodemailer')
@@ -204,6 +205,30 @@ const domainName = function (url) {
     return null
   }
 }
+
+const attachCompanyUserInfo = function () {
+  return compose().use((req, res, next) => {
+    callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
+      .then(companyUser => {
+        if (!companyUser) {
+          return res.status(404).json({
+            status: 'failed',
+            description: 'The user account does not belong to any company. Please contact support'
+          })
+        }
+        req.user.companyUser = companyUser
+        next()
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 'failed',
+          payload: `Failed to fetch company user ${JSON.stringify(error)}`
+        })
+      })
+  })
+}
+
+exports.attachCompanyUserInfo = attachCompanyUserInfo
 exports.domainName = domainName
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject

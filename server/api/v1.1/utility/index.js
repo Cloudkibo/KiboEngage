@@ -1,7 +1,8 @@
 const requestPromise = require('request-promise')
 const config = require('../../../config/environment/index')
+const { accounts } = require('../../global/constants').serverConstants
 
-exports.callApi = (endpoint, method = 'get', body, type = 'accounts', token) => {
+exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
   let headers
   if (token && token !== '') {
     headers = {
@@ -34,4 +35,5 @@ exports.callApi = (endpoint, method = 'get', body, type = 'accounts', token) => 
       }
     })
   })
+    .catch(err => console.log(err.response))
 }

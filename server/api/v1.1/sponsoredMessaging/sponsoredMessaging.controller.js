@@ -7,55 +7,21 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.controller.js'
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const { kiboengage } = require('../../global/constants').serverConstants
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
-    .then(companyUser => {
-      if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
-      }
-      utility.callApi(`sponsoredmessaging/query`, 'get', { companyId: companyUser.companyId })
-        .then(sponsoredMessages => {
-          return res.status(200).json({ status: 'success', payload: sponsoredMessages })
-        })
-        .catch(error => {
-          return res.status(500).json({ status: 'failed', payload: `Failed to fetch sponsoredMessages ${JSON.stringify(error)}` })
-        })
+  utility.callApi(`sponsoredMessaging/query`, 'get', { companyId: req.user.companyUser.companyId }, kiboengage)
+    .then(sponsoredMessages => {
+      return res.status(200).json({ status: 'success', payload: sponsoredMessages })
     })
     .catch(error => {
-      return res.status(500).json({
-        status: 'failed',
-        payload: `Failed to fetch company user ${JSON.stringify(error)}`
-      })
+      return res.status(500).json({ status: 'failed', payload: `Failed to fetch sponsoredMessages ${JSON.stringify(error)}` })
     })
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
-    .then(companyUser => {
-      if (!companyUser) {
-        return res.status(404).json({
-          status: 'failed',
-          description: 'The user account does not belong to any company. Please contact support'
-        })
-      }
-
-      let payload = logiclayer.preparePayload(companyUser.companyId, req.user._id, req.body.status)
-      utility.callApi(`sponsoredMessaging`, 'post', payload)
-        .then(sponsoredMessage => {
-          return res.status(201).json({ status: 'success', payload: sponsoredMessage })
-        })
-        .catch(error => {
-          return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
-        })
-    })
-}
-
-exports.update = function (req, res) {
-  utility.callApi(`sponsoredMessaging/${req.params.id}`, 'post', req.body)
+  let payload = logiclayer.preparePayload(req.user.companyUser.companyId, req.user._id, req.body.status)
+  utility.callApi(`sponsoredMessaging`, 'post', payload, kiboengage)
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
@@ -63,6 +29,17 @@ exports.update = function (req, res) {
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
+
+exports.update = function (req, res) {
+  utility.callApi(`sponsoredMessaging/${req.params.id}`, 'post', req.body, kiboengage)
+    .then(sponsoredMessage => {
+      return res.status(201).json({ status: 'success', payload: sponsoredMessage })
+    })
+    .catch(error => {
+      return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
+    })
+}
+
 function updateClickCountId (payload, sponsoredMessageID) {
   for (let i = 0; i < payload.length; i++) {
     logger.serverLog(TAG, `updateClickCountId ${sponsoredMessageID}`, 'debug')
@@ -202,7 +179,7 @@ exports.send = function (req, res) {
 }
 
 exports.delete = function (req, res) {
-  utility.callApi(`sponsoredMessaging/${req.params._id}`, 'DELETE', {})
+  utility.callApi(`sponsoredMessaging/${req.params._id}`, 'DELETE', {}, kiboengage)
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
@@ -319,4 +296,100 @@ exports.sendInSandbox = function (req, res) {
   } else {
     return sendErrorResponse(res, 500, {message: 'Failed to send sponsored message due missing account_id'})
   }
+}
+
+exports.adAccounts = function (req, res) {
+  if (req.user.role === 'buyer') {
+    _getAdAccounts(req, res, req.user.facebookInfo)
+  } else {
+    utility.callApi(`companyUser/query`, 'post', { companyId: req.user.companyUser.companyId, role: 'buyer' })
+      .then(userFound => {
+        if (userFound && userFound[0]) {
+          _getAdAccounts(req, res, userFound[0].facebookInfo)
+        } else {
+          return sendErrorResponse(res, 500, {message: 'Internal Error occurred. Please contact admin'})
+        }
+      })
+      .catch(error => {
+        return sendErrorResponse(res, 500, error)
+      })
+  }
+}
+
+function _getAdAccounts (req, res, facebookInfo) {
+  facebookApiCaller('v6.0', `${facebookInfo.fbId}/adaccounts?fields=name,account_id,id,currency,account_status&access_token=${facebookInfo.fbToken}`, 'get')
+    .then(response => {
+      if (response.body.error) {
+        sendOpAlert(response.body.error, 'fetching all ad accounts of a user', '', req.user._id, req.user.companyId)
+        return sendErrorResponse(res, 500, response.body.error)
+      }
+      return sendSuccessResponse(res, 200, response.body.data)
+    })
+    .catch(error => {
+      return sendErrorResponse(res, 500, error)
+    })
+}
+
+exports.campaigns = function (req, res) {
+  if (req.user.role === 'buyer') {
+    _getCampaigns(req, res, req.user.facebookInfo)
+  } else {
+    utility.callApi(`companyUser/query`, 'post', { companyId: req.user.companyUser.companyId, role: 'buyer' })
+      .then(userFound => {
+        if (userFound && userFound[0]) {
+          _getCampaigns(req, res, userFound[0].facebookInfo)
+        } else {
+          return sendErrorResponse(res, 500, {message: 'Internal Error occurred. Please contact admin'})
+        }
+      })
+      .catch(error => {
+        return sendErrorResponse(res, 500, error)
+      })
+  }
+}
+
+function _getCampaigns (req, res, facebookInfo) {
+  facebookApiCaller('v6.0', `${req.params.ad_account_id}/campaigns?fields=name,id,status&access_token=${facebookInfo.fbToken}`, 'get')
+    .then(response => {
+      if (response.body.error) {
+        sendOpAlert(response.body.error, 'fetching all ad campaigns of a user', '', req.user._id, req.user.companyId)
+        return sendErrorResponse(res, 500, response.body.error)
+      }
+      return sendSuccessResponse(res, 200, response.body.data)
+    })
+    .catch(error => {
+      return sendErrorResponse(res, 500, error)
+    })
+}
+
+exports.adSets = function (req, res) {
+  if (req.user.role === 'buyer') {
+    _getAdSets(req, res, req.user.facebookInfo)
+  } else {
+    utility.callApi(`companyUser/query`, 'post', { companyId: req.user.companyUser.companyId, role: 'buyer' })
+      .then(userFound => {
+        if (userFound && userFound[0]) {
+          _getAdSets(req, res, userFound[0].facebookInfo)
+        } else {
+          return sendErrorResponse(res, 500, {message: 'Internal Error occurred. Please contact admin'})
+        }
+      })
+      .catch(error => {
+        return sendErrorResponse(res, 500, error)
+      })
+  }
+}
+
+function _getAdSets (req, res, facebookInfo) {
+  facebookApiCaller('v6.0', `${req.params.ad_campaign_id}/adsets?fields=id,name,start_time,end_time,daily_budget,lifetime_budget&access_token=${facebookInfo.fbToken}`, 'get')
+    .then(response => {
+      if (response.body.error) {
+        sendOpAlert(response.body.error, 'fetching all ad sets of a user', '', req.user._id, req.user.companyId)
+        return sendErrorResponse(res, 500, response.body.error)
+      }
+      return sendSuccessResponse(res, 200, response.body.data)
+    })
+    .catch(error => {
+      return sendErrorResponse(res, 500, error)
+    })
 }
