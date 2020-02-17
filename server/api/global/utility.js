@@ -1,4 +1,5 @@
 const {callApi} = require('../v1.1/utility')
+const compose = require('composable-middleware')
 const logger = require('../../components/logger')
 const config = require('./../../config/environment')
 const nodemailer = require('nodemailer')
@@ -204,6 +205,40 @@ const domainName = function (url) {
     return null
   }
 }
+
+const attachBuyerInfo = function () {
+  return compose().use((req, res, next) => {
+    callApi(`companyUser/query`, 'post', { companyId: req.user.companyId, role: 'buyer' })
+      .then(buyerInfo => {
+        if (!buyerInfo) {
+          return res.status(404).json({
+            status: 'failed',
+            description: 'The buyer account has some technical problems. Please contact support'
+          })
+        }
+        return callApi(`user/query`, 'post', {domain_email: buyerInfo.domain_email})
+      })
+      .then(buyerInfo => {
+        buyerInfo = buyerInfo[0]
+        if (!buyerInfo) {
+          return res.status(404).json({
+            status: 'failed',
+            description: 'The buyer account has some technical problems. Please contact support'
+          })
+        }
+        req.user.buyerInfo = buyerInfo
+        next()
+      })
+      .catch(error => {
+        return res.status(500).json({
+          status: 'failed',
+          payload: `Failed to fetch buyer account ${JSON.stringify(error)}`
+        })
+      })
+  })
+}
+
+exports.attachBuyerInfo = attachBuyerInfo
 exports.domainName = domainName
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject

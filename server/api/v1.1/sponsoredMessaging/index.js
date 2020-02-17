@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../../../auth/auth.service')
 const validate = require('express-jsonschema').validate
+const attachBuyerInfo = require('./../../global/utility').attachBuyerInfo
 
 const controller = require('./sponsoredMessaging.controller')
 const validationSchema = require('./validationSchema')
@@ -40,6 +41,24 @@ router.delete('/:_id',
 router.get('/insights/:ad_id',
   auth.isAuthenticated(),
   controller.getInsight
+)
+
+router.get('/adAccounts',
+  auth.isAuthenticated(),
+  attachBuyerInfo(),
+  controller.adAccounts
+)
+
+router.get('/campaigns/:ad_account_id',
+  auth.isAuthenticated(),
+  attachBuyerInfo(),
+  controller.campaigns
+)
+
+router.get('/adSets/:ad_campaign_id',
+  auth.isAuthenticated(),
+  attachBuyerInfo(),
+  controller.adSets
 )
 
 module.exports = router
