@@ -379,6 +379,7 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
         },
         auth: oauth2Client
       }
+      console.log('request.range in update', request.range)
       sheets.spreadsheets.values.update(request, function (err, response) {
         if (err) {
           logger.serverLog(TAG, `Failed to update row ${JSON.stringify(err)}`, 'error')
