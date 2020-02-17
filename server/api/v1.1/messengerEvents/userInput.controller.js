@@ -417,6 +417,7 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
           auth: oauth2Client
         }
         sheets.spreadsheets.values.append(request, function (err, response) {
+          console.log('response in googlesheet insert', response)
           if (err) {
             logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
           }
