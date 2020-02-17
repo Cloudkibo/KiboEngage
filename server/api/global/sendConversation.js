@@ -148,6 +148,7 @@ const _prepareReport = (module, increment, data, subscribers, result, saveMsgRec
 }
 
 const _updateSubsForUserInput = (subscribers, waitingForUserInput) => {
+  console.log('called function _updateSubsForUserInput', waitingForUserInput)
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
