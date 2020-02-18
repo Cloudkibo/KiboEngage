@@ -66,7 +66,9 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
       broadcastId: recordObj ? recordObj.broadcastId: '',
       componentIndex: -1,
       incorrectTries: 3,
-      googleSheetRange: null 
+      googleSheetRange: null, 
+      spreadSheet: null,
+      worksheet: null
   }
   let batch = []
   let containsUserInput = false
@@ -99,6 +101,8 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
               waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
               waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
               waitingForUserInput.googleSheetRange = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.googleSheetRange  : null
+              waitingForUserInput.spreadSheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.spreadSheet  : null
+              waitingForUserInput.worksheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.worksheet  : null
             }
             else {
               waitingForUserInput.componentIndex=index
