@@ -1,9 +1,8 @@
 const { callApi } = require('../server/api/v1.1/utility')
 const logger = require('../server/components/logger')
 const TAG = 'scripts/rssScript.js'
-const og = require('open-graph')
 const async = require('async')
-const { getScheduledTime, domainName } = require('../server/api/global/utility')
+const { getScheduledTime, domainName, openGraphScrapper } = require('../server/api/global/utility')
 const RSSFeedsDataLayer = require('../server/api/v1.1/newsSections/newsSections.datalayer')
 const RssFeedPostsDataLayer = require('../server/api/v1.1/newsSections/newsPosts.datalayer')
 const RssFeedPostSubscribers = require('../server/api/v1.1/newsSections/newsPostSubscribers.datalayer')
@@ -352,28 +351,29 @@ function getMetaData (rssFeed, rssFeedPosts, page) {
     let length = rssFeed.stories.length
     async.eachOfSeries(rssFeed.stories, function (value, key, callback) {
       if (key < length) {
-        og(value, (err, meta) => {
-          if (err) {
-            logger.serverLog(TAG, 'error in fetching metdata', 'error')
-          }
-          if (meta && meta.title) {
-            gallery.push({
-              title: meta.title,
-              subtitle: meta.description ? meta.description : domainName(value),
-              image_url: meta.image && meta.image.url ? meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url : page.pagePic,
-              buttons: [
-                {
-                  type: 'web_url',
-                  title: 'Read More...',
-                  url: config.domain + `/clicked?r=${value}&m=rss&id=${rssFeedPost.rssFeedPostId}`
-                }
-              ]
-            })
-            callback()
-          } else {
-            callback()
-          }
-        })
+        openGraphScrapper(value)
+          .then(meta => {
+            if (meta && meta.ogTitle) {
+              gallery.push({
+                title: meta.ogTitle,
+                subtitle: meta.ogDescription ? meta.ogDescription : domainName(value),
+                image_url: meta.ogImage && meta.ogImage.url ? meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url : page.pagePic,
+                buttons: [
+                  {
+                    type: 'web_url',
+                    title: 'Read More...',
+                    url: config.domain + `/clicked?r=${value}&m=rss&id=${rssFeedPost.rssFeedPostId}`
+                  }
+                ]
+              })
+              callback()
+            } else {
+              callback()
+            }
+          })
+          .catch((err) => {
+            logger.serverLog(TAG, `Error from open graph ${err}`)
+          })
       } else {
         callback()
       }

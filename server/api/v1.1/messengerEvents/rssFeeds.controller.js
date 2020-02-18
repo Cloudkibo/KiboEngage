@@ -6,8 +6,7 @@ const RssFeedsDataLayer = require('../newsSections/newsSections.datalayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
 const rssScriptFunctions = require('../../../../scripts/rssFeedsScript')
-const og = require('open-graph')
-const {domainName} = require('../../global/utility')
+const {domainName, openGraphScrapper} = require('../../global/utility')
 
 exports.changeSubscription = function (req, res) {
   res.status(200).json({
@@ -391,28 +390,29 @@ function getMetaData (feed, rssFeed, page) {
     async.eachOfSeries(feed, function (value, key, callback) {
       if (key < length) {
         let valueGot = Object.keys(value).length > 0 && value.constructor === Object ? value.link : value
-        og(valueGot, (err, meta) => {
-          if (err) {
-            logger.serverLog(TAG, 'error in fetching metdata', 'error')
-          }
-          if (meta && meta.title) {
-            gallery.push({
-              title: meta.title,
-              subtitle: meta.description ? meta.description : domainName(valueGot),
-              image_url: meta.image && meta.image.url ? meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url : page.pagePic,
-              buttons: [
-                {
-                  type: 'web_url',
-                  title: 'Read More...',
-                  url: valueGot
-                }
-              ]
-            })
-            callback()
-          } else {
-            callback()
-          }
-        })
+        openGraphScrapper(valueGot)
+          .then(meta => {
+            if (meta && meta.ogTitle) {
+              gallery.push({
+                title: meta.ogTitle,
+                subtitle: meta.ogDescription ? meta.ogDescription : domainName(valueGot),
+                image_url: meta.ogImage && meta.ogImage.url ? meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url : page.pagePic,
+                buttons: [
+                  {
+                    type: 'web_url',
+                    title: 'Read More...',
+                    url: valueGot
+                  }
+                ]
+              })
+              callback()
+            } else {
+              callback()
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Error from open graph ${err}`)
+          })
       } else {
         callback()
       }

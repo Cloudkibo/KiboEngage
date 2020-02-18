@@ -1,7 +1,6 @@
-const og = require('open-graph')
 const request = require('request')
 const async = require('async')
-const {domainName} = require('../../global/utility')
+const {domainName, openGraphScrapper} = require('../../global/utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/rssFeeds/rssFeeds.logiclayer.js'
 
@@ -167,28 +166,29 @@ exports.getMetaData = function (feed, body, page) {
     async.eachOfSeries(feed, function (value, key, callback) {
       if (key < length) {
         let valueGot = Object.keys(value).length > 0 && value.constructor === Object ? value.link : value
-        og(valueGot, (err, meta) => {
-          if (err) {
+        openGraphScrapper(valueGot)
+          .then(meta => {
+            if (meta && meta.ogTitle) {
+              gallery.push({
+                title: meta.ogTitle,
+                subtitle: meta.ogDescription ? meta.ogDescription : domainName(valueGot),
+                image_url: meta.ogImage && meta.ogImage.url ? meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url : page.pagePic,
+                buttons: [
+                  {
+                    type: 'web_url',
+                    title: 'Read More...',
+                    url: valueGot
+                  }
+                ]
+              })
+              callback()
+            } else {
+              callback()
+            }
+          })
+          .catch(err => {
             logger.serverLog(TAG, `Error from open graph ${err}`)
-          }
-          if (meta && meta.title) {
-            gallery.push({
-              title: meta.title,
-              subtitle: meta.description ? meta.description : domainName(valueGot),
-              image_url: meta.image && meta.image.url ? meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url : page.pagePic,
-              buttons: [
-                {
-                  type: 'web_url',
-                  title: 'Read More...',
-                  url: valueGot
-                }
-              ]
-            })
-            callback()
-          } else {
-            callback()
-          }
-        })
+          })
       } else {
         callback()
       }
