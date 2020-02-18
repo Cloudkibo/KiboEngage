@@ -310,7 +310,8 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
         oauth2Client.credentials = integration.integrationPayload
         if (integration && integration.enabled) {
           if (broadcastPayload.action.googleSheetAction === 'insert_row') {
-            if (subscribers[0].waitingForUserInput.googleSheetRange) {
+            let resp = broadcastPayload.action
+            if (subscribers[0].waitingForUserInput.googleSheetRange && subscribers[0].waitingForUserInput.spreadSheet === resp.spreadSheet && subscribers[0].waitingForUserInput.worksheet === resp.worksheet) {
               _updateRow(req, res, subscribers[0].waitingForUserInput.googleSheetRange, broadcastPayload, subscribers, message, oauth2Client, true)
             }
             else {
@@ -435,12 +436,13 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
                 console.log('subscribers userInput', sub[0].waitingForUserInput)
                 let waitingForUserInput = sub[0].waitingForUserInput
                 waitingForUserInput.googleSheetRange = response.data.updates.updatedRange.split(':')[0]
+                waitingForUserInput.spreadSheet = resp.spreadSheet
+                waitingForUserInput.worksheet = resp.worksheet
                 logger.serverLog(TAG, ` waitingForUserInput after response ${waitingForUserInput}`)
                 let subscriber = {
                   data: sub
                 }
                 _subscriberUpdate(subscriber, waitingForUserInput)
-
               }).catch(err => {
                 logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
               })
