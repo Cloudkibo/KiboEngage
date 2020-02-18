@@ -4,7 +4,7 @@ const express = require('express')
 
 const router = express.Router()
 const validate = require('express-jsonschema').validate
-const controller = require('./rssFeeds.controller')
+const controller = require('./newsSections.controller')
 const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
 const { checkSMP } = require('../../middleware/SMPStatus.middleware')

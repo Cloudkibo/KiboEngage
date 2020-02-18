@@ -4,6 +4,7 @@ const config = require('./../../config/environment')
 const nodemailer = require('nodemailer')
 const TAG = 'server/api/global/utility'
 const _ = require('lodash')
+const ogs = require('open-graph-scraper')
 
 exports.createMessageBlocks = (linkedMessages, user, moduleId, moduleType) => {
   let messageBlockRequests = []
@@ -204,6 +205,21 @@ const domainName = function (url) {
     return null
   }
 }
+
+const openGraphScrapper = function (url) {
+  let options = {url}
+  return new Promise((resolve, reject) => {
+    ogs(options, (error, results) => {
+      if (error) {
+        reject(results.error)
+      } else {
+        resolve(results.data)
+      }
+    })
+  })
+}
+
+exports.openGraphScrapper = openGraphScrapper
 exports.domainName = domainName
 exports.getEmailObject = getEmailObject
 exports.getPlainEmailObject = getPlainEmailObject

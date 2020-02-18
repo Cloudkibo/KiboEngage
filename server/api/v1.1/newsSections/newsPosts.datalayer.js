@@ -10,9 +10,9 @@ exports.genericFindForRssFeedPosts = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`rssFeedPosts/query`, 'post', query, 'kiboengage')
+  return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
-exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unwind) => {
+exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unwind, project) => {
   let query = {
     purpose: 'aggregate',
     match: match
@@ -23,27 +23,29 @@ exports.aggregateForRssFeedPosts = (match, group, lookup, limit, sort, skip, unw
   if (sort) query.sort = sort
   if (skip) query.skip = skip
   if (unwind) query.unwind = unwind
+  if (project) query.project = project
 
-  return callApi(`rssFeedPosts/query`, 'post', query, 'kiboengage')
+  return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
 exports.createForRssFeedPosts = (payload) => {
-  return callApi(`rssFeedPosts`, 'post', payload, 'kiboengage')
+  return callApi(`newsPosts`, 'post', payload, 'kiboengage')
 }
 exports.deleteForRssFeedPosts = (queryObject) => {
   let query = {
     purpose: 'deleteMany',
     match: queryObject
   }
-  return callApi(`rssFeedPosts`, 'delete', query, 'kiboengage')
+  return callApi(`newsPosts`, 'delete', query, 'kiboengage')
 }
 
-exports.countDocuments = (filter) => {
+exports.countDocuments = (filter, project) => {
   let query = {
     purpose: 'aggregate',
     match: filter,
     group: { _id: null, count: { $sum: 1 } }
   }
-  return callApi(`rssFeedPosts/query`, 'post', query, 'kiboengage')
+  if (project) query.project = project
+  return callApi(`newsPosts/query`, 'post', query, 'kiboengage')
 }
 exports.genericUpdateRssFeedPosts = (queryObject, updated, options) => {
   let query = {
@@ -54,5 +56,5 @@ exports.genericUpdateRssFeedPosts = (queryObject, updated, options) => {
   if (options.upsert) query.upsert = options.upsert
   if (options.new) query.new = options.new
   if (options.multi) query.multi = options.multi
-  return callApi(`rssFeedPosts`, 'put', query, 'kiboengage')
+  return callApi(`newsPosts`, 'put', query, 'kiboengage')
 }

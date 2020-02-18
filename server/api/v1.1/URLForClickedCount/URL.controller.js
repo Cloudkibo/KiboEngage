@@ -7,7 +7,6 @@ const logger = require('../../../components/logger')
 const sequenceUtility = require('./../sequenceMessaging/utility')
 const { sendErrorResponse } = require('../../global/response')
 const utility = require('../utility')
-const RssFeedPostsDataLayer = require('./../rssFeeds/rssFeedPosts.datalayer')
 
 exports.index = function (req, res) {
   URLDataLayer.findOneURL(req.params.id)
@@ -151,21 +150,5 @@ exports.sequence = function (req, res) {
       if (err) {
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
-    })
-}
-exports.rss = function (req, res) {
-  URLDataLayer.findOneURL(req.params.id)
-    .then(URLObject => {
-      RssFeedPostsDataLayer.genericUpdateRssFeedPosts({_id: URLObject.module.id}, {$inc: {clicked: 1}}, {})
-        .then(updatedData => {
-          res.writeHead(301, {Location: URLObject.originalURL})
-          res.end()
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch update autoposting message ${JSON.stringify(err)}`, 'error')
-        })
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
     })
 }
