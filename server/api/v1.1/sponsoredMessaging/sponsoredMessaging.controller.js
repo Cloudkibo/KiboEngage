@@ -46,7 +46,6 @@ exports.update = function (req, res) {
 }
 
 exports.campaigns = function (req, res) {
-  console.log(req.body)
   let facebookInfo = req.user.facebookInfo
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
