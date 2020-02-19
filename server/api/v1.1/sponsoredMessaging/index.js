@@ -49,16 +49,30 @@ router.get('/adAccounts',
   controller.adAccounts
 )
 
+router.post('/campaigns',
+  auth.isAuthenticated(),
+  validate({ body: validationSchema.createCampaignsPayload }),
+  attachBuyerInfo(),
+  controller.campaigns
+)
+
 router.get('/campaigns/:ad_account_id',
   auth.isAuthenticated(),
   attachBuyerInfo(),
-  controller.campaigns
+  controller.fetchCampaigns
+)
+
+router.post('/adSets',
+  auth.isAuthenticated(),
+  validate({ body: validationSchema.createCampaignsPayload }),
+  attachBuyerInfo(),
+  controller.adSets
 )
 
 router.get('/adSets/:ad_campaign_id',
   auth.isAuthenticated(),
   attachBuyerInfo(),
-  controller.adSets
+  controller.fetchAdSets
 )
 
 module.exports = router
