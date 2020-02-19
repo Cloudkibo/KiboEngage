@@ -179,111 +179,60 @@ function updateClickCountId (payload, sponsoredMessageID) {
 }
 
 exports.send = function (req, res) {
-  const accesstoken = req.user.facebookInfo.fbToken
-  let id = req.params.id
-  if (!req.body.ad_account_id) {
-    return sendErrorResponse(res, 500, {message: 'Ad account id is must. Ad is not sent to facebook.'})
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
   }
-  if (id !== undefined && id !== '') {
-    utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
-      .then(sponsoredMessages => {
-        let sponsoredMessage = sponsoredMessages[0]
-        updateClickCountId(sponsoredMessage, id)
-        let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
-        facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
-          .then(campaignResp => {
-            if (campaignResp.body.error) {
-              sendOpAlert(campaignResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-              return sendErrorResponse(res, 500, {message: campaignResp.body.error.error_user_msg})
+  let creativePayload = logiclayer.prepareAdCreativePayload(req.body, facebookInfo.fbToken)
+  logger.serverLog(TAG, `creativePayload ${creativePayload}`)
+  facebookApiCaller('v6.0', `${req.body.adAccountId}/adcreatives`, 'post', creativePayload)
+    .then(adCreativeResp => {
+      if (adCreativeResp.body.error) {
+        sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+        return sendErrorResponse(res, 500, adCreativeResp.body.error.error_user_msg)
+      } else {
+        logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
+        let messageCreativeId = adCreativeResp.body.id
+        logger.serverLog(TAG, `messageCreativeId ${messageCreativeId}`)
+        let adPayload = logiclayer.prepareAdPayload(req.body, messageCreativeId, facebookInfo.fbToken)
+        facebookApiCaller('v6.0', `${req.body.adAccountId}/ads`, 'post', adPayload)
+          .then(adsResp => {
+            if (adsResp.body.error) {
+              sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+              return sendErrorResponse(res, 500, adsResp.body.error.error_user_msg)
             } else {
-              let campaignId = campaignResp.body.id
-              let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
-              logger.serverLog(TAG, `adsetPayload ${adsetPayload}`)
-              facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adsets`, 'post', adsetPayload)
-                .then(adsetResp => {
-                  if (adsetResp.body.error) {
-                    sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                    return sendErrorResponse(res, 500, {message: adsetResp.body.error.error_user_msg})
-                  } else {
-                    logger.serverLog(TAG, `adsetsResponse ${JSON.stringify(adsetResp.body)}`)
-                    let adsetid = adsetResp.body.id
-                    logger.serverLog(TAG, `adsetid ${adsetid}`)
-                    let creativePayload = logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
-                    logger.serverLog(TAG, `creativePayload ${creativePayload}`)
-                    facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
-                      .then(adCreativeResp => {
-                        if (adCreativeResp.body.error) {
-                          sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                          return sendErrorResponse(res, 500, {message: adCreativeResp.body.error.error_user_msg})
-                        } else {
-                          logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
-                          let messageCreativeId = adCreativeResp.body.id
-                          logger.serverLog(TAG, `messageCreativeId ${messageCreativeId}`)
-                          let adPayload = logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
-                          facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
-                            .then(adsResp => {
-                              if (adsResp.body.error) {
-                                sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                                return sendErrorResponse(res, 500, {message: adsResp.body.error.error_user_msg})
-                              } else {
-                                logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
-                                let adId = adsResp.body.id
-                                logger.serverLog(TAG, `ad_id ${adId}`)
-
-                                sendSuccessResponse(res, 200, {description: 'Your ad is sent to Facebook.'})
-
-                                // NOTE: The following code is breaking the sponsored messages
-                                // when we are trying to send the same ad again. This is actually
-                                // removing the payload of ad_set_payload and thus, we get undefined
-                                // error next time when we send same ad to facebook. This is not clear
-                                // why this code was written, therefore, I am not removing the code and
-                                // when FAIZAN is back, I will discuss with him. (SOJHARO)
-
-                                // Now since we have got respone from facebook, we shall update our database
-                                // let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
-                                // utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload)
-                                //   .then(sponsoredMessage => {
-                                //     sendSuccessResponse(res, 200, sponsoredMessage)
-                                //   })
-                                //   .catch(error => {
-                                //     console.log(error)
-                                //     return sendErrorResponse(res, 500, error)
-                                //   })
-                              }
-                            })
-                            .catch(err => {
-                              return sendErrorResponse(res, 500, err)
-                            })
-                        }
-                      })
-                      .catch(err => {
-                        logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
-                        return sendErrorResponse(res, 500, err)
-                      })
-                  }
-                })
-                .catch(err => {
-                  logger.serverLog(TAG, `error on fb call in send ad sets ${err}`)
-                  return sendErrorResponse(res, 500, err)
-                })
+              logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
+              let adId = adsResp.body.id
+              logger.serverLog(TAG, `ad_id ${adId}`)
+              let queryObject = { _id: req.params.id }
+              let dataToUpdate = { messageCreativeId, adId }
+              _storeAdAndCreativeIds(queryObject, dataToUpdate)
+              sendSuccessResponse(res, 200, {description: 'Your ad is sent to Facebook.'})
             }
           })
-          .catch(error => {
-            logger.serverLog(TAG, `error on fb call in send ad campaigns ${error}`)
-            return sendErrorResponse(res, 500, error)
+          .catch(err => {
+            return sendErrorResponse(res, 500, err)
           })
-      })
-      .catch(error => {
-        logger.serverLog(TAG, `error on sponsored messaging query ${error}`)
-        return sendErrorResponse(res, 500, error)
-      })
-  } else {
-    return sendErrorResponse(res, 500, {message: 'Failed to send sponsored message due missing account_id'})
-  }
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
+      return sendErrorResponse(res, 500, err)
+    })
+}
+
+function _storeAdAndCreativeIds (queryObject, dataToUpdate) {
+  datalayer.genericUpdateSponsoredMessaging(queryObject, dataToUpdate)
+    .then(sponsoredMessage => {
+      logger.serverLog(TAG, `Updated sponsored messaging`)
+    })
+    .catch(error => {
+      logger.serverLog(TAG, `Error on updating sponsored messaging ${JSON.stringify(error)}`)
+    })
 }
 
 exports.delete = function (req, res) {
-  utility.callApi(`sponsoredMessaging/${req.params._id}`, 'DELETE', {}, kiboengage)
+  datalayer.deleteForSponsoredMessaging({ _id: req.params.id })
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
@@ -453,4 +402,34 @@ exports.fetchAdSets = function (req, res) {
     .catch(error => {
       return sendErrorResponse(res, 500, error)
     })
+}
+
+exports.input = function (req, res) {
+  let id = {
+    _id: '5e4cf7a00a90a2e516c6b832',
+    clicks: 0,
+    companyId: '5cfe2560e6e8bf17615a5175',
+    userId: '5cfe2560e6e8bf17615a5174',
+    status: 'draft',
+    adName: 'New Ads',
+    pageId: '5e4637e6730f57d5150b88a8',
+    updatedAt: '2020-02-19T08:53:52.591Z',
+    createdAt: '2020-02-19T08:53:52.591Z',
+    __v: 0,
+    adAccountId: 'act_571432899551137',
+    campaignId: '6164254003229',
+    adSetId: '6164254003829',
+    currency: 'PKR',
+    payload: [
+      {
+        id: 1582112229183,
+        text: 'sfddsfa',
+        componentType: 'text',
+        buttons: [Array],
+        quickReplies: []
+      }
+    ],
+    campaignType: 'existing',
+    adSetType: 'existing'
+  }
 }

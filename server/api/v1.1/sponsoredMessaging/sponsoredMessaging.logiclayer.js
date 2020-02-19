@@ -80,27 +80,27 @@ exports.prepareAdsetPayload = function (body, accessToken) {
   return payload
 }
 
-exports.prepareadCreativePayload = function (body, access_token) {
+exports.prepareAdCreativePayload = function (body, accessToken) {
   let data = facebook(body.payload[0])
   data = JSON.parse(data)
   let payload = {
     object_id: body.pageId,
     object_type: 'SHARE',
     messenger_sponsored_message: JSON.stringify({message: data}),
-    access_token: access_token
+    access_token: accessToken
   }
   return payload
 }
 
-exports.prepareadAdPayload = function (body, adset_id, message_creative_id, access_token) {
+exports.prepareAdPayload = function (body, messageCreativeId, accessToken) {
   let payload = {
-    name: body.ad_name,
-    adset_id: adset_id,
+    name: body.adName,
+    adset_id: body.adSetId,
     creative: {
-      creative_id: message_creative_id
+      creative_id: messageCreativeId
     },
-    status: 'PAUSED',
-    access_token: access_token
+    status: 'ACTIVE',
+    access_token: accessToken
   }
 
   return payload
