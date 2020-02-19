@@ -118,9 +118,10 @@ exports.fetchSponsoredMessagesCriteria = function (body, companyId) {
   let finalCriteria = {}
   let countCriteria = {}
   let recordsToSkip = 0
+  let searchRegex = '.*' + body.search_value + '.*'
   let findCriteria = {
     companyId: companyId,
-    adName: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true }
+    adName: body.search_value !== '' ? { $regex: searchRegex, $options: 'i' } : { $exists: true }
   }
   if (body.status_value !== '') {
     findCriteria['status'] = body.status_value
