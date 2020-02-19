@@ -11,7 +11,6 @@ exports.aggregateForSponsoredMessaging = (match, group, lookup, limit, sort, ski
   if (limit) query.limit = limit
   if (sort) query.sort = sort
   if (skip) query.skip = skip
-
   return callApi(`sponsoredMessaging/query`, 'post', query, kiboengage)
 }
 
