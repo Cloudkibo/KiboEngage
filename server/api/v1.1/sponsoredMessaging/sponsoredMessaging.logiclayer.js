@@ -47,7 +47,7 @@ exports.prepareCampaignPayload = function (body, accessToken) {
   return payload
 }
 
-exports.prepareAdsetPayload = function (body, pageId, accessToken) {
+exports.prepareAdsetPayload = function (body, accessToken) {
   let budgetAmount = parseInt(body.budgetAmount, 10) // * 100
   let bidAmount = parseInt(body.bidAmount, 10) // * 100
   let genders = [1, 2]
@@ -73,7 +73,7 @@ exports.prepareAdsetPayload = function (body, pageId, accessToken) {
     },
     status: 'ACTIVE',
     promoted_object: {
-      page_id: pageId
+      page_id: body.pageId
     },
     access_token: accessToken
   }
@@ -89,7 +89,6 @@ exports.prepareadCreativePayload = function (body, access_token) {
     messenger_sponsored_message: JSON.stringify({message: data}),
     access_token: access_token
   }
-  console.log('messenger_sponsored_message', payload)
   return payload
 }
 
@@ -115,29 +114,57 @@ exports.prepareInsightPayload = function (access_token) {
   return payload
 }
 
-exports.updateSponsoredMessagePayload = function (queryObject, updated) {
-  let query = {
-    purpose: 'updateOne',
-    match: queryObject,
-    updated: updated
+exports.fetchSponsoredMessagesCriteria = function (body, companyId) {
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  let searchRegex = '.*' + body.search_value + '.*'
+  let findCriteria = {
+    companyId: companyId,
+    adName: body.search_value !== '' ? { $regex: searchRegex, $options: 'i' } : { $exists: true }
   }
-  return query
-}
-
-exports.updateCampaignIdPayload = function (body) {
-  let query = {
-    purpose: 'updateOne',
-    match: { _id: body._id },
-    updated: { campaignId: body.id }
+  if (body.status_value !== '') {
+    findCriteria['status'] = body.status_value
   }
-  return query
-}
-
-exports.updateAdSetIdPayload = function (body) {
-  let query = {
-    purpose: 'updateOne',
-    match: { _id: body._id },
-    updated: { adSetId: body.id }
+  if (body.page_value !== '') {
+    findCriteria['pageId'] = body.page_value
   }
-  return query
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $match: findCriteria },
+      { $sort: { createdAt: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { createdAt: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { createdAt: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  }
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
 }
