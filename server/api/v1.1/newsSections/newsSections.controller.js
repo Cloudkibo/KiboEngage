@@ -231,6 +231,15 @@ exports.fetchFeeds = function (req, res) {
         .catch(err => {
           callback(err)
         })
+    },
+    function (callback) {
+      DataLayer.genericFindForRssFeeds({companyId: req.user.companyId, integrationType: req.body.integrationType, defaultFeed: true})
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
     }
   ], 10, function (err, results) {
     if (err) {
@@ -238,7 +247,8 @@ exports.fetchFeeds = function (req, res) {
     } else {
       let countResponse = results[0]
       let rssFeeds = results[1]
-      sendSuccessResponse(res, 200, {rssFeeds: rssFeeds, count: countResponse.length > 0 ? countResponse[0].count : 0})
+      let defaultFeeds = results[2]
+      sendSuccessResponse(res, 200, {rssFeeds: rssFeeds, count: countResponse.length > 0 ? countResponse[0].count : 0, defaultFeeds: defaultFeeds})
     }
   })
 }
