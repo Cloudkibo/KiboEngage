@@ -47,7 +47,7 @@ exports.prepareCampaignPayload = function (body, accessToken) {
   return payload
 }
 
-exports.prepareAdsetPayload = function (body, pageId, accessToken) {
+exports.prepareAdsetPayload = function (body, accessToken) {
   let budgetAmount = parseInt(body.budgetAmount, 10) // * 100
   let bidAmount = parseInt(body.bidAmount, 10) // * 100
   let genders = [1, 2]
@@ -73,7 +73,7 @@ exports.prepareAdsetPayload = function (body, pageId, accessToken) {
     },
     status: 'ACTIVE',
     promoted_object: {
-      page_id: pageId
+      page_id: body.pageId
     },
     access_token: accessToken
   }

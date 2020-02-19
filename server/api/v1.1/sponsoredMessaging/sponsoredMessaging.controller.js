@@ -119,7 +119,7 @@ exports.adSets = function (req, res) {
     }
     utility.callApi(`sponsoredMessaging/query`, 'post', query, kiboengage)
       .then(sponsoredMessage => {
-        let adsetPayload = logiclayer.prepareAdsetPayload(req.body, sponsoredMessage.pageId, facebookInfo.fbToken)
+        let adsetPayload = logiclayer.prepareAdsetPayload(req.body, facebookInfo.fbToken)
         facebookApiCaller('v6.0', `${sponsoredMessage.adAccountId}/adsets`, 'post', adsetPayload)
           .then(adsetResp => {
             if (adsetResp.body.error) {
