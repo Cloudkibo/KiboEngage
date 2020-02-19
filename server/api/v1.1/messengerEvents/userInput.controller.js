@@ -387,7 +387,6 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
         },
         auth: oauth2Client
       }
-      console.log('request.range in update', request.range)
       sheets.spreadsheets.values.update(request, function (err, response) {
         if (err) {
           logger.serverLog(TAG, `Failed to update row ${JSON.stringify(err)}`, 'error')
@@ -426,14 +425,12 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
           auth: oauth2Client
         }
         sheets.spreadsheets.values.append(request, function (err, response) {
-          console.log('response in googlesheet insert', response.data)
           if (err) {
             logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
           }
           else {
             callApi(`subscribers/query`, 'post', {pageId: subscribers[0].pageId, senderId: subscribers[0].senderId, companyId: subscribers[0].companyId})
               .then(sub => {
-                console.log('subscribers userInput', sub[0].waitingForUserInput)
                 let waitingForUserInput = sub[0].waitingForUserInput
                 waitingForUserInput.googleSheetRange = response.data.updates.updatedRange.split(':')[0]
                 waitingForUserInput.spreadSheet = resp.spreadSheet
