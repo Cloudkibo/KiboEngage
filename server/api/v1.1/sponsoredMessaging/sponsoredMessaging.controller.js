@@ -403,33 +403,3 @@ exports.fetchAdSets = function (req, res) {
       return sendErrorResponse(res, 500, error)
     })
 }
-
-exports.input = function (req, res) {
-  let id = {
-    _id: '5e4cf7a00a90a2e516c6b832',
-    clicks: 0,
-    companyId: '5cfe2560e6e8bf17615a5175',
-    userId: '5cfe2560e6e8bf17615a5174',
-    status: 'draft',
-    adName: 'New Ads',
-    pageId: '5e4637e6730f57d5150b88a8',
-    updatedAt: '2020-02-19T08:53:52.591Z',
-    createdAt: '2020-02-19T08:53:52.591Z',
-    __v: 0,
-    adAccountId: 'act_571432899551137',
-    campaignId: '6164254003229',
-    adSetId: '6164254003829',
-    currency: 'PKR',
-    payload: [
-      {
-        id: 1582112229183,
-        text: 'sfddsfa',
-        componentType: 'text',
-        buttons: [Array],
-        quickReplies: []
-      }
-    ],
-    campaignType: 'existing',
-    adSetType: 'existing'
-  }
-}
