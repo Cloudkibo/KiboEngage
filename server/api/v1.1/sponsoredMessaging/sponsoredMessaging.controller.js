@@ -124,7 +124,7 @@ exports.adSets = function (req, res) {
           .then(adsetResp => {
             if (adsetResp.body.error) {
               sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-              return sendErrorResponse(res, 500, {message: adsetResp.body.error.error_user_msg})
+              return sendErrorResponse(res, 500, adsetResp.body.error.error_user_msg)
             } else {
               let dataToUpdate = { adSetId: adsetResp.body.id }
               _storeAdSetId(queryObject, dataToUpdate, res)
