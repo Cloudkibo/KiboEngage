@@ -7,7 +7,7 @@ const attachBuyerInfo = require('./../../global/utility').attachBuyerInfo
 const controller = require('./sponsoredMessaging.controller')
 const validationSchema = require('./validationSchema')
 
-router.get('/',
+router.post('/fetchSponsoredMessages',
   auth.isAuthenticated(),
   controller.index)
 

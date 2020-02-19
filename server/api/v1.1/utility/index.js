@@ -34,5 +34,7 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
         reject(response.payload)
       }
     })
+  }).catch(error => {
+    console.log(error.message)
   })
 }
