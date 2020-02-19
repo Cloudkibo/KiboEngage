@@ -1,12 +1,11 @@
 let { facebook } = require('../../global/prepareMessageData')
 
-exports.preparePayload = function (companyId, userId) {
+exports.preparePayload = function (companyId, userId, body) {
   let payload = {
     companyId: companyId,
     userId: userId,
-    status: 'draft'
+    ...body
   }
-
   return payload
 }
 
@@ -37,73 +36,48 @@ exports.prepareUpdatePayload = function (body, campaignId, adsetid) {
   return payload
 }
 
-exports.prepareCampaignPayload = function (body, access_token) {
+exports.prepareCampaignPayload = function (body, accessToken) {
   let payload = {
-    name: body.campaign_name,
+    name: body.name,
     objective: 'MESSAGES',
-    status: 'PAUSED',
-    access_token: access_token
+    status: 'ACTIVE',
+    access_token: accessToken
   }
   return payload
 }
 
-exports.prepareAdsetPayload = function (body, campaign_id, access_token) {
-  let budgetAmount = parseInt(body.ad_set_payload.budget.amount, 10) * 100
-  let bidAmount = parseInt(body.ad_set_payload.bidAmount, 10) * 100
-
+exports.prepareAdsetPayload = function (body, pageId, accessToken) {
+  let budgetAmount = parseInt(body.budgetAmount, 10) // * 100
+  let bidAmount = parseInt(body.bidAmount, 10) // * 100
+  let genders = [1, 2]
+  if (body.targeting.gender === 'male') {
+    genders = [1]
+  } else if (body.targeting.gender === 'female') {
+    genders = [2]
+  }
   let payload = {
-    name: body.ad_set_payload.adset_name,
+    name: body.name,
     optimization_goal: 'IMPRESSIONS',
     billing_event: 'IMPRESSIONS',
     bid_amount: bidAmount,
     daily_budget: budgetAmount,
-    campaign_id: campaign_id,
+    campaign_id: body.campaignId,
     targeting: {
       publisher_platforms: ['messenger'],
       messenger_positions: ['sponsored_messages'],
-      device_platforms: ['mobile', 'desktop']
+      device_platforms: ['mobile', 'desktop'],
+      age_min: parseInt(body.targeting.minAge, 10),
+      age_max: parseInt(body.targeting.maxAge, 10),
+      genders: genders
     },
-    status: 'PAUSED',
+    status: 'ACTIVE',
     promoted_object: {
-      page_id: body.pageId
+      page_id: pageId
     },
-    access_token: access_token
+    access_token: accessToken
   }
   return payload
 }
-//     {
-//       "message":
-//       {
-//         "text":"Sample Text",
-//         "quick_replies":[{
-//           "title":"Quick Reply Text",
-//            "content_type":"text"
-//           }]
-//         }
-//       }
-// {
-//   "message":
-//   {
-//     "attachment":
-//     {
-//       "type":"template",
-//       "payload":
-//       {
-//         "template_type":"generic",
-//         "elements":[{
-//           "title":"Image Text",
-//           "buttons":[{
-//             "type":"web_url",
-//             "title":"button text",
-//             "url":"<URL>"
-//           }],   
-//           "image_hash":"<IMAGE_HASH>"
-//         }]
-//       }
-//     },
-//     "text":"Ad text"
-//   }
-// }
 
 exports.prepareadCreativePayload = function (body, access_token) {
   let data = facebook(body.payload[0])
@@ -138,4 +112,31 @@ exports.prepareInsightPayload = function (access_token) {
     access_token: access_token
   }
   return payload
+}
+
+exports.updateSponsoredMessagePayload = function (queryObject, updated) {
+  let query = {
+    purpose: 'updateOne',
+    match: queryObject,
+    updated: updated
+  }
+  return query
+}
+
+exports.updateCampaignIdPayload = function (body) {
+  let query = {
+    purpose: 'updateOne',
+    match: { _id: body._id },
+    updated: { campaignId: body.id }
+  }
+  return query
+}
+
+exports.updateAdSetIdPayload = function (body) {
+  let query = {
+    purpose: 'updateOne',
+    match: { _id: body._id },
+    updated: { adSetId: body.id }
+  }
+  return query
 }

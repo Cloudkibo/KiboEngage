@@ -10,9 +10,13 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const { kiboengage } = require('../../global/constants').serverConstants
 
 exports.index = function (req, res) {
-  utility.callApi(`sponsoredMessaging/query`, 'get', { companyId: req.user.companyId }, kiboengage)
+  let query = {
+    purpose: 'findAll',
+    match: { companyId: req.user.companyId }
+  }
+  utility.callApi(`sponsoredMessaging/query`, 'post', query, kiboengage)
     .then(sponsoredMessages => {
-      return res.status(200).json({ status: 'success', payload: sponsoredMessages })
+      return res.status(200).json({ status: 'success', payload: { count: sponsoredMessages.length, sponsoredMessages } })
     })
     .catch(error => {
       return res.status(500).json({ status: 'failed', payload: `Failed to fetch sponsoredMessages ${JSON.stringify(error)}` })
@@ -20,7 +24,7 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  let payload = logiclayer.preparePayload(req.user.companyId, req.user._id, req.body.status)
+  let payload = logiclayer.preparePayload(req.user.companyId, req.user._id, req.body)
   utility.callApi(`sponsoredMessaging`, 'post', payload, kiboengage)
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
@@ -31,9 +35,85 @@ exports.create = function (req, res) {
 }
 
 exports.update = function (req, res) {
-  utility.callApi(`sponsoredMessaging/${req.params.id}`, 'post', req.body, kiboengage)
+  let payload = logiclayer.updateSponsoredMessagePayload({ _id: req.params.id }, req.body)
+  utility.callApi('sponsoredMessaging', 'put', payload, kiboengage)
     .then(sponsoredMessage => {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
+    })
+    .catch(error => {
+      return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
+    })
+}
+
+exports.campaigns = function (req, res) {
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
+  }
+  if (req.body.type === 'existing') {
+    let payload = logiclayer.updateCampaignIdPayload(req.body)
+    _storeCampaignId(payload, res)
+  } else {
+    let campaignPayload = logiclayer.prepareCampaignPayload(req.body, facebookInfo.fbToken)
+    facebookApiCaller('v6.0', `${req.body.adAccountId}/campaigns`, 'post', campaignPayload)
+      .then(campaignResp => {
+        if (campaignResp.body.error) {
+          sendOpAlert(campaignResp.body.error, 'creating campaign on fb in sponsored in kiboengage', '', req.user._id, req.user.companyId)
+          return sendErrorResponse(res, 500, {message: campaignResp.body.error.error_user_msg})
+        } else {
+          req.body.id = campaignResp.body.id
+          let payload = logiclayer.updateCampaignIdPayload(req.body)
+          _storeCampaignId(payload, res)
+        }
+      })
+  }
+}
+
+function _storeCampaignId (payload, res) {
+  utility.callApi('sponsoredMessaging', 'put', payload, kiboengage)
+    .then(sponsoredMessage => {
+      return res.status(201).json({ status: 'success', payload: sponsoredMessage.campaignId })
+    })
+    .catch(error => {
+      return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
+    })
+}
+
+exports.adSets = function (req, res) {
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
+  }
+  if (req.body.type === 'existing') {
+    let payload = logiclayer.updateAdSetIdPayload(req.body)
+    _storeAdSetId(payload, res)
+  } else {
+    let query = {
+      purpose: 'findOne',
+      match: { _id: req.body._id }
+    }
+    utility.callApi(`sponsoredMessaging/query`, 'post', query, kiboengage)
+      .then(sponsoredMessage => {
+        let adsetPayload = logiclayer.prepareAdsetPayload(req.body, sponsoredMessage.pageId, facebookInfo.fbToken)
+        facebookApiCaller('v6.0', `${sponsoredMessage.adAccountId}/adsets`, 'post', adsetPayload)
+          .then(adsetResp => {
+            if (adsetResp.body.error) {
+              sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+              return sendErrorResponse(res, 500, {message: adsetResp.body.error.error_user_msg})
+            } else {
+              req.body.id = adsetResp.body.id
+              let payload = logiclayer.updateAdSetIdPayload(req.body)
+              _storeAdSetId(payload, res)
+            }
+          })
+      })
+  }
+}
+
+function _storeAdSetId (payload, res) {
+  utility.callApi('sponsoredMessaging', 'put', payload, kiboengage)
+    .then(sponsoredMessage => {
+      return res.status(201).json({ status: 'success', payload: sponsoredMessage.campaignId })
     })
     .catch(error => {
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
@@ -316,7 +396,7 @@ exports.adAccounts = function (req, res) {
     })
 }
 
-exports.campaigns = function (req, res) {
+exports.fetchCampaigns = function (req, res) {
   let facebookInfo = req.user.facebookInfo
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
@@ -334,7 +414,7 @@ exports.campaigns = function (req, res) {
     })
 }
 
-exports.adSets = function (req, res) {
+exports.fetchAdSets = function (req, res) {
   let facebookInfo = req.user.facebookInfo
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
