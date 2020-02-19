@@ -41,6 +41,7 @@ exports.prepareCampaignPayload = function (body, accessToken) {
     name: body.name,
     objective: 'MESSAGES',
     status: 'ACTIVE',
+    special_ad_category: 'NONE',
     access_token: accessToken
   }
   return payload

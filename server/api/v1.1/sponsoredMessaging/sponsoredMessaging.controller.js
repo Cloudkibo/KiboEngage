@@ -46,6 +46,7 @@ exports.update = function (req, res) {
 }
 
 exports.campaigns = function (req, res) {
+  console.log(req.body)
   let facebookInfo = req.user.facebookInfo
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
@@ -58,6 +59,7 @@ exports.campaigns = function (req, res) {
     facebookApiCaller('v6.0', `${req.body.adAccountId}/campaigns`, 'post', campaignPayload)
       .then(campaignResp => {
         if (campaignResp.body.error) {
+          console.log(campaignResp.body.error)
           sendOpAlert(campaignResp.body.error, 'creating campaign on fb in sponsored in kiboengage', '', req.user._id, req.user.companyId)
           return sendErrorResponse(res, 500, {message: campaignResp.body.error.error_user_msg})
         } else {
@@ -72,6 +74,7 @@ exports.campaigns = function (req, res) {
 function _storeCampaignId (payload, res) {
   utility.callApi('sponsoredMessaging', 'put', payload, kiboengage)
     .then(sponsoredMessage => {
+      console.log(sponsoredMessage)
       return res.status(201).json({ status: 'success', payload: sponsoredMessage.campaignId })
     })
     .catch(error => {
