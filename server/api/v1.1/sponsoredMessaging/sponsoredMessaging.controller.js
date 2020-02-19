@@ -46,6 +46,7 @@ exports.update = function (req, res) {
 }
 
 exports.campaigns = function (req, res) {
+  console.log(req.body)
   let facebookInfo = req.user.facebookInfo
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
@@ -55,7 +56,7 @@ exports.campaigns = function (req, res) {
     _storeCampaignId(payload, res)
   } else {
     let campaignPayload = logiclayer.prepareCampaignPayload(req.body, facebookInfo.fbToken)
-    facebookApiCaller('v6.0', `act_${req.body.adAccountId}/campaigns`, 'post', campaignPayload)
+    facebookApiCaller('v6.0', `${req.body.adAccountId}/campaigns`, 'post', campaignPayload)
       .then(campaignResp => {
         if (campaignResp.body.error) {
           sendOpAlert(campaignResp.body.error, 'creating campaign on fb in sponsored in kiboengage', '', req.user._id, req.user.companyId)
