@@ -112,7 +112,7 @@ exports.fetchColumns = function (req, res) {
               .then(dataToSend => {
                 let googleSheetcolumns = dataToSend.googleSheetColumns.filter(column => column !== null)
                 dataToSend.googleSheetColumns = googleSheetcolumns
-                logger.serverLog(TAG, `dataToSend.googleSheetColumns ${dataToSend.googleSheetColumns}`)
+                logger.serverLog(TAG, `dataToSend.googleSheetColumns ${JSON.stringify(dataToSend.googleSheetColumns)}`)
                 if (req.body.user_input) {
                   resolve(dataToSend)
                 } else {
