@@ -10,9 +10,9 @@ exports.facebook = (body, fname, lname) => {
         data = JSON.parse(body.quick_replies[i].payload)
       }
       if (data) {
-        for (let i = 0; i < data.length; i++) {
-          if (data[i] && data[i].action === 'hubspot') {
-            data[i] = remove_hubspot_data(data[i])
+        for (let j = 0; j < data.length; j++) {
+          if (data[j] && data[j].action === 'hubspot') {
+            data[j] = remove_hubspot_data(data[j])
           }
         }
       }
