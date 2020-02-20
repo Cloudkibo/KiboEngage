@@ -1,4 +1,5 @@
-import {remove_hubspot_data} from '../v1.1/broadcasts/broadcasts.utility'
+let { remove_hubspot_data } = require('../v1.1/broadcasts/broadcasts.utility')
+
 exports.facebook = (body, fname, lname) => {
   let payload = {}
   let text = body.text
