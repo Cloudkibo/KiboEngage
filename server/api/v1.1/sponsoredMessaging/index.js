@@ -25,6 +25,7 @@ router.post('/update/:id',
 router.post('/send/:id',
   auth.isAuthenticated(),
   validate({ body: validationSchema.updatePayload }),
+  attachBuyerInfo(),
   controller.send
 )
 
