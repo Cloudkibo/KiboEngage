@@ -40,3 +40,11 @@ exports.genericUpdateSponsoredMessaging = (queryObject, updated, options) => {
   }
   return callApi(`sponsoredMessaging`, 'put', query, kiboengage)
 }
+
+exports.deleteForSponsoredMessaging = (queryObject) => {
+  let query = {
+    purpose: 'deleteMany',
+    match: queryObject
+  }
+  return callApi(`sponsoredMessaging`, 'delete', query, kiboengage)
+}

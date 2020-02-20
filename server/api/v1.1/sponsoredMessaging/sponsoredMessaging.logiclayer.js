@@ -48,8 +48,9 @@ exports.prepareCampaignPayload = function (body, accessToken) {
 }
 
 exports.prepareAdsetPayload = function (body, accessToken) {
-  let budgetAmount = parseInt(body.budgetAmount, 10) // * 100
-  let bidAmount = parseInt(body.bidAmount, 10) // * 100
+  let offSetValue = currencyCodes.filter(cc => cc.Code === body.currency)[0].Offset
+  let budgetAmount = parseInt(body.budgetAmount, 10) * offSetValue
+  let bidAmount = parseInt(body.bidAmount, 10) * offSetValue
   let genders = [1, 2]
   if (body.targeting.gender === 'male') {
     genders = [1]
@@ -80,27 +81,27 @@ exports.prepareAdsetPayload = function (body, accessToken) {
   return payload
 }
 
-exports.prepareadCreativePayload = function (body, access_token) {
+exports.prepareAdCreativePayload = function (body, accessToken) {
   let data = facebook(body.payload[0])
   data = JSON.parse(data)
   let payload = {
     object_id: body.pageId,
     object_type: 'SHARE',
     messenger_sponsored_message: JSON.stringify({message: data}),
-    access_token: access_token
+    access_token: accessToken
   }
   return payload
 }
 
-exports.prepareadAdPayload = function (body, adset_id, message_creative_id, access_token) {
+exports.prepareAdPayload = function (body, messageCreativeId, accessToken) {
   let payload = {
-    name: body.ad_name,
-    adset_id: adset_id,
+    name: body.adName,
+    adset_id: body.adSetId,
     creative: {
-      creative_id: message_creative_id
+      creative_id: messageCreativeId
     },
-    status: 'PAUSED',
-    access_token: access_token
+    status: 'ACTIVE',
+    access_token: accessToken
   }
 
   return payload
@@ -168,3 +169,281 @@ exports.fetchSponsoredMessagesCriteria = function (body, companyId) {
     countCriteria
   }
 }
+
+let currencyCodes = [
+  {
+    'Name': 'Algerian Dinar',
+    'Code': 'DZD',
+    'Offset': 100
+  },
+  {
+    'Name': 'Argentine Peso',
+    'Code': 'ARS',
+    'Offset': 100
+  },
+  {
+    'Name': 'Australian Dollar',
+    'Code': 'AUD',
+    'Offset': 100
+  },
+  {
+    'Name': 'Bangladeshi Taka',
+    'Code': 'BDT',
+    'Offset': 100
+  },
+  {
+    'Name': 'Bolivian Boliviano',
+    'Code': 'BOB',
+    'Offset': 100
+  },
+  {
+    'Name': 'Brazilian Real',
+    'Code': 'BRL',
+    'Offset': 100
+  },
+  {
+    'Name': 'British Pound',
+    'Code': 'GBP',
+    'Offset': 100
+  },
+  {
+    'Name': 'Canadian Dollar',
+    'Code': 'CAD',
+    'Offset': 100
+  },
+  {
+    'Name': 'Chilean Peso',
+    'Code': 'CLP',
+    'Offset': 1
+  },
+  {
+    'Name': 'Chinese Yuan',
+    'Code': 'CNY',
+    'Offset': 100
+  },
+  {
+    'Name': 'Colombian Peso',
+    'Code': 'COP',
+    'Offset': 1
+  },
+  {
+    'Name': 'Costa Rican Colon',
+    'Code': 'CRC',
+    'Offset': 1
+  },
+  {
+    'Name': 'Czech Koruna',
+    'Code': 'CZK',
+    'Offset': 100
+  },
+  {
+    'Name': 'Danish Krone',
+    'Code': 'DKK',
+    'Offset': 100
+  },
+  {
+    'Name': 'Egyptian Pounds',
+    'Code': 'EGP',
+    'Offset': 100
+  },
+  {
+    'Name': 'Euro',
+    'Code': 'EUR',
+    'Offset': 100
+  },
+  {
+    'Name': 'Guatemalan Quetza',
+    'Code': 'GTQ',
+    'Offset': 100
+  },
+  {
+    'Name': 'Honduran Lempira',
+    'Code': 'HNL',
+    'Offset': 100
+  },
+  {
+    'Name': 'Hong Kong Dollar',
+    'Code': 'HKD',
+    'Offset': 100
+  },
+  {
+    'Name': 'Hungarian Forint',
+    'Code': 'HUF',
+    'Offset': 1
+  },
+  {
+    'Name': 'Iceland Krona',
+    'Code': 'ISK',
+    'Offset': 1
+  },
+  {
+    'Name': 'Indian Rupee',
+    'Code': 'INR',
+    'Offset': 100
+  },
+  {
+    'Name': 'Indonesian Rupiah',
+    'Code': 'IDR',
+    'Offset': 1
+  },
+  {
+    'Name': 'Israeli New Shekel',
+    'Code': 'ILS',
+    'Offset': 100
+  },
+  {
+    'Name': 'Japanese Yen',
+    'Code': 'JPY',
+    'Offset': 1
+  },
+  {
+    'Name': 'Kenyan Shilling',
+    'Code': 'KES',
+    'Offset': 100
+  },
+  {
+    'Name': 'Korean Won',
+    'Code': 'KRW',
+    'Offset': 1
+  },
+  {
+    'Name': 'Macau Patacas',
+    'Code': 'MOP',
+    'Offset': 100
+  },
+  {
+    'Name': 'Malaysian Ringgit',
+    'Code': 'MYR',
+    'Offset': 100
+  },
+  {
+    'Name': 'Mexican Peso',
+    'Code': 'MXN',
+    'Offset': 100
+  },
+  {
+    'Name': 'New Zealand Dollar',
+    'Code': 'NZD',
+    'Offset': 100
+  },
+  {
+    'Name': 'Nicaraguan Cordoba',
+    'Code': 'NIO',
+    'Offset': 100
+  },
+  {
+    'Name': 'Nigerian Naira',
+    'Code': 'NGN',
+    'Offset': 100
+  },
+  {
+    'Name': 'Norwegian Krone',
+    'Code': 'NOK',
+    'Offset': 100
+  },
+  {
+    'Name': 'Pakistani Rupee',
+    'Code': 'PKR',
+    'Offset': 100
+  },
+  {
+    'Name': 'Paraguayan Guarani',
+    'Code': 'PYG',
+    'Offset': 1
+  },
+  {
+    'Name': 'Peruvian Nuevo Sol',
+    'Code': 'PEN',
+    'Offset': 100
+  },
+  {
+    'Name': 'Philippine Peso',
+    'Code': 'PHP',
+    'Offset': 100
+  },
+  {
+    'Name': 'Polish Zloty',
+    'Code': 'PLN',
+    'Offset': 100
+  },
+  {
+    'Name': 'Qatari Rials',
+    'Code': 'QAR',
+    'Offset': 100
+  },
+  {
+    'Name': 'Romanian Leu',
+    'Code': 'RON',
+    'Offset': 100
+  },
+  {
+    'Name': 'Russian Ruble',
+    'Code': 'RUB',
+    'Offset': 100
+  },
+  {
+    'Name': 'Saudi Arabian Riyal',
+    'Code': 'SAR',
+    'Offset': 100
+  },
+  {
+    'Name': 'Singapore Dollar',
+    'Code': 'SGD',
+    'Offset': 100
+  },
+  {
+    'Name': 'South African Rand',
+    'Code': 'ZAR',
+    'Offset': 100
+  },
+  {
+    'Name': 'Swedish Krona',
+    'Code': 'SEK',
+    'Offset': 100
+  },
+  {
+    'Name': 'Swiss Franc',
+    'Code': 'CHF',
+    'Offset': 100
+  },
+  {
+    'Name': 'Taiwan Dollar',
+    'Code': 'TWD',
+    'Offset': 1
+  },
+  {
+    'Name': 'Thai Baht',
+    'Code': 'THB',
+    'Offset': 100
+  },
+  {
+    'Name': 'Turkish Lira',
+    'Code': 'TRY',
+    'Offset': 100
+  },
+  {
+    'Name': 'Uae Dirham',
+    'Code': 'AED',
+    'Offset': 100
+  },
+  {
+    'Name': 'United States Dollar',
+    'Code': 'USD',
+    'Offset': 100
+  },
+  {
+    'Name': 'Uruguay Peso',
+    'Code': 'UYU',
+    'Offset': 100
+  },
+  {
+    'Name': 'Venezuelan Bolivar',
+    'Code': 'VEF',
+    'Offset': 100
+  },
+  {
+    'Name': 'Vietnamese Dong',
+    'Code': 'VND',
+    'Offset': 1
+  }
+]

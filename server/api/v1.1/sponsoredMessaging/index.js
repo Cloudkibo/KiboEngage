@@ -34,7 +34,7 @@ router.post('/sendInSandbox/:id',
   controller.sendInSandbox
 )
 
-router.delete('/:_id',
+router.delete('/:id',
   auth.isAuthenticated(),
   controller.delete)
 
