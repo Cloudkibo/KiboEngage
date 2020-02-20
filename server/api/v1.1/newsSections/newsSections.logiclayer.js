@@ -1,7 +1,6 @@
-const og = require('open-graph')
 const request = require('request')
 const async = require('async')
-const {domainName} = require('../../global/utility')
+const {domainName, openGraphScrapper} = require('../../global/utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1/rssFeeds/rssFeeds.logiclayer.js'
 
@@ -12,7 +11,8 @@ exports.fetchFeedsCriteria = function (body, companyId) {
   let findCriteria = {
     companyId: companyId,
     title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true },
-    defaultFeed: body.type_value !== '' ? body.type_value === 'default' : { $exists: true }
+    defaultFeed: body.type_value !== '' ? body.type_value === 'default' : { $exists: true },
+    integrationType: body.integrationType
   }
   if (body.status_value !== '') {
     findCriteria['isActive'] = body.status_value === 'true' ? true : false
@@ -61,51 +61,65 @@ exports.fetchFeedsCriteria = function (body, companyId) {
 }
 
 exports.getCriterias = function (body) {
-  let startDate = new Date(body.startDate) // Current date
-  startDate.setHours(0) // Set the hour, minute and second components to 0
-  startDate.setMinutes(0)
-  startDate.setSeconds(0)
-  let endDate = new Date(body.endDate) // Current date
-  endDate.setDate(endDate.getDate() + 1)
-  endDate.setHours(0) // Set the hour, minute and second components to 0
-  endDate.setMinutes(0)
-  endDate.setSeconds(0)
+  let startDate = new Date(body.startDate)
+  let endDate = new Date(body.endDate)
   let finalCriteria = [
-    { $lookup: { from: 'rssfeedpostsubscribers', localField: '_id', foreignField: 'rssFeedPostId', as: 'rssFeedPost' } },
-    { $unwind: '$rssFeedPost' },
+    { $lookup: { from: 'newspostsubscribers', localField: '_id', foreignField: 'newsPostId', as: 'newsPost' } },
+    { $unwind: '$newsPost' },
     {$group: {
       _id: '$_id',
-      seen: {$sum: {$cond: ['$rssFeedPost.seen', 1, 0]}},
-      sent: {$sum: {$cond: ['$rssFeedPost.sent', 1, 0]}},
-      clicked: {$sum: {$cond: ['$rssFeedPost.clicked', 1, 0]}},
-      rssFeedId: { '$first': '$rssFeedId' },
+      seen: {$sum: {$cond: ['$newsPost.seen', 1, 0]}},
+      sent: {$sum: {$cond: ['$newsPost.sent', 1, 0]}},
+      clicked: {$sum: {$cond: ['$newsPost.clicked', 1, 0]}},
+      newsSectionId: { '$first': '$newsSectionId' },
       pageId: {'$first': '$pageId'},
       companyId: {'$first': '$companyId'},
       datetime: {'$first': '$datetime'}
-    }}
+    }},
+    { $project:
+         {
+           year: { $year: '$datetime' },
+           month: { $month: '$datetime' },
+           day: { $dayOfMonth: '$datetime' },
+           pageId: 1,
+           newsSectionId: 1,
+           datetime: 1,
+           companyId: 1
+         }
+    }
   ]
   let countCriteria = [
-    { $lookup: { from: 'rssfeedpostsubscribers', localField: '_id', foreignField: 'rssFeedPostId', as: 'rssFeedPost' } },
-    { $unwind: '$rssFeedPost' },
-    {$group: {
-      _id: '$_id',
-      seen: {$sum: {$cond: ['$rssFeedPost.seen', 1, 0]}},
-      sent: {$sum: {$cond: ['$rssFeedPost.sent', 1, 0]}},
-      clicked: {$sum: {$cond: ['$rssFeedPost.clicked', 1, 0]}},
-      rssFeedId: { '$first': '$rssFeedId' },
-      pageId: {'$first': '$pageId'},
-      companyId: {'$first': '$companyId'},
-      datetime: {'$first': '$datetime'}
-    }}
+    { $project:
+         {
+           doc: '$$ROOT',
+           year: { $year: '$datetime' },
+           month: { $month: '$datetime' },
+           day: { $dayOfMonth: '$datetime' },
+           pageId: 1,
+           newsSectionId: 1,
+           datetime: 1,
+           companyId: 1
+         }
+    }
   ]
   let recordsToSkip = 0
   let findCriteria = {
-    rssFeedId: body.feedId,
-    'datetime': body.startDate && body.startDate !== '' && body.endDate && body.endDate !== '' ? {
-      $gte: startDate,
-      $lt: endDate
-    } : { $exists: true },
+    newsSectionId: body.feedId,
     pageId: body.page_value && body.page_value !== '' ? body.page_value : { $exists: true }
+  }
+  if (body.startDate && body.startDate !== '' && body.endDate && body.endDate !== '') {
+    findCriteria.month = {
+      $gte: startDate.getUTCMonth() + 1,
+      $lte: endDate.getUTCMonth() + 1
+    }
+    findCriteria.day = {
+      $gte: startDate.getUTCDate(),
+      $lte: endDate.getUTCDate()
+    }
+    findCriteria.year = {
+      $gte: startDate.getUTCFullYear(),
+      $lte: endDate.getUTCFullYear()
+    }
   }
   if (body.first_page === 'first') {
     finalCriteria.push(
@@ -145,34 +159,36 @@ exports.getCriterias = function (body) {
   }
 }
 
-exports.getMetaData = function (feed, body) {
+exports.getMetaData = function (feed, body, page) {
   return new Promise((resolve, reject) => {
     let gallery = []
-    let length = body.storiesCount
+    let length = body.storiesCount ? body.storiesCount : feed.length
     async.eachOfSeries(feed, function (value, key, callback) {
       if (key < length) {
-        og(value.link, (err, meta) => {
-          if (err) {
+        let valueGot = Object.keys(value).length > 0 && value.constructor === Object ? value.link : value
+        openGraphScrapper(valueGot)
+          .then(meta => {
+            if (meta && meta.ogTitle) {
+              gallery.push({
+                title: meta.ogTitle,
+                subtitle: meta.ogDescription ? meta.ogDescription : domainName(valueGot),
+                image_url: meta.ogImage && meta.ogImage.url ? meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url : page.pagePic,
+                buttons: [
+                  {
+                    type: 'web_url',
+                    title: 'Read More...',
+                    url: valueGot
+                  }
+                ]
+              })
+              callback()
+            } else {
+              callback()
+            }
+          })
+          .catch(err => {
             logger.serverLog(TAG, `Error from open graph ${err}`)
-          }
-          if (meta && meta.title && meta.image) {
-            gallery.push({
-              title: meta.title,
-              subtitle: meta.description ? meta.description : domainName(value.link),
-              image_url: meta.image.url.constructor === Array ? meta.image.url[0] : meta.image.url,
-              buttons: [
-                {
-                  type: 'web_url',
-                  title: 'Read More...',
-                  url: value.link
-                }
-              ]
-            })
-            callback()
-          } else {
-            callback()
-          }
-        })
+          })
       } else {
         callback()
       }

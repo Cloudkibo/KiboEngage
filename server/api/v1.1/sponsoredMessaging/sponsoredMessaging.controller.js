@@ -176,20 +176,24 @@ exports.send = function (req, res) {
                         }
                       })
                       .catch(err => {
+                        logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
                         return sendErrorResponse(res, 500, err)
                       })
                   }
                 })
                 .catch(err => {
+                  logger.serverLog(TAG, `error on fb call in send ad sets ${err}`)
                   return sendErrorResponse(res, 500, err)
                 })
             }
           })
           .catch(error => {
+            logger.serverLog(TAG, `error on fb call in send ad campaigns ${error}`)
             return sendErrorResponse(res, 500, error)
           })
       })
       .catch(error => {
+        logger.serverLog(TAG, `error on sponsored messaging query ${error}`)
         return sendErrorResponse(res, 500, error)
       })
   } else {
