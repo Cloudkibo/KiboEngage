@@ -724,9 +724,11 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         if (button.payload) {
           data = JSON.parse(button.payload)
         }
-        for (let i = 0; i < data.length; i++) {
-          if (data[i] && data[i].action === 'hubspot') {
-            data[i] = remove_hubspot_data(data[i])
+        if (data) {
+          for (let i = 0; i < data.length; i++) {
+            if (data[i] && data[i].action === 'hubspot') {
+              data[i] = remove_hubspot_data(data[i])
+            }
           }
         }
         if (button.payload) {

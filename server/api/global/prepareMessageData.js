@@ -9,9 +9,11 @@ exports.facebook = (body, fname, lname) => {
       if (body.quick_replies[i].payload) {
         data = JSON.parse(body.quick_replies[i].payload)
       }
-      for (let i = 0; i < data.length; i++) {
-        if (data[i] && data[i].action === 'hubspot') {
-          data[i] = remove_hubspot_data(data[i])
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          if (data[i] && data[i].action === 'hubspot') {
+            data[i] = remove_hubspot_data(data[i])
+          }
         }
       }
       if (body.quick_replies[i].payload) {
