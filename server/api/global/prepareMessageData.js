@@ -1,6 +1,23 @@
+import {remove_hubspot_data} from '../v1.1/broadcasts/broadcasts.utility'
 exports.facebook = (body, fname, lname) => {
   let payload = {}
   let text = body.text
+  var data = null
+  if (body.quick_replies) {
+    for (let i = 0; i < body.quick_replies.length; i++) {
+      if (body.quick_replies[i].payload) {
+        data = JSON.parse(body.quick_replies[i].payload)
+      }
+      for (let i = 0; i < data.length; i++) {
+        if (data[i] && data[i].action === 'hubspot') {
+          data[i] = remove_hubspot_data(data[i])
+        }
+      }
+      if (body.quick_replies[i].payload) {
+        body.quick_replies[i].payload = JSON.stringify(data)
+      }
+    }
+  }
   if (body.componentType === 'polls') {
     payload = {
       text: text,
