@@ -865,3 +865,4 @@ exports.uploadOnFacebook = uploadOnFacebook
 exports.addModuleIdIfNecessary = addModuleIdIfNecessary
 exports.isWhiteListedDomain = isWhiteListedDomain
 exports.isWebView = isWebView
+exports.remove_hubspot_data = remove_hubspot_data
