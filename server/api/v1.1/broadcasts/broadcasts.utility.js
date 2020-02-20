@@ -720,7 +720,6 @@ function addModuleIdIfNecessary (payload, broadcastId) {
   for (let i = 0; i < payload.length; i++) {
     var data = null
     if (payload[i].quickReplies && payload[i].quickReplies.length > 0) {
-      console.log('body.quickReplies.length', payload[i].quickReplies.length)
       for (let k = 0; k < payload[i].quickReplies.length; k++) {
         if (payload[i].quickReplies[k].payload) {
           data = JSON.parse(payload[i].quickReplies[k].payload)
@@ -733,7 +732,6 @@ function addModuleIdIfNecessary (payload, broadcastId) {
           }
         }
         if (payload[i].quickReplies[k].payload) {
-          console.log('body.quickReplies.data', data)
           payload[i].quickReplies[k].payload = JSON.stringify(data)
         }
       }
