@@ -724,6 +724,7 @@ function addModuleIdIfNecessary (payload, broadcastId) {
         if (button.payload) {
           data = JSON.parse(button.payload)
         }
+        console.log('data.action in addModuleIdIfNecessary', data)
         if (data && data.action === 'hubspot') {
           button.payload = remove_hubspot_data(data)
           if (button.payload) {
