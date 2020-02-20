@@ -717,8 +717,28 @@ function remove_hubspot_data (payload) {
 }
 function addModuleIdIfNecessary (payload, broadcastId) {
   logger.serverLog(TAG, `addModuleIdIfNecessary ${broadcastId}`, 'debug')
-  var data = null
   for (let i = 0; i < payload.length; i++) {
+    var data = null
+    if (payload[i].quickReplies && payload[i].quickReplies.length > 0) {
+      console.log('body.quickReplies.length', payload[i].quickReplies.length)
+      for (let k = 0; k < payload[i].quickReplies.length; k++) {
+        if (payload[i].quickReplies[k].payload) {
+          data = JSON.parse(payload[i].quickReplies[k].payload)
+        }
+        if (data) {
+          for (let j = 0; j < data.length; j++) {
+            if (data[j] && data[j].action === 'hubspot') {
+              data[j] = remove_hubspot_data(data[j])
+            }
+          }
+        }
+        if (payload[i].quickReplies[k].payload) {
+          console.log('body.quickReplies.data', data)
+          payload[i].quickReplies[k].payload = JSON.stringify(data)
+        }
+      }
+    }
+    data = null
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
         if (button.payload) {

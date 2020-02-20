@@ -4,25 +4,6 @@ exports.facebook = (body, fname, lname) => {
   let payload = {}
   let text = body.text
   var data = null
-  if (body.quickReplies && body.quickReplies.length > 0) {
-    console.log('body.quickReplies.length', body.quickReplies.length)
-    for (let i = 0; i < body.quickReplies.length; i++) {
-      if (body.quickReplies[i].payload) {
-        data = JSON.parse(body.quickReplies[i].payload)
-      }
-      if (data) {
-        for (let j = 0; j < data.length; j++) {
-          if (data[j] && data[j].action === 'hubspot') {
-            data[j] = remove_hubspot_data(data[j])
-          }
-        }
-      }
-      if (body.quickReplies[i].payload) {
-        console.log('body.quickReplies.data', data)
-        body.quickReplies[i].payload = JSON.stringify(data)
-      }
-    }
-  }
   if (body.componentType === 'polls') {
     payload = {
       text: text,
