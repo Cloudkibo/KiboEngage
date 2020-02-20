@@ -717,18 +717,40 @@ function remove_hubspot_data (payload) {
 }
 function addModuleIdIfNecessary (payload, broadcastId) {
   logger.serverLog(TAG, `addModuleIdIfNecessary ${broadcastId}`, 'debug')
-  var data = null
   for (let i = 0; i < payload.length; i++) {
+    var data = null
+    if (payload[i].quickReplies && payload[i].quickReplies.length > 0) {
+      for (let k = 0; k < payload[i].quickReplies.length; k++) {
+        if (payload[i].quickReplies[k].payload) {
+          data = JSON.parse(payload[i].quickReplies[k].payload)
+        }
+        if (data) {
+          for (let j = 0; j < data.length; j++) {
+            if (data[j] && data[j].action === 'hubspot') {
+              data[j] = remove_hubspot_data(data[j])
+            }
+          }
+        }
+        if (payload[i].quickReplies[k].payload) {
+          payload[i].quickReplies[k].payload = JSON.stringify(data)
+        }
+      }
+    }
+    data = null
     if (payload[i].buttons && payload[i].buttons.length > 0) {
       payload[i].buttons.forEach((button) => {
         if (button.payload) {
           data = JSON.parse(button.payload)
         }
-        if (data && data.action === 'hubspot') {
-          button.payload = remove_hubspot_data(data)
-          if (button.payload) {
-            button.payload = JSON.stringify(button.payload)
+        if (data) {
+          for (let i = 0; i < data.length; i++) {
+            if (data[i] && data[i].action === 'hubspot') {
+              data[i] = remove_hubspot_data(data[i])
+            }
           }
+        }
+        if (button.payload) {
+          button.payload = JSON.stringify(data)
         }
         if (button.url && !button.messenger_extensions) {
           let temp = button.url.split('/')
