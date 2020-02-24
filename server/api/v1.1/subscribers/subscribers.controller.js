@@ -407,17 +407,16 @@ function unSubscribeNewsSubscription (subscriber) {
       NewsSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': subscriber._id})
         .then(newsSubscriptions => {
           if (newsSubscriptions.length > 0) {
-            let subscriptionIds = newsSubscriptions.filter(n => n.subscription).map(s => s._id)
-            let newsIds = newsSubscriptions.filter(a => a.subscription).map(n => n.newsSectionId)
+            let subscriptionIds = newsSubscriptions.filter(n => n.subscription === true).map(s => s._id)
+            let newsIds = newsSubscriptions.filter(a => a.subscription === true).map(n => n.newsSectionId)
             updateSubscription({_id: {$in: subscriptionIds}})
             updateSubscriptionCount({_id: {$in: newsIds}})
             let defaultSubscriptions = []
             let defaultNewsSectionIds = defaultNewsSections.map(a => a._id)
-            let newsSubscriptionsIds = newsSubscriptions.map(n => n._id)
-            defaultSubscriptions = defaultNewsSectionIds.filter(function (v) { return newsSubscriptionsIds.indexOf(v) >= 0 })
-            defaultSubscriptions.concat(newsSubscriptionsIds.filter(function (v) { return defaultNewsSectionIds.indexOf(v) >= 0 }))
-            if (defaultSubscriptions.length === 0) {
-              updateSubscriptionCount({_id: {$in: defaultNewsSectionIds}})
+            let newsSubscriptionsIds = newsSubscriptions.map(n => n.newsSectionId)
+            defaultSubscriptions = defaultNewsSectionIds.filter((item) => !newsSubscriptionsIds.includes(item))
+            if (defaultSubscriptions.length > 0) {
+              updateSubscriptionCount({_id: {$in: defaultSubscriptions}})
             }
           } else {
             updateSubscriptionCount({defaultFeed: true, companyId: subscriber.companyId})
