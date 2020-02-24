@@ -271,8 +271,12 @@ exports.delete = function (req, res) {
     })
 }
 function _checkDefaultFeed (data, next) {
+  let query = {companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true, integrationType: data.body.integrationType}
+  if (data.feedId) {
+    query._id = {$ne: data.feedId}
+  }
   if (data.body.defaultFeed) {
-    DataLayer.genericFindForRssFeeds({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true, integrationType: data.body.integrationType})
+    DataLayer.genericFindForRssFeeds(query)
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
           rssFeeds = rssFeeds[0]
