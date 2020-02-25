@@ -275,8 +275,7 @@ exports.unSubscribe = function (req, res) {
   let subscriber = {}
   let updated = {}
 
-  let companyUserResponse = utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
-  let pageResponse = utility.callApi(`pages/${req.body.page_id}`, 'get', {}, req.headers.authorization)
+  let pageResponse = utility.callApi(`pages/${req.body.page_id}`, 'get', {}, 'accounts', req.headers.authorization)
   let subscriberResponse = utility.callApi(`subscribers/${req.body.subscriber_id}`, 'get', {})
   let updateSubscriberResponse = utility.callApi(`subscribers/update`, 'put', {
     query: { _id: req.body.subscriber_id },
@@ -284,14 +283,10 @@ exports.unSubscribe = function (req, res) {
     options: {}
   })
 
-  companyUserResponse.then(company => {
-    companyUser = company
-    return pageResponse
+  pageResponse.then(page => {
+    userPage = page
+    return subscriberResponse
   })
-    .then(page => {
-      userPage = page
-      return subscriberResponse
-    })
     .then(subscriberData => {
       subscriber = subscriberData
       return updateSubscriberResponse
@@ -337,7 +332,7 @@ exports.unSubscribe = function (req, res) {
                 sendOpAlert(resp.body.error, 'subscribers controller in kiboengage', '', '', '')
               }
               require('./../../../config/socketio').sendMessageToClient({
-                room_id: companyUser.companyId,
+                room_id: req.user.companyId,
                 body: {
                   action: 'unsubscribe',
                   payload: {
@@ -347,7 +342,7 @@ exports.unSubscribe = function (req, res) {
                   }
                 }
               })
-              sendErrorResponse(res, 20, updated)
+              sendSuccessResponse(res, 200, updated)
             })
         })
     })
@@ -356,17 +351,14 @@ exports.unSubscribe = function (req, res) {
     })
 }
 function saveNotifications (companyUser, subscriber, req) {
-  let companyUserResponse = utility.callApi(`companyUser/query`, 'post', { companyId: companyUser.companyId })
-
-  companyUserResponse.then(member => {
-    let notificationsData = {
-      message: `Subscriber ${subscriber.firstName + ' ' + subscriber.lastName} has been unsubscribed by ${req.user.name}`,
-      category: { type: 'unsubscribe', id: subscriber._id },
-      agentId: member.userId._id,
-      companyId: subscriber.companyId
-    }
-    return utility.callApi('notifications', 'post', notificationsData, 'kibochat')
-  })
+  let notificationsData = {
+    message: `Subscriber ${subscriber.firstName + ' ' + subscriber.lastName} has been unsubscribed by ${req.user.name}`,
+    category: { type: 'unsubscribe', id: subscriber._id },
+    agentId: req.user._id,
+    companyId: subscriber.companyId
+  }
+  console.log('notifications Data', notificationsData)
+  utility.callApi('notifications', 'post', notificationsData, 'kibochat')
     .then(savedNotification => { })
     .catch(error => {
       logger.serverLog(TAG, `Failed to create notification ${JSON.stringify(error)}`, 'error')
