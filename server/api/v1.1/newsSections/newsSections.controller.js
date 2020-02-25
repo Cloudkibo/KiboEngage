@@ -1,9 +1,9 @@
 const logger = require('../../../components/logger')
-const DataLayer = require('./rssFeeds.datalayer')
-const RssFeedPostsDataLayer = require('./rssFeedPosts.datalayer')
-const RssSubscriptionsDataLayer = require('./rssSubscriptions.datalayer')
-const LogicLayer = require('./rssFeeds.logiclayer')
-const TAG = 'api/v1/rssFeeds/rssFeeds.controller.js'
+const DataLayer = require('./newsSections.datalayer')
+const RssFeedPostsDataLayer = require('./newsPosts.datalayer')
+const RssSubscriptionsDataLayer = require('./newsSubscriptions.datalayer')
+const LogicLayer = require('./newsSections.logiclayer')
+const TAG = 'api/v1/newsSections/newsSections.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const feedparser = require('feedparser-promised')
@@ -40,23 +40,41 @@ exports.preview = function (req, res) {
   if (req.body.feedId) {
     data.feedId = req.body.feedId
   }
-  async.series([
-    _validateFeedUrl.bind(null, data),
-    _validateFeedTitle.bind(null, data),
-    _parseFeed.bind(null, data),
-    _fetchPage.bind(null, data),
-    _fetchAdminSubscription.bind(null, data),
-    _fetchRssFeeds.bind(null, data),
-    _prepareMessageData.bind(null, data),
-    _prepareBatch.bind(null, data),
-    _sendPreviewMessage.bind(null, data)
-  ], function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, err)
-    } else {
-      sendSuccessResponse(res, 200, data.sentResponse)
-    }
-  })
+  if (req.body.integrationType === 'rss') {
+    async.series([
+      _validateFeedUrl.bind(null, data),
+      _validateFeedTitle.bind(null, data),
+      _parseFeed.bind(null, data),
+      _fetchPage.bind(null, data),
+      _fetchAdminSubscription.bind(null, data),
+      _fetchRssFeeds.bind(null, data),
+      _prepareMessageData.bind(null, data),
+      _prepareBatch.bind(null, data),
+      _sendPreviewMessage.bind(null, data)
+    ], function (err) {
+      if (err) {
+        sendErrorResponse(res, 500, err)
+      } else {
+        sendSuccessResponse(res, 200, data.sentResponse)
+      }
+    })
+  } else if (req.body.integrationType === 'manual') {
+    async.series([
+      _validateFeedTitle.bind(null, data),
+      _fetchPage.bind(null, data),
+      _fetchAdminSubscription.bind(null, data),
+      _fetchRssFeeds.bind(null, data),
+      _prepareMessageData.bind(null, data),
+      _prepareBatch.bind(null, data),
+      _sendPreviewMessage.bind(null, data)
+    ], function (err) {
+      if (err) {
+        sendErrorResponse(res, 500, err)
+      } else {
+        sendSuccessResponse(res, 200, data.sentResponse)
+      }
+    })
+  }
 }
 exports.edit = function (req, res) {
   let data = {
@@ -111,7 +129,7 @@ function _updateSubscriptionCount (data, next) {
       utility.callApi(`subscribers/aggregate`, 'post', criteria)
         .then(result => {
           if (result.length > 0) {
-            RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: false}, { _id: null, count: { $sum: 1 } })
+            RssSubscriptionsDataLayer.aggregateForRssSubscriptions({newsSectionId: data.feed._id, subscription: false}, { _id: null, count: { $sum: 1 } })
               .then(rssSubscriptions => {
                 if (rssSubscriptions.length > 0) {
                   data.body.subscriptions = result.length - rssSubscriptions[0].count
@@ -133,7 +151,7 @@ function _updateSubscriptionCount (data, next) {
           next(err)
         })
     } else {
-      RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: data.feed._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+      RssSubscriptionsDataLayer.aggregateForRssSubscriptions({newsSectionId: data.feed._id, subscription: true}, { _id: null, count: { $sum: 1 } })
         .then(rssSubscriptions => {
           data.body.subscriptions = rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0
           next()
@@ -156,13 +174,18 @@ function _saveRSSFeed (data, next) {
     pageIds: data.body.pageIds,
     companyId: data.companyId,
     userId: data.userId,
-    feedUrl: data.body.feedUrl,
     title: data.body.title,
     subscriptions: data.subscriptions,
-    storiesCount: data.body.storiesCount,
     defaultFeed: data.body.defaultFeed,
     scheduledTime: scheduledTime,
-    isActive: data.body.isActive
+    isActive: data.body.isActive,
+    integrationType: data.body.integrationType
+  }
+  if (data.body.integrationType === 'rss') {
+    dataToSave.feedUrl = data.body.feedUrl
+    dataToSave.storiesCount = data.body.storiesCount
+  } else if (data.body.integrationType === 'manual') {
+    dataToSave.stories = data.body.stories
   }
   DataLayer.createForRssFeeds(dataToSave)
     .then(savedFeed => {
@@ -208,6 +231,15 @@ exports.fetchFeeds = function (req, res) {
         .catch(err => {
           callback(err)
         })
+    },
+    function (callback) {
+      DataLayer.genericFindForRssFeeds({companyId: req.user.companyId, integrationType: req.body.integrationType, defaultFeed: true})
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
     }
   ], 10, function (err, results) {
     if (err) {
@@ -215,7 +247,8 @@ exports.fetchFeeds = function (req, res) {
     } else {
       let countResponse = results[0]
       let rssFeeds = results[1]
-      sendSuccessResponse(res, 200, {rssFeeds: rssFeeds, count: countResponse.length > 0 ? countResponse[0].count : 0})
+      let defaultFeeds = results[2]
+      sendSuccessResponse(res, 200, {rssFeeds: rssFeeds, count: countResponse.length > 0 ? countResponse[0].count : 0, defaultFeeds: defaultFeeds})
     }
   })
 }
@@ -238,12 +271,16 @@ exports.delete = function (req, res) {
     })
 }
 function _checkDefaultFeed (data, next) {
+  let query = {companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true, integrationType: data.body.integrationType}
+  if (data.feedId) {
+    query._id = {$ne: data.feedId}
+  }
   if (data.body.defaultFeed) {
-    DataLayer.genericFindForRssFeeds({companyId: data.companyId, pageIds: data.body.pageIds[0], defaultFeed: true})
+    DataLayer.genericFindForRssFeeds(query)
       .then(rssFeeds => {
         if (rssFeeds.length > 0) {
           rssFeeds = rssFeeds[0]
-          RssSubscriptionsDataLayer.aggregateForRssSubscriptions({rssFeedId: rssFeeds._id, subscription: true}, { _id: null, count: { $sum: 1 } })
+          RssSubscriptionsDataLayer.aggregateForRssSubscriptions({newsSectionId: rssFeeds._id, subscription: true}, { _id: null, count: { $sum: 1 } })
             .then(rssSubscriptions => {
               DataLayer.genericUpdateRssFeed({_id: rssFeeds._id}, {defaultFeed: false, subscriptions: rssSubscriptions.length > 0 ? rssSubscriptions[0].count : 0}, {})
                 .then(updated => {
@@ -301,7 +338,7 @@ function _getSubscriptionsCount (data, next) {
 
 const _validateActiveFeeds = (data, next) => {
   if (data.body.isActive) {
-    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], isActive: true})
+    DataLayer.countDocuments({companyId: data.companyId, pageIds: data.body.pageIds[0], isActive: true, integrationType: data.body.integrationType})
       .then(rssFeeds => {
         if (rssFeeds.length > 0 && rssFeeds[0].count >= 13) {
           next(`Can not create more than 13 active Feeds for one news page at a time!`)
@@ -322,7 +359,8 @@ const _validateFeedTitle = (data, next) => {
     var query = {
       companyId: data.companyId,
       pageIds: data.body.pageIds[0],
-      title: {$regex: data.body.title, $options: 'i'}
+      integrationType: data.body.integrationType,
+      title: {$regex: `^${data.body.title}$`, $options: 'i'}
     }
     if (data.feedId) {
       query['_id'] = {$ne: data.feedId}
@@ -384,7 +422,9 @@ const _fetchPage = (data, next) => {
 const _fetchRssFeeds = (data, next) => {
   DataLayer.genericFindForRssFeeds({companyId: data.companyId,
     isActive: true,
-    pageIds: {$in: [data.body.pageIds[0]]}})
+    pageIds: {$in: [data.body.pageIds[0]]},
+    integrationType: data.body.integrationType
+  })
     .then(rssFeeds => {
       data.rssFeeds = rssFeeds
       next()
@@ -409,10 +449,10 @@ const _prepareMessageData = (data, next) => {
     quickReplies.push({
       content_type: 'text',
       title: 'Show More Topics',
-      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: ''}])
+      payload: JSON.stringify([{action: 'show_more_topics', rssFeedId: '', type: data.body.integrationType}])
     })
   }
-  LogicLayer.getMetaData(data.feed, data.body)
+  LogicLayer.getMetaData(data.body.stories ? data.body.stories : data.feed, data.body, data.page)
     .then(gallery => {
       logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = [{
@@ -462,7 +502,7 @@ exports.getRssFeedPosts = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
   async.parallelLimit([
     function (callback) {
-      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[3].$match)
+      RssFeedPostsDataLayer.countDocuments(criterias.countCriteria[1].$match, criterias.countCriteria[0].$project)
         .then(result => {
           callback(null, result)
         })
@@ -471,7 +511,7 @@ exports.getRssFeedPosts = function (req, res) {
         })
     },
     function (callback) {
-      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[3].$match, criterias.finalCriteria[2].$group, criterias.finalCriteria[0].$lookup, criterias.finalCriteria[6].$limit, criterias.finalCriteria[4].$sort, criterias.finalCriteria[5].$skip, criterias.finalCriteria[1].$unwind)
+      RssFeedPostsDataLayer.aggregateForRssFeedPosts(criterias.finalCriteria[4].$match, criterias.finalCriteria[2].$group, criterias.finalCriteria[0].$lookup, criterias.finalCriteria[7].$limit, criterias.finalCriteria[5].$sort, criterias.finalCriteria[6].$skip, criterias.finalCriteria[1].$unwind, criterias.finalCriteria[3].$project)
         .then(result => {
           callback(null, result)
         })

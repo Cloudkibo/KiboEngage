@@ -6,6 +6,8 @@ const util = require('util')
 const needle = require('needle')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const NewsSubscriptionsDataLayer = require('../newsSections/newsSubscriptions.datalayer')
+const NewsSectionsDataLayer = require('../newsSections/newsSections.datalayer')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -242,6 +244,7 @@ exports.getAll = function (req, res) {
 exports.subscribeBack = function (req, res) {
   utility.callApi(`subscribers/update`, 'put', { query: { _id: req.params.id, unSubscribedBy: 'agent' }, newPayload: { isSubscribed: true, unSubscribedBy: 'subscriber' }, options: {} }) // fetch single subscriber
     .then(subscriber => {
+      subscribeNewsSubscription(req.params.id, req.user.companyId)
       sendSuccessResponse(res, 200, subscriber)
     })
     .catch(error => {
@@ -304,6 +307,7 @@ exports.unSubscribe = function (req, res) {
       } else {
         currentUser = connectedUser
       }
+      unSubscribeNewsSubscription(subscriber)
       needle.get(
         `https://graph.facebook.com/v2.10/${userPage.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
         (err, resp) => {
@@ -362,5 +366,76 @@ function saveNotifications (companyUser, subscriber, req) {
     .then(savedNotification => { })
     .catch(error => {
       logger.serverLog(TAG, `Failed to create notification ${JSON.stringify(error)}`, 'error')
+    })
+}
+function subscribeNewsSubscription (subscriberId, companyId) {
+  NewsSectionsDataLayer.genericFindForRssFeeds({companyId: companyId, defaultFeed: true})
+    .then(newsSections => {
+      if (newsSections.length > 0) {
+        let newsSectionIds = newsSections.map(n => n._id)
+        NewsSubscriptionsDataLayer.genericUpdateRssSubscriptions(
+          {'subscriberId._id': subscriberId, subscription: false, newsSectionId: {$in: newsSectionIds}},
+          {subscription: true}, {})
+          .then(updated => {
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to udpate subscription ${err}`, 'error')
+          })
+        NewsSectionsDataLayer.genericUpdateRssFeed({_id: {$in: newsSectionIds}}, {$inc: {subscriptions: 1}}, {})
+          .then(updated => {
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to udpate subscription count ${err}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to udpate subscriber ${err}`, 'error')
+    })
+}
+function unSubscribeNewsSubscription (subscriber) {
+  NewsSectionsDataLayer.genericFindForRssFeeds({defaultFeed: true, companyId: subscriber.companyId})
+    .then(defaultNewsSections => {
+      NewsSubscriptionsDataLayer.genericFindForRssSubscriptions({'subscriberId._id': subscriber._id})
+        .then(newsSubscriptions => {
+          if (newsSubscriptions.length > 0) {
+            let subscriptionIds = newsSubscriptions.filter(n => n.subscription === true).map(s => s._id)
+            let newsIds = newsSubscriptions.filter(a => a.subscription === true).map(n => n.newsSectionId)
+            updateSubscription({_id: {$in: subscriptionIds}})
+            updateSubscriptionCount({_id: {$in: newsIds}})
+            let defaultSubscriptions = []
+            let defaultNewsSectionIds = defaultNewsSections.map(a => a._id)
+            let newsSubscriptionsIds = newsSubscriptions.map(n => n.newsSectionId)
+            defaultSubscriptions = defaultNewsSectionIds.filter((item) => !newsSubscriptionsIds.includes(item))
+            if (defaultSubscriptions.length > 0) {
+              updateSubscriptionCount({_id: {$in: defaultSubscriptions}})
+            }
+          } else {
+            updateSubscriptionCount({defaultFeed: true, companyId: subscriber.companyId})
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch subscriptions ${JSON.stringify(err)}`, 'error')
+        })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to default feeds ${err}`, 'error')
+    })
+}
+function updateSubscriptionCount (query) {
+  NewsSectionsDataLayer.genericUpdateRssFeed(query, {$inc: {subscriptions: -1}}, {})
+    .then(updated => {
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to udpate subscription count for default ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+function updateSubscription (query) {
+  NewsSubscriptionsDataLayer.genericUpdateRssSubscriptions(query, {subscription: false}, {})
+    .then(updated => {
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to udpate subscriptions ${JSON.stringify(err)}`, 'error')
     })
 }

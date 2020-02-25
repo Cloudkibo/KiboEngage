@@ -113,7 +113,8 @@ exports.send = function (req, res) {
           .then(campaignResp => {
             if (campaignResp.body.error) {
               sendOpAlert(campaignResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-              return sendErrorResponse(res, 500, {message: campaignResp.body.error.error_user_msg})
+              let errMessage = campaignResp.body.error.error_user_msg ? campaignResp.body.error.error_user_msg : campaignResp.body.error.message
+              return sendErrorResponse(res, 500, {message: errMessage})
             } else {
               let campaignId = campaignResp.body.id
               let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
@@ -122,7 +123,8 @@ exports.send = function (req, res) {
                 .then(adsetResp => {
                   if (adsetResp.body.error) {
                     sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                    return sendErrorResponse(res, 500, {message: adsetResp.body.error.error_user_msg})
+                    let errMessage = adsetResp.body.error.error_user_msg ? adsetResp.body.error.error_user_msg : adsetResp.body.error.message
+                    return sendErrorResponse(res, 500, {message: errMessage})
                   } else {
                     logger.serverLog(TAG, `adsetsResponse ${JSON.stringify(adsetResp.body)}`)
                     let adsetid = adsetResp.body.id
@@ -133,7 +135,8 @@ exports.send = function (req, res) {
                       .then(adCreativeResp => {
                         if (adCreativeResp.body.error) {
                           sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                          return sendErrorResponse(res, 500, {message: adCreativeResp.body.error.error_user_msg})
+                          let errMessage = adCreativeResp.body.error.error_user_msg ? adCreativeResp.body.error.error_user_msg : adCreativeResp.body.error.message
+                          return sendErrorResponse(res, 500, {message: errMessage})
                         } else {
                           logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
                           let messageCreativeId = adCreativeResp.body.id
@@ -143,7 +146,8 @@ exports.send = function (req, res) {
                             .then(adsResp => {
                               if (adsResp.body.error) {
                                 sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-                                return sendErrorResponse(res, 500, {message: adsResp.body.error.error_user_msg})
+                                let errMessage = adsResp.body.error.error_user_msg ? adsResp.body.error.error_user_msg : adsResp.body.error.message
+                                return sendErrorResponse(res, 500, {message: errMessage})
                               } else {
                                 logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
                                 let adId = adsResp.body.id
@@ -176,20 +180,24 @@ exports.send = function (req, res) {
                         }
                       })
                       .catch(err => {
+                        logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
                         return sendErrorResponse(res, 500, err)
                       })
                   }
                 })
                 .catch(err => {
+                  logger.serverLog(TAG, `error on fb call in send ad sets ${err}`)
                   return sendErrorResponse(res, 500, err)
                 })
             }
           })
           .catch(error => {
+            logger.serverLog(TAG, `error on fb call in send ad campaigns ${error}`)
             return sendErrorResponse(res, 500, error)
           })
       })
       .catch(error => {
+        logger.serverLog(TAG, `error on sponsored messaging query ${error}`)
         return sendErrorResponse(res, 500, error)
       })
   } else {

@@ -62,51 +62,52 @@ const _callBatchAPI = (batch, accessToken) => {
 
 /* eslint-disable */
 const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) => {
-  let waitingForUserInput = {
-    broadcastId: recordObj ? recordObj.broadcastId: '',
-    componentIndex: -1,
-    incorrectTries: 3,
-    googleSheetRange: null, 
-    spreadSheet: null,
-    worksheet: null
-}
-let batch = []
-let containsUserInput = false
-for (let i = 0; i <= subscribers.length; i++) {
-  if (i === subscribers.length) {
-    if (containsUserInput) {
-      _updateSubsForUserInput(subscribers, waitingForUserInput)
-    }
-    else if(module !== 'broadcast_message') {
-      _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
-    }
-    return batch
-  } else {
-    let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": subscribers[i].senderId}))
-    let tag = "tag=" + encodeURIComponent("NON_PROMOTIONAL_SUBSCRIPTION")
-    let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
-    let flag = true
-    payload.forEach((item, index) => {
-      if (flag) {
-        let message = "message=" + encodeURIComponent(_prepareMessageData(module, item, subscribers[i]))
-        if (index === 0) {
-          batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
-        } else {
-          batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "depends_on": `${subscribers[i].senderId}${index}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
-        }
-        if (item.componentType === 'userInput') {
-          flag = false
-          containsUserInput = true
-          if(module === 'update_broadcast') {
-            waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
-            waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
-            waitingForUserInput.googleSheetRange = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.googleSheetRange  : null
-            waitingForUserInput.spreadSheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.spreadSheet  : null
-            waitingForUserInput.worksheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.worksheet  : null
+    let waitingForUserInput = {
+      broadcastId: recordObj ? recordObj.broadcastId: '',
+      componentIndex: -1,
+      incorrectTries: 3,
+      googleSheetRange: null, 
+      spreadSheet: null,
+      worksheet: null
+  }
+  let batch = []
+  let containsUserInput = false
+  for (let i = 0; i <= subscribers.length; i++) {
+    if (i === subscribers.length) {
+      if (containsUserInput) {
+        _updateSubsForUserInput(subscribers, waitingForUserInput)
+      }
+      else if(module !== 'broadcast_message') {
+        _removeSubsWaitingForUserInput(subscribers, waitingForUserInput)
+      }
+      return batch
+    } else {
+      let recipient = "recipient=" + encodeURIComponent(JSON.stringify({"id": subscribers[i].senderId}))
+      let tag = "tag=" + encodeURIComponent("NON_PROMOTIONAL_SUBSCRIPTION")
+      let messagingType = "messaging_type=" + encodeURIComponent("MESSAGE_TAG")
+      let flag = true
+      payload.forEach((item, index) => {
+        if (flag) {
+          let message = "message=" + encodeURIComponent(_prepareMessageData(module, item, subscribers[i]))
+          if (index === 0) {
+            batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
+          } else {
+            batch.push({ "method": "POST", "name": `${subscribers[i].senderId}${index + 1}`, "depends_on": `${subscribers[i].senderId}${index}`, "relative_url": "v4.0/me/messages", "body": recipient + "&" + message + "&" + messagingType +  "&" + tag })
           }
-          else {
-            waitingForUserInput.componentIndex=index
-            waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
+          if (item.componentType === 'userInput') {
+            flag = false
+            containsUserInput = true
+            if(module === 'update_broadcast') {
+              waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
+              waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
+              waitingForUserInput.googleSheetRange = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.googleSheetRange  : null
+              waitingForUserInput.spreadSheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.spreadSheet  : null
+              waitingForUserInput.worksheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.worksheet  : null
+            }
+            else {
+              waitingForUserInput.componentIndex=index
+              waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
+            }
           }
         }
       }
@@ -154,6 +155,7 @@ const _prepareReport = (module, increment, data, subscribers, result, saveMsgRec
 }
 
 const _updateSubsForUserInput = (subscribers, waitingForUserInput) => {
+  console.log('called function _updateSubsForUserInput', waitingForUserInput)
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
