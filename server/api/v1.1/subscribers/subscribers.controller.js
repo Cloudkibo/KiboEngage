@@ -361,7 +361,6 @@ function saveNotifications (companyUser, subscriber, req) {
     agentId: req.user._id,
     companyId: subscriber.companyId
   }
-  console.log('notifications Data', notificationsData)
   utility.callApi('notifications', 'post', notificationsData, 'kibochat')
     .then(savedNotification => { })
     .catch(error => {
