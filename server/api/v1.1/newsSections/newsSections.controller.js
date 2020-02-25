@@ -360,7 +360,7 @@ const _validateFeedTitle = (data, next) => {
       companyId: data.companyId,
       pageIds: data.body.pageIds[0],
       integrationType: data.body.integrationType,
-      title: {$regex: data.body.title, $options: 'i'}
+      title: {$regex: `^${data.body.title}$`, $options: 'i'}
     }
     if (data.feedId) {
       query['_id'] = {$ne: data.feedId}
