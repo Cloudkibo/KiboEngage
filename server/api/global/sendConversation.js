@@ -110,13 +110,12 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
             }
           }
         }
-      }
       if (['polls', 'surveys'].includes(item.componentType)) {
-        saveLiveChat(preparePayload(user, subscribers[i], page, item))
-      }
-    })
+          saveLiveChat(preparePayload(user, subscribers[i], page, item))
+        }
+      })
+    }
   }
-}
 }
 /* eslint-enable */
 
