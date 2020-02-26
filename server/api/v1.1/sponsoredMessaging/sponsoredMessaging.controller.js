@@ -84,7 +84,8 @@ exports.campaigns = function (req, res) {
       .then(campaignResp => {
         if (campaignResp.body.error) {
           sendOpAlert(campaignResp.body.error, 'creating campaign on fb in sponsored in kiboengage', '', req.user._id, req.user.companyId)
-          return sendErrorResponse(res, 500, campaignResp.body.error.error_user_msg)
+          let errMessage = campaignResp.body.error.error_user_msg ? campaignResp.body.error.error_user_msg : campaignResp.body.error.message
+          return sendErrorResponse(res, 500, errMessage)
         } else {
           let dataToUpdate = { campaignId: campaignResp.body.id }
           _storeCampaignId(queryObject, dataToUpdate, res)
@@ -124,7 +125,8 @@ exports.adSets = function (req, res) {
           .then(adsetResp => {
             if (adsetResp.body.error) {
               sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-              return sendErrorResponse(res, 500, adsetResp.body.error.error_user_msg)
+              let errMessage = adsetResp.body.error.error_user_msg ? adsetResp.body.error.error_user_msg : adsetResp.body.error.message
+              return sendErrorResponse(res, 500, errMessage)
             } else {
               let dataToUpdate = { adSetId: adsetResp.body.id }
               _storeAdSetId(queryObject, dataToUpdate, res)
@@ -189,7 +191,8 @@ exports.send = function (req, res) {
     .then(adCreativeResp => {
       if (adCreativeResp.body.error) {
         sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-        return sendErrorResponse(res, 500, adCreativeResp.body.error.error_user_msg)
+        let errMessage = adCreativeResp.body.error.error_user_msg ? adCreativeResp.body.error.error_user_msg : adCreativeResp.body.error.message
+        return sendErrorResponse(res, 500, errMessage)
       } else {
         logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
         let messageCreativeId = adCreativeResp.body.id
@@ -199,13 +202,14 @@ exports.send = function (req, res) {
           .then(adsResp => {
             if (adsResp.body.error) {
               sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
-              return sendErrorResponse(res, 500, adsResp.body.error.error_user_msg)
+              let errMessage = adsResp.body.error.error_user_msg ? adsResp.body.error.error_user_msg : adsResp.body.error.message
+              return sendErrorResponse(res, 500, errMessage)
             } else {
               logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
               let adId = adsResp.body.id
               logger.serverLog(TAG, `ad_id ${adId}`)
               let queryObject = { _id: req.params.id }
-              let dataToUpdate = { messageCreativeId, adId }
+              let dataToUpdate = { messageCreativeId, adId, status: 'in_review', payload: req.body.payload }
               _storeAdAndCreativeIds(queryObject, dataToUpdate)
               sendSuccessResponse(res, 200, {description: 'Your ad is sent to Facebook.'})
             }
