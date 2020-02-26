@@ -110,6 +110,7 @@ exports.fetchColumns = function (req, res) {
           .then(dataToSend => {
             populateGoogleColumns(dataToSend, googleData, req.body.sheetId)
               .then(dataToSend => {
+                logger.serverLog(TAG, `dataToSend.googleSheetColumns ${JSON.stringify(dataToSend.googleSheetColumns)}`)
                 if (req.body.user_input) {
                   resolve(dataToSend)
                 } else {
@@ -151,7 +152,7 @@ exports.auth = function (req, res) {
   const url = oauth2Client.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
     access_type: 'offline',
-
+    prompt: 'consent',
     // If you only need one scope you can pass it as a string
     scope: config.google.scopes
   })
@@ -169,7 +170,7 @@ exports.callback = async function (req, res) {
 
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.credentials = tokens
-
+  logger.serverLog(TAG, 'Tokens from google' + JSON.stringify(tokens), 'Token')
   let userId = req.cookies.userid
   dataLayer.fetchUserCompany(userId)
     .then(companyUser => {
@@ -179,6 +180,7 @@ exports.callback = async function (req, res) {
           .then(integrations => {
             if (integrations.length > 0) {
               tokens.refresh_token = tokens.refresh_token || integrations[0].integrationPayload.refresh_token
+              logger.serverLog(TAG, 'Tokens to be saved' + JSON.stringify(tokens), 'Token')
               let newPayload = {
                 companyId: integrations[0].companyId,
                 userId: integrations[0].userId,

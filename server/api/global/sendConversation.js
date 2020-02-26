@@ -65,7 +65,10 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
     let waitingForUserInput = {
       broadcastId: recordObj ? recordObj.broadcastId: '',
       componentIndex: -1,
-      incorrectTries: 3
+      incorrectTries: 3,
+      googleSheetRange: null, 
+      spreadSheet: null,
+      worksheet: null
   }
   let batch = []
   let containsUserInput = false
@@ -97,6 +100,9 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
             if(module === 'update_broadcast') {
               waitingForUserInput.componentIndex = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.componentIndex + index +  1 : index
               waitingForUserInput.incorrectTries = item.incorrectTriesAllowed
+              waitingForUserInput.googleSheetRange = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.googleSheetRange  : null
+              waitingForUserInput.spreadSheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.spreadSheet  : null
+              waitingForUserInput.worksheet = subscribers[i].waitingForUserInput ? subscribers[i].waitingForUserInput.worksheet  : null
             }
             else {
               waitingForUserInput.componentIndex=index
@@ -148,6 +154,7 @@ const _prepareReport = (module, increment, data, subscribers, result, saveMsgRec
 }
 
 const _updateSubsForUserInput = (subscribers, waitingForUserInput) => {
+  console.log('called function _updateSubsForUserInput', waitingForUserInput)
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
