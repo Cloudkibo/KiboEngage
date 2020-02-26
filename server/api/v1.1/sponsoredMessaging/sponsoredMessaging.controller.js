@@ -246,20 +246,23 @@ exports.delete = function (req, res) {
 }
 
 exports.getInsight = function (req, res) {
-  const accesstoken = marketingApiAccessToken
   let adId = req.params.ad_id
-
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
+  }
   if (adId !== undefined && adId !== '') {
-    let insightPayload = logiclayer.prepareInsightPayload(accesstoken)
-    facebookApiCaller(`v4.0/${adId}/insights`, 'post', insightPayload)
+    facebookApiCaller('v6.0', `${adId}/insights?fields=impressions,ad_name,reach,clicks,spend,date_start,date_stop&access_token=${facebookInfo.fbToken}`, 'get', {})
       .then(response => {
         if (response.body.error) {
           sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+          return sendErrorResponse(res, 500, response.body.error)
+        } else {
+          sendSuccessResponse(res, 200, response.body.data)
         }
-        return res.status(200).json({ status: 'success', payload: response })
       })
       .catch(error => {
-        return res.status(500).json({ status: 'failed', payload: `Failed to fetch insight of a ad ${JSON.stringify(error)}` })
+        return sendErrorResponse(res, 500, error)
       })
   }
 }

@@ -41,6 +41,7 @@ router.delete('/:id',
 
 router.get('/insights/:ad_id',
   auth.isAuthenticated(),
+  attachBuyerInfo(),
   controller.getInsight
 )
 
