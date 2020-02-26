@@ -209,7 +209,7 @@ exports.send = function (req, res) {
               let adId = adsResp.body.id
               logger.serverLog(TAG, `ad_id ${adId}`)
               let queryObject = { _id: req.params.id }
-              let dataToUpdate = { messageCreativeId, adId, status: 'In Review', payload: req.body.payload }
+              let dataToUpdate = { messageCreativeId, adId, status: 'In Review', payload: req.body.payload, adName: req.body.adName }
               _storeAdAndCreativeIds(queryObject, dataToUpdate)
               sendSuccessResponse(res, 200, {description: 'Your ad is sent to Facebook.'})
             }
