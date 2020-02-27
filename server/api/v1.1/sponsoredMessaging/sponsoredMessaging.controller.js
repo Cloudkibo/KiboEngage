@@ -49,15 +49,12 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  console.log(req.body)
   let payload = logiclayer.preparePayload(req.user.companyId, req.user._id, req.body)
   datalayer.createForSponsoredMessaging(payload)
     .then(sponsoredMessage => {
-      console.log(sponsoredMessage)
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
     .catch(error => {
-      console.log(error)
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
