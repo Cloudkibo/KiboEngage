@@ -64,11 +64,9 @@ function handleWithIssuesAdObjects (payload) {
 function updateSponsoredMessaging (queryObject, dataToUpdate) {
   datalayer.genericUpdateSponsoredMessaging(queryObject, dataToUpdate)
     .then(sponsoredMessage => {
-      console.log(sponsoredMessage)
       logger.serverLog(TAG, `Updated sponsored messaging`)
     })
     .catch(error => {
-      console.log(error)
       logger.serverLog(TAG, `Error on updating sponsored messaging ${JSON.stringify(error)}`)
     })
 }
