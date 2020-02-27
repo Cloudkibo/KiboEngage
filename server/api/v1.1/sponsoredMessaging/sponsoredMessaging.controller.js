@@ -10,6 +10,7 @@ const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.controller.js'
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { kiboengage } = require('../../global/constants').serverConstants
+const config = require('./../../../config/environment')
 
 exports.index = function (req, res) {
   var fetchCriteria = logiclayer.fetchSponsoredMessagesCriteria(req.body, req.user.companyId)
@@ -48,12 +49,15 @@ exports.index = function (req, res) {
 }
 
 exports.create = function (req, res) {
+  console.log(req.body)
   let payload = logiclayer.preparePayload(req.user.companyId, req.user._id, req.body)
   datalayer.createForSponsoredMessaging(payload)
     .then(sponsoredMessage => {
+      console.log(sponsoredMessage)
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
     .catch(error => {
+      console.log(error)
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
@@ -186,7 +190,6 @@ exports.send = function (req, res) {
     facebookInfo = req.user.buyerInfo.facebookInfo
   }
   let creativePayload = logiclayer.prepareAdCreativePayload(req.body, facebookInfo.fbToken)
-  logger.serverLog(TAG, `creativePayload ${creativePayload}`)
   facebookApiCaller('v6.0', `${req.body.adAccountId}/adcreatives`, 'post', creativePayload)
     .then(adCreativeResp => {
       if (adCreativeResp.body.error) {
@@ -194,9 +197,7 @@ exports.send = function (req, res) {
         let errMessage = adCreativeResp.body.error.error_user_msg ? adCreativeResp.body.error.error_user_msg : adCreativeResp.body.error.message
         return sendErrorResponse(res, 500, errMessage)
       } else {
-        logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
         let messageCreativeId = adCreativeResp.body.id
-        logger.serverLog(TAG, `messageCreativeId ${messageCreativeId}`)
         let adPayload = logiclayer.prepareAdPayload(req.body, messageCreativeId, facebookInfo.fbToken)
         facebookApiCaller('v6.0', `${req.body.adAccountId}/ads`, 'post', adPayload)
           .then(adsResp => {
@@ -205,13 +206,23 @@ exports.send = function (req, res) {
               let errMessage = adsResp.body.error.error_user_msg ? adsResp.body.error.error_user_msg : adsResp.body.error.message
               return sendErrorResponse(res, 500, errMessage)
             } else {
-              logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
               let adId = adsResp.body.id
-              logger.serverLog(TAG, `ad_id ${adId}`)
               let queryObject = { _id: req.params.id }
               let dataToUpdate = { messageCreativeId, adId, status: 'in_review', payload: req.body.payload, adName: req.body.adName }
               _storeAdAndCreativeIds(queryObject, dataToUpdate)
-              sendSuccessResponse(res, 200, {description: 'Your ad is sent to Facebook.'})
+              facebookApiCaller('v6.0', `${req.body.adAccountId}/subscribed_apps?app_id=${config.facebook.clientID}`, 'post', {access_token: facebookInfo.fbToken})
+                .then(subscriptionResp => {
+                  if (subscriptionResp.body.error) {
+                    sendOpAlert(subscriptionResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
+                    let errMessage = subscriptionResp.body.error.error_user_msg ? subscriptionResp.body.error.error_user_msg : subscriptionResp.body.error.message
+                    return sendErrorResponse(res, 500, errMessage)
+                  } else {
+                    sendSuccessResponse(res, 200, {description: 'Your ad is successfully sent to Facebook.'})
+                  }
+                })
+                .catch(err => {
+                  return sendErrorResponse(res, 500, err)
+                })
             }
           })
           .catch(err => {
