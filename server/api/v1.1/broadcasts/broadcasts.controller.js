@@ -446,6 +446,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
   BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
     .then(broadcast => {
       logger.serverLog(TAG, `broadcast created ${JSON.stringify(broadcast)}`, 'debug')
+      logger.serverLog(TAG, `creating message blocks ${JSON.stringify(req.body)}`, 'debug')
       createMessageBlocks(req.body.linkedMessages, req.user, broadcast._id, 'broadcast')
         .then(results => {
           // ...
