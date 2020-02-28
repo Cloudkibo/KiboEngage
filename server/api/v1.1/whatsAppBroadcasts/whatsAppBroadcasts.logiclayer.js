@@ -44,8 +44,7 @@ exports.getCriterias = function (body, companyUser) {
         $gte: startDate
       } : { $exists: true }
     }
-  }
-  else {
+  } else {
     if (body.filter_criteria.type_value === 'miscellaneous') {
       findCriteria = {
         companyId: companyUser.companyId,
@@ -65,8 +64,7 @@ exports.getCriterias = function (body, companyUser) {
             $gte: startDate
           } : { $exists: true }
         }
-      }
-      else {
+      } else {
         findCriteria = {
           companyId: companyUser.companyId,
           'payload.0.componentType': (body.filter_criteria.type_value !== '' && body.filter_criteria.type_value !== 'all') ? body.filter_criteria.type_value : { $exists: true },

@@ -330,7 +330,7 @@ exports.fetchPostData = function (req, res) {
       post = post[0]
       var isVideoPost = false
       if (post.payload && post.payload.length > 0) {
-        for (var i=0; i < post.payload.length; i++) {
+        for (var i = 0; i < post.payload.length; i++) {
           if (post.payload[i].componentType === 'video') {
             isVideoPost = true
             break
@@ -339,40 +339,40 @@ exports.fetchPostData = function (req, res) {
       }
       if (isVideoPost) {
         facebookApiCaller('v3.3', `${post.post_id}?fields=description,created_time&access_token=${post.pageId.accessToken}`, 'get', {})
-        .then(response => {
-          if (response.body.error) {
-            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
-          } else {
-            let dataToSend = {
-              attachments: true,
-              message: response.body.description ? response.body.description : '',
-              datetime: response.body.created_time,
-              postLink: `https://www.facebook.com/${post.post_id}`
+          .then(response => {
+            if (response.body.error) {
+              sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
+            } else {
+              let dataToSend = {
+                attachments: true,
+                message: response.body.description ? response.body.description : '',
+                datetime: response.body.created_time,
+                postLink: `https://www.facebook.com/${post.post_id}`
+              }
+              sendSuccessResponse(res, 200, dataToSend)
             }
-            sendSuccessResponse(res, 200, dataToSend)
-          }
-        })
-        .catch((err) => {
-          sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
-        })
+          })
+          .catch((err) => {
+            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
+          })
       } else {
-      facebookApiCaller('v3.3', `${post.post_id}?fields=message,attachments.limit(1){type},created_time&access_token=${post.pageId.accessToken}`, 'get', {})
-        .then(response => {
-          if (response.body.error) {
-            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
-          } else {
-            let dataToSend = {
-              attachments: response.body.attachments ? true : false,
-              message: response.body.message ? response.body.message : '',
-              datetime: response.body.created_time,
-              postLink: `https://www.facebook.com/${post.post_id}`
+        facebookApiCaller('v3.3', `${post.post_id}?fields=message,attachments.limit(1){type},created_time&access_token=${post.pageId.accessToken}`, 'get', {})
+          .then(response => {
+            if (response.body.error) {
+              sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
+            } else {
+              let dataToSend = {
+                attachments: !!response.body.attachments,
+                message: response.body.message ? response.body.message : '',
+                datetime: response.body.created_time,
+                postLink: `https://www.facebook.com/${post.post_id}`
+              }
+              sendSuccessResponse(res, 200, dataToSend)
             }
-            sendSuccessResponse(res, 200, dataToSend)
-          }
-        })
-        .catch((err) => {
-          sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
-        })
+          })
+          .catch((err) => {
+            sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
+          })
       }
     })
     .catch(error => {
@@ -428,7 +428,7 @@ function sendGlobalDataPayload (responseBody) {
                   postId: data[i].id,
                   commentsCount: commentsCount,
                   message: data[i].message ? data[i].message : '',
-                  attachments: data[i].attachments ? true : false,
+                  attachments: !!data[i].attachments,
                   datetime: data[i].created_time
                 })
                 if (i === data.length - 1) {

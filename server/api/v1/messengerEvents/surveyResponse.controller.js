@@ -151,8 +151,8 @@ function savesurvey (req) {
                 needle.get(
                   `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
                   (err3, response) => {
-                    if (err3) { 
-                      logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`) 
+                    if (err3) {
+                      logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`)
                     }
                     if (response.body.error) {
                       sendOpAlert(response.body.error, 'survey response controller')

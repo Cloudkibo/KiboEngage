@@ -313,8 +313,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
             let resp = broadcastPayload.action
             if (subscribers[0].waitingForUserInput.googleSheetRange && subscribers[0].waitingForUserInput.spreadSheet === resp.spreadSheet && subscribers[0].waitingForUserInput.worksheet === resp.worksheet) {
               _updateRow(req, res, subscribers[0].waitingForUserInput.googleSheetRange, broadcastPayload, subscribers, message, oauth2Client, true)
-            }
-            else {
+            } else {
               _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client)
             }
           } else if (broadcastPayload.action.googleSheetAction === 'update_row') {
@@ -336,8 +335,8 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                       let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
                       if (range) {
                         _updateRow(req, res, range, broadcastPayload, subscribers, message, oauth2Client)
-                      } else { 
-                        _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client, true)   
+                      } else {
+                        _insertRow(req, res, broadcastPayload, subscribers, message, oauth2Client, true)
                       }
                     }
                   })
@@ -429,8 +428,7 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
           console.log('response in googlesheet insert', response.data)
           if (err) {
             logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
-          }
-          else {
+          } else {
             callApi(`subscribers/query`, 'post', {pageId: subscribers[0].pageId, senderId: subscribers[0].senderId, companyId: subscribers[0].companyId})
               .then(sub => {
                 console.log('subscribers userInput', sub[0].waitingForUserInput)
@@ -469,11 +467,10 @@ const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => 
           if (Columns.googleSheetColumns[i] === resp.lookUpColumn) {
             if (subscribers[0][resp.lookUpValue] || resp.lookUpValue === 'fullName') {
               if (resp.lookUpValue === 'fullName') {
-                //data.push(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
+                // data.push(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
                 resolve(subscribers[0]['firstName'] + ' ' + subscribers[0]['lastName'])
-              }
-              else {
-                //data.push(subscribers[0][resp.lookUpValue])
+              } else {
+                // data.push(subscribers[0][resp.lookUpValue])
                 resolve(subscribers[0][resp.lookUpValue])
               }
             } else {
@@ -487,7 +484,7 @@ const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => 
               )
                 .then(customFieldSubscriber => {
                   if (customFieldSubscriber) {
-                    //data.push(customFieldSubscriber.value)
+                    // data.push(customFieldSubscriber.value)
                     resolve(customFieldSubscriber.value)
                   }
                 })
@@ -496,11 +493,11 @@ const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => 
                 })
             }
           } else {
-            //data.push(null)
+            // data.push(null)
             resolve(null)
           }
         } else {
-          //data.push(null)
+          // data.push(null)
           resolve(null)
         }
       }

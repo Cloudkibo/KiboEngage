@@ -62,7 +62,6 @@ exports.prepareAdsetPayload = function (body, accessToken) {
     optimization_goal: 'IMPRESSIONS',
     billing_event: 'IMPRESSIONS',
     bid_amount: bidAmount,
-    daily_budget: budgetAmount,
     campaign_id: body.campaignId,
     targeting: {
       publisher_platforms: ['messenger'],
@@ -77,6 +76,11 @@ exports.prepareAdsetPayload = function (body, accessToken) {
       page_id: body.pageId
     },
     access_token: accessToken
+  }
+  if (body.budgetType === 'daily_budget') {
+    payload.daily_budget = budgetAmount
+  } else if (body.budgetType === 'lifetime_budget') {
+    payload.lifetime_budget = budgetAmount
   }
   return payload
 }
