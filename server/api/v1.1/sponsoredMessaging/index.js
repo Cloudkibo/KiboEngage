@@ -9,6 +9,7 @@ const validationSchema = require('./validationSchema')
 
 router.post('/fetchSponsoredMessages',
   auth.isAuthenticated(),
+  attachBuyerInfo(),
   controller.index)
 
 router.post('/',

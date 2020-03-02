@@ -13,6 +13,10 @@ const { kiboengage } = require('../../global/constants').serverConstants
 const config = require('./../../../config/environment')
 
 exports.index = function (req, res) {
+  let facebookInfo = req.user.facebookInfo
+  if (req.user.role !== 'buyer') {
+    facebookInfo = req.user.buyerInfo.facebookInfo
+  }
   var fetchCriteria = logiclayer.fetchSponsoredMessagesCriteria(req.body, req.user.companyId)
   async.parallelLimit([
     function (callback) {
@@ -37,13 +41,14 @@ exports.index = function (req, res) {
           callback(err)
         })
     }
-  ], 10, function (err, results) {
+  ], 10, async function (err, results) {
     if (err) {
       sendErrorResponse(res, 500, err)
     } else {
       let countResponse = results[0]
       let sponsoredMessages = results[1]
-      sendSuccessResponse(res, 200, {sponsoredMessages: sponsoredMessages, count: countResponse.length > 0 ? countResponse[0].count : 0})
+      let permissionsGiven = await logiclayer.checkFacebookPermissions(facebookInfo)
+      sendSuccessResponse(res, 200, {sponsoredMessages: sponsoredMessages, count: countResponse.length > 0 ? countResponse[0].count : 0, permissionsGiven})
     }
   })
 }
@@ -370,8 +375,6 @@ exports.adAccounts = function (req, res) {
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
   }
-  console.log('IN FETCH ALL ACCOUNTS OF USER')
-  logiclayer.checkFacebookPermissions(facebookInfo)
   facebookApiCaller('v6.0', `${facebookInfo.fbId}/adaccounts?fields=name,account_id,id,currency,account_status&access_token=${facebookInfo.fbToken}`, 'get')
     .then(response => {
       if (response.body.error) {
