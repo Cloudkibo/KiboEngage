@@ -149,34 +149,31 @@ function _storeAdSetId (queryObject, dataToUpdate, res) {
 
 function _updateClickCountId (payload, sponsoredMessageID) {
   for (let i = 0; i < payload.length; i++) {
-    logger.serverLog(TAG, `updateClickCountId ${sponsoredMessageID}`, 'debug')
-    for (let i = 0; i < payload.length; i++) {
-      if (payload[i].buttons && payload[i].buttons.length > 0) {
-        payload[i].buttons.forEach((button) => {
-          if (button.url && !button.messenger_extensions) {
-            let temp = button.newUrl.split('/')
-            let urlId = temp[temp.length - 1]
-            URLDataLayer.findOneURL(urlId)
-              .then(URLObject => {
-                let module = URLObject.module
-                module.id = sponsoredMessageID
-                logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
-                URLObject.module = module
-                logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
-                URLDataLayer.updateOneURL(URLObject._id, {'module': module})
-                  .then(savedurl => {
-                    logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
-                  })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
-                  })
-              })
-              .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
-              })
-          }
-        })
-      }
+    if (payload[i].buttons && payload[i].buttons.length > 0) {
+      payload[i].buttons.forEach((button) => {
+        if (button.url && !button.messenger_extensions) {
+          let temp = button.newUrl.split('/')
+          let urlId = temp[temp.length - 1]
+          URLDataLayer.findOneURL(urlId)
+            .then(URLObject => {
+              let module = URLObject.module
+              module.id = sponsoredMessageID
+              logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
+              URLObject.module = module
+              logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
+              URLDataLayer.updateOneURL(URLObject._id, {'module': module})
+                .then(savedurl => {
+                  logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
+                })
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
+            })
+        }
+      })
     }
   }
 }
