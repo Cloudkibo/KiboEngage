@@ -370,6 +370,8 @@ exports.adAccounts = function (req, res) {
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
   }
+  console.log('IN FETCH ALL ACCOUNTS OF USER')
+  logiclayer.checkFacebookPermissions(facebookInfo)
   facebookApiCaller('v6.0', `${facebookInfo.fbId}/adaccounts?fields=name,account_id,id,currency,account_status&access_token=${facebookInfo.fbToken}`, 'get')
     .then(response => {
       if (response.body.error) {
