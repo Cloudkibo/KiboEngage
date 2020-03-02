@@ -89,7 +89,7 @@ function newComment (postId, verb, body) {
     })
 }
 function updatePositiveMatch (postId) {
-  let newPayload = { $inc: { positiveMatchCount : 1 } }
+  let newPayload = { $inc: { positiveMatchCount: 1 } }
   utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
     .then(updated => {
       logger.serverLog(TAG, `Match count updated ${JSON.stringify(updated)}`, 'updated')
@@ -101,7 +101,7 @@ function updatePositiveMatch (postId) {
 function updateCommentsCount (body, verb, postId, commentCountForPost) {
   let page = body.entry[0].changes[0].value.post_id.split('_')
   if (page[0] !== body.entry[0].changes[0].value.from.id) {
-    let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: commentCountForPost ? commentCountForPost : -1 } }
+    let newPayload = verb === 'add' ? { $inc: { count: 1 } } : { $inc: { count: commentCountForPost || -1 } }
     utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
       .then(updated => {
       })

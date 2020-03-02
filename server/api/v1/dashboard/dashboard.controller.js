@@ -449,7 +449,7 @@ exports.stats = function (req, res) {
                   })
                   callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, isEnabledByPage: true, isSubscribed: true}, req.headers.authorization)
                     .then(subscribers => {
-                      //logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`)
+                      // logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`)
                       let subscribersCount = subscribers.length
 
                       payload.subscribers = subscribersCount

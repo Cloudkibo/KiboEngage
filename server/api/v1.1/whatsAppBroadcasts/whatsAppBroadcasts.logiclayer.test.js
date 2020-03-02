@@ -2,31 +2,31 @@ const { getCriterias, createPayloadgetSubscribersCount, checkFilterValues } = re
 const { prepareChat } = require('./whatsAppBroadcasts.logiclayer.js')
 
 describe('Validate getCriterias method for pagaination', () => {
-    test( 'should return an error because body is empty', () => {
-      expect(() => { getCriterias(null, '12345678') }).toThrowError(Error('body shouldnot be empty'))
-    })
-    test( 'should return an error because companyId is null', () => {
+  test('should return an error because body is empty', () => {
+    expect(() => { getCriterias(null, '12345678') }).toThrowError(Error('body shouldnot be empty'))
+  })
+  test('should return an error because companyId is null', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: '', days: '0'},
       first_page: 'next',
       last_id: '5d9c3027e58f4b3f604b2961',
       number_of_records: 10,
-      requested_page:1,
+      requested_page: 1,
       current_page: 0
     }
-      expect(() => { getCriterias(body, null) }).toThrowError(Error('companyUser must contain companyId and should be valid payload'))
-    })
-  test( 'should return an error because number_of_records is null', () => {
+    expect(() => { getCriterias(body, null) }).toThrowError(Error('companyUser must contain companyId and should be valid payload'))
+  })
+  test('should return an error because number_of_records is null', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: '', days: '0'},
       first_page: 'next',
       last_id: '5d9c3027e58f4b3f604b2961',
-      requested_page:1,
+      requested_page: 1,
       current_page: 0
     }
-      expect(() => { getCriterias(body, '12345678') }).toThrowError(Error('body must contain number_of_records and should be valid payload'))
-    })
-    test('should give first page countCriterias and fetchCriteria', () => {
+    expect(() => { getCriterias(body, '12345678') }).toThrowError(Error('body must contain number_of_records and should be valid payload'))
+  })
+  test('should give first page countCriterias and fetchCriteria', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: '', days: '0'},
       first_page: 'first',
@@ -40,11 +40,11 @@ describe('Validate getCriterias method for pagaination', () => {
       'companyId': '12345678',
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -60,14 +60,14 @@ describe('Validate getCriterias method for pagaination', () => {
      { '$skip': 0 },
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
-})
-test('should give next page countCriterias and fetchCriteria', () => {
+  })
+  test('should give next page countCriterias and fetchCriteria', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: '', days: '0'},
       first_page: 'next',
       last_id: '5d9c3027e58f4b3f604b2961',
       number_of_records: 10,
-      requested_page:1,
+      requested_page: 1,
       current_page: 0
     }
     var companyUser = {
@@ -77,11 +77,11 @@ test('should give next page countCriterias and fetchCriteria', () => {
       'companyId': '12345678',
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -97,16 +97,15 @@ test('should give next page countCriterias and fetchCriteria', () => {
        { '$sort': { datetime: -1 } },
        { '$skip': 0 },
        { '$limit': 10 } ] }
-      expect(getCriterias(body, companyUser)).toEqual(output)
-
-})
-test('should give previous page countCriterias and fetchCriteria', () => {
+    expect(getCriterias(body, companyUser)).toEqual(output)
+  })
+  test('should give previous page countCriterias and fetchCriteria', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: '', days: '0'},
       first_page: 'previous',
       last_id: '5d9c3027e58f4b3f604b2961',
       number_of_records: 10,
-      requested_page:1,
+      requested_page: 1,
       current_page: 0
     }
     var companyUser = {
@@ -116,11 +115,11 @@ test('should give previous page countCriterias and fetchCriteria', () => {
       'companyId': '12345678',
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -136,10 +135,9 @@ test('should give previous page countCriterias and fetchCriteria', () => {
        { '$sort': { datetime: -1 } },
        { '$skip': 10 },
        { '$limit': 10 } ] }
-      expect(getCriterias(body, companyUser)).toEqual(output)
-
-})
-test('should give first page countCriterias and fetchCriteria with miscellaneous component type', () => {
+    expect(getCriterias(body, companyUser)).toEqual(output)
+  })
+  test('should give first page countCriterias and fetchCriteria with miscellaneous component type', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: 'miscellaneous', days: '0'},
       first_page: 'first',
@@ -155,11 +153,11 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
       'title': { $exists: true },
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -171,15 +169,15 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
        'title': { $exists: true },
        'datetime': {
          '$exists': true
-       },
+       }
      }},
      { '$sort': { datetime: -1 } },
      { '$skip': 0 },
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
-})
+  })
 
-test('should give first page countCriterias and fetchCriteria with media component type', () => {
+  test('should give first page countCriterias and fetchCriteria with media component type', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: 'media', days: '0'},
       first_page: 'first',
@@ -195,11 +193,11 @@ test('should give first page countCriterias and fetchCriteria with media compone
       'title': { $exists: true },
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -211,14 +209,14 @@ test('should give first page countCriterias and fetchCriteria with media compone
        'title': { $exists: true },
        'datetime': {
          '$exists': true
-       },
+       }
      }},
      { '$sort': { datetime: -1 } },
      { '$skip': 0 },
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
-})
-test('should give first page countCriterias and fetchCriteria with all component type', () => {
+  })
+  test('should give first page countCriterias and fetchCriteria with all component type', () => {
     var body = {filter: false,
       filter_criteria: {search_value: '', type_value: 'all', days: '0'},
       first_page: 'first',
@@ -234,11 +232,11 @@ test('should give first page countCriterias and fetchCriteria with all component
       'title': { $exists: true },
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -250,14 +248,14 @@ test('should give first page countCriterias and fetchCriteria with all component
        'title': { $exists: true },
        'datetime': {
          '$exists': true
-       },
+       }
      }},
      { '$sort': { datetime: -1 } },
      { '$skip': 0 },
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
-})
-test('should give first page countCriterias and fetchCriteria with miscellaneous component type and title', () => {
+  })
+  test('should give first page countCriterias and fetchCriteria with miscellaneous component type and title', () => {
     var body = {filter: false,
       filter_criteria: {search_value: 'testing', type_value: 'miscellaneous', days: '0'},
       first_page: 'first',
@@ -275,11 +273,11 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
       },
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -293,14 +291,14 @@ test('should give first page countCriterias and fetchCriteria with miscellaneous
        },
        'datetime': {
          '$exists': true
-       },
+       }
      }},
      { '$sort': { datetime: -1 } },
      { '$skip': 0 },
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
-})
-test('should give first page countCriterias and fetchCriteria with media component type and title', () => {
+  })
+  test('should give first page countCriterias and fetchCriteria with media component type and title', () => {
     var body = {filter: false,
       filter_criteria: {search_value: 'testing', type_value: 'media', days: '0'},
       first_page: 'first',
@@ -318,11 +316,11 @@ test('should give first page countCriterias and fetchCriteria with media compone
       },
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -336,14 +334,14 @@ test('should give first page countCriterias and fetchCriteria with media compone
        },
        'datetime': {
          '$exists': true
-       },
+       }
      }},
      { '$sort': { datetime: -1 } },
      { '$skip': 0 },
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
-})
-test('should give first page countCriterias and fetchCriteria with all component type and title', () => {
+  })
+  test('should give first page countCriterias and fetchCriteria with all component type and title', () => {
     var body = {filter: false,
       filter_criteria: {search_value: 'testing', type_value: 'all', days: '0'},
       first_page: 'first',
@@ -361,11 +359,11 @@ test('should give first page countCriterias and fetchCriteria with all component
       },
       'datetime': {
         '$exists': true
-      },
-}},
+      }
+    }},
     { '$group': {
       '_id': null,
-      'count':{
+      'count': {
         '$sum': 1
       }
     }
@@ -379,13 +377,13 @@ test('should give first page countCriterias and fetchCriteria with all component
        },
        'datetime': {
          '$exists': true
-       },
+       }
      }},
      { '$sort': { datetime: -1 } },
      { '$skip': 0 },
      { '$limit': 10 } ] }
     expect(getCriterias(body, companyUser)).toEqual(output)
-})
+  })
 })
 
 describe('Get Payload of get subscribers count method', () => {
@@ -400,7 +398,7 @@ describe('Get Payload of get subscribers count method', () => {
       match: finalFindCriteria,
       sort: {datetime: -1},
       limit: 1
-      }
+    }
     expect(createPayloadgetSubscribersCount('12345678', '+923403630780')).toEqual(output)
   })
 })
@@ -417,7 +415,7 @@ describe('createPayloadgetSubscribersCount method testing', () => {
       match: finalFindCriteria,
       sort: {datetime: -1},
       limit: 1
-      }
+    }
     expect(createPayloadgetSubscribersCount('12345678', '+923403630780')).toEqual(output)
   })
   test('return error because companyID is missing', () => {
@@ -431,9 +429,8 @@ describe('createPayloadgetSubscribersCount method testing', () => {
       match: finalFindCriteria,
       sort: {datetime: -1},
       limit: 1
-      }
-      expect(() => { createPayloadgetSubscribersCount(null, '+923403630780') }).toThrowError(Error('must contain companyId and should be valid payload'))
-
+    }
+    expect(() => { createPayloadgetSubscribersCount(null, '+923403630780') }).toThrowError(Error('must contain companyId and should be valid payload'))
   })
   test('return error because contact no is missing', () => {
     let finalFindCriteria = {
@@ -446,9 +443,8 @@ describe('createPayloadgetSubscribersCount method testing', () => {
       match: finalFindCriteria,
       sort: {datetime: -1},
       limit: 1
-      }
-      expect(() => { createPayloadgetSubscribersCount('123456789', null) }).toThrowError(Error('must contain contact number and should be valid payload'))
-
+    }
+    expect(() => { createPayloadgetSubscribersCount('123456789', null) }).toThrowError(Error('must contain contact number and should be valid payload'))
   })
 })
 
@@ -457,14 +453,14 @@ describe('checkFilterValues method testing', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
-  }
+    }
     expect(checkFilterValues(null, contact)).toEqual(true)
   })
   test('return true because segmentation length is zero ', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
-  }
+    }
     expect(checkFilterValues(null, contact)).toEqual(true)
   })
   test('return false because name doesnot exist in contact', () => {
@@ -478,9 +474,9 @@ describe('checkFilterValues method testing', () => {
       text: 'Arveen Kumar',
       condition: 'name'
     }]
-      expect(checkFilterValues(values, contact)).toEqual(false)
-    })
-    test('return false because name exist in contact', () => {
+    expect(checkFilterValues(values, contact)).toEqual(false)
+  })
+  test('return false because name exist in contact', () => {
     var contact = {
       'name': 'Arveen Kumar',
       'number': '+923403630780'
@@ -491,8 +487,8 @@ describe('checkFilterValues method testing', () => {
       text: 'Arveen Kumar',
       condition: 'name'
     }]
-      expect(checkFilterValues(values, contact)).toEqual(true)
-    })
+    expect(checkFilterValues(values, contact)).toEqual(true)
+  })
   test('return false because name doesnot exist in contact', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
@@ -504,8 +500,8 @@ describe('checkFilterValues method testing', () => {
       text: 'Vishal',
       condition: 'name'
     }]
-      expect(checkFilterValues(values, contact)).toEqual(false)
-    })
+    expect(checkFilterValues(values, contact)).toEqual(false)
+  })
   test('return true because name  exist in contact', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
@@ -517,8 +513,8 @@ describe('checkFilterValues method testing', () => {
       text: 'Kumar',
       condition: 'name'
     }]
-      expect(checkFilterValues(values, contact)).toEqual(true)
-    })
+    expect(checkFilterValues(values, contact)).toEqual(true)
+  })
   test('return false because name doesnot begin with Arveen in contact', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
@@ -530,8 +526,8 @@ describe('checkFilterValues method testing', () => {
       text: 'Kumar Maheshwari',
       condition: 'name'
     }]
-      expect(checkFilterValues(values, contact)).toEqual(false)
-    })
+    expect(checkFilterValues(values, contact)).toEqual(false)
+  })
   test('return true because name  begin with Arveen in contact', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
@@ -543,8 +539,8 @@ describe('checkFilterValues method testing', () => {
       text: 'Arveen',
       condition: 'name'
     }]
-      expect(checkFilterValues(values, contact)).toEqual(true)
-    })
+    expect(checkFilterValues(values, contact)).toEqual(true)
+  })
   test('return true because name  exist with Arveen and contact in contacts', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
@@ -560,10 +556,10 @@ describe('checkFilterValues method testing', () => {
       text: '+923403630780',
       condition: 'number'
     }
-  ]
-      expect(checkFilterValues(values, contact)).toEqual(true)
-    })
-    test('return false because name  doesnot exist with Arveen and contact in contacts', () => {
+    ]
+    expect(checkFilterValues(values, contact)).toEqual(true)
+  })
+  test('return false because name  doesnot exist with Arveen and contact in contacts', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',
       'number': '+923403630780'
@@ -579,8 +575,8 @@ describe('checkFilterValues method testing', () => {
       condition: 'number'
     }
     ]
-        expect(checkFilterValues(values, contact)).toEqual(false)
-      })
+    expect(checkFilterValues(values, contact)).toEqual(false)
+  })
   test('return error because contact data is missing', () => {
     var contact = {
       'name': 'Arveen Kumar Maheshwari',

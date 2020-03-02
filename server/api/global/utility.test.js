@@ -119,6 +119,5 @@ describe('Validate PhoneNumber test in utility', () => {
     expect(isPhoneNumber('number')).toBe(false)
     expect(isPhoneNumber('1234')).toBe(false)
     expect(isPhoneNumber('+92340')).toBe(false)
-
   })
 })

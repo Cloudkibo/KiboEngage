@@ -31,8 +31,8 @@ describe('Get SendGrid Object in utility', () => {
 
 describe('Pad with zeros function', () => {
   test('should pad a number with zeros correctly', () => {
-    expect(padWithZeros(4, 2)).toBe("04")
-    expect(padWithZeros(4, 3)).toBe("004")
-    expect(padWithZeros(14, 2)).toBe("14")
+    expect(padWithZeros(4, 2)).toBe('04')
+    expect(padWithZeros(4, 3)).toBe('004')
+    expect(padWithZeros(14, 2)).toBe('14')
   })
 })

@@ -40,7 +40,7 @@ exports.invite = function (req, res) {
 }
 
 exports.updateRole = function (req, res) {
-  utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email},'accounts', req.headers.authorization)
+  utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email}, 'accounts', req.headers.authorization)
     .then((result) => {
       logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
       logger.serverLog(TAG, result, 'debug')
@@ -88,7 +88,7 @@ exports.updatePlatform = function (req, res) {
             client.incomingPhoneNumbers
               .list().then((incomingPhoneNumbers) => {
                 console.log('incomingPhoneNumbers', incomingPhoneNumbers)
-                if (incomingPhoneNumbers && incomingPhoneNumbers.length > 0) {  
+                if (incomingPhoneNumbers && incomingPhoneNumbers.length > 0) {
                   utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}})
                     .then(updatedProfile => {
                       sendSuccessResponse(res, 200, updatedProfile)

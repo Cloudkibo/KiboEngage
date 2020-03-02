@@ -15,7 +15,7 @@ exports.fetchFeedsCriteria = function (body, companyId) {
     integrationType: body.integrationType
   }
   if (body.status_value !== '') {
-    findCriteria['isActive'] = body.status_value === 'true' ? true : false
+    findCriteria['isActive'] = body.status_value === 'true'
   }
   if (body.page_value !== '') {
     findCriteria['pageIds'] = body.page_value

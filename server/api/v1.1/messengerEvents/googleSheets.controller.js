@@ -122,16 +122,14 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
               } else if (type === 'update_row') {
                 updateRow(resp, subscriber, oauth2Client, range)
               }
-            }
-            else {
-              if (type === 'update_row') { 
+            } else {
+              if (type === 'update_row') {
                 for (let i = 0; i < resp.mapping.length; i++) {
                   if (resp.lookUpColumn === resp.mapping[i].googleSheetColumn) {
                     if (!resp.mapping[i].kiboPushColumn && !resp.mapping[i].customFieldColumn) {
                       if (subscriber[resp.lookUpValue] || resp.lookUpValue === 'fullName') {
                         resp.mapping[i].kiboPushColumn = resp.lookUpValue
-                      }
-                      else {
+                      } else {
                         resp.mapping[i].customFieldColumn = resp.lookUpValue
                       }
                     }
