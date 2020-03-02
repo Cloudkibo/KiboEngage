@@ -89,7 +89,7 @@ exports.prepareAdCreativePayload = function (body, accessToken) {
   let data = facebook(body.payload[0])
   data = JSON.parse(data)
   let payload = {
-    object_id: body.pageId,
+    object_id: body.pageFbId,
     object_type: 'SHARE',
     messenger_sponsored_message: JSON.stringify({message: data}),
     access_token: accessToken
