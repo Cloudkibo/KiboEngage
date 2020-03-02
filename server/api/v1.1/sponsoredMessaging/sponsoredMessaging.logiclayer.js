@@ -1,4 +1,30 @@
 let { facebook } = require('../../global/prepareMessageData')
+let config = require('./../../../config/environment')
+let PassportFacebookExtension = require('passport-facebook-extension')
+const logger = require('../../../components/logger')
+const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.logiclayer.js'
+
+exports.checkFacebookPermissions = async function (facebookInfo) {
+  let FBExtension = new PassportFacebookExtension(config.facebook.clientID,
+    config.facebook.clientSecret)
+  let adsReadPermissionGiven = false
+  let adsManagementPermissionGiven = false
+
+  let permissions = await FBExtension.permissionsGiven(facebookInfo.fbId, facebookInfo.fbToken)
+  for (let i = 0; i < permissions.length; i++) {
+    if (permissions[i].permission === 'ads_management') {
+      if (permissions[i].status === 'granted') {
+        adsManagementPermissionGiven = true
+      }
+    }
+    if (permissions[i].permission === 'ads_read') {
+      if (permissions[i].status === 'granted') {
+        adsReadPermissionGiven = true
+      }
+    }
+  }
+  return (adsManagementPermissionGiven && adsReadPermissionGiven)
+}
 
 exports.preparePayload = function (companyId, userId, body) {
   let payload = {
