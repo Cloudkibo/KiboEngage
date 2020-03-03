@@ -9,6 +9,9 @@ exports.getPostsPayload = {
     'last_id': {
       'type': 'string'
     },
+    'pageIds': {
+      'type': 'array'
+    },
     'number_of_records': {
       'type': 'integer'
     },
@@ -31,7 +34,8 @@ exports.getPostsPayload = {
   'required': [
     'last_id',
     'number_of_records',
-    'first_page'
+    'first_page',
+    'pageIds'
   ]
 }
 exports.postPayload = {

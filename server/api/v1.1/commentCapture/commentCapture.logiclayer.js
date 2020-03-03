@@ -24,7 +24,8 @@ exports.getCriterias = function (body, companyId) {
       $gte: startDate,
       $lt: endDate
     } : { $exists: true },
-    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true }
+    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true },
+    pageId: body.pageIds.length > 0 ? {$in: body.pageIds} : {$exists: true}
   }
   if (body.type_value === 'any') {
     findCriteria['payload.0'] = { $exists: false }
@@ -98,7 +99,7 @@ exports.getComments = (body) => {
   ]
   if (body.post_id && body.post_id !== '') {
     aggregateData[0].$match.postFbId = body.post_id
-  } else { 
+  } else {
     aggregateData[0].$match.postId = body.postId
   }
   return aggregateData
