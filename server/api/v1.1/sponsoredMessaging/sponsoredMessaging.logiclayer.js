@@ -151,7 +151,7 @@ exports.fetchSponsoredMessagesCriteria = function (body, companyId) {
     adName: body.search_value !== '' ? { $regex: searchRegex, $options: 'i' } : { $exists: true }
   }
   if (body.status_value !== '') {
-    findCriteria['status'] = body.status_value
+    findCriteria['status'] = {$regex: `^${body.status_value}$`, $options: 'i'}
   }
   if (body.page_value !== '') {
     findCriteria['pageId'] = body.page_value
