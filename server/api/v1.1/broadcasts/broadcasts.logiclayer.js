@@ -41,8 +41,7 @@ exports.getCriterias = function (req) {
             $gte: startDate
           } : { $exists: true }
         }
-      }
-      else {
+      } else {
         findCriteria = {
           companyId: req.user.companyId,
           'payload.0.componentName': (req.body.filter_criteria.type_value !== '' && req.body.filter_criteria.type_value !== 'all') ? req.body.filter_criteria.type_value : { $exists: true },
@@ -52,7 +51,6 @@ exports.getCriterias = function (req) {
             $gte: startDate
           } : { $exists: true }
         }
-
       }
     }
   }

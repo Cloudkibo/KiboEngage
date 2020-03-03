@@ -115,7 +115,7 @@ const _updateSubscription = (data, next) => {
       senderId: data.subscriber.senderId
     },
     newsSectionId: data.resp.rssFeedId,
-    subscription: data.resp.action === 'subscribe_to_rssFeed' ? true : false
+    subscription: data.resp.action === 'subscribe_to_rssFeed'
   }
   RssSubscriptionsDataLayer.genericUpdateRssSubscriptions({'subscriberId._id': data.subscriber._id, newsSectionId: data.resp.rssFeedId}, updateData, {upsert: true})
     .then(rssSubscription => {

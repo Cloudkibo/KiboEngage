@@ -152,36 +152,33 @@ function _storeAdSetId (queryObject, dataToUpdate, res) {
     })
 }
 
-function updateClickCountId (payload, sponsoredMessageID) {
+function _updateClickCountId (payload, sponsoredMessageID) {
   for (let i = 0; i < payload.length; i++) {
-    logger.serverLog(TAG, `updateClickCountId ${sponsoredMessageID}`, 'debug')
-    for (let i = 0; i < payload.length; i++) {
-      if (payload[i].buttons && payload[i].buttons.length > 0) {
-        payload[i].buttons.forEach((button) => {
-          if (button.url && !button.messenger_extensions) {
-            let temp = button.newUrl.split('/')
-            let urlId = temp[temp.length - 1]
-            URLDataLayer.findOneURL(urlId)
-              .then(URLObject => {
-                let module = URLObject.module
-                module.id = sponsoredMessageID
-                logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
-                URLObject.module = module
-                logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
-                URLDataLayer.updateOneURL(URLObject._id, {'module': module})
-                  .then(savedurl => {
-                    logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
-                  })
-                  .catch(err => {
-                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
-                  })
-              })
-              .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
-              })
-          }
-        })
-      }
+    if (payload[i].buttons && payload[i].buttons.length > 0) {
+      payload[i].buttons.forEach((button) => {
+        if (button.url && !button.messenger_extensions) {
+          let temp = button.newUrl.split('/')
+          let urlId = temp[temp.length - 1]
+          URLDataLayer.findOneURL(urlId)
+            .then(URLObject => {
+              let module = URLObject.module
+              module.id = sponsoredMessageID
+              logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
+              URLObject.module = module
+              logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
+              URLDataLayer.updateOneURL(URLObject._id, {'module': module})
+                .then(savedurl => {
+                  logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
+                })
+                .catch(err => {
+                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
+                })
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
+            })
+        }
+      })
     }
   }
 }
@@ -210,8 +207,10 @@ exports.send = function (req, res) {
             } else {
               let adId = adsResp.body.id
               let queryObject = { _id: req.params.id }
-              let dataToUpdate = { messageCreativeId, adId, status: 'in_review', payload: req.body.payload, adName: req.body.adName }
+              let dataToUpdate = { messageCreativeId, adId, status: 'sent_to_fb', payload: req.body.payload, adName: req.body.adName }
               _storeAdAndCreativeIds(queryObject, dataToUpdate)
+              _updateClickCountId(req.body, req.body._id)
+              _sendToClientUsingSocket(req.body, req.user.name)
               facebookApiCaller('v6.0', `${req.body.adAccountId}/subscribed_apps?app_id=${config.facebook.clientID}`, 'post', {access_token: facebookInfo.fbToken})
                 .then(subscriptionResp => {
                   if (subscriptionResp.body.error) {
@@ -246,6 +245,20 @@ function _storeAdAndCreativeIds (queryObject, dataToUpdate) {
     .catch(error => {
       logger.serverLog(TAG, `Error on updating sponsored messaging ${JSON.stringify(error)}`)
     })
+}
+
+function _sendToClientUsingSocket (body, agentName) {
+  body.status = 'sent_to_fb'
+  require('./../../../config/socketio').sendMessageToClient({
+    room_id: body.companyId,
+    body: {
+      action: 'sponsoredMessaging_newCreated',
+      payload: {
+        sponsoredMessage: body,
+        message: `${agentName} has created a new sponsored broadcast. Please refresh to see changes.`
+      }
+    }
+  })
 }
 
 exports.delete = function (req, res) {
@@ -291,7 +304,7 @@ exports.sendInSandbox = function (req, res) {
     utility.callApi(`sponsoredMessaging/query`, 'get', { _id: id })
       .then(sponsoredMessages => {
         let sponsoredMessage = sponsoredMessages[0]
-        updateClickCountId(sponsoredMessage, id)
+        _updateClickCountId(sponsoredMessage, id)
         let campaignPayload = logiclayer.prepareCampaignPayload(sponsoredMessage, accesstoken)
         facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/campaigns`, 'post', campaignPayload)
           .then(campaignResp => {

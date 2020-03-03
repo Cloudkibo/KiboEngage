@@ -56,7 +56,7 @@ exports.findBroadcast = (queryObject) => {
     match: queryObject
   }
   return callApi(`broadcasts/query`, 'post', query, 'kiboengage')
-} 
+}
 exports.findBroadcastsWithSortLimit = (queryObject, sort, limit) => {
   let query = {
     purpose: 'aggregate',

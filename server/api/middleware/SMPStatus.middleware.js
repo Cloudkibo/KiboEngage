@@ -33,8 +33,8 @@ exports.checkSMP = () => {
 function checkStatusForEachPage (connectedPages) {
   return new Promise((resolve, reject) => {
     let statusArray = []
-      async.each(connectedPages, function (connectedPage, next) {
-        isApprovedForSMP(connectedPage)
+    async.each(connectedPages, function (connectedPage, next) {
+      isApprovedForSMP(connectedPage)
         .then(smpStatus => {
           statusArray.push({ pageId: connectedPage._id, smpStatus: smpStatus })
           next()
@@ -42,13 +42,13 @@ function checkStatusForEachPage (connectedPages) {
         .catch(err => {
           reject(err)
         })
-      }, function (err) {
-        if (err) {
-          logger.serverLog(TAG, `Failed to fetch subscription messaging status of connected pages ${err}`, 'error')
-          reject(err)
-        } else {
-          resolve(statusArray)
-        }
-      })
+    }, function (err) {
+      if (err) {
+        logger.serverLog(TAG, `Failed to fetch subscription messaging status of connected pages ${err}`, 'error')
+        reject(err)
+      } else {
+        resolve(statusArray)
+      }
     })
+  })
 }

@@ -34,7 +34,7 @@ function handleDisapprovedAdObjects (payload) {
 function handleInProcessAdObjects (payload) {
   const { id, level } = payload
   let queryObject
-  let dataToUpdate = { status: 'in_process', statusFbPayload: payload }
+  let dataToUpdate = { status: payload.status_name, statusFbPayload: payload }
   if (level === 'AD') {
     queryObject = { adId: id }
   } else if (level === 'AD_SET') {
@@ -64,9 +64,31 @@ function handleWithIssuesAdObjects (payload) {
 function updateSponsoredMessaging (queryObject, dataToUpdate) {
   datalayer.genericUpdateSponsoredMessaging(queryObject, dataToUpdate)
     .then(sponsoredMessage => {
+      sendToClientUsingSocket(queryObject, dataToUpdate)
       logger.serverLog(TAG, `Updated sponsored messaging`)
     })
     .catch(error => {
       logger.serverLog(TAG, `Error on updating sponsored messaging ${JSON.stringify(error)}`)
+    })
+}
+
+function sendToClientUsingSocket (queryObject, dataToUpdate) {
+  datalayer.findOneSponsoredMessaging(queryObject)
+    .then(sponsoredMessage => {
+      if (sponsoredMessage) {
+        require('./../../../config/socketio').sendMessageToClient({
+          room_id: sponsoredMessage.companyId,
+          body: {
+            action: 'sponsoredMessaging_statusChanged',
+            payload: {
+              status: dataToUpdate.status,
+              sponsoredMessage
+            }
+          }
+        })
+      }
+    })
+    .catch(error => {
+      logger.serverLog(TAG, `Error in fetching sponsored messaging to update client using socket ${JSON.stringify(error)}`)
     })
 }
