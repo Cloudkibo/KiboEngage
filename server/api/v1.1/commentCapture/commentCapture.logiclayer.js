@@ -24,7 +24,8 @@ exports.getCriterias = function (body, companyId) {
       $gte: startDate,
       $lt: endDate
     } : { $exists: true },
-    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true }
+    title: body.search_value !== '' ? { $regex: body.search_value, $options: 'i' } : { $exists: true },
+    pageId: body.pageIds.length > 0 ? {$in: body.pageIds} : {$exists: true}
   }
   if (body.type_value === 'any') {
     findCriteria['payload.0'] = { $exists: false }
@@ -98,7 +99,7 @@ exports.getComments = (body) => {
   ]
   if (body.post_id && body.post_id !== '') {
     aggregateData[0].$match.postFbId = body.post_id
-  } else { 
+  } else {
     aggregateData[0].$match.postId = body.postId
   }
   return aggregateData
@@ -157,7 +158,7 @@ exports.getPostId = function (url) {
   let postId = ''
   let pathname
   let result = URL.parse(url)
-  if ((result.host === 'www.facebook.com' || result.host=== 'web.facebook.com' )&& result.query && result.pathname) {
+  if ((result.host === 'www.facebook.com' || result.host === 'web.facebook.com') && result.query && result.pathname) {
     let query = result.query.split('&')
     if (query && query.length > 0) {
       for (let i = 0; i < query.length; i++) {
@@ -281,12 +282,12 @@ function handleLinks (textComponents, linkComponents) {
     payload = {
       type: 'text',
       payload: {
-        "message": "",
-        "link": "www.kibopush.com",
-        "child_attachments": JSON.stringify(links)
+        'message': '',
+        'link': 'www.kibopush.com',
+        'child_attachments': JSON.stringify(links)
       }
     }
-    payload.payload.message = textComponents.length > 0 ? textComponents[0].text : ""
+    payload.payload.message = textComponents.length > 0 ? textComponents[0].text : ''
   }
   return payload
 }

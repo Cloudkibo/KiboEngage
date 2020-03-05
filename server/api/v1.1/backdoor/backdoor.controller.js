@@ -1319,7 +1319,7 @@ exports.fetchPageOwners = (req, res) => {
       '$project': {
         '_id': 0,
         'pageId': '$_id',
-        'users': 1,
+        'users': 1
       }
     }
   ]
@@ -1327,7 +1327,7 @@ exports.fetchPageOwners = (req, res) => {
     .then(pageOwners => {
       return res.status(200).json({
         status: 'success',
-        payload: pageOwners[0].users,
+        payload: pageOwners[0].users
 
       })
     })
@@ -1514,7 +1514,7 @@ exports.fetchSubscribersWithTags = (req, res) => {
         'pageName': {'$first': '$pageName'},
         'subscribers': {'$addToSet': '$subscriber'},
         'accessToken': {'$first': '$accessToken'},
-        'userId': {'$first': '$userId'},
+        'userId': {'$first': '$userId'}
       }
     },
     {
@@ -1585,29 +1585,29 @@ exports.fetchSubscribersWithTags = (req, res) => {
                     subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
                   }
                   if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
-                        foundOne = true
-                        subscriberData.push({
-                          subscriber: pageSubscribers[0].subscribers[i],
-                          assignedTags: [],
-                          unassignedTags: []
-                        })
-                    }
+                    foundOne = true
+                    subscriberData.push({
+                      subscriber: pageSubscribers[0].subscribers[i],
+                      assignedTags: [],
+                      unassignedTags: []
+                    })
                   }
-                } else {
-                  return res.status(200).json({
-                    status: 'success',
-                    payload: []
-                  })
                 }
-              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber-1)*10) ) {
-                  subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
-                  return res.status(200).json({
-                    status: 'success',
-                    payload: {
-                      subscriberData,
-                      totalSubscribers: pageSubscribers[0].subscribers.length
-                    }
-                  })
+              } else {
+                return res.status(200).json({
+                  status: 'success',
+                  payload: []
+                })
+              }
+              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber - 1) * 10)) {
+                subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
+                return res.status(200).json({
+                  status: 'success',
+                  payload: {
+                    subscriberData,
+                    totalSubscribers: pageSubscribers[0].subscribers.length
+                  }
+                })
               }
             } else {
               console.log('pageTags found', pageTags)
@@ -1621,8 +1621,8 @@ exports.fetchSubscribersWithTags = (req, res) => {
                   subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
                 }
                 if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
-                    console.log('subscriber name search', req.body.subscriberName)
-                    console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
+                  console.log('subscriber name search', req.body.subscriberName)
+                  console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
                   criteriaFulfilled += 1
                   needle.get(
                     `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
@@ -1714,21 +1714,21 @@ exports.fetchSubscribersWithTags = (req, res) => {
                         }
 
                         if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                              subscriberData.push({
-                                subscriber: pageSubscribers[0].subscribers[i],
-                                assignedTags: assignedTags,
-                                unassignedTags: unassignedTags
-                              })
+                          subscriberData.push({
+                            subscriber: pageSubscribers[0].subscribers[i],
+                            assignedTags: assignedTags,
+                            unassignedTags: unassignedTags
+                          })
                         }
                         retrievedSubscriberData += 1
-                        if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled) ) {
+                        if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled)) {
                           if (!subscriberDataPopulated) {
                             subscriberDataPopulated = true
                             subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
                             return res.status(200).json({
                               status: 'success',
                               payload: {
-                                subscriberData: subscriberData.slice(0,10),
+                                subscriberData: subscriberData.slice(0, 10),
                                 totalSubscribers: pageSubscribers[0].subscribers.length
                               }
                             })
@@ -1737,22 +1737,22 @@ exports.fetchSubscribersWithTags = (req, res) => {
                       }
                     })
                 }
+              }
+              loopFinished = true
+              if (criteriaFulfilled === 0) {
+                return res.status(200).json({
+                  status: 'success',
+                  payload: []
+                })
+              }
             }
-            loopFinished = true
-            if (criteriaFulfilled === 0) {
-              return res.status(200).json({
-                status: 'success',
-                payload: []
-              })
-            }
-          }
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch page tags ${err}`
           })
-        })
+          .catch(err => {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to fetch page tags ${err}`
+            })
+          })
       } else {
         return res.status(200).json({
           status: 'success',
@@ -1900,7 +1900,7 @@ exports.fetchCompanyInfoNew = (req, res) => {
       '$group': {
         '_id': '$_id',
         'companyName': {'$first': '$companyName'},
-        'userId': {'$first': '$ownerId'},
+        'userId': {'$first': '$ownerId'}
       }
     },
     {
@@ -1914,7 +1914,7 @@ exports.fetchCompanyInfoNew = (req, res) => {
       }
     },
     {
-      '$skip':  req.body.pageNumber ? (req.body.pageNumber-1) * 10 : 0
+      '$skip': req.body.pageNumber ? (req.body.pageNumber - 1) * 10 : 0
     },
     {
       '$limit': 10
@@ -1929,14 +1929,13 @@ exports.fetchCompanyInfoNew = (req, res) => {
         let companyUserRequests = []
         let subscriberRequests = []
         for (let i = 0; i < companies.length; i++) {
-
           userRequests.push(
             function (callback) {
               utility.callApi(`user/query`, 'post', {_id: companies[i].userId}, 'accounts', req.headers.authorization)
                 .then(users => {
                   callback(null, {companyId: companies[i]._id,
-                                   companyName: companies[i].companyName,
-                                   user: users.length > 0 ? users[0] : null})
+                    companyName: companies[i].companyName,
+                    user: users.length > 0 ? users[0] : null})
                 })
                 .catch(err => {
                   callback(err)
@@ -1949,7 +1948,7 @@ exports.fetchCompanyInfoNew = (req, res) => {
               utility.callApi(`pages/query`, 'post', {companyId: companies[i]._id}, 'accounts', req.headers.authorization)
                 .then(pages => {
                   callback(null, { numOfOwnedPages: pages.length,
-                                   numOfConnectedPages: pages.filter(page => page.connected).length})
+                    numOfConnectedPages: pages.filter(page => page.connected).length})
                 })
                 .catch(err => {
                   callback(err)
@@ -1990,15 +1989,15 @@ exports.fetchCompanyInfoNew = (req, res) => {
             })
           } else {
             let data = []
-            for (let i = 0; i < results.length/4; i++) {
+            for (let i = 0; i < results.length / 4; i++) {
               data.push({
                 owner: results[i].user,
                 companyId: results[i].companyId,
                 companyName: results[i].companyName,
-                numOfOwnedPages: results[i+(results.length/4)].numOfOwnedPages,
-                numOfConnectedPages: results[i+(results.length/4)].numOfConnectedPages,
-                numOfCompanyUsers: results[i+(results.length/4)*2].numOfCompanyUsers,
-                numOfSubscribers: results[i+(results.length/4)*3].numOfSubscribers
+                numOfOwnedPages: results[i + (results.length / 4)].numOfOwnedPages,
+                numOfConnectedPages: results[i + (results.length / 4)].numOfConnectedPages,
+                numOfCompanyUsers: results[i + (results.length / 4) * 2].numOfCompanyUsers,
+                numOfSubscribers: results[i + (results.length / 4) * 3].numOfSubscribers
               })
             }
             console.log('company data done', data)
@@ -2074,15 +2073,15 @@ function get10PageSubscribers (req, skip) {
         '_id': 1,
         'firstName': 1,
         'lastName': 1,
-        'fullName': { $concat : [ "$firstName", " ", "$lastName" ] },
+        'fullName': { $concat: [ '$firstName', ' ', '$lastName' ] },
         'senderId': 1,
         'gender': 1
       }
     },
     {
-      '$match': { fullName: { $regex: '.*'+ req.body.subscriberName +'.*', $options: 'i' } }
+      '$match': { fullName: { $regex: '.*' + req.body.subscriberName + '.*', $options: 'i' } }
     },
-    {'$skip': skip ? skip : 0},
+    {'$skip': skip || 0},
     {'$limit': 10}
   ]
   return utility.callApi(`subscribers/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
@@ -2121,33 +2120,33 @@ function getPageTags (req) {
   return utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
 }
 
-function _fetchSubscribersWithTagsNew(req, res, skip, pageTags, results) {
+function _fetchSubscribersWithTagsNew (req, res, skip, pageTags, results) {
   console.log(`_fetchSubscribersWithTagsNew skip: ${skip} `)
-  get10PageSubscribers(req, (req.body.pageNumber -1)*10)
+  get10PageSubscribers(req, (req.body.pageNumber - 1) * 10)
     .then(subscribers => {
       console.log('got subscribers', subscribers)
       if (subscribers) {
         filterSubscribers(req, res, subscribers, pageTags, results)
-        .then(filteredSubscribers => {
-          if (results.length < 10 && subscribers.length >= 10) {
-            console.log('recursion condition')
-            skip += 10
-            _fetchSubscribersWithTagsNew(req, res, skip, pageTags, results)
-          } else {
-            return res.status(200).json({
-              status: 'success',
-              payload: {
-                subscriberData: results
-              }
-            })
-          }
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to filter subscribers  ${err}`
+          .then(filteredSubscribers => {
+            if (results.length < 10 && subscribers.length >= 10) {
+              console.log('recursion condition')
+              skip += 10
+              _fetchSubscribersWithTagsNew(req, res, skip, pageTags, results)
+            } else {
+              return res.status(200).json({
+                status: 'success',
+                payload: {
+                  subscriberData: results
+                }
+              })
+            }
           })
-        })
+          .catch(err => {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Failed to filter subscribers  ${err}`
+            })
+          })
       } else {
         return res.status(200).json({
           status: 'success',
@@ -2161,12 +2160,12 @@ function _fetchSubscribersWithTagsNew(req, res, skip, pageTags, results) {
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch subscribers  ${err}`
+      })
     })
-  })
 }
 
 function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     if (pageTags.length === 0) {
       let statusFilterSucceeded = true
       if (req.body.status) {
@@ -2178,17 +2177,17 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
       }
       if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
         for (let i = 0; subscriberData.length < 10 && i < subscribers.length; i++) {
-            retrievedSubscriberData += 1
-            subscriberData.push({
-              subscriber: subscribers[i],
-              assignedTags: [],
-              unassignedTags: []
-            })
-          }
-          resolve(subscriberData)
-        } else {
-          resolve([])
+          retrievedSubscriberData += 1
+          subscriberData.push({
+            subscriber: subscribers[i],
+            assignedTags: [],
+            unassignedTags: []
+          })
         }
+        resolve(subscriberData)
+      } else {
+        resolve([])
+      }
     } else {
       let requests = []
       for (let i = 0; subscriberData.length < 10 && i < subscribers.length; i++) {
@@ -2203,7 +2202,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                   assignedTags: [],
                   unassignedTags: pageTags
                 })
-                //callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
+                // callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
               } else {
                 logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
                 logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags)}`, 'debug')
@@ -2297,20 +2296,21 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
               }
             })
         })
-    }
-    async.parallelLimit(requests, 30, function (err, results) {
-      if (err) {
-        reject(`Failed to fetch facebook tags ${err}`)
-      } else {
-        for (let i = 0; subscriberData.length < 10 && i < results.length; i++) {
-          if (results[i]) {
-            subscriberData.push(results[i])
-          }
-        }
-        resolve(subscriberData)
       }
-    })
-  }})
+      async.parallelLimit(requests, 30, function (err, results) {
+        if (err) {
+          reject(`Failed to fetch facebook tags ${err}`)
+        } else {
+          for (let i = 0; subscriberData.length < 10 && i < results.length; i++) {
+            if (results[i]) {
+              subscriberData.push(results[i])
+            }
+          }
+          resolve(subscriberData)
+        }
+      })
+    }
+  })
 }
 
 exports.usersListForViewAs = function (req, res) {

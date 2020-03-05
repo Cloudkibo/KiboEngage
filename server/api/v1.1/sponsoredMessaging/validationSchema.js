@@ -1,27 +1,29 @@
 exports.createPayload = {
   type: 'object',
-  companyId: {
-    type: 'string',
-    required: true
-  },
-  userId: {
-    type: 'string',
-    required: true
+  properties: {
+    status: {
+      type: 'string',
+      required: true
+    },
+    adName: {
+      type: 'string',
+      required: true
+    },
+    pageId: {
+      type: 'string',
+      required: true
+    }
   }
-
 }
 
 exports.updatePayload = {
   type: 'object',
-  companyId: {
-    type: 'string',
-    required: true
-  },
-  userId: {
-    type: 'string',
-    required: true
+  properties: {
+    adAccountId: {
+      type: 'string',
+      required: true
+    }
   }
-
 }
 
 exports.sendPayload = {
@@ -29,5 +31,19 @@ exports.sendPayload = {
   ad_account_id: {
     type: 'string',
     required: true
+  }
+}
+
+exports.createCampaignsPayload = {
+  type: 'object',
+  properties: {
+    _id: {
+      type: 'string',
+      required: true
+    },
+    type: {
+      type: 'string',
+      required: true
+    }
   }
 }

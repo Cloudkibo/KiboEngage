@@ -378,10 +378,15 @@ function isItWebhookServer () {
     // logger.serverLog(TAG, 'This is middleware')
     // logger.serverLog(TAG, req.body)
     // logger.serverLog(TAG, `config.webhook_ip ${config.webhook_ip}`)
-    if (ip === '::ffff:' + config.webhook_ip) next()
-    else res.send(403)
+    if (config.env === 'development') {
+      next()
+    } else {
+      if (ip === '::ffff:' + config.webhook_ip) next()
+      else res.send(403)
+    }
   })
 }
+
 // Auth for kibodash service
 function isKiboDash (req, res, next) {
   logger.serverLog(TAG, `Request header from KiboDash ${JSON.stringify(req.headers)}`)
