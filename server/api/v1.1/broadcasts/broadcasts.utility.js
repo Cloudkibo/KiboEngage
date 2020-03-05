@@ -854,6 +854,9 @@ function getHostName (url) {
 function removeOldUrlFromButton (buttons) {
   if (buttons.length > 0) {
     for (let i = 0; i < buttons.length; i++) {
+      if (buttons[i].id) {
+        delete buttons[i].id
+      }
       if (buttons[i].type === 'web_url' && buttons[i].newUrl) {
         buttons[i].url = buttons[i].newUrl
         delete buttons[i].newUrl
