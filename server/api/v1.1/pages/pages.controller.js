@@ -170,115 +170,115 @@ exports.enable = function (req, res) {
                                 .then(pages => {
                                   let page = pages[0]
                                   // initiate reach estimation
-                                  needle('post', `https://graph.facebook.com/v2.11/me/broadcast_reach_estimations?access_token=${page.accessToken}`)
-                                    .then(reachEstimation => {
-                                      if (reachEstimation.body.error) {
-                                        sendOpAlert(reachEstimation.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
-                                      }
-                                      console.log('reachEstimation response', reachEstimation.body)
-                                      if (reachEstimation.body.reach_estimation_id) {
-                                        query.reachEstimationId = reachEstimation.body.reach_estimation_id
-                                        utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
-                                          .then(connectPage => {
-                                            utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
-                                              .then(whitelistDomains => {
-                                              })
-                                              .catch(error => {
-                                                logger.serverLog(TAG,
-                                                  `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
-                                              })
-                                            utility.callApi(`featureUsage/updateCompany`, 'put', {
-                                              query: {companyId: req.body.companyId},
-                                              newPayload: { $inc: { facebook_pages: 1 } },
-                                              options: {}
-                                            })
-                                              .then(updated => {
-                                                // console.log('update company')
-                                              })
-                                              .catch(error => {
-                                                sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
-                                              })
-                                            utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
-                                              .then(updatedSubscriber => {
-                                                const options = {
-                                                  url: `https://graph.facebook.com/v2.6/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
-                                                  qs: {access_token: page.accessToken},
-                                                  method: 'POST'
-                                                }
-                                                let bodyToSend = {
-                                                  subscribed_fields: [
-                                                    'feed', 'conversations', 'mention', 'messages', 'message_echoes', 'message_deliveries', 'messaging_optins', 'messaging_postbacks', 'message_reads', 'messaging_referrals', 'messaging_policy_enforcement']
-                                                }
-                                                needle.post(`https://graph.facebook.com/v3.2/me/subscribed_apps?access_token=${page.accessToken}`, bodyToSend, (error, response) => {
-                                                  console.log('response.body', response.body)
-                                                  if (error) {
-                                                    console.log('error in subscribed_apps', error)
-                                                    sendErrorResponse(res, 5000, JSON.stringify(error))
-                                                  }
-                                                  if (response.body.error) {
-                                                    sendOpAlert(response.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
-                                                  }
-                                                  if (response.body.success) {
-                                                    let updateConnectedFacebook = {query: {pageId: page.pageId}, newPayload: {connectedFacebook: true}, options: {multi: true}}
-                                                    utility.callApi(`pages/update`, 'post', updateConnectedFacebook) // connect page
-                                                      .then(updatedPage => {
-                                                      })
-                                                      .catch(error => {
-                                                        logger.serverLog(TAG,
-                                                          `Failed to updatedPage ${JSON.stringify(error)}`, 'error')
-                                                      })
-                                                  }
-                                                  var valueForMenu = {
-                                                    'get_started': {
-                                                      'payload': '<GET_STARTED_PAYLOAD>'
-                                                    },
-                                                    'greeting': [
-                                                      {
-                                                        'locale': 'default',
-                                                        'text': 'Hi {{user_full_name}}! Please tap on getting started to start the conversation.'
-                                                      }]
-                                                  }
-                                                  const requesturl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
-                                                  needle.request('post', requesturl, valueForMenu,
-                                                    {json: true}, function (err, resp) {
-                                                      if (err) {
-                                                        logger.serverLog(TAG,
-                                                          `Internal Server Error ${JSON.stringify(
-                                                            err)}`, 'error')
-                                                      }
-                                                      if (resp.body.error) {
-                                                        sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
-                                                      }
-                                                    })
-                                                  // require('./../../../config/socketio').sendMessageToClient({
-                                                  //   room_id: req.body.companyId,
-                                                  //   body: {
-                                                  //     action: 'page_connect',
-                                                  //     payload: {
-                                                  //       page_id: page.pageId,
-                                                  //       user_id: req.user._id,
-                                                  //       user_name: req.user.name,
-                                                  //       company_id: req.body.companyId
-                                                  //     }
-                                                  //   }
-                                                  // })
-                                                  sendSuccessResponse(res, 200, 'Page connected successfully!')
+                                  // needle('post', `https://graph.facebook.com/v2.11/me/broadcast_reach_estimations?access_token=${page.accessToken}`)
+                                  //   .then(reachEstimation => {
+                                  //     if (reachEstimation.body.error) {
+                                  //       sendOpAlert(reachEstimation.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
+                                  //     }
+                                  //     console.log('reachEstimation response', reachEstimation.body)
+                                  //     if (reachEstimation.body.reach_estimation_id) {
+                                        // query.reachEstimationId = reachEstimation.body.reach_estimation_id
+                                  utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
+                                    .then(connectPage => {
+                                      utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
+                                        .then(whitelistDomains => {
+                                        })
+                                        .catch(error => {
+                                          logger.serverLog(TAG,
+                                            `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
+                                        })
+                                      utility.callApi(`featureUsage/updateCompany`, 'put', {
+                                        query: {companyId: req.body.companyId},
+                                        newPayload: { $inc: { facebook_pages: 1 } },
+                                        options: {}
+                                      })
+                                        .then(updated => {
+                                          // console.log('update company')
+                                        })
+                                        .catch(error => {
+                                          sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
+                                        })
+                                      utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
+                                        .then(updatedSubscriber => {
+                                          const options = {
+                                            url: `https://graph.facebook.com/v2.6/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
+                                            qs: {access_token: page.accessToken},
+                                            method: 'POST'
+                                          }
+                                          let bodyToSend = {
+                                            subscribed_fields: [
+                                              'feed', 'conversations', 'mention', 'messages', 'message_echoes', 'message_deliveries', 'messaging_optins', 'messaging_postbacks', 'message_reads', 'messaging_referrals', 'messaging_policy_enforcement']
+                                          }
+                                          needle.post(`https://graph.facebook.com/v3.2/me/subscribed_apps?access_token=${page.accessToken}`, bodyToSend, (error, response) => {
+                                            console.log('response.body', response.body)
+                                            if (error) {
+                                              console.log('error in subscribed_apps', error)
+                                              sendErrorResponse(res, 5000, JSON.stringify(error))
+                                            }
+                                            if (response.body.error) {
+                                              sendOpAlert(response.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
+                                            }
+                                            if (response.body.success) {
+                                              let updateConnectedFacebook = {query: {pageId: page.pageId}, newPayload: {connectedFacebook: true}, options: {multi: true}}
+                                              utility.callApi(`pages/update`, 'post', updateConnectedFacebook) // connect page
+                                                .then(updatedPage => {
                                                 })
+                                                .catch(error => {
+                                                  logger.serverLog(TAG,
+                                                    `Failed to updatedPage ${JSON.stringify(error)}`, 'error')
+                                                })
+                                            }
+                                            var valueForMenu = {
+                                              'get_started': {
+                                                'payload': '<GET_STARTED_PAYLOAD>'
+                                              },
+                                              'greeting': [
+                                                {
+                                                  'locale': 'default',
+                                                  'text': 'Hi {{user_full_name}}! Please tap on getting started to start the conversation.'
+                                                }]
+                                            }
+                                            const requesturl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
+                                            needle.request('post', requesturl, valueForMenu,
+                                              {json: true}, function (err, resp) {
+                                                if (err) {
+                                                  logger.serverLog(TAG,
+                                                    `Internal Server Error ${JSON.stringify(
+                                                      err)}`, 'error')
+                                                }
+                                                if (resp.body.error) {
+                                                  sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
+                                                }
                                               })
-                                              .catch(error => {
-                                                sendErrorResponse(res, 500, `Failed to update subscriber ${JSON.stringify(error)}`)
-                                              })
+                                            // require('./../../../config/socketio').sendMessageToClient({
+                                            //   room_id: req.body.companyId,
+                                            //   body: {
+                                            //     action: 'page_connect',
+                                            //     payload: {
+                                            //       page_id: page.pageId,
+                                            //       user_id: req.user._id,
+                                            //       user_name: req.user.name,
+                                            //       company_id: req.body.companyId
+                                            //     }
+                                            //   }
+                                            // })
+                                            sendSuccessResponse(res, 200, 'Page connected successfully!')
                                           })
-                                          .catch(error => {
-                                            sendErrorResponse(res, 500, `Failed to connect page ${JSON.stringify(error)}`)
-                                          })
-                                      } else {
-                                        logger.serverLog(TAG, `Failed to start reach estimation`, 'error')
-                                      }
+                                        })
+                                        .catch(error => {
+                                          sendErrorResponse(res, 500, `Failed to update subscriber ${JSON.stringify(error)}`)
+                                        })
                                     })
-                                    .catch(err => {
-                                      logger.serverLog(TAG, `Error at find page ${err}`, 'error')
+                                    .catch(error => {
+                                      sendErrorResponse(res, 500, `Failed to connect page ${JSON.stringify(error)}`)
                                     })
+                                    //   } else {
+                                    //     logger.serverLog(TAG, `Failed to start reach estimation`, 'error')
+                                    //   }
+                                    // })
+                                    // .catch(err => {
+                                    //   logger.serverLog(TAG, `Error at find page ${err}`, 'error')
+                                    // })
                                 })
                                 .catch(err => {
                                   logger.serverLog(TAG, `Error at find page ${err}`, 'error')
