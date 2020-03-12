@@ -43,27 +43,34 @@ exports.sendBroadcast = function (req, res) {
               let accountSid = companyUser.companyId.twilio.accountSID
               let authToken = companyUser.companyId.twilio.authToken
               let client = require('twilio')(accountSid, authToken)
+              let requests = []
               for (let i = 0; i < contacts.length; i++) {
                 var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
                 if (matchCriteria) {
-                  client.messages
-                    .create({
-                      body: req.body.payload[0].text,
-                      from: req.body.phoneNumber,
-                      to: contacts[i].number,
-                      statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${broadcast._id}`
-                    })
-                    .then(response => {
-                      logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
-                    })
-                    .catch(error => {
-                      logger.serverLog(TAG, `error at sending message ${error}`, 'error')
-                    })
-                }
-                if (i === contacts.length - 1) {
-                  sendSuccessResponse(res, 200, 'Conversation sent successfully!')
+                  requests.push(new Promise((resolve, reject) => {
+                    client.messages
+                      .create({
+                        body: req.body.payload[0].text,
+                        from: req.body.phoneNumber,
+                        to: contacts[i].number,
+                        statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${broadcast._id}`
+                      })
+                      .then(response => {
+                        logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
+                        resolve(response)
+                      })
+                      .catch(error => {
+                        logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+                        resolve(error)
+                      })
+                  }))
                 }
               }
+              Promise.all(requests)
+                .then((responses) => {
+                  sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
+                })
+                .catch((err) => sendErrorResponse(res, 500, '', 'Failed to Send Broadcast to all Subscribers'))
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
