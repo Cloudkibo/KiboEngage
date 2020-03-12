@@ -70,7 +70,7 @@ exports.sendBroadcast = function (req, res) {
                 .then((responses) => {
                   sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
                 })
-                .catch((err) => sendErrorResponse(res, 500, '', 'Failed to Send Broadcast to all subscribers'))
+                .catch((err) => sendErrorResponse(res, 500, '', 'Failed to Send Broadcast to all Subscribers'))
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
