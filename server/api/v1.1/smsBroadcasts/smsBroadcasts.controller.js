@@ -61,7 +61,7 @@ exports.sendBroadcast = function (req, res) {
                       })
                       .catch(error => {
                         logger.serverLog(TAG, `error at sending message ${error}`, 'error')
-                        resolve(error)
+                        reject(error)
                       })
                   }))
                 }
