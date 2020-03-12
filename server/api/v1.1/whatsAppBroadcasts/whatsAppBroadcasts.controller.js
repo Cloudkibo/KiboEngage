@@ -42,39 +42,45 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
   let authToken = companyUser.companyId.twilioWhatsApp.authToken
   let client = require('twilio')(accountSid, authToken)
   console.log('contacts.length', contacts.length)
-
+  let requests = []
   for (let i = 0; i < req.body.payload.length; i++) {
     let payload = req.body.payload[i]
     for (let j = 0; j < contacts.length; j++) {
-      setTimeout(() => {
-        client.messages
-          .create({
-            mediaUrl: req.body.payload[i].componentType === 'text' ? [] : req.body.payload[i].file ? [req.body.payload[i].file.fileurl.url] : [req.body.payload[i].fileurl.url],
-            body: req.body.payload[i].componentType === 'text' ? req.body.payload[i].text : (req.body.payload[i].componentType === 'file') ? req.body.payload[i].file.fileName : '',
-            from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
-            to: `whatsapp:${contacts[j].senderNumber}`,
-            statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
-          })
-          .then(response => {
-            logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`, 'info')
-            let MessageObject = logicLayer.prepareChat(payload, companyUser, contacts[j])
-            utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
-              .then(response => {
-              })
-              .catch(error => {
-                logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
-              })
-          })
-          .catch(error => {
-            sendOpAlert(error, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
-            logger.serverLog(TAG, `error at sending message ${error}`, 'error')
-          })
-      }, ((contacts.length) * i + (j + 1)) * 1000)
-    }
-    if (i === req.body.payload.length - 1) {
-      sendSuccessResponse(res, 200, 'Conversation sent successfully!')
+      requests.push(new Promise((resolve, reject) => {
+        setTimeout(() => {
+          client.messages
+            .create({
+              mediaUrl: req.body.payload[i].componentType === 'text' ? [] : req.body.payload[i].file ? [req.body.payload[i].file.fileurl.url] : [req.body.payload[i].fileurl.url],
+              body: req.body.payload[i].componentType === 'text' ? req.body.payload[i].text : (req.body.payload[i].componentType === 'file') ? req.body.payload[i].file.fileName : '',
+              from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
+              to: `whatsapp:${contacts[j].senderNumber}`,
+              statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
+            })
+            .then(response => {
+              resolve('success')
+              logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`, 'info')
+              let MessageObject = logicLayer.prepareChat(payload, companyUser, contacts[j])
+              utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
+                .then(response => {
+                })
+                .catch(error => {
+                  reject('fail')
+                  logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
+                })
+            })
+            .catch(error => {
+              sendOpAlert(error, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
+              logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+            })
+        }, ((contacts.length) * i + (j + 1)) * 1000)
+      }))
     }
   }
+  Promise.all(requests)
+    .then((responses) => {
+      sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
+    })
+    .catch((err) => sendErrorResponse(res, 500, '', 'Failed to send broadcast to all subscribers'))
 }
 exports.sendBroadcast = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
