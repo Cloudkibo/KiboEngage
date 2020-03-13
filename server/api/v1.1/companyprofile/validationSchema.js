@@ -34,6 +34,24 @@ exports.updatePlatformPayload = {
     }
   }
 }
+exports.fetchValidCallerIds = {
+  'type': 'object',
+  'properties': {
+    twilio: {
+      type: 'object',
+      properties: {
+        accountSID: {
+          type: 'string',
+          required: true
+        },
+        authToken: {
+          type: 'string',
+          required: true
+        }
+      }
+    }
+  }
+}
 exports.updatePlatformWhatsApp = {
   'type': 'object',
   'properties': {
