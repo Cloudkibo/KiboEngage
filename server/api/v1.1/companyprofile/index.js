@@ -30,11 +30,6 @@ router.post('/updatePlatform',
   validate({body: validationSchema.updatePlatformPayload}),
   controller.updatePlatform)
 
-router.post('/fetchValidCallerIds',
-  auth.isAuthenticated(),
-  validate({body: validationSchema.fetchValidCallerIds}),
-  controller.fetchValidCallerIds)
-
 router.post('/updatePlatformWhatsApp',
   auth.isAuthenticated(),
   validate({body: validationSchema.updatePlatformWhatsApp}),
