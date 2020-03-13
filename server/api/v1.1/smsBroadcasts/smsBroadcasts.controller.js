@@ -86,8 +86,7 @@ exports.sendBroadcast = function (req, res) {
 }
 
 exports.getCount = function (req, res) {
-
-  utility.callApi(`contacts/query`, 'post', {companyId: req.user.companyId._id, isSubscribed: true}) // fetch company user
+  utility.callApi(`contacts/query`, 'post', {companyId: req.user.companyId, isSubscribed: true}) // fetch company user
     .then(contacts => {
       let subscriberCount = 0
       for (let i = 0; i < contacts.length; i++) {
