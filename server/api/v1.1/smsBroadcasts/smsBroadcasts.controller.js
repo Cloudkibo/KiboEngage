@@ -84,6 +84,29 @@ exports.sendBroadcast = function (req, res) {
         })
     })
 }
+
+exports.getCount = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
+    .then(companyUser => {
+      utility.callApi(`contacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}) // fetch company user
+        .then(contacts => {
+          let subscriberCount = 0
+          for (let i = 0; i < contacts.length; i++) {
+            var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
+            if (matchCriteria) {
+              subscriberCount = subscriberCount + 1
+            }
+          }
+          sendSuccessResponse(res, 200, {subscribersCount: subscriberCount})
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+        })
+    })
+}
 exports.getTwilioNumbers = function (req, res) {
   logger.serverLog(TAG, `called function getTwilioNumbers`)
   let numbers = []
