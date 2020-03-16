@@ -94,4 +94,32 @@ exports.checkFilterValues = function (values, data) {
   return matchCriteria
 }
 
+exports.checkFilterValuesForGetCount = function (values, companyId) {
+  let matchCriteria = {
+    companyId,
+    isSubscribed: true
+  }
+  _checkFilterCondition(values, matchCriteria) 
+  let countCriteria = [
+    { $match: matchCriteria},
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
+const _checkFilterCondition = (values, matchCriteria) => {
+  for (var i = 0; i < values.length; i++) {
+    var filter = values[i]
+    if (filter.criteria === 'is') {
+      matchCriteria[`${filter.condition}`] = {$regex: `^${filter.text}$`, $options: 'i'}
+    }
+    else if (filter.criteria === 'contains') {
+      matchCriteria[`${filter.condition}`] = {$regex: `.*${filter.text}.*`, $options: 'i'}
+    }
+    else if (filter.criteria === 'begins') {
+      matchCriteria[`${filter.condition}`] = {$regex: `^${filter.text}`, $options: 'i'}
+    }
+  }
+}
+
 exports.prepareBroadCastPayload = prepareBroadCastPayload
