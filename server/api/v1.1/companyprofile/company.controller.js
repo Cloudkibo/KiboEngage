@@ -201,3 +201,35 @@ exports.disconnect = function (req, res) {
       sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
     })
 }
+
+exports.fetchValidCallerIds = function(req, res) {
+  let accountSid = req.body.twilio.accountSID
+  let authToken = req.body.twilio.authToken
+  let client = require('twilio')(accountSid, authToken)
+  client.outgoingCallerIds.list()
+  .then((callerIds) => {
+    if (callerIds && callerIds.length > 0 ) {
+      callerIds.forEach((callerId, index) => {
+        var contact = {
+          name: callerId.friendlyName, 
+          number: callerId.phoneNumber,
+          companyId: req.user.companyId
+        }
+        console.log('Contact', callerId)
+        utility.callApi(`contacts/update`, 'put', {query:{number: callerId.phoneNumber, companyId: req.user.companyId}, newPayload: contact, options:{upsert: true}})
+        .then(saved => {
+          logger.serverLog(TAG, `${JSON.stringify(contact)} saved successfully`, 'success')
+        })
+        .catch(error => {
+          logger.serverLog(TAG, `Failed to save contact ${JSON.stringify(error)}`, 'error')
+        })
+        if (index === (callerIds.length - 1)) {
+          sendSuccessResponse(res, 200,'Contacts updated successfully')
+        }  
+      })
+    }
+  })
+  .catch(error => {
+    sendErrorResponse(res, 500, `Failed to fetch valid caller Ids ${JSON.stringify(error)}`)
+  })
+}
