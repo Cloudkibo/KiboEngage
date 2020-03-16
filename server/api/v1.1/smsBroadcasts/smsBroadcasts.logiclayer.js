@@ -99,7 +99,7 @@ exports.checkFilterValuesForGetCount = function (values, companyId) {
     companyId,
     isSubscribed: true
   }
-  _checkFilterCondition(values, matchCriteria) 
+  matchCriteria = _checkFilterCondition(values, matchCriteria) 
   let countCriteria = [
     { $match: matchCriteria},
     { $group: { _id: null, count: { $sum: 1 } } }
@@ -120,6 +120,7 @@ const _checkFilterCondition = (values, matchCriteria) => {
       matchCriteria[`${filter.condition}`] = {$regex: `^${filter.text}`, $options: 'i'}
     }
   }
+  return matchCriteria
 }
 
 exports.prepareBroadCastPayload = prepareBroadCastPayload
