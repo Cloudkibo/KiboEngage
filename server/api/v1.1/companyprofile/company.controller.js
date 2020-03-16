@@ -215,14 +215,22 @@ exports.fetchValidCallerIds = function(req, res) {
           number: callerId.phoneNumber,
           companyId: req.user.companyId
         }
-        console.log('Contact', callerId)
-        utility.callApi(`contacts/update`, 'put', {query:{number: callerId.phoneNumber, companyId: req.user.companyId}, newPayload: contact, options:{upsert: true}})
-        .then(saved => {
-          logger.serverLog(TAG, `${JSON.stringify(contact)} saved successfully`, 'success')
-        })
-        .catch(error => {
-          logger.serverLog(TAG, `Failed to save contact ${JSON.stringify(error)}`, 'error')
-        })
+        utility.callApi(`contacts/query`, 'post', {
+          number: callerId.phoneNumber, companyId: req.user.companyId})
+          .then(phone => {
+            if (phone.length === 0) {
+              utility.callApi(`contacts`, 'post', contact)
+                .then(saved => {
+                  logger.serverLog(TAG, `Contact saved successfully ${JSON.stringify(error)}`, 'success')
+                })
+                .catch(error => {
+                  logger.serverLog(TAG, `Failed to save contact ${JSON.stringify(error)}`, 'error')
+                })
+            }
+          })
+          .catch(error => {
+            logger.serverLog(TAG, `Failed to fetch contact ${JSON.stringify(error)}`, 'error')
+          })
         if (index === (callerIds.length - 1)) {
           sendSuccessResponse(res, 200,'Contacts updated successfully')
         }  
