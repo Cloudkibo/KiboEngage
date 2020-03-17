@@ -76,6 +76,8 @@ module.exports = function (app) {
   app.use('/api/overlayWidgets', require('./api/v1.1/overlayWidgets'))
   app.use('/api/appMaker', require('./api/appMaker'))
   app.use('/api/reroute', require('./api/v1.1/Whatsapp Link Re-Routing'))
+  app.use('/api/twilio', require('./api/v1.1/twilio'))
+
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
 

@@ -201,3 +201,43 @@ exports.disconnect = function (req, res) {
       sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
     })
 }
+
+exports.fetchValidCallerIds = function(req, res) {
+  let accountSid = req.body.twilio.accountSID
+  let authToken = req.body.twilio.authToken
+  let client = require('twilio')(accountSid, authToken)
+  client.outgoingCallerIds.list()
+  .then((callerIds) => {
+    if (callerIds && callerIds.length > 0 ) {
+      callerIds.forEach((callerId, index) => {
+        var contact = {
+          name: callerId.friendlyName, 
+          number: callerId.phoneNumber,
+          companyId: req.user.companyId
+        }
+        utility.callApi(`contacts/query`, 'post', {
+          number: callerId.phoneNumber, companyId: req.user.companyId})
+          .then(phone => {
+            if (phone.length === 0) {
+              utility.callApi(`contacts`, 'post', contact)
+                .then(saved => {
+                  logger.serverLog(TAG, `Contact saved successfully ${JSON.stringify(error)}`, 'success')
+                })
+                .catch(error => {
+                  logger.serverLog(TAG, `Failed to save contact ${JSON.stringify(error)}`, 'error')
+                })
+            }
+          })
+          .catch(error => {
+            logger.serverLog(TAG, `Failed to fetch contact ${JSON.stringify(error)}`, 'error')
+          })
+        if (index === (callerIds.length - 1)) {
+          sendSuccessResponse(res, 200,'Contacts updated successfully')
+        }  
+      })
+    }
+  })
+  .catch(error => {
+    sendErrorResponse(res, 500, `Failed to fetch valid caller Ids ${JSON.stringify(error)}`)
+  })
+}

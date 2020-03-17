@@ -61,7 +61,7 @@ exports.sendBroadcast = function (req, res) {
                       })
                       .catch(error => {
                         logger.serverLog(TAG, `error at sending message ${error}`, 'error')
-                        resolve(error)
+                        reject(error)
                       })
                   }))
                 }
@@ -83,6 +83,36 @@ exports.sendBroadcast = function (req, res) {
           sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
         })
     })
+}
+
+exports.getCount = function (req, res) {
+  var criteria = logicLayer.checkFilterValuesForGetCount(req.body.segmentation, req.user.companyId)
+  utility.callApi(`contacts/aggregate`, 'post', criteria)
+    .then(result => {
+      if (result.length > 0) {
+        sendSuccessResponse(res, 200, {subscribersCount: result[0].count})
+      } else {
+        sendSuccessResponse(res, 200, {subscribersCount: 0})
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch  ${err}`)
+      sendErrorResponse(res, 500, `Failed to fetch count`)
+    })
+  // utility.callApi(`contacts/query`, 'post', {companyId: req.user.companyId, isSubscribed: true}) // fetch company user
+  //   .then(contacts => {
+  //     let subscriberCount = 0
+  //     for (let i = 0; i < contacts.length; i++) {
+  //       var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
+  //       if (matchCriteria) {
+  //         subscriberCount = subscriberCount + 1
+  //       }
+  //     }
+  //     sendSuccessResponse(res, 200, {subscribersCount: subscriberCount})
+  //   })
+  //   .catch(error => {
+  //     sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
+  //   })
 }
 exports.getTwilioNumbers = function (req, res) {
   logger.serverLog(TAG, `called function getTwilioNumbers`)
