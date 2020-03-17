@@ -1,7 +1,7 @@
 const logger = require('../../../components/logger')
 const TAG = 'smsBroadcasts.controller.js'
 const async = require('async')
-const config = require('../../config/environment')
+const config = require('../../../config/environment')
 
 exports.sendSMS = function (req, res) {
   const numbers = req.body.numbers
