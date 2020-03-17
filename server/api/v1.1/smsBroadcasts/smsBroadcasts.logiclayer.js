@@ -116,14 +116,14 @@ const _checkFilterCondition = (values, matchCriteria) => {
       } else {
         matchCriteria[`${filter.condition}`] = {$regex: `^${filter.text}$`, $options: 'i'}
       }
-    } else if (filter.criteria === 'contains' && filter.text.includes('+')) {
-      if (filter.condition === 'number') {
+    } else if (filter.criteria === 'contains') {
+      if (filter.condition === 'number' && filter.text.includes('+')) {
         matchCriteria[`${filter.condition}`] = {$regex: `.*\\${filter.text}.*`, $options: 'i'}
       } else {
         matchCriteria[`${filter.condition}`] = {$regex: `.*${filter.text}.*`, $options: 'i'}
       }
-    } else if (filter.criteria === 'begins' && filter.text.includes('+')) {
-      if (filter.condition === 'number') {
+    } else if (filter.criteria === 'begins') {
+      if (filter.condition === 'number' && filter.text.includes('+')) {
         matchCriteria[`${filter.condition}`] = {$regex: `^\\${filter.text}`, $options: 'i'}
       } else {
         matchCriteria[`${filter.condition}`] = {$regex: `^${filter.text}`, $options: 'i'}
