@@ -84,6 +84,22 @@ exports.sendBroadcast = function (req, res) {
         })
     })
 }
+
+exports.getCount = function (req, res) {
+  var criteria = logicLayer.checkFilterValuesForGetCount(req.body.segmentation, req.user.companyId)
+  utility.callApi(`contacts/aggregate`, 'post', criteria)
+    .then(result => {
+      if (result.length > 0) {
+        sendSuccessResponse(res, 200, {subscribersCount: result[0].count})
+      } else {
+        sendSuccessResponse(res, 200, {subscribersCount: 0})
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch  ${err}`)
+      sendErrorResponse(res, 500, `Failed to fetch count`)
+    })
+}
 exports.getTwilioNumbers = function (req, res) {
   logger.serverLog(TAG, `called function getTwilioNumbers`)
   let numbers = []

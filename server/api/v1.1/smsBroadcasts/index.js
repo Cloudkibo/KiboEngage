@@ -16,6 +16,10 @@ router.post('/sendBroadcast',
   validate({body: validationSchema.sendBroadcastPayload}),
   controller.sendBroadcast)
 
+router.post('/getCount',
+  auth.isAuthenticated(),
+  controller.getCount)
+
 router.get('/getTwilioNumbers',
   auth.isAuthenticated(),
   controller.getTwilioNumbers)
