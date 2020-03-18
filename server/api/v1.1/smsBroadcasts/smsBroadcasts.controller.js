@@ -113,6 +113,7 @@ exports.getCount = function (req, res) {
   //   .catch(error => {
   //     sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
   //   })
+}
 exports.getTwilioNumbers = function (req, res) {
   logger.serverLog(TAG, `called function getTwilioNumbers`)
   let numbers = []
