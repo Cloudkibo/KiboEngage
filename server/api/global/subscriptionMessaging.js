@@ -6,7 +6,7 @@ let config = require('./../../config/environment')
 
 exports.isApprovedForSMP = (page) => {
   return new Promise((resolve, reject) => {
-    if (config.ignoreSMP && config.ignoreSMP.includes(page._id)) {
+    if (config.ignoreSMP && config.ignoreSMP.includes(page.pageId)) {
       resolve('approved')
     } else {
     facebookApiCaller(
