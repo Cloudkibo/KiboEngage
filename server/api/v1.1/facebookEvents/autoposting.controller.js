@@ -45,7 +45,7 @@ exports.autoposting = function (req, res) {
                               unsuccessful: 0,
                               errors: []
                             }
-                            isApprovedForSMP({accessToken: page.accessToken})
+                            isApprovedForSMP({_id:page._id, accessToken: page.accessToken})
                               .then(smpStatus => {
                                 let smp = false
                                 if ((smpStatus === 'approved')) {

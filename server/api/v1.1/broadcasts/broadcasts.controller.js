@@ -710,7 +710,7 @@ exports.retrieveSubscribersCount = function (req, res) {
         lists = [].concat.apply([], lists)
         lists = lists.filter((item, i, arr) => arr.indexOf(item) === i)
         match['_id'] = {$in: lists}
-        _getSubscribersCount(req.body.pageAccessToken, match, res)
+        _getSubscribersCount(req.body, match, res)
       })
       .catch(err => {
         logger.serverLog(TAG, err)
@@ -751,23 +751,23 @@ exports.retrieveSubscribersCount = function (req, res) {
               if (req.body.segmentationTags.length > 0 && segmentationPoll.length > 0) {
                 let subscriberIds = _.intersection(tagSubscribers, pollSubscribers)
                 match['_id'] = {$in: subscriberIds}
-                _getSubscribersCount(req.body.pageAccessToken, match, res)
+                _getSubscribersCount(req.body, match, res)
               } else if (req.body.segmentationTags.length > 0 && segmentationSurvey.length > 0) {
                 let subscriberIds = _.intersection(tagSubscribers, surveySubscribers)
                 match['_id'] = {$in: subscriberIds}
-                _getSubscribersCount(req.body.pageAccessToken, match, res)
+                _getSubscribersCount(req.body, match, res)
               } else if (segmentationSurvey.length > 0) {
                 match['_id'] = {$in: surveySubscribers}
                 _getSubscribersCount(req.body.pageAccessToken, match, res)
               } else if (segmentationPoll.length > 0) {
                 match['_id'] = {$in: pollSubscribers}
-                _getSubscribersCount(req.body.pageAccessToken, match, res)
+                _getSubscribersCount(req.body, match, res)
               } else if (req.body.segmentationTags.length > 0) {
                 match['_id'] = {$in: tagSubscribers}
-                _getSubscribersCount(req.body.pageAccessToken, match, res)
+                _getSubscribersCount(req.body, match, res)
               } else {
                 match['_id'] = []
-                _getSubscribersCount(req.body.pageAccessToken, match, res)
+                _getSubscribersCount(req.body, match, res)
               }
             })
             .catch(err => {
@@ -779,15 +779,15 @@ exports.retrieveSubscribersCount = function (req, res) {
           sendErrorResponse(res, 500, 'Failed to fetch tags')
         })
     } else {
-      _getSubscribersCount(req.body.pageAccessToken, match, res)
+      _getSubscribersCount(req.body, match, res)
     }
   } else {
-    _getSubscribersCount(req.body.pageAccessToken, match, res)
+    _getSubscribersCount(req.body, match, res)
   }
 }
 
-const _getSubscribersCount = (pageAccessToken, match, res) => {
-  isApprovedForSMP({accessToken: pageAccessToken})
+const _getSubscribersCount = (body, match, res) => {
+  isApprovedForSMP({_id: body.pageId, accessToken: body.pageAccessToken})
     .then(smpStatus => {
       let smp = false
       if ((smpStatus === 'approved')) {
