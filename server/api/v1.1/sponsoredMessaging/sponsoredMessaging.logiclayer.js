@@ -11,6 +11,7 @@ exports.checkFacebookPermissions = async function (facebookInfo) {
   let adsManagementPermissionGiven = false
 
   let permissions = await FBExtension.permissionsGiven(facebookInfo.fbId, facebookInfo.fbToken)
+  logger.serverLog(TAG, `permissions got ${JSON.stringify(permissions)}`, 'debug')
   for (let i = 0; i < permissions.length; i++) {
     if (permissions[i].permission === 'ads_management') {
       if (permissions[i].status === 'granted') {
