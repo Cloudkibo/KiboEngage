@@ -23,10 +23,10 @@ router
   }), auth.fbConnectDone)
 
   .get('/reauth/sponsoredmessages', passport.authenticate('facebook', {
-    authType: 'reauthenticate',
+    authType: 'rerequest',
     scope: ['ads_read', 'ads_management'],
     failureRedirect: '/',
     session: false
-  }), auth.fbConnectDone)
+  }))
 
 module.exports = router
