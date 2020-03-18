@@ -57,7 +57,12 @@ const all = {
     email: 'muzamil@cloudkibo.com',
     password: 'cloudkibo123'
   },
-  kibodashdomain: `${process.env.KIBODASH || 'http://localhost:5050'}`
+  kibodashdomain: `${process.env.KIBODASH || 'http://localhost:5050'}`,
+  twilio: {
+    sid: 'ACdeb74ff803b2e44e127d0570e6248b3b',
+    token: '5c13521c7655811076a9c04d88fac395',
+    number: '+14254286230'
+  }
 }
 
 module.exports = _.merge(
