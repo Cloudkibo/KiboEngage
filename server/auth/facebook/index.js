@@ -22,4 +22,11 @@ router
     session: false
   }), auth.fbConnectDone)
 
+  .get('/reauth/sponsoredmessages', passport.authenticate('facebook', {
+    authType: 'rerequest',
+    scope: ['ads_read', 'ads_management'],
+    failureRedirect: '/',
+    session: false
+  }))
+
 module.exports = router
