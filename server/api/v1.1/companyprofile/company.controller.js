@@ -25,6 +25,35 @@ exports.getAutomatedOptions = function (req, res) {
     })
 }
 
+exports.getAdvancedSettings = function (req, res) {
+  utility.callApi(`companyprofile`, 'get', {}, 'accounts', req.headers.authorization)
+    .then(payload => {
+      sendSuccessResponse(res, 200, payload)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, `Failed to fetch advanced settings in company profile ${err}`)
+    })
+}
+
+
+exports.updateAdvancedSettings = function (req, res) {
+  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
+    .then(companyUser => {
+      if (!companyUser) {
+        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
+      }
+      utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: req.body.updatedObject, options: {}})
+        .then(updatedProfile => {
+          sendSuccessResponse(res, 200, updatedProfile)
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
+    })
+}
 exports.invite = function (req, res) {
   utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, 'accounts', req.headers.authorization)
     .then((result) => {

@@ -14,6 +14,14 @@ router.get('/getAutomatedOptions',
   auth.isAuthenticated(),
   controller.getAutomatedOptions)
 
+router.get('/getAdvancedSettings',
+  auth.isAuthenticated(),
+  controller.getAdvancedSettings)
+
+router.post('/updateAdvancedSettings',
+  auth.isAuthenticated(),
+  controller.updateAdvancedSettings)
+
 router.post('/invite', auth.isAuthenticated(), controller.invite)
 
 router.post('/updateRole',
