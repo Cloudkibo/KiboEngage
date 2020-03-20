@@ -107,12 +107,25 @@ exports.getAllPages = function (req, res) {
     })
 }
 exports.allLocales = function (req, res) {
-  utility.callApi(`user/distinct`, 'post', {distinct: 'facebookInfo.locale'})
-    .then(locales => {
-      sendSuccessResponse(res, 200, locales)
+  utility.callApi(`pages/query`, 'post', {_id: req.params.pageid, connected: true})
+    .then(pages => {
+      console.log('pages in locale', pages)
+      let page = pages[0]
+      let aggregateObject = [
+        { $match: {companyId: page.companyId} },
+        { $group: { _id: null, locales: { $addToSet: '$locale' } } }
+      ]
+      utility.callApi(`subscribers/aggregate`, 'post', aggregateObject) // fetch subscribers locales
+        .then(locales => {
+          sendSuccessResponse(res, 200, locales[0].locales)
+        })
+        .catch(error => {
+          console.log(`pages in error ${JSON.stringify(error)}`)
+          sendErrorResponse(res, 500, `Failed to fetch locales ${JSON.stringify(error)}`)
+        })
     })
     .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch locales ${JSON.stringify(error)}`)
+      sendErrorResponse(res, 500, `Failed to fetch company pages ${JSON.stringify(error)}`)
     })
 }
 exports.allUserBroadcasts = function (req, res) {
