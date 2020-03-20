@@ -109,7 +109,6 @@ exports.getAllPages = function (req, res) {
 exports.allLocales = function (req, res) {
   utility.callApi(`pages/query`, 'post', {_id: req.params.pageid, connected: true})
     .then(pages => {
-      console.log('pages in locale', pages)
       let page = pages[0]
       let aggregateObject = [
         { $match: {companyId: page.companyId} },
@@ -120,7 +119,6 @@ exports.allLocales = function (req, res) {
           sendSuccessResponse(res, 200, locales[0].locales)
         })
         .catch(error => {
-          console.log(`pages in error ${JSON.stringify(error)}`)
           sendErrorResponse(res, 500, `Failed to fetch locales ${JSON.stringify(error)}`)
         })
     })
