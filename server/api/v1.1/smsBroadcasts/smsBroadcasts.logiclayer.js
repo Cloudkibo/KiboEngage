@@ -133,5 +133,4 @@ const _checkFilterCondition = (values, matchCriteria) => {
   console.log('matchCriteria', matchCriteria)
   return matchCriteria
 }
-
 exports.prepareBroadCastPayload = prepareBroadCastPayload
