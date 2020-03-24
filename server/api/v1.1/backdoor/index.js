@@ -74,7 +74,7 @@ router.post('/getAllPolls',
   auth.isAuthorizedSuperUser(),
   controller.getAllPolls) // pagination
 
-router.get('/allLocales',
+router.get('/allLocales/:pageid',
   auth.isAuthorizedSuperUser(),
   controller.allLocales)
 
