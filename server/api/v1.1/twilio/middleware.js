@@ -43,9 +43,10 @@ function validateNumbers () {
 
 /* eslint-disable */
 const verifyPhoneNumber = (number, client) => {
-  return client.phoneNumbers(number).fetch()
+  return client.lookups.phoneNumbers(number).fetch()
     .then(numberData => true, err => false)
 }
 /* eslint-enable */
 
 exports.validateNumbers = validateNumbers
+exports.verifyPhoneNumber = verifyPhoneNumber

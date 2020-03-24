@@ -33,3 +33,13 @@ exports.receiveSMSPayload = {
     'Body'
   ]
 }
+
+exports.verifyPayload = {
+  'type': 'object',
+  'properties': {
+    'number': {
+      'type': 'string',
+      'required': true
+    }
+  }
+}
