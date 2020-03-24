@@ -45,4 +45,9 @@ router.post('/disconnect',
   validate({body: validationSchema.disconnect}),
   controller.disconnect)
 
+router.post('/deleteWhatsAppInfo',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.deleteWhatsAppInfo}),
+  controller.deleteWhatsAppInfo)
+
 module.exports = router
