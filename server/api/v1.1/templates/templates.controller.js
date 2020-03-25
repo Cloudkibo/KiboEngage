@@ -21,9 +21,9 @@ exports.getAllPolls = function (req, res) {
       .then(totalCount => {
         dataLayer.pollTemplateaggregateCount(findCriteria)
           .then(pollsCount => {
-            dataLayer.pollTemplateaggregateLimit({findCriteria, req})
+            dataLayer.pollTemplateaggregateLimit({ findCriteria, req })
               .then(polls => {
-                sendSuccessResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+                sendSuccessResponse(res, 200, { polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
                 sendErrorResponse(res, 500, JSON.stringify(err))
@@ -40,9 +40,9 @@ exports.getAllPolls = function (req, res) {
       .then(totalCount => {
         dataLayer.pollTemplateaggregateCount(findCriteria)
           .then(pollsCount => {
-            dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+            dataLayer.pollTemplateaggregateLimitNextPrevious({ findCriteria, recordsToSkip, req })
               .then(polls => {
-                sendErrorResponse(res, 200, {polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+                sendErrorResponse(res, 200, { polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(error => {
                 sendErrorResponse(res, 500, JSON.stringify(error))
@@ -62,9 +62,9 @@ exports.getAllPolls = function (req, res) {
       .then(totalCount => {
         dataLayer.pollTemplateaggregateCount(findCriteria)
           .then(pollsCount => {
-            dataLayer.pollTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+            dataLayer.pollTemplateaggregateLimitNextPrevious({ findCriteria, recordsToSkip, req })
               .then(polls => {
-                sendSuccessResponse(res, 200, {polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+                sendSuccessResponse(res, 200, { polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(error => {
                 sendErrorResponse(res, 500, JSON.stringify(error))
@@ -87,9 +87,9 @@ exports.getAllSurveys = function (req, res) {
       .then(totalCount => {
         dataLayer.surveyTemplateaggregateCount(findCriteria)
           .then(surveysCount => {
-            dataLayer.surveyTemplateaggregateLimit({findCriteria, req})
+            dataLayer.surveyTemplateaggregateLimit({ findCriteria, req })
               .then(surveys => {
-                sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0, totalCount: totalCount[0] ? totalCount[0].count : 0})
+                sendSuccessResponse(res, 200, { surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0, totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
                 sendErrorResponse(res, 500, err)
@@ -109,9 +109,9 @@ exports.getAllSurveys = function (req, res) {
       .then(totalCount => {
         dataLayer.surveyTemplateaggregateCount(findCriteria)
           .then(surveysCount => {
-            dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+            dataLayer.surveyTemplateaggregateLimitNextPrevious({ findCriteria, recordsToSkip, req })
               .then(surveys => {
-                sendSuccessResponse(res, 200, {surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+                sendSuccessResponse(res, 200, { surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
                 sendErrorResponse(res, 500, err)
@@ -131,9 +131,9 @@ exports.getAllSurveys = function (req, res) {
       .then(totalCount => {
         dataLayer.surveyTemplateaggregateCount(findCriteria)
           .then(surveysCount => {
-            dataLayer.surveyTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+            dataLayer.surveyTemplateaggregateLimitNextPrevious({ findCriteria, recordsToSkip, req })
               .then(surveys => {
-                sendSuccessResponse(res, 200, {surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0})
+                sendSuccessResponse(res, 200, { surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
                 sendErrorResponse(res, 500, err)
@@ -206,7 +206,7 @@ exports.createSurvey = function (req, res) {
 }
 
 exports.allCategories = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
@@ -225,12 +225,12 @@ exports.allCategories = function (req, res) {
 }
 
 exports.createCategory = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      let categoryPayload = logicLayer.createDataCategory({req, companyUser})
+      let categoryPayload = logicLayer.createDataCategory({ req, companyUser })
       if (req.user.isSuperUser) {
         categoryPayload.createdBySuperUser = true
       }
@@ -251,7 +251,7 @@ exports.editCategory = function (req, res) {
   let payload = {
     name: req.body.name
   }
-  dataLayer.editCategory({_id: req.body._id}, payload)
+  dataLayer.editCategory({ _id: req.body._id }, payload)
     .then(categoryCreated => {
       sendSuccessResponse(res, 200, categoryCreated)
     })
@@ -268,7 +268,7 @@ exports.surveyDetails = function (req, res) {
       }
       dataLayer.findQuestionById(req)
         .then(questions => {
-          sendSuccessResponse(res, 200, {survey, questions})
+          sendSuccessResponse(res, 200, { survey, questions })
         })
         .catch(err => {
           sendErrorResponse(res, 500, err)
@@ -356,13 +356,13 @@ exports.editSurvey = function (req, res) {
         description: req.body.survey.description,
         category: req.body.survey.category
       }
-      dataLayer.editSurvey({_id: req.body.survey._id}, payload)
+      dataLayer.editSurvey({ _id: req.body.survey._id }, payload)
         .then(success => {
           dataLayer.findQuestionSurveyById(req)
             .then(questions => {
               for (let i = 0; i < questions.length; i++) {
                 dataLayer.removeQuestion(questions[i]._id)
-                  .then(success => {})
+                  .then(success => { })
                   .catch(err => {
                     sendErrorResponse(res, 500, err)
                   })
@@ -409,7 +409,7 @@ exports.editPoll = function (req, res) {
         options: req.body.options,
         category: req.body.category
       }
-      dataLayer.editPoll({_id: req.body._id}, payload)
+      dataLayer.editPoll({ _id: req.body._id }, payload)
         .then(success => {
           sendSuccessResponse(res, 200)
         })
@@ -425,12 +425,42 @@ exports.editPoll = function (req, res) {
 exports.createBroadcast = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
-      callApi.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
+      callApi.callApi(`featureUsage/planQuery`, 'post', { planId: companyUser.companyId.planId })
         .then(planUsage => {
           planUsage = planUsage[0]
-          callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id})
+          callApi.callApi(`featureUsage/companyQuery`, 'post', { companyId: companyUser.companyId._id })
             .then(companyUsage => {
               companyUsage = companyUsage[0]
+              dataLayer.broadcastFind(companyUser)
+                .then(broadcasts => {
+                  console.log('broadcast template length', broadcasts.length)
+                  if (broadcasts.length >= 10) {
+                    sendErrorResponse(res, 500, {}, 'CANNOT CREATE MORE BROADCAST TEMPLATES!')
+                  } else {
+                    let broadcastPayload = logicLayer.createDataBroadcast(req, companyUser)
+                    if (req.user.isSuperUser) {
+                      broadcastPayload.createdBySuperUser = true
+                    }
+                    dataLayer.createBroadcast(broadcastPayload)
+                      .then(broadcastCreated => {
+                        if (!req.user.isSuperUser) {
+                          callApi.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { broadcast_templates: 1 } }, options: {} })
+                            .then(update => {
+                            })
+                            .catch(err => {
+                              sendErrorResponse(res, 500, err)
+                            })
+                        }
+                        sendSuccessResponse(res, 200, broadcastCreated)
+                      })
+                      .catch(err => {
+                        sendErrorResponse(res, 500, err)
+                      })
+                  }
+                })
+                .catch(err => {
+                  sendErrorResponse(res, 500, err)
+                })
               // add paid plan check later
               // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
               //   return res.status(500).json({
@@ -438,25 +468,6 @@ exports.createBroadcast = function (req, res) {
               //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
               //   })
               // }
-              let broadcastPayload = logicLayer.createDataBroadcast(req, companyUser)
-              if (req.user.isSuperUser) {
-                broadcastPayload.createdBySuperUser = true
-              }
-              dataLayer.createBroadcast(broadcastPayload)
-                .then(broadcastCreated => {
-                  if (!req.user.isSuperUser) {
-                    callApi.callApi('featureUsage/updateCompany', 'put', {query: {companyId: companyUser.companyId._id}, newPayload: { $inc: { broadcast_templates: 1 } }, options: {}})
-                      .then(update => {
-                      })
-                      .catch(err => {
-                        sendErrorResponse(res, 500, err)
-                      })
-                  }
-                  sendSuccessResponse(res, 200, broadcastCreated)
-                })
-                .catch(err => {
-                  sendErrorResponse(res, 500, err)
-                })
             })
             .catch(err => {
               sendErrorResponse(res, 500, err)
@@ -472,7 +483,7 @@ exports.createBroadcast = function (req, res) {
 }
 
 exports.allBroadcasts = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
@@ -503,20 +514,20 @@ exports.getAllBroadcasts = function (req, res) {
   }
   */
 
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      dataLayer.broadcastTemplateaggregateCount({createdBySuperUser: true})
+      dataLayer.broadcastTemplateaggregateCount({ createdBySuperUser: true })
         .then(superUserCount => {
-          dataLayer.broadcastTemplateaggregateCount({companyId: companyUser.companyId, createdBySuperUser: false})
+          dataLayer.broadcastTemplateaggregateCount({ companyId: companyUser.companyId, createdBySuperUser: false })
             .then(userCount => {
               if (req.body.first_page === 'first') {
-                let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+                let findCriteria = logicLayer.getCriteriasBroadcast({ req, companyUser })
                 dataLayer.broadcastTemplateaggregateCount(findCriteria)
                   .then(broadcastsCount => {
-                    dataLayer.broadcastTemplateaggregateLimit({findCriteria, req})
+                    dataLayer.broadcastTemplateaggregateLimit({ findCriteria, req })
                       .then(broadcasts => {
                         sendSuccessResponse(res, 200, {
                           broadcasts: broadcasts,
@@ -534,16 +545,17 @@ exports.getAllBroadcasts = function (req, res) {
                   })
               } else if (req.body.first_page === 'next') {
                 let recordsToSkip = Math.abs(((req.body.requested_page - 1) - (req.body.current_page))) * req.body.number_of_records
-                let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+                let findCriteria = logicLayer.getCriteriasBroadcast({ req, companyUser })
                 dataLayer.broadcastTemplateaggregateCount(findCriteria)
                   .then(broadcastsCount => {
-                    dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+                    dataLayer.broadcastTemplateaggregateLimitNextPrevious({ findCriteria, recordsToSkip, req })
                       .then(broadcasts => {
                         sendSuccessResponse(res, 200, {
                           broadcasts: broadcasts,
                           count: broadcasts.length > 0 ? broadcastsCount[0].count : '',
                           superUserCount: superUserCount[0] ? superUserCount[0].count : 0,
-                          userCount: userCount[0] ? userCount[0].count : 0})
+                          userCount: userCount[0] ? userCount[0].count : 0
+                        })
                       })
                       .catch(err => {
                         sendErrorResponse(res, 500, err)
@@ -554,16 +566,17 @@ exports.getAllBroadcasts = function (req, res) {
                   })
               } else if (req.body.first_page === 'previous') {
                 let recordsToSkip = Math.abs(((req.body.requested_page) - (req.body.current_page - 1))) * req.body.number_of_records
-                let findCriteria = logicLayer.getCriteriasBroadcast({req, companyUser})
+                let findCriteria = logicLayer.getCriteriasBroadcast({ req, companyUser })
                 dataLayer.broadcastTemplateaggregateCount(findCriteria)
                   .then(broadcastsCount => {
-                    dataLayer.broadcastTemplateaggregateLimitNextPrevious({findCriteria, recordsToSkip, req})
+                    dataLayer.broadcastTemplateaggregateLimitNextPrevious({ findCriteria, recordsToSkip, req })
                       .then(broadcasts => {
                         sendSuccessResponse(res, 200, {
                           broadcasts: broadcasts,
                           count: broadcasts.length > 0 ? broadcastsCount[0].count : '',
                           superUserCount: superUserCount[0] ? superUserCount[0].count : 0,
-                          userCount: userCount[0] ? userCount[0].count : 0})
+                          userCount: userCount[0] ? userCount[0].count : 0
+                        })
                       })
                       .catch(err => {
                         sendErrorResponse(res, 500, err)
@@ -592,7 +605,7 @@ exports.deleteBroadcast = function (req, res) {
       }
       dataLayer.removeBroadcast(broadcast)
         .then(success => {
-          return res.status(500).json({status: 'success'})
+          return res.status(500).json({ status: 'success' })
         })
         .catch(error => {
           sendErrorResponse(res, 500, error)
@@ -614,7 +627,7 @@ exports.editBroadcast = function (req, res) {
         payload: req.body.payload,
         category: req.body.category
       }
-      dataLayer.saveBroadcast({_id: req.body._id}, payload)
+      dataLayer.saveBroadcast({ _id: req.body._id }, payload)
         .then(success => {
           sendSuccessResponse(res, 200, broadcast)
         })
@@ -638,7 +651,7 @@ exports.broadcastDetails = function (req, res) {
 }
 
 exports.createBotTemplate = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
@@ -661,7 +674,7 @@ exports.createBotTemplate = function (req, res) {
 }
 
 exports.allBots = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
+  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
@@ -706,7 +719,7 @@ exports.editBot = function (req, res) {
         payload: req.body.payload,
         category: req.body.category
       }
-      dataLayer.botSave({_id: req.body._id}, payload)
+      dataLayer.botSave({ _id: req.body._id }, payload)
         .then(success => {
           sendSuccessResponse(res, 200, botTemplateFound)
         })
