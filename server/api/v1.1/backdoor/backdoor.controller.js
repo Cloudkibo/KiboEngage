@@ -6,6 +6,7 @@ const sortBy = require('sort-array')
 const DataLayer = require('./datalayer')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const PollPageDataLayer = require('../page_poll/page_poll.datalayer')
+const SurveyPageDataLayer = require('../page_survey/page_survey.datalayer')
 const SurveyQuestionDataLayer = require('../surveys/surveyquestion.datalayer')
 const SurveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
@@ -566,7 +567,11 @@ exports.surveyDetails = function (req, res) {
         .then(questions => {
           SurveyResponseDataLayer.genericFind({surveyId: req.params.surveyid})
             .then(responses => {
-              sendSuccessResponse(res, 200, {survey, questions, responses})
+              SurveyPageDataLayer.genericFind({surveyId: req.params.surveyid})
+                .then(surveypages => {
+                  survey[0].Sent = surveypages.length
+                  sendSuccessResponse(res, 200, {survey, questions, responses})
+                })
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to fetch survey responses ${JSON.stringify(error)}`)
