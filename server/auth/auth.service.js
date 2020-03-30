@@ -421,7 +421,6 @@ function fetchPages (url, user, req, token) {
     // logger.serverLogF(TAG, JSON.stringify(resp.body))
     const data = resp.body.data
     const cursor = resp.body.paging
-    console.log('data from facebook', data)
     apiCaller.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email})
       .then(companyUser => {
         if (!companyUser) {
