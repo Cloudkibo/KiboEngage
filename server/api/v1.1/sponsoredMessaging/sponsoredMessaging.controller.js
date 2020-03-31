@@ -3,7 +3,6 @@ const logiclayer = require('./sponsoredMessaging.logiclayer')
 const datalayer = require('./sponsoredMessaging.datalayer')
 const async = require('async')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
-const { marketingApiAccessToken } = require('../../../config/environment')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.controller.js'

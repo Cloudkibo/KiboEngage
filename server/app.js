@@ -9,6 +9,7 @@ const TweetsQueueScript = require('../scripts/tweets_queue_script.js')
 const abandonedCartScript = require('../scripts/abandonedScript')
 const rssFeedsScript = require('../scripts/rssFeedsScript')
 const manualFeedsScript = require('../scripts/manualFeedsScript')
+const sponsoredScheduled = require('../scripts/scheduleSponsored.js')
 
 const app = express()
 const httpApp = express()
