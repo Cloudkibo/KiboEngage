@@ -30,6 +30,7 @@ cron.schedule('* * * * *', abandonedCartScript.runScript)
 // cron.schedule('0 8 * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
 cron.schedule('0 */1 * * *', rssFeedsScript.runRSSScript) //  after every 2 hours for testing
 cron.schedule('0 */2 * * *', manualFeedsScript.runScript)
+cron.schedule('* * * * *', sponsoredScheduled.runScheduleSponsored)
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)

@@ -1,6 +1,8 @@
 const requestPromise = require('request-promise')
 const config = require('../../../config/environment/index')
 const { accounts } = require('../../global/constants').serverConstants
+const logger = require('./../../../components/logger')
+const TAG = 'server/api/v1.1/utility/index'
 
 exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
   let headers
@@ -34,5 +36,5 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
         reject(response.payload)
       }
     })
-  })
+  }).catch(err => logger.serverLog(TAG, `API call error ${err}`, 'error'))
 }

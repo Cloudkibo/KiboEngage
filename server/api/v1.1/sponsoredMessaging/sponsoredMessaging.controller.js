@@ -209,7 +209,7 @@ exports.send = function (req, res) {
               let dataToUpdate = { messageCreativeId, adId, status: 'sent_to_fb', payload: req.body.payload, adName: req.body.adName }
               _storeAdAndCreativeIds(queryObject, dataToUpdate)
               _updateClickCountId(req.body, req.body._id)
-              _sendToClientUsingSocket(req.body, req.user.name)
+              _sendToClientUsingSocket(req.body, `${req.user.name} has created a new sponsored broadcast. Please refresh to see changes.`)
               facebookApiCaller('v6.0', `${req.body.adAccountId}/subscribed_apps?app_id=${config.facebook.clientID}`, 'post', {access_token: facebookInfo.fbToken})
                 .then(subscriptionResp => {
                   if (subscriptionResp.body.error) {
@@ -246,7 +246,7 @@ function _storeAdAndCreativeIds (queryObject, dataToUpdate) {
     })
 }
 
-function _sendToClientUsingSocket (body, agentName) {
+function _sendToClientUsingSocket (body, message) {
   body.status = 'sent_to_fb'
   require('./../../../config/socketio').sendMessageToClient({
     room_id: body.companyId,
@@ -254,7 +254,7 @@ function _sendToClientUsingSocket (body, agentName) {
       action: 'sponsoredMessaging_newCreated',
       payload: {
         sponsoredMessage: body,
-        message: `${agentName} has created a new sponsored broadcast. Please refresh to see changes.`
+        message: message
       }
     }
   })
@@ -435,3 +435,7 @@ exports.fetchAdSets = function (req, res) {
       return sendErrorResponse(res, 500, error)
     })
 }
+
+exports._storeAdAndCreativeIdsExport = _storeAdAndCreativeIds
+exports._updateClickCountIdExport = _updateClickCountId
+exports._sendToClientUsingSocketExport = _sendToClientUsingSocket
