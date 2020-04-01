@@ -22,6 +22,14 @@ exports.findOneSponsoredMessaging = (match) => {
   return callApi(`sponsoredMessaging/query`, 'post', query, kiboengage)
 }
 
+exports.findAllSponsoredMessaging = (match) => {
+  let query = {
+    purpose: 'findAll',
+    match: match
+  }
+  return callApi(`sponsoredMessaging/query`, 'post', query, kiboengage)
+}
+
 exports.countDocuments = (filter) => {
   let query = {
     purpose: 'aggregate',
