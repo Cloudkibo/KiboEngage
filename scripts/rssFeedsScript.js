@@ -59,6 +59,7 @@ const _prepareFeeds = (data, next) => {
       .then(parsedFeed => {
         prepareMessageData(parsedFeed, feed, data.showMoreTopics, data.rssFeedPosts, data.page)
           .then(preparedData => {
+            logger.serverLog(TAG, `preparedData ${preparedData}`)
             data.parsedFeeds[feed._id] = {
               data: preparedData,
               postSubscriber: {
@@ -302,8 +303,10 @@ const callBatchAPI = (page, batch) => {
   return new Promise((resolve, reject) => {
     const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
       if (err) {
+        logger.serverLog(TAG, `callBatchAPI error ${err}`)
         reject(err)
       } else {
+        logger.serverLog(TAG, `callBatchAPI response ${body}`)
         body = JSON.parse(body)
         resolve('success')
       }
@@ -346,7 +349,7 @@ const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page
     }
     getMetaData(parsedFeed, feed, rssFeedPosts, page)
       .then(gallery => {
-        logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title`)
+        logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title ${feed.title}`)
         let messageData = [{
           text: `Here are your daily updates from ${feed.title} News:`
         }, {
