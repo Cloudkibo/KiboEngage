@@ -127,6 +127,19 @@ exports.allLocales = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company pages ${JSON.stringify(error)}`)
     })
 }
+
+exports.alUserslLocales = function (req, res) {
+  let aggregateObject = [
+    { $group: { _id: null, locales: { $addToSet: '$facebookInfo.locale' } } }
+  ]
+  utility.callApi(`user/aggregate`, 'post', aggregateObject) // fetch subscribers locales
+    .then(locales => {
+      sendSuccessResponse(res, 200, locales[0].locales)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch locales ${JSON.stringify(error)}`)
+    })
+}
 exports.allUserBroadcasts = function (req, res) {
   let criteria = LogicLayer.allUserBroadcastsCriteria(req.params.userid, req.body)
   DataLayer.countBroadcasts(criteria.countCriteria[0].$match)

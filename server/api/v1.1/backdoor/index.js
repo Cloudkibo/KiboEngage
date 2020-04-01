@@ -78,6 +78,10 @@ router.get('/allLocales/:pageid',
   auth.isAuthorizedSuperUser(),
   controller.allLocales)
 
+router.get('/alUserslLocales',
+  auth.isAuthorizedSuperUser(),
+  controller.alUserslLocales)
+
 router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.sendEmail)
 
 router.get('/uploadFile', auth.isAuthorizedSuperUser(), controller.uploadFile)
