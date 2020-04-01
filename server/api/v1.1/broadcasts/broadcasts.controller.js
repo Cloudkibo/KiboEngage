@@ -788,70 +788,70 @@ exports.retrieveSubscribersCount = function (req, res) {
 
 const _getSubscribersCount = (body, match, res) => {
   utility.callApi(`pages/${body.pageId}`)
-  .then(page => {
-    isApprovedForSMP({pageId: page.pageId, accessToken: body.pageAccessToken})
-      .then(smpStatus => {
-        let smp = false
-        if ((smpStatus === 'approved')) {
-          smp = true
-        }
-        async.parallelLimit([
-          function (cb) {
-            let matchCriteria = Object.assign({}, match)
-            delete matchCriteria.lastMessagedAt
-            let criteria = [
-              {$match: matchCriteria},
-              {$group: {_id: null, count: {$sum: 1}}}
-            ]
-            utility.callApi(`subscribers/aggregate`, 'post', criteria)
-              .then(response => {
-                let count = 0
-                if (response.length > 0) {
-                  count = response[0].count
-                }
-                cb(null, count)
-              })
-              .catch(err => {
-                cb(err)
-              })
-          },
-          function (cb) {
-            let matchCriteria = Object.assign({}, match)
-            if (smp) delete matchCriteria.lastMessagedAt
-            let criteria = [
-              {$match: matchCriteria},
-              {$group: {_id: null, count: {$sum: 1}}}
-            ]
-            utility.callApi(`subscribers/aggregate`, 'post', criteria)
-              .then(response => {
-                let count = 0
-                if (response.length > 0) {
-                  count = response[0].count
-                }
-                cb(null, count)
-              })
-              .catch(err => {
-                cb(err)
-              })
+    .then(page => {
+      isApprovedForSMP(page)
+        .then(smpStatus => {
+          let smp = false
+          if (smpStatus === 'approved' || smpStatus === true) {
+            smp = true
           }
-        ], 10, function (err, results) {
-          if (err) {
-            logger.serverLog(TAG, err)
-            sendErrorResponse(res, 500, 'Failed to get subscribers count')
-          } else {
-            let payload = {
-              isApprovedForSMP: smp,
-              totalCount: results[0],
-              count: results[1]
+          async.parallelLimit([
+            function (cb) {
+              let matchCriteria = Object.assign({}, match)
+              delete matchCriteria.lastMessagedAt
+              let criteria = [
+                {$match: matchCriteria},
+                {$group: {_id: null, count: {$sum: 1}}}
+              ]
+              utility.callApi(`subscribers/aggregate`, 'post', criteria)
+                .then(response => {
+                  let count = 0
+                  if (response.length > 0) {
+                    count = response[0].count
+                  }
+                  cb(null, count)
+                })
+                .catch(err => {
+                  cb(err)
+                })
+            },
+            function (cb) {
+              let matchCriteria = Object.assign({}, match)
+              if (smp) delete matchCriteria.lastMessagedAt
+              let criteria = [
+                {$match: matchCriteria},
+                {$group: {_id: null, count: {$sum: 1}}}
+              ]
+              utility.callApi(`subscribers/aggregate`, 'post', criteria)
+                .then(response => {
+                  let count = 0
+                  if (response.length > 0) {
+                    count = response[0].count
+                  }
+                  cb(null, count)
+                })
+                .catch(err => {
+                  cb(err)
+                })
             }
-            sendSuccessResponse(res, 200, payload)
-          }
+          ], 10, function (err, results) {
+            if (err) {
+              logger.serverLog(TAG, err)
+              sendErrorResponse(res, 500, 'Failed to get subscribers count')
+            } else {
+              let payload = {
+                isApprovedForSMP: smp,
+                totalCount: results[0],
+                count: results[1]
+              }
+              sendSuccessResponse(res, 200, payload)
+            }
+          })
         })
-      })
-      .catch(err => {
-        logger.serverLog(TAG, err)
-        sendErrorResponse(res, 500, 'Failed to get subscribers count')
-      })
+        .catch(err => {
+          logger.serverLog(TAG, err)
+          sendErrorResponse(res, 500, 'Failed to get subscribers count')
+        })
     })
     .catch(err => {
       logger.serverLog(TAG, err)
