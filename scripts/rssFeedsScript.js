@@ -352,7 +352,7 @@ const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page
       .then(gallery => {
         logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title ${feed.title}`)
         let messageData = [{
-          text: `Here are your daily updates from ${feed.title} News:`
+          text: `Here are your daily updates from ${feed.title}:`
         }, {
           attachment: {
             type: 'template',
