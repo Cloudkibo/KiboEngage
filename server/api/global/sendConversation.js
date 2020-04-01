@@ -66,7 +66,7 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
       broadcastId: recordObj ? recordObj.broadcastId: '',
       componentIndex: -1,
       incorrectTries: 3,
-      googleSheetRange: null, 
+      googleSheetRange: null,
       spreadSheet: null,
       worksheet: null
   }
@@ -111,13 +111,25 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
           }
         }
         if (['polls', 'surveys'].includes(item.componentType)) {
-          saveLiveChat(preparePayload(user, subscribers[i], page, item))
+          saveAutomationMessages(user, subscribers[i], page, item)
         }
       })
     }
   }
 }
 /* eslint-enable */
+
+const saveAutomationMessages = (user, subscriber, page, message) => {
+  callApi('companyprofile/query', 'post', {_id: user.companyId})
+    .then(company => {
+      if (company && company.saveAutomationMessages) {
+        saveLiveChat(preparePayload(user, subscriber, page, message))
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, err, 'error')
+    })
+}
 
 const _prepareMessageData = (module, item, subscriber) => {
   let message = ['autoposting'].includes(module) ? JSON.stringify(item)
