@@ -9,7 +9,6 @@ const TweetsQueueScript = require('../scripts/tweets_queue_script.js')
 const abandonedCartScript = require('../scripts/abandonedScript')
 const rssFeedsScript = require('../scripts/rssFeedsScript')
 const manualFeedsScript = require('../scripts/manualFeedsScript')
-const sponsoredScheduled = require('../scripts/scheduleSponsored.js')
 
 const app = express()
 const httpApp = express()
@@ -29,7 +28,7 @@ cron.schedule('*/5 * * * * *', SequenceScript.runSequenceMessageQueueScript) // 
 cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midnight
 cron.schedule('* * * * *', abandonedCartScript.runScript)
 // cron.schedule('0 8 * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
-cron.schedule('0 13 * * *', rssFeedsScript.runRSSScript) //  everyday at 1 PM
+cron.schedule('0 */1 * * *', rssFeedsScript.runRSSScript) //  after every 2 hours for testing
 cron.schedule('0 */2 * * *', manualFeedsScript.runScript)
 cron.schedule('* * * * *', sponsoredScheduled.runScheduleSponsored)
 
