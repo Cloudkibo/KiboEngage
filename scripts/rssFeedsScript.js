@@ -129,8 +129,9 @@ const _fetchPage = (data, next) => {
 const _handleFeed = (data, next) => {
   const criteria = [
     {$match: {pageId: data.page._id, companyId: data.page.companyId, isSubscribed: true, completeInfo: true}},
-    {$limit: Math.floor(50 / Object.keys(data.parsedFeeds).length)}
+    {$limit: Math.floor(50 / (Object.keys(data.parsedFeeds).length * 2))}
   ]
+  logger.serverLog(TAG, `criteria in _handleFeed ${JSON.stringify(criteria)}`)
   const rssFeedIds = data.feeds.map((f) => f._id)
   sendFeed(criteria, data.page, data.rssFeed, data.rssFeedPost, data.parsedFeeds, rssFeedIds)
   next()
