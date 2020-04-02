@@ -40,7 +40,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
   facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/adcreatives`, 'post', creativePayload)
     .then(adCreativeResp => {
       if (adCreativeResp.body.error) {
-        logger.serverLog(TAG, `Error in Ad Creatives Create ${JSON.stringify(scheduledMessage)}`, 'error')
+        logger.serverLog(TAG, `Error in Ad Creatives Create ${JSON.stringify(adCreativeResp.body)}`, 'error')
         sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
       } else {
         let messageCreativeId = adCreativeResp.body.id
@@ -48,7 +48,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
         facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/ads`, 'post', adPayload)
           .then(adsResp => {
             if (adsResp.body.error) {
-              logger.serverLog(TAG, `Error in sending ad to Facebook ${JSON.stringify(scheduledMessage)}`, 'error')
+              logger.serverLog(TAG, `Error in sending ad to Facebook ${JSON.stringify(adsResp.body)}`, 'error')
               sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
             } else {
               let adId = adsResp.body.id
@@ -60,6 +60,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
               facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/subscribed_apps?app_id=${config.facebook.clientID}`, 'post', {access_token: facebookInfo.fbToken})
                 .then(subscriptionResp => {
                   if (subscriptionResp.body.error) {
+                    logger.serverLog(TAG, `Error in subscribing to ad insights to Facebook ${JSON.stringify(subscriptionResp.body)}`, 'error')
                     sendOpAlert(subscriptionResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
                   } else {
                     logger.serverLog(TAG, 'The scheduled ad is sent to facebook.')
