@@ -22,6 +22,7 @@ exports.runScheduleSponsored = () => {
 }
 
 function startScheduledMessageProcess (scheduledMessage) {
+  logger.serverLog(TAG, `Scheduled MESSAGE FOUND ${JSON.stringify(scheduledMessage)}`, 'error')
   utility.callApi(`companyUser/query`, 'post', { role: 'buyer', companyId: scheduledMessage.companyId })
     .then(companyUser => {
       return utility.callApi(`user/query`, 'post', {_id: companyUser.userId})
@@ -39,6 +40,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
   facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/adcreatives`, 'post', creativePayload)
     .then(adCreativeResp => {
       if (adCreativeResp.body.error) {
+        logger.serverLog(TAG, `Error in Ad Creatives Create ${JSON.stringify(scheduledMessage)}`, 'error')
         sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
       } else {
         let messageCreativeId = adCreativeResp.body.id
@@ -46,6 +48,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
         facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/ads`, 'post', adPayload)
           .then(adsResp => {
             if (adsResp.body.error) {
+              logger.serverLog(TAG, `Error in sending ad to Facebook ${JSON.stringify(scheduledMessage)}`, 'error')
               sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
             } else {
               let adId = adsResp.body.id
