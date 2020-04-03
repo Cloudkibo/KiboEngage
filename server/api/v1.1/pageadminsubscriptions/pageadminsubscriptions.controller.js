@@ -58,6 +58,16 @@ exports.create = function (req, res) {
         utility.callApi('pageadminsubscriptions', 'put', updatedData, 'kiboengage')
           .then(updated => {
             logger.serverLog(TAG, 'pageadminsubscription updated successfuly')
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: req.body.companyId,
+              body: {
+                action: 'admin_subscriber',
+                payload: {
+                  subscribed_page: req.body.pageId
+                }
+              }
+            })
+            sendSuccessResponse(res, 200, updated)
           })
           .catch(err => {
             sendErrorResponse(res, 500, `failed to update page admin subscription ${JSON.stringify(err)}`)
