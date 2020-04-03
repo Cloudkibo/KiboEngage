@@ -23,11 +23,16 @@ exports.runScheduleSponsored = () => {
 
 function startScheduledMessageProcess (scheduledMessage) {
   logger.serverLog(TAG, `Scheduled MESSAGE FOUND ${JSON.stringify(scheduledMessage)}`, 'error')
+  let user
   utility.callApi(`companyUser/query`, 'post', { role: 'buyer', companyId: scheduledMessage.companyId })
     .then(companyUser => {
       return utility.callApi(`user/query`, 'post', {_id: companyUser.userId})
     })
-    .then(user => {
+    .then(userFound => {
+      user = userFound
+      return utility.callApi(`pages/query`, 'post', {_id: scheduledMessage.pageId})
+    }).then(page => {
+      scheduledMessage.pageId = page[0].pageId
       sendScheduledMessage(scheduledMessage, user[0].facebookInfo)
     })
     .catch(err => {
@@ -41,6 +46,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
     .then(adCreativeResp => {
       if (adCreativeResp.body.error) {
         logger.serverLog(TAG, `Error in Ad Creatives Create ${JSON.stringify(adCreativeResp.body)}`, 'error')
+        updateForError(scheduledMessage, adCreativeResp.body.error.error_user_msg)
         sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
       } else {
         let messageCreativeId = adCreativeResp.body.id
@@ -49,6 +55,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
           .then(adsResp => {
             if (adsResp.body.error) {
               logger.serverLog(TAG, `Error in sending ad to Facebook ${JSON.stringify(adsResp.body)}`, 'error')
+              updateForError(scheduledMessage, adsResp.body.error.error_user_msg)
               sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
             } else {
               let adId = adsResp.body.id
@@ -61,6 +68,7 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
                 .then(subscriptionResp => {
                   if (subscriptionResp.body.error) {
                     logger.serverLog(TAG, `Error in subscribing to ad insights to Facebook ${JSON.stringify(subscriptionResp.body)}`, 'error')
+                    updateForError(scheduledMessage, subscriptionResp.body.error.error_user_msg)
                     sendOpAlert(subscriptionResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
                   } else {
                     logger.serverLog(TAG, 'The scheduled ad is sent to facebook.')
@@ -79,4 +87,11 @@ function sendScheduledMessage (scheduledMessage, facebookInfo) {
     .catch(err => {
       logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
     })
+}
+
+function updateForError (scheduledMessage, errorMessage) {
+  let errorMsg = 'This scheduled broadcast failed due to this reason from facebook: ' + errorMessage
+  let queryObject = { _id: scheduledMessage._id }
+  let dataToUpdate = { status: 'failed', errorMessage: errorMsg }
+  _storeAdAndCreativeIdsExport(queryObject, dataToUpdate)
 }
