@@ -575,12 +575,10 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
     `req.user._id ${JSON.stringify(req.user._id)}`)    
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
-      logger.serverLog(TAG,
-        `subscriptionUser.subscriberId ${JSON.stringify(subscriptionUser.subscriberId)}`) 
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
-        `subscriptionUser ${subscriptionUser}`, 'debug')
-      broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
+        `subscriptionUser ${subscriptionUser}`)
+      broadcastUtility.getSubscriberInfoFromFB(subscriptionUser[0].subscriberId, page)
         .then(response => {
           logger.serverLog(TAG,
             `response ${response}`)
