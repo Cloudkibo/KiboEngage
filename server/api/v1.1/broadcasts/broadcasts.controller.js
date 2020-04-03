@@ -567,6 +567,12 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
 
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   var testBroadcast = true
+  logger.serverLog(TAG,
+    `companyUser.companyId ${JSON.stringify(companyUser.companyId)}`)
+  logger.serverLog(TAG,
+    `page._id ${JSON.stringify(page._id)}`)  
+  logger.serverLog(TAG,
+    `req.user._id ${JSON.stringify(req.user._id)}`)  
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
@@ -587,6 +593,8 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
         })
     })
     .catch(error => {
+      logger.serverLog(TAG,
+        `Failed to fetch adminsubscription ${JSON.stringify(error)}`)  
       sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
 }
