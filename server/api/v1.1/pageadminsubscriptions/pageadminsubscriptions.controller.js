@@ -45,7 +45,7 @@ exports.create = function (req, res) {
       if (pageadminsubscription) {
         let updatedData = {
           purpose: 'updateOne',
-          query: {
+          match: {
             companyId: req.body.companyId,
             pageId: req.body.pageId
           },
