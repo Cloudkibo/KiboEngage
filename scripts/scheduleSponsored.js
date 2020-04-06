@@ -32,7 +32,7 @@ function startScheduledMessageProcess (scheduledMessage) {
       user = userFound
       return utility.callApi(`pages/query`, 'post', {_id: scheduledMessage.pageId})
     }).then(page => {
-      scheduledMessage.pageId = page[0].pageId
+      scheduledMessage.pageFbId = page[0].pageId
       sendScheduledMessage(scheduledMessage, user[0].facebookInfo)
     })
     .catch(err => {
