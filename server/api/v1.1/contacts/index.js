@@ -31,8 +31,4 @@ router.get('/fetchLists',
   auth.isAuthenticated(),
   controller.fetchLists)
 
-router.post('/createList',
-  auth.isAuthenticated(),
-  controller.createList)
-
 module.exports = router

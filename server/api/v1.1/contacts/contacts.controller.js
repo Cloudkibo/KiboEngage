@@ -133,12 +133,3 @@ exports.fetchLists = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
-exports.createList = function (req, res) {
-  contactListsDataLayer.create({companyId: req.user.companyId, name: 'test list'})
-    .then(lists => {
-      sendSuccessResponse(res, 200, lists)
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
-    })
-}
