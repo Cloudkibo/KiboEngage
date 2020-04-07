@@ -4,7 +4,7 @@ exports.getCriterias = function (body, companyUser) {
   let recordsToSkip = 0
   findCriteria = {
     companyId: companyUser.companyId,
-    name: body.search_value !== '' ? { $regex: '.*' + body.search_value + '.*', $options: 'i' } : { $exists: true },
+    name: body.search_value ? { $regex: '.*' + body.search_value + '.*', $options: 'i' } : { $exists: true },
     isSubscribed: body.status_value !== '' ? body.status_value : {$exists: true}
   }
   if (body.list_value !== '') {
