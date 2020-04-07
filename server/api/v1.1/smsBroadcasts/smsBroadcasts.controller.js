@@ -38,7 +38,7 @@ exports.sendBroadcast = function (req, res) {
     .then(companyUser => {
       dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
         .then(broadcast => {
-          utility.callApi(`contacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}) // fetch company user
+          utility.callApi(`contacts/query`, 'post', logicLayer.prepareQueryToGetContacts(req.body, req.user.companyId)) // fetch company user
             .then(contacts => {
               let accountSid = companyUser.companyId.twilio.accountSID
               let authToken = companyUser.companyId.twilio.authToken
@@ -70,7 +70,7 @@ exports.sendBroadcast = function (req, res) {
                 .then((responses) => {
                   sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
                 })
-                .catch((err) => sendErrorResponse(res, 500, '', 'Failed to Send Broadcast to all Subscribers'))
+                .catch((err) => sendErrorResponse(res, 500, '', `Failed to Send Broadcast to all Subscribers ${err}`))
             })
             .catch(error => {
               sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
@@ -86,7 +86,7 @@ exports.sendBroadcast = function (req, res) {
 }
 
 exports.getCount = function (req, res) {
-  var criteria = logicLayer.checkFilterValuesForGetCount(req.body.segmentation, req.user.companyId)
+  var criteria = logicLayer.checkFilterValuesForGetCount(req.body, req.user.companyId)
   utility.callApi(`contacts/aggregate`, 'post', criteria)
     .then(result => {
       if (result.length > 0) {
@@ -99,20 +99,6 @@ exports.getCount = function (req, res) {
       logger.serverLog(TAG, `Failed to fetch  ${err}`)
       sendErrorResponse(res, 500, `Failed to fetch count`)
     })
-  // utility.callApi(`contacts/query`, 'post', {companyId: req.user.companyId, isSubscribed: true}) // fetch company user
-  //   .then(contacts => {
-  //     let subscriberCount = 0
-  //     for (let i = 0; i < contacts.length; i++) {
-  //       var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
-  //       if (matchCriteria) {
-  //         subscriberCount = subscriberCount + 1
-  //       }
-  //     }
-  //     sendSuccessResponse(res, 200, {subscribersCount: subscriberCount})
-  //   })
-  //   .catch(error => {
-  //     sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
-  //   })
 }
 exports.getTwilioNumbers = function (req, res) {
   logger.serverLog(TAG, `called function getTwilioNumbers`)
