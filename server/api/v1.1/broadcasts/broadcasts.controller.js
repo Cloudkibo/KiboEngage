@@ -587,7 +587,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
       utility.callApi(`subscribers/query`, 'post', match)
         .then(subscribers => {
           logger.serverLog(TAG,
-            `subscribers match ${subscribers}`)
+            `subscribers match ${JSON.stringify(subscribers)}`)
         })
       broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
         .then(response => {
