@@ -577,8 +577,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
-        `subscriptionUser ${subscriptionUser.subscriberId}`)
-
+        `subscriptionUser ${JSON.stringify(subscriptionUser)}`)
       let match = {
         companyId: companyUser.companyId,
         pageId: page._id,

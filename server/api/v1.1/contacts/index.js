@@ -23,4 +23,12 @@ router.post('/uploadNumbers',
   validate({body: validationSchema.uploadNumbersPayload}),
   controller.uploadNumbers)
 
+router.post('/update/:id',
+  auth.isAuthenticated(),
+  controller.update)
+
+router.get('/fetchLists',
+  auth.isAuthenticated(),
+  controller.fetchLists)
+
 module.exports = router
