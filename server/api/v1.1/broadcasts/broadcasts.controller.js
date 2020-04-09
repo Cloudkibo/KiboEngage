@@ -581,7 +581,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
       broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
         .then(response => {
           logger.serverLog(TAG,
-            `response ${JSON.stringify(response)}`)
+            `response ${JSON.stringify(response.body)}`)
           const subscriber = response.body
           let fname = subscriber.first_name
           let lname = subscriber.last_name
