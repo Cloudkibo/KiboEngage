@@ -578,6 +578,17 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
         `subscriptionUser ${JSON.stringify(subscriptionUser)}`)
+      let match = {
+        senderId: subscriptionUser.subscriberId,
+        lastMessagedAt: {
+          $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
+        }
+      }
+      utility.callApi(`subscribers/query`, 'post', match)
+        .then(subscribers => {
+          logger.serverLog(TAG,
+            `subscribers match ${subscribers}`)
+        })
       broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
         .then(response => {
           logger.serverLog(TAG,
