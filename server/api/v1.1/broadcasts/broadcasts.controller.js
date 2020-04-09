@@ -570,18 +570,18 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   logger.serverLog(TAG,
     `companyUser.companyId ${JSON.stringify(companyUser.companyId)}`)
   logger.serverLog(TAG,
-    `page._id ${JSON.stringify(page._id)}`)  
+    `page._id ${JSON.stringify(page._id)}`)
   logger.serverLog(TAG,
-    `req.user._id ${JSON.stringify(req.user._id)}`)    
-  PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id}) 
+    `req.user._id ${JSON.stringify(req.user._id)}`)
+  PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
-        `subscriptionUser ${subscriptionUser.subscriberId}`)
+        `subscriptionUser ${JSON.stringify(subscriptionUser)}`)
       broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
         .then(response => {
           logger.serverLog(TAG,
-            `response ${response}`)
+            `response ${JSON.stringify(response)}`)
           const subscriber = response.body
           let fname = subscriber.first_name
           let lname = subscriber.last_name
@@ -589,13 +589,13 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
         })
         .catch(error => {
           logger.serverLog(TAG,
-            `Failed to fetch data from facebook ${JSON.stringify(error)}`)  
+            `Failed to fetch data from facebook ${JSON.stringify(error)}`)
           sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
       logger.serverLog(TAG,
-        `Failed to fetch adminsubscription ${JSON.stringify(error)}`)  
+        `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
       sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
 }
