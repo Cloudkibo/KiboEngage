@@ -1,5 +1,7 @@
-const requestPromise = require('request-promise')
+const needle = require('needle')
 const config = require('../../../config/environment/index')
+const logger = require('../../../components/logger')
+const TAG = 'api/v1.1/utility/index.js'
 const { accounts } = require('../../global/constants').serverConstants
 const logger = require('./../../../components/logger')
 const TAG = 'server/api/v1.1/utility/index'
@@ -8,12 +10,12 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
   let headers
   if (token && token !== '') {
     headers = {
-      'content-type': 'application/json',
+      'content_type': 'application/json',
       'Authorization': token
     }
   } else {
     headers = {
-      'content-type': 'application/json',
+      'content_type': 'application/json',
       'is_kibo_product': true
     }
   }
@@ -28,13 +30,19 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
     body,
     json: true
   }
-  return requestPromise(options).then(response => {
-    return new Promise((resolve, reject) => {
-      if (response.status === 'success') {
-        resolve(response.payload)
-      } else {
-        reject(response.payload)
-      }
-    })
-  }).catch(err => logger.serverLog(TAG, `API call error ${err}`, 'error'))
+  
+  return new Promise((resolve, reject) => {
+    needle(method, options.uri, body, options)
+      .then(response => {
+        if (response.body.status === 'success') {
+          resolve(response.body.payload)
+        } else {
+          reject(response.body.payload)
+        }
+      })
+      .catch(error => {
+        reject(error)
+        logger.serverLog(TAG, `error in calling internal APIs ${JSON.stringify(error)}`, 'error')
+      })
+  })
 }
