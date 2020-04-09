@@ -22,18 +22,24 @@ const sendUsingBatchAPI = (module, payload, subscribers, page, user, result, sav
   subscribersPromise
     .then(subscribers => {
       if (subscribers.length > 0) {
-        let batch = _prepareBatchData(module, payload, subscribers, page, user, recordObj)
-        _callBatchAPI(JSON.stringify(batch), page.accessToken)
-          .then(response => {
-            logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
-            result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
-            if (subscribers.criteria) {
-              subscribers.criteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
-              sendUsingBatchAPI(payload, subscribers, page.accessToken, result, saveMsgRecord, recordObj)
-            }
+        callApi(`companyProfile/query`, 'post', {ownerId: user._id})
+        .then(companyProfile => {
+          let batch = _prepareBatchData(module, payload, subscribers, page, user, recordObj, companyProfile)
+          _callBatchAPI(JSON.stringify(batch), page.accessToken)
+            .then(response => {
+              logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
+              result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
+              if (subscribers.criteria) {
+                subscribers.criteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
+                sendUsingBatchAPI(payload, subscribers, page.accessToken, result, saveMsgRecord, recordObj)
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
+            })
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
+            logger.serverLog(TAG, `Failed to fetch company profile ${err}`, 'error')
           })
       } else {
         logger.serverLog(TAG, result)
@@ -61,12 +67,12 @@ const _callBatchAPI = (batch, accessToken) => {
 }
 
 /* eslint-disable */
-const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) => {
+const _prepareBatchData = (module, payload, subscribers, page, user, recordObj, companyProfile) => {
     let waitingForUserInput = {
       broadcastId: recordObj ? recordObj.broadcastId: '',
       componentIndex: -1,
       incorrectTries: 3,
-      googleSheetRange: null, 
+      googleSheetRange: null,
       spreadSheet: null,
       worksheet: null
   }
@@ -111,13 +117,25 @@ const _prepareBatchData = (module, payload, subscribers, page, user, recordObj) 
           }
         }
         if (['polls', 'surveys'].includes(item.componentType)) {
-          saveLiveChat(preparePayload(user, subscribers[i], page, item))
+          saveAutomationMessages(user, subscribers[i], page, item)
         }
       })
     }
   }
 }
 /* eslint-enable */
+
+const saveAutomationMessages = (user, subscriber, page, message) => {
+  callApi('companyprofile/query', 'post', {_id: user.companyId})
+    .then(company => {
+      if (company && company.saveAutomationMessages) {
+        saveLiveChat(preparePayload(user, subscriber, page, message))
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, err, 'error')
+    })
+}
 
 const _prepareMessageData = (module, item, subscriber) => {
   let message = ['autoposting'].includes(module) ? JSON.stringify(item)

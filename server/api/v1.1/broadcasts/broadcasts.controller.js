@@ -567,26 +567,46 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
 
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   var testBroadcast = true
+  logger.serverLog(TAG,
+    `companyUser.companyId ${JSON.stringify(companyUser.companyId)}`)
+  logger.serverLog(TAG,
+    `page._id ${JSON.stringify(page._id)}`)
+  logger.serverLog(TAG,
+    `req.user._id ${JSON.stringify(req.user._id)}`)
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
-        `subscriptionUser ${subscriptionUser}`, 'debug')
-      utility.callApi(`user/query`, 'post', {_id: subscriptionUser.userId})
-        .then(user => {
-          user = user[0]
+        `subscriptionUser ${JSON.stringify(subscriptionUser)}`)
+      let match = {
+        senderId: subscriptionUser.subscriberId,
+        lastMessagedAt: {
+          $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
+        }
+      }
+      utility.callApi(`subscribers/query`, 'post', match)
+        .then(subscribers => {
           logger.serverLog(TAG,
-            `user ${JSON.stringify(user)}`, 'debug')
-          let temp = user.facebookInfo.name.split(' ')
-          let fname = temp[0]
-          let lname = temp[1] ? temp[1] : ''
+            `subscribers match ${subscribers}`)
+        })
+      broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
+        .then(response => {
+          logger.serverLog(TAG,
+            `response ${JSON.stringify(response.body)}`)
+          const subscriber = response.body
+          let fname = subscriber.first_name
+          let lname = subscriber.last_name
           broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
         })
         .catch(error => {
+          logger.serverLog(TAG,
+            `Failed to fetch data from facebook ${JSON.stringify(error)}`)
           sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      logger.serverLog(TAG,
+        `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
       sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
 }
@@ -788,70 +808,70 @@ exports.retrieveSubscribersCount = function (req, res) {
 
 const _getSubscribersCount = (body, match, res) => {
   utility.callApi(`pages/${body.pageId}`)
-  .then(page => {
-    isApprovedForSMP({pageId: page.pageId, accessToken: body.pageAccessToken})
-      .then(smpStatus => {
-        let smp = false
-        if ((smpStatus === 'approved')) {
-          smp = true
-        }
-        async.parallelLimit([
-          function (cb) {
-            let matchCriteria = Object.assign({}, match)
-            delete matchCriteria.lastMessagedAt
-            let criteria = [
-              {$match: matchCriteria},
-              {$group: {_id: null, count: {$sum: 1}}}
-            ]
-            utility.callApi(`subscribers/aggregate`, 'post', criteria)
-              .then(response => {
-                let count = 0
-                if (response.length > 0) {
-                  count = response[0].count
-                }
-                cb(null, count)
-              })
-              .catch(err => {
-                cb(err)
-              })
-          },
-          function (cb) {
-            let matchCriteria = Object.assign({}, match)
-            if (smp) delete matchCriteria.lastMessagedAt
-            let criteria = [
-              {$match: matchCriteria},
-              {$group: {_id: null, count: {$sum: 1}}}
-            ]
-            utility.callApi(`subscribers/aggregate`, 'post', criteria)
-              .then(response => {
-                let count = 0
-                if (response.length > 0) {
-                  count = response[0].count
-                }
-                cb(null, count)
-              })
-              .catch(err => {
-                cb(err)
-              })
+    .then(page => {
+      isApprovedForSMP(page)
+        .then(smpStatus => {
+          let smp = false
+          if (smpStatus === 'approved' || smpStatus === true) {
+            smp = true
           }
-        ], 10, function (err, results) {
-          if (err) {
-            logger.serverLog(TAG, err)
-            sendErrorResponse(res, 500, 'Failed to get subscribers count')
-          } else {
-            let payload = {
-              isApprovedForSMP: smp,
-              totalCount: results[0],
-              count: results[1]
+          async.parallelLimit([
+            function (cb) {
+              let matchCriteria = Object.assign({}, match)
+              delete matchCriteria.lastMessagedAt
+              let criteria = [
+                {$match: matchCriteria},
+                {$group: {_id: null, count: {$sum: 1}}}
+              ]
+              utility.callApi(`subscribers/aggregate`, 'post', criteria)
+                .then(response => {
+                  let count = 0
+                  if (response.length > 0) {
+                    count = response[0].count
+                  }
+                  cb(null, count)
+                })
+                .catch(err => {
+                  cb(err)
+                })
+            },
+            function (cb) {
+              let matchCriteria = Object.assign({}, match)
+              if (smp) delete matchCriteria.lastMessagedAt
+              let criteria = [
+                {$match: matchCriteria},
+                {$group: {_id: null, count: {$sum: 1}}}
+              ]
+              utility.callApi(`subscribers/aggregate`, 'post', criteria)
+                .then(response => {
+                  let count = 0
+                  if (response.length > 0) {
+                    count = response[0].count
+                  }
+                  cb(null, count)
+                })
+                .catch(err => {
+                  cb(err)
+                })
             }
-            sendSuccessResponse(res, 200, payload)
-          }
+          ], 10, function (err, results) {
+            if (err) {
+              logger.serverLog(TAG, err)
+              sendErrorResponse(res, 500, 'Failed to get subscribers count')
+            } else {
+              let payload = {
+                isApprovedForSMP: smp,
+                totalCount: results[0],
+                count: results[1]
+              }
+              sendSuccessResponse(res, 200, payload)
+            }
+          })
         })
-      })
-      .catch(err => {
-        logger.serverLog(TAG, err)
-        sendErrorResponse(res, 500, 'Failed to get subscribers count')
-      })
+        .catch(err => {
+          logger.serverLog(TAG, err)
+          sendErrorResponse(res, 500, 'Failed to get subscribers count')
+        })
     })
     .catch(err => {
       logger.serverLog(TAG, err)

@@ -14,6 +14,14 @@ router.get('/getAutomatedOptions',
   auth.isAuthenticated(),
   controller.getAutomatedOptions)
 
+router.get('/getAdvancedSettings',
+  auth.isAuthenticated(),
+  controller.getAdvancedSettings)
+
+router.post('/updateAdvancedSettings',
+  auth.isAuthenticated(),
+  controller.updateAdvancedSettings)
+
 router.post('/invite', auth.isAuthenticated(), controller.invite)
 
 router.post('/updateRole',
@@ -49,5 +57,14 @@ router.post('/deleteWhatsAppInfo',
   auth.isAuthenticated(),
   validate({body: validationSchema.deleteWhatsAppInfo}),
   controller.deleteWhatsAppInfo)
+
+router.get('/getAdvancedSettings',
+  auth.isAuthenticated(),
+  controller.getAdvancedSettings)
+
+router.post('/updateAdvancedSettings',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.advancedSettingsPayload}),
+  controller.updateAdvancedSettings)
 
 module.exports = router

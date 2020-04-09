@@ -3,6 +3,8 @@ const config = require('../../../config/environment/index')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/utility/index.js'
 const { accounts } = require('../../global/constants').serverConstants
+const logger = require('./../../../components/logger')
+const TAG = 'server/api/v1.1/utility/index'
 
 exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
   let headers
@@ -28,6 +30,7 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
     body,
     json: true
   }
+  
   return new Promise((resolve, reject) => {
     needle(method, options.uri, body, options)
       .then(response => {

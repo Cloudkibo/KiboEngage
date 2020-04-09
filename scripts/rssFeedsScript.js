@@ -59,6 +59,7 @@ const _prepareFeeds = (data, next) => {
       .then(parsedFeed => {
         prepareMessageData(parsedFeed, feed, data.showMoreTopics, data.rssFeedPosts, data.page)
           .then(preparedData => {
+            logger.serverLog(TAG, `preparedData ${preparedData}`)
             data.parsedFeeds[feed._id] = {
               data: preparedData,
               postSubscriber: {
@@ -128,8 +129,9 @@ const _fetchPage = (data, next) => {
 const _handleFeed = (data, next) => {
   const criteria = [
     {$match: {pageId: data.page._id, companyId: data.page.companyId, isSubscribed: true, completeInfo: true}},
-    {$limit: Math.floor(50 / Object.keys(data.parsedFeeds).length)}
+    {$limit: Math.floor(50 / (Object.keys(data.parsedFeeds).length * 2))}
   ]
+  logger.serverLog(TAG, `criteria in _handleFeed ${JSON.stringify(criteria)}`)
   const rssFeedIds = data.feeds.map((f) => f._id)
   sendFeed(criteria, data.page, data.rssFeed, data.rssFeedPost, data.parsedFeeds, rssFeedIds)
   next()
@@ -302,8 +304,10 @@ const callBatchAPI = (page, batch) => {
   return new Promise((resolve, reject) => {
     const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
       if (err) {
+        logger.serverLog(TAG, `callBatchAPI error ${err}`)
         reject(err)
       } else {
+        logger.serverLog(TAG, `callBatchAPI response ${body}`)
         body = JSON.parse(body)
         resolve('success')
       }
@@ -346,9 +350,9 @@ const prepareMessageData = (parsedFeed, feed, showMoreTopics, rssFeedPosts, page
     }
     getMetaData(parsedFeed, feed, rssFeedPosts, page)
       .then(gallery => {
-        logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title`)
+        logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title ${feed.title}`)
         let messageData = [{
-          text: `Here are your daily updates from ${feed.title} News:`
+          text: `Here are your daily updates from ${feed.title}:`
         }, {
           attachment: {
             type: 'template',

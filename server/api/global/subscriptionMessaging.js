@@ -1,13 +1,10 @@
 const { facebookApiCaller } = require('./facebookApiCaller')
 const logger = require('../../components/logger')
 const TAG = 'global/subscriptionMessaging.js'
-const config = require('./../../config/environment')
 
 exports.isApprovedForSMP = (page) => {
   return new Promise((resolve, reject) => {
-    if (config.ignoreSMP && config.ignoreSMP.includes(page.pageId)) {
-      resolve('approved')
-    } else {
+    if (page.tasks && page.tasks.includes('MANAGE')) {
       facebookApiCaller(
         'v6.0',
         `me/messaging_feature_review?access_token=${page.accessToken}`,
@@ -35,6 +32,8 @@ exports.isApprovedForSMP = (page) => {
           logger.serverLog(TAG, `Failed to check subscription_messaging permission status ${err}`, 'error')
           resolve(false)
         })
+    } else {
+      resolve(true)
     }
   })
 }
