@@ -77,11 +77,12 @@ exports.update = function (req, res) {
       callApi.callApi('custom_fields/', 'put', { purpose: 'updateOne', match: { _id: req.body.customFieldId }, updated: updatedPayload })
         .then(updated => {
           require('./../../../config/socketio').sendMessageToClient({
-            room_id: fieldPayload.companyId._id,
+            room_id: req.user.companyId,
             body: {
-              action: 'tag_rename',
+              action: 'custom_field_update',
               payload: {
-                fieldPayload
+                customFieldId: req.body.customFieldId,
+                updated: req.body.updated
               }
             }
           })
@@ -105,7 +106,7 @@ exports.delete = function (req, res) {
             callApi.callApi('custom_fields/', 'delete', { purpose: 'deleteOne', match: { _id: req.body.customFieldId } })
               .then(fieldPayload => {
                 require('./../../../config/socketio').sendMessageToClient({
-                  room_id: fieldPayload.companyId,
+                  room_id: req.user.companyId,
                   body: {
                     action: 'custom_field_remove',
                     payload: {
@@ -126,7 +127,7 @@ exports.delete = function (req, res) {
         callApi.callApi('custom_fields/', 'delete', { purpose: 'deleteOne', match: { _id: req.body.customFieldId } })
           .then(fieldPayload => {
             require('./../../../config/socketio').sendMessageToClient({
-              room_id: fieldPayload.companyId,
+              room_id: req.user.companyId,
               body: {
                 action: 'custom_field_remove',
                 payload: {
