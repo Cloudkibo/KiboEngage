@@ -63,7 +63,7 @@ exports.getCriterias = function (body, companyUser) {
 
 exports.checkFilterValues = function (values, data) {
   var matchCriteria = true
-  if (values.length > 0) {
+  if (values && values.length > 0) {
     for (var i = 0; i < values.length; i++) {
       var filter = values[i]
       if (filter.criteria === 'is') {
@@ -101,7 +101,7 @@ exports.checkFilterValuesForGetCount = function (body, companyId) {
   }
   if (body.listIds && body.listIds.length > 0) {
     matchCriteria = {listIds: {$in: body.listIds}}
-  } else {
+  } else if (body.segmentation && body.segmentation.length > 0) {
     matchCriteria = _checkFilterCondition(body.segmentation, matchCriteria)
   }
   let countCriteria = [
