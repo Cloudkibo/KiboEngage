@@ -570,32 +570,53 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   logger.serverLog(TAG,
     `companyUser.companyId ${JSON.stringify(companyUser.companyId)}`)
   logger.serverLog(TAG,
-    `page._id ${JSON.stringify(page._id)}`)  
+    `page._id ${JSON.stringify(page._id)}`)
   logger.serverLog(TAG,
-    `req.user._id ${JSON.stringify(req.user._id)}`)    
-  PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id}) 
+    `req.user._id ${JSON.stringify(req.user._id)}`)
+  PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
       logger.serverLog(TAG,
         `subscriptionUser ${subscriptionUser.subscriberId}`)
-      broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
-        .then(response => {
-          logger.serverLog(TAG,
-            `response ${response}`)
-          const subscriber = response.body
-          let fname = subscriber.first_name
-          let lname = subscriber.last_name
-          broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
+
+      let match = {
+        companyId: companyUser.companyId,
+        pageId: page._id,
+        senderId: subscriptionUser.subscriberId,
+        lastMessagedAt: {
+          $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
+        }
+      }
+      utility.callApi(`subscribers/query`, 'post', match)
+        .then(subscribers => {
+          if (subscribers.length > 0) {
+            broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
+              .then(response => {
+                logger.serverLog(TAG,
+                  `response ${response}`)
+                const subscriber = response.body
+                let fname = subscriber.first_name
+                let lname = subscriber.last_name
+                broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
+              })
+              .catch(error => {
+                logger.serverLog(TAG,
+                  `Failed to fetch data from facebook ${JSON.stringify(error)}`)
+                sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
+              })
+          } else {
+            sendErrorResponse(res, 500, `User hasn't messaged page in 24 hours`, `You need to message the page before you can send a test broadcast`)
+          }
         })
         .catch(error => {
           logger.serverLog(TAG,
-            `Failed to fetch data from facebook ${JSON.stringify(error)}`)  
-          sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
+            `Failed to fetch subscriber ${JSON.stringify(error)}`)
+          sendErrorResponse(res, 500, `Failed to fetch subscriber ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
       logger.serverLog(TAG,
-        `Failed to fetch adminsubscription ${JSON.stringify(error)}`)  
+        `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
       sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
 }

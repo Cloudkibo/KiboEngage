@@ -41,8 +41,10 @@ exports.create = function (req, res) {
         companyId: companyUser.companyId,
         createdBy: req.user._id
       }
+      logger.serverLog(CUSTOMFIELD, `got custom fields ${JSON.stringify(customFieldPayload)}`)
       callApi.callApi('custom_fields/', 'post', customFieldPayload)
         .then(newCustomField => {
+          logger.serverLog(CUSTOMFIELD, `created custom fields ${JSON.stringify(newCustomField)}`)
           require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
@@ -55,7 +57,7 @@ exports.create = function (req, res) {
           sendSuccessResponse(res, 200, newCustomField)
         })
         .catch(err => {
-          sendErrorResponse(res, 500, '', err.error.payload)
+          sendErrorResponse(res, 500, '', err)
         })
     })
     .catch(err => {
@@ -88,7 +90,7 @@ exports.update = function (req, res) {
           sendSuccessResponse(res, 200, updated)
         })
         .catch(err => {
-          sendErrorResponse(res, 500, '', err.error.payload)
+          sendErrorResponse(res, 500, '', err)
         })
     })
     .catch(err => {
