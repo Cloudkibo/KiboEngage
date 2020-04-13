@@ -873,6 +873,25 @@ function removeOldUrlFromButton (buttons) {
     return buttons
   }
 }
+
+function getSubscriberInfoFromFB (sender, page) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name&access_token=${page.accessToken}`,
+      qs: { access_token: page.accessToken },
+      method: 'GET'
+    }
+    needle.get(options.url, options, (error, response) => {
+      logger.serverLog(TAG, `Subscriber response git from facebook: ${JSON.stringify(response.body)}`, 'debug')
+      if (error) {
+        reject(error)
+      } else {
+        resolve(response)
+      }
+    })
+  })
+}
+exports.getSubscriberInfoFromFB = getSubscriberInfoFromFB
 exports.prepareSendAPIPayload = prepareSendAPIPayload
 exports.prepareBroadCastPayload = prepareBroadCastPayload
 exports.parseUrl = parseUrl

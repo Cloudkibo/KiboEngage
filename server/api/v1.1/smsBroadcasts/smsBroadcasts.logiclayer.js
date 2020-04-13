@@ -63,7 +63,7 @@ exports.getCriterias = function (body, companyUser) {
 
 exports.checkFilterValues = function (values, data) {
   var matchCriteria = true
-  if (values.length > 0) {
+  if (values && values.length > 0) {
     for (var i = 0; i < values.length; i++) {
       var filter = values[i]
       if (filter.criteria === 'is') {
@@ -94,14 +94,18 @@ exports.checkFilterValues = function (values, data) {
   return matchCriteria
 }
 
-exports.checkFilterValuesForGetCount = function (values, companyId) {
+exports.checkFilterValuesForGetCount = function (body, companyId) {
   let matchCriteria = {
     companyId,
     isSubscribed: true
   }
-  matchCriteria = _checkFilterCondition(values, matchCriteria) 
+  if (body.listIds && body.listIds.length > 0) {
+    matchCriteria = {listIds: {$in: body.listIds}}
+  } else if (body.segmentation && body.segmentation.length > 0) {
+    matchCriteria = _checkFilterCondition(body.segmentation, matchCriteria)
+  }
   let countCriteria = [
-    { $match: matchCriteria},
+    { $match: matchCriteria },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
   return countCriteria
@@ -130,7 +134,16 @@ const _checkFilterCondition = (values, matchCriteria) => {
       }
     }
   }
-  console.log('matchCriteria', matchCriteria)
   return matchCriteria
+}
+exports.prepareQueryToGetContacts = function (body, companyId) {
+  let query = {
+    companyId: companyId,
+    isSubscribed: true
+  }
+  if (body.listIds && body.listIds.length > 0) {
+    query.listIds = {$in: body.listIds}
+  }
+  return query
 }
 exports.prepareBroadCastPayload = prepareBroadCastPayload
