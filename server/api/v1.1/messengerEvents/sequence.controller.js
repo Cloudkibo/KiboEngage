@@ -195,6 +195,15 @@ exports.subscribeToSequence = (req, res) => {
                   .then(seqSubs => {
                     if (seqSubs.length > 0) {
                       logger.serverLog(TAG, 'This subscriber is already subscribed to the sequence')
+                      messages.forEach(message => {
+                        logger.serverLog(TAG, `message.trigger.event ${message.trigger.event}`)
+                        if (message.trigger.event === 'none') {
+                          let utcDate = SequenceUtility.setScheduleDate(message.schedule)
+                          SequenceUtility.addToMessageQueue(resp.sequenceId, message._id, subscriber._id, page.company._id, utcDate)
+                        } else {
+                          SequenceUtility.addToMessageQueue(resp.sequenceId, message._id, subscriber._id, page.company._id)
+                        }
+                      })
                     } else {
                       let sequenceSubscriberPayload = {
                         sequenceId: resp.sequenceId,
