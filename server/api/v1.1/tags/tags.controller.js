@@ -64,8 +64,10 @@ exports.create = function (req, res) {
               body: {
                 action: 'new_tag',
                 payload: {
-                  tag_id: newTag._id,
-                  tag_name: newTag.tag
+                  _id: newTag._id,
+                  tag: newTag.tag,
+                  status: 'Unassigned',
+                  subscribersCount: 0
                 }
               }
             })
@@ -94,7 +96,7 @@ exports.rename = function (req, res) {
                 action: 'tag_rename',
                 payload: {
                   tag_id: tag._id,
-                  tag_name: tag.tag
+                  new_tag: req.body.newTag
                 }
               }
             })
