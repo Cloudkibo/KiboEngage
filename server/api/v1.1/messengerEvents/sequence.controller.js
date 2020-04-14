@@ -203,7 +203,7 @@ exports.subscribeToSequence = (req, res) => {
                             if (data.length > 0) {
                               if (message.trigger.event === 'none') {
                                 let utcDate = SequenceUtility.setScheduleDate(message.schedule)
-                                SequenceMessageQueueDatalayer.genericUpdate({sequenceId: resp.sequenceId, sequenceMessageId: message._id, subscriberId: subscriber._id}, utcDate, {})
+                                SequenceMessageQueueDatalayer.genericUpdate({sequenceId: resp.sequenceId, sequenceMessageId: message._id, subscriberId: subscriber._id}, {queueScheduledTime: utcDate}, {})
                                   .then(updated => {
                                     logger.serverLog(TAG, 'Updated successfully sequence Again')
                                   }).catch(err => {
