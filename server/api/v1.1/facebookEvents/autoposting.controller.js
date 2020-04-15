@@ -13,13 +13,14 @@ exports.autoposting = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  AutoPostingDataLayer.findAllAutopostingObjectsUsingQuery({ accountUniqueName: req.body.entry[0].changes[0].value.sender_id, isActive: true })
+  AutoPostingDataLayer.findAllAutopostingObjectsUsingQuery({ accountUniqueName: req.body.entry[0].changes[0].value.from.id, isActive: true })
     .then(autopostings => {
       autopostings.forEach(postingItem => {
         let pagesFindCriteria = autopostingLogicLayer.pagesFindCriteria(postingItem)
         utility.callApi(`pages/query`, 'post', pagesFindCriteria)
           .then(pages => {
             pages.forEach(page => {
+              logger.serverLog(TAG, `page is in sendFB ${page}`)
               let subscribersData = [
                 {$match: {pageId: page._id, companyId: page.companyId, completeInfo: true}},
                 {$group: {_id: null, count: {$sum: 1}}}
