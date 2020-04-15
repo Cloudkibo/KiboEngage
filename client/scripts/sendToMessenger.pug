@@ -8,8 +8,6 @@ script.
   version          : 'v3.2'
   });
   FB.Event.subscribe('send_to_messenger', function(response) {
-  console.log('landingPage got', landingPage)
-  console.log('response got', response)
   if ( response.event == 'clicked' ) {
   if (landingPage.submittedState.actionType === 'REDIRECT_TO_URL') {
      if (landingPage.submittedState.tab === 'NEW_TAB') window.open(landingPage.submittedState.url, '_blank')
