@@ -87,8 +87,7 @@ exports.twitterwebhook = function (req, res) {
 const sendTweet = (postingItem, req) => {
   let pagesFindCriteria = {
     companyId: postingItem.companyId,
-    connected: true,
-    gotPageSubscriptionPermission: true
+    connected: true
   }
   if (postingItem.isSegmented) {
     if (postingItem.segmentationPageIds && postingItem.segmentationPageIds.length > 0) {
@@ -102,6 +101,7 @@ const sendTweet = (postingItem, req) => {
   utility.callApi('pages/query', 'post', pagesFindCriteria)
     .then(pages => {
       pages.forEach(page => {
+        logger.serverLog(TAG, `page is in sendTweet ${page}`)
         if (postingItem.actionType === 'messenger') {
           sendToMessenger(postingItem, page, req)
         } else if (postingItem.actionType === 'facebook') {
