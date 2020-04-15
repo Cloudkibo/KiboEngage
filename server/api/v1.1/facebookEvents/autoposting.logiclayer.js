@@ -68,13 +68,13 @@ exports.handleFacebookPayload = function (body, savedMsg) {
       let query = { $or: [ { pageId: originalPage[1] }, { pageUserName: originalPage[1] } ] }
       utility.callApi(`pages/query`, 'post', query)
         .then(pages => {
-          tagline = `${body.sender_name} shared ${pages[0].pageName}'s post:`
+          tagline = `${body.from.name} shared ${pages[0].pageName}'s post:`
           handlePost(tagline, body, savedMsg).then(result => {
             resolve(result)
           })
         })
     } else {
-      tagline = `${body.sender_name} shared:`
+      tagline = `${body.from.name} shared:`
       handlePost(tagline, body, savedMsg).then(result => {
         resolve(result)
       })
@@ -92,15 +92,15 @@ const handlePost = (tagline, body, savedMsg) => {
       payload.push(prepareFacbookPayloadForVideo(body.link))
       resolve(payload)
     } else if (body.item === 'photo') { //  single image
-      payload.push(prepareFacbookPayloadForImage([body.link], savedMsg, body.post_id, body.sender_name))
+      payload.push(prepareFacbookPayloadForImage([body.link], savedMsg, body.post_id, body.from.name))
       resolve(payload)
     } else if (body.item === 'status' && body.photos) { //  multiple images
-      payload.push(prepareFacbookPayloadForImage(body.photos, savedMsg, body.post_id, body.sender_name))
+      payload.push(prepareFacbookPayloadForImage(body.photos, savedMsg, body.post_id, body.from.name))
       resolve(payload)
     } else if (body.item === 'share') { // link or shared post
       if (body.link.includes('http')) { //  simple link sharing
         getUrls(body.message).then(urls => {
-          prepareFacbookPayloadForLink(urls, savedMsg, body.post_id, body.sender_name).then(result => {
+          prepareFacbookPayloadForLink(urls, savedMsg, body.post_id, body.body.from.name).then(result => {
             payload.push(result.messageData)
             if (!result.showButton && button) { // remove button from text
               payload[0] = {
@@ -113,7 +113,7 @@ const handlePost = (tagline, body, savedMsg) => {
           })
         })
       } else { //  shared post
-        prepareFacbookPayloadForLink([`https://facebook.com${body.link}`], savedMsg, body.post_id, body.sender_name).then(result => {
+        prepareFacbookPayloadForLink([`https://facebook.com${body.link}`], savedMsg, body.post_id, body.from.name).then(result => {
           payload.push(result.messageData)
           if (!result.showButton && button) { // remove button from text
             payload[0] = {
