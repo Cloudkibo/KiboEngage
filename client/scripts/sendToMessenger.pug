@@ -16,7 +16,7 @@ script.
     landingPage.currentState = 'submitted';
     let serverRequest = new XMLHttpRequest();
     serverRequest.open("POST", `/landingPage/${landingPage._id}`, true);
-    window.open(`https://m.me/${landingPage.pageId.pageId}`, '_blank')
+    //- window.open(`https://m.me/${landingPage.pageId.pageId}`, '_blank')
     serverRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     serverRequest.onreadystatechange = function () {
     if(this.readyState === 4 && this.status === 200) {
