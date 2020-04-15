@@ -8,6 +8,8 @@ script.
   version          : 'v3.2'
   });
   FB.Event.subscribe('send_to_messenger', function(response) {
+  console.log('landingPage got', landingPage)
+  console.log('response got', response)
   if ( response.event == 'clicked' ) {
   if (landingPage.submittedState.actionType === 'REDIRECT_TO_URL') {
      if (landingPage.submittedState.tab === 'NEW_TAB') window.open(landingPage.submittedState.url, '_blank')
@@ -16,6 +18,7 @@ script.
     landingPage.currentState = 'submitted';
     let serverRequest = new XMLHttpRequest();
     serverRequest.open("POST", `/landingPage/${landingPage._id}`, true);
+    window.open(`https://m.me/${landingPage.pageId.pageId}`, '_blank')
     serverRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     serverRequest.onreadystatechange = function () {
     if(this.readyState === 4 && this.status === 200) {
