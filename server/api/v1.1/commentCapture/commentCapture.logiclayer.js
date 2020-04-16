@@ -180,6 +180,9 @@ exports.getPostId = function (url) {
         }
       }
     }
+  } else {
+    let parsed = result.pathname.split('/')
+    postId = parsed[parsed.length - 1]
   }
   return postId
 }
