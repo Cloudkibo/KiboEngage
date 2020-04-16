@@ -126,7 +126,7 @@ function getExistingPostId (url, pageId) {
                 if (response.body.error.message && response.body.error.message === 'Invalid parameter') {
                   reject(new Error('Either post doesn’t exist or it belongs to some other page'))
                 } else {
-                  reject(new Error('Invalid URL'))
+                  reject(new Error(response.body.error.message ? response.body.error.message : 'Post Not Found'))
                 }
               }
             })
