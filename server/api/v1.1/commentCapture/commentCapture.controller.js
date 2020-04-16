@@ -110,16 +110,13 @@ function getPayloadToSave (user, body) {
 function getExistingPostId (url, pageId) {
   return new Promise(function (resolve, reject) {
     let postId = logicLayer.getPostId(url)
-    console.log('postId git', postId)
     if (postId === '') {
       reject(new Error('Invalid URL'))
     } else {
-      console.log('pageId', pageId)
       utility.callApi(`pages/${pageId}`, 'get', {})
         .then(page => {
           facebookApiCaller('v3.3', `${page.pageId}_${postId}?access_token=${page.accessToken}`, 'get', {})
             .then(response => {
-              console.log('response.body,', response.body)
               if (!response.body.error) {
                 resolve(`${page.pageId}_${postId}`)
               } else {
