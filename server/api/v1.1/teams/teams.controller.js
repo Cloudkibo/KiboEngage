@@ -17,7 +17,6 @@ exports.index = function (req, res) {
             .then(agentIds => {
               populateAgentIds(agentIds)
                 .then(result => {
-                  console.log('result', result)
                   utility.callApi(`user/query`, 'post', {_id: {$in: result.agentIds}}) // fetch unique agents info
                     .then(uniqueAgents => {
                       utility.callApi(`teams/pages/distinct`, 'post', {companyId: companyuser.companyId}) // fetch distinct team pages
