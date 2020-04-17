@@ -255,7 +255,7 @@ function handleText (textComponents) {
     if (urls && urls.length === 1) {
       payload.payload['link'] = urls[0]
     } else if (urls && urls.length > 1) {
-      // payload.payload['link'] = `https://kibopush.com`
+      payload.payload['link'] = `https://kibopush.com`
       let links = []
       for (let i = 0; i < urls.length && i < 10; i++) {
         links.push({'link': urls[i]})
@@ -286,7 +286,7 @@ function handleLinks (textComponents, linkComponents) {
       type: 'text',
       payload: {
         'message': '',
-        'link': 'www.kibopush.com',
+        // 'link': 'www.kibopush.com',
         'child_attachments': JSON.stringify(links)
       }
     }
