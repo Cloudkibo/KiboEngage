@@ -17,6 +17,7 @@ exports.index = function (req, res) {
             .then(agentIds => {
               populateAgentIds(agentIds)
                 .then(result => {
+                  console.log('result', result)
                   utility.callApi(`user/query`, 'post', {_id: {$in: result.agentIds}}) // fetch unique agents info
                     .then(uniqueAgents => {
                       utility.callApi(`teams/pages/distinct`, 'post', {companyId: companyuser.companyId}) // fetch distinct team pages
@@ -243,9 +244,11 @@ function populateAgentIds (agentIds) {
   return new Promise(function (resolve, reject) {
     let agentIdsToSend = []
     for (let i = 0; i < agentIds.length; i++) {
-      agentIdsToSend.push(agentIds[i].agentId._id)
-      if (agentIdsToSend.length === agentIds.length) {
-        resolve({agentIds: agentIdsToSend})
+      if (agentIds[i].agentId) {
+        agentIdsToSend.push(agentIds[i].agentId._id)
+        if (i === agentIds.length - 1) {
+          resolve({agentIds: agentIdsToSend})
+        }
       }
     }
   })
