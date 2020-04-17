@@ -20,6 +20,7 @@ exports.getFinalPayload = (subscribers, customFields, customFieldSubscribers) =>
         _id: customFields[j]._id,
         name: customFields[j].name,
         type: customFields[j].type,
+        default: customFields[j].default,
         value: ''
       }
       for (let k = 0; k < customFieldSubscribers.length; k++) {
