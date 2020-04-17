@@ -142,7 +142,7 @@ const _prepareMessageDataForFacebook = (data, next) => {
   if (data.feed.length === 1) {
     payload['link'] = data.feed[0].link
   } else {
-    payload['link'] = `https://kibopush.com`
+    // payload['link'] = `https://kibopush.com`
   }
   for (let i = 0; i < data.feed.length && i < 10; i++) {
     links.push(JSON.stringify({'link': data.feed[i].link, 'name': data.feed[i].title}))
