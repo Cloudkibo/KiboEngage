@@ -7,7 +7,6 @@ const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.logiclayer.js'
 exports.checkFacebookPermissions = async function (facebookInfo) {
   let FBExtension = new PassportFacebookExtension(config.facebook.clientID,
     config.facebook.clientSecret)
-  let adsReadPermissionGiven = false
   let adsManagementPermissionGiven = false
 
   let permissions = await FBExtension.permissionsGiven(facebookInfo.fbId, facebookInfo.fbToken)
@@ -18,13 +17,8 @@ exports.checkFacebookPermissions = async function (facebookInfo) {
         adsManagementPermissionGiven = true
       }
     }
-    if (permissions[i].permission === 'ads_read') {
-      if (permissions[i].status === 'granted') {
-        adsReadPermissionGiven = true
-      }
-    }
   }
-  return (adsManagementPermissionGiven && adsReadPermissionGiven)
+  return adsManagementPermissionGiven
 }
 
 exports.preparePayload = function (companyId, userId, body) {
@@ -138,10 +132,10 @@ exports.prepareAdPayload = function (body, messageCreativeId, accessToken) {
   return payload
 }
 
-exports.prepareInsightPayload = function (access_token) {
+exports.prepareInsightPayload = function (accessToken) {
   let payload = {
     fields: ['impressions', 'ad_name', 'reach', 'clicks', 'spend', 'date_start', 'date_stop'],
-    access_token: access_token
+    access_token: accessToken
   }
   return payload
 }

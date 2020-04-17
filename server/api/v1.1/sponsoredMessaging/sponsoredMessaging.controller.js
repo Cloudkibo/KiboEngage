@@ -277,7 +277,7 @@ exports.getInsight = function (req, res) {
     facebookInfo = req.user.buyerInfo.facebookInfo
   }
   if (adId !== undefined && adId !== '') {
-    facebookApiCaller('v6.0', `${adId}/insights?fields=impressions,ad_name,reach,clicks,spend,date_start,date_stop&access_token=${facebookInfo.fbToken}`, 'get', {})
+    facebookApiCaller('v6.0', `${adId}/insights?fields=impressions,ad_name,reach,clicks,spend,date_start,date_stop,unique_clicks,cpm,cpp,ctr,cpc,account_currency&access_token=${facebookInfo.fbToken}`, 'get', {})
       .then(response => {
         if (response.body.error) {
           sendOpAlert(response.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
@@ -423,7 +423,7 @@ exports.fetchAdSets = function (req, res) {
   if (req.user.role !== 'buyer') {
     facebookInfo = req.user.buyerInfo.facebookInfo
   }
-  facebookApiCaller('v6.0', `${req.params.ad_campaign_id}/adsets?fields=id,name,start_time,end_time,daily_budget,lifetime_budget&access_token=${facebookInfo.fbToken}`, 'get')
+  facebookApiCaller('v6.0', `${req.params.ad_campaign_id}/adsets?fields=id,name,start_time,end_time,daily_budget,lifetime_budget,optimization_goal,billing_event,campaign_id,targeting,status,promoted_object&access_token=${facebookInfo.fbToken}`, 'get')
     .then(response => {
       if (response.body.error) {
         sendOpAlert(response.body.error, 'fetching all ad sets of a user', '', req.user._id, req.user.companyId)
