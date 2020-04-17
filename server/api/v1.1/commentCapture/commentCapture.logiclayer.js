@@ -286,7 +286,7 @@ function handleLinks (textComponents, linkComponents) {
       type: 'text',
       payload: {
         'message': '',
-        'link': '',
+        'link': 'https://healthalertme.com/',
         'child_attachments': JSON.stringify(links)
       }
     }
