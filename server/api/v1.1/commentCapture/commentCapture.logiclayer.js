@@ -186,7 +186,7 @@ exports.getPostId = function (url) {
   }
   return postId
 }
-exports.preparePayloadToPost = function (payload) {
+exports.preparePayloadToPost = function (payload, seeMoreLink) {
   let textComponents = payload.filter(item => item.componentType === 'text')
   let linkComponents = payload.filter(item => item.componentType === 'link')
   let imageComponents = payload.filter(item => item.componentType === 'image')
@@ -198,7 +198,7 @@ exports.preparePayloadToPost = function (payload) {
     payload = handleVideo(videoComponents, textComponents)
     return payload
   } else {
-    payload = handleTextAndLinks(textComponents, linkComponents)
+    payload = handleTextAndLinks(textComponents, linkComponents, seeMoreLink)
     return payload
   }
 }
@@ -233,17 +233,17 @@ function handleImage (imageComponents, textComponents) {
   return payload
 }
 
-function handleTextAndLinks (textComponents, linkComponents) {
+function handleTextAndLinks (textComponents, linkComponents, seeMoreLink) {
   let payload
   if (linkComponents.length > 0) {
-    payload = handleLinks(textComponents, linkComponents)
+    payload = handleLinks(textComponents, linkComponents, seeMoreLink)
     return payload
   } else {
     payload = handleText(textComponents)
     return payload
   }
 }
-function handleText (textComponents) {
+function handleText (textComponents, seeMoreLink) {
   let payload = {
     type: 'text',
     payload: {
@@ -255,7 +255,7 @@ function handleText (textComponents) {
     if (urls && urls.length === 1) {
       payload.payload['link'] = urls[0]
     } else if (urls && urls.length > 1) {
-      payload.payload['link'] = `https://kibopush.com`
+      payload.payload['link'] = seeMoreLink || 'kibopush.com'
       let links = []
       for (let i = 0; i < urls.length && i < 10; i++) {
         links.push({'link': urls[i]})
@@ -265,7 +265,7 @@ function handleText (textComponents) {
   }
   return payload
 }
-function handleLinks (textComponents, linkComponents) {
+function handleLinks (textComponents, linkComponents, seeMoreLink) {
   let payload = {}
   if (linkComponents.length === 1) {
     payload = {
@@ -280,13 +280,17 @@ function handleLinks (textComponents, linkComponents) {
   } else if (linkComponents.length > 1) {
     let links = []
     for (let i = 0; i < linkComponents.length && i < 10; i++) {
-      links.push({'link': linkComponents[i].url, 'name': linkComponents[i].card.title, 'description': linkComponents[i].card.subtitle })
+      links.push({
+        'link': linkComponents[i].url,
+        'name': linkComponents[i].card.title,
+        'description': linkComponents[i].card.subtitle
+      })
     }
     payload = {
       type: 'text',
       payload: {
         'message': '',
-        'link': 'kibopush.com',
+        'link': seeMoreLink || 'kibopush.com',
         'child_attachments': JSON.stringify(links)
       }
     }
