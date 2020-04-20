@@ -59,7 +59,8 @@ function getPayloadToSave (user, body) {
       userId: user._id,
       reply: body.reply,
       excludedKeywords: body.excludedKeywords,
-      includedKeywords: body.includedKeywords
+      includedKeywords: body.includedKeywords,
+      seeMoreLink: body.seeMoreLink
     }
     if (body.secondReply) {
       payloadToSave.secondReply = body.secondReply
