@@ -186,12 +186,11 @@ exports.getPostId = function (url) {
   }
   return postId
 }
-exports.preparePayloadToPost = function (payload) {
+exports.preparePayloadToPost = function (payload, seeMoreLink) {
   let textComponents = payload.filter(item => item.componentType === 'text')
   let linkComponents = payload.filter(item => item.componentType === 'link')
   let imageComponents = payload.filter(item => item.componentType === 'image')
   let videoComponents = payload.filter(item => item.componentType === 'video')
-  let seeMoreLink = payload.seeMoreLink
   if (imageComponents.length > 0) {
     payload = handleImage(imageComponents, textComponents)
     return payload
