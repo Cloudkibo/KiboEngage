@@ -138,9 +138,9 @@ function getExistingPostId (url, pageId) {
   })
 }
 
-function postOnFacebook (payload, pageId) {
+function postOnFacebook (payload, pageId, seeMoreLink) {
   return new Promise(function (resolve, reject) {
-    let payloadToPost = logicLayer.preparePayloadToPost(payload)
+    let payloadToPost = logicLayer.preparePayloadToPost(payload, seeMoreLink)
     utility.callApi(`pages/${pageId}`, 'get', {})
       .then(page => {
         if (payloadToPost.type === 'text') {
