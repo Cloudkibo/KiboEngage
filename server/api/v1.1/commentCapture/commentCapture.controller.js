@@ -59,7 +59,8 @@ function getPayloadToSave (user, body) {
       userId: user._id,
       reply: body.reply,
       excludedKeywords: body.excludedKeywords,
-      includedKeywords: body.includedKeywords
+      includedKeywords: body.includedKeywords,
+      seeMoreLink: body.seeMoreLink
     }
     if (body.secondReply) {
       payloadToSave.secondReply = body.secondReply
@@ -94,7 +95,7 @@ function getPayloadToSave (user, body) {
           reject(err)
         })
     } else if (body.captureOption === 'new') {
-      postOnFacebook(body.payload, body.pageId)
+      postOnFacebook(body.payload, body.pageId, body.seeMoreLink)
         .then(postId => {
           payloadToSave.post_id = postId
           payloadToSave.payload = body.payload
@@ -138,9 +139,9 @@ function getExistingPostId (url, pageId) {
   })
 }
 
-function postOnFacebook (payload, pageId) {
+function postOnFacebook (payload, pageId, seeMoreLink) {
   return new Promise(function (resolve, reject) {
-    let payloadToPost = logicLayer.preparePayloadToPost(payload)
+    let payloadToPost = logicLayer.preparePayloadToPost(payload, seeMoreLink)
     utility.callApi(`pages/${pageId}`, 'get', {})
       .then(page => {
         if (payloadToPost.type === 'text') {
