@@ -206,6 +206,8 @@ exports.subscribeToSequence = (req, res) => {
                                 SequenceMessageQueueDatalayer.genericUpdate({sequenceId: resp.sequenceId, sequenceMessageId: message._id, subscriberId: subscriber._id}, {queueScheduledTime: utcDate}, {})
                                   .then(updated => {
                                     logger.serverLog(TAG, 'Updated successfully sequence Again')
+                                  }).catch(err => {
+                                    logger.serverLog(TAG, `Failed to update sequence subscriber ${err}`, 'error')
                                   })
                               }     
                             } else {
