@@ -117,24 +117,27 @@ function sendReply (post, body) {
   let page = body.entry[0].changes[0].value.post_id.split('_')
   if (page[0] !== body.entry[0].changes[0].value.from.id) {
     if (send) {
-      let messageData = {
-        'recipient': {
-          'comment_id': body.entry[0].changes[0].value.comment_id},
-        'message': JSON.stringify(broadcastUtility.prepareMessageData(null, post.reply[0]))
-      }
-      needle.post(
-        `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
-        messageData, (err, resp) => {
-          if (err) {
-            logger.serverLog(TAG, err, 'error')
-          } else if (resp.body.error) {
-            sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
-          }
-        })
-      updatePositiveMatch(post._id)
       createSubscriber(post, body)
     }
   }
+}
+
+function send1stReplyToFacebook (post, body) {
+  let messageData = {
+    'recipient': {
+      'comment_id': body.entry[0].changes[0].value.comment_id},
+    'message': JSON.stringify(broadcastUtility.prepareMessageData(null, post.reply[0]))
+  }
+  needle.post(
+    `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
+    messageData, (err, resp) => {
+      if (err) {
+        logger.serverLog(TAG, err, 'error')
+      } else if (resp.body.error) {
+        sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
+      }
+    })
+  updatePositiveMatch(post._id)
 }
 
 function createSubscriber (post, body) {
@@ -143,6 +146,7 @@ function createSubscriber (post, body) {
     .then(subscriber => {
       subscriber = subscriber[0]
       if (!subscriber) {
+        send1stReplyToFacebook(post, body)
         let newPayload = { $inc: { waitingReply: 1 } }
         utility.callApi(`comment_capture/update`, 'put', {query: { _id: post._id }, newPayload: newPayload, options: {}})
           .then(updated => {
@@ -166,16 +170,21 @@ function createSubscriber (post, body) {
             logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')
           })
       } else {
-        utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
-          .then(updated => {
-          })
-          .catch(err => {
-            logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
-          })
+        if (subscriber.awaitingCommentReply && subscriber.awaitingCommentReply.postId && subscriber.awaitingCommentReply.postId === post._id) {
+          //  don't send reply
+        } else {
+          send1stReplyToFacebook(post, body)
+          utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
+            .then(updated => {
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+            })
+        }
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+      logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
     })
 }
 
