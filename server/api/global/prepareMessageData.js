@@ -176,18 +176,36 @@ exports.facebook = (body, fname, lname) => {
       payload.quick_replies = body.quickReplies
     }
   } else if (body.componentType === 'media') {
-    payload = {
-      'attachment': {
-        'type': 'template',
-        'payload': {
-          'template_type': 'media',
-          'elements': [
-            {
-              'attachment_id': body.fileurl.attachment_id,
-              'media_type': body.mediaType,
-              'buttons': _updateButtonUrl(body.buttons)
-            }
-          ]
+    if (body.facebookUrl) {
+      payload = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'media',
+            'elements': [
+              {
+                'url': body.facebookUrl,
+                'media_type': body.mediaType,
+                'buttons': _updateButtonUrl(body.buttons)
+              }
+            ]
+          }
+        }
+      }
+    } else {
+      payload = {
+        'attachment': {
+          'type': 'template',
+          'payload': {
+            'template_type': 'media',
+            'elements': [
+              {
+                'attachment_id': body.fileurl.attachment_id,
+                'media_type': body.mediaType,
+                'buttons': _updateButtonUrl(body.buttons)
+              }
+            ]
+          }
         }
       }
     }
