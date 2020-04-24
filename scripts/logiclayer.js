@@ -158,17 +158,34 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
         }
       }
     } else if (payload.componentType === 'media') {
-      messageData.message = {
-        'attachment': {
-          'type': 'template',
-          'payload': {
-            'template_type': 'media',
-            'elements': [
-              {
-                media_type: payload.media_type,
-                attachment_id: payload.fileurl.attachment_id
-              }
-            ]
+      if (payload.facebookUrl) {
+        messageData.message = {
+          'attachment': {
+            'type': 'template',
+            'payload': {
+              'template_type': 'media',
+              'elements': [
+                {
+                  media_type: payload.media_type,
+                  url: payload.facebookUrl
+                }
+              ]
+            }
+          }
+        }
+      } else {
+        messageData.message = {
+          'attachment': {
+            'type': 'template',
+            'payload': {
+              'template_type': 'media',
+              'elements': [
+                {
+                  media_type: payload.media_type,
+                  attachment_id: payload.fileurl.attachment_id
+                }
+              ]
+            }
           }
         }
       }

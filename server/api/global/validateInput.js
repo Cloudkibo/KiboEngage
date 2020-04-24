@@ -41,10 +41,8 @@ exports.facebookBroadcast = (body) => {
         }
       }
       if (body.payload[i].componentType === 'media') {
-        if (body.payload[i].fileurl === undefined ||
-          body.payload[i].fileurl === '') return false
-        if (body.payload[i].mediaType === undefined ||
-          body.payload[i].mediaType === '') return false
+        if (!body.payload[i].facebookUrl && !body.payload[i].fileUrl) return false
+        if (!body.payload[i].mediaType) return false
         for (let j = 0; j < body.payload[i].buttons.length; j++) {
           if (body.payload[i].buttons[j].type === 'web_url') {
             if (!utility.validateUrl(
