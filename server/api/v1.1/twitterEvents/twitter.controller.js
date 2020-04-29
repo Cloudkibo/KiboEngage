@@ -160,20 +160,7 @@ const sendToMessenger = (postingItem, page, req) => {
                               if (tagSubscribers.length > 0) {
                                 let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                                 subsFindCriteria['_id'] = {$in: subscriberIds}
-                                let subscriberCountCriteria = [...subsFindCriteria]
-                                delete subscriberCountCriteria[0].$limit
-                                subscriberCountCriteria.push({$group: {_id: null, count: {$sum: 1}}})
-                                utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
-                                  .then(response => {
-                                    AutoPostingMessage.updateOneAutopostingMessage(postingItem._id, {sent: response[0].count})
-                                      .then(Autopostingresponse => {
-                                        logger.serverLog(TAG, 'updated successfully Subscriber Count')
-                                      }).catch(err => {
-                                        logger.serverLog(TAG, err)
-                                      })
-                                  }).catch(err => {
-                                    logger.serverLog(TAG, err)
-                                  })
+                                _countUpdate(subsFindCriteria, postingItem)
                                 sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                                 logger.serverLog(TAG, 'Conversation sent successfully!')
                               } else {
@@ -188,6 +175,7 @@ const sendToMessenger = (postingItem, page, req) => {
                           logger.serverLog(TAG, err)
                         })
                     } else {
+                      _countUpdate(subsFindCriteria, postingItem)
                       sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                       logger.serverLog(TAG, 'Conversation sent successfully!')
                     }
@@ -206,6 +194,23 @@ const sendToMessenger = (postingItem, page, req) => {
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch subscriber count ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+const _countUpdate = (subsFindCriteria, postingItem) => {
+  let subscriberCountCriteria = [...subsFindCriteria]
+  delete subscriberCountCriteria[0].$limit
+  subscriberCountCriteria.push({$group: {_id: null, count: {$sum: 1}}})
+  utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
+    .then(response => {
+      AutoPostingMessage.updateOneAutopostingMessage(postingItem._id, {sent: response[0].count})
+        .then(Autopostingresponse => {
+          logger.serverLog(TAG, 'updated successfully Subscriber Count')
+        }).catch(err => {
+          logger.serverLog(TAG, err)
+        })
+    }).catch(err => {
+      logger.serverLog(TAG, err)
     })
 }
 
