@@ -21,6 +21,7 @@ exports.autoposting = function (req, res) {
           .then(pages => {
             pages.forEach(page => {
               logger.serverLog(TAG, `page is in sendFB ${page}`)
+              if(postingItem.segmentationGender)
               let subscribersData = [
                 {$match: {pageId: page._id, companyId: page.companyId, completeInfo: true}},
                 {$group: {_id: null, count: {$sum: 1}}}
@@ -46,7 +47,7 @@ exports.autoposting = function (req, res) {
                               unsuccessful: 0,
                               errors: []
                             }
-                            isApprovedForSMP({pageId:page.pageId, accessToken: page.accessToken})
+                            isApprovedForSMP({pageId: page.pageId, accessToken: page.accessToken})
                               .then(smpStatus => {
                                 let smp = false
                                 if ((smpStatus === 'approved')) {
@@ -62,6 +63,20 @@ exports.autoposting = function (req, res) {
                                           if (tagSubscribers.length > 0) {
                                             let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                                             subsFindCriteria['_id'] = {$in: subscriberIds}
+                                            let subscriberCountCriteria = [...subsFindCriteria]
+                                            delete subscriberCountCriteria[0].$limit
+                                            subscriberCountCriteria.push({$group: {_id: null, count: {$sum: 1}}})
+                                            utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
+                                            .then(response => {
+                                              AutopostingMessagesDataLayer.updateOneAutopostingMessage(postingItem._id, {sent: response[0].count})
+                                              .then(Autopostingresponse => {
+                                                logger.serverLog(TAG, 'updated successfully Subscriber Count')
+                                              }).catch(err => {
+                                                logger.serverLog(TAG, err)
+                                              })
+                                            }).catch(err => {
+                                              logger.serverLog(TAG, err)
+                                            })
                                             sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                                             logger.serverLog(TAG, 'Conversation sent successfully!')
                                           } else {
