@@ -160,7 +160,7 @@ const sendToMessenger = (postingItem, page, req) => {
                               if (tagSubscribers.length > 0) {
                                 let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                                 subsFindCriteria['_id'] = {$in: subscriberIds}
-                                _countUpdate(subsFindCriteria, postingItem)
+                                _countUpdate(subsFindCriteria, req.body.id.toString())
                                 sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                                 logger.serverLog(TAG, 'Conversation sent successfully!')
                               } else {
@@ -175,7 +175,7 @@ const sendToMessenger = (postingItem, page, req) => {
                           logger.serverLog(TAG, err)
                         })
                     } else {
-                      _countUpdate(subsFindCriteria, postingItem)
+                      _countUpdate(subsFindCriteria, req.body.id.toString())
                       sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                       logger.serverLog(TAG, 'Conversation sent successfully!')
                     }
@@ -197,13 +197,14 @@ const sendToMessenger = (postingItem, page, req) => {
     })
 }
 
-const _countUpdate = (subsFindCriteria, postingItem) => {
+const _countUpdate = (subsFindCriteria, messageId) => {
   let subscriberCountCriteria = [...subsFindCriteria]
   delete subscriberCountCriteria[0].$limit
   subscriberCountCriteria.push({$group: {_id: null, count: {$sum: 1}}})
   utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
     .then(response => {
-      AutoPostingMessage.updateOneAutopostingMessage(postingItem._id, {sent: response[0].count})
+      console.log('response.count', response[0].count)
+      AutoPostingMessage.findOneAutopostingMessageAndUpdate({message_id: messageId}, {sent: response[0].count})
         .then(Autopostingresponse => {
           logger.serverLog(TAG, 'updated successfully Subscriber Count')
         }).catch(err => {
