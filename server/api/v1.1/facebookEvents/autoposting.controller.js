@@ -115,6 +115,7 @@ const _countUpdate = (subsFindCriteria, postingItem) => {
   subscriberCountCriteria.push({$group: {_id: null, count: {$sum: 1}}})
   utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
     .then(response => {
+      console.log('response.count', response[0].count)
       AutopostingMessagesDataLayer.updateOneAutopostingMessage(postingItem._id, {sent: response[0].count})
         .then(Autopostingresponse => {
           logger.serverLog(TAG, 'updated successfully Subscriber Count')
