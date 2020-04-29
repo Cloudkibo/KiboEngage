@@ -204,7 +204,7 @@ const _countUpdate = (subsFindCriteria, messageId) => {
   utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
     .then(response => {
       console.log('response.count', response[0].count)
-      AutoPostingMessage.findOneAutopostingMessageAndUpdate({message_id: messageId}, {sent: response[0].count})
+      AutoPostingMessage.findOneAutopostingMessageAndUpdate({message_id: messageId}, {sent: response[0].count}, {})
         .then(Autopostingresponse => {
           logger.serverLog(TAG, 'updated successfully Subscriber Count')
         }).catch(err => {
