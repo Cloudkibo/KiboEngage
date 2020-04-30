@@ -46,7 +46,7 @@ exports.autoposting = function (req, res) {
                               unsuccessful: 0,
                               errors: []
                             }
-                            isApprovedForSMP({pageId:page.pageId, accessToken: page.accessToken})
+                            isApprovedForSMP({pageId: page.pageId, accessToken: page.accessToken})
                               .then(smpStatus => {
                                 let smp = false
                                 if ((smpStatus === 'approved')) {
@@ -62,6 +62,7 @@ exports.autoposting = function (req, res) {
                                           if (tagSubscribers.length > 0) {
                                             let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                                             subsFindCriteria['_id'] = {$in: subscriberIds}
+                                            _countUpdate(subsFindCriteria, req.body.entry[0].changes[0].value.post_id)
                                             sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                                             logger.serverLog(TAG, 'Conversation sent successfully!')
                                           } else {
@@ -76,6 +77,7 @@ exports.autoposting = function (req, res) {
                                       logger.serverLog(TAG, err)
                                     })
                                 } else {
+                                  _countUpdate(subsFindCriteria, req.body.entry[0].changes[0].value.post_id)
                                   sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
                                   logger.serverLog(TAG, 'Conversation sent successfully!')
                                 }
@@ -104,5 +106,23 @@ exports.autoposting = function (req, res) {
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch autopostings ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+const _countUpdate = (subsFindCriteria, messageId) => {
+  let subscriberCountCriteria = [...subsFindCriteria]
+  delete subscriberCountCriteria[0].$limit
+  subscriberCountCriteria.push({$group: {_id: null, count: {$sum: 1}}})
+  utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
+    .then(response => {
+      console.log('response.count', response[0].count)
+      AutopostingMessagesDataLayer.findOneAutopostingMessageAndUpdate({message_id: messageId}, {sent: response[0].count}, {})
+        .then(Autopostingresponse => {
+          logger.serverLog(TAG, 'updated successfully Subscriber Count')
+        }).catch(err => {
+          logger.serverLog(TAG, err)
+        })
+    }).catch(err => {
+      logger.serverLog(TAG, err)
     })
 }
