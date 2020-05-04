@@ -109,7 +109,7 @@ function savesurvey (req) {
                   })
                 }
                 needle.get(
-                  `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
+                  `https://graph.facebook.com/v6.0/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
                   (err3, response) => {
                     if (err3) {
                       logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`)
@@ -133,7 +133,7 @@ function savesurvey (req) {
                       message: JSON.stringify(messageData)
                     }
                     needle.post(
-                      `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
+                      `https://graph.facebook.com/v6.0/me/messages?access_token=${response.body.access_token}`,
                       data, (err4, respp) => {
                         if (respp.body.error) {
                           sendOpAlert(respp.body.error, 'survey response controller')
@@ -149,7 +149,7 @@ function savesurvey (req) {
                     logger.serverLog(TAG, `Failed to update survey ${JSON.stringify(err)}`)
                   })
                 needle.get(
-                  `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
+                  `https://graph.facebook.com/v6.0/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
                   (err3, response) => {
                     if (err3) {
                       logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`)
@@ -166,7 +166,7 @@ function savesurvey (req) {
                       message: messageData
                     }
                     needle.post(
-                      `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
+                      `https://graph.facebook.com/v6.0/me/messages?access_token=${response.body.access_token}`,
                       data, (err4, respp) => {
                         if (err4) {
                         }

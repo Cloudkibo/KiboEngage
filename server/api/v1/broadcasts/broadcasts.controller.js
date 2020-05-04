@@ -250,7 +250,7 @@ exports.upload = function (req, res) {
       utility.callApi(`pages/${mongoose.Types.ObjectId(pages[0])}`)
         .then(page => {
           needle.get(
-            `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
+            `https://graph.facebook.com/v6.0/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
             (err, resp2) => {
               if (err) {
                 return res.status(500).json({
@@ -279,7 +279,7 @@ exports.upload = function (req, res) {
                   'method': 'POST',
                   'json': true,
                   'formData': messageData,
-                  'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
+                  'uri': 'https://graph.facebook.com/v6.0/me/message_attachments?access_token=' + pageAccessToken
                 },
                 function (err, resp) {
                   if (err) {

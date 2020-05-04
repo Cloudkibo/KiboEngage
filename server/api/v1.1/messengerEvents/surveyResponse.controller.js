@@ -119,7 +119,7 @@ function savesurvey (req, subscriber) {
               })
             }
             needle.get(
-              `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
+              `https://graph.facebook.com/v6.0/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
                 if (err3) {
                   logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
@@ -143,7 +143,7 @@ function savesurvey (req, subscriber) {
                   message: JSON.stringify(messageData)
                 }
                 needle.post(
-                  `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
+                  `https://graph.facebook.com/v6.0/me/messages?access_token=${response.body.access_token}`,
                   data, (err4, respp) => {
                     if (respp.body.error) {
                       sendOpAlert(respp.body.error, 'survey response in kiboengage', '', '', '')
@@ -159,7 +159,7 @@ function savesurvey (req, subscriber) {
                 logger.serverLog(TAG, `Failed to update survey ${JSON.stringify(err)}`, 'error')
               })
             needle.get(
-              `https://graph.facebook.com/v2.10/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
+              `https://graph.facebook.com/v6.0/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
                 if (err3) logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
                 if (response.body.error) {
@@ -174,7 +174,7 @@ function savesurvey (req, subscriber) {
                   message: messageData
                 }
                 needle.post(
-                  `https://graph.facebook.com/v2.6/me/messages?access_token=${response.body.access_token}`,
+                  `https://graph.facebook.com/v6.0/me/messages?access_token=${response.body.access_token}`,
                   data, (err4, respp) => {
                     if (respp.body.error) {
                       sendOpAlert(respp.body.error, 'survey response in kiboengage', '', '', '')

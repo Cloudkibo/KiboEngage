@@ -702,7 +702,7 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
       'method': 'POST',
       'json': true,
       'formData': messageData,
-      'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + pageAccessToken
+      'uri': 'https://graph.facebook.com/v6.0/me/message_attachments?access_token=' + pageAccessToken
     },
     function (err, resp) {
       if (err) {
@@ -821,14 +821,14 @@ function addModuleIdIfNecessary (payload, broadcastId) {
 function isWhiteListedDomain (domain, pageId, user) {
   return new Promise(function (resolve, reject) {
     let returnValue = false
-    needle.get(`https://graph.facebook.com/v2.10/${pageId}?fields=access_token&access_token=${user.facebookInfo.fbToken}`,
+    needle.get(`https://graph.facebook.com/v6.0/${pageId}?fields=access_token&access_token=${user.facebookInfo.fbToken}`,
       (err, resp) => {
         if (err) {
         }
         if (resp.body.error) {
           sendOpAlert(resp.body.error, 'broadcast utility in kiboengage', pageId, user._id, '')
         }
-        needle.get(`https://graph.facebook.com/v2.10/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
+        needle.get(`https://graph.facebook.com/v6.0/me/messenger_profile?fields=whitelisted_domains&access_token=${resp.body.access_token}`,
           (err, resp) => {
             if (err) {
             }
@@ -895,7 +895,7 @@ function removeOldUrlFromButton (buttons) {
 function getSubscriberInfoFromFB (sender, page) {
   return new Promise((resolve, reject) => {
     const options = {
-      url: `https://graph.facebook.com/v2.10/${sender}?fields=gender,first_name,last_name&access_token=${page.accessToken}`,
+      url: `https://graph.facebook.com/v6.0/${sender}?fields=gender,first_name,last_name&access_token=${page.accessToken}`,
       qs: { access_token: page.accessToken },
       method: 'GET'
     }

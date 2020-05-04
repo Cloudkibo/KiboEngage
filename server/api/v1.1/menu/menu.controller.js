@@ -102,7 +102,7 @@ exports.create = function (req, res) {
                         }
                       }
                     })
-                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
+                    const requestUrl = `https://graph.facebook.com/v6.0/me/messenger_profile?access_token=${page.accessToken}`
                     logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`, 'debug')
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
@@ -130,7 +130,7 @@ exports.create = function (req, res) {
                   options: {}
                 })
                   .then(updated => {
-                    const requestUrl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${page.accessToken}`
+                    const requestUrl = `https://graph.facebook.com/v6.0/me/messenger_profile?access_token=${page.accessToken}`
                     logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`, 'debug')
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: companyUser.companyId,

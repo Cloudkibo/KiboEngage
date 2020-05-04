@@ -186,7 +186,7 @@ exports.enable = function (req, res) {
               utility.callApi(`pages/${req.body._id}`, 'get', {}, req.headers.authorization) // fetch page
                 .then(page => {
                   needle.get(
-                    `https://graph.facebook.com/v2.10/${page.pageId}?fields=is_published&access_token=${page.userId.facebookInfo.fbToken}`,
+                    `https://graph.facebook.com/v6.0/${page.pageId}?fields=is_published&access_token=${page.userId.facebookInfo.fbToken}`,
                     (err, resp) => {
                       if (err) {
                         logger.serverLog(TAG,
@@ -232,7 +232,7 @@ exports.enable = function (req, res) {
                                   utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}, req.headers.authorization) // update subscribers
                                     .then(updatedSubscriber => {
                                       const options = {
-                                        url: `https://graph.facebook.com/v2.6/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
+                                        url: `https://graph.facebook.com/v6.0/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
                                         qs: {access_token: page.accessToken},
                                         method: 'POST'
                                       }
@@ -343,7 +343,7 @@ exports.disable = function (req, res) {
               })
             })
           const options = {
-            url: `https://graph.facebook.com/v2.6/${req.body.pageId}/subscribed_apps?access_token=${req.body.accessToken}`,
+            url: `https://graph.facebook.com/v6.0/${req.body.pageId}/subscribed_apps?access_token=${req.body.accessToken}`,
             qs: {access_token: req.body.accessToken},
             method: 'DELETE'
           }
@@ -434,7 +434,7 @@ exports.saveGreetingText = function (req, res) {
             .then(gotPage => {
               const pageToken = gotPage && gotPage[0].accessToken
               if (pageToken) {
-                const requesturl = `https://graph.facebook.com/v2.6/me/messenger_profile?access_token=${pageToken}`
+                const requesturl = `https://graph.facebook.com/v6.0/me/messenger_profile?access_token=${pageToken}`
                 var valueForMenu = {
                   'greeting': [
                     {
