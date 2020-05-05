@@ -309,7 +309,7 @@ exports.unSubscribe = function (req, res) {
       }
       unSubscribeNewsSubscription(subscriber)
       needle.get(
-        `https://graph.facebook.com/v2.10/${userPage.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+        `https://graph.facebook.com/v6.0/${userPage.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
         (err, resp) => {
           if (err) {
             logger.serverLog(TAG,
@@ -327,7 +327,7 @@ exports.unSubscribe = function (req, res) {
             message: messageData
           }
           needle.post(
-            `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+            `https://graph.facebook.com/v6.0/me/messages?access_token=${resp.body.access_token}`,
             data, (err, resp) => {
               if (err) {
                 sendErrorResponse(res, 500, '', JSON.stringify(err))
