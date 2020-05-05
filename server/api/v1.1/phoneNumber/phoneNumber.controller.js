@@ -146,7 +146,7 @@ exports.upload = function (req, res) {
                                     'method': 'POST',
                                     'json': true,
                                     'formData': messageData,
-                                    'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
+                                    'uri': 'https://graph.facebook.com/v6.0/me/messages?access_token=' +
                                     page.accessToken
                                   },
                                   function (err, res) {
@@ -320,7 +320,7 @@ exports.sendNumbers = function (req, res) {
                           'method': 'POST',
                           'json': true,
                           'formData': messageData,
-                          'uri': 'https://graph.facebook.com/v2.6/me/messages?access_token=' +
+                          'uri': 'https://graph.facebook.com/v6.0/me/messages?access_token=' +
                           page.accessToken
                         },
                         function (err, res) {

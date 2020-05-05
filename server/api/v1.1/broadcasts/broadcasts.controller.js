@@ -333,7 +333,7 @@ const _fetchPage = (filedata, next) => {
 
 const _refreshPageAccessToken = (filedata, next) => {
   if (filedata.pages && filedata.pages !== 'undefined' && filedata.pages.length > 0) {
-    needle('get', `https://graph.facebook.com/v2.10/${filedata.page.pageId}?fields=access_token&access_token=${filedata.page.userId.facebookInfo.fbToken}`)
+    needle('get', `https://graph.facebook.com/v6.0/${filedata.page.pageId}?fields=access_token&access_token=${filedata.page.userId.facebookInfo.fbToken}`)
       .then(response => {
         if (response.body.error) {
           next(response.body.error)
@@ -369,7 +369,7 @@ const _uploadOnFacebook = (filedata, next) => {
         'method': 'POST',
         'json': true,
         'formData': messageData,
-        'uri': 'https://graph.facebook.com/v2.6/me/message_attachments?access_token=' + filedata.pageAccessToken
+        'uri': 'https://graph.facebook.com/v6.0/me/message_attachments?access_token=' + filedata.pageAccessToken
       },
       function (err, resp) {
         if (err) {

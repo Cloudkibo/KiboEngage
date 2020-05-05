@@ -61,7 +61,7 @@ function sendToFacebook (checkout, store, details) {
         }
       }
       let options = {
-        uri: 'https://graph.facebook.com/v2.6/me/messages?access_token=' + page.accessToken,
+        uri: 'https://graph.facebook.com/v6.0/me/messages?access_token=' + page.accessToken,
         method: 'POST',
         json: {
           'recipient': {
@@ -94,7 +94,7 @@ function sendOrderStatusToFacebook (order, statusMessage, store) {
         'text': statusMessage
       }
       let options = {
-        uri: 'https://graph.facebook.com/v2.6/me/messages?access_token=' + page.accessToken,
+        uri: 'https://graph.facebook.com/v6.0/me/messages?access_token=' + page.accessToken,
         method: 'POST',
         json: {
           'recipient': {

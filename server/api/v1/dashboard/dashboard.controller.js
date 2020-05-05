@@ -402,7 +402,7 @@ exports.stats = function (req, res) {
                           }
                           if (req.user.facebookInfo) {
                             needle.get(
-                              `https://graph.facebook.com/v2.10/${page.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                              `https://graph.facebook.com/v6.0/${page.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                               (err, resp) => {
                                 if (err) {
                                   logger.serverLog(TAG,
@@ -411,7 +411,7 @@ exports.stats = function (req, res) {
                                 }
                                 if (resp && resp.body && resp.body.access_token) {
                                   needle.get(
-                                    `https://graph.facebook.com/v2.11/me/messaging_feature_review?access_token=${resp.body.access_token}`,
+                                    `https://graph.facebook.com/v6.0/me/messaging_feature_review?access_token=${resp.body.access_token}`,
                                     (err, respp) => {
                                       if (err) {
                                         logger.serverLog(TAG,

@@ -432,7 +432,7 @@ exports.send = function (req, res) {
                                                 callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                                   .then(subscribers => {
                                                     needle.get(
-                                                      `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
+                                                      `https://graph.facebook.com/v6.0/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`)
                                                       .then(resp => {
                                                         utility.applyTagFilterIfNecessary(req, subscribers, (taggedSubscribers) => {
                                                           subscribers = taggedSubscribers
@@ -476,7 +476,7 @@ exports.send = function (req, res) {
                                                                       if (isLastMessage) {
                                                                         logger.serverLog(TAG, 'inside suvery send' + JSON.stringify(data))
                                                                         needle.post(
-                                                                          `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                                          `https://graph.facebook.com/v6.0/me/messages?access_token=${resp.body.access_token}`,
                                                                           data, (err, resp) => {
                                                                             if (err) {
                                                                               return res.status(500).json({
@@ -576,7 +576,7 @@ exports.send = function (req, res) {
                                             callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                               .then(subscribers => {
                                                 needle.get(
-                                                  `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                                  `https://graph.facebook.com/v6.0/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                                   (err, resp) => {
                                                     if (err) {
                                                       logger.serverLog(TAG, `Page access token from graph api error ${JSON.stringify(err)}`)
@@ -624,7 +624,7 @@ exports.send = function (req, res) {
                                                                   if (isLastMessage) {
                                                                     logger.serverLog(TAG, 'inside send survey' + JSON.stringify(data))
                                                                     needle.post(
-                                                                      `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                                      `https://graph.facebook.com/v6.0/me/messages?access_token=${resp.body.access_token}`,
                                                                       data, (err, resp) => {
                                                                         if (err) {
                                                                           return res.status(500).json({
@@ -918,7 +918,7 @@ exports.sendSurvey = function (req, res) {
                                                     callApi.callApi(`subscribers/query`, 'post', subsFindCriteria, req.headers.authorization)
                                                       .then(subscribers => {
                                                         needle.get(
-                                                          `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                                          `https://graph.facebook.com/v6.0/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                                           (err, resp) => {
                                                             if (err) {
                                                               logger.serverLog(TAG,
@@ -968,7 +968,7 @@ exports.sendSurvey = function (req, res) {
                                                                           if (isLastMessage) {
                                                                             logger.serverLog(TAG, 'inside direct survey send' + JSON.stringify(data))
                                                                             needle.post(
-                                                                              `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                                              `https://graph.facebook.com/v6.0/me/messages?access_token=${resp.body.access_token}`,
                                                                               data, (err, resp) => {
                                                                                 if (err) {
                                                                                   return res.status(500).json({
@@ -1059,7 +1059,7 @@ exports.sendSurvey = function (req, res) {
                                                 callApi.callApi(`subscribers/query`, 'post', subscriberFindCriteria, req.headers.authorization)
                                                   .then(subscribers => {
                                                     needle.get(
-                                                      `https://graph.facebook.com/v2.10/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
+                                                      `https://graph.facebook.com/v6.0/${pages[z].pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
                                                       (err, resp) => {
                                                         if (err) {
                                                           logger.serverLog(TAG,
@@ -1109,7 +1109,7 @@ exports.sendSurvey = function (req, res) {
                                                                       if (isLastMessage) {
                                                                         logger.serverLog(TAG, 'inside direct survey sendd' + JSON.stringify(data))
                                                                         needle.post(
-                                                                          `https://graph.facebook.com/v2.6/me/messages?access_token=${resp.body.access_token}`,
+                                                                          `https://graph.facebook.com/v6.0/me/messages?access_token=${resp.body.access_token}`,
                                                                           data, (err, resp) => {
                                                                             if (err) {
                                                                               return res.status(500).json({

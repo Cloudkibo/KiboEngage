@@ -150,7 +150,7 @@ exports.cancelDeletion = function (req, res) {
 
 exports.validateUserAccessToken = function (req, res) {
   if (req.user.facebookInfo) {
-    needle.get(`https://graph.facebook.com/v2.6/me?access_token=${req.user.facebookInfo.fbToken}`, (err, response) => {
+    needle.get(`https://graph.facebook.com/v6.0/me?access_token=${req.user.facebookInfo.fbToken}`, (err, response) => {
       if (err) {
         res.status(500).json({status: 'failed', payload: JSON.stringify(err)})
       } else if (response.body.error) {

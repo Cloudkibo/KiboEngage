@@ -3,6 +3,7 @@ let config = require('./../../../config/environment')
 let PassportFacebookExtension = require('passport-facebook-extension')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.logiclayer.js'
+const { facebookApiCallerWithFile } = require('../../global/facebookApiCaller')
 
 exports.checkFacebookPermissions = async function (facebookInfo) {
   let FBExtension = new PassportFacebookExtension(config.facebook.clientID,
@@ -106,16 +107,56 @@ exports.prepareAdsetPayload = function (body, accessToken) {
   return payload
 }
 
-exports.prepareAdCreativePayload = function (body, accessToken) {
-  let data = facebook(body.payload[0])
-  data = JSON.parse(data)
-  let payload = {
-    object_id: body.pageFbId,
-    object_type: 'SHARE',
-    messenger_sponsored_message: JSON.stringify({message: data}),
-    access_token: accessToken
+exports.prepareAdCreativePayload = function (body, accessToken, cb) {
+  let data
+  if (body.payload.length === 1) {
+    data = facebook(body.payload[0])
+    data = JSON.parse(data)
+  } else if (body.payload.length === 2) {
+    if (body.payload[0].componentType === 'text') {
+      data = facebook(body.payload[1])
+      data = JSON.parse(data)
+      data.text = body.payload[0].text
+    } else {
+      data = facebook(body.payload[0])
+      data = JSON.parse(data)
+      data.text = body.payload[1].text
+    }
   }
-  return payload
+  if (data.attachment) {
+    let imageUrl = data.attachment.payload.elements[0].image_url
+    let imagePayload = {
+      filename: imageUrl,
+      access_token: accessToken
+    }
+    console.log('imagePayload', imagePayload)
+    facebookApiCallerWithFile('v6.0', `${body.adAccountId}/adimages`, 'post', imagePayload)
+      .then(imageHashed => {
+        if (imageHashed.body.error) {
+          console.log('error', imageHashed.body.error)
+          // cb(imageHashed.body.error)
+        }
+        console.log('body', imageHashed.body)
+      })
+      .catch(err => {
+        cb(err)
+      })
+    let payload = {
+      object_id: body.pageFbId,
+      object_type: 'SHARE',
+      messenger_sponsored_message: JSON.stringify({message: data}),
+      access_token: accessToken
+    }
+    cb(null, payload)
+  } else {
+    let payload = {
+      object_id: body.pageFbId,
+      object_type: 'SHARE',
+      messenger_sponsored_message: JSON.stringify({message: data}),
+      access_token: accessToken
+    }
+    cb(null, payload)
+  }
 }
 
 exports.prepareAdPayload = function (body, messageCreativeId, accessToken) {

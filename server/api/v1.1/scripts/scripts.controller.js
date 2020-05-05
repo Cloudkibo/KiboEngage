@@ -10,12 +10,12 @@ function updateSubscribersPic (pageTokens, companyId) {
       for (let i = 0; i < users.length; i++) {
         let accessToken = pageTokens.filter((item) => item.id === users[i].pageId.pageId)[0].token
 
-        logger.serverLog(TAG, `https://graph.facebook.com/v2.10/${users[i].senderId}?access_token=${accessToken}`)
+        logger.serverLog(TAG, `https://graph.facebook.com/v6.0/${users[i].senderId}?access_token=${accessToken}`)
         needle.get(
-          `https://graph.facebook.com/v2.10/${users[i].senderId}?access_token=${accessToken}`,
+          `https://graph.facebook.com/v6.0/${users[i].senderId}?access_token=${accessToken}`,
           (err, resp) => {
             if (err) {
-              logger.serverLog(TAG, `error in retrieving https://graph.facebook.com/v2.10/${users[i].senderId}?access_token=${accessToken} ${JSON.stringify(err)}`, 'error')
+              logger.serverLog(TAG, `error in retrieving https://graph.facebook.com/v6.0/${users[i].senderId}?access_token=${accessToken} ${JSON.stringify(err)}`, 'error')
             }
             // logger.serverLog(TAG, `resp ${JSON.stringify(resp.body)}`)
             utility.callApi(`subscribers/update`, 'put', {query: {_id: users[i]._id}, newPayload: {firstName: resp.body.first_name, lastName: resp.body.last_name, profilePic: resp.body.profile_pic, locale: resp.body.locale, timezone: resp.body.timezone, gender: resp.body.gender}, options: {}})
@@ -39,10 +39,10 @@ function getPageAccessTokenAndUpdate (companyId) {
     .then(pages => {
       for (let i = 0; i < pages.length; i++) {
         needle.get(
-          `https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
+          `https://graph.facebook.com/v6.0/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`,
           (err, resp) => {
             if (err) {
-              // logger.serverLog(TAG, `Page access token from graph api error: ${err} resp: ${JSON.stringify(resp)} companyId: ${companyId} https://graph.facebook.com/v2.10/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`, 'error')
+              // logger.serverLog(TAG, `Page access token from graph api error: ${err} resp: ${JSON.stringify(resp)} companyId: ${companyId} https://graph.facebook.com/v6.0/${pages[i].pageId}?fields=access_token&access_token=${pages[i].accessToken}`, 'error')
               pageTokens.push({id: pages[i].pageId, token: pages[i].accessToken})
               if (pageTokens.length === pages.length) {
                 updateSubscribersPic(pageTokens, companyId)
@@ -68,7 +68,7 @@ exports.updateProfilePics = function (req, res) {
       users.forEach((user, index) => {
         if (user.facebookInfo) {
           needle.get(
-            `https://graph.facebook.com/v2.10/${user.facebookInfo.fbId}?fields=picture&access_token=${user.facebookInfo.fbToken}`,
+            `https://graph.facebook.com/v6.0/${user.facebookInfo.fbId}?fields=picture&access_token=${user.facebookInfo.fbToken}`,
             (err, resp) => {
               if (err) {
                 logger.serverLog(TAG, `ERROR in cron script update_profile_pic ${JSON.stringify(err)}`)
