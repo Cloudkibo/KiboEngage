@@ -83,11 +83,22 @@ exports.facebook = (body, fname, lname) => {
     }
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
-    payload = {
-      'attachment': {
-        'type': body.componentType,
-        'payload': {
-          'attachment_id': body.fileurl.attachment_id
+    if (body.fileurl && body.fileurl.attachment_id) {
+      payload = {
+        'attachment': {
+          'type': body.componentType,
+          'payload': {
+            'attachment_id': body.fileurl.attachment_id
+          }
+        }
+      }
+    } else {
+      payload = {
+        'attachment': {
+          'type': body.componentType,
+          'payload': {
+            'url': body.fileurl.url
+          }
         }
       }
     }
