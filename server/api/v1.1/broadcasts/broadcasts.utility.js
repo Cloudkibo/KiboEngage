@@ -512,7 +512,7 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         'attachment': {
           'type': body.componentType,
           'payload': {
-            'attachment_id': body.fileurl.attachment_id
+            'attachment_id': body.fileurl ? body.fileurl.attachment_id : body.file.fileurl.attachment_id
           }
         }
       }
