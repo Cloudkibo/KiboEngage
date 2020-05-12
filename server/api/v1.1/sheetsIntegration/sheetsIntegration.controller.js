@@ -179,7 +179,7 @@ exports.callback = async function (req, res) {
         dataLayer.index({ companyId, userId, integrationName: 'Google Sheets' })
           .then(integrations => {
             if (integrations.length > 0) {
-              tokens.refresh_token = tokens.refresh_token || integrations[0].integrationPayload.refresh_token
+              tokens.refresh_token = tokens.refresh_token && tokens.refresh_token !== '' ? tokens.refresh_token : integrations[0].integrationPayload.refresh_token
               logger.serverLog(TAG, 'Tokens to be saved' + JSON.stringify(tokens), 'Token')
               let newPayload = {
                 companyId: integrations[0].companyId,
@@ -257,7 +257,7 @@ exports.listSpreadSheets = (req, res) => {
           },
           (err, response) => {
             if (err) {
-              return sendErrorResponse(res, 404, err, 'No integrations defined. Please enabled from settings.')
+              return sendErrorResponse(res, 404, err, 'Connection with Google Sheets failed. Please Disconnect and Connect again from Settings.')
             }
             const files = response.data.files
             if (files.length === 0) {
@@ -268,7 +268,7 @@ exports.listSpreadSheets = (req, res) => {
           }
         )
       } else {
-        sendErrorResponse(res, 404, null, 'No integrations defined. Please enabled from settings.')
+        sendErrorResponse(res, 404, null, 'No integrations defined. Please connect Google Sheets from Settings.')
       }
     })
 }
