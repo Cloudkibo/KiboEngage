@@ -2,7 +2,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const { callApi } = require('../utility')
 
 exports.index = function (req, res) {
-  callApi(`integrations/query`, 'post', {companyId: req.user.companyId}, 'accounts', req.headers.authorization)
+  callApi(`integrations/query`, 'post', {companyId: req.user.companyId, userId: req.user._id}, 'accounts', req.headers.authorization)
     .then(integrations => {
       sendSuccessResponse(res, 200, integrations)
     })
