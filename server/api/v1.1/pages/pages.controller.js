@@ -373,7 +373,6 @@ exports.disable = function (req, res) {
                 if (connectedPages.length > 0) {
                   autopostingQuery.segmentationPageIds = [req.body.pageId]
                 }
-                console.log('autopostingQuery', autopostingQuery)
                 AutopostingDataLayer.findAllAutopostingObjectsUsingQuery(autopostingQuery)
                   .then(autopostings => {
                     for (let i = 0; i < autopostings.length; i++) {
