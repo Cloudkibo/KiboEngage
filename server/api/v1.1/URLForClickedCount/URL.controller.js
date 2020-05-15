@@ -9,6 +9,7 @@ const { sendErrorResponse } = require('../../global/response')
 const utility = require('../utility')
 
 exports.index = function (req, res) {
+  console.log(`request headers in click count autoposting ${JSON.stringify(req.headers)}`)
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
       AutopostingMessagesDataLayer.updateOneAutopostingMessage(URLObject.module.id, {$inc: {clicked: 1}})
