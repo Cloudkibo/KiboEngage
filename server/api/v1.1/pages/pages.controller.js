@@ -4,6 +4,7 @@ const needle = require('needle')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/pages/pages.controller.js'
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
+const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 let config = require('./../../../config/environment')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
@@ -177,7 +178,7 @@ exports.enable = function (req, res) {
                                   //     }
                                   //     console.log('reachEstimation response', reachEstimation.body)
                                   //     if (reachEstimation.body.reach_estimation_id) {
-                                        // query.reachEstimationId = reachEstimation.body.reach_estimation_id
+                                  // query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                   utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
                                     .then(connectPage => {
                                       utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
@@ -365,6 +366,35 @@ exports.disable = function (req, res) {
             //     }
             //   }
             // })
+
+            utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true}) // fetch all pages of company
+              .then(connectedPages => {
+                let autopostingQuery = {companyId: req.user.companyId}
+                if (connectedPages.length > 0) {
+                  autopostingQuery.segmentationPageIds = [req.body.pageId]
+                }
+                AutopostingDataLayer.findAllAutopostingObjectsUsingQuery(autopostingQuery)
+                  .then(autopostings => {
+                    for (let i = 0; i < autopostings.length; i++) {
+                      let autoposting = autopostings[i]
+                      AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
+                        .then(result => {
+                          utility.callApi('twitter/restart', 'get', {}, 'webhook')
+                          require('./../../../config/socketio').sendMessageToClient({
+                            room_id: autoposting.companyId,
+                            body: {
+                              action: 'autoposting_removed',
+                              payload: {
+                                autoposting_id: autoposting._id,
+                                user_id: req.user._id,
+                                user_name: req.user.name
+                              }
+                            }
+                          })
+                        })
+                    }
+                  })
+              })
             sendSuccessResponse(res, 200, 'Page disconnected successfully!')
           })
         })
