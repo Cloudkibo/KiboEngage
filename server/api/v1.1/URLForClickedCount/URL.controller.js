@@ -9,20 +9,22 @@ const { sendErrorResponse } = require('../../global/response')
 const utility = require('../utility')
 
 exports.index = function (req, res) {
-  URLDataLayer.findOneURL(req.params.id)
-    .then(URLObject => {
-      AutopostingMessagesDataLayer.updateOneAutopostingMessage(URLObject.module.id, {$inc: {clicked: 1}})
-        .then(updatedData => {
-          res.writeHead(301, {Location: URLObject.originalURL})
-          res.end()
-        })
-        .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch update autoposting message ${JSON.stringify(err)}`, 'error')
-        })
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
-    })
+  if (!req.headers['user-agent'].startsWith('facebook')) {
+    URLDataLayer.findOneURL(req.params.id)
+      .then(URLObject => {
+        AutopostingMessagesDataLayer.updateOneAutopostingMessage(URLObject.module.id, {$inc: {clicked: 1}})
+          .then(updatedData => {
+            res.writeHead(301, {Location: URLObject.originalURL})
+            res.end()
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch update autoposting message ${JSON.stringify(err)}`, 'error')
+          })
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
+      })
+  }
 }
 
 exports.broadcast = function (req, res) {
