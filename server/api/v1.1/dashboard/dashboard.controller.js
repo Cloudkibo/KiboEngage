@@ -213,15 +213,19 @@ exports.sentVsSeen = function (req, res) {
 function populateIds (pages, subscriber) {
   return new Promise(function (resolve, reject) {
     let pageIds = []
-    for (let i = 0; i < pages.length; i++) {
-      if (subscriber) {
-        pageIds.push(pages[i]._id)
-      } else {
-        pageIds.push(pages[i].pageId)
+    if (pages.length > 0) {
+      for (let i = 0; i < pages.length; i++) {
+        if (subscriber) {
+          pageIds.push(pages[i]._id)
+        } else {
+          pageIds.push(pages[i].pageId)
+        }
+        if (pageIds.length === pages.length) {
+          resolve({pageIds: pageIds})
+        }
       }
-      if (pageIds.length === pages.length) {
-        resolve({pageIds: pageIds})
-      }
+    } else {
+      resolve({pageIds: pageIds})
     }
   })
 }
