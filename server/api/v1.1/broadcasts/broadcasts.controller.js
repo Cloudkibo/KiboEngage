@@ -9,7 +9,6 @@ const needle = require('needle')
 const path = require('path')
 const fs = require('fs')
 let config = require('./../../../config/environment')
-const uniqid = require('uniqid')
 let _ = require('lodash')
 let request = require('request')
 const crypto = require('crypto')
@@ -25,6 +24,7 @@ const { prepareSubscribersCriteria, createMessageBlocks } = require('../../globa
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const surveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 const ogs = require('open-graph-scraper')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -446,10 +446,11 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
   BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
     .then(broadcast => {
       logger.serverLog(TAG, `broadcast created ${JSON.stringify(broadcast)}`, 'debug')
+      // update company usage
+      updateCompanyUsage(req.user.companyId, 'broadcasts', 1)
       logger.serverLog(TAG, `creating message blocks ${JSON.stringify(req.body)}`, 'debug')
       createMessageBlocks(req.body.linkedMessages, req.user, broadcast._id, 'broadcast')
         .then(results => {
-          // ...
           require('./../../../config/socketio').sendMessageToClient({
             room_id: req.user.companyId,
             body: {

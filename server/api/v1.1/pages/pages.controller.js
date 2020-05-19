@@ -8,7 +8,7 @@ const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 let config = require('./../../../config/environment')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
-// const util = require('util')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
@@ -181,6 +181,8 @@ exports.enable = function (req, res) {
                                   // query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                   utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
                                     .then(connectPage => {
+                                      // update company usage
+                                      updateCompanyUsage(req.user.companyId, 'facebook_pages', 1)
                                       utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
                                         .then(whitelistDomains => {
                                         })
@@ -315,6 +317,7 @@ exports.enable = function (req, res) {
 exports.disable = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', {connected: false}) // disconnect page
     .then(disconnectPage => {
+      updateCompanyUsage(req.user.companyId, 'facebook_pages', -1)
       logger.serverLog(TAG, 'updated page successfully', 'debug')
       utility.callApi(`subscribers/update`, 'put', {query: {pageId: req.body._id}, newPayload: {isEnabledByPage: false}, options: {multi: true}}) // update subscribers
         .then(updatedSubscriber => {
