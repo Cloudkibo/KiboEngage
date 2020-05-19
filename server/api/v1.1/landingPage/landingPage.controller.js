@@ -1,6 +1,7 @@
 const utility = require('../utility')
 const logicLayer = require('./landingPage.logiclayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -76,6 +77,7 @@ exports.create = function (req, res) {
           let payload = logicLayer.preparePayload(req.body, landingPageState, companyUser)
           utility.callApi(`landingPage`, 'post', payload)
             .then(landingPage => {
+              updateCompanyUsage(req.user.companyId, 'landing_pages', 1)
               sendSuccessResponse(res, 200, landingPage)
             })
             .catch(error => {
@@ -109,6 +111,7 @@ exports.delete = function (req, res) {
           }
           utility.callApi(`landingPage/${req.params.id}`, 'delete', {})
             .then(result => {
+              updateCompanyUsage(req.user.companyId, 'landing_pages', -1)
               sendSuccessResponse(res, 200, result)
             })
             .catch(error => {

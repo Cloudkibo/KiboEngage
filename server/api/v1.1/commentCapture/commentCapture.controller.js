@@ -6,6 +6,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 let { sendOpAlert } = require('./../../global/operationalAlert')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   let criteria = logicLayer.getCriterias(req.body, req.user.companyId)
@@ -39,6 +40,7 @@ exports.create = function (req, res) {
     .then(payloadToSave => {
       utility.callApi(`comment_capture`, 'post', payloadToSave)
         .then(postCreated => {
+          updateCompanyUsage(req.user.companyId, 'comment_capture_rules', 1)
           sendSuccessResponse(res, 200, postCreated)
         })
         .catch((err) => {
@@ -231,6 +233,7 @@ exports.edit = function (req, res) {
 exports.delete = function (req, res) {
   utility.callApi(`comment_capture/${req.params.id}`, 'delete', {})
     .then(result => {
+      updateCompanyUsage(req.user.companyId, 'comment_capture_rules', -1)
       sendSuccessResponse(res, 200, result)
     })
     .catch(error => {
