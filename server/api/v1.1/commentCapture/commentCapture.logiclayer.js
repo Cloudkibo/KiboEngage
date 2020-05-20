@@ -192,7 +192,7 @@ exports.preparePayloadToPost = function (payload, seeMoreLink) {
   let imageComponents = payload.filter(item => item.componentType === 'image')
   let videoComponents = payload.filter(item => item.componentType === 'video')
   if (imageComponents.length > 0) {
-    payload = handleImage(imageComponents, textComponents)
+    payload = handleImage(imageComponents, textComponents, seeMoreLink)
     return payload
   } else if (videoComponents.length > 0) {
     payload = handleVideo(videoComponents, textComponents)
@@ -202,7 +202,7 @@ exports.preparePayloadToPost = function (payload, seeMoreLink) {
     return payload
   }
 }
-function handleImage (imageComponents, textComponents) {
+function handleImage (imageComponents, textComponents, seeMoreLink) {
   let payload = {}
   if (imageComponents.length === 1) {
     payload = {
@@ -222,7 +222,7 @@ function handleImage (imageComponents, textComponents) {
     payload = {
       type: 'images',
       payload: {
-        'link': `https://kibopush.com`,
+        'link': seeMoreLink || `https://kibopush.com`,
         'child_attachments': links
       }
     }
