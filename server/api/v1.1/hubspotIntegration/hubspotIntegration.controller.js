@@ -104,7 +104,6 @@ exports.callback = function (req, res) {
 exports.getForms = function (req, res) {
   dataLayer.index({
     companyId: req.user.companyId,
-    userId: req.user._id,
     integrationName: 'Hubspot'
   })
     .then(function (integrations) {
