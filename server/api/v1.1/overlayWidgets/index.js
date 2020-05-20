@@ -10,20 +10,24 @@ const auth = require('../../../auth/auth.service')
 
 router.delete('/delete/:id',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('overlay_widgets'),
   controller.delete)
 
 router.post('/create',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('overlay_widgets'),
   validate({body: validationSchema.createPayload}),
   controller.create)
 
 router.post('/fetchWidgets',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('overlay_widgets'),
   validate({body: validationSchema.fetchPayload}),
   controller.fetchWidgets)
 
 router.post('/update/:id',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('overlay_widgets'),
   controller.update)
 
 module.exports = router
