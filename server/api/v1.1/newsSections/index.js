@@ -11,35 +11,49 @@ const { checkSMP } = require('../../middleware/SMPStatus.middleware')
 
 router.get('/checkSMP',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('news_integration'),
+  auth.isUserAllowedToPerformThisAction('view_news_fedds'),
   checkSMP(),
   controller.checkSMP)
 
 router.post('/create',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('news_integration'),
+  auth.isUserAllowedToPerformThisAction('add_news_feeds'),
   validate({body: validationSchema.createPayload}),
   controller.create)
 
 router.post('/fetchFeeds',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('news_integration'),
+  auth.isUserAllowedToPerformThisAction('view_news_fedds'),
   validate({body: validationSchema.fetchPayload}),
   controller.fetchFeeds)
 
 router.delete('/:id',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('news_integration'),
+  auth.isUserAllowedToPerformThisAction('delete_news_feeds'),
   controller.delete)
 
 router.post('/rssFeedPosts',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('news_integration'),
+  auth.isUserAllowedToPerformThisAction('view_news_fedds'),
   validate({body: validationSchema.getRssFeedPostsPayload}),
   controller.getRssFeedPosts)
 
 router.post('/edit',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('news_integration'),
+  auth.isUserAllowedToPerformThisAction('update_news_feeds'),
   validate({body: validationSchema.editPayload}),
   controller.edit)
 
 router.post('/preview',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('news_integration'),
+  auth.isUserAllowedToPerformThisAction('view_news_fedds'),
   validate({body: validationSchema.previewPayload}),
   controller.preview)
 
