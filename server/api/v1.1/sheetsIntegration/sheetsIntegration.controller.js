@@ -176,7 +176,7 @@ exports.callback = async function (req, res) {
     .then(companyUser => {
       if (companyUser) {
         let companyId = companyUser.companyId
-        dataLayer.index({ companyId, userId, integrationName: 'Google Sheets' })
+        dataLayer.index({ companyId, integrationName: 'Google Sheets' })
           .then(integrations => {
             if (integrations.length > 0) {
               tokens.refresh_token = tokens.refresh_token && tokens.refresh_token !== '' ? tokens.refresh_token : integrations[0].integrationPayload.refresh_token
@@ -239,7 +239,6 @@ exports.listSpreadSheets = (req, res) => {
 
   dataLayer.index({
     companyId: req.user.companyId,
-    userId: req.user._id,
     integrationName: 'Google Sheets'
   })
     .then(function (integrations) {

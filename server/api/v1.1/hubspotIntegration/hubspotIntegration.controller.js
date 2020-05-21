@@ -44,7 +44,7 @@ exports.callback = function (req, res) {
         .then(companyUser => {
           if (companyUser) {
             let companyId = companyUser.companyId
-            dataLayer.index({ companyId, userId, integrationName: 'Hubspot' })
+            dataLayer.index({ companyId, integrationName: 'Hubspot' })
               .then(integrations => {
                 if (integrations.length > 0) {
                   let newPayload = {
@@ -104,7 +104,6 @@ exports.callback = function (req, res) {
 exports.getForms = function (req, res) {
   dataLayer.index({
     companyId: req.user.companyId,
-    userId: req.user._id,
     integrationName: 'Hubspot'
   })
     .then(function (integrations) {

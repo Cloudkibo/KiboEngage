@@ -2,7 +2,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const { callApi } = require('../utility')
 
 exports.index = function (req, res) {
-  callApi(`integrations/query`, 'post', {companyId: req.user.companyId, userId: req.user._id}, 'accounts', req.headers.authorization)
+  callApi(`integrations/query`, 'post', {companyId: req.user.companyId}, 'accounts', req.headers.authorization)
     .then(integrations => {
       sendSuccessResponse(res, 200, integrations)
     })
@@ -14,6 +14,7 @@ exports.update = function (req, res) {
   if (!req.body.enabled) {
     req.body.integrationToken = ''
   }
+  req.body.userId = req.user._id
   callApi(`integrations/update`, 'put', {query: {_id: req.params.id}, newPayload: req.body, options: {}}, 'accounts', req.headers.authorization)
     .then(integrations => {
       sendSuccessResponse(res, 200, integrations)
