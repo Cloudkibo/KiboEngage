@@ -8,11 +8,12 @@ exports.facebookApiCaller = (version, path, method, data) => {
   )
 }
 
-exports.facebookApiCallerWithFile = (version, path, method, data, file) => {
-  // make it callback, maybe it is not working for promise
-  return needle(
-    method.toLowerCase(),
-    `https://graph.facebook.com/${version}/${path}`,
-    data,
-    { multipart: true })
+exports.facebookApiCallerWithFile = (version, path, method, data, cb) => {
+  let url = `https://graph.facebook.com/${version}/${path}`
+  needle.post(url, data, { multipart: true }, function (err, resp, body) {
+    if (err) {
+      return cb(err)
+    }
+    cb(null, body)
+  })
 }

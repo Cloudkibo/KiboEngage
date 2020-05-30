@@ -28,7 +28,7 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
     body,
     json: true
   }
-  
+
   return new Promise((resolve, reject) => {
     needle(method, options.uri, body, options)
       .then(response => {

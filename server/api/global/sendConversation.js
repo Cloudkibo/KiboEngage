@@ -23,20 +23,20 @@ const sendUsingBatchAPI = (module, payload, subscribers, page, user, result, sav
     .then(subscribers => {
       if (subscribers.length > 0) {
         callApi(`companyProfile/query`, 'post', {ownerId: user._id})
-        .then(companyProfile => {
-          let batch = _prepareBatchData(module, payload, subscribers, page, user, recordObj, companyProfile)
-          _callBatchAPI(JSON.stringify(batch), page.accessToken)
-            .then(response => {
-              logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
-              result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
-              if (subscribers.criteria) {
-                subscribers.criteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
-                sendUsingBatchAPI(payload, subscribers, page.accessToken, result, saveMsgRecord, recordObj)
-              }
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
-            })
+          .then(companyProfile => {
+            let batch = _prepareBatchData(module, payload, subscribers, page, user, recordObj, companyProfile)
+            _callBatchAPI(JSON.stringify(batch), page.accessToken)
+              .then(response => {
+                logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
+                result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
+                if (subscribers.criteria) {
+                  subscribers.criteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
+                  sendUsingBatchAPI(payload, subscribers, page.accessToken, result, saveMsgRecord, recordObj)
+                }
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
+              })
           })
           .catch(err => {
             logger.serverLog(TAG, `Failed to fetch company profile ${err}`, 'error')
