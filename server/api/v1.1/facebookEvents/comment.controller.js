@@ -110,6 +110,17 @@ function updateCommentsCount (body, verb, postId, commentCountForPost) {
       })
   }
 }
+function updateDeletedCount (postId) {
+  let newPayload = { $inc: { deletedComments: 1 } }
+  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+    .then(updated => {
+      logger.serverLog(TAG, `Deleted count updated ${JSON.stringify(updated)}`, 'updated')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update Deleted Count ${JSON.stringify(err)}`, 'error')
+    })
+}
+
 function sendReply (post, body) {
   let send = true
   send = commentCaptureLogicLayer.getSendValue(post, body)
@@ -272,12 +283,14 @@ function deleteComment (body) {
             .then(deleted => {
               commentCountForPost = commentCountForPost - deleted.deletedCount
               updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
+              updateDeletedCount(comment.postId)
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
             })
         } else {
           updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
+          updateDeletedCount(comment.postId)
         }
         if (comment.parentId) {
           utility.callApi(`comment_capture/comments/update`, 'put', {query: { _id: comment.parentId }, newPayload: { $inc: { childCommentCount: -1 } }, options: {}})
