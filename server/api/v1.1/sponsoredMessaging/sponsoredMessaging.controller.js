@@ -188,9 +188,6 @@ exports.send = function (req, res) {
     facebookInfo = req.user.buyerInfo.facebookInfo
   }
   logiclayer.prepareAdCreativePayload(req.body, facebookInfo.fbToken, (err, creativePayload) => {
-    console.log(creativePayload)
-    sendSuccessResponse(res, 200, {description: 'Your ad is successfully sent to Facebook.'})
-    return ;
     facebookApiCaller('v6.0', `${req.body.adAccountId}/adcreatives`, 'post', creativePayload)
       .then(adCreativeResp => {
         if (adCreativeResp.body.error) {

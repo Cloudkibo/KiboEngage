@@ -144,7 +144,7 @@ const sendToMessenger = (postingItem, page, req) => {
                   unsuccessful: 0,
                   errors: []
                 }
-                isApprovedForSMP({pageId:page.pageId, accessToken: page.accessToken})
+                isApprovedForSMP({pageId: page.pageId, accessToken: page.accessToken})
                   .then(smpStatus => {
                     let smp = false
                     if ((smpStatus === 'approved')) {
