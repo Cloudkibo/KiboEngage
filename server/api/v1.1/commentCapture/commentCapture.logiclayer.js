@@ -147,6 +147,7 @@ exports.getAggregateQuery = function (companyId) {
     group: { _id: '$companyId',
       count: { $sum: 1 },
       totalComments: { $sum: '$count' },
+      deletedComments: { $sum: '$deletedComments' },
       totalRepliesSent: { $sum: '$positiveMatchCount' },
       conversions: {$sum: '$conversionCount'},
       waitingConversions: {$sum: '$waitingReply'}
