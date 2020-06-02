@@ -3,23 +3,27 @@ let config = require('./../../../config/environment')
 let PassportFacebookExtension = require('passport-facebook-extension')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.logiclayer.js'
-const { facebookApiCallerWithFile } = require('../../global/facebookApiCaller')
+const { facebookApiCallerWithFile, facebookApiCaller } = require('../../global/facebookApiCaller')
 
 exports.checkFacebookPermissions = async function (facebookInfo) {
-  let FBExtension = new PassportFacebookExtension(config.facebook.clientID,
-    config.facebook.clientSecret)
-  let adsManagementPermissionGiven = false
-
-  let permissions = await FBExtension.permissionsGiven(facebookInfo.fbId, facebookInfo.fbToken)
-  logger.serverLog(TAG, `permissions got ${JSON.stringify(permissions)}`, 'debug')
-  for (let i = 0; i < permissions.length; i++) {
-    if (permissions[i].permission === 'ads_management') {
-      if (permissions[i].status === 'granted') {
-        adsManagementPermissionGiven = true
+  try {
+    let adsManagementPermissionGiven = false
+    let query = `${facebookInfo.fbId}/permissions?access_token=${facebookInfo.fbToken}`
+    let permissions = await facebookApiCaller('v6.0', query, 'get')
+    permissions = permissions.body.data
+    for (let i = 0; i < permissions.length; i++) {
+      if (permissions[i].permission === 'ads_management') {
+        if (permissions[i].status === 'granted') {
+          adsManagementPermissionGiven = true
+        }
       }
     }
+    return adsManagementPermissionGiven
+  } catch (err) {
+    logger.serverLog(TAG, 'FATAL Error ' + JSON.stringify(err), 'error')
+    logger.serverLog(TAG, 'FATAL Error ' + err, 'error')
+    return false
   }
-  return adsManagementPermissionGiven
 }
 
 exports.preparePayload = function (companyId, userId, body) {
@@ -125,29 +129,34 @@ exports.prepareAdCreativePayload = function (body, accessToken, cb) {
   }
   if (data.attachment) {
     let imageUrl = data.attachment.payload.elements[0].image_url
-    let imagePayload = {
-      filename: imageUrl,
-      access_token: accessToken
-    }
-    console.log('imagePayload', imagePayload)
-    facebookApiCallerWithFile('v6.0', `${body.adAccountId}/adimages`, 'post', imagePayload)
-      .then(imageHashed => {
-        if (imageHashed.body.error) {
-          console.log('error', imageHashed.body.error)
-          // cb(imageHashed.body.error)
+    downloadTempImage(imageUrl, (err, imgPath) => {
+      if (err) {
+        return cb(err)
+      }
+      let imageName = imgPath.split('/')[1]
+      let imageSplit = imageName.split('.')
+      let imageExension = imageSplit[imageSplit.length - 1]
+      let imagePayload = {
+        filename: {file: imgPath, content_type: 'image/' + imageExension },
+        access_token: accessToken
+      }
+      facebookApiCallerWithFile('v6.0', `${body.adAccountId}/adimages`, 'post', imagePayload, (err, respFb) => {
+        if (err) {
+          deleteTempImage(imgPath)
+          return cb(err)
         }
-        console.log('body', imageHashed.body)
+        let hash = respFb.images[imageName].hash
+        data.attachment.payload.elements[0].image_hash = hash
+        deleteTempImage(imgPath)
+        let payload = {
+          object_id: body.pageFbId,
+          object_type: 'SHARE',
+          messenger_sponsored_message: JSON.stringify({message: data}),
+          access_token: accessToken
+        }
+        cb(null, payload)
       })
-      .catch(err => {
-        cb(err)
-      })
-    let payload = {
-      object_id: body.pageFbId,
-      object_type: 'SHARE',
-      messenger_sponsored_message: JSON.stringify({message: data}),
-      access_token: accessToken
-    }
-    cb(null, payload)
+    })
   } else {
     let payload = {
       object_id: body.pageFbId,
@@ -234,6 +243,23 @@ exports.fetchSponsoredMessagesCriteria = function (body, companyId) {
     finalCriteria,
     countCriteria
   }
+}
+
+function downloadTempImage (imageUrl, cb) {
+  let imgSplitUrl = imageUrl.split('/')
+  let imgName = imgSplitUrl[imgSplitUrl.length - 1]
+  var out = require('fs').createWriteStream('tempImages/' + imgName)
+  require('needle').get(imageUrl).pipe(out).on('close', () => {
+    cb(null, 'tempImages/' + imgName)
+  })
+}
+
+function deleteTempImage (imgPath) {
+  require('fs').unlink(imgPath, (err) => {
+    if (err) {
+      logger.serverLog(TAG, 'ERROR in deleting temp file', 'error')
+    }
+  })
 }
 
 let currencyCodes = [
