@@ -20,7 +20,6 @@ const logger = new winston.Logger({
 exports.serverLog = function (label, data, type = 'info') {
   const namespace = `KiboEngage:${label}`
   const debug = require('debug')(namespace)
-  console.log(type, `${namespace} - ${data}`)
   if (config.env === 'development' || config.env === 'test') {
     debug(data)
     console.log(type, `${namespace} - ${data}`)

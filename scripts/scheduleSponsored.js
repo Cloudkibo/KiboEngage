@@ -41,52 +41,56 @@ function startScheduledMessageProcess (scheduledMessage) {
 }
 
 function sendScheduledMessage (scheduledMessage, facebookInfo) {
-  let creativePayload = logiclayer.prepareAdCreativePayload(scheduledMessage, facebookInfo.fbToken)
-  facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/adcreatives`, 'post', creativePayload)
-    .then(adCreativeResp => {
-      if (adCreativeResp.body.error) {
-        logger.serverLog(TAG, `Error in Ad Creatives Create ${JSON.stringify(adCreativeResp.body)}`, 'error')
-        updateForError(scheduledMessage, adCreativeResp.body.error.error_user_msg)
-        sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
-      } else {
-        let messageCreativeId = adCreativeResp.body.id
-        let adPayload = logiclayer.prepareAdPayload(scheduledMessage, messageCreativeId, facebookInfo.fbToken)
-        facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/ads`, 'post', adPayload)
-          .then(adsResp => {
-            if (adsResp.body.error) {
-              logger.serverLog(TAG, `Error in sending ad to Facebook ${JSON.stringify(adsResp.body)}`, 'error')
-              updateForError(scheduledMessage, adsResp.body.error.error_user_msg)
-              sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
-            } else {
-              let adId = adsResp.body.id
-              let queryObject = { _id: scheduledMessage._id }
-              let dataToUpdate = { messageCreativeId, adId, status: 'sent_to_fb', payload: scheduledMessage.payload, adName: scheduledMessage.adName }
-              _storeAdAndCreativeIdsExport(queryObject, dataToUpdate)
-              _updateClickCountIdExport(scheduledMessage, scheduledMessage._id)
-              _sendToClientUsingSocketExport(scheduledMessage, 'Scheduled Sponsored Message is sent. Please refresh to see the changes.')
-              facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/subscribed_apps?app_id=${config.facebook.clientID}`, 'post', {access_token: facebookInfo.fbToken})
-                .then(subscriptionResp => {
-                  if (subscriptionResp.body.error) {
-                    logger.serverLog(TAG, `Error in subscribing to ad insights to Facebook ${JSON.stringify(subscriptionResp.body)}`, 'error')
-                    updateForError(scheduledMessage, subscriptionResp.body.error.error_user_msg)
-                    sendOpAlert(subscriptionResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
-                  } else {
-                    logger.serverLog(TAG, 'The scheduled ad is sent to facebook.')
-                  }
-                })
-                .catch(err => {
-                  logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
-                })
-            }
-          })
-          .catch(err => {
-            logger.serverLog(TAG, `error on fb call in get ads  ${err}`)
-          })
-      }
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
-    })
+  logiclayer.prepareAdCreativePayload(scheduledMessage, facebookInfo.fbToken, (err, creativePayload) => {
+    if (err) {
+      return logger.serverLog(TAG, `Error in preparing Ad Creatives ${JSON.stringify(err)}`, 'error')
+    }
+    facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/adcreatives`, 'post', creativePayload)
+      .then(adCreativeResp => {
+        if (adCreativeResp.body.error) {
+          logger.serverLog(TAG, `Error in Ad Creatives Create ${JSON.stringify(adCreativeResp.body)}`, 'error')
+          updateForError(scheduledMessage, adCreativeResp.body.error.error_user_msg)
+          sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
+        } else {
+          let messageCreativeId = adCreativeResp.body.id
+          let adPayload = logiclayer.prepareAdPayload(scheduledMessage, messageCreativeId, facebookInfo.fbToken)
+          facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/ads`, 'post', adPayload)
+            .then(adsResp => {
+              if (adsResp.body.error) {
+                logger.serverLog(TAG, `Error in sending ad to Facebook ${JSON.stringify(adsResp.body)}`, 'error')
+                updateForError(scheduledMessage, adsResp.body.error.error_user_msg)
+                sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
+              } else {
+                let adId = adsResp.body.id
+                let queryObject = { _id: scheduledMessage._id }
+                let dataToUpdate = { messageCreativeId, adId, status: 'sent_to_fb', payload: scheduledMessage.payload, adName: scheduledMessage.adName }
+                _storeAdAndCreativeIdsExport(queryObject, dataToUpdate)
+                _updateClickCountIdExport(scheduledMessage, scheduledMessage._id)
+                _sendToClientUsingSocketExport(scheduledMessage, 'Scheduled Sponsored Message is sent. Please refresh to see the changes.')
+                facebookApiCaller('v6.0', `${scheduledMessage.adAccountId}/subscribed_apps?app_id=${config.facebook.clientID}`, 'post', {access_token: facebookInfo.fbToken})
+                  .then(subscriptionResp => {
+                    if (subscriptionResp.body.error) {
+                      logger.serverLog(TAG, `Error in subscribing to ad insights to Facebook ${JSON.stringify(subscriptionResp.body)}`, 'error')
+                      updateForError(scheduledMessage, subscriptionResp.body.error.error_user_msg)
+                      sendOpAlert(subscriptionResp.body.error, 'sponsored messaging controller in kiboengage', '', '', '')
+                    } else {
+                      logger.serverLog(TAG, 'The scheduled ad is sent to facebook.')
+                    }
+                  })
+                  .catch(err => {
+                    logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
+                  })
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `error on fb call in get ads  ${err}`)
+            })
+        }
+      })
+      .catch(err => {
+        logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
+      })
+  })
 }
 
 function updateForError (scheduledMessage, errorMessage) {
