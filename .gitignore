@@ -70,6 +70,7 @@ typings/
 broadcastFiles/
 uploaded_files/
 uploaded_media/
+tempImages/
 plugins/
 
 # ctags file
