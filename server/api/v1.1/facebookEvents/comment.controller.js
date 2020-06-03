@@ -110,8 +110,8 @@ function updateCommentsCount (body, verb, postId, commentCountForPost) {
       })
   }
 }
-function updateDeletedCount (postId) {
-  let newPayload = { $inc: { deletedComments: 1 } }
+function updateDeletedCount (postId, commentCountForPost) {
+  let newPayload = { $inc: { deletedComments: commentCountForPost } }
   utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
     .then(updated => {
       logger.serverLog(TAG, `Deleted count updated ${JSON.stringify(updated)}`, 'updated')
@@ -267,7 +267,7 @@ function editComment (body) {
 
 function deleteComment (body) {
   let value = body.entry[0].changes[0].value
-  let commentCountForPost = -1
+  let commentCountForPost = 1
   utility.callApi(`comment_capture/comments/query`, 'post', {commentFbId: value.comment_id})
     .then(comment => {
       comment = comment[0]
@@ -281,16 +281,14 @@ function deleteComment (body) {
         if (comment.childCommentCount > 0) {
           utility.callApi(`comment_capture/comments/delete`, 'post', {parentId: comment._id})
             .then(deleted => {
-              commentCountForPost = commentCountForPost - deleted.deletedCount
-              updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
-              updateDeletedCount(comment.postId)
+              commentCountForPost = commentCountForPost + deleted.deletedCount
+              updateDeletedCount(comment.postId, commentCountForPost)
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
             })
         } else {
-          updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
-          updateDeletedCount(comment.postId)
+          updateDeletedCount(comment.postId, commentCountForPost)
         }
         if (comment.parentId) {
           utility.callApi(`comment_capture/comments/update`, 'put', {query: { _id: comment.parentId }, newPayload: { $inc: { childCommentCount: -1 } }, options: {}})
