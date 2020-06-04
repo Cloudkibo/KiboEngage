@@ -281,7 +281,9 @@ function deleteComment (body) {
         if (comment.childCommentCount > 0) {
           utility.callApi(`comment_capture/comments/delete`, 'post', {parentId: comment._id})
             .then(deleted => {
+              logger.serverLog(`Deleted Count ${deleted}`)
               commentCountForPost = commentCountForPost + deleted.deletedCount
+              logger.serverLog(`Comment Count for post ${commentCountForPost}`)
               updateDeletedCount(comment.postId, commentCountForPost)
             })
             .catch(err => {
