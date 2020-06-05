@@ -63,7 +63,12 @@ exports.getLookUpValue = (lookUpValue, subscriber) => {
         lookUpValue = subscriber[lookUpValue]
         resolve(lookUpValue)
       } else {
-        resolve('')
+        if (lookUpValue === 'fullName') {
+          lookUpValue = subscriber['firstName'] + ' ' + subscriber['lastName']
+          resolve(lookUpValue)
+        } else {
+          resolve('')
+        }
       }
     }
   })
