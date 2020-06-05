@@ -550,3 +550,13 @@ exports.isWhitelisted = function (req, res) {
       sendSuccessResponse(res, 200, result.returnValue)
     })
 }
+
+exports.refreshPages = function (req, res) {
+  utility.callApi(`pages/refreshPages`, 'post', {}, 'accounts',  req.headers.authorization)// fetch all pages of company
+    .then(response => {
+      sendSuccessResponse(res, 200, response)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to refresh pages ${JSON.stringify(error)}`)
+    })
+}
