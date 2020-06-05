@@ -281,7 +281,7 @@ function deleteComment (body) {
         if (comment.childCommentCount > 0) {
           utility.callApi(`comment_capture/comments/delete`, 'post', {parentId: comment._id})
             .then(deleted => {
-              commentCountForPost = commentCountForPost + deleted.deletedCount
+              commentCountForPost = commentCountForPost + deleted.n
               updateDeletedCount(comment.postId, commentCountForPost)
             })
             .catch(err => {
