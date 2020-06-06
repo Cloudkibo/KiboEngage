@@ -7,6 +7,7 @@ const TAG = 'api/sponsoredMessaging/webhook.controller.js'
 const datalayer = require('./sponsoredMessaging.datalayer')
 
 exports.handleAdAccountStatus = function (payload) {
+  logger.serverLog(TAG, 'Inside the webhook handler of sponsored message', 'info')
   const { field, value } = payload
   if (field === 'disapproved_ad_objects') {
     handleDisapprovedAdObjects(value)
@@ -18,6 +19,7 @@ exports.handleAdAccountStatus = function (payload) {
 }
 
 function handleDisapprovedAdObjects (payload) {
+  logger.serverLog(TAG, `inside handle disapproved ad ${JSON.stringify(payload)}`, 'info')
   const { id, level } = payload
   let queryObject
   let dataToUpdate = { status: 'disapproved', statusFbPayload: payload }
@@ -32,6 +34,7 @@ function handleDisapprovedAdObjects (payload) {
 }
 
 function handleInProcessAdObjects (payload) {
+  logger.serverLog(TAG, `inside handle in process ad ${JSON.stringify(payload)}`, 'info')
   const { id, level } = payload
   let queryObject
   let dataToUpdate = { status: payload.status_name, statusFbPayload: payload }
@@ -48,6 +51,7 @@ function handleInProcessAdObjects (payload) {
 }
 
 function handleWithIssuesAdObjects (payload) {
+  logger.serverLog(TAG, `inside handle with issues ad ${JSON.stringify(payload)}`, 'info')
   const { id, level } = payload
   let queryObject
   let dataToUpdate = { status: 'with_issues', statusFbPayload: payload }
