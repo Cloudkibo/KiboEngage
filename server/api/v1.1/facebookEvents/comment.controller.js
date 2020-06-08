@@ -184,13 +184,18 @@ function createSubscriber (post, body) {
         if (subscriber.awaitingCommentReply && subscriber.awaitingCommentReply.postId && subscriber.awaitingCommentReply.postId === post._id) {
           //  don't send reply
         } else {
-          send1stReplyToFacebook(post, body)
-          utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
-            .then(updated => {
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
-            })
+          if (post.sendOnlyToNewSubscribers) {
+            // don't send reply if this option is set to true, we won't send if admin only wants to send comment
+            // capture to new  subscribers. This check will let us know. This check is available in UI.
+          } else {
+            send1stReplyToFacebook(post, body)
+            utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
+              .then(updated => {
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+              })
+          }
         }
       }
     })

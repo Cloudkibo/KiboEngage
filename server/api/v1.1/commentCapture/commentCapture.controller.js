@@ -60,7 +60,8 @@ function getPayloadToSave (user, body) {
       reply: body.reply,
       excludedKeywords: body.excludedKeywords,
       includedKeywords: body.includedKeywords,
-      seeMoreLink: body.seeMoreLink
+      seeMoreLink: body.seeMoreLink,
+      sendOnlyToNewSubscribers: body.sendOnlyToNewSubscribers
     }
     if (body.secondReply) {
       payloadToSave.secondReply = body.secondReply
@@ -218,7 +219,8 @@ exports.edit = function (req, res) {
     excludedKeywords: req.body.excludedKeywords,
     reply: req.body.reply,
     secondReply: req.body.secondReply,
-    title: req.body.title
+    title: req.body.title,
+    sendOnlyToNewSubscribers: req.body.sendOnlyToNewSubscribers
   }
   utility.callApi(`comment_capture/updateone`, 'put', { query: {_id: req.body.postId}, newPayload: updatePayload, options: {} })
     .then(result => {
