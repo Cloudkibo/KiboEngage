@@ -49,7 +49,7 @@ const all = {
     ]
   },
   sendgrid: {
-    username: 'cloudkibo',
+    username: 'jawaid@cloudKibo.com',
     password: 'cl0udk1b0'
   },
   nodemailer: {
