@@ -815,7 +815,7 @@ exports.sendEmail = function (req, res) {
 
                           let email = new sendgrid.Email({
                             to: user.email,
-                            from: 'support@cloudkibo.com',
+                            from: 'admin@cloudkibo.com',
                             subject: 'KiboPush: Weekly Summary',
                             text: 'Welcome to KiboPush'
                           })
