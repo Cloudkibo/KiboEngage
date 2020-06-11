@@ -410,11 +410,45 @@ exports.disable = function (req, res) {
 exports.createWelcomeMessage = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', {welcomeMessage: req.body.welcomeMessage})
     .then(updatedWelcomeMessage => {
-      sendSuccessResponse(res, 200, 'Welcome Message updated successfully!')
+      createMessageBlocks(req.body.linkedMessages ? req.body.linkedMessages : [], req.user, req.body._id, 'welcomeMessage')
+        .then(results => {
+          sendSuccessResponse(res, 200, 'Welcome Message updated successfully!')
+        })
+        .catch(err => {
+          logger.serverLog(TAG, err)
+          sendErrorResponse(res, 500, `Failed to create linked message blocks ${JSON.stringify(err)}`)
+        })
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to update welcome message ${JSON.stringify(error)}`)
     })
+}
+
+function createMessageBlocks (linkedMessages, user, moduleId, moduleType) {
+  let messageBlockRequests = []
+  let queryObject = {'module.id': moduleId, 'module.type': 'welcomeMessage'}
+  for (let i = 0; i < linkedMessages.length; i++) {
+    let linkedMessage = linkedMessages[i]
+    let data = {
+      module: {
+        id: moduleId,
+        type: moduleType
+      },
+      title: linkedMessage.title,
+      uniqueId: linkedMessage.id.toString(),
+      payload: linkedMessage.messageContent,
+      userId: user._id,
+      companyId: user.companyId
+    }
+    let query = {
+      purpose: 'updateOne',
+      match: queryObject,
+      updated: data,
+      upsert: true
+    }
+    messageBlockRequests.push(utility.callApi(`messageBlocks/`, 'put', query, 'kiboengage'))
+  }
+  return Promise.all(messageBlockRequests)
 }
 
 exports.enableDisableWelcomeMessage = function (req, res) {

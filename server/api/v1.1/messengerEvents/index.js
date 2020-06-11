@@ -41,6 +41,7 @@ router.post('/updateProfilePic', auth.isItWebhookServer(), profilePicController.
 router.post('/policyNotification', auth.isItWebhookServer(), policyController.policyNotification)
 router.post('/menuReply', auth.isItWebhookServer(), menuController.index)
 router.post('/welcomeMessage', auth.isItWebhookServer(), welcomeMessageController.index)
+router.post('/welcomeMessage/emailNumberQuickReply', auth.isItWebhookServer(), welcomeMessageController.emailNumberQuickReply)
 router.post('/messengerAdsReply', auth.isItWebhookServer(), messengerAdsController.index)
 router.post('/shopify', auth.isItWebhookServer(), shopifyController.shopify)
 router.post('/shopifyNewSubscriber', auth.isItWebhookServer(), shopifyController.shopifyNewSubscriber)
