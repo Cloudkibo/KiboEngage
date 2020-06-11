@@ -151,7 +151,7 @@ const passwordChangeEmailAlert = function (userId, userEmail) {
     .then(response1 => {
     // sucess... Email user to reconnect facebook account
       let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
-      let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
+      let email = getPlainEmailObject(userEmail, 'admin@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
       let transporter = getMailTransporter()
 
       if (config.env === 'production') {
