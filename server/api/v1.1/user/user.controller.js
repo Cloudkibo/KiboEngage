@@ -10,7 +10,6 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 exports.index = function (req, res) {
   utility.callApi(`user`, 'get', {}, 'accounts', req.headers.authorization)
     .then(user => {
-      console.log('userId in kiboengage', user)
       utility.callApi(`companyUser/query`, 'post', {userId: user._id}, 'accounts', req.headers.authorization)
         .then(companyUser => {
           user.expoListToken = companyUser.expoListToken
