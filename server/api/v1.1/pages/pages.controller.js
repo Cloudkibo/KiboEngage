@@ -438,7 +438,8 @@ function createMessageBlocks (linkedMessages, user, moduleId, moduleType) {
       uniqueId: linkedMessage.id.toString(),
       payload: linkedMessage.messageContent,
       userId: user._id,
-      companyId: user.companyId
+      companyId: user.companyId,
+      datetime: new Date()
     }
     let query = {
       purpose: 'updateOne',
