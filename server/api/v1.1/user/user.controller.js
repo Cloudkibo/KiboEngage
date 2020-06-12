@@ -10,7 +10,14 @@ const { facebookApiCaller } = require('../../global/facebookApiCaller')
 exports.index = function (req, res) {
   utility.callApi(`user`, 'get', {}, 'accounts', req.headers.authorization)
     .then(user => {
-      sendSuccessResponse(res, 200, user)
+      utility.callApi(`companyUser/query`, 'post', {userId: user._id}, 'accounts', req.headers.authorization)
+        .then(companyUser => {
+          user.expoListToken = companyUser.expoListToken
+          sendSuccessResponse(res, 200, user)
+        }).catch(error => {
+          logger.serverLog(TAG, `Error while fetching companyUser details ${util.inspect(error)}`, 'error')
+          sendErrorResponse(res, 500, `Failed to fetching companyUser details ${JSON.stringify(error)}`)
+        })
     }).catch(error => {
       logger.serverLog(TAG, `Error while fetching user details ${util.inspect(error)}`, 'error')
       sendErrorResponse(res, 500, `Failed to fetching user details ${JSON.stringify(error)}`)
