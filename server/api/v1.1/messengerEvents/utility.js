@@ -17,4 +17,14 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
   form.append('access_token', page.accessToken)
   form.append('batch', batchMessages)
 }
+
+exports.validateEmail = (email) => {
+  const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase())
+}
+exports.validatePhoneNumber = (number) => {
+  let regexp = /^[0-9+\(\)#\.\s\/ext-]+$/
+  return regexp.test(number)
+}
+
 exports.sendBroadcast = sendBroadcast
