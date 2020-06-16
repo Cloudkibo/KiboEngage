@@ -666,6 +666,35 @@ function downloadSubscribersData (subscribers) {
   })
 }
 
+const _findBroadcasts = (pageId, next) => {
+  DataLayer.findBroadcasts({segmentationPageIds: pageId})
+    .then(broadcasts => {
+      next(null, broadcasts)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _findSurvey = (pageId, next) => {
+  DataLayer.findSurvey({segmentationPageIds: pageId})
+    .then(surveys => {
+      next(null, surveys)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _findPolls = (pageId, next) => {
+  DataLayer.findPolls({segmentationPageIds: pageId})
+    .then(polls => {
+      next(null, polls)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
 function downloadCSV (pages, req) {
   return new Promise(function (resolve, reject) {
     let usersPayload = []
@@ -673,60 +702,58 @@ function downloadCSV (pages, req) {
       if (pages[i].userId) {
         utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true, completeInfo: true})
           .then(subscribers => {
-            DataLayer.findBroadcasts({pageIds: pages[i].pageId})
-              .then(broadcasts => {
-                DataLayer.findSurvey({pageIds: pages[i].pageId})
-                  .then(surveys => {
-                    DataLayer.findPolls({pageIds: pages[i].pageId})
-                      .then(polls => {
-                        usersPayload.push({
-                          Page: pages[i].pageName,
-                          isConnected: pages[i].connected,
-                          Name: pages[i].userId.name,
-                          Gender: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.gender : '',
-                          Email: pages[i].userId.email,
-                          Locale: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.locale : '',
-                          CreatedAt: pages[i].userId.createdAt,
-                          Likes: pages[i].likes,
-                          Subscribers: subscribers && subscribers.length > 0 ? subscribers.length : 0,
-                          Broadcasts: broadcasts && broadcasts.length > 0 ? broadcasts.length : 0,
-                          Surveys: surveys && surveys.length > 0 ? surveys.length : 0,
-                          Polls: polls && polls.length > 0 ? polls.length : 0
-                        })
-                        if (i === pages.length - 1) {
-                          var info = usersPayload
-                          var keys = []
-                          var val = info[0]
+            async.parallelLimit([
+              _findBroadcasts.bind(null, pages[i].pageId),
+              _findSurvey.bind(null, pages[i].pageId),
+              _findPolls.bind(null, pages[i].pageId)
+            ], 10, function (err, results) {
+              if (err) {
+                logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(err)}`, 'error')
+              } else {
+                let broadcasts = results[0]
+                let surveys = results[1]
+                let polls = results[2]
+                usersPayload.push({
+                  Page: pages[i].pageName,
+                  isConnected: pages[i].connected,
+                  Name: pages[i].userId.name,
+                  Gender: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.gender : '',
+                  Email: pages[i].userId.email,
+                  Locale: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.locale : '',
+                  CreatedAt: pages[i].userId.createdAt,
+                  LikesdownloadCSV: pages[i].likes,
+                  Subscribers: subscribers && subscribers.length > 0 ? subscribers.length : 0,
+                  Broadcasts: broadcasts && broadcasts.length > 0 ? broadcasts.length : 0,
+                  Surveys: surveys && surveys.length > 0 ? surveys.length : 0,
+                  Polls: polls && polls.length > 0 ? polls.length : 0
+                })
+              }
+              if (i === pages.length - 1) {
+                var info = usersPayload
+                var keys = []
+                var val = info[0]
 
-                          for (var k in val) {
-                            var subKey = k
-                            keys.push(subKey)
-                          }
-                          const opts = { keys }
-                          try {
-                            const csv = parse(info, opts)
-                            resolve({data: csv})
-                          } catch (err) {
-                            console.error('error at parse', err)
-                          }
-                          // json2csv({ data: info, fields: keys }, function (err, csv) {
-                          //   if (err) {
-                          //     console.log('error at exporting', err)
-                          //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`, 'error')
-                          //   }
-                          //   console.log('csv in', csv)
-                          //   resolve({data: csv})
-                          // })
-                        }
-                      })
-                      .catch(error => {
-                        logger.serverLog(TAG, `Failed to fetch polls ${JSON.stringify(error)}`, 'error')
-                      })
-                  })
-                  .catch(error => {
-                    logger.serverLog(TAG, `Failed to fetch surveys ${JSON.stringify(error)}`, 'error')
-                  })
-              })
+                for (var k in val) {
+                  var subKey = k
+                  keys.push(subKey)
+                }
+                const opts = { keys }
+                try {
+                  const csv = parse(info, opts)
+                  resolve({data: csv})
+                } catch (err) {
+                  console.error('error at parse', err)
+                }
+              // json2csv({ data: info, fields: keys }, function (err, csv) {
+              //   if (err) {
+              //     console.log('error at exporting', err)
+              //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`, 'error')
+              //   }
+              //   console.log('csv in', csv)
+              //   resolve({data: csv})
+              // })
+              }
+            })
               .catch(error => {
                 logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`, 'error')
               })
