@@ -52,6 +52,7 @@ const all = {
     username: 'jawaid@cloudKibo.com',
     password: 'cl0udk1b0'
   },
+  SENDGRID_API_KEY: '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',
   nodemailer: {
     service: 'gmail',
     email: 'muzamil@cloudkibo.com',
