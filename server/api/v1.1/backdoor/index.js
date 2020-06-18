@@ -78,7 +78,7 @@ router.get('/allLocales/:pageid',
   auth.isAuthorizedSuperUser(),
   controller.allLocales)
 
-router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.sendEmail)
+router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.weeklyEmail)
 
 router.get('/uploadFile', auth.isAuthorizedSuperUser(), controller.uploadFile)
 
