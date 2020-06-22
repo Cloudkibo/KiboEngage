@@ -18,7 +18,7 @@ exports.sendOpAlert = function (errObj, codePart, pageId, userId, companyId) {
 
   // NOTE: We were using email to send facebook alerts before.
   // I have comment out this logic as now these errors go to sentry
-  // let email = getEmailObject(['sojharo@cloudkibo.com', 'jawaid@cloudkibo.com', 'faizan@cloudkibo.com'], 'admin@cloudkibo.com', 'KiboPush: Facebook Error', 'Facebook Error', errObj.message, errObj.code, errObj.error_subcode, codePart, pageId, userId._id, companyId)
+  // let email = getEmailObject(['sojharo@cloudkibo.com', 'jawaid@cloudkibo.com', 'faizan@cloudkibo.com'], 'support@cloudkibo.com', 'KiboPush: Facebook Error', 'Facebook Error', errObj.message, errObj.code, errObj.error_subcode, codePart, pageId, userId._id, companyId)
 
   // let transporter = getMailTransporter()
 
