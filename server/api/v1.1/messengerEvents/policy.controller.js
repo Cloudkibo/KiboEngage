@@ -18,7 +18,7 @@ exports.policyNotification = function (req, res) {
           config.sendgrid.password)
         let email = new sendgrid.Email({
           to: user.email,
-          from: 'admin@cloudkibo.com',
+          from: 'support@cloudkibo.com',
           subject: 'Facebook Page Policy Violation',
           text: "Your Facebook page is violating Facebook's terms of service"
         })

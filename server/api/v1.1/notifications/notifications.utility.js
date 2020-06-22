@@ -26,7 +26,7 @@ function saveNotification (webhook, req) {
 
   let email = new sendgrid.Email({
     to: webhook.userId.email,
-    from: 'admin@cloudkibo.com',
+    from: 'support@cloudkibo.com',
     subject: 'KiboPush: Webhook failed',
     text: 'Welcome to KiboPush'
   })

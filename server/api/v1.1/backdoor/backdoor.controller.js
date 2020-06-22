@@ -900,7 +900,7 @@ function calculateSummary (messages, item, callback) {
         
         let message = {
           to: item.email,
-          from: 'admin@cloudkibo.com',
+          from: 'support@cloudkibo.com',
           subject: 'KiboPush: Weekly Summary',
           text: 'Welcome to KiboPush'
         }
