@@ -52,7 +52,7 @@ const all = {
     username: 'anisha@cloudkibo.com',
     password: 'cl0udk1b0'
   },
-  SENDGRID_API_KEY: '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',
+  SENDGRID_API_KEY: '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',
   nodemailer: {
     service: 'gmail',
     email: 'muzamil@cloudkibo.com',
