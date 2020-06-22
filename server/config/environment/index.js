@@ -49,9 +49,10 @@ const all = {
     ]
   },
   sendgrid: {
-    username: 'arveen@cloudkibo.com',
+    username: 'anisha@cloudkibo.com',
     password: 'cl0udk1b0'
   },
+  SENDGRID_API_KEY: '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',
   nodemailer: {
     service: 'gmail',
     email: 'muzamil@cloudkibo.com',
