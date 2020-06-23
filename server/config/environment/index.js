@@ -49,10 +49,10 @@ const all = {
     ]
   },
   sendgrid: {
-    username: 'anisha@cloudkibo.com',
-    password: 'cl0udk1b0'
+    username: process.env.SENDGRID_USERNAME,
+    password: process.env.SENDGRID_PASSWORD
   },
-  SENDGRID_API_KEY: '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',
+  SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
   nodemailer: {
     service: 'gmail',
     email: 'muzamil@cloudkibo.com',
