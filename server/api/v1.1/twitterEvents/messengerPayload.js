@@ -65,12 +65,15 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
         .then(meta => {
           console.log('meta data got', meta)
           if (meta && meta !== {} && meta.ogTitle) {
-            gallery.push({
+            let data = {
               'title': meta.ogTitle,
               'subtitle': 'kibopush.com',
-              // 'image_url': meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url,
               'buttons': buttons
-            })
+            }
+            if (meta.ogImage && meta.ogImage.url) {
+              data.image_url = meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url
+            }
+            gallery.push(data)
             if (i === length - 1) {
               resolve(gallery)
             }
