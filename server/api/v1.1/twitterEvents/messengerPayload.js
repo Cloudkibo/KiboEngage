@@ -62,11 +62,11 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
     for (let i = 0; i < length; i++) {
       openGraphScrapper(urls[i].expanded_url)
         .then(meta => {
-          if (meta && meta !== {} && meta.ogImage && meta.ogImage.url && meta.ogTitle) {
+          if (meta && meta !== {} && meta.ogTitle) {
             gallery.push({
               'title': meta.ogTitle,
               'subtitle': 'kibopush.com',
-              'image_url': meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url,
+              // 'image_url': meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url,
               'buttons': buttons
             })
             if (i === length - 1) {
