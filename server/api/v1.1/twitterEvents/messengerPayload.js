@@ -60,12 +60,9 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
     })
     let length = urls.length <= 10 ? urls.length : 10
     for (let i = 0; i < length; i++) {
-      console.log('fetching meta for', urls[i].expanded_url)
       openGraphScrapper(urls[i].expanded_url)
         .then(meta => {
-          console.log('meta fetched for', meta)
           if (meta && meta !== {} && meta.ogImage && meta.ogImage.url && meta.ogTitle) {
-            console.log('metadata', meta)
             gallery.push({
               'title': meta.ogTitle,
               'subtitle': 'kibopush.com',
