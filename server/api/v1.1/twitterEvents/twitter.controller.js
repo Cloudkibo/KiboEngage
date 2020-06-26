@@ -33,6 +33,7 @@ exports.twitterwebhook = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
+  console.log('twitter event got', req.body)
   AutoPosting.findAllAutopostingObjectsUsingQuery({accountUniqueName: req.body.user.screen_name, isActive: true})
     .then(autopostings => {
       autopostings.forEach(postingItem => {
