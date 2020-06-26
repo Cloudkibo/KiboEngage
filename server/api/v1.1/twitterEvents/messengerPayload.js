@@ -7,7 +7,6 @@ const path = require('path')
 const {openGraphScrapper} = require('../../global/utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/twitterEvents/messengerPayload.js'
-const urlMetadata = require('url-metadata')
 
 const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, page) => {
   return new Promise((resolve, reject) => {
@@ -61,14 +60,15 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
     })
     let length = urls.length <= 10 ? urls.length : 10
     for (let i = 0; i < length; i++) {
-      urlMetadata(urls[i].expanded_url)
+      console.log('url got', urls[i].expanded_url)
+      openGraphScrapper(urls[i].expanded_url)
         .then(meta => {
           console.log('meta data got', meta)
-          if (meta && meta !== {} && meta.image && meta.title) {
+          if (meta && meta !== {} && meta.ogTitle) {
             gallery.push({
-              'title': meta.title,
+              'title': meta.ogTitle,
               'subtitle': 'kibopush.com',
-              'image_url': meta.image,
+              'image_url': meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url,
               'buttons': buttons
             })
             if (i === length - 1) {

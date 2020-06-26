@@ -88,7 +88,6 @@
     "twilio": "^3.29.1",
     "twit": "^2.2.11",
     "uniqid": "^5.0.3",
-    "url-metadata": "^2.4.0",
     "util": "^0.11.0",
     "winston": "^2.3.1",
     "winston-papertrail": "^1.0.5",
