@@ -1,7 +1,7 @@
 const LogicLayer = require('./logiclayer')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
-const TAG = 'api/v1.1/messengerEvents/delivery.controller'
+const TAG = 'api/v1.1/backdoor/backdoor.controller'
 const sortBy = require('sort-array')
 const DataLayer = require('./datalayer')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
@@ -775,6 +775,7 @@ function downloadCSV (pages, req) {
       })
   })
 }
+
 const _aggregateSubscribers = (data, next) => {
   utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true, completeInfo: true})
     .then(subs => {
@@ -900,7 +901,7 @@ function calculateSummary (messages, item, callback) {
         
         let message = {
           to: item.email,
-          from: 'admin@cloudkibo.com',
+          from: 'support@cloudkibo.com',
           subject: 'KiboPush: Weekly Summary',
           text: 'Welcome to KiboPush'
         }
