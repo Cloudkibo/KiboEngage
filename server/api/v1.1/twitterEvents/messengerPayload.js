@@ -62,6 +62,7 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
     for (let i = 0; i < length; i++) {
       openGraphScrapper(urls[i].expanded_url)
         .then(meta => {
+          console.log('meta data got', meta)
           if (meta && meta !== {} && meta.ogTitle) {
             gallery.push({
               'title': meta.ogTitle,
