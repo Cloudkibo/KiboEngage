@@ -97,7 +97,7 @@ exports.findBroadcasts = (queryObject) => {
     purpose: 'findAll',
     match: queryObject
   }
-  return callApi(`surveys/kiboDashQuery`, 'post', query, 'kiboengage')
+  return callApi(`broadcasts/kiboDashQuery`, 'post', query, 'kiboengage')
 }
 exports.findPolls = (queryObject) => {
   let query = {
