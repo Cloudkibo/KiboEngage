@@ -621,7 +621,7 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
           var dataToSend = new Buffer(csv)
           let attachment = dataToSend.toString('base64')
           const msg = {
-            to: 'arveen@cloudkibo.com',
+            to: req.user.email,
             from: 'support@cloudkibo.com',
             subject: 'KiboPush Data',
             text: 'Here is your requested KiboPush Data',
