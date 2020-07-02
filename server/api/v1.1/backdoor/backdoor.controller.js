@@ -751,6 +751,7 @@ function downloadCSV (pages, req) {
                     let polls = results[2]
                     usersPayload.push({
                       Page: pages[i].pageName,
+                      isConnected: pages[i].connected, 
                       Name: pages[i].userId.name,
                       Gender: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.gender : '',
                       Email: pages[i].userId.email,
