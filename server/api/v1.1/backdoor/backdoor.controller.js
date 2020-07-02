@@ -601,7 +601,7 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
         downloadCSV(pages, req)
           .then(result => {
             data = data.concat(result)
-            skipRecords = skipRecords + 100
+            skipRecords = skipRecords + 150
             _getPageData(res, req, skipRecords, LimitRecords, data)
           }).catch(error => {
             sendErrorResponse(res, 500, `Failed to download CSV DATA ${JSON.stringify(error)}`)
