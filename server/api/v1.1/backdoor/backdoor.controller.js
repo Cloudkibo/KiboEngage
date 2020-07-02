@@ -601,7 +601,7 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
         downloadCSV(pages, req)
           .then(result => {
             data = data.concat(result)
-            skipRecords = skipRecords + 150
+            skipRecords = skipRecords + 100
             _getPageData(res, req, skipRecords, LimitRecords, data)
           }).catch(error => {
             sendErrorResponse(res, 500, `Failed to download CSV DATA ${JSON.stringify(error)}`)
@@ -630,7 +630,7 @@ exports.uploadFile = function (req, res) {
   utility.callApi(`user/query`, 'post', {})
     .then(users => {
       let data = []
-      _getPageData(res, req, 0, 150, data)
+      _getPageData(res, req, 0, 100, data)
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
