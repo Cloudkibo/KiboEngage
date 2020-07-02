@@ -596,7 +596,7 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregateData)
     .then(pages => {
-      console.log('pages.length', pages.length)
+      logger.serverLog(TAG, `pages.length in _getPageData${(pages.length)} `)
       if (pages.length > 0) {
         downloadCSV(pages, req)
           .then(result => {
@@ -619,7 +619,7 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
           const csv = parse(info, opts)
           sendSuccessResponse(res, 200, csv)
         } catch (err) {
-          console.error('error at parse', err)
+          logger.serverLog(TAG, `error at parse ${JSON.stringify(err)}`, 'error')
         }
       }
     }).catch(error => {
