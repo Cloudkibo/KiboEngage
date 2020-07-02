@@ -586,19 +586,51 @@ exports.surveyDetails = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch survey ${JSON.stringify(error)}`)
     })
 }
+
+const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
+  let aggregateData = [
+    {$skip: skipRecords},
+    {$limit: LimitRecords},
+    { $lookup: {from: 'users', localField: 'userId', foreignField: '_id', as: 'userId'} },
+    { $unwind: '$userId' }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregateData)
+    .then(pages => {
+      logger.serverLog(TAG, `pages.length in _getPageData${(pages.length)} `)
+      if (pages.length > 0) {
+        downloadCSV(pages, req)
+          .then(result => {
+            data = data.concat(result)
+            skipRecords = skipRecords + 200
+            _getPageData(res, req, skipRecords, LimitRecords, data)
+          }).catch(error => {
+            sendErrorResponse(res, 500, `Failed to download CSV DATA ${JSON.stringify(error)}`)
+          })
+      } else {
+        var info = data
+        var keys = []
+        var val = info[0]
+        for (var k in val) {
+          var subKey = k
+          keys.push(subKey)
+        }
+        const opts = { keys }
+        try {
+          const csv = parse(info, opts)
+          sendSuccessResponse(res, 200, csv)
+        } catch (err) {
+          logger.serverLog(TAG, `error at parse ${JSON.stringify(err)}`, 'error')
+        }
+      }
+    }).catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
+    })
+}
 exports.uploadFile = function (req, res) {
   utility.callApi(`user/query`, 'post', {})
     .then(users => {
-      utility.callApi(`pages/query`, 'post', {})
-        .then(pages => {
-          downloadCSV(pages, req)
-            .then(result => {
-              sendSuccessResponse(res, 200, result.data)
-            })
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
-        })
+      let data = []
+      _getPageData(res, req, 0, 200, data)
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
@@ -719,13 +751,13 @@ function downloadCSV (pages, req) {
                     let polls = results[2]
                     usersPayload.push({
                       Page: pages[i].pageName,
-                      isConnected: pages[i].connected,
+                      isConnected: pages[i].connected, 
                       Name: pages[i].userId.name,
                       Gender: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.gender : '',
                       Email: pages[i].userId.email,
                       Locale: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.locale : '',
                       CreatedAt: pages[i].userId.createdAt,
-                      LikesdownloadCSV: pages[i].likes,
+                      Likes: pages[i].likes,
                       Subscribers: subscribers && subscribers.length > 0 ? subscribers.length : 0,
                       Broadcasts: broadcasts && broadcasts.length > 0 ? broadcasts.length : 0,
                       Surveys: surveys && surveys.length > 0 ? surveys.length : 0,
@@ -757,21 +789,7 @@ function downloadCSV (pages, req) {
     }
     Promise.all(requests)
       .then(results => {
-        var info = usersPayload
-        var keys = []
-        var val = info[0]
-
-        for (var k in val) {
-          var subKey = k
-          keys.push(subKey)
-        }
-        const opts = { keys }
-        try {
-          const csv = parse(info, opts)
-          resolve({data: csv})
-        } catch (err) {
-          console.error('error at parse', err)
-        }
+        resolve(usersPayload)
       })
   })
 }
