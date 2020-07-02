@@ -596,7 +596,7 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregateData)
     .then(pages => {
-      logger.serverLog(TAG, `pages.length in _getPageData${(pages.length)} `)
+      logger.serverLog(TAG, `pages.length in _getPageData ${(pages.length)} `)
       if (pages.length > 0) {
         downloadCSV(pages, req)
           .then(result => {
@@ -617,7 +617,26 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
         const opts = { keys }
         try {
           const csv = parse(info, opts)
-          sendSuccessResponse(res, 200, csv)
+          sgMail.setApiKey(config.SENDGRID_API_KEY)
+          var dataToSend = new Buffer(csv)
+          let attachment = dataToSend.toString('base64')
+          const msg = {
+            to: req.user.email,
+            from: 'support@cloudkibo.com',
+            subject: 'KiboPush Data',
+            text: 'Here is your requested KiboPush Data',
+            attachments: [
+              {
+                content: attachment,
+                filename: 'KiboPushData.csv',
+                type: 'application/csv',
+                disposition: 'attachment'
+              }
+            ]
+          }
+          sgMail.send(msg).catch(err => {
+            console.log(JSON.stringify(err))
+          })
         } catch (err) {
           logger.serverLog(TAG, `error at parse ${JSON.stringify(err)}`, 'error')
         }
@@ -631,6 +650,7 @@ exports.uploadFile = function (req, res) {
     .then(users => {
       let data = []
       _getPageData(res, req, 0, 100, data)
+      sendSuccessResponse(res, 200, {})
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
