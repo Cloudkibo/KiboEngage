@@ -3,7 +3,6 @@ const https = require('https')
 const fs = require('fs')
 const logger = require('./../components/logger')
 const TAG = 'config/setup.js'
-const request = require('request')
 
 module.exports = function (app, httpapp, config) {
   let options = {
@@ -27,13 +26,6 @@ module.exports = function (app, httpapp, config) {
   const server = http.createServer(httpapp)
   const httpsServer = https.createServer(options, app)
 
-  // const r = request.defaults({'proxy':'http://localproxy.com'})
-  //
-  // let proxy = http.createServer(function (req, resp) {
-  //   console.log('in create server')
-  //   r.get('http://google.com/doodle.png').pipe(resp)
-  // })
-
   if (['production', 'staging'].indexOf(config.env) > -1) {
     httpapp.get('*', (req, res) => {
       res.redirect(`${config.domain}${req.url}`)
@@ -50,9 +42,9 @@ module.exports = function (app, httpapp, config) {
       config.secure_port} in ${config.env} mode`)
   })
 
-  // proxy.listen('8080', () => {
-  //   logger.serverLog(TAG, `proxy server STARTED`)
-  // })
+  proxy.listen('8080', () => {
+    logger.serverLog(TAG, `proxy server STARTED`)
+  })
 
   // TODO: we will enable this while doing socket io
   const socket = require('socket.io').listen((config.env === 'production' || config.env === 'staging') ? httpsServer : server)

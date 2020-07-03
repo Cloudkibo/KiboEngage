@@ -6,9 +6,6 @@ const nodemailer = require('nodemailer')
 const TAG = 'server/api/global/utility'
 const _ = require('lodash')
 const ogs = require('open-graph-scraper')
-const http = require('http')
-const request = require('request')
-const rp = require('request-promise');
 
 exports.createMessageBlocks = (linkedMessages, user, moduleId, moduleType) => {
   let messageBlockRequests = []
@@ -243,43 +240,9 @@ const attachBuyerInfo = function () {
 }
 
 const openGraphScrapper = function (url) {
-  let options = {url: 'https://fallacious-walnut-sprite.glitch.me', method: 'GET'}
-  // const r = request.defaults({'proxy': 'http://localproxy.com'})
-  // r.get(url)
-  // .on('response', function(response) {
-  //   console.log('response from proxy1', response) // 200
-  // })
-  // http.createServer(function (req, resp) {
-  //   console.log('getting proxy1')
-  //   request.get(url)
-  //   .on('error', function(err) {
-  //   console.error('error from proxy', err)
-  // })
-  // .on('response', function(response) {
-  //   console.log('response from proxy3', response) // 200
-  // })
-  // http.createServer(function (req, resp) {
-  //   console.log('create server')
-  //   r.get(url, function (error, response, body) {
-  //     if (!error) {
-  //       console.log('body got', body)
-  //         // parseMyAwesomeHtml(body);
-  //     } else {
-  //         console.log(error);
-  //     }
-  // });
-  // })
-  request(options, function (error, response, body) {
-    if (!error) {
-      console.log('response got proxy', response.statusCode)
-      console.log('body got proxy', body)
-    } else {
-      console.log('error got from proxy', error)
-    }
-  })
+  let options = {url}
   return new Promise((resolve, reject) => {
-    let options1 = {url: url}
-    ogs(options1, (error, results) => {
+    ogs(options, (error, results) => {
       if (error) {
         reject(results.error)
       } else {
