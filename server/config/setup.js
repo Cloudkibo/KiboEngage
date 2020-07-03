@@ -42,10 +42,6 @@ module.exports = function (app, httpapp, config) {
       config.secure_port} in ${config.env} mode`)
   })
 
-  proxy.listen('8080', () => {
-    logger.serverLog(TAG, `proxy server STARTED`)
-  })
-
   // TODO: we will enable this while doing socket io
   const socket = require('socket.io').listen((config.env === 'production' || config.env === 'staging') ? httpsServer : server)
 
