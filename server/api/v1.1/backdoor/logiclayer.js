@@ -594,3 +594,111 @@ exports.topPagesCriteria = function (body) {
   ]
   return criteria
 }
+exports.getPlatformCriteriaForSubscribers = function (body) {
+  let findCriteria = {
+    isSubscribed: true,
+    completeInfo: true
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  let countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
+exports.getPlatformCriteriaForPages = function (type) {
+  let countCriteria = [
+    { $match: {connected: type ? true : {$exists: true}} },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+exports.getPlatformCriteriaForMessages = function (body) {
+  let findCriteria = {
+    format: 'convos'
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  return {
+    purpose: 'aggregate',
+    match: findCriteria,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+}
+exports.getAllCommentCapturesCriteria = function (body) {
+  let findCriteria = {}
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - body.days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  if (body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    finalCriteria.datetime = {$gte: startDate}
+  }
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $match: findCriteria },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'page' } },
+      { '$unwind': '$page' },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'page' } },
+      { '$unwind': '$page' },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'page' } },
+      { '$unwind': '$page' },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  }
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
+}
