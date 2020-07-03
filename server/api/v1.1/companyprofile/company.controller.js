@@ -157,12 +157,27 @@ exports.updatePlatform = function (req, res) {
     })
 }
 const _updateCompanyProfile = (data, next) => {
-  if (!data.body.changeWhatsAppTwilio) {
-    let newPayload = {twilioWhatsApp: {
-      accountSID: data.body.accountSID,
-      authToken: data.body.authToken,
-      sandboxNumber: data.body.sandboxNumber.split(' ').join(''),
-      sandboxCode: data.body.sandboxCode
+  // if (!data.body.changeWhatsAppTwilio) {
+  //   let newPayload = {twilioWhatsApp: {
+  //     accountSID: data.body.accountSID,
+  //     authToken: data.body.authToken,
+  //     sandboxNumber: data.body.sandboxNumber.split(' ').join(''),
+  //     sandboxCode: data.body.sandboxCode
+  //   }}
+  //   utility.callApi(`companyprofile/update`, 'put', {query: {_id: data.companyId}, newPayload: newPayload, options: {}})
+  //     .then(updatedProfile => {
+  //       next(null, updatedProfile)
+  //     })
+  //     .catch(err => {
+  //       next(err)
+  //     })
+  // } else {
+  //   next(null)
+  // }
+  if (!data.body.changeWhatsAppFlockSend) {
+    let newPayload = {flockSendWhatsApp: {
+      authToken: data.body.accessToken,
+      number: data.body.number.split(' ').join('')
     }}
     utility.callApi(`companyprofile/update`, 'put', {query: {_id: data.companyId}, newPayload: newPayload, options: {}})
       .then(updatedProfile => {
@@ -175,6 +190,7 @@ const _updateCompanyProfile = (data, next) => {
     next(null)
   }
 }
+
 const _updateUser = (data, next) => {
   if (data.body.platform) {
     utility.callApi('user/update', 'post', {query: {_id: data.userId}, newPayload: {platform: data.body.platform}, options: {}})
@@ -189,44 +205,56 @@ const _updateUser = (data, next) => {
   }
 }
 exports.updatePlatformWhatsApp = function (req, res) {
-  let query = {
-    _id: req.user.companyId,
-    'twilioWhatsApp.accountSID': req.body.accountSID,
-    'twilioWhatsApp.authToken': req.body.authToken,
-    'twilioWhatsApp.sandboxNumber': req.body.sandboxNumber.split(' ').join(''),
-    'twilioWhatsApp.sandboxCode': req.body.sandboxCode
-  }
-  utility.callApi(`companyprofile/query`, 'post', query) // fetch company user
-    .then(companyprofile => {
-      if (!companyprofile) {
-        needle.get(
-          `https://${req.body.accountSID}:${req.body.authToken}@api.twilio.com/2010-04-01/Accounts`,
-          (err, resp) => {
-            if (err) {
-              sendErrorResponse(res, 401, 'unable to authenticate twilio account')
-            } else if (resp.statusCode === 200) {
-              let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
-              async.series([
-                _updateCompanyProfile.bind(null, data),
-                _updateUser.bind(null, data)
-              ], function (err) {
-                if (err) {
-                  sendErrorResponse(res, 500, '', err)
-                } else {
-                  sendSuccessResponse(res, 200, {description: 'updated successfully', showModal: req.body.changeWhatsAppTwilio})
-                }
-              })
-            } else {
-              sendErrorResponse(res, 404, 'Twilio account not found. Please enter correct details')
-            }
-          })
-      } else {
-        sendSuccessResponse(res, 200, {description: 'updated successfully'})
-      }
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch company user ${error}`)
-    })
+  // let query = {
+  //   _id: req.user.companyId,
+  //   'twilioWhatsApp.accountSID': req.body.accountSID,
+  //   'twilioWhatsApp.authToken': req.body.authToken,
+  //   'twilioWhatsApp.sandboxNumber': req.body.sandboxNumber.split(' ').join(''),
+  //   'twilioWhatsApp.sandboxCode': req.body.sandboxCode
+  // }
+  // utility.callApi(`companyprofile/query`, 'post', query) // fetch company user
+  //   .then(companyprofile => {
+  //     if (!companyprofile) {
+  //       needle.get(
+  //         `https://${req.body.accountSID}:${req.body.authToken}@api.twilio.com/2010-04-01/Accounts`,
+  //         (err, resp) => {
+  //           if (err) {
+  //             sendErrorResponse(res, 401, 'unable to authenticate twilio account')
+  //           } else if (resp.statusCode === 200) {
+  //             let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
+  //             async.series([
+  //               _updateCompanyProfile.bind(null, data),
+  //               _updateUser.bind(null, data)
+  //             ], function (err) {
+  //               if (err) {
+  //                 sendErrorResponse(res, 500, '', err)
+  //               } else {
+  //                 sendSuccessResponse(res, 200, {description: 'updated successfully', showModal: req.body.changeWhatsAppTwilio})
+  //               }
+  //             })
+  //           } else {
+  //             sendErrorResponse(res, 404, 'Twilio account not found. Please enter correct details')
+  //           }
+  //         })
+  //     } else {
+  //       sendSuccessResponse(res, 200, {description: 'updated successfully'})
+  //     }
+  //   })
+  //   .catch(error => {
+  //     sendErrorResponse(res, 500, `Failed to fetch company user ${error}`)
+  //   })
+
+  let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
+  async.series([
+    _updateCompanyProfile.bind(null, data),
+    _updateUser.bind(null, data)
+  ], function (err) {
+    if (err) {
+      sendErrorResponse(res, 500, '', err)
+    } else {
+      sendSuccessResponse(res, 200, {description: 'updated successfully', showModal: req.body.changeWhatsAppTwilio})
+    }
+  })
 }
 exports.disconnect = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
@@ -238,7 +266,7 @@ exports.disconnect = function (req, res) {
       if (req.body.type === 'sms') {
         updated = {$unset: {twilio: 1}}
       } else {
-        updated = {$unset: {twilioWhatsApp: 1}}
+        updated = {$unset: {flockSendWhatsApp: 1}}
       }
       let userUpdated = logicLayer.getPlatform(companyUser, req.body)
       utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: updated, options: {}})
@@ -306,14 +334,22 @@ exports.deleteWhatsAppInfo = function (req, res) {
       async.parallelLimit([
         function (callback) {
           let updated = {}
+          // if (req.body.type === 'Disconnect') {
+          //   updated = {$unset: {twilioWhatsApp: 1}}
+          // } else {
+          //   updated = {twilioWhatsApp: {
+          //     accountSID: req.body.accountSID,
+          //     authToken: req.body.authToken,
+          //     sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
+          //     sandboxCode: req.body.sandboxCode
+          //   }}
+          // }
           if (req.body.type === 'Disconnect') {
-            updated = {$unset: {twilioWhatsApp: 1}}
+            updated = {$unset: {flockSendWhatsApp: 1}}
           } else {
             updated = {twilioWhatsApp: {
-              accountSID: req.body.accountSID,
-              authToken: req.body.authToken,
-              sandboxNumber: req.body.sandboxNumber.split(' ').join(''),
-              sandboxCode: req.body.sandboxCode
+              accessToken: req.body.accessToken,
+              number: req.body.sandboxNumber.split(' ').join('')
             }}
           }
           utility.callApi(`companyprofile/update`, 'put', {query: {_id: req.user.companyId}, newPayload: updated, options: {}})
