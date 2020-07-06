@@ -6,6 +6,7 @@ const logger = require('../../../components/logger')
 const TAG = 'whatsAppBroadcasts.controller.js'
 const async = require('async')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const { flockSendApiCaller } = require('../../global/flockSendApiCaller')
 
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
@@ -37,28 +38,24 @@ exports.index = function (req, res) {
 }
 
 function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
-  console.log('sendBrodcastComponent', req.body)
-  let accountSid = companyUser.companyId.twilioWhatsApp.accountSID
-  let authToken = companyUser.companyId.twilioWhatsApp.authToken
-  let client = require('twilio')(accountSid, authToken)
-  console.log('contacts.length', contacts.length)
+  console.log('contacts got', contacts[0])
+  let contactNumbers = contacts.map((c) => c.senderNumber)
   let requests = []
   for (let i = 0; i < req.body.payload.length; i++) {
     let payload = req.body.payload[i]
-    for (let j = 0; j < contacts.length; j++) {
-      requests.push(new Promise((resolve, reject) => {
-        setTimeout(() => {
-          client.messages
-            .create({
-              mediaUrl: req.body.payload[i].componentType === 'text' ? [] : req.body.payload[i].file ? [req.body.payload[i].file.fileurl.url] : [req.body.payload[i].fileurl.url],
-              body: req.body.payload[i].componentType === 'text' ? req.body.payload[i].text : (req.body.payload[i].componentType === 'file') ? req.body.payload[i].file.fileName : '',
-              from: `whatsapp:${companyUser.companyId.twilioWhatsApp.sandboxNumber}`,
-              to: `whatsapp:${contacts[j].senderNumber}`,
-              statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDeliveryWhatsApp/${broadcast._id}`
-            })
-            .then(response => {
-              resolve('success')
-              logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`, 'info')
+    requests.push(new Promise((resolve, reject) => {
+      let {route, MessageObject} = logicLayer.prepareFlockSendPayload(req.body.payload[i], companyUser, contactNumbers)
+      console.log('MessageObject', MessageObject)
+      flockSendApiCaller(route, 'post', MessageObject)
+        .then(response => {
+          let parsed = JSON.parse(response.body)
+          if (parsed.code !== 200) {
+            sendOpAlert(parsed.message, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
+            logger.serverLog(TAG, `error at sending message ${parsed.message}`, 'error')
+          } else {
+            resolve('success')
+            logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`, 'info')
+            for (let j = 0; j < contacts.length; j++) {
               let MessageObject = logicLayer.prepareChat(payload, companyUser, contacts[j])
               utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
                 .then(response => {
@@ -67,14 +64,14 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
                   reject('fail')
                   logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
                 })
-            })
-            .catch(error => {
-              sendOpAlert(error, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
-              logger.serverLog(TAG, `error at sending message ${error}`, 'error')
-            })
-        }, ((contacts.length) * i + (j + 1)) * 1000)
-      }))
-    }
+            }
+          }
+        })
+        .catch(error => {
+          sendOpAlert(error, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
+          logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+        })
+    }))
   }
   Promise.all(requests)
     .then((responses) => {

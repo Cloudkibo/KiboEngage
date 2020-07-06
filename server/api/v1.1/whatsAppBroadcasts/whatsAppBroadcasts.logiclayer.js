@@ -1,3 +1,5 @@
+var path = require('path')
+
 exports.prepareChat = (payload, companyUser, contact) => {
   if (!(contact && contact.contactId && contact.senderNumber)) {
     throw Error('contact payload should contain _id and number as parameters and should be valid payload')
@@ -190,4 +192,37 @@ exports.createPayloadgetSubscribersCount = function (companyId, number) {
     limit: 1
   }
   return finalCriteria
+}
+
+exports.prepareFlockSendPayload = (payload, companyUser, contactNumbers) => {
+  let route = ''
+  let MessageObject = {
+    token: companyUser.companyId.flockSendWhatsApp.token,
+    number_details: JSON.stringify(contactNumbers)
+  }
+  if (payload.componentType === 'text') {
+    MessageObject.message = payload.text
+    route = 'text'
+  } else if (payload.componentType === 'media') {
+    if (payload.mediaType === 'image') {
+      MessageObject.image = payload.fileurl.url || payload.fileurl
+      route = 'image'
+    } else if (payload.mediaType === 'video') {
+      MessageObject.video = payload.fileurl.url || payload.fileurl
+      route = 'video'
+    }
+  } else if (payload.componentType === 'file') {
+    let ext = path.extname(payload.fileurl.name)
+    let fileName = ''
+    if (ext !== '') {
+      fileName = payload.filurl.name.replace(ext, '')
+    }
+    MessageObject.title = fileName
+    MessageObject.file = payload.fileurl.url || payload.fileurl
+    route = 'file'
+  }
+  return {
+    MessageObject,
+    route
+  }
 }
