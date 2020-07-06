@@ -8,7 +8,8 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 exports.resend = function (req, res) {
   utility.callApi(`verificationtoken/resend`, 'get', {}, 'accounts', req.headers.authorization)
     .then(response => {
-      sendSuccessResponse(res, 200, 'Verification email has been sent')
+      console.log('response.payload', response)
+      sendSuccessResponse(res, 200, response)
     })
     .catch(err => { sendErrorResponse(res, 500, 'Internal Server Error ' + err) })
 }
