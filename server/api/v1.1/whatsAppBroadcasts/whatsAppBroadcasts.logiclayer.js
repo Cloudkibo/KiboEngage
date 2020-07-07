@@ -205,7 +205,7 @@ exports.prepareFlockSendPayload = (payload, companyUser, contactNumbers) => {
     let ext = path.extname(payload.fileurl.name)
     let fileName = ''
     if (ext !== '') {
-      fileName = payload.filurl.name.replace(ext, '')
+      fileName = payload.fileurl.name.replace(ext, '')
     }
     MessageObject.title = fileName
     MessageObject.file = payload.fileurl.url || payload.fileurl
