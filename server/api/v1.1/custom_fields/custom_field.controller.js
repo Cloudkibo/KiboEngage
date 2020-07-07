@@ -12,7 +12,6 @@ exports.index = function (req, res) {
       }
       callApi.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: companyUser.companyId}, {default: true}] } })
         .then(customFields => {
-          logger.serverLog(CUSTOMFIELD, `got custom fields ${JSON.stringify(customFields)}`, 'debug')
           sendSuccessResponse(res, 200, customFields)
         })
         .catch(err => {
@@ -41,7 +40,6 @@ exports.create = function (req, res) {
         companyId: companyUser.companyId,
         createdBy: req.user._id
       }
-      logger.serverLog(CUSTOMFIELD, `got custom fields ${JSON.stringify(customFieldPayload)}`)
       callApi.callApi('custom_fields/', 'post', customFieldPayload)
         .then(newCustomField => {
           logger.serverLog(CUSTOMFIELD, `created custom fields ${JSON.stringify(newCustomField)}`)
