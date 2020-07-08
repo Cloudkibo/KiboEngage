@@ -106,3 +106,23 @@ exports.allUserSurveys = function (req, res) {
         })
     })
 }
+exports.getMessagesCount = function (req, res) {
+  let query = {
+    purpose: 'aggregate',
+    match: {
+      format: 'convos',
+      company_id: req.body.companyId && req.body.companyId !== '' ? req.body.companyId : {$exists: true}
+    },
+    group: { _id: null, count: { $sum: 1 } }
+  }
+  utility.callApi(`livechat/query`, 'post', query, 'kibochat')
+    .then(result => {
+      let data = {
+        totalMessagesSent: result[0] ? result[0].count : 0
+      }
+      sendSuccessResponse(res, 200, data)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, '', `Error in getting messages count ${JSON.stringify(err)}`)
+    })
+}

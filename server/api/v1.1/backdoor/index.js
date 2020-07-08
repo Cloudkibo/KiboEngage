@@ -25,6 +25,10 @@ router.post('/getAllPages/:userid',
   auth.isAuthorizedSuperUser(),
   userController.getAllPages) // pagination
 
+router.post('/getMessagesCount',
+  auth.isAuthorizedSuperUser(),
+  userController.getMessagesCount) // pagination
+
 router.post('/getAllSubscribers/:pageid',
   validate({body: validationSchema.getAllSubscribersPayload}),
   auth.isAuthorizedSuperUser(),
@@ -134,13 +138,22 @@ router.get('/integrationsData',
   auth.isAuthorizedSuperUser(),
   controller.integrationsData)
 
-router.post('/platformwise',
+router.post('/pageAnalytics',
   auth.isAuthorizedSuperUser(),
-  controller.platformwise)
+  controller.pageAnalytics)
+
+router.post('/otherAnalytics',
+  auth.isAuthorizedSuperUser(),
+  controller.otherAnalytics)
 
 router.post('/getAllCommentCaptures',
   validate({body: validationSchema.commentCapturePayload}),
   auth.isAuthorizedSuperUser(),
   controller.getAllCommentCaptures)
+
+router.post('/getAllChatBots',
+  validate({body: validationSchema.commentCapturePayload}),
+  auth.isAuthorizedSuperUser(),
+  controller.getAllChatBots)
 
 module.exports = router

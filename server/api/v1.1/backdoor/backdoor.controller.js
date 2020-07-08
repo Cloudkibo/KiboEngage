@@ -16,7 +16,6 @@ const async = require('async')
 const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const sgMail = require('@sendgrid/mail')
-const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
@@ -24,7 +23,7 @@ exports.getAllUsers = function (req, res) {
     .then(usersData => {
       utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria)
         .then(users => {
-          let usersPayload = []
+=          let usersPayload = []
           if (users.length > 0) {
             users.forEach((user) => {
               let pageIds = []
@@ -43,7 +42,8 @@ exports.getAllUsers = function (req, res) {
                         createdAt: user.createdAt,
                         pages: pages.length,
                         subscribers: subscribers.length,
-                        domain_email: user.domain_email
+                        domain_email: user.domain_email,
+                        companyId: user.companyId._id
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
@@ -1394,7 +1394,7 @@ exports.integrationsData = function (req, res) {
       sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
     })
 }
-exports.platformwise = function (req, res) {
+exports.pageAnalytics = function (req, res) {
   async.parallelLimit([
     function (callback) {
       let subscriberCriteria = LogicLayer.getPlatformCriteriaForSubscribers(req.body)
@@ -1483,6 +1483,138 @@ exports.getAllCommentCaptures = function (req, res) {
       let data = {
         commentCaptures: results[1],
         count: count[0] ? count[0].count : 0
+      }
+      sendSuccessResponse(res, 200, data)
+    }
+  })
+}
+exports.getAllChatBots = function (req, res) {
+  let criteria = LogicLayer.getAllChatBotsCriteria(req.body)
+  async.parallelLimit([
+    function (callback) {
+      utility.callApi(`chatbots/query`, 'post', criteria.countCriteria, 'kibochat')
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      utility.callApi(`chatbots/query`, 'post', criteria.getCriteria, 'kibochat')
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Error in getting Chat bots ${JSON.stringify(err)}`)
+    } else {
+      let count = results[0]
+      let chatbots = results[1]
+      populatePage(chatbots)
+        .then(result => {
+          let data = {
+            chatbots: result,
+            count: count[0] ? count[0].count : 0
+          }
+          sendSuccessResponse(res, 200, data)
+        })
+        .catch((err) => {
+          sendErrorResponse(res, 500, '', `Error in getting Chat bots ${err}`)
+        })
+    }
+  })
+}
+function populatePage (chatbots) {
+  return new Promise(function (resolve, reject) {
+    async.each(chatbots, function (chatbot, next) {
+      utility.callApi(`pages/query`, 'post', {_id: chatbot.pageId})
+        .then(pages => {
+          chatbot.pageId = pages[0]
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
+    }, function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(chatbots)
+      }
+    })
+  })
+}
+exports.otherAnalytics = function (req, res) {
+  let queryForUser = {}
+  let queryForOthers = {}
+  if (req.body.days !== 'all') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - req.body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    queryForUser.createdAt = {$gte: startDate}
+    queryForOthers.datetime = {$gte: startDate}
+  }
+  async.parallelLimit([
+    function (callback) {
+      let query = [
+        {$match: queryForUser},
+        {$group: { _id: null, count: { $sum: 1 } }}
+      ]
+      utility.callApi(`user/aggregate`, 'post', query)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      DataLayer.countBroadcasts(queryForOthers)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      DataLayer.countSurveys(queryForOthers)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      DataLayer.countPolls(queryForOthers)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Error in getting page analytics ${JSON.stringify(err)}`)
+    } else {
+      let totalUsers = results[0]
+      let totalBroadcasts = results[1]
+      let totalSurveys = results[2]
+      let totalPolls = results[3]
+      let data = {
+        totalUsers: totalUsers[0] ? totalUsers[0].count : 0,
+        totalBroadcasts: totalBroadcasts[0] ? totalBroadcasts[0].count : 0,
+        totalSurveys: totalSurveys[0] ? totalSurveys[0].count : 0,
+        totalPolls: totalPolls[0] ? totalPolls[0].count : 0
       }
       sendSuccessResponse(res, 200, data)
     }
