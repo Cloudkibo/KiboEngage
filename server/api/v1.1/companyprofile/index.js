@@ -45,6 +45,10 @@ router.post('/updateAutomatedOptions',
   auth.hasRole('buyer'),
   controller.updateAutomatedOptions)
 
+router.get('/switchToBasicPlan',
+  auth.isAuthenticated(),
+  controller.switchToBasicPlan)
+
 router.post('/updatePlatform',
   auth.isAuthenticated(),
   validate({body: validationSchema.updatePlatformPayload}),
