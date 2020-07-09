@@ -589,7 +589,7 @@ exports.isWhitelisted = function (req, res) {
 }
 
 exports.refreshPages = function (req, res) {
-  utility.callApi(`pages/refreshPages`, 'post', {}, 'accounts',  req.headers.authorization)// fetch all pages of company
+  utility.callApi(`pages/refreshPages`, 'post', {}, 'accounts', req.headers.authorization)// fetch all pages of company
     .then(response => {
       sendSuccessResponse(res, 200, response)
     })
