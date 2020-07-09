@@ -771,9 +771,9 @@ exports.getAllChatBotsCriteria = function (body) {
   let getCriteria = {
     purpose: 'aggregate',
     match: finalCriteria[0].$match,
-    sort: finalCriteria[0].$sort,
-    skip: finalCriteria[0].$skip,
-    limit: finalCriteria[0].$limit
+    sort: finalCriteria[1].$sort,
+    skip: finalCriteria[2].$skip,
+    limit: finalCriteria[3].$limit
   }
   return {
     countCriteria,
