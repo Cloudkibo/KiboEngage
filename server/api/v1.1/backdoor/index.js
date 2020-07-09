@@ -27,7 +27,7 @@ router.post('/getAllPages/:userid',
 
 router.post('/getMessagesCount',
   auth.isAuthorizedSuperUser(),
-  userController.getMessagesCount) // pagination
+  userController.getMessagesCount)
 
 router.post('/getAllSubscribers/:pageid',
   validate({body: validationSchema.getAllSubscribersPayload}),

@@ -115,6 +115,7 @@ exports.getMessagesCount = function (req, res) {
     },
     group: { _id: null, count: { $sum: 1 } }
   }
+  console.log('query sent', query)
   utility.callApi(`livechat/query`, 'post', query, 'kibochat')
     .then(result => {
       let data = {
@@ -123,6 +124,6 @@ exports.getMessagesCount = function (req, res) {
       sendSuccessResponse(res, 200, data)
     })
     .catch(err => {
-      sendErrorResponse(res, 500, '', `Error in getting messages count ${JSON.stringify(err)}`)
+      sendErrorResponse(res, 500, '', `Error in getting messages count ${err}`)
     })
 }

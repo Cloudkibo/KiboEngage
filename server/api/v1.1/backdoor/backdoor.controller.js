@@ -23,7 +23,7 @@ exports.getAllUsers = function (req, res) {
     .then(usersData => {
       utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria)
         .then(users => {
-=          let usersPayload = []
+          let usersPayload = []
           if (users.length > 0) {
             users.forEach((user) => {
               let pageIds = []
