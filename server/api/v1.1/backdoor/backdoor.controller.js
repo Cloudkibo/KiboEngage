@@ -1658,3 +1658,82 @@ exports.otherAnalytics = function (req, res) {
     }
   })
 }
+exports.metricsWhatsApp = function (req, res) {
+  let messagesSentQuery = LogicLayer.queryForMessages(req.body, 'convos', 'sent')
+  let templateMessagesSentQuery = LogicLayer.queryForMessages(req.body, 'convos', 'template')
+  let messagesReceivedQuery = LogicLayer.queryForMessages(req.body, 'whatsApp')
+  let zoomMeetingsQuery = LogicLayer.queryForZoomMeetings(req.body)
+  let activeSubscribersQuery = LogicLayer.queryForActiveSubscribers(req.body)
+
+  async.parallelLimit([
+    _getMessagesSent.bind(null, messagesSentQuery),
+    _getMessagesSent.bind(null, templateMessagesSentQuery),
+    _getMessagesSent.bind(null, messagesReceivedQuery),
+    _getZoomMeetings.bind(null, zoomMeetingsQuery),
+    _getActiveSubscribers.bind(null, activeSubscribersQuery)
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, err)
+    } else {
+      let activeSubscribers = []
+      if (results[2].length > 0) {
+        activeSubscribers = results[2].map(r => {
+          return {_id: r._id, count: r.uniqueValues.length}
+        }
+        )
+      }
+      let graphDatas = {
+        messagesSent: results[0],
+        templateMessagesSent: results[1],
+        messagesReceived: results[2],
+        zoomMeetings: results[3],
+        activeSubscribers: activeSubscribers
+      }
+      let data = {
+        messagesSentCount: results[0].length > 0 ? sum(results[0], 'count') : 0,
+        templateMessagesSentCount: results[1].length > 0 ? sum(results[1], 'count') : 0,
+        messagesReceivedCount: results[2].length > 0 ? sum(results[2], 'count') : 0,
+        zoomMeetingsCount: results[3].length > 0 ? sum(results[3], 'count') : 0,
+        activeSubscribersCount: results[4].length > 0 ? results[4][0].count : 0,
+        graphDatas
+      }
+      sendSuccessResponse(res, 200, data)
+    }
+  })
+}
+
+const _getMessagesSent = (criteria, callback) => {
+  utility.callApi(`whatsAppChat/query`, 'post', criteria, 'kibochat')
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+const _getZoomMeetings = (criteria, callback) => {
+  utility.callApi(`zoomMeetings/query`, 'post', criteria)
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+const _getActiveSubscribers = (criteria, callback) => {
+  utility.callApi(`whatsAppContacts/aggregate`, 'post', criteria)
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+const sum = (items, prop) => {
+  return items.reduce(function (a, b) {
+    return a + b[prop]
+  }, 0)
+}

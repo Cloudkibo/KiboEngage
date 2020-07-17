@@ -45,6 +45,7 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
       let {route, MessageObject} = logicLayer.prepareFlockSendPayload(value, companyUser, contactNumbers)
       flockSendApiCaller(route, 'post', MessageObject)
         .then(response => {
+          logger.serverLog(TAG, `response from flockSendApiCaller ${response.body}`, 'error')
           let parsed = JSON.parse(response.body)
           if (parsed.code !== 200) {
             sendOpAlert(parsed.message, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
