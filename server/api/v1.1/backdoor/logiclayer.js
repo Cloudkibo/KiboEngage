@@ -780,3 +780,77 @@ exports.getAllChatBotsCriteria = function (body) {
     getCriteria
   }
 }
+exports.queryForMessages = function (body, format, type) {
+  let startDate = new Date(body.startDate)
+  startDate.setHours(0)
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate)
+  endDate.setDate(endDate.getDate() + 1)
+  endDate.setHours(0)
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let match = {
+    datetime: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true },
+    format: format
+  }
+  if (type) {
+    match['payload.templateName'] = type === 'template' ? {$exists: true} : {$exists: false}
+  }
+  let group = {
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1},
+    uniqueValues: {$addToSet: '$contactId'}
+  }
+  return {
+    purpose: 'aggregate',
+    match,
+    group
+  }
+}
+exports.queryForZoomMeetings = function (body) {
+  let startDate = new Date(body.startDate)
+  startDate.setHours(0)
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate)
+  endDate.setDate(endDate.getDate() + 1)
+  endDate.setHours(0)
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let match = {
+    platform: 'whatsApp',
+    datetime: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
+  }
+  let group = {
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1}
+  }
+  return {
+    purpose: 'aggregate',
+    match,
+    group
+  }
+}
+exports.queryForActiveSubscribers = function (body) {
+  let startDate = new Date(body.startDate)
+  startDate.setHours(0)
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate)
+  endDate.setDate(endDate.getDate() + 1)
+  endDate.setHours(0)
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let match = {
+    lastMessagedAt: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
+  }
+  let group = {
+    _id: null,
+    count: {$sum: 1}
+  }
+  return [
+    {$match: match},
+    {$group: group}
+  ]
+}
