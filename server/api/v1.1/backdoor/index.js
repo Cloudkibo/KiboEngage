@@ -156,4 +156,8 @@ router.post('/getAllChatBots',
   auth.isAuthorizedSuperUser(),
   controller.getAllChatBots)
 
+router.post('/metricsWhatsApp',
+  auth.isAuthorizedSuperUser(),
+  controller.metricsWhatsApp)
+
 module.exports = router
