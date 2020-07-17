@@ -191,8 +191,15 @@ exports.prepareFlockSendPayload = (payload, companyUser, contactNumbers) => {
     number_details: JSON.stringify(contactNumbers)
   }
   if (payload.componentType === 'text') {
-    MessageObject.message = payload.text
-    route = 'text'
+    if (payload.templateName) {
+      MessageObject.template_name = payload.templateName
+      MessageObject.template_argument = payload.templateArguments
+      MessageObject.language = 'en'
+      route = 'hsm'
+    } else {
+      MessageObject.message = payload.text
+      route = 'text'
+    }
   } else if (payload.componentType === 'media') {
     if (payload.mediaType === 'image') {
       MessageObject.image = payload.fileurl.url || payload.fileurl
