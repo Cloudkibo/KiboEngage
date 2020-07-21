@@ -1,7 +1,6 @@
 const logicLayer = require('./whatsAppBroadcasts.logiclayer')
 const dataLayer = require('./whatsAppBroadcasts.datalayer')
 const utility = require('../utility')
-let config = require('./../../../config/environment')
 const logger = require('../../../components/logger')
 const TAG = 'whatsAppBroadcasts.controller.js'
 const async = require('async')
@@ -39,6 +38,7 @@ exports.index = function (req, res) {
 
 function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
   let contactNumbers = []
+  let parsed
   contacts.map((c) => contactNumbers.push({phone: c.number}))
   async.eachOfSeries(req.body.payload, function (value, key, callback) {
     if (key < req.body.payload.length) {
@@ -46,7 +46,7 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
       flockSendApiCaller(route, 'post', MessageObject)
         .then(response => {
           logger.serverLog(TAG, `response from flockSendApiCaller ${response.body}`, 'error')
-          let parsed = JSON.parse(response.body)
+          parsed = JSON.parse(response.body)
           if (parsed.code !== 200) {
             sendOpAlert(parsed.message, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
             logger.serverLog(TAG, `error at sending message ${parsed.message}`, 'error')
@@ -62,6 +62,9 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
                   logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
                 })
             }
+            if (key === req.body.payload.length - 1 && parsed.data.length > 0) {
+              saveWhatsAppBroadcastMessages(parsed.data, req, broadcast._id)
+            }
           }
         })
     } else {
@@ -75,6 +78,26 @@ function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
     }
   })
 }
+
+function saveWhatsAppBroadcastMessages (data, req, broadcastId) {
+  let dataToInsert = []
+  data.forEach(value => {
+    dataToInsert.push({
+      userId: req.user._id,
+      companyId: req.user.companyId,
+      subscriberNumber: value.phone_number,
+      broadcastId: broadcastId,
+      messageId: value.id
+    })
+  })
+  utility.callApi(`whatsAppBroadcastMessages/insert`, 'post', dataToInsert, 'kiboengage') // fetch company user
+    .then(companyUser => {
+    })
+    .catch(error => {
+      logger.serverLog(TAG, `Failed to save whatsAppBroadcastMessages ${error}`, 'error')
+    })
+}
+
 exports.sendBroadcast = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
     .then(companyUser => {
