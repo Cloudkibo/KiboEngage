@@ -3,7 +3,6 @@ const logger = require('../../../components/logger')
 const TAG = '/api/v1/flockSendEvents/controller.js'
 
 exports.messageStatus = function (req, res) {
-  console.log('message status', req.body)
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -16,28 +15,13 @@ exports.messageStatus = function (req, res) {
     callApi(`whatsAppBroadcastMessages/query`, 'post', query, 'kiboengage')
       .then(message => {
         if (message) {
-          let updateData = {
-            purpose: 'updateOne',
-            match: {_id: message._id},
-            updated: req.body.status === 'delivered' ? {delivered: true} : {seen: true}
-          }
-          callApi(`whatsAppBroadcastMessages`, 'put', updateData, 'kiboengage')
-            .then(message => {
+          updateCount(message, req.body)
+        } else {
+          callApi(`queue`, 'post', {platform: 'whatsApp', payload: req.body}, 'kiboengage')
+            .then(queue => {
             })
             .catch((err) => {
-              logger.serverLog(`Failed to update message ${err}`, 'error')
-            })
-          let broadcastCountUpdate = {
-            purpose: 'updateOne',
-            match: {_id: message.broadcastId},
-            updated: req.body.status === 'delivered'
-              ? { $inc: { delivered: 1 } } : { $inc: { seen: 1 } }
-          }
-          callApi(`whatsAppBroadcasts`, 'put', broadcastCountUpdate, 'kiboengage')
-            .then(broadcast => {
-            })
-            .catch((err) => {
-              logger.serverLog(`Failed to update broadcast ${err}`, 'error')
+              logger.serverLog(`Failed to create queue ${err}`, 'error')
             })
         }
       })
@@ -46,3 +30,30 @@ exports.messageStatus = function (req, res) {
       })
   }
 }
+function updateCount (message, body) {
+  let updateData = {
+    purpose: 'updateOne',
+    match: {_id: message._id},
+    updated: body.status === 'delivered' ? {delivered: true} : {seen: true}
+  }
+  callApi(`whatsAppBroadcastMessages`, 'put', updateData, 'kiboengage')
+    .then(message => {
+    })
+    .catch((err) => {
+      logger.serverLog(`Failed to update message ${err}`, 'error')
+    })
+  let broadcastCountUpdate = {
+    purpose: 'updateOne',
+    match: {_id: message.broadcastId},
+    updated: body.status === 'delivered'
+      ? { $inc: { delivered: 1 } } : { $inc: { seen: 1 } }
+  }
+  callApi(`whatsAppBroadcasts`, 'put', broadcastCountUpdate, 'kiboengage')
+    .then(broadcast => {
+    })
+    .catch((err) => {
+      logger.serverLog(`Failed to update broadcast ${err}`, 'error')
+    })
+}
+
+exports.updateCount = updateCount
