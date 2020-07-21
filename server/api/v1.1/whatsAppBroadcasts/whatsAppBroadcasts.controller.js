@@ -138,7 +138,7 @@ function getSubscribersCount (req, res, contacts, companyUser) {
         //   .then(data => {
         // if (data && data.length > 0) {
         var hours = (new Date() - new Date(contacts[i].lastMessagedAt)) / 3600000
-        if (hours <= 24) {
+        if (req.body.onlyTemplates || hours <= 24) {
           var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
           if (matchCriteria) {
             callback(null, contacts[i])
