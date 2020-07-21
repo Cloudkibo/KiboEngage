@@ -10,6 +10,7 @@ const abandonedCartScript = require('../scripts/abandonedScript')
 const rssFeedsScript = require('../scripts/rssFeedsScript')
 const manualFeedsScript = require('../scripts/manualFeedsScript')
 const sponsoredScheduled = require('../scripts/scheduleSponsored.js')
+const whatsAppMessageStatus = require('../scripts/whatsAppMessageStatus.js')
 
 const app = express()
 const httpApp = express()
@@ -32,6 +33,7 @@ cron.schedule('* * * * *', abandonedCartScript.runScript)
 cron.schedule('0 13 * * *', rssFeedsScript.runRSSScript) //  daily 6 pm pakistan time
 cron.schedule('0 */2 * * *', manualFeedsScript.runScript)
 cron.schedule('* * * * *', sponsoredScheduled.runScheduleSponsored)
+cron.schedule('*/5 * * * * *', whatsAppMessageStatus.runScript)
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
