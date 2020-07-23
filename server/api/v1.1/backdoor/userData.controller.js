@@ -2,6 +2,7 @@ const LogicLayer = require('./logiclayer')
 const DataLayer = require('./datalayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const utility = require('../utility')
+const async = require('async')
 
 exports.getAllPages = function (req, res) {
   let criterias = LogicLayer.getAllPagesCriteria(req.params.userid, req.body)
@@ -38,6 +39,52 @@ exports.getAllPages = function (req, res) {
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch pages count ${JSON.stringify(error)}`)
     })
+}
+exports.getUserSummary = function (req, res) {
+  async.parallelLimit([
+    function (callback) {
+      utility.callApi(`pages/query`, 'post', {companyId: req.body.companyId, connected: true})
+        .then(pages => {
+          let pageIds = []
+          for (let i = 0; i < pages.length; i++) {
+            pageIds.push(pages[i]._id) 
+          }
+          let subscriberCriteria = LogicLayer.getSubscribersCountForUser(req.body, pageIds)
+          utility.callApi(`subscribers/aggregate`, 'post', subscriberCriteria)
+            .then(subscribers => {
+              callback(null, subscribers)
+            })
+            .catch(err => {
+              callback(err)
+            })
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      let messagesCriteria = LogicLayer.getMessagesCountForUser(req.body)
+      utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Error in getting user summary ${JSON.stringify(err)}`)
+    } else {
+      let subscribers = results[0]
+      let messagesCount = results[1]
+      let data = {
+        subscribersCount: subscribers[0] ? subscribers[0].count : 0,
+        messagesCount: messagesCount[0] ? messagesCount[0].count : 0
+      }
+      sendSuccessResponse(res, 200, data)
+    }
+  })
 }
 
 exports.allUserBroadcasts = function (req, res) {
