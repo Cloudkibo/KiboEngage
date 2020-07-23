@@ -53,6 +53,11 @@ router.post('/allUserSurveys/:userid',
   auth.isAuthorizedSuperUser(),
   userController.allUserSurveys) // pagination
 
+router.post('/userSummary',
+  validate({body: validationSchema.getUserSummary}),
+  auth.isAuthorizedSuperUser(),
+  userController.getUserSummary)
+
 router.get('/polls/:pollid', auth.isAuthorizedSuperUser(), controller.poll)
 
 router.get('/surveyDetails/:surveyid', auth.isAuthorizedSuperUser(), controller.surveyDetails)

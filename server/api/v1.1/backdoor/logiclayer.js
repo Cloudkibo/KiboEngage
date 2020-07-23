@@ -620,6 +620,27 @@ exports.getPlatformCriteriaForSubscribers = function (body) {
   return countCriteria
 }
 
+exports.getSubscribersCountForUser = function (body, pages) {
+  let findCriteria = {
+    isSubscribed: true,
+    completeInfo: true,
+    pageId: {$in: pages}
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  let countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
 exports.getPlatformCriteriaForPages = function (type) {
   let countCriteria = [
     { $match: {connected: type ? true : {$exists: true}} },
@@ -630,6 +651,25 @@ exports.getPlatformCriteriaForPages = function (type) {
 exports.getPlatformCriteriaForMessages = function (body) {
   let findCriteria = {
     format: 'convos'
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  return {
+    purpose: 'aggregate',
+    match: findCriteria,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+}
+exports.getMessagesCountForUser = function (body) {
+  let findCriteria = {
+    format: 'convos',
+    company_id: body.companyId && body.companyId !== '' ? body.companyId : {$exists: true}
   }
   if (body.days && body.days !== '') {
     let startDate = new Date() // Current date
