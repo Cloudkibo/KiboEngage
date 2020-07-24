@@ -871,7 +871,6 @@ exports.weeklyEmail = function (req, res) {
 }
 
 function sendEmail (match, limit, count, totalCount, res) {
-  console.log('totalcount', totalCount)
   var criteria = [{$match: match}, {$limit: limit}]
   utility.callApi(`user/aggregate`, 'post', criteria)
     .then(users => {
@@ -1731,14 +1730,11 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
 
 const _getWhatsAppMetricsData = (body) => {
   return new Promise((resolve, reject) => {
-    console.log('_getWhatsAppMetricsData', body)
     let messagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'sent')
     let templateMessagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'template')
     let messagesReceivedQuery = LogicLayer.queryForMessages(body, 'whatsApp')
     let zoomMeetingsQuery = LogicLayer.queryForZoomMeetings(body)
     let activeSubscribersQuery = LogicLayer.queryForActiveSubscribers(body)
-
-    console.log(messagesSentQuery, JSON.stringify(messagesSentQuery))
 
     async.parallelLimit([
       _getMessagesSent.bind(null, messagesSentQuery),
