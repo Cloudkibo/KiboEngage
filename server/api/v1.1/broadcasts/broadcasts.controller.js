@@ -728,6 +728,7 @@ exports.retrieveSubscribersCount = function (req, res) {
     companyId: req.user.companyId,
     completeInfo: true,
     isSubscribed: true,
+    disabledByPlan: false,
     lastMessagedAt: {
       $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
     }
