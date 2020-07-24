@@ -22,6 +22,18 @@ exports.getAllUsersPayload = {
     }
   }
 }
+exports.getUserSummary = {
+  properties: {
+    companyId: {
+      type: 'string',
+      required: true
+    },
+    days: {
+      type: 'number',
+      required: true
+    }
+  }
+}
 exports.getAllPagesPayload = {
   properties: {
     last_id: {
