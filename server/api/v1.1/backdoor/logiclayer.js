@@ -794,6 +794,9 @@ exports.queryForMessages = function (body, format, type) {
     datetime: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true },
     format: format
   }
+  if (body.companyId) {
+    match.companyId = body.companyId
+  }
   if (type) {
     match['payload.templateName'] = type === 'template' ? {$exists: true} : {$exists: false}
   }
@@ -822,6 +825,9 @@ exports.queryForZoomMeetings = function (body) {
     platform: 'whatsApp',
     datetime: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
   }
+  if (body.companyId) {
+    match.companyId = body.companyId
+  }
   let group = {
     _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
     count: {$sum: 1}
@@ -844,6 +850,9 @@ exports.queryForActiveSubscribers = function (body) {
   endDate.setSeconds(0)
   let match = {
     lastMessagedAt: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
+  }
+  if (body.companyId) {
+    match.companyId = body.companyId
   }
   let group = {
     _id: null,

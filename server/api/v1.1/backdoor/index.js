@@ -160,4 +160,8 @@ router.post('/metricsWhatsApp',
   auth.isAuthorizedSuperUser(),
   controller.metricsWhatsApp)
 
+router.get('/sendWhatsAppMetricsEmail',
+  auth.isAuthorizedSuperUser(),
+  controller.sendWhatsAppMetricsEmail)
+
 module.exports = router
