@@ -666,10 +666,10 @@ exports.getPlatformCriteriaForMessages = function (body) {
     group: { _id: null, count: { $sum: 1 } }
   }
 }
-exports.getMessagesCountForUser = function (body) {
+exports.getMessagesCountForUser = function (companyUser, body) {
   let findCriteria = {
     format: 'convos',
-    company_id: body.companyId && body.companyId !== '' ? body.companyId : {$exists: true}
+    company_id: companyUser.companyId && companyUser.companyId !== '' ? companyUser.companyId : {$exists: true}
   }
   if (body.days && body.days !== '') {
     let startDate = new Date() // Current date

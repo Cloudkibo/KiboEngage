@@ -24,7 +24,7 @@ exports.getAllUsersPayload = {
 }
 exports.getUserSummary = {
   properties: {
-    companyId: {
+    userId: {
       type: 'string',
       required: true
     },
