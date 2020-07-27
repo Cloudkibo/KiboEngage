@@ -51,3 +51,18 @@ exports.prepareFlockSendPayload = (data) => {
   }
   return MessageObject
 }
+exports.prepareChat = (data, contact) => {
+  let MessageObject = {
+    senderNumber: data.senderNumber,
+    recipientNumber: contact.number,
+    contactId: contact._id,
+    companyId: data.companyId,
+    payload: data.payload,
+    repliedBy: {
+      id: data.user._id,
+      name: data.user.name,
+      type: 'agent'
+    }
+  }
+  return MessageObject
+}
