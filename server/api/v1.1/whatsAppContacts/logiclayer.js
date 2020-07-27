@@ -41,3 +41,28 @@ exports.getCriterias = function (body, companyUser) {
   }
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }
+exports.prepareFlockSendPayload = (data) => {
+  let MessageObject = {
+    token: data.accessToken,
+    number_details: JSON.stringify(data.numbers),
+    template_name: data.payload.templateName,
+    template_argument: data.payload.templateArguments,
+    language: 'en'
+  }
+  return MessageObject
+}
+exports.prepareChat = (data, contact) => {
+  let MessageObject = {
+    senderNumber: data.senderNumber,
+    recipientNumber: contact.number,
+    contactId: contact._id,
+    companyId: data.companyId,
+    payload: data.payload,
+    repliedBy: {
+      id: data.user._id,
+      name: data.user.name,
+      type: 'agent'
+    }
+  }
+  return MessageObject
+}
