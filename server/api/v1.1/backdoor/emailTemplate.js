@@ -63,7 +63,7 @@ exports.getWhatsAppEmail = (name, data) => {
                                                                       <td style="padding:15px 045px 30px 45px;line-height:22px;text-align:inherit;" height="100%" valign="top" bgcolor="">
                                                                         <div>Hello ${name},</div>
                                                                         <div>&nbsp;</div>
-                                                                        <div>Hope you are doing great!</div>
+                                                                        <div>Hope you are doing well!</div>
                                                                         <div>&nbsp;</div>
                                                                         <div>You have become an important part of our community. We are pleased to share the monthly report of your activities on our WhatsApp platform.</div>
                                                                         <div>&nbsp;</div>
@@ -72,7 +72,7 @@ exports.getWhatsAppEmail = (name, data) => {
                                                                             <li><strong>Active Subscribers</strong>: ${data.activeSubscribersCount}</li>
                                                                             <li><strong>Messages Received</strong>: ${data.messagesReceivedCount}</li>
                                                                             <li><strong>Non-Template Messages Sent</strong>: ${data.messagesSentCount}</li>
-                                                                            <li><strong>Template Messages Sent</strong> ${data.templateMessagesSentCount}</li>
+                                                                            <li><strong>Template Messages Sent</strong>: ${data.templateMessagesSentCount}</li>
                                                                             <li><strong>Zoom Meetings Created</strong>: ${data.zoomMeetingsCount}</li>
                                                                         </ul>
                                                                         <div>&nbsp;</div>
