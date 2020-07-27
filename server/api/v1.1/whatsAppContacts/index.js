@@ -4,6 +4,8 @@ const auth = require('../../../auth/auth.service')
 const validate = require('express-jsonschema').validate
 const validationSchema = require('./validationSchema')
 const controller = require('./whatsAppContacts.controller')
+const multiparty = require('connect-multiparty')
+const multipartyMiddleware = multiparty()
 
 router.post('/',
   auth.isAuthenticated(),
@@ -13,5 +15,15 @@ router.post('/',
 router.post('/update/:id',
   auth.isAuthenticated(),
   controller.update)
+
+router.post('/getDuplicateSubscribers',
+  auth.isAuthenticated(),
+  multipartyMiddleware,
+  controller.getDuplicateSubscribers)
+
+router.post('/sendMessage',
+  auth.isAuthenticated(),
+  multipartyMiddleware,
+  controller.sendMessage)
 
 module.exports = router
