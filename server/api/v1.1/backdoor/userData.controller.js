@@ -4,33 +4,50 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const utility = require('../utility')
 const async = require('async')
 
+
 exports.getAllPages = function (req, res) {
+  console.log('Get all pages')
   let criterias = LogicLayer.getAllPagesCriteria(req.params.userid, req.body)
   utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria) // fetch connected pages count
     .then(count => {
       utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria) // fetch connected pages
         .then(pages => {
-          let pagesPayload = []
-          for (let i = 0; i < pages.length; i++) {
-            let subscribers = pages[i].subscribers.filter(subscriber => subscriber.isSubscribed === true)
-            pagesPayload.push({
-              _id: pages[i]._id,
-              pageId: pages[i].pageId,
-              pageName: pages[i].pageName,
-              userId: pages[i].userId,
-              pagePic: pages[i].pagePic,
-              connected: pages[i].connected,
-              pageUserName: pages[i].pageUserName,
-              isApproved: pages[i].isApproved,
-              likes: pages[i].likes,
-              subscribers: subscribers.length
+          let pagesArray = []
+          async.each(pages, function (page, next) {
+            let subscriberCriteria = LogicLayer.getSubscribersCountForPages(page)
+            console.log(subscriberCriteria)
+            utility.callApi(`subscribers/aggregate`, 'post', subscriberCriteria) // fetch connected pages count
+            .then(result => {
+              console.log('subcribers result', result)
+              pagesArray.push({
+                _id: page._id,
+                pageId: page.pageId,
+                pageName: page.pageName,
+                userId: page.userId,
+                pagePic: page.pagePic,
+                connected: page.connected,
+                pageUserName: page.pageUserName,
+                isApproved: page.isApproved,
+                likes: page.likes,
+                subscribers: result.length > 0 ? result[0].count : 0
+              })
+              next()
             })
-          }
-          let payload = {
-            pages: pagesPayload,
-            count: pagesPayload.length > 0 ? count[0].count : ''
-          }
-          sendSuccessResponse(res, 200, payload)
+            .catch(err => {
+              next(err)
+            })
+          }, function (err) {
+            if (err) {
+              sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
+            } else {
+              let payload = {
+                pages: pagesArray,
+                count: pagesArray.length > 0 ? count[0].count : ''
+              }
+              console.log('Payload', JSON.stringify(payload))
+              sendSuccessResponse(res, 200, payload)
+            }
+          })
         })
         .catch(error => {
           sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
