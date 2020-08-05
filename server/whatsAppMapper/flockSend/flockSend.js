@@ -125,7 +125,8 @@ exports.setWebhook = (body) => {
         flockSendApiCaller('update-listen-webhook', 'post', {
           token: body.accessToken,
           webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend',
-          webhook_status: 1})
+          webhook_status: 1
+        })
           .then(response => {
             callback()
           })
