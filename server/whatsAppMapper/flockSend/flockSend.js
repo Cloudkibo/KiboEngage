@@ -28,8 +28,8 @@ exports.sendBroadcastMessages = (body) => {
                     logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
                   })
               }
-              if (key === body.payload.length - 1 && response.length > 0) {
-                saveWhatsAppBroadcastMessages(response, body)
+              if (key === body.payload.length - 1 && parsed.data.length > 0) {
+                saveWhatsAppBroadcastMessages(parsed.data, body)
               }
             }
           })
@@ -112,9 +112,8 @@ exports.setWebhook = (body) => {
       function (callback) {
         flockSendApiCaller('update-send-message-webhook', 'post', {
           token: body.accessToken,
-          webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend/messageStatus',
-          webhook_status: 1
-        })
+          webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend',
+          webhook_status: 1})
           .then(response => {
             callback()
           })
@@ -126,8 +125,7 @@ exports.setWebhook = (body) => {
         flockSendApiCaller('update-listen-webhook', 'post', {
           token: body.accessToken,
           webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend',
-          webhook_status: 1
-        })
+          webhook_status: 1})
           .then(response => {
             callback()
           })
