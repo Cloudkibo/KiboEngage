@@ -6,7 +6,8 @@ const config = require('../../../config/environment/index')
 const logicLayer = require('./company.logiclayer.js')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const async = require('async')
-const request = require('request')
+const {ActionTypes} = require('../../../whatsAppMapper/constants')
+const {whatsAppMapper} = require('../../../whatsAppMapper/whatsAppMapper')
 
 exports.members = function (req, res) {
   utility.callApi(`companyprofile/members`, 'get', {}, 'accounts', req.headers.authorization)
@@ -118,7 +119,6 @@ exports.updatePlatform = function (req, res) {
             let client = require('twilio')(accountSid, authToken)
             client.incomingPhoneNumbers
               .list().then((incomingPhoneNumbers) => {
-                console.log('incomingPhoneNumbers', incomingPhoneNumbers)
                 if (incomingPhoneNumbers && incomingPhoneNumbers.length > 0) {
                   utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}})
                     .then(updatedProfile => {
@@ -176,10 +176,7 @@ const _updateCompanyProfile = (data, next) => {
   //   next(null)
   // }
   // if (!data.body.changeWhatsAppFlockSend) {
-  let newPayload = {flockSendWhatsApp: {
-    accessToken: data.body.accessToken,
-    number: data.body.number.split(' ').join('')
-  }}
+  let newPayload = {whatsApp: data.body}
   utility.callApi(`companyprofile/update`, 'put', {query: {_id: data.companyId}, newPayload: newPayload, options: {}})
     .then(updatedProfile => {
       next(null, updatedProfile)
@@ -204,6 +201,24 @@ const _updateUser = (data, next) => {
   } else {
     next(null)
   }
+}
+const _setWebhook = (data, next) => {
+  whatsAppMapper(data.body.provider, ActionTypes.SET_WEBHOOK, data.body)
+    .then(response => {
+      next(null, data)
+    })
+    .catch(error => {
+      next(error)
+    })
+}
+const _verifyCredentials = (data, next) => {
+  whatsAppMapper(data.body.provider, ActionTypes.VERIFY_CREDENTIALS, data.body)
+    .then(response => {
+      next(null, data)
+    })
+    .catch(error => {
+      next(error)
+    })
 }
 exports.updatePlatformWhatsApp = function (req, res) {
   // let query = {
@@ -247,8 +262,10 @@ exports.updatePlatformWhatsApp = function (req, res) {
 
   let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
   async.series([
+    _verifyCredentials.bind(null, data),
     _updateCompanyProfile.bind(null, data),
-    _updateUser.bind(null, data)
+    _updateUser.bind(null, data),
+    _setWebhook.bind(null, data)
   ], function (err) {
     if (err) {
       sendErrorResponse(res, 500, '', err)
@@ -416,7 +433,6 @@ exports.deleteWhatsAppInfo = function (req, res) {
           logger.serverLog(TAG, err, 'error')
           sendErrorResponse(res, 500, `Failed to delete whatsapp info ${err}`)
         } else {
-          console.log('results got', results)
           sendSuccessResponse(res, 200, req.body.type === 'Disconnect' ? 'Disconnected Successfully' : 'Saved Successfully')
         }
       })
@@ -479,75 +495,11 @@ exports.enableMember = function (req, res) {
 }
 
 exports.getWhatsAppMessageTemplates = function (req, res) {
-  utility.callApi('companyprofile/query', 'post', {_id: req.user.companyId})
-    .then(companyProfile => {
-      if (companyProfile) {
-        if (companyProfile.flockSendWhatsApp) {
-          const authData = {
-            'token': companyProfile.flockSendWhatsApp.accessToken
-          }
-          request(
-            {
-              'method': 'POST',
-              'formData': authData,
-              'uri': 'https://flocksend.com/api/templates-fetch'
-            }, (err, resp) => {
-              if (err) {
-                sendErrorResponse(res, 500, err, 'Error retrieving templates')
-              }
-              // let templates = [
-              //   {
-              //     name: 'contact_reminder',
-              //     text: 'Hi {{1}}.\n\nThank you for contacting {{2}}.\n\nPlease choose from the options below to continue:',
-              //     regex: ^Hi (.*)\.\n\nThank you for contacting (.*).\n\nPlease choose from the options below to continue:$,
-              //     buttons: [
-              //       {title: 'Get in Touch'},
-              //       {title: 'Explore Options'},
-              //       {title: 'Speak to Support'}
-              //     ],
-              //     templateArguments: '{{1}},{{2}}'
-              //   }
-              // ]
-              let templates = []
-              let flockSendTemplates = JSON.parse(resp.body)
-              for (let i = 0; i < flockSendTemplates.length; i++) {
-                if (flockSendTemplates[i].localizations[0].status === 'APPROVED') {
-                  let template = {}
-                  template.name = flockSendTemplates[i].templateName
-                  let templateComponents = flockSendTemplates[i].localizations[0].components
-                  for (let j = 0; j < templateComponents.length; j++) {
-                    if (templateComponents[j].type === 'BODY') {
-                      template.text = templateComponents[j].text
-                      let argumentsRegex = /{{[0-9]}}/g
-                      let templateArguments = template.text.match(argumentsRegex).join(',')
-                      template.templateArguments = templateArguments
-                      let regex = template.text.replace('.', '\\.')
-                      regex = regex.replace(argumentsRegex, '(.*)')
-                      template.regex = `^${regex}$`
-                    } else if (templateComponents[j].type === 'BUTTONS') {
-                      template.buttons = templateComponents[j].buttons.map(button => {
-                        return {
-                          title: button.text
-                        }
-                      })
-                    }
-                  }
-                  if (!template.buttons) {
-                    template.buttons = []
-                  }
-                  templates.push(template)
-                }
-              }
-              sendSuccessResponse(res, 200, templates, 'Retrieved templates successfully')
-            })
-        } else {
-          sendErrorResponse(res, 500, null, 'WhatsApp not connected')
-        }
-      } else {
-        sendErrorResponse(res, 500, null, 'No company profile found')
-      }
+  whatsAppMapper(req.user.whatsApp.provider, ActionTypes.GET_TEMPLATES, {whatsApp: req.user.whatsApp})
+    .then(templates => {
+      sendSuccessResponse(res, 200, templates, 'Retrieved templates successfully')
     })
-    .catch(err => {
-      sendErrorResponse(res, 500, err, 'Error fetching company profile')
+    .catch(error => {
+      sendErrorResponse(res, 500, error, 'Error retrieving templates')
     })
 }

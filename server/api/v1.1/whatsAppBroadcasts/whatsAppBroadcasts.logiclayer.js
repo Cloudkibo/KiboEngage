@@ -1,11 +1,11 @@
 var path = require('path')
 
-exports.prepareChat = (payload, companyUser, contact) => {
+exports.prepareChat = (payload, companyId, contact, whatsAppNumber) => {
   let MessageObject = {
-    senderNumber: companyUser.companyId.flockSendWhatsApp.number,
+    senderNumber: whatsAppNumber,
     recipientNumber: contact.number,
     contactId: contact._id,
-    companyId: companyUser.companyId._id,
+    companyId: companyId,
     payload: payload
   }
   return MessageObject

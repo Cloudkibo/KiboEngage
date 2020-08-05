@@ -8,7 +8,8 @@ const async = require('async')
 const csv = require('csv-parser')
 const logger = require('../../../components/logger')
 const TAG = 'api/whatsAppContacts/whatsAppContacts.controller.js'
-const { flockSendApiCaller } = require('../../global/flockSendApiCaller')
+const {ActionTypes} = require('../../../whatsAppMapper/constants')
+const { whatsAppMapper } = require('../../../whatsAppMapper/whatsAppMapper')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -109,33 +110,22 @@ exports.sendMessage = function (req, res) {
       companyId: req.user.companyId,
       user: req.user,
       directory: directory,
-      payload: payload
+      payload: payload,
+      whatsApp: req.user.whatsApp
     }
     async.series([
-      _getCompanyProfile.bind(null, data),
       _parseFile.bind(null, data),
       _fetchSubscribers.bind(null, data),
       _sendTemplateMessage.bind(null, data)
     ], function (err) {
       if (err) {
-        logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
+        logger.serverLog(TAG, `Failed to send template invitation. ${JSON.stringify(err)}`)
         sendErrorResponse(res, 500, '', err)
       } else {
         sendSuccessResponse(res, 200, 'Message Sent Successfully')
       }
     })
   })
-}
-const _getCompanyProfile = (data, next) => {
-  utility.callApi('companyprofile/query', 'post', {_id: data.companyId})
-    .then(company => {
-      data.accessToken = company.flockSendWhatsApp.accessToken
-      data.senderNumber = company.flockSendWhatsApp.number
-      next(null, data)
-    })
-    .catch((err) => {
-      next(err)
-    })
 }
 const _parseFile = (data, next) => {
   let phoneColumn = data.body.phoneColumn
@@ -157,17 +147,12 @@ const _parseFile = (data, next) => {
 }
 const _sendTemplateMessage = (data, next) => {
   if (data.numbers.length > 0) {
-    let MessageObject = logicLayer.prepareFlockSendPayload(data)
-    flockSendApiCaller('hsm', 'post', MessageObject)
+    whatsAppMapper(data.whatsApp.provider, ActionTypes.SEND_INVITATION_TEMPLATE, data)
       .then(response => {
-        logger.serverLog(TAG, `response from flockSendApiCaller ${response.body}`, 'error')
-        let parsed = JSON.parse(response.body)
-        if (parsed.code !== 200) {
-          logger.serverLog(TAG, `error at sending message ${parsed.message}`, 'error')
-          next(parsed.message)
-        } else {
-          next(null, data)
-        }
+        next(null, data)
+      })
+      .catch(error => {
+        next(error)
       })
   } else {
     next(null, data)
