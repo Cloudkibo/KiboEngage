@@ -48,7 +48,7 @@ exports.sendBroadcastMessages = (body) => {
     })
   })
 }
-function saveWhatsAppBroadcastMessages(data, body) {
+function saveWhatsAppBroadcastMessages (data, body) {
   let dataToInsert = []
   data.forEach(value => {
     dataToInsert.push({
@@ -113,7 +113,8 @@ exports.setWebhook = (body) => {
         flockSendApiCaller('update-send-message-webhook', 'post', {
           token: body.accessToken,
           webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend/messageStatus',
-          webhook_status: 1})
+          webhook_status: 1
+        })
           .then(response => {
             callback()
           })
@@ -125,7 +126,8 @@ exports.setWebhook = (body) => {
         flockSendApiCaller('update-listen-webhook', 'post', {
           token: body.accessToken,
           webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend',
-          webhook_status: 1})
+          webhook_status: 1
+        })
           .then(response => {
             callback()
           })
@@ -142,7 +144,7 @@ exports.setWebhook = (body) => {
     })
   })
 }
-  
+
 exports.verifyCredentials = (body) => {
   return new Promise((resolve, reject) => {
     resolve()
