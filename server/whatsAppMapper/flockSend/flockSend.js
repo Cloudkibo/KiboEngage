@@ -14,9 +14,7 @@ exports.sendBroadcastMessages = (body) => {
         let { route, MessageObject } = logicLayer.prepareSendMessagePayload(body, contactNumbers, value)
         flockSendApiCaller(`connect/official/v2/${route}`, 'post', MessageObject)
           .then(response => {
-            console.log('response', response)
             let parsed = JSON.parse(response.body)
-            console.log('parsed', parsed)
             if (parsed.code !== 200) {
               callback(parsed.message)
             } else {
