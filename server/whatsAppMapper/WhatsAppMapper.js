@@ -1,9 +1,9 @@
 const flockSend = require('../whatsAppMapper/flockSend/flockSend')
 const twilio = require('../whatsAppMapper/twilio/twilio')
-const {ActionTypes} = require('./constants')
+const { ActionTypes } = require('./constants')
 const providers = [
-  {key: 'flockSend', value: flockSend},
-  {key: 'twilio', value: twilio}
+  { key: 'flockSend', value: flockSend },
+  { key: 'twilio', value: twilio }
 ]
 
 exports.whatsAppMapper = (provider, action, data, callback) => {
@@ -21,4 +21,9 @@ function callAction (action, data, provider) {
       return provider.sendInvitationTemplate(data)
     default: break
   }
+}
+
+exports.handleInboundMessageStatus = (provider, event) => {
+  provider = providers.find(a => a.key === provider).value
+  return provider.getNormalizedMessageStatusData(event)
 }

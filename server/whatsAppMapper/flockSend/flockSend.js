@@ -1,5 +1,5 @@
 const logicLayer = require('./logiclayer')
-const {flockSendApiCaller} = require('../../api/global/flockSendApiCaller')
+const { flockSendApiCaller } = require('../../api/global/flockSendApiCaller')
 const utility = require('../../api/v1.1/utility')
 const async = require('async')
 const logger = require('../../components/logger')
@@ -8,10 +8,10 @@ const TAG = 'whatsAppMapper/flocksend.js'
 exports.sendBroadcastMessages = (body) => {
   return new Promise((resolve, reject) => {
     let contactNumbers = []
-    body.contacts.map((c) => contactNumbers.push({phone: c.number}))
+    body.contacts.map((c) => contactNumbers.push({ phone: c.number }))
     async.eachOfSeries(body.payload, function (value, key, callback) {
       if (key < body.payload.length) {
-        let {route, MessageObject} = logicLayer.prepareSendMessagePayload(body, contactNumbers, value)
+        let { route, MessageObject } = logicLayer.prepareSendMessagePayload(body, contactNumbers, value)
         flockSendApiCaller(`connect/official/v2/${route}`, 'post', MessageObject)
           .then(response => {
             let parsed = JSON.parse(response.body)
@@ -48,7 +48,7 @@ exports.sendBroadcastMessages = (body) => {
     })
   })
 }
-function saveWhatsAppBroadcastMessages (data, body) {
+function saveWhatsAppBroadcastMessages(data, body) {
   let dataToInsert = []
   data.forEach(value => {
     dataToInsert.push({
@@ -97,4 +97,11 @@ exports.sendInvitationTemplate = (body) => {
         reject(err)
       })
   })
+}
+
+exports.getNormalizedMessageStatusData = (event) => {
+  return {
+    messageId: event.id,
+    status: event.status
+  }
 }
