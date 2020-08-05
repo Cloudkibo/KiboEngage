@@ -34,6 +34,14 @@ router.post('/invite', // invite user to jion team account
   auth.isUserAllowedToPerformThisAction('invite_members'),
   controller.invite)
 
+router.get('/getKeys',
+  auth.isAuthenticated(),
+  controller.getKeys)
+
+router.post('/setCard',
+  auth.isAuthenticated(),
+  controller.setCard)
+
 router.post('/updateRole', // update user role
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('team_members_management'),
