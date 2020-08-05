@@ -119,7 +119,6 @@ exports.updatePlatform = function (req, res) {
             let client = require('twilio')(accountSid, authToken)
             client.incomingPhoneNumbers
               .list().then((incomingPhoneNumbers) => {
-                console.log('incomingPhoneNumbers', incomingPhoneNumbers)
                 if (incomingPhoneNumbers && incomingPhoneNumbers.length > 0) {
                   utility.callApi(`companyprofile/update`, 'put', {query: {_id: companyUser.companyId}, newPayload: {twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken}}, options: {}})
                     .then(updatedProfile => {
@@ -177,10 +176,7 @@ const _updateCompanyProfile = (data, next) => {
   //   next(null)
   // }
   // if (!data.body.changeWhatsAppFlockSend) {
-  let newPayload = {flockSendWhatsApp: {
-    accessToken: data.body.accessToken,
-    number: data.body.number.split(' ').join('')
-  }}
+  let newPayload = {whatsApp: data.body}
   utility.callApi(`companyprofile/update`, 'put', {query: {_id: data.companyId}, newPayload: newPayload, options: {}})
     .then(updatedProfile => {
       next(null, updatedProfile)
@@ -205,6 +201,24 @@ const _updateUser = (data, next) => {
   } else {
     next(null)
   }
+}
+const _setWebhook = (data, next) => {
+  whatsAppMapper(data.body.provider, ActionTypes.SET_WEBHOOK, data.body)
+    .then(response => {
+      next(null, data)
+    })
+    .catch(error => {
+      next(error)
+    })
+}
+const _verifyCredentials = (data, next) => {
+  whatsAppMapper(data.body.provider, ActionTypes.VERIFY_CREDENTIALS, data.body)
+    .then(response => {
+      next(null, data)
+    })
+    .catch(error => {
+      next(error)
+    })
 }
 exports.updatePlatformWhatsApp = function (req, res) {
   // let query = {
@@ -248,8 +262,10 @@ exports.updatePlatformWhatsApp = function (req, res) {
 
   let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
   async.series([
+    _verifyCredentials.bind(null, data),
     _updateCompanyProfile.bind(null, data),
-    _updateUser.bind(null, data)
+    _updateUser.bind(null, data),
+    _setWebhook.bind(null, data)
   ], function (err) {
     if (err) {
       sendErrorResponse(res, 500, '', err)
@@ -417,7 +433,6 @@ exports.deleteWhatsAppInfo = function (req, res) {
           logger.serverLog(TAG, err, 'error')
           sendErrorResponse(res, 500, `Failed to delete whatsapp info ${err}`)
         } else {
-          console.log('results got', results)
           sendSuccessResponse(res, 200, req.body.type === 'Disconnect' ? 'Disconnected Successfully' : 'Saved Successfully')
         }
       })

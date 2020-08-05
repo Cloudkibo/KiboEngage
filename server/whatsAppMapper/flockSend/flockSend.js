@@ -105,3 +105,46 @@ exports.getNormalizedMessageStatusData = (event) => {
     status: event.status
   }
 }
+
+exports.setWebhook = (body) => {
+  return new Promise((resolve, reject) => {
+    async.parallelLimit([
+      function (callback) {
+        flockSendApiCaller('update-send-message-webhook', 'post', {
+          token: body.accessToken,
+          webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend/messageStatus',
+          webhook_status: 1})
+          .then(response => {
+            callback()
+          })
+          .catch((err) => {
+            reject(err)
+          })
+      },
+      function (callback) {
+        flockSendApiCaller('update-listen-webhook', 'post', {
+          token: body.accessToken,
+          webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend',
+          webhook_status: 1})
+          .then(response => {
+            callback()
+          })
+          .catch((err) => {
+            reject(err)
+          })
+      }
+    ], 10, function (err, results) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve()
+      }
+    })
+  })
+}
+  
+exports.verifyCredentials = (body) => {
+  return new Promise((resolve, reject) => {
+    resolve()
+  })
+}
