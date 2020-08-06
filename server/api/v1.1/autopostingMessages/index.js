@@ -11,8 +11,8 @@ const validate = require('express-jsonschema').validate
 
 router.post('/getMessages/:id',
   auth.isAuthenticated(),
-  // auth.doesPlanPermitsThisAction('autoposting'),
-  // auth.doesRolePermitsThisAction('autopostingPermission'),
+  auth.doesPlanPermitsThisAction('autoposting_history'),
+  auth.isUserAllowedToPerformThisAction('view_autoposting_feed_history'),
   validate({body: validationSchema.getMessagePayload}),
   controller.getMessages)
 

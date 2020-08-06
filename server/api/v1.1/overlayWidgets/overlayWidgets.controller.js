@@ -2,10 +2,12 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const { callApi } = require('../utility')
 const LogicLayer = require('./overlayWidgets.logiclayer.js')
 const async = require('async')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.delete = function (req, res) {
   callApi(`overlayWidgets/${req.params.id}`, 'delete', {}, 'accounts', req.headers.authorization)
     .then(deleted => {
+      updateCompanyUsage(req.user.companyId, 'overlay_widgets', -1)
       sendSuccessResponse(res, 200, deleted)
     })
     .catch(err => {
@@ -26,6 +28,7 @@ exports.create = function (req, res) {
   }
   callApi(`overlayWidgets/`, 'post', dataToSave, 'accounts', req.headers.authorization)
     .then(result => {
+      updateCompanyUsage(req.user.companyId, 'overlay_widgets', 1)
       sendSuccessResponse(res, 200, result)
     })
     .catch(err => {

@@ -6,8 +6,10 @@ const validate = require('express-jsonschema').validate
 const validationSchema = require('./validationSchema')
 const controller = require('./company.controller')
 
-router.get('/members',
+router.get('/members', // fetch team acount members (users)
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('team_members_management'),
+  auth.isUserAllowedToPerformThisAction('view_members'),
   controller.members)
 
 router.get('/getAutomatedOptions',
@@ -16,22 +18,48 @@ router.get('/getAutomatedOptions',
 
 router.get('/getAdvancedSettings',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('advanced_settings'),
+  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   controller.getAdvancedSettings)
 
 router.post('/updateAdvancedSettings',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('advanced_settings'),
+  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   controller.updateAdvancedSettings)
 
-router.post('/invite', auth.isAuthenticated(), controller.invite)
-
-router.post('/updateRole',
+router.post('/invite', // invite user to jion team account
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('invite_members'),
+  auth.isUserAllowedToPerformThisAction('invite_members'),
+  controller.invite)
+
+router.get('/getKeys',
+  auth.isAuthenticated(),
+  controller.getKeys)
+
+router.post('/setCard',
+  auth.isAuthenticated(),
+  controller.setCard)
+
+router.post('/updatePlan',
+  auth.isAuthenticated(),
+  controller.updatePlan)
+
+router.post('/updateRole', // update user role
+  auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('team_members_management'),
+  auth.isUserAllowedToPerformThisAction('update_role'),
   controller.updateRole)
 
 router.post('/updateAutomatedOptions',
   auth.isAuthenticated(),
   auth.hasRole('buyer'),
   controller.updateAutomatedOptions)
+
+router.get('/switchToBasicPlan',
+  auth.isAuthenticated(),
+  controller.switchToBasicPlan)
 
 router.post('/updatePlatform',
   auth.isAuthenticated(),
@@ -60,10 +88,14 @@ router.post('/deleteWhatsAppInfo',
 
 router.get('/getAdvancedSettings',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('advanced_settings'),
+  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   controller.getAdvancedSettings)
 
 router.post('/updateAdvancedSettings',
   auth.isAuthenticated(),
+  auth.doesPlanPermitsThisAction('advanced_settings'),
+  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   validate({body: validationSchema.advancedSettingsPayload}),
   controller.updateAdvancedSettings)
 

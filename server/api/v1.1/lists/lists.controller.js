@@ -11,6 +11,7 @@ const TAG = 'api/lists/lists.controller.js'
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.allLists = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -102,15 +103,7 @@ function createList (req, callback) {
     joiningCondition: req.body.joiningCondition
   })
     .then(listCreated => {
-      utility.callApi(`featureUsage/updateCompany`, 'put', {
-        query: {companyId: req.body.companyId},
-        newPayload: { $inc: { segmentation_lists: 1 } },
-        options: {}
-      })
-        .then(updated => {
-          callback(null, 'success')
-        })
-        .catch(error => callback(error))
+      updateCompanyUsage(req.user.companyId, 'segmentation_lists', 1)
     })
     .catch(error => callback(error))
 }
@@ -284,17 +277,7 @@ exports.deleteList = function (req, res) {
 function deleteListFromLocal (req, callback) {
   utility.callApi(`lists/${req.params.id}`, 'delete', {})
     .then(result => {
-      utility.callApi(`featureUsage/updateCompany`, 'put', {
-        query: {companyId: req.user.companyId},
-        newPayload: { $inc: { segmentation_lists: -1 } },
-        options: {}
-      })
-        .then(updated => {
-          callback(null, {status: 'success', payload: result})
-        })
-        .catch(error => {
-          callback(error)
-        })
+      updateCompanyUsage(req.user.companyId, 'segmentation_lists', -1)
     })
     .catch(error => {
       callback(error)

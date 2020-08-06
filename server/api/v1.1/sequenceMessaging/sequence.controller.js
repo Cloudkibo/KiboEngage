@@ -5,6 +5,7 @@ const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/sequenceMessaging/sequence.controller.js'
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.allMessages = function (req, res) {
   SequenceDatalayer.genericFindForSequenceMessages({ sequenceId: req.params.id })
@@ -113,6 +114,7 @@ exports.deleteSequence = function (req, res) {
       }
       SequenceDatalayer.deleteSequence(req.params.id)
         .then(result => {
+          updateCompanyUsage(req.user.companyId, 'broadcast_sequences', -1)
           SequenceDatalayer.deleteManySequenceSubscribers({ sequenceId: req.params.id })
             .then(result => {
               SequenceMessageQueueDatalayer.deleteMany({ sequenceId: req.params.id })
@@ -176,6 +178,7 @@ exports.createSequence = function (req, res) {
               }
               SequenceDatalayer.createSequence(sequencePayload)
                 .then(sequenceCreated => {
+                  updateCompanyUsage(companyUser.companyId._id, 'broadcast_sequences', 1)
                   utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}})
                     .then(result => {
                       require('./../../../config/socketio').sendMessageToClient({

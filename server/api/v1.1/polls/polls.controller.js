@@ -8,11 +8,11 @@ const TAG = 'api/v1/polls/polls.controller.js'
 const utility = require('../utility')
 const notificationsUtility = require('../notifications/notifications.utility')
 const async = require('async')
-// const util = require('util')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
 const _ = require('lodash')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -197,6 +197,8 @@ exports.sendPollDirectly = function (req, res) {
 exports.deletePoll = function (req, res) {
   PollDataLayer.deleteForPolls(req.params.id)
     .then(poll => {
+      // update company usage
+      updateCompanyUsage(req.user.companyId, 'polls', -1)
       PollPageDataLayer.deleteForPollPage({pollId: req.params.id})
         .then(pollpages => {
           PollResponseDataLayer.deleteForPollResponse({pollId: req.params.id})
@@ -379,6 +381,8 @@ function createPoll (user, body, callback) {
   let pollPayload = PollLogicLayer.preparePollsPayload(user, body)
   PollDataLayer.createForPoll(pollPayload)
     .then(pollCreated => {
+      // update company usage
+      updateCompanyUsage(user.companyId, 'polls', 1)
       require('./../../../config/socketio').sendMessageToClient({
         room_id: user.companyId,
         body: {

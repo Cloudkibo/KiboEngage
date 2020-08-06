@@ -3,6 +3,7 @@ const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
 const callApi = require('../utility/index')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.allPolls = function (req, res) {
   dataLayer.allPolls()
@@ -169,6 +170,9 @@ exports.createPoll = function (req, res) {
   // save model to MongoDB
   dataLayer.createPoll(pollPayload)
     .then(pollCreated => {
+      if (!req.user.isSuperUser) {
+        updateCompanyUsage(req.user.companyId, 'polls_templates', 1)
+      }
       sendSuccessResponse(res, 200, pollCreated)
     })
     .catch(err => {
@@ -184,6 +188,9 @@ exports.createSurvey = function (req, res) {
   dataLayer.createSurveys(surveyPayload)
     .then(survey => {
       // after survey is created, create survey questions
+      if (!req.user.isSuperUser) {
+        updateCompanyUsage(req.user.companyId, 'survey_templates', 1)
+      }
       for (let question in req.body.questions) {
         let options = []
         options = req.body.questions[question].options
@@ -236,6 +243,7 @@ exports.createCategory = function (req, res) {
       }
       dataLayer.createCategory(categoryPayload)
         .then(categoryCreated => {
+          updateCompanyUsage(req.user.companyId, 'template_categories', 1)
           sendSuccessResponse(res, 200, categoryCreated)
         })
         .catch(err => {
@@ -299,6 +307,9 @@ exports.deletePoll = function (req, res) {
       }
       dataLayer.removePoll(req.params.id)
         .then(success => {
+          if (!req.user.isSuperUser) {
+            updateCompanyUsage(req.user.companyId, 'polls_templates', -1)
+          }
           sendSuccessResponse(res, 200)
         })
         .catch(err => {
@@ -318,6 +329,7 @@ exports.deleteCategory = function (req, res) {
       }
       dataLayer.removeCategory(req.params.id)
         .then(success => {
+          updateCompanyUsage(req.user.companyId, 'template_categories', -1)
           sendSuccessResponse(res, 200)
         })
         .catch(error => {
@@ -337,6 +349,9 @@ exports.deleteSurvey = function (req, res) {
       }
       dataLayer.removeSurvey(req.params.id)
         .then(success => {
+          if (!req.user.companyId) {
+            updateCompanyUsage(req.user.companyId, 'survey_templates', -1)
+          }
           sendSuccessResponse(res, 200)
         })
     })
@@ -444,12 +459,8 @@ exports.createBroadcast = function (req, res) {
                     dataLayer.createBroadcast(broadcastPayload)
                       .then(broadcastCreated => {
                         if (!req.user.isSuperUser) {
-                          callApi.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { broadcast_templates: 1 } }, options: {} })
-                            .then(update => {
-                            })
-                            .catch(err => {
-                              sendErrorResponse(res, 500, err)
-                            })
+                          // update company usage
+                          updateCompanyUsage(req.user.companyId, 'broadcast_templates', 1)
                         }
                         sendSuccessResponse(res, 200, broadcastCreated)
                       })
@@ -605,6 +616,9 @@ exports.deleteBroadcast = function (req, res) {
       }
       dataLayer.removeBroadcast(broadcast)
         .then(success => {
+          if (!req.user.isSuperUser) {
+            updateCompanyUsage(req.user.companyId, 'broadcast_templates', -1)
+          }
           return res.status(500).json({ status: 'success' })
         })
         .catch(error => {
