@@ -26,7 +26,8 @@ exports.verifyCredentials = (body) => {
 }
 exports.getTemplates = (body) => {
   return new Promise((resolve, reject) => {
-    resolve([])
+    let templates = logicLayer.prepareTemplates()
+    resolve(templates)
   })
 }
 exports.sendBroadcastMessages = (body) => {
