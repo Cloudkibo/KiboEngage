@@ -26,7 +26,8 @@ exports.verifyCredentials = (body) => {
 }
 exports.getTemplates = (body) => {
   return new Promise((resolve, reject) => {
-    resolve([])
+    let templates = logicLayer.prepareTemplates()
+    resolve(templates)
   })
 }
 exports.sendBroadcastMessages = (body) => {
@@ -78,9 +79,36 @@ function saveWhatsAppBroadcastMessages (resp, body, contact) {
     messageId: resp.sid
   }
   utility.callApi(`whatsAppBroadcastMessages`, 'post', dataToInsert, 'kiboengage') // fetch company user
-    .then(companyUser => {
+    .then(result => {
     })
     .catch(error => {
       logger.serverLog(TAG, `Failed to save broadcast messages ${error}`, 'error')
     })
+}
+exports.sendInvitationTemplate = (body) => {
+  return new Promise((resolve, reject) => {
+    let accountSid = body.whatsApp.accountSID
+    let authToken = body.whatsApp.accessToken
+    let client = require('twilio')(accountSid, authToken)
+    let requests = []
+    for (let j = 0; j < body.numbers.length; j++) {
+      requests.push(new Promise((resolve, reject) => {
+        setTimeout(() => {
+          client.messages
+            .create(logicLayer.prepareInvitationPayload(body, body.numbers[j]))
+            .then(response => {
+              resolve('success')
+            })
+            .catch(error => {
+              logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+            })
+        }, 1000)
+      }))
+    }
+    Promise.all(requests)
+      .then((responses) => {
+        resolve()
+      })
+      .catch((err) => reject(err))
+  })
 }
