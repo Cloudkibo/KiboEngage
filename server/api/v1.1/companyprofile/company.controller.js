@@ -88,6 +88,16 @@ exports.getKeys = function (req, res) {
     })
 }
 
+exports.updatePlan = function (req, res) {
+  utility.callApi('companyprofile/updatePlan', 'post', req.body, 'accounts', req.headers.authorization)
+    .then((result) => {
+      sendSuccessResponse(res, 200, result)
+    })
+    .catch((err) => {
+      sendErrorResponse(res, 500, err)
+    })
+}
+
 exports.setCard = function (req, res) {
   utility.callApi('companyprofile/setCard', 'post', req.body, 'accounts', req.headers.authorization)
     .then((result) => {

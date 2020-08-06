@@ -42,6 +42,10 @@ router.post('/setCard',
   auth.isAuthenticated(),
   controller.setCard)
 
+router.post('/updatePlan',
+  auth.isAuthenticated(),
+  controller.updatePlan)
+
 router.post('/updateRole', // update user role
   auth.isAuthenticated(),
   auth.doesPlanPermitsThisAction('team_members_management'),
