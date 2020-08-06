@@ -8,29 +8,34 @@ exports.messageStatus = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  let data = whatsAppMapper.handleInboundMessageStatus(req.body.provider, req.body.event)
-  if (data.status === 'delivered' || data.status === 'seen') {
-    let query = {
-      purpose: 'findOne',
-      match: { messageId: data.messageId }
-    }
-    callApi(`whatsAppBroadcastMessages/query`, 'post', query, 'kiboengage')
-      .then(message => {
-        if (message) {
-          updateCount(message, data)
-        } else {
-          callApi(`queue`, 'post', { platform: 'whatsApp', payload: data }, 'kiboengage')
-            .then(queue => {
-            })
-            .catch((err) => {
-              logger.serverLog(`Failed to create queue ${err}`, 'error')
-            })
+  whatsAppMapper.handleInboundMessageStatus(req.body.provider, req.body.event)
+    .then(data => {
+      if (data.status === 'delivered' || data.status === 'seen') {
+        let query = {
+          purpose: 'findOne',
+          match: { messageId: data.messageId }
         }
-      })
-      .catch((err) => {
-        logger.serverLog(TAG, `Failed to fetch whatsAppBroadcastMessages data ${err}`, 'error')
-      })
-  }
+        callApi(`whatsAppBroadcastMessages/query`, 'post', query, 'kiboengage')
+          .then(message => {
+            if (message) {
+              updateCount(message, data)
+            } else {
+              callApi(`queue`, 'post', { platform: 'whatsApp', payload: data }, 'kiboengage')
+                .then(queue => {
+                })
+                .catch((err) => {
+                  logger.serverLog(`Failed to create queue ${err}`, 'error')
+                })
+            }
+          })
+          .catch((err) => {
+            logger.serverLog(TAG, `Failed to fetch whatsAppBroadcastMessages data ${err}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to map whatsapp message status data ${JSON.stringify(req.body)} ${JSON.stringify(err)}`, 'error')
+    })
 }
 function updateCount (message, body) {
   let updateData = {
