@@ -1,10 +1,12 @@
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const config = require('../../../config/environment/index')
-const og = require('open-graph')
 const remote = require('remote-file-size')
 const fs = require('fs')
 const https = require('https')
 const path = require('path')
+const {openGraphScrapper} = require('../../global/utility')
+const logger = require('../../../components/logger')
+const TAG = 'api/twitterEvents/messengerPayload.js'
 
 const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, page) => {
   return new Promise((resolve, reject) => {
@@ -58,27 +60,27 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
     })
     let length = urls.length <= 10 ? urls.length : 10
     for (let i = 0; i < length; i++) {
-      og(urls[i].expanded_url, (err, meta) => {
-        if (err) {
-          console.log('error in fetching metdata')
-        }
-        if (meta && meta !== {} && meta.image && meta.title) {
-          console.log('metadata', meta)
-          gallery.push({
-            'title': meta.title,
-            'subtitle': 'kibopush.com',
-            'image_url': meta.image.url,
-            'buttons': buttons
-          })
-          if (i === length - 1) {
-            resolve(gallery)
+      openGraphScrapper(urls[i].expanded_url)
+        .then(meta => {
+          if (meta && meta !== {} && meta.ogTitle && meta.ogImage && meta.ogImage.url) {
+            gallery.push({
+              'title': meta.ogTitle,
+              'subtitle': 'kibopush.com',
+              'image_url': meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url,
+              'buttons': buttons
+            })
+            if (i === length - 1) {
+              resolve(gallery)
+            }
+          } else {
+            if (i === length - 1) {
+              resolve(gallery)
+            }
           }
-        } else {
-          if (i === length - 1) {
-            resolve(gallery)
-          }
-        }
-      })
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Error from open graph ${err}`)
+        })
     }
   })
 }

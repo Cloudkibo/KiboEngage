@@ -22,6 +22,18 @@ exports.getAllUsersPayload = {
     }
   }
 }
+exports.getUserSummary = {
+  properties: {
+    userId: {
+      type: 'string',
+      required: true
+    },
+    days: {
+      type: 'number',
+      required: true
+    }
+  }
+}
 exports.getAllPagesPayload = {
   properties: {
     last_id: {
@@ -139,6 +151,22 @@ exports.getAllSubscribersPayload = {
 exports.getPageUsersPayload = {
   properties: {
     pageId: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+exports.commentCapturePayload = {
+  properties: {
+    last_id: {
+      type: 'string',
+      required: true
+    },
+    number_of_records: {
+      type: 'number',
+      required: true
+    },
+    first_page: {
       type: 'string',
       required: true
     }

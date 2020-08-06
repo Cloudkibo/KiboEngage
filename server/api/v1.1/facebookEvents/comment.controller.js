@@ -110,6 +110,17 @@ function updateCommentsCount (body, verb, postId, commentCountForPost) {
       })
   }
 }
+function updateDeletedCount (postId, commentCountForPost) {
+  let newPayload = { $inc: { deletedComments: commentCountForPost } }
+  utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
+    .then(updated => {
+      logger.serverLog(TAG, `Deleted count updated ${JSON.stringify(updated)}`, 'updated')
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to update Deleted Count ${JSON.stringify(err)}`, 'error')
+    })
+}
+
 function sendReply (post, body) {
   let send = true
   send = commentCaptureLogicLayer.getSendValue(post, body)
@@ -173,13 +184,18 @@ function createSubscriber (post, body) {
         if (subscriber.awaitingCommentReply && subscriber.awaitingCommentReply.postId && subscriber.awaitingCommentReply.postId === post._id) {
           //  don't send reply
         } else {
-          send1stReplyToFacebook(post, body)
-          utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
-            .then(updated => {
-            })
-            .catch(err => {
-              logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
-            })
+          if (post.sendOnlyToNewSubscribers) {
+            // don't send reply if this option is set to true, we won't send if admin only wants to send comment
+            // capture to new  subscribers. This check will let us know. This check is available in UI.
+          } else {
+            send1stReplyToFacebook(post, body)
+            utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriber._id}, newPayload: {awaitingCommentReply: {sendSecondMessage: true, postId: post._id}}, options: {}})
+              .then(updated => {
+              })
+              .catch(err => {
+                logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+              })
+          }
         }
       }
     })
@@ -256,7 +272,7 @@ function editComment (body) {
 
 function deleteComment (body) {
   let value = body.entry[0].changes[0].value
-  let commentCountForPost = -1
+  let commentCountForPost = 1
   utility.callApi(`comment_capture/comments/query`, 'post', {commentFbId: value.comment_id})
     .then(comment => {
       comment = comment[0]
@@ -270,14 +286,14 @@ function deleteComment (body) {
         if (comment.childCommentCount > 0) {
           utility.callApi(`comment_capture/comments/delete`, 'post', {parentId: comment._id})
             .then(deleted => {
-              commentCountForPost = commentCountForPost - deleted.deletedCount
-              updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
+              commentCountForPost = commentCountForPost + deleted.n
+              updateDeletedCount(comment.postId, commentCountForPost)
             })
             .catch(err => {
               logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
             })
         } else {
-          updateCommentsCount(body, value.verb, comment.postId, commentCountForPost)
+          updateDeletedCount(comment.postId, commentCountForPost)
         }
         if (comment.parentId) {
           utility.callApi(`comment_capture/comments/update`, 'put', {query: { _id: comment.parentId }, newPayload: { $inc: { childCommentCount: -1 } }, options: {}})

@@ -1,7 +1,7 @@
 const LogicLayer = require('./logiclayer')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
-const TAG = 'api/v1.1/messengerEvents/delivery.controller'
+const TAG = 'api/v1.1/backdoor/backdoor.controller'
 const sortBy = require('sort-array')
 const DataLayer = require('./datalayer')
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
@@ -15,9 +15,8 @@ const { parse } = require('json2csv')
 const async = require('async')
 const AutopostingMessagesDataLayer = require('../autopostingMessages/autopostingMessages.datalayer')
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
-const { facebookApiCaller } = require('../../global/facebookApiCaller')
-// const helperApiCalls = require('./helperApiCalls')
-const needle = require('needle')
+const sgMail = require('@sendgrid/mail')
+const EmailTemplate = require('./emailTemplate')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
@@ -44,7 +43,8 @@ exports.getAllUsers = function (req, res) {
                         createdAt: user.createdAt,
                         pages: pages.length,
                         subscribers: subscribers.length,
-                        domain_email: user.domain_email
+                        domain_email: user.domain_email,
+                        companyId: user.companyId._id
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
@@ -71,42 +71,7 @@ exports.getAllUsers = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
     })
 }
-exports.getAllPages = function (req, res) {
-  let criterias = LogicLayer.getAllPagesCriteria(req.params.userid, req.body)
-  utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria) // fetch connected pages count
-    .then(count => {
-      utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria) // fetch connected pages
-        .then(pages => {
-          let pagesPayload = []
-          for (let i = 0; i < pages.length; i++) {
-            let subscribers = pages[i].subscribers.filter(subscriber => subscriber.isSubscribed === true)
-            pagesPayload.push({
-              _id: pages[i]._id,
-              pageId: pages[i].pageId,
-              pageName: pages[i].pageName,
-              userId: pages[i].userId,
-              pagePic: pages[i].pagePic,
-              connected: pages[i].connected,
-              pageUserName: pages[i].pageUserName,
-              isApproved: pages[i].isApproved,
-              likes: pages[i].likes,
-              subscribers: subscribers.length
-            })
-          }
-          let payload = {
-            pages: pagesPayload,
-            count: pagesPayload.length > 0 ? count[0].count : ''
-          }
-          sendSuccessResponse(res, 200, payload)
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch pages count ${JSON.stringify(error)}`)
-    })
-}
+
 exports.allLocales = function (req, res) {
   utility.callApi(`pages/query`, 'post', {_id: req.params.pageid, connected: true})
     .then(pages => {
@@ -125,72 +90,6 @@ exports.allLocales = function (req, res) {
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch company pages ${JSON.stringify(error)}`)
-    })
-}
-exports.allUserBroadcasts = function (req, res) {
-  let criteria = LogicLayer.allUserBroadcastsCriteria(req.params.userid, req.body)
-  DataLayer.countBroadcasts(criteria.countCriteria[0].$match)
-    .then(broadcastsCount => {
-      let aggregateMatch = criteria.finalCriteria[0].$match
-      let aggregateSort = criteria.finalCriteria[1].$sort
-      let aggregateSkip = criteria.finalCriteria[2].$skip
-      let aggregateLimit = criteria.finalCriteria[3].$limit
-      DataLayer.aggregateForBroadcasts(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
-        .then(broadcasts => {
-          let payload = {
-            broadcasts: broadcasts,
-            count: broadcasts.length > 0 ? broadcastsCount[0].count : ''
-          }
-          sendSuccessResponse(res, 200, payload)
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch broadcasts count ${JSON.stringify(error)}`)
-    })
-}
-exports.allUserPolls = function (req, res) {
-  let criteria = LogicLayer.allUserPollsCriteria(req.params.userid, req.body)
-  DataLayer.countPolls(criteria.countCriteria[0].$match)
-    .then(pollsCount => {
-      let aggregateMatch = criteria.finalCriteria[0].$match
-      let aggregateSort = criteria.finalCriteria[1].$sort
-      let aggregateSkip = criteria.finalCriteria[2].$skip
-      let aggregateLimit = criteria.finalCriteria[3].$limit
-      DataLayer.aggregateForPolls(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
-        .then(polls => {
-          let payload = {
-            polls: polls,
-            count: polls.length > 0 ? pollsCount[0].count : ''
-          }
-          sendSuccessResponse(res, 200, payload)
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to polls ${JSON.stringify(error)}`)
-        })
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch polls count ${JSON.stringify(error)}`)
-    })
-}
-exports.allUserSurveys = function (req, res) {
-  let criteria = LogicLayer.allUserPollsCriteria(req.params.userid, req.body, true)
-  DataLayer.countSurveys(criteria.countCriteria[0].$match)
-    .then(surveysCount => {
-      let aggregateMatch = criteria.finalCriteria[0].$match
-      let aggregateSort = criteria.finalCriteria[1].$sort
-      let aggregateSkip = criteria.finalCriteria[2].$skip
-      let aggregateLimit = criteria.finalCriteria[3].$limit
-      DataLayer.aggregateForSurveys(aggregateMatch, undefined, undefined, aggregateLimit, aggregateSort, aggregateSkip)
-        .then(surveys => {
-          let payload = {
-            surveys: surveys,
-            count: surveys.length > 0 ? surveysCount[0].count : ''
-          }
-          sendSuccessResponse(res, 200, payload)
-        })
     })
 }
 exports.getAllBroadcasts = function (req, res) {
@@ -585,19 +484,71 @@ exports.surveyDetails = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch survey ${JSON.stringify(error)}`)
     })
 }
+
+const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
+  let aggregateData = [
+    {$skip: skipRecords},
+    {$limit: LimitRecords},
+    { $lookup: {from: 'users', localField: 'userId', foreignField: '_id', as: 'userId'} },
+    { $unwind: '$userId' }
+  ]
+  utility.callApi(`pages/aggregate`, 'post', aggregateData)
+    .then(pages => {
+      logger.serverLog(TAG, `pages.length in _getPageData ${(pages.length)} `)
+      if (pages.length > 0) {
+        downloadCSV(pages, req)
+          .then(result => {
+            data = data.concat(result)
+            skipRecords = skipRecords + 100
+            _getPageData(res, req, skipRecords, LimitRecords, data)
+          }).catch(error => {
+            sendErrorResponse(res, 500, `Failed to download CSV DATA ${JSON.stringify(error)}`)
+          })
+      } else {
+        var info = data
+        var keys = []
+        var val = info[0]
+        for (var k in val) {
+          var subKey = k
+          keys.push(subKey)
+        }
+        const opts = { keys }
+        try {
+          const csv = parse(info, opts)
+          sgMail.setApiKey(config.SENDGRID_API_KEY)
+          var dataToSend = new Buffer(csv)
+          let attachment = dataToSend.toString('base64')
+          const msg = {
+            to: req.user.email,
+            from: 'support@cloudkibo.com',
+            subject: 'KiboPush Data',
+            text: 'Here is your requested KiboPush Data',
+            attachments: [
+              {
+                content: attachment,
+                filename: 'KiboPushData.csv',
+                type: 'application/csv',
+                disposition: 'attachment'
+              }
+            ]
+          }
+          sgMail.send(msg).catch(err => {
+            console.log(JSON.stringify(err))
+          })
+        } catch (err) {
+          logger.serverLog(TAG, `error at parse ${JSON.stringify(err)}`, 'error')
+        }
+      }
+    }).catch(error => {
+      sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
+    })
+}
 exports.uploadFile = function (req, res) {
   utility.callApi(`user/query`, 'post', {})
     .then(users => {
-      utility.callApi(`pages/query`, 'post', {})
-        .then(pages => {
-          downloadCSV(pages, req)
-            .then(result => {
-              sendSuccessResponse(res, 200, result.data)
-            })
-        })
-        .catch(error => {
-          sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
-        })
+      let data = []
+      _getPageData(res, req, 0, 100, data)
+      sendSuccessResponse(res, 200, {})
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to fetch users ${JSON.stringify(error)}`)
@@ -609,7 +560,6 @@ exports.AllSubscribers = function (req, res) {
     .then(companyuser => {
       utility.callApi(`subscribers/query`, 'post', {pageId: req.params.pageid, completeInfo: true}) // fetch subscribers of company
         .then(subscribers => {
-          console.log('subscribers in All subscribers', subscribers)
           downloadSubscribersData(subscribers)
             .then(result => {
               sendSuccessResponse(res, 200, result.data)
@@ -666,190 +616,294 @@ function downloadSubscribersData (subscribers) {
   })
 }
 
+const _findBroadcasts = (pageId, next) => {
+  DataLayer.findBroadcasts({segmentationPageIds: pageId})
+    .then(broadcasts => {
+      next(null, broadcasts)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _findSurvey = (pageId, next) => {
+  DataLayer.findSurvey({segmentationPageIds: pageId})
+    .then(surveys => {
+      next(null, surveys)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
+
+const _findPolls = (pageId, next) => {
+  DataLayer.findPolls({segmentationPageIds: pageId})
+    .then(polls => {
+      next(null, polls)
+    })
+    .catch(err => {
+      next(err)
+    })
+}
 function downloadCSV (pages, req) {
   return new Promise(function (resolve, reject) {
     let usersPayload = []
+    let requests = []
     for (let i = 0; i < pages.length; i++) {
       if (pages[i].userId) {
-        utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true, completeInfo: true})
-          .then(subscribers => {
-            DataLayer.findBroadcasts({pageIds: pages[i].pageId})
-              .then(broadcasts => {
-                DataLayer.findSurvey({pageIds: pages[i].pageId})
-                  .then(surveys => {
-                    DataLayer.findPolls({pageIds: pages[i].pageId})
-                      .then(polls => {
-                        usersPayload.push({
-                          Page: pages[i].pageName,
-                          isConnected: pages[i].connected,
-                          Name: pages[i].userId.name,
-                          Gender: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.gender : '',
-                          Email: pages[i].userId.email,
-                          Locale: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.locale : '',
-                          CreatedAt: pages[i].userId.createdAt,
-                          Likes: pages[i].likes,
-                          Subscribers: subscribers && subscribers.length > 0 ? subscribers.length : 0,
-                          Broadcasts: broadcasts && broadcasts.length > 0 ? broadcasts.length : 0,
-                          Surveys: surveys && surveys.length > 0 ? surveys.length : 0,
-                          Polls: polls && polls.length > 0 ? polls.length : 0
-                        })
-                        if (i === pages.length - 1) {
-                          var info = usersPayload
-                          var keys = []
-                          var val = info[0]
+        requests.push(
+          utility.callApi(`subscribers/query`, 'post', {pageId: pages[i]._id, isEnabledByPage: true, isSubscribed: true, completeInfo: true})
+            .then(subscribers => {
+              return new Promise((resolve, reject) => {
+                async.parallelLimit([
+                  _findBroadcasts.bind(null, pages[i].pageId),
+                  _findSurvey.bind(null, pages[i].pageId),
+                  _findPolls.bind(null, pages[i].pageId)
+                ], 10, function (err, results) {
+                  if (err) {
+                    logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(err)}`, 'error')
+                  } else {
+                    let broadcasts = results[0]
+                    let surveys = results[1]
+                    let polls = results[2]
+                    usersPayload.push({
+                      Page: pages[i].pageName,
+                      isConnected: pages[i].connected,
+                      Name: pages[i].userId.name,
+                      Gender: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.gender : '',
+                      Email: pages[i].userId.email,
+                      Locale: pages[i].userId.facebookInfo ? pages[i].userId.facebookInfo.locale : '',
+                      CreatedAt: pages[i].userId.createdAt,
+                      Likes: pages[i].likes,
+                      Subscribers: subscribers && subscribers.length > 0 ? subscribers.length : 0,
+                      Broadcasts: broadcasts && broadcasts.length > 0 ? broadcasts.length : 0,
+                      Surveys: surveys && surveys.length > 0 ? surveys.length : 0,
+                      Polls: polls && polls.length > 0 ? polls.length : 0
+                    })
+                  }
+                  resolve('success')
+                  // json2csv({ data: info, fields: keys }, function (err, csv) {
+                  //   if (err) {
+                  //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`, 'error')
+                  //   }
+                  //   resolve({data: csv})
+                  // })
+                })
+              })
 
-                          for (var k in val) {
-                            var subKey = k
-                            keys.push(subKey)
-                          }
-                          const opts = { keys }
-                          try {
-                            const csv = parse(info, opts)
-                            resolve({data: csv})
-                          } catch (err) {
-                            console.error('error at parse', err)
-                          }
-                          // json2csv({ data: info, fields: keys }, function (err, csv) {
-                          //   if (err) {
-                          //     console.log('error at exporting', err)
-                          //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`, 'error')
-                          //   }
-                          //   console.log('csv in', csv)
-                          //   resolve({data: csv})
-                          // })
-                        }
-                      })
-                      .catch(error => {
-                        logger.serverLog(TAG, `Failed to fetch polls ${JSON.stringify(error)}`, 'error')
-                      })
-                  })
-                  .catch(error => {
-                    logger.serverLog(TAG, `Failed to fetch surveys ${JSON.stringify(error)}`, 'error')
-                  })
-              })
-              .catch(error => {
-                logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`, 'error')
-              })
-          })
-          .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
-          })
+                .catch(error => {
+                  logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`, 'error')
+                })
+            })
+            .catch(error => {
+              logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
+            })
+        )
       }
     }
+    Promise.all(requests)
+      .then(results => {
+        resolve(usersPayload)
+      })
   })
 }
-exports.sendEmail = function (req, res) {
-  var days = 7
-  utility.callApi(`user/query`, 'post', {})
-    .then(users => {
-      users.forEach((user) => {
-        let data = {
-          subscribers: 0,
-          polls: 0,
-          broadcasts: 0,
-          surveys: 0,
-          liveChat: 0
-        }
-        utility.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email})
-          .then(companyUser => {
-            utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true, completeInfo: true})
-              .then(subs => {
-                if (subs.length > 1) {
-                  let subscriberAggregate = [
-                    {
-                      $match: {
-                        $and: [
-                          {'datetime': {
-                            $gte: new Date(
-                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                            $lt: new Date(
-                              (new Date().getTime()))
-                          }
-                          }, {companyId: companyUser.companyId},
-                          {isEnabledByPage: true}, {isSubscribed: true}, {completeInfo: true}]
-                      }}
-                  ]
-                  utility.callApi(`subscribers/aggregate`, 'post', subscriberAggregate)
-                    .then(subscribers => {
-                      data.subscribers = subscribers.length
-                      // if (subscribers.length > 50) {
-                      DataLayer.aggregateForPolls({
-                        $and: [
-                          {'datetime': {
-                            $gte: new Date(
-                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                            $lt: new Date(
-                              (new Date().getTime()))
-                          }
-                          }, {companyId: companyUser.companyId}]
-                      }, undefined, undefined, undefined, undefined, undefined)
-                        .then(polls => {
-                          data.polls = polls.length
-                        })
-                      DataLayer.aggregateForSurveys({
-                        $and: [
-                          {'datetime': {
-                            $gte: new Date(
-                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                            $lt: new Date(
-                              (new Date().getTime()))
-                          }
-                          }, {companyId: companyUser.companyId}]
-                      }, undefined, undefined, undefined, undefined, undefined)
-                        .then(surveys => {
-                          data.surveys = surveys.length
-                        })
-                      DataLayer.aggregateForBroadcasts({
-                        $and: [
-                          {'datetime': {
-                            $gte: new Date(
-                              (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
-                            $lt: new Date(
-                              (new Date().getTime()))
-                          }
-                          }, {companyId: companyUser.companyId}]
-                      }, undefined, undefined, undefined, undefined, undefined)
-                        .then(broadcasts => {
-                          let sendgrid = require('sendgrid')(config.sendgrid.username,
-                            config.sendgrid.password)
 
-                          let email = new sendgrid.Email({
-                            to: user.email,
-                            from: 'support@cloudkibo.com',
-                            subject: 'KiboPush: Weekly Summary',
-                            text: 'Welcome to KiboPush'
-                          })
-                          email.setHtml('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html data-editor-version="2" class="sg-campaigns" xmlns="http://www.w3.org/1999/xhtml"> <head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/> <meta http-equiv="X-UA-Compatible" content="IE=Edge"/><!--[if (gte mso 9)|(IE)]> <xml> <o:OfficeDocumentSettings> <o:AllowPNG/> <o:PixelsPerInch>96</o:PixelsPerInch> </o:OfficeDocumentSettings> </xml><![endif]--><!--[if (gte mso 9)|(IE)]> <style type="text/css"> body{width: 600px;margin: 0 auto;}table{border-collapse: collapse;}table, td{mso-table-lspace: 0pt;mso-table-rspace: 0pt;}img{-ms-interpolation-mode: bicubic;}</style><![endif]--> <style type="text/css"> body, p, div{font-family: arial; font-size: 14px;}body{color: #000000;}body a{color: #1188E6; text-decoration: none;}p{margin: 0; padding: 0;}table.wrapper{width:100% !important; table-layout: fixed; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; -ms-text-size-adjust: 100%;}img.max-width{max-width: 100% !important;}.column.of-2{width: 50%;}.column.of-3{width: 33.333%;}.column.of-4{width: 25%;}@media screen and (max-width:480px){.preheader .rightColumnContent, .footer .rightColumnContent{text-align: left !important;}.preheader .rightColumnContent div, .preheader .rightColumnContent span, .footer .rightColumnContent div, .footer .rightColumnContent span{text-align: left !important;}.preheader .rightColumnContent, .preheader .leftColumnContent{font-size: 80% !important; padding: 5px 0;}table.wrapper-mobile{width: 100% !important; table-layout: fixed;}img.max-width{height: auto !important; max-width: 480px !important;}a.bulletproof-button{display: block !important; width: auto !important; font-size: 80%; padding-left: 0 !important; padding-right: 0 !important;}.columns{width: 100% !important;}.column{display: block !important; width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; margin-left: 0 !important; margin-right: 0 !important;}}</style> </head> <body> <center class="wrapper" data-link-color="#1188E6" data-body-style="font-size: 14px; font-family: arial; color: #000000; background-color: #ebebeb;"> <div class="webkit"> <table cellpadding="0" cellspacing="0" border="0" width="100%" class="wrapper" bgcolor="#ebebeb"> <tr> <td valign="top" bgcolor="#ebebeb" width="100%"> <table width="100%" role="content-container" class="outer" align="center" cellpadding="0" cellspacing="0" border="0"> <tr> <td width="100%"> <table width="100%" cellpadding="0" cellspacing="0" border="0"> <tr> <td><!--[if mso]> <center> <table><tr><td width="600"><![endif]--> <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width:600px;" align="center"> <tr> <td role="modules-container" style="padding: 0px 0px 0px 0px; color: #000000; text-align: left;" bgcolor="#ffffff" width="100%" align="left"> <table class="module preheader preheader-hide" role="module" data-type="preheader" border="0" cellpadding="0" cellspacing="0" width="100%" style="display: none !important; mso-hide: all; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0;"> <tr> <td role="module-content"> <p></p></td></tr></table> <table class="wrapper" role="module" data-type="image" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;"> <tr> <td style="font-size:6px;line-height:10px;padding:35px 0px 0px 0px;background-color:#ffffff;" valign="top" align="center"> <img class="max-width" border="0" style="display:block;color:#000000;text-decoration:none;font-family:Helvetica, arial, sans-serif;font-size:16px;" width="600" height="100" src="https://marketing-image-production.s3.amazonaws.com/uploads/63fe9859761f80dce4c7d46736baaa15ca671ce6533ec000c93401c7ac150bbec5ddae672e81ff4f6686750ed8e3fad14a60fc562df6c6fdf70a6ef40b2d9c56.png" alt="Logo"> </td></tr></table> <table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;"> <tr> <td style="padding:18px 0px 18px 0px;line-height:22px;text-align:inherit;" height="100%" valign="top" bgcolor=""> <h1 style="text-align: center;"><span style="color:#B7451C;"><span style="font-size:20px;"><span style="font-family:arial,helvetica,sans-serif;">KiboPush Weekly Report</span></span></span></h1> </td></tr></table> <table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;"> <tr> <td style="padding:30px 045px 30px 45px;line-height:22px;text-align:inherit;" height="100%" valign="top" bgcolor=""> <div>Hello ' + user.name + ',</div><div>&nbsp;</div><div>Hope you are doing great&nbsp;:)</div><div>&nbsp;</div><div>You have become an important part of our community. You have been very active on KiboPush. We are very pleased to share the weekly report of your activities.</div><div>&nbsp;</div><ul><li>New Subscribers =&gt; ' + data.subscribers + '</li><li>New Broadcasts =&gt; ' + data.broadcasts + '</li><li>New Surveys =&gt; ' + data.surveys + '</li><li>New Polls =&gt; ' + data.polls + '</li></ul><div>If you have any queries, you can send message to our <a href="https://www.facebook.com/kibopush/" style="background-color: rgb(255, 255, 255); font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; font-family: arial; font-size: 14px;">&nbsp;Facebook Page</a>. Our admins will get back to you. Or, you can join our <a href="https://www.facebook.com/groups/kibopush/">Facebook Community</a>.</div><div>&nbsp;</div><div>Thank you for your continuous support!</div><div>&nbsp;</div><div>Regards,</div><div>KiboPush Team</div><div>CloudKibo</div></td></tr></table> <table class="module" role="module" data-type="social" align="right" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;"> <tbody> <tr> <td valign="top" style="padding:10px 0px 30px 0px;font-size:6px;line-height:10px;background-color:#f5f5f5;"> <table align="right"> <tbody> <tr> <td style="padding: 0px 5px;"> <a role="social-icon-link" href="https://www.facebook.com/kibopush/" target="_blank" alt="Facebook" data-nolink="false" title="Facebook " style="-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;display:inline-block;background-color:#3B579D;"> <img role="social-icon" alt="Facebook" title="Facebook " height="30" width="30" style="height: 30px, width: 30px" src="https://marketing-image-production.s3.amazonaws.com/social/white/facebook.png"/> </a> </td><td style="padding: 0px 5px;"> <a role="social-icon-link" href="https://twitter.com/kibodeveloper" target="_blank" alt="Twitter" data-nolink="false" title="Twitter " style="-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;display:inline-block;background-color:#7AC4F7;"> <img role="social-icon" alt="Twitter" title="Twitter " height="30" width="30" style="height: 30px, width: 30px" src="https://marketing-image-production.s3.amazonaws.com/social/white/twitter.png"/> </a> </td></tr></tbody> </table> </td></tr></tbody> </table> </td></tr></table><!--[if mso]> </td></tr></table> </center><![endif]--> </td></tr></table> </td></tr></table> </td></tr></table> </div></center> </body></html>')
-                          sendgrid.send(email, function (err, json) {
-                            if (err) {
-                              logger.serverLog(TAG,
-                                `Internal Server Error on sending email : ${JSON.stringify(
-                                  err)}`, 'error')
-                            }
-                          })
-                        // }
-                        })
-                    })
-                    .catch(error => {
-                      logger.serverLog(TAG, `Failed to aggregate subscribers ${JSON.stringify(error)}`, 'error')
-                    })
+const _aggregateSubscribers = (data, next) => {
+  utility.callApi(`subscribers/query`, 'post', {isSubscribed: true, isEnabledByPage: true, completeInfo: true})
+    .then(subs => {
+      if (subs.length > 1) {
+        var days = 7
+        let subscriberAggregate = [
+          {
+            $match: {
+              $and: [
+                {'datetime': {
+                  $gte: new Date(
+                    (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+                  $lt: new Date(
+                    (new Date().getTime()))
                 }
-              })
-              .catch(error => {
-                logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
-              })
+                }, {companyId: data.companyUser.companyId},
+                {isEnabledByPage: true}, {isSubscribed: true}, {completeInfo: true}]
+            }}
+        ]
+        utility.callApi(`subscribers/aggregate`, 'post', subscriberAggregate)
+          .then(subscribers => {
+            data.subscribers = subscribers.length
+            next(null)
           })
-          .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch company user ${JSON.stringify(error)}`, 'error')
+          .catch(err => {
+            logger.serverLog(TAG, `Unable to aggregate subscribers ${JSON.stringify(err)}`)
+            next(err)
           })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Unable to query subscribers ${JSON.stringify(err)}`)
+      next(err)
+    })
+}
+
+const _aggregatePoll = (data, next) => {
+  var days = 7
+  DataLayer.aggregateForPolls({
+    $and: [
+      {'datetime': {
+        $gte: new Date(
+          (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+        $lt: new Date(
+          (new Date().getTime()))
+      }
+      }, {companyId: data.companyUser.companyId}]
+  }, undefined, undefined, undefined, undefined, undefined)
+    .then(polls => {
+      data.polls = polls.length
+      next(null)
+    })
+    .catch(err => {
+      logger.serverLog(`Unable to aggregate Polls ${err}`, err)
+      next(err)
+    })
+}
+const _aggregateSurvey = (data, next) => {
+  var days = 7
+  DataLayer.aggregateForSurveys({
+    $and: [
+      {'datetime': {
+        $gte: new Date(
+          (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+        $lt: new Date(
+          (new Date().getTime()))
+      }
+      }, {companyId: data.companyUser.companyId}]
+  }, undefined, undefined, undefined, undefined, undefined)
+    .then(surveys => {
+      data.surveys = surveys.length
+      next(null)
+    })
+    .catch(err => {
+      logger.serverLog(`Unable to aggregate Surveys ${err}`, err)
+      next(err)
+    })
+}
+const _aggregateBroadcast = (data, next) => {
+  var days = 7
+  DataLayer.aggregateForBroadcasts({
+    $and: [
+      {'datetime': {
+        $gte: new Date(
+          (new Date().getTime() - (days * 24 * 60 * 60 * 1000))),
+        $lt: new Date(
+          (new Date().getTime()))
+      }
+      }, {companyId: data.companyUser.companyId}]
+  }, undefined, undefined, undefined, undefined, undefined)
+    .then(broadcasts => {
+      data.broadcasts = broadcasts.length
+      next(null)
+    })
+    .catch(err => {
+      logger.serverLog(`Unable to aggregate Broadcasts ${err}`, err)
+      next(err)
+    })
+}
+
+function calculateSummary (messages, item, callback) {
+  logger.serverLog(TAG, `foreach ${JSON.stringify(item.email)}`)
+  utility.callApi(`companyUser/query`, 'post', {domain_email: item.domain_email})
+    .then(companyUser => {
+      let data = {
+        subscribers: 0,
+        polls: 0,
+        broadcasts: 0,
+        surveys: 0,
+        liveChat: 0,
+        user: item,
+        companyUser: companyUser
+      }
+      async.series([
+        _aggregateSubscribers.bind(null, data),
+        _aggregatePoll.bind(null, data),
+        _aggregateBroadcast.bind(null, data),
+        _aggregateSurvey.bind(null, data)
+      ], function (err) {
+        if (err) {
+          callback(err)
+        } else {
+          let message = {
+            to: item.email,
+            from: 'support@cloudkibo.com',
+            subject: 'KiboPush: Weekly Summary',
+            text: 'Welcome to KiboPush'
+          }
+          logger.serverLog(`summary for ${item.domain_email} - Subscribers:${data.subscribers}, Polls:${data.polls}, Surveys:${data.surveys}, Broadcasts: ${data.broadcasts}`)
+          message.html = EmailTemplate.getWeeklyUserEmail(item.name, data)
+          messages.push(message)
+          callback()
+        }
       })
     })
-    .catch(error => {
-      logger.serverLog(TAG, `Failed to fetch users ${JSON.stringify(error)}`, 'error')
+    .catch(err => {
+      callback(err)
     })
-  return res.status(200)
-    .json({status: 'success'})
 }
+exports.weeklyEmail = function (req, res) {
+  let countQuery = [
+    { $match: {isSuperUser: true} },
+    { $group: {_id: null, count: { $sum: 1 }} }
+  ]
+  const limit = 5
+  let count = 0
+  let match = {
+    isSuperUser: true
+  }
+  utility.callApi(`user/aggregate`, 'post', countQuery)
+    .then(result => {
+      if (result[0]) {
+        sendEmail(match, limit, count, result[0].count, res)
+      } else {
+        logger.serverLog('Unable to get count result')
+      }
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, `Failed to get users count ${JSON.stringify(err)}`)
+    })
+}
+
+function sendEmail (match, limit, count, totalCount, res) {
+  var criteria = [{$match: match}, {$limit: limit}]
+  utility.callApi(`user/aggregate`, 'post', criteria)
+    .then(users => {
+      logger.serverLog('Users', users.length)
+      let userData = users
+      let messages = []
+      if (userData) {
+        async.each(users, calculateSummary.bind(null, messages), function (err) {
+          if (err) {
+            logger.serverLog(`Unable to calculate weekly summary ${err}`, 'error')
+          } else {
+            sgMail.setApiKey(config.SENDGRID_API_KEY)
+            sgMail.send(messages).then(() => {
+              logger.serverLog(TAG, `${JSON.stringify(match)}, ${limit}, ${count}, ${totalCount}`)
+              count = count + users.length
+              if (count < totalCount) {
+                match = {$and: [{isSuperUser: true}, {_id: {$gt: users[users.length - 1]._id}}]}
+                sendEmail(match, limit, count, totalCount, res)
+              } else {
+                return sendSuccessResponse(res, 200, 'success')
+              }
+            }).catch(error => {
+              sendErrorResponse(res, 500, `Failed to send weekly email ${JSON.stringify(error)}`)
+            })
+          }
+        })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch users ${err}`, 'error')
+    })
+}
+
 exports.fetchAutopostingDetails = function (req, res) {
   const criteria = LogicLayer.getCriteriasForAutopostingByType(req)
   const postCriteria = LogicLayer.getFbPostsCriteria(req)
@@ -1009,100 +1063,6 @@ exports.fetchAutopostingDetails = function (req, res) {
     }
   })
 }
-exports.getPagePermissions = function (req, res) {
-  let recentPageCriteria = [
-    {$match: {pageId: req.params.id}},
-    {$sort: {_id: -1}},
-    {$limit: 1},
-    { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
-    { '$unwind': '$user' }
-  ]
-  utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
-    .then(page => {
-      page = page[0]
-      if (page) {
-        utility.callApi(`user/query`, 'post', {email: 'anisha@cloudkibo.com'}, 'accounts', req.headers.authorization)
-          .then(user => {
-            user = user[0]
-            let appLevelPermissions = {
-              email: false,
-              manage_pages: false,
-              pages_show_list: false,
-              publish_pages: false,
-              pages_messaging: false,
-              pages_messaging_phone_number: false,
-              pages_messaging_subscriptions: false,
-              public_profile: false
-            }
-            let pageLevelPermissions = {
-              subscription_messaging: 'Not Applied'
-            }
-            async.parallelLimit([
-              function (callback) {
-                facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${user.facebookInfo.fbToken}`, 'get', {})
-                  .then(response => {
-                    logger.serverLog(TAG, `response from debug token ${response.body}`)
-                    if (response.body && response.body.data && response.body.data.scopes) {
-                      if (response.body.data.scopes.length > 0) {
-                        for (let i = 0; i < response.body.data.scopes.length; i++) {
-                          appLevelPermissions[`${response.body.data.scopes[i]}`] = true
-                          if (i === response.body.data.scopes.length - 1) {
-                            callback(null, appLevelPermissions)
-                          }
-                        }
-                      } else {
-                        callback(null, appLevelPermissions)
-                      }
-                    } else {
-                      callback(response.body.error)
-                    }
-                  })
-                  .catch(err => {
-                    callback(err)
-                  })
-              },
-              function (callback) {
-                facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
-                  .then(response => {
-                    logger.serverLog(TAG, `response from messaging_feature_review ${response.body}`)
-                    if (response.body && response.body.data) {
-                      if (response.body.data.length > 0) {
-                        for (let i = 0; i < response.body.data.length; i++) {
-                          pageLevelPermissions[`${response.body.data[i].feature}`] = response.body.data[i].status
-                          if (i === response.body.data.length - 1) {
-                            callback(null, pageLevelPermissions)
-                          }
-                        }
-                      } else {
-                        callback(null, pageLevelPermissions)
-                      }
-                    } else {
-                      callback(response.body.error)
-                    }
-                  })
-                  .catch(err => {
-                    callback(err)
-                  })
-              }
-            ], 10, function (err, results) {
-              if (err) {
-                sendErrorResponse(res, 500, `Failed to fetch page permissions ${JSON.stringify(err)}`)
-              } else {
-                sendSuccessResponse(res, 200, {appLevelPermissions: results[0], pageLevelPermissions: results[1]})
-              }
-            })
-          })
-          .catch(error => {
-            sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
-          })
-      } else {
-        sendErrorResponse(res, 500, `Failed to fetch permissions ${JSON.stringify({message: `This page is not connected by any User. So, we cannot fetch this page's permissions`})}`)
-      }
-    })
-    .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
-    })
-}
 
 exports.fetchUniquePages = (req, res) => {
   let aggregation = [
@@ -1162,7 +1122,6 @@ exports.fetchUniquePages = (req, res) => {
         for (let i = 0; i < uniquePages.length; i++) {
           utility.callApi(`pages/query`, 'post', {pageId: uniquePages[i].pageId, 'connected': true}, 'accounts', req.headers.authorization)
             .then(page => {
-              // console.log('found page owner', page[0].userId)
               pageOwnersFound += 1
               if (page[0]) {
                 uniquePages[i].connectedBy = page[0].userId
@@ -1170,7 +1129,6 @@ exports.fetchUniquePages = (req, res) => {
               if (pageOwnersFound === uniquePages.length) {
                 utility.callApi(`pages/aggregate`, 'post', countAggregation, 'accounts', req.headers.authorization)
                   .then(count => {
-                    // console.log('countAggregation result', count)
                     return res.status(200).json({
                       status: 'success',
                       payload: {
@@ -1212,581 +1170,8 @@ exports.fetchUniquePages = (req, res) => {
       })
     })
 }
-exports.fetchPageUsers = (req, res) => {
-  async.parallelLimit([
-    function (callback) {
-      let recentPageCriteria = [
-        {$match: {pageId: req.body.pageId}},
-        {$sort: {_id: -1}},
-        {$limit: 1},
-        { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
-        { '$unwind': '$user' }
-      ]
-      utility.callApi(`pages/aggregate`, 'post', recentPageCriteria, 'accounts', req.headers.authorization)
-        .then(connectedPage => {
-          connectedPage = connectedPage[0]
-          facebookApiCaller('v4.0', `${req.body.pageId}?fields=access_token&access_token=${connectedPage.user.facebookInfo.fbToken}`, 'get', {})
-            .then(response => {
-              if (response.body && response.body.access_token) {
-                facebookApiCaller('v4.0', `${req.body.pageId}/roles?access_token=${response.body.access_token}`, 'get', {})
-                  .then(resp => {
-                    if (resp.body && resp.body.data) {
-                      callback(null, resp.body.data)
-                    } else if (resp.body && resp.body.error) {
-                      callback(null, [])
-                    }
-                  })
-                  .catch(err => {
-                    callback(err)
-                  })
-              } else if (response.body && response.body.error) {
-                callback(null, [])
-              }
-            })
-            .catch(err => {
-              callback(err)
-            })
-        })
-        .catch(err => {
-          callback(err)
-        })
-    }, function (callback) {
-      let criterias = LogicLayer.getPageUsersCriteria(req.body)
-      utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria, 'accounts', req.headers.authorization)
-        .then(pagesCount => {
-          utility.callApi(`pages/aggregate`, 'post', criterias.finalCriteria, 'accounts', req.headers.authorization)
-            .then(pageUsers => {
-              callback(null, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
-            })
-            .catch(err => {
-              sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
-            })
-        })
-        .catch(err => {
-          sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
-        })
-    }
-  ], 10, function (err, results) {
-    if (err) {
-      sendErrorResponse(res, 500, `Failed to fetch page users ${err}`)
-    } else {
-      getAdminedData(results[0], results[1])
-        .then(result => {
-          if (req.body.admin_filter === true) {
-            result.pageUsers = result.pageUsers.filter((c) => c.admin === true)
-            result.count = result.pageUsers.length
-          } else if (req.body.admin_filter === false) {
-            result.pageUsers = result.pageUsers.filter((c) => c.admin === false)
-            result.count = result.pageUsers.length
-          }
-          sendSuccessResponse(res, 200, {count: result.count, pageUsers: result.pageUsers})
-        })
-    }
-  })
-}
-
-function getAdminedData (fbRoles, localDataFromDB) {
-  return new Promise(function (resolve, reject) {
-    let roles = []
-    if (fbRoles.length > 0) {
-      roles = fbRoles.map(role => role.name)
-    }
-    let localData = localDataFromDB.pageUsers
-    if (localData.length > 0) {
-      for (let i = 0; i < localData.length; i++) {
-        if (localData[i].user.facebookInfo && roles.indexOf(localData[i].user.facebookInfo.name) > -1) {
-          localData[i].admin = true
-        } else {
-          localData[i].admin = false
-        }
-        if (i === localData.length - 1) {
-          resolve({count: localDataFromDB.count, pageUsers: localData})
-        }
-      }
-    } else {
-      resolve({count: 0, pageUsers: []})
-    }
-  })
-}
-
-exports.fetchPageOwners = (req, res) => {
-  let aggregation = [
-    {
-      '$match': {'pageId': req.params.pageId}
-    },
-    {
-      '$lookup': {
-        from: 'users',
-        localField: 'userId',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    {
-      '$unwind': '$user'
-    },
-    {
-      '$group': {
-        '_id': '$pageId',
-        'users': {'$addToSet': '$user'}
-      }
-    },
-    {
-      '$project': {
-        '_id': 0,
-        'pageId': '$_id',
-        'users': 1
-      }
-    }
-  ]
-  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
-    .then(pageOwners => {
-      return res.status(200).json({
-        status: 'success',
-        payload: pageOwners[0].users
-
-      })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch page owners for page ${req.params.pageId} ${err}`
-      })
-    })
-}
-
-exports.fetchPageTags = (req, res) => {
-  let aggregation = [
-    {
-      '$match': {'pageId': req.params.pageId}
-    },
-    {
-      '$lookup': {
-        from: 'tags',
-        localField: '_id',
-        foreignField: 'pageId',
-        as: 'tag'
-      }
-    },
-    {
-      '$unwind': '$tag'
-    },
-    {
-      '$group': {
-        '_id': '$pageId',
-        'pageName': {'$first': '$pageName'},
-        'accessToken': {'$first': '$accessToken'},
-        'tags': {'$push': '$tag'}
-      }
-    },
-    {
-      '$project': {
-        '_id': 0,
-        'pageId': '$_id',
-        'pageName': 1,
-        'tags': 1,
-        'accessToken': 1
-      }
-    }
-  ]
-  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
-    .then(kiboPageTags => {
-      if (kiboPageTags && kiboPageTags[0]) {
-        needle.get(
-          `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${kiboPageTags[0].accessToken}`,
-          (err, resp) => {
-            if (err) {
-              return res.status(500).json({
-                status: 'failed',
-                description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
-              })
-            } else {
-              console.log('fbPageTags', resp.body)
-              return res.status(200).json({
-                status: 'success',
-                payload: {
-                  kiboPageTags: kiboPageTags[0].tags,
-                  fbPageTags: resp.body.data ? resp.body.data : []
-                }
-              })
-            }
-          })
-      } else {
-        let backupAggregation = [
-          {
-            '$match': {'pageId': req.params.pageId}
-          },
-          {
-            '$group': {
-              '_id': '$pageId',
-              'pageName': {'$first': '$pageName'},
-              'accessToken': {'$first': '$accessToken'}
-            }
-          },
-          {
-            '$project': {
-              '_id': 0,
-              'pageId': '$_id',
-              'pageName': 1,
-              'accessToken': 1
-            }
-          }
-        ]
-        utility.callApi(`pages/aggregate`, 'post', backupAggregation, 'accounts', req.headers.authorization)
-          .then(pageInfo => {
-            pageInfo = pageInfo[0]
-            needle.get(
-              `https://graph.facebook.com/v4.0/me/custom_labels?fields=name&access_token=${pageInfo.accessToken}`,
-              (err, resp) => {
-                if (err) {
-                  return res.status(500).json({
-                    status: 'failed',
-                    description: `Failed to fetch facebook labels for page ${req.params.pageId} ${err}`
-                  })
-                } else {
-                  console.log('fbPageTags', resp.body)
-                  return res.status(200).json({
-                    status: 'success',
-                    payload: {
-                      kiboPageTags: [],
-                      fbPageTags: resp.body.data ? resp.body.data : []
-                    }
-                  })
-                }
-              })
-          })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to fetch page info ${err}`
-            })
-          })
-      }
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch unique pages ${err}`
-      })
-    })
-}
-
-exports.fetchPageAdmins = (req, res) => {
-  let pageAggregation = [
-    {$match: {pageId: req.params.pageId}},
-    {$sort: {_id: -1}},
-    {$limit: 1}
-  ]
-  utility.callApi(`pages/aggregate`, 'post', pageAggregation, 'accounts', req.headers.authorization)
-    .then(page => {
-      page = page[0]
-      facebookApiCaller('v4.0', `${req.params.pageId}/roles?access_token=${page.accessToken}`, 'get', {})
-        .then(resp => {
-          if (resp.body && resp.body.data) {
-            return res.status(200).json({
-              status: 'success',
-              payload: resp.body.data
-            })
-          }
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch page admins ${err}`
-          })
-        })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch page ${err}`
-      })
-    })
-}
-
-exports.fetchSubscribersWithTags = (req, res) => {
-  let aggregation = [
-    {
-      '$match': {pageId: req.body.pageId}
-    },
-    {
-      '$match': {'userId': req.body.pageOwner}
-    },
-    {
-      '$lookup': {
-        from: 'subscribers',
-        localField: '_id',
-        foreignField: 'pageId',
-        as: 'subscriber'
-      }
-    },
-    {
-      '$unwind': '$subscriber'
-    },
-    {
-      '$group': {
-        '_id': '$pageId',
-        'pageName': {'$first': '$pageName'},
-        'subscribers': {'$addToSet': '$subscriber'},
-        'accessToken': {'$first': '$accessToken'},
-        'userId': {'$first': '$userId'}
-      }
-    },
-    {
-      '$project': {
-        '_id': 0,
-        'pageId': '$_id',
-        'pageName': 1,
-        'subscribers': 1,
-        'userId': 1,
-        'accessToken': 1
-      }
-    }
-  ]
-  utility.callApi(`pages/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
-    .then(pageSubscribers => {
-      if (pageSubscribers[0]) {
-        pageSubscribers[0].subscribers = pageSubscribers[0].subscribers.sort((a, b) => (a.firstName > b.firstName) ? 1 : ((b.lastName > a.lastName) ? -1 : 0))
-        console.log(`pageSubscribers ${JSON.stringify(pageSubscribers[0].subscribers)}`)
-        let subscriberData = []
-        let retrievedSubscriberData = 0
-        let pageTagsAggregation = [
-          {
-            '$match': {'pageId': req.body.pageId}
-          },
-          {
-            '$lookup': {
-              from: 'tags',
-              localField: '_id',
-              foreignField: 'pageId',
-              as: 'tag'
-            }
-          },
-          {
-            '$unwind': '$tag'
-          },
-          {
-            '$group': {
-              '_id': '$pageId',
-              'tags': {'$addToSet': '$tag'}
-            }
-          },
-          {
-            '$project': {
-              '_id': 0,
-              'pageId': '$_id',
-              'tags': 1
-            }
-          }
-        ]
-        utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
-          .then(pageTags => {
-            if (!pageTags || !pageTags[0]) {
-              let subscriberData = []
-              let statusFilterSucceeded = true
-              if (req.body.status) {
-                if (req.body.status === 'correct') {
-                  statusFilterSucceeded = true
-                } else {
-                  statusFilterSucceeded = false
-                }
-              }
-              if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
-                let foundOne = false
-                for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
-                  retrievedSubscriberData += 1
-                  let subscriberFullName = ''
-                  if (pageSubscribers[0].subscribers[i].firstName && pageSubscribers[0].subscribers[i].lastName) {
-                    subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
-                  }
-                  if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
-                    foundOne = true
-                    subscriberData.push({
-                      subscriber: pageSubscribers[0].subscribers[i],
-                      assignedTags: [],
-                      unassignedTags: []
-                    })
-                  }
-                }
-              } else {
-                return res.status(200).json({
-                  status: 'success',
-                  payload: []
-                })
-              }
-              if (subscriberData.length === 10 || retrievedSubscriberData === pageSubscribers[0].subscribers.length - ((req.body.pageNumber - 1) * 10)) {
-                subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
-                return res.status(200).json({
-                  status: 'success',
-                  payload: {
-                    subscriberData,
-                    totalSubscribers: pageSubscribers[0].subscribers.length
-                  }
-                })
-              }
-            } else {
-              console.log('pageTags found', pageTags)
-              let criteriaFulfilled = 0
-              let loopFinished = false
-              let subscriberDataPopulated = false
-              for (let i = (req.body.pageNumber - 1) * 10; subscriberData.length < 10 && i < pageSubscribers[0].subscribers.length; i++) {
-                console.log(`pageSubscribers[0].subscribers[${i}]`, pageSubscribers[0].subscribers[i])
-                let subscriberFullName = ''
-                if (pageSubscribers[0].subscribers[i].firstName && pageSubscribers[0].subscribers[i].lastName) {
-                  subscriberFullName = pageSubscribers[0].subscribers[i].firstName.toLowerCase() + ' ' + pageSubscribers[0].subscribers[i].lastName.toLowerCase()
-                }
-                if (subscriberFullName.includes(req.body.subscriberName.toLowerCase())) {
-                  console.log('subscriber name search', req.body.subscriberName)
-                  console.log('subscriber full name', pageSubscribers[0].subscribers[i].firstName + pageSubscribers[0].subscribers[i].lastName)
-                  criteriaFulfilled += 1
-                  needle.get(
-                    `https://graph.facebook.com/v4.0/${pageSubscribers[0].subscribers[i].senderId}/custom_labels?fields=name&access_token=${pageSubscribers[0].accessToken}`,
-                    (err, resp) => {
-                      if (err) {
-                        return res.status(500).json({
-                          status: 'failed',
-                          description: `Failed to fetch facebook labels for subscriber ${pageSubscribers[0].subscribers[i].senderId} ${err}`
-                        })
-                      } else {
-                        logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
-                        logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags[0])}`, 'debug')
-                        let fbTags = resp.body.data
-                        let kiboPageTags = pageTags[0].tags
-                        let assignedTags = []
-                        let unassignedTags = []
-                        let tagAssigned = false
-                        if (fbTags) {
-                          for (let j = 0; j < kiboPageTags.length; j++) {
-                            for (let k = 0; k < fbTags.length; k++) {
-                              if (fbTags[k].id === kiboPageTags[j].labelFbId) {
-                                assignedTags.push(kiboPageTags[j])
-                                tagAssigned = true
-                                break
-                              }
-                            }
-                            if (!tagAssigned) {
-                              if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                                if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
-                                  unassignedTags.push(kiboPageTags[j])
-                                }
-                              } else {
-                                unassignedTags.push(kiboPageTags[j])
-                              }
-                            } else {
-                              tagAssigned = false
-                            }
-                          }
-                        } else {
-                          for (let j = 0; j < kiboPageTags.length; j++) {
-                            if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                              if (kiboPageTags[j].tag === pageSubscribers[0].subscribers[i].gender) {
-                                unassignedTags.push(kiboPageTags[j])
-                              }
-                            } else {
-                              unassignedTags.push(kiboPageTags[j])
-                            }
-                          }
-                        }
-                        let filteredAssignedTags = assignedTags.filter(x => {
-                          let tagName = x.tag
-                          if (tagName.toLowerCase().includes(req.body.assignedTag.toLowerCase())) {
-                            return true
-                          }
-                        })
-                        let filteredUnassignedTags = unassignedTags.filter(x => {
-                          let tagName = x.tag
-                          if (tagName.toLowerCase().includes(req.body.unassignedTag.toLowerCase())) {
-                            return true
-                          }
-                        })
-                        let assignedTagsFound = false
-                        let unassignedTagsFound = false
-                        if (assignedTags.length > 0) {
-                          if (filteredAssignedTags.length > 0) {
-                            assignedTagsFound = true
-                          }
-                        } else {
-                          assignedTagsFound = true
-                        }
-
-                        if (unassignedTags.length > 0) {
-                          if (filteredUnassignedTags.length > 0) {
-                            unassignedTagsFound = true
-                          }
-                        } else {
-                          unassignedTagsFound = true
-                        }
-
-                        let statusFilterSucceeded = true
-                        if (req.body.status) {
-                          if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
-                            statusFilterSucceeded = true
-                          } else if (req.body.status === 'correct' && filteredUnassignedTags.length === 0) {
-                            statusFilterSucceeded = true
-                          } else {
-                            statusFilterSucceeded = false
-                          }
-                        }
-
-                        if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                          subscriberData.push({
-                            subscriber: pageSubscribers[0].subscribers[i],
-                            assignedTags: assignedTags,
-                            unassignedTags: unassignedTags
-                          })
-                        }
-                        retrievedSubscriberData += 1
-                        if (subscriberData.length >= 10 || (loopFinished && retrievedSubscriberData === criteriaFulfilled)) {
-                          if (!subscriberDataPopulated) {
-                            subscriberDataPopulated = true
-                            subscriberData = subscriberData.sort((a, b) => (a.subscriber.firstName > b.subscriber.firstName) ? 1 : ((b.subscriber.lastName > a.subscriber.lastName) ? -1 : 0))
-                            return res.status(200).json({
-                              status: 'success',
-                              payload: {
-                                subscriberData: subscriberData.slice(0, 10),
-                                totalSubscribers: pageSubscribers[0].subscribers.length
-                              }
-                            })
-                          }
-                        }
-                      }
-                    })
-                }
-              }
-              loopFinished = true
-              if (criteriaFulfilled === 0) {
-                return res.status(200).json({
-                  status: 'success',
-                  payload: []
-                })
-              }
-            }
-          })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to fetch page tags ${err}`
-            })
-          })
-      } else {
-        return res.status(200).json({
-          status: 'success',
-          payload: []
-        })
-      }
-    })
-    .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch unique pages ${err}`
-      })
-    })
-}
 
 exports.fetchCompanyInfo = (req, res) => {
-  console.log('fetching company info')
   let companyAggregation = [
     {
       '$match': {
@@ -1863,12 +1248,8 @@ exports.fetchCompanyInfo = (req, res) => {
   ]
   utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
     .then(companyOwnedPages => {
-      // console.log('companyAggregation done', companyOwnedPages)
-      console.log('companyInfo length', companyOwnedPages.length)
       let data = []
       for (let i = 0; i < companyOwnedPages.length; i++) {
-        // console.log(`companyInfo ${i} ${JSON.stringify(companyOwnedPages[i])}`)
-        // console.log('company loop', i)
         data.push({
           companyName: companyOwnedPages[i].companyName,
           numOfConnectedPages: companyOwnedPages[i].pages.filter(page => page.connected).length,
@@ -1878,7 +1259,6 @@ exports.fetchCompanyInfo = (req, res) => {
           owner: companyOwnedPages[i].user
         })
       }
-      console.log('company data done', data)
       return res.status(200).json({
         status: 'success',
         payload: {
@@ -1905,7 +1285,6 @@ exports.topPages = function (req, res) {
 }
 
 exports.fetchCompanyInfoNew = (req, res) => {
-  console.log('fetching company info')
   let companyAggregation = [
     {
       '$match': {
@@ -1939,7 +1318,6 @@ exports.fetchCompanyInfoNew = (req, res) => {
   utility.callApi(`companyprofile/aggregate`, 'post', companyAggregation, 'accounts', req.headers.authorization)
     .then(companies => {
       if (companies) {
-        console.log('companies retrieved', companies)
         let userRequests = []
         let pageRequests = []
         let companyUserRequests = []
@@ -2016,7 +1394,6 @@ exports.fetchCompanyInfoNew = (req, res) => {
                 numOfSubscribers: results[i + (results.length / 4) * 3].numOfSubscribers
               })
             }
-            console.log('company data done', data)
             return res.status(200).json({
               status: 'success',
               payload: {
@@ -2033,300 +1410,6 @@ exports.fetchCompanyInfoNew = (req, res) => {
         description: `Failed to fetch companies ${err}`
       })
     })
-}
-
-exports.fetchSubscribersWithTagsNew = (req, res) => {
-  let subscriberData = []
-  utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId, userId: req.body.pageOwner}, 'accounts', req.headers.authorization)
-    .then(pages => {
-      let page = pages[0]
-      req.body.page_id = page._id
-      req.body.accessToken = page.accessToken
-      getPageTags(req)
-        .then(pageTags => {
-          if (pageTags[0]) {
-            console.log('page tags exist')
-            return _fetchSubscribersWithTagsNew(req, res, 0, pageTags[0].tags, subscriberData)
-          } else {
-            console.log('page tags do not exist')
-            return _fetchSubscribersWithTagsNew(req, res, [], subscriberData)
-          }
-        })
-        .catch(err => {
-          return res.status(500).json({
-            status: 'failed',
-            description: `Failed to fetch page tags  ${err}`
-          })
-        })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch page  ${err}`
-      })
-    })
-}
-
-function get10PageSubscribers (req, skip) {
-  let aggregation = [
-    {
-      '$match': {pageId: req.body.page_id, completeInfo: true}
-    },
-    {
-      '$sort': {'_id': -1}
-    },
-    {
-      '$group': {
-        '_id': '$_id',
-        'firstName': {'$first': '$firstName'},
-        'lastName': {'$first': '$lastName'},
-        'senderId': {'$first': '$senderId'},
-        'gender': {'$first': '$gender'}
-      }
-    },
-    {
-      '$project': {
-        '_id': 1,
-        'firstName': 1,
-        'lastName': 1,
-        'fullName': { $concat: [ '$firstName', ' ', '$lastName' ] },
-        'senderId': 1,
-        'gender': 1
-      }
-    },
-    {
-      '$match': { fullName: { $regex: '.*' + req.body.subscriberName + '.*', $options: 'i' } }
-    },
-    {'$skip': skip || 0},
-    {'$limit': 10}
-  ]
-  return utility.callApi(`subscribers/aggregate`, 'post', aggregation, 'accounts', req.headers.authorization)
-}
-
-function getPageTags (req) {
-  let pageTagsAggregation = [
-    {
-      '$match': {pageId: req.body.pageId}
-    },
-    {
-      '$lookup': {
-        from: 'tags',
-        localField: '_id',
-        foreignField: 'pageId',
-        as: 'tag'
-      }
-    },
-    {
-      '$unwind': '$tag'
-    },
-    {
-      '$group': {
-        '_id': '$pageId',
-        'tags': {'$addToSet': '$tag'}
-      }
-    },
-    {
-      '$project': {
-        '_id': 0,
-        'pageId': '$_id',
-        'tags': 1
-      }
-    }
-  ]
-  return utility.callApi(`pages/aggregate`, 'post', pageTagsAggregation, 'accounts', req.headers.authorization)
-}
-
-function _fetchSubscribersWithTagsNew (req, res, skip, pageTags, results) {
-  console.log(`_fetchSubscribersWithTagsNew skip: ${skip} `)
-  get10PageSubscribers(req, (req.body.pageNumber - 1) * 10)
-    .then(subscribers => {
-      console.log('got subscribers', subscribers)
-      if (subscribers) {
-        filterSubscribers(req, res, subscribers, pageTags, results)
-          .then(filteredSubscribers => {
-            if (results.length < 10 && subscribers.length >= 10) {
-              console.log('recursion condition')
-              skip += 10
-              _fetchSubscribersWithTagsNew(req, res, skip, pageTags, results)
-            } else {
-              return res.status(200).json({
-                status: 'success',
-                payload: {
-                  subscriberData: results
-                }
-              })
-            }
-          })
-          .catch(err => {
-            return res.status(500).json({
-              status: 'failed',
-              description: `Failed to filter subscribers  ${err}`
-            })
-          })
-      } else {
-        return res.status(200).json({
-          status: 'success',
-          payload: {
-            subscriberData: []
-          }
-        })
-      }
-    })
-    .catch(err => {
-      return res.status(500).json({
-        status: 'failed',
-        description: `Failed to fetch subscribers  ${err}`
-      })
-    })
-}
-
-function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
-  return new Promise((resolve, reject) => {
-    if (pageTags.length === 0) {
-      let statusFilterSucceeded = true
-      if (req.body.status) {
-        if (req.body.status === 'correct') {
-          statusFilterSucceeded = true
-        } else {
-          statusFilterSucceeded = false
-        }
-      }
-      if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
-        for (let i = 0; subscriberData.length < 10 && i < subscribers.length; i++) {
-          retrievedSubscriberData += 1
-          subscriberData.push({
-            subscriber: subscribers[i],
-            assignedTags: [],
-            unassignedTags: []
-          })
-        }
-        resolve(subscriberData)
-      } else {
-        resolve([])
-      }
-    } else {
-      let requests = []
-      for (let i = 0; subscriberData.length < 10 && i < subscribers.length; i++) {
-        requests.push((callback) => {
-          needle.get(
-            `https://graph.facebook.com/v4.0/${subscribers[i].senderId}/custom_labels?fields=name&access_token=${req.body.accessToken}`,
-            (err, resp) => {
-              if (err) {
-                logger.serverLog(TAG, `Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`, 'debug')
-                callback(null, {
-                  subscriber: subscribers[i],
-                  assignedTags: [],
-                  unassignedTags: pageTags
-                })
-                // callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
-              } else {
-                logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
-                logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags)}`, 'debug')
-                let fbTags = resp.body.data
-                let kiboPageTags = pageTags
-                let assignedTags = []
-                let unassignedTags = []
-                let tagAssigned = false
-                if (fbTags) {
-                  for (let j = 0; j < kiboPageTags.length; j++) {
-                    for (let k = 0; k < fbTags.length; k++) {
-                      if (fbTags[k].id === kiboPageTags[j].labelFbId) {
-                        assignedTags.push(kiboPageTags[j])
-                        tagAssigned = true
-                        break
-                      }
-                    }
-                    if (!tagAssigned) {
-                      if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                        if (kiboPageTags[j].tag === subscribers[i].gender) {
-                          unassignedTags.push(kiboPageTags[j])
-                        }
-                      } else {
-                        unassignedTags.push(kiboPageTags[j])
-                      }
-                    } else {
-                      tagAssigned = false
-                    }
-                  }
-                } else {
-                  for (let j = 0; j < kiboPageTags.length; j++) {
-                    if (kiboPageTags[j].tag === 'male' || kiboPageTags[j].tag === 'female' || kiboPageTags[j].tag === 'other') {
-                      if (kiboPageTags[j].tag === subscribers[i].gender) {
-                        unassignedTags.push(kiboPageTags[j])
-                      }
-                    } else {
-                      unassignedTags.push(kiboPageTags[j])
-                    }
-                  }
-                }
-                let filteredAssignedTags = assignedTags.filter(x => {
-                  let tagName = x.tag
-                  if (tagName.toLowerCase().includes(req.body.assignedTag.toLowerCase())) {
-                    return true
-                  }
-                })
-                let filteredUnassignedTags = unassignedTags.filter(x => {
-                  let tagName = x.tag
-                  if (tagName.toLowerCase().includes(req.body.unassignedTag.toLowerCase())) {
-                    return true
-                  }
-                })
-                let assignedTagsFound = false
-                let unassignedTagsFound = false
-                if (assignedTags.length > 0) {
-                  if (filteredAssignedTags.length > 0) {
-                    assignedTagsFound = true
-                  }
-                } else {
-                  assignedTagsFound = true
-                }
-
-                if (unassignedTags.length > 0) {
-                  if (filteredUnassignedTags.length > 0) {
-                    unassignedTagsFound = true
-                  }
-                } else {
-                  unassignedTagsFound = true
-                }
-
-                let statusFilterSucceeded = true
-                if (req.body.status) {
-                  if (req.body.status === 'incorrect' && filteredUnassignedTags.length > 0) {
-                    statusFilterSucceeded = true
-                  } else if (req.body.status === 'correct' && filteredUnassignedTags.length === 0) {
-                    statusFilterSucceeded = true
-                  } else {
-                    statusFilterSucceeded = false
-                  }
-                }
-
-                if (assignedTagsFound && unassignedTagsFound && statusFilterSucceeded) {
-                  callback(null, {
-                    subscriber: subscribers[i],
-                    assignedTags: assignedTags,
-                    unassignedTags: unassignedTags
-                  })
-                } else {
-                  callback(null, null)
-                }
-              }
-            })
-        })
-      }
-      async.parallelLimit(requests, 30, function (err, results) {
-        if (err) {
-          reject(`Failed to fetch facebook tags ${err}`)
-        } else {
-          for (let i = 0; subscriberData.length < 10 && i < results.length; i++) {
-            if (results[i]) {
-              subscriberData.push(results[i])
-            }
-          }
-          resolve(subscriberData)
-        }
-      })
-    }
-  })
 }
 
 exports.usersListForViewAs = function (req, res) {
@@ -2349,4 +1432,380 @@ exports.integrationsData = function (req, res) {
     .catch(err => {
       sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
     })
+}
+exports.pageAnalytics = function (req, res) {
+  async.parallelLimit([
+    function (callback) {
+      let subscriberCriteria = LogicLayer.getPlatformCriteriaForSubscribers(req.body)
+      utility.callApi(`subscribers/aggregate`, 'post', subscriberCriteria)
+        .then(subscribers => {
+          callback(null, subscribers)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      let totalPagesCriteria = LogicLayer.getPlatformCriteriaForPages()
+      utility.callApi(`pages/aggregate`, 'post', totalPagesCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      let connectedPagesCriteria = LogicLayer.getPlatformCriteriaForPages('connected')
+      utility.callApi(`pages/aggregate`, 'post', connectedPagesCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      let messagesCriteria = LogicLayer.getPlatformCriteriaForMessages(req.body)
+      utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Error in getting page analytics ${JSON.stringify(err)}`)
+    } else {
+      let subscribers = results[0]
+      let totalPages = results[1]
+      let connectedPages = results[2]
+      let messagesSent = results[3]
+      let data = {
+        totalSubscribers: subscribers[0] ? subscribers[0].count : 0,
+        totalPages: totalPages[0] ? totalPages[0].count : 0,
+        totalConnectedPages: connectedPages[0] ? connectedPages[0].count : 0,
+        totalMessagesSent: messagesSent[0] ? messagesSent[0].count : 0
+      }
+      sendSuccessResponse(res, 200, data)
+    }
+  })
+}
+exports.getAllCommentCaptures = function (req, res) {
+  let criteria = LogicLayer.getAllCommentCapturesCriteria(req.body)
+  async.parallelLimit([
+    function (callback) {
+      utility.callApi(`comment_capture/aggregate`, 'post', criteria.countCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      utility.callApi(`comment_capture/aggregate`, 'post', criteria.finalCriteria)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Error in getting comment captures ${JSON.stringify(err)}`)
+    } else {
+      let count = results[0]
+      let data = {
+        commentCaptures: results[1],
+        count: count[0] ? count[0].count : 0
+      }
+      sendSuccessResponse(res, 200, data)
+    }
+  })
+}
+exports.getAllChatBots = function (req, res) {
+  let criteria = LogicLayer.getAllChatBotsCriteria(req.body)
+  async.parallelLimit([
+    function (callback) {
+      utility.callApi(`chatbots/query`, 'post', criteria.countCriteria, 'kibochat')
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      utility.callApi(`chatbots/query`, 'post', criteria.getCriteria, 'kibochat')
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Error in getting Chat bots ${JSON.stringify(err)}`)
+    } else {
+      let count = results[0]
+      let chatbots = results[1]
+      populatePage(chatbots)
+        .then(result => {
+          let data = {
+            chatbots: result,
+            count: count[0] ? count[0].count : 0
+          }
+          sendSuccessResponse(res, 200, data)
+        })
+        .catch((err) => {
+          sendErrorResponse(res, 500, '', `Error in getting Chat bots ${err}`)
+        })
+    }
+  })
+}
+function populatePage (chatbots) {
+  return new Promise(function (resolve, reject) {
+    async.each(chatbots, function (chatbot, next) {
+      utility.callApi(`pages/query`, 'post', {_id: chatbot.pageId})
+        .then(pages => {
+          chatbot.pageId = pages[0]
+          next()
+        })
+        .catch(err => {
+          next(err)
+        })
+    }, function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(chatbots)
+      }
+    })
+  })
+}
+exports.otherAnalytics = function (req, res) {
+  let queryForUser = {}
+  let queryForOthers = {}
+  if (req.body.days !== 'all') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - req.body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    queryForUser.createdAt = {$gte: startDate}
+    queryForOthers.datetime = {$gte: startDate}
+  }
+  async.parallelLimit([
+    function (callback) {
+      let query = [
+        {$match: queryForUser},
+        {$group: { _id: null, count: { $sum: 1 } }}
+      ]
+      utility.callApi(`user/aggregate`, 'post', query)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      DataLayer.countBroadcasts(queryForOthers)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      DataLayer.countSurveys(queryForOthers)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      DataLayer.countPolls(queryForOthers)
+        .then(result => {
+          callback(null, result)
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      sendErrorResponse(res, 500, '', `Error in getting page analytics ${JSON.stringify(err)}`)
+    } else {
+      let totalUsers = results[0]
+      let totalBroadcasts = results[1]
+      let totalSurveys = results[2]
+      let totalPolls = results[3]
+      let data = {
+        totalUsers: totalUsers[0] ? totalUsers[0].count : 0,
+        totalBroadcasts: totalBroadcasts[0] ? totalBroadcasts[0].count : 0,
+        totalSurveys: totalSurveys[0] ? totalSurveys[0].count : 0,
+        totalPolls: totalPolls[0] ? totalPolls[0].count : 0
+      }
+      sendSuccessResponse(res, 200, data)
+    }
+  })
+}
+exports.metricsWhatsApp = function (req, res) {
+  _getWhatsAppMetricsData(req.body)
+    .then(data => {
+      sendSuccessResponse(res, 200, data)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, err)
+    })
+}
+
+exports.sendWhatsAppMetricsEmail = function (req, res) {
+  let aggregateQuery = [
+    {
+      $lookup:
+        {
+          from: 'companyprofiles',
+          localField: '_id',
+          foreignField: 'ownerId',
+          as: 'companyProfile'
+        }
+    },
+    {
+      $match: {'companyProfile.flockSendWhatsApp': {$exists: true}, role: 'buyer'}
+    }
+  ]
+  let endDate = new Date()
+  let startDate = new Date((endDate.getTime() - (30 * 24 * 60 * 60 * 1000)))
+  let startMonth = ('0' + (startDate.getMonth() + 1)).slice(-2)
+  let startDay = ('0' + startDate.getDate()).slice(-2)
+  let finalStartDate = `${startDate.getFullYear()}-${startMonth}-${startDay}`
+  let endMonth = ('0' + (endDate.getMonth() + 1)).slice(-2)
+  let endDay = ('0' + endDate.getDate()).slice(-2)
+  let finalEndDate = `${endDate.getFullYear()}-${endMonth}-${endDay}`
+
+  let requests = []
+  utility.callApi(`user/aggregate`, 'post', aggregateQuery)
+    .then(users => {
+      logger.serverLog('Users', users)
+      for (let i = 0; i < users.length; i++) {
+        requests.push(_getWhatsAppMetricsData({startDate: finalStartDate, endDate: finalEndDate, companyId: users[i].companyProfile[0]._id}))
+      }
+      Promise.all(requests)
+        .then(results => {
+          let messages = []
+          for (let i = 0; i < results.length; i++) {
+            results[i].email = users[i].email
+            let message = {
+              to: users[i].email,
+              from: 'support@cloudkibo.com',
+              subject: 'KiboPush WhatsApp: Monthly Summary',
+              text: 'Welcome to KiboPush'
+            }
+            message.html = EmailTemplate.getWhatsAppEmail(users[i].name, results[i])
+            messages.push(message)
+          }
+          sgMail.setApiKey(config.SENDGRID_API_KEY)
+          sgMail.send(messages).then(() => {
+            sendSuccessResponse(res, 200, results)
+          }).catch(error => {
+            sendErrorResponse(res, 500, `Failed to send montly email ${JSON.stringify(error)}`)
+          })
+        })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch users ${err}`, 'error')
+      sendErrorResponse(res, 500, err)
+    })
+}
+
+const _getWhatsAppMetricsData = (body) => {
+  return new Promise((resolve, reject) => {
+    let messagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'sent')
+    let templateMessagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'template')
+    let messagesReceivedQuery = LogicLayer.queryForMessages(body, 'whatsApp')
+    let zoomMeetingsQuery = LogicLayer.queryForZoomMeetings(body)
+    let activeSubscribersQuery = LogicLayer.queryForActiveSubscribers(body)
+
+    async.parallelLimit([
+      _getMessagesSent.bind(null, messagesSentQuery),
+      _getMessagesSent.bind(null, templateMessagesSentQuery),
+      _getMessagesSent.bind(null, messagesReceivedQuery),
+      _getZoomMeetings.bind(null, zoomMeetingsQuery),
+      _getActiveSubscribers.bind(null, activeSubscribersQuery)
+    ], 10, function (err, results) {
+      if (err) {
+        reject(err)
+      } else {
+        let activeSubscribers = []
+        if (results[2].length > 0) {
+          activeSubscribers = results[2].map(r => {
+            return {_id: r._id, count: r.uniqueValues.length}
+          }
+          )
+        }
+        let graphDatas = {
+          messagesSent: results[0],
+          templateMessagesSent: results[1],
+          messagesReceived: results[2],
+          zoomMeetings: results[3],
+          activeSubscribers: activeSubscribers
+        }
+        let data = {
+          messagesSentCount: results[0].length > 0 ? sum(results[0], 'count') : 0,
+          templateMessagesSentCount: results[1].length > 0 ? sum(results[1], 'count') : 0,
+          messagesReceivedCount: results[2].length > 0 ? sum(results[2], 'count') : 0,
+          zoomMeetingsCount: results[3].length > 0 ? sum(results[3], 'count') : 0,
+          activeSubscribersCount: results[4].length > 0 ? results[4][0].count : 0,
+          graphDatas
+        }
+        resolve(data)
+      }
+    })
+  })
+}
+
+const _getMessagesSent = (criteria, callback) => {
+  utility.callApi(`whatsAppChat/query`, 'post', criteria, 'kibochat')
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+const _getZoomMeetings = (criteria, callback) => {
+  utility.callApi(`zoomMeetings/query`, 'post', criteria)
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+const _getActiveSubscribers = (criteria, callback) => {
+  utility.callApi(`whatsAppContacts/aggregate`, 'post', criteria)
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+const sum = (items, prop) => {
+  return items.reduce(function (a, b) {
+    return a + b[prop]
+  }, 0)
 }

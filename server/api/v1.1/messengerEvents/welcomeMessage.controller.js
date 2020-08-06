@@ -23,9 +23,6 @@ exports.index = function (req, res) {
   callApi(`pages/aggregate`, 'post', aggregateData)
     .then(page => {
       page = page[0]
-      logger.serverLog(TAG, `pageId ${JSON.stringify(page._id)}`, 'debug')
-      logger.serverLog(TAG, `companyId ${JSON.stringify(page.companyId)}`, 'debug')
-      logger.serverLog(TAG, `senderId ${JSON.stringify(sender)}`, 'debug')
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
         .then(subscriber => {
           subscriber = subscriber[0]
@@ -78,5 +75,116 @@ exports.index = function (req, res) {
     })
     .catch(err => {
       logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+exports.emailNumberQuickReply = function (req, res) {
+  res.status(200).json({
+    status: 'success',
+    description: `received the payload`
+  })
+  let payload = req.body.entry[0].messaging[0].message.quick_reply.payload
+  const sender = req.body.entry[0].messaging[0].sender.id
+  const pageId = req.body.entry[0].messaging[0].recipient.id
+  callApi(`pages/query`, 'post', {pageId: pageId, connected: true})
+    .then(page => {
+      page = page[0]
+      getQuickReplyPayload(page.welcomeMessage, payload, page)
+        .then(quickReplyPayload => {
+          performActions(page, sender, quickReplyPayload, payload)
+        })
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+function searchQuickReply (quickReplies, payload) {
+  let quickReplyPayload
+  if (messengerEventsUtility.validateEmail(payload)) {
+    for (let i = 0; i < quickReplies.length; i++) {
+      if (quickReplies[i].content_type === 'user_email') {
+        quickReplyPayload = quickReplies[i].payload
+      }
+    }
+  } else if (messengerEventsUtility.validatePhoneNumber(payload)) {
+    // quickReplyPayload = JSON.stringify([{action: 'set_subscriber_field', fieldName: 'phoneNumber'}])
+    for (let i = 0; i < quickReplies.length; i++) {
+      if (quickReplies[i].content_type === 'user_phone_number') {
+        quickReplyPayload = quickReplies[i].payload
+      }
+    }
+  }
+  return quickReplyPayload
+}
+
+function getQuickReplyPayload (welcomeMessage, payload, page) {
+  return new Promise(function (resolve, reject) {
+    let quickReplyPayload = searchQuickReply(welcomeMessage[welcomeMessage.length - 1].quickReplies, payload)
+    if (quickReplyPayload) {
+      resolve(quickReplyPayload)
+    } else {
+      callApi(`messageBlocks/query`, 'post', { purpose: 'findOne', match: { 'module.id': page._id, 'module.type': 'welcomeMessage' } }, 'kiboengage')
+        .then(messageBlock => {
+          if (messageBlock) {
+            quickReplyPayload = searchQuickReply(messageBlock.payload[messageBlock.payload.length - 1].quickReplies, payload)
+            quickReplyPayload ? resolve(quickReplyPayload) : reject(Error)
+          } else {
+            reject(Error)
+          }
+        })
+        .catch(err => {
+          logger.serverLog(TAG, `Failed to fetch messageBlock in query ${JSON.stringify(err)}`, 'error')
+        })
+    }
+  })
+}
+
+function performActions (page, sender, payload, value) {
+  let parsedPayload = JSON.parse(payload)
+  if (parsedPayload[0]) {
+    for (let i = 0; i < parsedPayload.length; i++) {
+      if (parsedPayload[i].action && parsedPayload[i].action === 'set_subscriber_field') {
+        updateSubscriber(page, sender, parsedPayload[i], value)
+      }
+      if (parsedPayload[i].action && parsedPayload[i].action === 'send_message_block') {
+        sendReply(page, sender, parsedPayload[i])
+      }
+    }
+  }
+}
+
+function updateSubscriber (page, sender, payload, value) {
+  let query = {
+    pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true
+  }
+  let newPayload = {}
+  newPayload[payload.fieldName] = value
+  callApi(`subscribers/update`, 'put', {query, newPayload, options: {}})
+    .then(updated => {
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+    })
+}
+
+function sendReply (page, sender, payload) {
+  callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
+    .then(subscriber => {
+      subscriber = subscriber[0]
+      if (subscriber) {
+        callApi(`messageBlocks/query`, 'post', { purpose: 'findOne', match: { uniqueId: '' + payload.blockUniqueId } }, 'kiboengage')
+          .then(messageBlock => {
+            if (messageBlock && messageBlock.module.type === 'welcomeMessage') {
+              broadcastUtility.getBatchData(messageBlock.payload, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
+            }
+          })
+          .catch(err => {
+            logger.serverLog(TAG, `Failed to fetch messageBlock in query ${JSON.stringify(err)}`, 'error')
+          })
+      }
+    })
+    .catch(err => {
+      logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
     })
 }

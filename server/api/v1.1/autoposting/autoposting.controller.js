@@ -133,7 +133,7 @@ const _addTwitterAccount = (data, next) => {
               logger.serverLog(TAG, err, 'error')
               next(err)
             })
-          utility.callApi('twitter/restart', 'get', {}, 'webhook')
+          utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
           require('./../../../config/socketio').sendMessageToClient({
             room_id: data.companyUser.companyId._id,
             body: {
@@ -379,7 +379,7 @@ exports.destroy = function (req, res) {
       }
       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
         .then(result => {
-          utility.callApi('twitter/restart', 'get', {}, 'webhook')
+          utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
           require('./../../../config/socketio').sendMessageToClient({
             room_id: autoposting.companyId,
             body: {

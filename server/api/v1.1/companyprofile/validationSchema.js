@@ -55,22 +55,30 @@ exports.fetchValidCallerIds = {
 exports.updatePlatformWhatsApp = {
   'type': 'object',
   'properties': {
-    accountSID: {
+    accessToken: {
       type: 'string',
       required: true
     },
-    authToken: {
-      type: 'string',
-      required: true
-    },
-    sandboxNumber: {
-      type: 'string',
-      required: true
-    },
-    sandboxCode: {
+    number: {
       type: 'string',
       required: true
     }
+    // accountSID: {
+    //   type: 'string',
+    //   required: true
+    // },
+    // authToken: {
+    //   type: 'string',
+    //   required: true
+    // },
+    // sandboxNumber: {
+    //   type: 'string',
+    //   required: true
+    // },
+    // sandboxCode: {
+    //   type: 'string',
+    //   required: true
+    // }
   }
 }
 exports.disconnect = {
@@ -101,6 +109,30 @@ exports.advancedSettingsPayload = {
   'properties': {
     saveAutomationMessages: {
       type: 'boolean',
+      required: true
+    }
+  }
+}
+
+exports.disableMember = {
+  'type': 'object',
+  'properties': {
+    memberId: {
+      type: 'string',
+      required: true
+    },
+    password: {
+      type: 'string',
+      required: true
+    }
+  }
+}
+
+exports.enableMember = {
+  'type': 'object',
+  'properties': {
+    memberId: {
+      type: 'string',
       required: true
     }
   }

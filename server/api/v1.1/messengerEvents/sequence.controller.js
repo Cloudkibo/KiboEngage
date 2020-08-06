@@ -209,7 +209,7 @@ exports.subscribeToSequence = (req, res) => {
                                   }).catch(err => {
                                     logger.serverLog(TAG, `Failed to update sequence subscriber ${err}`, 'error')
                                   })
-                              }     
+                              }
                             } else {
                               logger.serverLog(TAG, `message.trigger.event ${message.trigger.event}`)
                               if (message.trigger.event === 'none') {

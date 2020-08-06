@@ -15,6 +15,7 @@ exports.update = function (req, res) {
   if (!req.body.enabled) {
     req.body.integrationToken = ''
   }
+  req.body.userId = req.user._id
   callApi(`integrations/update`, 'put', {query: {_id: req.params.id}, newPayload: req.body, options: {}}, 'accounts', req.headers.authorization)
     .then(integrations => {
       if (!req.body.enabled) {

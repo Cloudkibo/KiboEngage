@@ -170,6 +170,8 @@ exports.enable = function (req, res) {
                               utility.callApi('pages/query', 'post', {_id: req.body._id})
                                 .then(pages => {
                                   let page = pages[0]
+
+                                  query.welcomeMessage = page.welcomeMessage ? page.welcomeMessage : query.welcomeMessage
                                   // initiate reach estimation
                                   // needle('post', `https://graph.facebook.com/v6.0/me/broadcast_reach_estimations?access_token=${page.accessToken}`)
                                   //   .then(reachEstimation => {
@@ -413,11 +415,46 @@ exports.disable = function (req, res) {
 exports.createWelcomeMessage = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', {welcomeMessage: req.body.welcomeMessage})
     .then(updatedWelcomeMessage => {
-      sendSuccessResponse(res, 200, 'Welcome Message updated successfully!')
+      createMessageBlocks(req.body.linkedMessages ? req.body.linkedMessages : [], req.user, req.body._id, 'welcomeMessage')
+        .then(results => {
+          sendSuccessResponse(res, 200, 'Welcome Message updated successfully!')
+        })
+        .catch(err => {
+          logger.serverLog(TAG, err)
+          sendErrorResponse(res, 500, `Failed to create linked message blocks ${JSON.stringify(err)}`)
+        })
     })
     .catch(error => {
       sendErrorResponse(res, 500, `Failed to update welcome message ${JSON.stringify(error)}`)
     })
+}
+
+function createMessageBlocks (linkedMessages, user, moduleId, moduleType) {
+  let messageBlockRequests = []
+  let queryObject = {'module.id': moduleId, 'module.type': 'welcomeMessage'}
+  for (let i = 0; i < linkedMessages.length; i++) {
+    let linkedMessage = linkedMessages[i]
+    let data = {
+      module: {
+        id: moduleId,
+        type: moduleType
+      },
+      title: linkedMessage.title,
+      uniqueId: linkedMessage.id.toString(),
+      payload: linkedMessage.messageContent,
+      userId: user._id,
+      companyId: user.companyId,
+      datetime: new Date()
+    }
+    let query = {
+      purpose: 'updateOne',
+      match: queryObject,
+      updated: data,
+      upsert: true
+    }
+    messageBlockRequests.push(utility.callApi(`messageBlocks/`, 'put', query, 'kiboengage'))
+  }
+  return Promise.all(messageBlockRequests)
 }
 
 exports.enableDisableWelcomeMessage = function (req, res) {
@@ -551,5 +588,15 @@ exports.isWhitelisted = function (req, res) {
   broadcastUtility.isWhiteListedDomain(req.body.domain, req.body.pageId, req.user)
     .then(result => {
       sendSuccessResponse(res, 200, result.returnValue)
+    })
+}
+
+exports.refreshPages = function (req, res) {
+  utility.callApi(`pages/refreshPages`, 'post', {}, 'accounts',  req.headers.authorization)// fetch all pages of company
+    .then(response => {
+      sendSuccessResponse(res, 200, response)
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to refresh pages ${JSON.stringify(error)}`)
     })
 }

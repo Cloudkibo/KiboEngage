@@ -1,18 +1,10 @@
+var path = require('path')
+
 exports.prepareChat = (payload, companyUser, contact) => {
-  if (!(contact && contact.contactId && contact.senderNumber)) {
-    throw Error('contact payload should contain _id and number as parameters and should be valid payload')
-  }
-  if (!(companyUser && companyUser.companyId && companyUser.companyId._id &&
-    companyUser.companyId.twilioWhatsApp && companyUser.companyId.twilioWhatsApp.sandboxNumber)) {
-    throw Error('company payload should be valid')
-  }
-  if (!(payload && payload.componentType)) {
-    throw Error('payload should be defined')
-  }
   let MessageObject = {
-    senderNumber: companyUser.companyId.twilioWhatsApp.sandboxNumber,
-    recipientNumber: contact.senderNumber,
-    contactId: contact.contactId,
+    senderNumber: companyUser.companyId.flockSendWhatsApp.number,
+    recipientNumber: contact.number,
+    contactId: contact._id,
     companyId: companyUser.companyId._id,
     payload: payload
   }
@@ -190,4 +182,44 @@ exports.createPayloadgetSubscribersCount = function (companyId, number) {
     limit: 1
   }
   return finalCriteria
+}
+
+exports.prepareFlockSendPayload = (payload, companyUser, contactNumbers) => {
+  let route = ''
+  let MessageObject = {
+    token: companyUser.companyId.flockSendWhatsApp.accessToken,
+    number_details: JSON.stringify(contactNumbers)
+  }
+  if (payload.componentType === 'text') {
+    if (payload.templateName) {
+      MessageObject.template_name = payload.templateName
+      MessageObject.template_argument = payload.templateArguments
+      MessageObject.language = 'en'
+      route = 'hsm'
+    } else {
+      MessageObject.message = payload.text
+      route = 'text'
+    }
+  } else if (payload.componentType === 'media') {
+    if (payload.mediaType === 'image') {
+      MessageObject.image = payload.fileurl.url || payload.fileurl
+      route = 'image'
+    } else if (payload.mediaType === 'video') {
+      MessageObject.video = payload.fileurl.url || payload.fileurl
+      route = 'video'
+    }
+  } else if (payload.componentType === 'file') {
+    let ext = path.extname(payload.fileurl.name)
+    let fileName = ''
+    if (ext !== '') {
+      fileName = payload.fileurl.name.replace(ext, '')
+    }
+    MessageObject.title = fileName
+    MessageObject.file = payload.fileurl.url || payload.fileurl
+    route = 'file'
+  }
+  return {
+    MessageObject,
+    route
+  }
 }

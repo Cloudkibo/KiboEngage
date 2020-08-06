@@ -1,5 +1,7 @@
 exports.getCriterias = function (body) {
-  let findCriteria = {}
+  let findCriteria = {
+    role: 'buyer'
+  }
   let finalCriteria = {}
   let search = '.*' + body.filter_criteria.search_value + '.*'
   if (body.filter_criteria.search_value !== '') {
@@ -14,12 +16,16 @@ exports.getCriterias = function (body) {
   if (body.first_page) {
     finalCriteria = [
       { $match: findCriteria },
+      { $lookup: { from: 'companyprofiles', localField: '_id', foreignField: 'ownerId', as: 'companyId' } },
+      { '$unwind': '$companyId' },
       { $sort: { createdAt: -1 } },
       { $limit: body.number_of_records }
     ]
   } else {
     finalCriteria = [
       { $match: {$and: [findCriteria, {_id: {$lt: body.last_id}}]} },
+      { $lookup: { from: 'companyprofiles', localField: '_id', foreignField: 'ownerId', as: 'companyId' } },
+      { '$unwind': '$companyId' },
       { $sort: { createdAt: -1 } },
       { $limit: body.number_of_records }
     ]
@@ -44,7 +50,6 @@ exports.getAllPagesCriteria = function (userid, body) {
   if (body.first_page === 'first') {
     finalCriteria = [
       { $match: findCriteria },
-      { $lookup: { from: 'subscribers', localField: '_id', foreignField: 'pageId', as: 'subscribers' } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
@@ -52,7 +57,6 @@ exports.getAllPagesCriteria = function (userid, body) {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
       { $match: {$and: [findCriteria, {_id: {$gt: body.last_id}}]} },
-      { $lookup: { from: 'subscribers', localField: '_id', foreignField: 'pageId', as: 'subscribers' } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
@@ -60,7 +64,6 @@ exports.getAllPagesCriteria = function (userid, body) {
     recordsToSkip = Math.abs(((body.requested_page) - (body.current_page - 1))) * body.number_of_records
     finalCriteria = [
       { $match: {$and: [findCriteria, {_id: {$lt: body.last_id}}]} },
-      { $lookup: { from: 'subscribers', localField: '_id', foreignField: 'pageId', as: 'subscribers' } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
     ]
@@ -70,6 +73,15 @@ exports.getAllPagesCriteria = function (userid, body) {
     finalCriteria
   }
 }
+
+exports.getSubscribersCountForPages = function (page) {
+  let countCriteria = [
+    { $match: {pageId: page._id}},
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
 exports.allUserBroadcastsCriteria = function (userid, body) {
   let findCriteria = {}
   let finalCriteria = {}
@@ -593,4 +605,307 @@ exports.topPagesCriteria = function (body) {
     {'$unwind': '$user'}
   ]
   return criteria
+}
+exports.getPlatformCriteriaForSubscribers = function (body) {
+  let findCriteria = {
+    isSubscribed: true,
+    completeInfo: true
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  let countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
+exports.getSubscribersCountForUser = function (body, pages) {
+  let findCriteria = {
+    isSubscribed: true,
+    completeInfo: true,
+    pageId: {$in: pages}
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  let countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
+exports.getPlatformCriteriaForPages = function (type) {
+  let countCriteria = [
+    { $match: {connected: type ? true : {$exists: true}} },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+exports.getPlatformCriteriaForMessages = function (body) {
+  let findCriteria = {
+    format: 'convos'
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  return {
+    purpose: 'aggregate',
+    match: findCriteria,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+}
+exports.getMessagesCountForUser = function (companyUser, body) {
+  let findCriteria = {
+    format: 'convos',
+    company_id: companyUser.companyId && companyUser.companyId !== '' ? companyUser.companyId : {$exists: true}
+  }
+  if (body.days && body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  return {
+    purpose: 'aggregate',
+    match: findCriteria,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+}
+exports.getAllCommentCapturesCriteria = function (body) {
+  let findCriteria = {
+    userId: body.userId && body.userId !== '' ? body.userId : {$exists: true},
+    companyId: body.companyId && body.companyId !== '' ? body.companyId : {$exists: true}
+  }
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - body.days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  if (body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $match: findCriteria },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'page' } },
+      { '$unwind': '$page' },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'page' } },
+      { '$unwind': '$page' },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $lookup: { from: 'pages', localField: 'pageId', foreignField: '_id', as: 'page' } },
+      { '$unwind': '$page' },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  }
+  countCriteria = [
+    { $match: findCriteria },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return {
+    finalCriteria,
+    countCriteria
+  }
+}
+
+exports.getAllChatBotsCriteria = function (body) {
+  let findCriteria = {
+    userId: body.userId && body.userId !== '' ? body.userId : {$exists: true},
+    companyId: body.companyId && body.companyId !== '' ? body.companyId : {$exists: true}
+  }
+  let startDate = new Date() // Current date
+  startDate.setDate(startDate.getDate() - body.days)
+  startDate.setHours(0) // Set the hour, minute and second components to 0
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let finalCriteria = {}
+  let countCriteria = {}
+  let recordsToSkip = 0
+  if (body.days !== '') {
+    let startDate = new Date() // Current date
+    startDate.setDate(startDate.getDate() - body.days)
+    startDate.setHours(0) // Set the hour, minute and second components to 0
+    startDate.setMinutes(0)
+    startDate.setSeconds(0)
+    findCriteria.datetime = {$gte: startDate}
+  }
+  if (body.first_page === 'first') {
+    finalCriteria = [
+      { $match: findCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria = [
+      { $match: finalFindCriteria },
+      { $sort: { datetime: -1 } },
+      { $skip: recordsToSkip },
+      { $limit: body.number_of_records }
+    ]
+  }
+  countCriteria = {
+    purpose: 'aggregate',
+    match: findCriteria,
+    group: { _id: null, count: { $sum: 1 } }
+  }
+  let getCriteria = {
+    purpose: 'aggregate',
+    match: finalCriteria[0].$match,
+    sort: finalCriteria[1].$sort,
+    skip: finalCriteria[2].$skip,
+    limit: finalCriteria[3].$limit
+  }
+  return {
+    countCriteria,
+    getCriteria
+  }
+}
+exports.queryForMessages = function (body, format, type) {
+  let startDate = new Date(body.startDate)
+  startDate.setHours(0)
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate)
+  endDate.setDate(endDate.getDate() + 1)
+  endDate.setHours(0)
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let match = {
+    datetime: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true },
+    format: format
+  }
+  if (body.companyId) {
+    match.companyId = body.companyId
+  }
+  if (type) {
+    match['payload.templateName'] = type === 'template' ? {$exists: true} : {$exists: false}
+  }
+  let group = {
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1},
+    uniqueValues: {$addToSet: '$contactId'}
+  }
+  return {
+    purpose: 'aggregate',
+    match,
+    group
+  }
+}
+exports.queryForZoomMeetings = function (body) {
+  let startDate = new Date(body.startDate)
+  startDate.setHours(0)
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate)
+  endDate.setDate(endDate.getDate() + 1)
+  endDate.setHours(0)
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let match = {
+    platform: 'whatsApp',
+    datetime: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
+  }
+  if (body.companyId) {
+    match.companyId = body.companyId
+  }
+  let group = {
+    _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
+    count: {$sum: 1}
+  }
+  return {
+    purpose: 'aggregate',
+    match,
+    group
+  }
+}
+exports.queryForActiveSubscribers = function (body) {
+  let startDate = new Date(body.startDate)
+  startDate.setHours(0)
+  startDate.setMinutes(0)
+  startDate.setSeconds(0)
+  let endDate = new Date(body.endDate)
+  endDate.setDate(endDate.getDate() + 1)
+  endDate.setHours(0)
+  endDate.setMinutes(0)
+  endDate.setSeconds(0)
+  let match = {
+    lastMessagedAt: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
+  }
+  if (body.companyId) {
+    match.companyId = body.companyId
+  }
+  let group = {
+    _id: null,
+    count: {$sum: 1}
+  }
+  return [
+    {$match: match},
+    {$group: group}
+  ]
 }

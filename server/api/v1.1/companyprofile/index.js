@@ -99,4 +99,18 @@ router.post('/updateAdvancedSettings',
   validate({body: validationSchema.advancedSettingsPayload}),
   controller.updateAdvancedSettings)
 
+router.post('/disableMember',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.disableMember}),
+  controller.disableMember)
+
+router.post('/enableMember',
+  auth.isAuthenticated(),
+  validate({body: validationSchema.enableMember}),
+  controller.enableMember)
+
+router.get('/getWhatsAppMessageTemplates',
+  auth.isAuthenticated(),
+  controller.getWhatsAppMessageTemplates)
+
 module.exports = router

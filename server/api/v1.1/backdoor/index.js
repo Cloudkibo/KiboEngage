@@ -9,6 +9,8 @@ const express = require('express')
 const router = express.Router()
 
 const controller = require('./backdoor.controller')
+const userController = require('./userData.controller')
+const permissionsController = require('./permissionsData.controller')
 const auth = require('../../../auth/auth.service')
 const validationSchema = require('./validationSchema')
 const validate = require('express-jsonschema').validate
@@ -21,7 +23,11 @@ router.post('/getAllUsers',
 router.post('/getAllPages/:userid',
   validate({body: validationSchema.getAllPagesPayload}),
   auth.isAuthorizedSuperUser(),
-  controller.getAllPages) // pagination
+  userController.getAllPages) // pagination
+
+router.post('/getMessagesCount',
+  auth.isAuthorizedSuperUser(),
+  userController.getMessagesCount)
 
 router.post('/getAllSubscribers/:pageid',
   validate({body: validationSchema.getAllSubscribersPayload}),
@@ -35,17 +41,22 @@ router.get('/allsubscribers/:pageid',
 router.post('/allUserBroadcasts/:userid',
   validate({body: validationSchema.allUserBroadcastsPayload}),
   auth.isAuthorizedSuperUser(),
-  controller.allUserBroadcasts) // pagination
+  userController.allUserBroadcasts) // pagination
 
 router.post('/allUserPolls/:userid',
   validate({body: validationSchema.getAllBroadcastsPayload}),
   auth.isAuthorizedSuperUser(),
-  controller.allUserPolls) // pagination
+  userController.allUserPolls) // pagination
 
 router.post('/allUserSurveys/:userid',
   validate({body: validationSchema.getAllBroadcastsPayload}),
   auth.isAuthorizedSuperUser(),
-  controller.allUserSurveys) // pagination
+  userController.allUserSurveys) // pagination
+
+router.post('/userSummary',
+  validate({body: validationSchema.getUserSummary}),
+  auth.isAuthorizedSuperUser(),
+  userController.getUserSummary)
 
 router.get('/polls/:pollid', auth.isAuthorizedSuperUser(), controller.poll)
 
@@ -78,7 +89,7 @@ router.get('/allLocales/:pageid',
   auth.isAuthorizedSuperUser(),
   controller.allLocales)
 
-router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.sendEmail)
+router.get('/sendEmail', auth.isAuthorizedSuperUser(), controller.weeklyEmail)
 
 router.get('/uploadFile', auth.isAuthorizedSuperUser(), controller.uploadFile)
 
@@ -92,24 +103,24 @@ router.post('/fetchUniquePages',
 
 router.get('/getPagePermissions/:id',
   auth.isAuthorizedSuperUser(),
-  controller.getPagePermissions)
+  permissionsController.getPagePermissions)
 
 router.post('/fetchPageUsers',
   validate({body: validationSchema.getPageUsersPayload}),
   auth.isAuthorizedSuperUser(),
-  controller.fetchPageUsers)
+  permissionsController.fetchPageUsers)
 
 router.get('/fetchPageTags/:pageId',
   auth.isAuthorizedSuperUser(),
-  controller.fetchPageTags)
+  permissionsController.fetchPageTags)
 
 router.post('/fetchSubscribersWithTags',
   auth.isAuthorizedSuperUser(),
-  controller.fetchSubscribersWithTagsNew)
+  permissionsController.fetchSubscribersWithTagsNew)
 
 router.get('/fetchPageAdmins/:pageId',
   auth.isAuthorizedSuperUser(),
-  controller.fetchPageAdmins)
+  permissionsController.fetchPageAdmins)
 
 router.post('/fetchCompanyInfo',
   auth.isAuthorizedSuperUser(),
@@ -126,10 +137,36 @@ router.post('/usersListForViewAs',
 
 router.get('/fetchPageOwners/:pageId',
   auth.isAuthorizedSuperUser(),
-  controller.fetchPageOwners)
+  permissionsController.fetchPageOwners)
 
 router.get('/integrationsData',
   auth.isAuthorizedSuperUser(),
   controller.integrationsData)
+
+router.post('/pageAnalytics',
+  auth.isAuthorizedSuperUser(),
+  controller.pageAnalytics)
+
+router.post('/otherAnalytics',
+  auth.isAuthorizedSuperUser(),
+  controller.otherAnalytics)
+
+router.post('/getAllCommentCaptures',
+  validate({body: validationSchema.commentCapturePayload}),
+  auth.isAuthorizedSuperUser(),
+  controller.getAllCommentCaptures)
+
+router.post('/getAllChatBots',
+  validate({body: validationSchema.commentCapturePayload}),
+  auth.isAuthorizedSuperUser(),
+  controller.getAllChatBots)
+
+router.post('/metricsWhatsApp',
+  auth.isAuthorizedSuperUser(),
+  controller.metricsWhatsApp)
+
+router.get('/sendWhatsAppMetricsEmail',
+  auth.isAuthorizedSuperUser(),
+  controller.sendWhatsAppMetricsEmail)
 
 module.exports = router

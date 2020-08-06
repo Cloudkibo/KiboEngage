@@ -217,7 +217,7 @@ exports.assign = function (req, res) {
       body: {
         action: 'tag_assign',
         payload: {
-          tag: req.body.tag,
+          tagId: req.body.tagId,
           subscriber_ids: req.body.subscribers
         }
       }
