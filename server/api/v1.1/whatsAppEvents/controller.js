@@ -1,7 +1,7 @@
 const { callApi } = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = '/api/v1/flockSendEvents/controller.js'
-const whatsAppMapper = require('../../../whatsAppMapper/WhatsAppMapper')
+const whatsAppMapper = require('../../../whatsAppMapper/whatsAppMapper')
 
 exports.messageStatus = function (req, res) {
   res.status(200).json({
