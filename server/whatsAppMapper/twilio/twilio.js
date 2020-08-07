@@ -1,5 +1,5 @@
 const needle = require('needle')
-const logicLayer = require('./logicLayer')
+const logicLayer = require('./logiclayer')
 const utility = require('../../api/v1.1/utility')
 const logger = require('../../components/logger')
 const TAG = 'whatsAppMapper/flocksend.js'
