@@ -53,6 +53,7 @@ exports.prepareFlockSendPayload = (data) => {
 }
 exports.prepareChat = (data, contact) => {
   let MessageObject = {
+    senderNumber: data.whatsApp.businessNumber,
     senderNumber: data.senderNumber,
     recipientNumber: contact.number,
     contactId: contact._id,
