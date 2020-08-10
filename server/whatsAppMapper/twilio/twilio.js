@@ -112,3 +112,16 @@ exports.sendInvitationTemplate = (body) => {
       .catch((err) => reject(err))
   })
 }
+
+exports.getNormalizedMessageStatusData = (event) => {
+  return new Promise((resolve, reject) => {
+    try {
+      resolve({
+        messageId: event.MessageSid,
+        status: event.MessageStatus === 'read' ? 'seen' : event.MessageStatus
+      })
+    } catch (err) {
+      reject(err)
+    }
+  })
+}
