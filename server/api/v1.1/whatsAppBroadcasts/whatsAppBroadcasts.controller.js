@@ -1,13 +1,10 @@
 const logicLayer = require('./whatsAppBroadcasts.logiclayer')
 const dataLayer = require('./whatsAppBroadcasts.datalayer')
 const utility = require('../utility')
-const logger = require('../../../components/logger')
-const TAG = 'whatsAppBroadcasts.controller.js'
 const async = require('async')
-let { sendOpAlert } = require('./../../global/operationalAlert')
-const { flockSendApiCaller } = require('../../global/flockSendApiCaller')
-
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const {ActionTypes} = require('../../../whatsAppMapper/constants')
+const {whatsAppMapper} = require('../../../whatsAppMapper/whatsAppMapper')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -36,97 +33,47 @@ exports.index = function (req, res) {
     })
 }
 
-function sendBrodcastComponent (req, res, companyUser, broadcast, contacts) {
-  let contactNumbers = []
-  let parsed
-  contacts.map((c) => contactNumbers.push({phone: c.number}))
-  async.eachOfSeries(req.body.payload, function (value, key, callback) {
-    if (key < req.body.payload.length) {
-      let {route, MessageObject} = logicLayer.prepareFlockSendPayload(value, companyUser, contactNumbers)
-      flockSendApiCaller(route, 'post', MessageObject)
-        .then(response => {
-          logger.serverLog(TAG, `response from flockSendApiCaller ${response.body}`, 'error')
-          parsed = JSON.parse(response.body)
-          if (parsed.code !== 200) {
-            sendOpAlert(parsed.message, 'whatsAppBroadcast controller in kiboengage', null, req.user._id, companyUser.companyId._id)
-            logger.serverLog(TAG, `error at sending message ${parsed.message}`, 'error')
-            callback(parsed.message)
-          } else {
-            callback()
-            for (let j = 0; j < contacts.length; j++) {
-              let MessageObject = logicLayer.prepareChat(value, companyUser, contacts[j])
-              utility.callApi(`whatsAppChat`, 'post', MessageObject, 'kibochat')
-                .then(response => {
-                })
-                .catch(error => {
-                  logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
-                })
-            }
-            if (key === req.body.payload.length - 1 && parsed.data.length > 0) {
-              saveWhatsAppBroadcastMessages(parsed.data, req, broadcast._id)
-            }
-          }
-        })
-    } else {
-      callback()
-    }
-  }, function (err) {
-    if (err) {
-      sendErrorResponse(res, 500, '', 'Failed to send broadcast to all subscribers')
-    } else {
+function sendBrodcastComponent (req, res, broadcast, contacts) {
+  let mapperData = {
+    contacts: contacts,
+    whatsApp: req.user.whatsApp,
+    broadcastId: broadcast._id,
+    companyId: req.user.companyId,
+    userId: req.user._id,
+    payload: req.body.payload
+  }
+  whatsAppMapper(req.user.whatsApp.provider, ActionTypes.SEND_BROADCAST_MESSAGES, mapperData)
+    .then(response => {
       sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
-    }
-  })
-}
-
-function saveWhatsAppBroadcastMessages (data, req, broadcastId) {
-  let dataToInsert = []
-  data.forEach(value => {
-    dataToInsert.push({
-      userId: req.user._id,
-      companyId: req.user.companyId,
-      subscriberNumber: value.phone_number,
-      broadcastId: broadcastId,
-      messageId: value.id
-    })
-  })
-  utility.callApi(`whatsAppBroadcastMessages/insert`, 'post', dataToInsert, 'kiboengage') // fetch company user
-    .then(companyUser => {
     })
     .catch(error => {
-      logger.serverLog(TAG, `Failed to save whatsAppBroadcastMessages ${error}`, 'error')
+      sendErrorResponse(res, 500, '', `Failed to send broadcast to all subscribers ${error}`)
     })
 }
 
 exports.sendBroadcast = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
-    .then(companyUser => {
-      dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
-        .then(broadcast => {
-          utility.callApi(`whatsAppContacts/query`, 'post', {companyId: companyUser.companyId._id, isSubscribed: true}) // fetch company user
-            .then(contacts => {
-              getSubscribersCount(req, res, contacts, companyUser)
-                .then(contactList => {
-                  let ArrayContact = [].concat(...contactList)
-                  sendBrodcastComponent(req, res, companyUser, broadcast, ArrayContact)
-                })
-                .catch(error => {
-                  sendErrorResponse(res, 500, `Failed to get subscribers count ${JSON.stringify(error)}`)
-                })
+  dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, req.user.companyId))
+    .then(broadcast => {
+      utility.callApi(`whatsAppContacts/query`, 'post', {companyId: req.user.companyId, isSubscribed: true}) // fetch company user
+        .then(contacts => {
+          getSubscribersCount(req, res, contacts)
+            .then(contactList => {
+              let ArrayContact = [].concat(...contactList)
+              sendBrodcastComponent(req, res, broadcast, ArrayContact)
             })
             .catch(error => {
-              sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
+              sendErrorResponse(res, 500, `Failed to get subscribers count ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
-          sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
+          sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
+      sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
     })
 }
-function getSubscribersCount (req, res, contacts, companyUser) {
+function getSubscribersCount (req, res, contacts) {
   return new Promise((resolve, reject) => {
     let requests = []
     for (let i = 0; i < contacts.length; i++) {

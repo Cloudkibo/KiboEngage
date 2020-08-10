@@ -78,19 +78,20 @@ module.exports = function (app) {
   app.use('/api/reroute', require('./api/v1.1/Whatsapp Link Re-Routing'))
   app.use('/api/twilio', require('./api/v1.1/twilio'))
   app.use('/api/flockSendEvents', require('./api/v1.1/flockSendEvents'))
+  app.use('/api/whatsAppEvents', require('./api/v1.1/whatsAppEvents'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
 
   app.get('/', (req, res) => {
     res.cookie('environment', config.env,
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_development', 'http://localhost:3021',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.sendFile(path.join(config.root, 'client/index.html'))
   })
 
@@ -109,7 +110,7 @@ module.exports = function (app) {
               description: 'internal server error' + JSON.stringify(err)
             })
           }
-          return res.status(201).json({status: 'success', description: 'HTML uploaded'})
+          return res.status(201).json({ status: 'success', description: 'HTML uploaded' })
         }
       )
     })
@@ -119,7 +120,7 @@ module.exports = function (app) {
   })
 
   app.get('/landingPage/:id', (req, res) => {
-    callApi('landingPage/query', 'post', {_id: req.params.id})
+    callApi('landingPage/query', 'post', { _id: req.params.id })
       .then(landingPages => {
         let landingPage = landingPages[0]
         landingPage.state = landingPages[0].initialState
@@ -144,56 +145,56 @@ module.exports = function (app) {
 
   app.get('/demoSSA', (req, res) => {
     res.cookie('environment', config.env,
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_development', 'http://localhost:3021',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.sendFile(path.join(config.root, 'client/index.html'))
   })
 
   app.get('/successMessage', (req, res) => {
     res.cookie('environment', config.env,
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_development', 'http://localhost:3021',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.sendFile(path.join(config.root, 'client/index.html'))
   })
 
   app.get('/successMessage', (req, res) => {
     res.cookie('environment', config.env,
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_development', 'http://localhost:3021',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.sendFile(path.join(config.root, 'client/index.html'))
   })
 
   app.get('/ErrorMessage', (req, res) => {
     res.cookie('environment', config.env,
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_production', 'https://kiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_staging', 'https://skiboengage.cloudkibo.com',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.cookie('url_development', 'http://localhost:3021',
-      {expires: new Date(Date.now() + 900000)})
+      { expires: new Date(Date.now() + 900000) })
     res.sendFile(path.join(config.root, 'client/index.html'))
   })
 
   app.route('/:url(api|auth)/*').get((req, res) => {
-    res.status(404).send({url: `${req.originalUrl} not found`})
+    res.status(404).send({ url: `${req.originalUrl} not found` })
   }).post((req, res) => {
-    res.status(404).send({url: `${req.originalUrl} not found`})
+    res.status(404).send({ url: `${req.originalUrl} not found` })
   })
 
   app.route('/*').get((req, res) => {
