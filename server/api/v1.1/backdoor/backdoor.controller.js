@@ -1681,7 +1681,7 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
         }
     },
     {
-      $match: {'companyProfile.flockSendWhatsApp': {$exists: true}, role: 'buyer'}
+      $match: {'companyProfile.whatsApp': {$exists: true}, role: 'buyer'}
     }
   ]
   let endDate = new Date()
@@ -1696,7 +1696,6 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
   let requests = []
   utility.callApi(`user/aggregate`, 'post', aggregateQuery)
     .then(users => {
-      logger.serverLog('Users', users)
       for (let i = 0; i < users.length; i++) {
         requests.push(_getWhatsAppMetricsData({startDate: finalStartDate, endDate: finalEndDate, companyId: users[i].companyProfile[0]._id}))
       }
