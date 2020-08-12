@@ -70,7 +70,7 @@ exports.sendBroadcastMessages = (body) => {
       .catch((err) => reject(err))
   })
 }
-function saveWhatsAppBroadcastMessages (resp, body, contact) {
+function saveWhatsAppBroadcastMessages(resp, body, contact) {
   let dataToInsert = {
     userId: body.userId,
     companyId: body.companyId,
