@@ -17,6 +17,7 @@ const AutopostingMessagesDataLayer = require('../autopostingMessages/autoposting
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const sgMail = require('@sendgrid/mail')
 const EmailTemplate = require('./emailTemplate')
+const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
@@ -1702,22 +1703,43 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
       Promise.all(requests)
         .then(results => {
           let messages = []
-          for (let i = 0; i < results.length; i++) {
-            results[i].email = users[i].email
-            let message = {
-              to: users[i].email,
-              from: 'support@cloudkibo.com',
-              subject: 'KiboPush WhatsApp: Monthly Summary',
-              text: 'Welcome to KiboPush'
+          async.eachOf(results, function (result, j, next) {
+            result.email = users[j].email
+            let graph = LogicLayer.setChartData(result.graphDatas, finalStartDate, finalEndDate)
+            needle(
+              'post',
+              `https://quickchart.io/chart/create`,
+              {
+                width: 500,
+                devicePixelRatio: 1.0,
+                backgroundColor: 'white',
+                chart: JSON.stringify(graph)
+              },
+              {json: true}
+            )
+              .then(resp => {
+                let message = {
+                  to: users[j].email,
+                  from: 'support@cloudkibo.com',
+                  subject: 'KiboPush WhatsApp: Monthly Summary',
+                  text: 'Welcome to KiboPush'
+                }
+                message.html = EmailTemplate.getWhatsAppEmail(users[j].name, result, resp.body.url)
+                messages.push(message)
+                next()
+              })
+              .catch((err) => {
+                next(err)
+              })
+          }, function (err) {
+            if (err) {
+              sendErrorResponse(res, 500, `Failed to send montly email ${JSON.stringify(err)}`)
+            } else {
+              sgMail.setApiKey(config.SENDGRID_API_KEY)
+              sgMail.send(messages).then(() => {
+                sendSuccessResponse(res, 200, results)
+              })
             }
-            message.html = EmailTemplate.getWhatsAppEmail(users[i].name, results[i])
-            messages.push(message)
-          }
-          sgMail.setApiKey(config.SENDGRID_API_KEY)
-          sgMail.send(messages).then(() => {
-            sendSuccessResponse(res, 200, results)
-          }).catch(error => {
-            sendErrorResponse(res, 500, `Failed to send montly email ${JSON.stringify(error)}`)
           })
         })
     })
@@ -1727,7 +1749,7 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
     })
 }
 
-const _getWhatsAppMetricsData = (body) => {
+function _getWhatsAppMetricsData (body) {
   return new Promise((resolve, reject) => {
     let messagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'sent')
     let templateMessagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'template')
@@ -1808,3 +1830,5 @@ const sum = (items, prop) => {
     return a + b[prop]
   }, 0)
 }
+
+exports._getWhatsAppMetricsData = _getWhatsAppMetricsData

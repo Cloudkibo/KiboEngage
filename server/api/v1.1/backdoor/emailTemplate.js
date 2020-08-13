@@ -1,4 +1,4 @@
-exports.getWhatsAppEmail = (name, data) => {
+exports.getWhatsAppEmail = (name, data, url) => {
   return `
   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
     <html data-editor-version="2" class="sg-campaigns" xmlns="http://www.w3.org/1999/xhtml">
@@ -6,16 +6,16 @@ exports.getWhatsAppEmail = (name, data) => {
           <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
           <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
-          <!--[if (gte mso 9)|(IE)]> 
+          <!--[if (gte mso 9)|(IE)]>
           <xml>
             <o:OfficeDocumentSettings>
                 <o:AllowPNG/>
                 <o:PixelsPerInch>96</o:PixelsPerInch>
             </o:OfficeDocumentSettings>
           </xml>
-          <![endif]--><!--[if (gte mso 9)|(IE)]> 
+          <![endif]--><!--[if (gte mso 9)|(IE)]>
           <style type="text/css"> body{width: 600px;margin: 0 auto;}table{border-collapse: collapse;}table, td{mso-table-lspace: 0pt;mso-table-rspace: 0pt;}img{-ms-interpolation-mode: bicubic;}</style>
-          <![endif]--> 
+          <![endif]-->
           <style type="text/css"> body, p, div{font-family: arial; font-size: 14px;}body{color: #000000;}body a{color: #1188E6; text-decoration: none;}p{margin: 0; padding: 0;}table.wrapper{width:100% !important; table-layout: fixed; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; -ms-text-size-adjust: 100%;}img.max-width{max-width: 100% !important;}.column.of-2{width: 50%;}.column.of-3{width: 33.333%;}.column.of-4{width: 25%;}@media screen and (max-width:480px){.preheader .rightColumnContent, .footer .rightColumnContent{text-align: left !important;}.preheader .rightColumnContent div, .preheader .rightColumnContent span, .footer .rightColumnContent div, .footer .rightColumnContent span{text-align: left !important;}.preheader .rightColumnContent, .preheader .leftColumnContent{font-size: 80% !important; padding: 5px 0;}table.wrapper-mobile{width: 100% !important; table-layout: fixed;}img.max-width{height: auto !important; max-width: 480px !important;}a.bulletproof-button{display: block !important; width: auto !important; font-size: 80%; padding-left: 0 !important; padding-right: 0 !important;}.columns{width: 100% !important;}.column{display: block !important; width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; margin-left: 0 !important; margin-right: 0 !important;}}</style>
       </head>
       <body>
@@ -30,12 +30,12 @@ exports.getWhatsAppEmail = (name, data) => {
                                   <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                     <tr>
                                         <td>
-                                          <!--[if mso]> 
+                                          <!--[if mso]>
                                           <center>
                                               <table>
                                                 <tr>
                                                     <td width="600">
-                                                      <![endif]--> 
+                                                      <![endif]-->
                                                       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width:600px;" align="center">
                                                           <tr>
                                                             <td role="modules-container" style="padding: 0px 0px 0px 0px; color: #000000; text-align: left;" bgcolor="#ffffff" width="100%" align="left">
@@ -69,12 +69,14 @@ exports.getWhatsAppEmail = (name, data) => {
                                                                         <div>&nbsp;</div>
                                                                         <h3>Monthly Stats (Past 30 Days):</h3>
                                                                         <ul>
-                                                                            <li><strong>Active Subscribers</strong>: ${data.activeSubscribersCount}</li>
+                                                                            <li><strong>Monthly Active Users</strong>: ${data.activeSubscribersCount}</li>
                                                                             <li><strong>Messages Received</strong>: ${data.messagesReceivedCount}</li>
-                                                                            <li><strong>Non-Template Messages Sent</strong>: ${data.messagesSentCount}</li>
+                                                                            <li><strong>Messages Sent</strong>: ${data.messagesSentCount}</li>
                                                                             <li><strong>Template Messages Sent</strong>: ${data.templateMessagesSentCount}</li>
                                                                             <li><strong>Zoom Meetings Created</strong>: ${data.zoomMeetingsCount}</li>
                                                                         </ul>
+                                                                        <div>&nbsp;</div>
+                                                                        <img src=${url}>
                                                                         <div>&nbsp;</div>
                                                                         <div>If you have any queries, you can send a message to us on <a href="https://m.me/151990922046256?ref=whatsapp_monthly_email" style="background-color: rgb(255, 255, 255); font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; font-family: arial; font-size: 14px;">Messenger</a> or <a href="https://api.whatsapp.com/send?phone=14256266670" style="background-color: rgb(255, 255, 255); font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; font-family: arial; font-size: 14px;">WhatsApp</a>. Our admins will get back to you as soon as possible.</div>
                                                                         <div>&nbsp;</div>
@@ -105,12 +107,12 @@ exports.getWhatsAppEmail = (name, data) => {
                                                             </td>
                                                           </tr>
                                                       </table>
-                                                      <!--[if mso]> 
+                                                      <!--[if mso]>
                                                     </td>
                                                 </tr>
                                               </table>
                                           </center>
-                                          <![endif]--> 
+                                          <![endif]-->
                                         </td>
                                     </tr>
                                   </table>
@@ -135,16 +137,16 @@ exports.getWeeklyUserEmail = (name, data) => {
           <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
           <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
-          <!--[if (gte mso 9)|(IE)]> 
+          <!--[if (gte mso 9)|(IE)]>
           <xml>
             <o:OfficeDocumentSettings>
                 <o:AllowPNG/>
                 <o:PixelsPerInch>96</o:PixelsPerInch>
             </o:OfficeDocumentSettings>
           </xml>
-          <![endif]--><!--[if (gte mso 9)|(IE)]> 
+          <![endif]--><!--[if (gte mso 9)|(IE)]>
           <style type="text/css"> body{width: 600px;margin: 0 auto;}table{border-collapse: collapse;}table, td{mso-table-lspace: 0pt;mso-table-rspace: 0pt;}img{-ms-interpolation-mode: bicubic;}</style>
-          <![endif]--> 
+          <![endif]-->
           <style type="text/css"> body, p, div{font-family: arial; font-size: 14px;}body{color: #000000;}body a{color: #1188E6; text-decoration: none;}p{margin: 0; padding: 0;}table.wrapper{width:100% !important; table-layout: fixed; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; -ms-text-size-adjust: 100%;}img.max-width{max-width: 100% !important;}.column.of-2{width: 50%;}.column.of-3{width: 33.333%;}.column.of-4{width: 25%;}@media screen and (max-width:480px){.preheader .rightColumnContent, .footer .rightColumnContent{text-align: left !important;}.preheader .rightColumnContent div, .preheader .rightColumnContent span, .footer .rightColumnContent div, .footer .rightColumnContent span{text-align: left !important;}.preheader .rightColumnContent, .preheader .leftColumnContent{font-size: 80% !important; padding: 5px 0;}table.wrapper-mobile{width: 100% !important; table-layout: fixed;}img.max-width{height: auto !important; max-width: 480px !important;}a.bulletproof-button{display: block !important; width: auto !important; font-size: 80%; padding-left: 0 !important; padding-right: 0 !important;}.columns{width: 100% !important;}.column{display: block !important; width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; margin-left: 0 !important; margin-right: 0 !important;}}</style>
       </head>
       <body>
@@ -159,12 +161,12 @@ exports.getWeeklyUserEmail = (name, data) => {
                                   <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                     <tr>
                                         <td>
-                                          <!--[if mso]> 
+                                          <!--[if mso]>
                                           <center>
                                               <table>
                                                 <tr>
                                                     <td width="600">
-                                                      <![endif]--> 
+                                                      <![endif]-->
                                                       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width:600px;" align="center">
                                                           <tr>
                                                             <td role="modules-container" style="padding: 0px 0px 0px 0px; color: #000000; text-align: left;" bgcolor="#ffffff" width="100%" align="left">
@@ -231,12 +233,12 @@ exports.getWeeklyUserEmail = (name, data) => {
                                                             </td>
                                                           </tr>
                                                       </table>
-                                                      <!--[if mso]> 
+                                                      <!--[if mso]>
                                                     </td>
                                                 </tr>
                                               </table>
                                           </center>
-                                          <![endif]--> 
+                                          <![endif]-->
                                         </td>
                                     </tr>
                                   </table>
