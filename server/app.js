@@ -11,6 +11,7 @@ const rssFeedsScript = require('../scripts/rssFeedsScript')
 const manualFeedsScript = require('../scripts/manualFeedsScript')
 const sponsoredScheduled = require('../scripts/scheduleSponsored.js')
 const whatsAppMessageStatus = require('../scripts/whatsAppMessageStatus.js')
+const whatsAppMonthlyEmail = require('../scripts/whatsAppMonthlyEmail.js')
 
 const app = express()
 const httpApp = express()
@@ -34,6 +35,7 @@ cron.schedule('0 13 * * *', rssFeedsScript.runRSSScript) //  daily 6 pm pakistan
 cron.schedule('0 */2 * * *', manualFeedsScript.runScript)
 cron.schedule('* * * * *', sponsoredScheduled.runScheduleSponsored)
 cron.schedule('*/5 * * * * *', whatsAppMessageStatus.runScript)
+cron.schedule('0 0 1 * *', whatsAppMonthlyEmail.runScript) // 1st day of every month
 
 require('./config/express')(appObj)
 require('./config/setup')(app, httpApp, config)
