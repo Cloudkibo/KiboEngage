@@ -895,7 +895,7 @@ exports.queryForActiveSubscribers = function (body) {
   endDate.setMinutes(0)
   endDate.setSeconds(0)
   let match = {
-    lastMessagedAt: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
+    last_activity_time: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
   }
   if (body.companyId) {
     match.companyId = body.companyId
