@@ -91,8 +91,8 @@ exports.getKeys = function (req, res) {
 
 exports.updatePlan = function (req, res) {
   utility.callApi('companyprofile/updatePlan', 'post', req.body, 'accounts', req.headers.authorization)
-    .then((result) => {
-      sendSuccessResponse(res, 200, result)
+    .then((payload, description) => {
+      sendSuccessResponse(res, 200, payload, description)
     })
     .catch((err) => {
       sendErrorResponse(res, 500, err)
