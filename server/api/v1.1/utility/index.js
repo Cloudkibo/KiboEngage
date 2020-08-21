@@ -33,9 +33,9 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
     needle(method, options.uri, body, options)
       .then(response => {
         if (response.body.status === 'success') {
-          resolve(response.body.payload)
+          resolve(response.body.payload, response.body.description)
         } else {
-          reject(response.body.payload)
+          reject(response.body.payload, response.body.description)
         }
       })
       .catch(error => {
