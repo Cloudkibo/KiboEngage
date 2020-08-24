@@ -75,9 +75,13 @@ exports.updatePermissions = {
     },
     billingPermission: {
       type: 'boolean'
+    },
+    muteNotifications: {
+      type: 'array'
     }
   }
 }
+
 exports.update = {
   type: 'object',
   properties: {
