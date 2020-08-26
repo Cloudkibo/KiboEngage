@@ -268,7 +268,6 @@ exports.updatePlatformWhatsApp = function (req, res) {
   ]
   utility.callApi(`companyprofile/aggregate`, 'post', query) // fetch company user
     .then(companyprofile => {
-      console.log('company profile', companyprofile)
       if (!companyprofile[0]) {
         let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
         async.series([
