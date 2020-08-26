@@ -725,6 +725,7 @@ exports.getAllCommentCapturesCriteria = function (body) {
     ]
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    console.log('recordsToSkip', recordsToSkip)
     let finalFindCriteria = {}
     Object.assign(finalFindCriteria, findCriteria)
     finalFindCriteria._id = { $lt: body.last_id }
