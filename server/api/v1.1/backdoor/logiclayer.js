@@ -886,6 +886,7 @@ exports.queryForZoomMeetings = function (body) {
     group
   }
 }
+
 exports.queryForActiveSubscribers = function (body) {
   let startDate = new Date(body.startDate)
   startDate.setHours(0)
@@ -911,6 +912,14 @@ exports.queryForActiveSubscribers = function (body) {
     {$group: group}
   ]
 }
+exports.queryForCompaniesCount = function (body) {
+  let countCriteria = [
+    { $match: {whatsApp: { $exists: true, $ne: null }}},
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
 exports.setChartData = function (graphData, startDate, endDate) {
   let activeSubscribers = []
   let messagesSent = []
