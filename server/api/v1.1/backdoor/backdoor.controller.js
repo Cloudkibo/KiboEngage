@@ -1756,23 +1756,29 @@ function _getWhatsAppMetricsData (body) {
     let messagesReceivedQuery = LogicLayer.queryForMessages(body, 'whatsApp')
     let zoomMeetingsQuery = LogicLayer.queryForZoomMeetings(body)
     let activeSubscribersQuery = LogicLayer.queryForActiveSubscribers(body)
+    let companiesCountQuery = LogicLayer.queryForCompaniesCount(body)
 
     async.parallelLimit([
       _getMessagesSent.bind(null, messagesSentQuery),
       _getMessagesSent.bind(null, templateMessagesSentQuery),
       _getMessagesSent.bind(null, messagesReceivedQuery),
       _getZoomMeetings.bind(null, zoomMeetingsQuery),
-      _getActiveSubscribers.bind(null, activeSubscribersQuery)
+      _getActiveSubscribers.bind(null, activeSubscribersQuery),
+      _getCompaniesCount.bind(null, companiesCountQuery)
     ], 10, function (err, results) {
       if (err) {
         reject(err)
       } else {
         let activeSubscribers = []
+        let companiesCount = []
         if (results[2].length > 0) {
           activeSubscribers = results[2].map(r => {
             return {_id: r._id, count: r.uniqueValues.length}
           }
           )
+        }
+        if (results[5].length > 0) {
+          companiesCount = results[5]
         }
         let graphDatas = {
           messagesSent: results[0],
@@ -1787,6 +1793,7 @@ function _getWhatsAppMetricsData (body) {
           messagesReceivedCount: results[2].length > 0 ? sum(results[2], 'count') : 0,
           zoomMeetingsCount: results[3].length > 0 ? sum(results[3], 'count') : 0,
           activeSubscribersCount: results[4].length > 0 ? results[4][0].count : 0,
+          companiesCount: companiesCount[0] && companiesCount[0].count ? companiesCount[0].count : 0,
           graphDatas
         }
         resolve(data)
@@ -1829,6 +1836,16 @@ const sum = (items, prop) => {
   return items.reduce(function (a, b) {
     return a + b[prop]
   }, 0)
+}
+
+const _getCompaniesCount = (criteria, callback) => {
+  utility.callApi(`companyprofile/aggregate`, 'post', criteria)
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
 }
 
 exports._getWhatsAppMetricsData = _getWhatsAppMetricsData
