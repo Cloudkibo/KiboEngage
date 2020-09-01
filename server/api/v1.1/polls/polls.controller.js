@@ -93,7 +93,7 @@ exports.allPolls = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
@@ -132,7 +132,7 @@ exports.create = function (req, res) {
 
 exports.send = function (req, res) {
   let abort = false
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId._id})
@@ -157,7 +157,7 @@ exports.send = function (req, res) {
 }
 exports.sendPollDirectly = function (req, res) {
   let abort = false
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})

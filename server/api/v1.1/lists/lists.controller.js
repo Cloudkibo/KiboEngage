@@ -56,7 +56,7 @@ exports.getAll = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
