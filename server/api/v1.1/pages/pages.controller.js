@@ -137,15 +137,16 @@ exports.enable = function (req, res) {
     .then(companyUser => {
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
+          planUsage = planUsage[0]
           utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
-              // add paid plan check later
-              // if (planUsage.facebook_pages !== -1 && companyUsage.facebook_pages >= planUsage.facebook_pages) {
-              //   return res.status(500).json({
-              //     status: 'failed',
-              //     description: `Your pages limit has reached. Please upgrade your plan to premium in order to connect more pages.`
-              //   })
-              // }
+              companyUsage = companyUsage[0]
+              if (planUsage.facebook_pages !== -1 && companyUsage.facebook_pages >= planUsage.facebook_pages) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Your pages limit has reached. Please upgrade your plan to connect more pages.`
+                })
+              }
               utility.callApi(`pages/${req.body._id}`, 'get', {}) // fetch page
                 .then(page => {
                   needle('get', `https://graph.facebook.com/v6.0/me?access_token=${page.accessToken}`)
