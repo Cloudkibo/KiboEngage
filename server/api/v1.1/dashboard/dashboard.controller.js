@@ -867,54 +867,6 @@ exports.getAllSubscribers = function (req, res) {
       })
   }
 }
-exports.updateSubscriptionPermission = function (req, res) {
-  callApi.callApi('pages/query', 'post', {companyId: req.user.companyId, isApproved: true, connected: true})
-    .then(userPages => {
-      userPages.forEach((page) => {
-        needle.get(
-          `https://graph.facebook.com/v6.0/${page.pageId}?fields=access_token&access_token=${req.user.facebookInfo.fbToken}`,
-          (err, resp) => {
-            if (err) {
-              logger.serverLog(TAG,
-                `Page access token from graph api error ${JSON.stringify(
-                  err)}`, 'error')
-            }
-            if (resp && resp.body && resp.body.error) {
-              sendOpAlert(resp.body.error, 'dashboard controller in kiboengage', page._id, page.userId, page.companyId)
-            }
-            if (resp && resp.body && resp.body.access_token) {
-              needle.get(
-                `https://graph.facebook.com/v6.0/me/messaging_feature_review?access_token=${resp.body.access_token}`,
-                (err, respp) => {
-                  if (err) {
-                    logger.serverLog(TAG,
-                      `Page access token from graph api error ${JSON.stringify(
-                        err)}`, 'error')
-                  }
-                  if (respp && respp.body && respp.body.error) {
-                    sendOpAlert(respp.body.error, 'dashboard controller in kiboengage', page._id, page.userId, page.companyId)
-                  }
-                  if (respp && respp.body && respp.body.data && respp.body.data.length > 0) {
-                    for (let a = 0; a < respp.body.data.length; a++) {
-                      if (respp.body.data[a].feature === 'subscription_messaging' && respp.body.data[a].status === 'approved') {
-                        callApi.callApi(`pages/${page._id}`, 'put', {gotPageSubscriptionPermission: true}) // disconnect page
-                          .then(updated => {
-                          })
-                          .catch(err => {
-                          })
-                      }
-                    }
-                  }
-                })
-            }
-          })
-      })
-      sendSuccessResponse(res, 200)
-    })
-    .catch(err => {
-      sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
-    })
-}
 exports.subscriberSummary = function (req, res) {
   callApi.callApi('companyUser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
