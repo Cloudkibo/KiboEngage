@@ -293,28 +293,49 @@ const _createAutoposting = (data, next) => {
 }
 
 exports.create = function (req, res) {
-  let data = {
-    user: req.user,
-    subscriptionType: req.body.subscriptionType,
-    subscriptionUrl: req.body.subscriptionUrl,
-    autoPostingPayload: AutoPostingLogicLayer.prepareAutopostingPayload(req)
-  }
-  async.series([
-    _fetchCompanyUser.bind(null, data),
-    _fetchPlanUsage.bind(null, data),
-    _fetchCompanyUsage.bind(null, data),
-    _countAutoposting.bind(null, data),
-    _checkAutopostingExistStatus.bind(null, data),
-    _createAutoposting.bind(null, data)
-  ], function (err) {
-    if (err) {
-      logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
-      // console.log('Failed to create autoposting', err)
-      sendErrorResponse(res, 500, '', err)
-    } else {
-      sendSuccessResponse(res, 200, data.result)
-    }
-  })
+  const usage = `${req.body.subscriptionType}_autoposting`
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage[usage] !== -1 && companyUsage[usage] >= planUsage[usage]) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your ${req.body.subscriptionType} autoposting limit has reached. Please upgrade your plan to create more autoposting.`
+            })
+          } else {
+            let data = {
+              user: req.user,
+              subscriptionType: req.body.subscriptionType,
+              subscriptionUrl: req.body.subscriptionUrl,
+              autoPostingPayload: AutoPostingLogicLayer.prepareAutopostingPayload(req)
+            }
+            async.series([
+              _fetchCompanyUser.bind(null, data),
+              _fetchPlanUsage.bind(null, data),
+              _fetchCompanyUsage.bind(null, data),
+              _countAutoposting.bind(null, data),
+              _checkAutopostingExistStatus.bind(null, data),
+              _createAutoposting.bind(null, data)
+            ], function (err) {
+              if (err) {
+                logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
+                sendErrorResponse(res, 500, '', err)
+              } else {
+                sendSuccessResponse(res, 200, data.result)
+              }
+            })
+          }
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, '', `Internal Server Error while fetching company usage ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, '', `Internal Server Error while fetching plan usage ${JSON.stringify(err)}`)
+    })
 }
 
 exports.edit = function (req, res) {
