@@ -232,19 +232,40 @@ exports.allCategories = function (req, res) {
 }
 
 exports.createCategory = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
-    .then(companyUser => {
-      if (!companyUser) {
-        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
-      }
-      let categoryPayload = logicLayer.createDataCategory({ req, companyUser })
-      if (req.user.isSuperUser) {
-        categoryPayload.createdBySuperUser = true
-      }
-      dataLayer.createCategory(categoryPayload)
-        .then(categoryCreated => {
-          updateCompanyUsage(req.user.companyId, 'template_categories', 1)
-          sendSuccessResponse(res, 200, categoryCreated)
+  callApi.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage.template_categories !== -1 && companyUsage.template_categories >= planUsage.template_categories) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your template categories limit has reached. Please upgrade your plan to create more categories.`
+            })
+          } else {
+            callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
+              .then(companyUser => {
+                if (!companyUser) {
+                  sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
+                }
+                let categoryPayload = logicLayer.createDataCategory({ req, companyUser })
+                if (req.user.isSuperUser) {
+                  categoryPayload.createdBySuperUser = true
+                }
+                dataLayer.createCategory(categoryPayload)
+                  .then(categoryCreated => {
+                    updateCompanyUsage(req.user.companyId, 'template_categories', 1)
+                    sendSuccessResponse(res, 200, categoryCreated)
+                  })
+                  .catch(err => {
+                    sendErrorResponse(res, 500, err)
+                  })
+              })
+              .catch(err => {
+                sendErrorResponse(res, 500, err)
+              })
+          }
         })
         .catch(err => {
           sendErrorResponse(res, 500, err)

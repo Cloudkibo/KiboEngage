@@ -162,43 +162,45 @@ exports.createSequence = function (req, res) {
       // calling accounts feature usage for this
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
+          planUsage = planUsage[0]
           utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
-              // add paid plan check later
-              // if (planUsage.broadcast_sequences !== -1 && companyUsage.broadcast_sequences >= planUsage.broadcast_sequences) {
-              //   return res.status(500).json({
-              //     status: 'failed',
-              //     description: `Your sequences limit has reached. Please upgrade your plan to premium in order to create more sequences.`
-              //   })
-              // }
-              let sequencePayload = {
-                name: req.body.name,
-                companyId: companyUser.companyId._id,
-                userId: req.user._id
-              }
-              SequenceDatalayer.createSequence(sequencePayload)
-                .then(sequenceCreated => {
-                  updateCompanyUsage(companyUser.companyId._id, 'broadcast_sequences', 1)
-                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}})
-                    .then(result => {
-                      require('./../../../config/socketio').sendMessageToClient({
-                        room_id: companyUser.companyId._id,
-                        body: {
-                          action: 'sequence_create',
-                          payload: {
-                            sequence_id: sequenceCreated._id
+              companyUsage = companyUsage[0]
+              if (planUsage.broadcast_sequences !== -1 && companyUsage.broadcast_sequences >= planUsage.broadcast_sequences) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Your sequences limit has reached. Please upgrade your plan to create more sequences.`
+                })
+              } else {
+                let sequencePayload = {
+                  name: req.body.name,
+                  companyId: companyUser.companyId._id,
+                  userId: req.user._id
+                }
+                SequenceDatalayer.createSequence(sequencePayload)
+                  .then(sequenceCreated => {
+                    updateCompanyUsage(companyUser.companyId._id, 'broadcast_sequences', 1)
+                    utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { broadcast_sequences: 1 }}, options: {}})
+                      .then(result => {
+                        require('./../../../config/socketio').sendMessageToClient({
+                          room_id: companyUser.companyId._id,
+                          body: {
+                            action: 'sequence_create',
+                            payload: {
+                              sequence_id: sequenceCreated._id
+                            }
                           }
-                        }
+                        })
+                        sendSuccessResponse(res, 200, sequenceCreated)
                       })
-                      sendSuccessResponse(res, 200, sequenceCreated)
-                    })
-                    .catch(err => {
-                      sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
-                    })
-                })
-                .catch(err => {
-                  sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
-                })
+                      .catch(err => {
+                        sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
+                      })
+                  })
+                  .catch(err => {
+                    sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
+                  })
+              }
             })
             .catch(err => {
               sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
@@ -250,50 +252,52 @@ exports.createMessage = function (req, res) {
       // calling accounts feature usage for this
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
+          planUsage = planUsage[0]
           utility.callApi('featureUsage/companyQuery', 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
-              // add paid plan check later
-              // if (planUsage.messages_per_sequence !== -1 && companyUsage.messages_per_sequence >= planUsage.messages_per_sequence) {
-              //   return res.status(500).json({
-              //     status: 'failed',
-              //     description: `Your sequence messages limit has reached. Please upgrade your plan to premium in order to create more messages.`
-              //   })
-              // }
-              let messagePayload = {
-                schedule: req.body.schedule,
-                sequenceId: req.body.sequenceId,
-                payload: req.body.payload,
-                title: req.body.title
-              }
-              SequenceDatalayer.createMessage(messagePayload)
-                .then(messageCreated => {
-                  utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}})
-                    .then(result => {
-                      logger.serverLog('Message Created:', messageCreated, 'debug')
-                      if (messageCreated.trigger.event === 'none') {
-                        let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
-                        SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, messageCreated._id)
-                      } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
-                        SequenceUtility.checkParentMessageTrigger(messageCreated)
-                      }
-                      require('./../../../config/socketio').sendMessageToClient({
-                        room_id: companyUser.companyId._id,
-                        body: {
-                          action: 'sequence_update',
-                          payload: {
-                            sequence_id: req.body.sequenceId
-                          }
+              companyUsage = companyUsage[0]
+              if (planUsage.messages_per_sequence !== -1 && companyUsage.messages_per_sequence >= planUsage.messages_per_sequence) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Your sequence messages limit has reached. Please upgrade your plan to create more messages.`
+                })
+              } else {
+                let messagePayload = {
+                  schedule: req.body.schedule,
+                  sequenceId: req.body.sequenceId,
+                  payload: req.body.payload,
+                  title: req.body.title
+                }
+                SequenceDatalayer.createMessage(messagePayload)
+                  .then(messageCreated => {
+                    utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}})
+                      .then(result => {
+                        logger.serverLog('Message Created:', messageCreated, 'debug')
+                        if (messageCreated.trigger.event === 'none') {
+                          let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
+                          SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, messageCreated._id)
+                        } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
+                          SequenceUtility.checkParentMessageTrigger(messageCreated)
                         }
+                        require('./../../../config/socketio').sendMessageToClient({
+                          room_id: companyUser.companyId._id,
+                          body: {
+                            action: 'sequence_update',
+                            payload: {
+                              sequence_id: req.body.sequenceId
+                            }
+                          }
+                        })
+                        sendSuccessResponse(res, 200, messageCreated)
                       })
-                      sendSuccessResponse(res, 200, messageCreated)
-                    })
-                    .catch(err => {
-                      sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
-                    })
-                })
-                .catch(err => {
-                  sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
-                })
+                      .catch(err => {
+                        sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
+                      })
+                  })
+                  .catch(err => {
+                    sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
+                  })
+              }
             })
             .catch(err => {
               sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
