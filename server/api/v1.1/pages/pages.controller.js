@@ -193,17 +193,6 @@ exports.enable = function (req, res) {
                                           logger.serverLog(TAG,
                                             `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
                                         })
-                                      utility.callApi(`featureUsage/updateCompany`, 'put', {
-                                        query: {companyId: req.body.companyId},
-                                        newPayload: { $inc: { facebook_pages: 1 } },
-                                        options: {}
-                                      })
-                                        .then(updated => {
-                                          // console.log('update company')
-                                        })
-                                        .catch(error => {
-                                          sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
-                                        })
                                       utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
                                         .then(updatedSubscriber => {
                                           const options = {
@@ -324,17 +313,6 @@ exports.disable = function (req, res) {
       logger.serverLog(TAG, 'updated page successfully', 'debug')
       utility.callApi(`subscribers/update`, 'put', {query: {pageId: req.body._id}, newPayload: {isEnabledByPage: false}, options: {multi: true}}) // update subscribers
         .then(updatedSubscriber => {
-          utility.callApi(`featureUsage/updateCompany`, 'put', {
-            query: {companyId: req.body.companyId},
-            newPayload: { $inc: { facebook_pages: -1 } },
-            options: {}
-          })
-            .then(updated => {
-              logger.serverLog(TAG, 'company updated successfully', 'debug')
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
-            })
           const options = {
             url: `https://graph.facebook.com/v6.0/${req.body.pageId}/subscribed_apps?access_token=${req.body.accessToken}`,
             qs: {access_token: req.body.accessToken},
