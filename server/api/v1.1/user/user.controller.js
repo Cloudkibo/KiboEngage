@@ -128,7 +128,7 @@ exports.validateFacebookConnected = function (req, res) {
           buyerFbName: company.user.facebookInfo && company.user.facebookInfo.name ? company.user.facebookInfo.name : '',
           email: company.user.email,
           profilePic: company.user.facebookInfo && company.user.facebookInfo.profilePic ? company.user.facebookInfo.profilePic : ''
-        }  
+        }
       }
       sendSuccessResponse(res, 200, dataTosend)
     })
@@ -218,9 +218,23 @@ exports.updateShowIntegrations = function (req, res) {
 }
 
 exports.disconnectFacebook = function (req, res) {
-  utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {connectFacebook: false}, options: {}})
-    .then(updated => {
-      sendSuccessResponse(res, 200, 'Updated Successfully!')
+  utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id})
+    .then(companyProfile => {
+      let updated = {connectFacebook: false}
+      if (companyProfile.twilio) {
+        updated.platform = 'sms'
+      } else if (companyProfile.whatsApp) {
+        updated.platform = 'whatsApp'
+      } else {
+        updated.platform = ''
+      }
+      utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: updated, options: {}})
+        .then(updated => {
+          sendSuccessResponse(res, 200, 'Updated Successfully!')
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, err)
+        })
     })
     .catch(err => {
       sendErrorResponse(res, 500, err)
