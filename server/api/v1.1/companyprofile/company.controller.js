@@ -353,7 +353,6 @@ exports.deleteWhatsAppInfo = function (req, res) {
     .then(authenticated => {
       utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
         .then(company => {
-          console.log('company got', company)
           async.parallelLimit([
             function (callback) {
               let updated = {}
@@ -372,7 +371,6 @@ exports.deleteWhatsAppInfo = function (req, res) {
             function (callback) {
               if (req.body.type === 'Disconnect') {
                 let platform = logicLayer.getPlatformForWhatsApp(company, req.user)
-                console.log('platform got', platform)
                 utility.callApi(`user/update`, 'post', {query: {_id: req.user._id}, newPayload: {platform: platform}, options: {}})
                   .then(data => {
                     callback(null)
