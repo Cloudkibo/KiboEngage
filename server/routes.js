@@ -78,6 +78,7 @@ module.exports = function (app) {
   app.use('/api/reroute', require('./api/v1.1/Whatsapp Link Re-Routing'))
   app.use('/api/twilio', require('./api/v1.1/twilio'))
   app.use('/api/flockSendEvents', require('./api/v1.1/flockSendEvents'))
+  app.use('/api/addOns', require('./api/v1.1/addOns'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
