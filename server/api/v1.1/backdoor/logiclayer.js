@@ -1,3 +1,5 @@
+const moment = require('moment')
+
 exports.getCriterias = function (body) {
   let findCriteria = {
     role: 'buyer'
@@ -884,6 +886,7 @@ exports.queryForZoomMeetings = function (body) {
     group
   }
 }
+
 exports.queryForActiveSubscribers = function (body) {
   let startDate = new Date(body.startDate)
   startDate.setHours(0)
@@ -895,7 +898,7 @@ exports.queryForActiveSubscribers = function (body) {
   endDate.setMinutes(0)
   endDate.setSeconds(0)
   let match = {
-    lastMessagedAt: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
+    last_activity_time: body.startDate !== '' ? {$gte: startDate, $lt: endDate} : { $exists: true }
   }
   if (body.companyId) {
     match.companyId = body.companyId
@@ -908,4 +911,211 @@ exports.queryForActiveSubscribers = function (body) {
     {$match: match},
     {$group: group}
   ]
+}
+exports.queryForCompaniesCount = function (body) {
+  let countCriteria = [
+    { $match: {whatsApp: { $exists: true, $ne: null }}},
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
+  return countCriteria
+}
+
+exports.setChartData = function (graphData, startDate, endDate) {
+  let activeSubscribers = []
+  let messagesSent = []
+  let templateMessagesSent = []
+  let zoomMeetings = []
+  let messagesReceived = []
+  let difference = getDays(startDate, endDate)
+  if (graphData.activeSubscribers && graphData.activeSubscribers.length > 0) {
+    activeSubscribers = includeZeroCounts(graphData.activeSubscribers, difference)
+  }
+  if (graphData.messagesSent && graphData.messagesSent.length > 0) {
+    messagesSent = includeZeroCounts(graphData.messagesSent, difference)
+  }
+  if (graphData.templateMessagesSent && graphData.templateMessagesSent.length > 0) {
+    templateMessagesSent = includeZeroCounts(graphData.templateMessagesSent, difference)
+  }
+  if (graphData.messagesReceived && graphData.messagesReceived.length > 0) {
+    messagesReceived = includeZeroCounts(graphData.messagesReceived, difference)
+  }
+  if (graphData.zoomMeetings && graphData.zoomMeetings.length > 0) {
+    zoomMeetings = includeZeroCounts(graphData.zoomMeetings, difference)
+  }
+  let dataChart = prepareLineChartData(
+    activeSubscribers, messagesSent, templateMessagesSent, messagesReceived, zoomMeetings)
+  let labels = dataChart.map(a => a.date)
+  let messagesSentArray = dataChart.map(m => m.messagesSent)
+  let activeSubscribersArray = dataChart.map(m => m.activeSubscribers)
+  let templateMessagesSentArray = dataChart.map(m => m.templateMessagesSent)
+  let zoomMeetingsArray = dataChart.map(m => m.zoomMeetings)
+  let messagesReceivedArray = dataChart.map(m => m.messagesReceived)
+  let graph = {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {label: 'Monthly Active Users', data: activeSubscribersArray, fill: false, borderColor: 'rgba(92, 184, 92, 1)', pointBackgroundColor: 'white', pointBorderColor: 'rgba(52, 191, 163, 1)', borderWidth: 1},
+        {label: 'Messages Received', data: messagesReceivedArray, fill: false, borderColor: 'rgba(113, 106, 202, 1)', pointBackgroundColor: 'white', pointBorderColor: 'rgba(113, 106, 202, 1)', borderWidth: 1},
+        {label: 'Messages Sent', data: messagesSentArray, fill: false, borderColor: 'rgba(217, 83, 79, 1)', pointBackgroundColor: 'white', pointBorderColor: 'rgba(217, 83, 79, 1)', borderWidth: 1},
+        {label: 'Template Messages Sent', data: templateMessagesSentArray, fill: false, borderColor: 'rgb(240, 173, 78, 1)', pointBackgroundColor: 'white', pointBorderColor: 'rgba(240, 173, 78, 1)', borderWidth: 1},
+        {label: 'Zoom Meetings Created', data: zoomMeetingsArray, fill: false, borderColor: 'rgba(196, 197, 214, 1)', pointBackgroundColor: 'white', pointBorderColor: 'rgba(196, 197, 214, 1)', borderWidth: 1}
+      ]
+    }
+  }
+  return graph
+  // return {type:'line',data:{labels:['January','February', 'March','April', 'May'], datasets:[{label:'Dogs', data: [50,60,70,180,190]},{label:'Cats', data:[100,200,300,400,500]}]}}
+}
+
+function getDays (startDate, endDate) {
+  var date1 = new Date(startDate)
+  var date2 = new Date(endDate)
+  var difference = date2.getTime() - date1.getTime()
+  return (difference / (1000 * 3600 * 24))
+}
+
+function includeZeroCounts (data, difference) {
+  var dataArray = []
+  var days = difference
+  var index = 0
+  var varDate = moment()
+  for (var i = 0; i < days; i++) {
+    for (var j = 0; j < data.length; j++) {
+      var recordId = data[j]._id
+      var date = `${recordId.year}-${recordId.month}-${recordId.day}`
+      var loopDate = moment(varDate).format('YYYY-MM-DD')
+      if (moment(date).isSame(loopDate, 'day')) {
+        var d = {}
+        d.date = loopDate
+        d.count = data[j].count
+        dataArray.push(d)
+        varDate = moment(varDate).subtract(1, 'days')
+        index = 0
+        break
+      }
+      index++
+    }
+    if (index === data.length) {
+      var obj = {}
+      obj.date = varDate.format('YYYY-MM-DD')
+      obj.count = 0
+      dataArray.push(obj)
+      varDate = moment(varDate).subtract(1, 'days')
+      index = 0
+    }
+  }
+  return dataArray.reverse()
+}
+function prepareLineChartData (activeSubscribers, messagesSent, templateMessagesSent, messagesReceived, zoomMeetings) {
+  var dataChart = []
+  if (activeSubscribers && activeSubscribers.length > 0) {
+    for (var i = 0; i < activeSubscribers.length; i++) {
+      var record = {}
+      record.date = activeSubscribers[i].date
+      if (messagesSent && messagesSent.length > 0) {
+        record.messagesSent = messagesSent[i].count
+      } else {
+        record.messagesSent = 0
+      }
+      if (templateMessagesSent && templateMessagesSent.length > 0) {
+        record.templateMessagesSent = templateMessagesSent[i].count
+      } else {
+        record.templateMessagesSent = 0
+      }
+      if (messagesReceived && messagesReceived.length > 0) {
+        record.messagesReceived = messagesReceived[i].count
+      } else {
+        record.messagesReceived = 0
+      }
+      if (zoomMeetings && zoomMeetings.length > 0) {
+        record.zoomMeetings = zoomMeetings[i].count
+      } else {
+        record.zoomMeetings = 0
+      }
+      record.activeSubscribers = activeSubscribers[i].count
+      dataChart.push(record)
+    }
+  } else if (messagesSent && messagesSent.length > 0) {
+    for (var j = 0; j < messagesSent.length; j++) {
+      var record1 = {}
+      record1.date = messagesSent[j].date
+      if (activeSubscribers && activeSubscribers.length > 0) {
+        record1.activeSubscribers = activeSubscribers[j].count
+      } else {
+        record1.activeSubscribers = 0
+      }
+      if (templateMessagesSent && templateMessagesSent.length > 0) {
+        record1.templateMessagesSent = templateMessagesSent[j].count
+      } else {
+        record1.templateMessagesSent = 0
+      }
+      if (messagesReceived && messagesReceived.length > 0) {
+        record1.messagesReceived = messagesReceived[j].count
+      } else {
+        record1.messagesReceived = 0
+      }
+      if (zoomMeetings && zoomMeetings.length > 0) {
+        record1.zoomMeetings = zoomMeetings[j].count
+      } else {
+        record1.zoomMeetings = 0
+      }
+      record1.messagesSent = messagesSent[j].count
+      dataChart.push(record1)
+    }
+  } else if (templateMessagesSent && templateMessagesSent.length > 0) {
+    for (var k = 0; k < templateMessagesSent.length; k++) {
+      var record2 = {}
+      record2.date = templateMessagesSent[k].date
+      if (activeSubscribers && activeSubscribers.length > 0) {
+        record2.activeSubscribers = activeSubscribers[k].count
+      } else {
+        record2.activeSubscribers = 0
+      }
+      if (messagesSent && messagesSent.length > 0) {
+        record2.messagesSent = messagesSent[k].count
+      } else {
+        record2.messagesSent = 0
+      }
+      if (messagesReceived && messagesReceived.length > 0) {
+        record2.messagesReceived = messagesReceived[k].count
+      } else {
+        record2.messagesReceived = 0
+      }
+      if (zoomMeetings && zoomMeetings.length > 0) {
+        record2.zoomMeetings = zoomMeetings[k].count
+      } else {
+        record2.zoomMeetings = 0
+      }
+      record2.templateMessagesSent = templateMessagesSent[k].count
+      dataChart.push(record2)
+    }
+  } else if (messagesReceived && messagesReceived.length > 0) {
+    for (var l = 0; l < messagesReceived.length; l++) {
+      var record3 = {}
+      record3.date = messagesReceived[l].date
+      if (activeSubscribers && activeSubscribers.length > 0) {
+        record3.activeSubscribers = activeSubscribers[l].count
+      } else {
+        record3.activeSubscribers = 0
+      }
+      if (messagesSent && messagesSent.length > 0) {
+        record3.messagesSent = messagesSent[l].count
+      } else {
+        record3.messagesSent = 0
+      }
+      if (templateMessagesSent && templateMessagesSent.length > 0) {
+        record3.templateMessagesSent = templateMessagesSent[l].count
+      } else {
+        record3.templateMessagesSent = 0
+      }
+      if (zoomMeetings && templateMessagesSent.length > 0) {
+        record3.zoomMeetings = zoomMeetings[l].count
+      } else {
+        record3.zoomMeetings = 0
+      }
+      record3.messagesReceived = messagesReceived[l].count
+      dataChart.push(record3)
+    }
+  }
+  return dataChart
 }

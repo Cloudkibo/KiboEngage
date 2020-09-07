@@ -17,6 +17,7 @@ const AutopostingMessagesDataLayer = require('../autopostingMessages/autoposting
 const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 const sgMail = require('@sendgrid/mail')
 const EmailTemplate = require('./emailTemplate')
+const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
@@ -1681,7 +1682,7 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
         }
     },
     {
-      $match: {'companyProfile.flockSendWhatsApp': {$exists: true}, role: 'buyer'}
+      $match: {'companyProfile.whatsApp': {$exists: true}, role: 'buyer'}
     }
   ]
   let endDate = new Date()
@@ -1696,29 +1697,49 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
   let requests = []
   utility.callApi(`user/aggregate`, 'post', aggregateQuery)
     .then(users => {
-      logger.serverLog('Users', users)
       for (let i = 0; i < users.length; i++) {
         requests.push(_getWhatsAppMetricsData({startDate: finalStartDate, endDate: finalEndDate, companyId: users[i].companyProfile[0]._id}))
       }
       Promise.all(requests)
         .then(results => {
           let messages = []
-          for (let i = 0; i < results.length; i++) {
-            results[i].email = users[i].email
-            let message = {
-              to: users[i].email,
-              from: 'support@cloudkibo.com',
-              subject: 'KiboPush WhatsApp: Monthly Summary',
-              text: 'Welcome to KiboPush'
+          async.eachOf(results, function (result, j, next) {
+            result.email = users[j].email
+            let graph = LogicLayer.setChartData(result.graphDatas, finalStartDate, finalEndDate)
+            needle(
+              'post',
+              `https://quickchart.io/chart/create`,
+              {
+                width: 500,
+                devicePixelRatio: 1.0,
+                backgroundColor: 'white',
+                chart: JSON.stringify(graph)
+              },
+              {json: true}
+            )
+              .then(resp => {
+                let message = {
+                  to: users[j].email,
+                  from: 'support@cloudkibo.com',
+                  subject: 'KiboPush WhatsApp: Monthly Summary',
+                  text: 'Welcome to KiboPush'
+                }
+                message.html = EmailTemplate.getWhatsAppEmail(users[j].name, result, resp.body.url)
+                messages.push(message)
+                next()
+              })
+              .catch((err) => {
+                next(err)
+              })
+          }, function (err) {
+            if (err) {
+              sendErrorResponse(res, 500, `Failed to send montly email ${JSON.stringify(err)}`)
+            } else {
+              sgMail.setApiKey(config.SENDGRID_API_KEY)
+              sgMail.send(messages).then(() => {
+                sendSuccessResponse(res, 200, results)
+              })
             }
-            message.html = EmailTemplate.getWhatsAppEmail(users[i].name, results[i])
-            messages.push(message)
-          }
-          sgMail.setApiKey(config.SENDGRID_API_KEY)
-          sgMail.send(messages).then(() => {
-            sendSuccessResponse(res, 200, results)
-          }).catch(error => {
-            sendErrorResponse(res, 500, `Failed to send montly email ${JSON.stringify(error)}`)
           })
         })
     })
@@ -1728,30 +1749,36 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
     })
 }
 
-const _getWhatsAppMetricsData = (body) => {
+function _getWhatsAppMetricsData (body) {
   return new Promise((resolve, reject) => {
     let messagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'sent')
     let templateMessagesSentQuery = LogicLayer.queryForMessages(body, 'convos', 'template')
     let messagesReceivedQuery = LogicLayer.queryForMessages(body, 'whatsApp')
     let zoomMeetingsQuery = LogicLayer.queryForZoomMeetings(body)
     let activeSubscribersQuery = LogicLayer.queryForActiveSubscribers(body)
+    let companiesCountQuery = LogicLayer.queryForCompaniesCount(body)
 
     async.parallelLimit([
       _getMessagesSent.bind(null, messagesSentQuery),
       _getMessagesSent.bind(null, templateMessagesSentQuery),
       _getMessagesSent.bind(null, messagesReceivedQuery),
       _getZoomMeetings.bind(null, zoomMeetingsQuery),
-      _getActiveSubscribers.bind(null, activeSubscribersQuery)
+      _getActiveSubscribers.bind(null, activeSubscribersQuery),
+      _getCompaniesCount.bind(null, companiesCountQuery)
     ], 10, function (err, results) {
       if (err) {
         reject(err)
       } else {
         let activeSubscribers = []
+        let companiesCount = []
         if (results[2].length > 0) {
           activeSubscribers = results[2].map(r => {
             return {_id: r._id, count: r.uniqueValues.length}
           }
           )
+        }
+        if (results[5].length > 0) {
+          companiesCount = results[5]
         }
         let graphDatas = {
           messagesSent: results[0],
@@ -1766,6 +1793,7 @@ const _getWhatsAppMetricsData = (body) => {
           messagesReceivedCount: results[2].length > 0 ? sum(results[2], 'count') : 0,
           zoomMeetingsCount: results[3].length > 0 ? sum(results[3], 'count') : 0,
           activeSubscribersCount: results[4].length > 0 ? results[4][0].count : 0,
+          companiesCount: companiesCount[0] && companiesCount[0].count ? companiesCount[0].count : 0,
           graphDatas
         }
         resolve(data)
@@ -1809,3 +1837,15 @@ const sum = (items, prop) => {
     return a + b[prop]
   }, 0)
 }
+
+const _getCompaniesCount = (criteria, callback) => {
+  utility.callApi(`companyprofile/aggregate`, 'post', criteria)
+    .then(data => {
+      callback(null, data)
+    })
+    .catch(err => {
+      callback(err)
+    })
+}
+
+exports._getWhatsAppMetricsData = _getWhatsAppMetricsData

@@ -128,7 +128,7 @@ exports.validateFacebookConnected = function (req, res) {
           buyerFbName: company.user.facebookInfo && company.user.facebookInfo.name ? company.user.facebookInfo.name : '',
           email: company.user.email,
           profilePic: company.user.facebookInfo && company.user.facebookInfo.profilePic ? company.user.facebookInfo.profilePic : ''
-        }  
+        }
       }
       sendSuccessResponse(res, 200, dataTosend)
     })
@@ -218,9 +218,23 @@ exports.updateShowIntegrations = function (req, res) {
 }
 
 exports.disconnectFacebook = function (req, res) {
-  utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {connectFacebook: false}, options: {}})
-    .then(updated => {
-      sendSuccessResponse(res, 200, 'Updated Successfully!')
+  utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id})
+    .then(companyProfile => {
+      let updated = {connectFacebook: false}
+      if (companyProfile.twilio) {
+        updated.platform = 'sms'
+      } else if (companyProfile.whatsApp) {
+        updated.platform = 'whatsApp'
+      } else {
+        updated.platform = ''
+      }
+      utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: updated, options: {}})
+        .then(updated => {
+          sendSuccessResponse(res, 200, 'Updated Successfully!')
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, err)
+        })
     })
     .catch(err => {
       sendErrorResponse(res, 500, err)
@@ -246,3 +260,29 @@ exports.updatePicture = function (req, res) {
       sendErrorResponse(res, 500, `Failed to retrieve profile picture of user ${JSON.stringify(error)}`)
     })
 }
+
+exports.logout = function (req, res) {
+  utility.callApi(`users/receivelogout`, 'get', {}, 'chat', req.headers.authorization)
+    .then(response => {
+      return res.status(200).json({
+        status: 'success',
+        payload: 'send response successfully!'
+      })
+    }).catch(err => {
+      res.status(500).json({status: 'failed', payload: `failed to sendLogoutEvent ${err}`})
+    })
+}
+
+exports.receivelogout = function (req, res) {
+  require('../../../config/socketio').sendMessageToClient({
+    room_id: req.user.companyId,
+    body: {
+      action: 'logout'
+    }
+  })
+  return res.status(200).json({
+    status: 'success',
+    payload: 'recieved logout event!'
+  })
+}
+

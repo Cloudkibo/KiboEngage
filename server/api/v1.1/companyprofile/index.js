@@ -5,6 +5,7 @@ const validate = require('express-jsonschema').validate
 
 const validationSchema = require('./validationSchema')
 const controller = require('./company.controller')
+const { attachProviderInfo } = require('../../middleware/whatsApp.middleware')
 
 router.get('/members', // fetch team acount members (users)
   auth.isAuthenticated(),
@@ -111,6 +112,7 @@ router.post('/enableMember',
 
 router.get('/getWhatsAppMessageTemplates',
   auth.isAuthenticated(),
+  attachProviderInfo(),
   controller.getWhatsAppMessageTemplates)
 
 module.exports = router
