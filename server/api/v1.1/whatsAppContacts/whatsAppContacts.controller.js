@@ -20,7 +20,7 @@ exports.index = function (req, res) {
           utility.callApi(`whatsAppContacts/aggregate`, 'post', criterias.fetchCriteria) // fetch subscribers
             .then(contacts => {
               var data = {
-                count: count[0].count,
+                count: count.length > 0 ? count[0].count: 0,
                 contacts: contacts
               }
               sendSuccessResponse(res, 200, data)
