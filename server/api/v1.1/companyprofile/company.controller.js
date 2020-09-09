@@ -417,8 +417,15 @@ exports.deleteWhatsAppInfo = function (req, res) {
           async.parallelLimit([
             function (callback) {
               let updated = {}
-              if (req.body.type === 'Disconnect') {
+              if (req.body.type === 'Disconnect' && !req.body.connected) {
+                updated = {'whatsApp.connected': req.body.connected, 'whatsApp.dateDisconnected': req.body.Date}
+              } else if (req.body.type === 'Disconnect') {
                 updated = {$unset: {whatsApp: 1}}
+              } else {
+                updated = {twilioWhatsApp: {
+                  accessToken: req.body.accessToken,
+                  number: req.body.sandboxNumber.split(' ').join('')
+                }}
               }
               utility.callApi(`companyprofile/update`, 'put', {query: {_id: req.user.companyId}, newPayload: updated, options: {}})
                 .then(data => {
@@ -430,11 +437,20 @@ exports.deleteWhatsAppInfo = function (req, res) {
                 })
             },
             function (callback) {
-              if (req.body.type === 'Disconnect') {
-                let platform = logicLayer.getPlatformForWhatsApp(company, req.user)
-                utility.callApi(`user/update`, 'post', {query: {_id: req.user._id}, newPayload: {platform: platform}, options: {}})
+              let platform = logicLayer.getPlatformForWhatsApp(company, req.user)
+              utility.callApi(`user/update`, 'post', {query: {_id: req.user._id}, newPayload: {platform: platform}, options: {}})
+                .then(data => {
+                  callback(null)
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            },
+            function (callback) {
+              if (req.body.type === 'Disconnect' && req.body.connected) {
+                utility.callApi(`whatsAppContacts/deleteMany`, 'delete', {companyId: req.user.companyId})
                   .then(data => {
-                    callback(null)
+                    callback(null, data)
                   })
                   .catch(err => {
                     callback(err)
@@ -444,40 +460,56 @@ exports.deleteWhatsAppInfo = function (req, res) {
               }
             },
             function (callback) {
-              utility.callApi(`whatsAppContacts/deleteMany`, 'delete', {companyId: req.user.companyId})
-                .then(data => {
-                  callback(null, data)
-                })
-                .catch(err => {
-                  callback(err)
-                })
+              if (req.body.type === 'Disconnect' && req.body.connected) {
+                let query = {
+                  purpose: 'deleteMany',
+                  match: {companyId: req.user.companyId}
+                }
+                utility.callApi(`whatsAppBroadcasts`, 'delete', query, 'kiboengagedblayer')
+                  .then(data => {
+                    callback(null, data)
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              } else {
+                callback(null)
+              }
             },
             function (callback) {
-              let query = {
-                purpose: 'deleteMany',
-                match: {companyId: req.user.companyId}
+              if (req.body.type === 'Disconnect' && req.body.connected) {
+                let query = {
+                  purpose: 'deleteMany',
+                  match: {companyId: req.user.companyId}
+                }
+                utility.callApi(`whatsAppBroadcastMessages`, 'delete', query, 'kiboengagedblayer')
+                  .then(data => {
+                    callback(null, data)
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              } else {
+                callback(null)
               }
-              utility.callApi(`whatsAppBroadcasts`, 'delete', query, 'kiboengage')
-                .then(data => {
-                  callback(null, data)
-                })
-                .catch(err => {
-                  callback(err)
-                })
             },
             function (callback) {
-              let query = {
-                purpose: 'deleteMany',
-                match: {companyId: req.user.companyId}
+              if (req.body.type === 'Disconnect' && req.body.connected) {
+                let query = {
+                  purpose: 'deleteMany',
+                  match: {companyId: req.user.companyId}
+                }
+                utility.callApi(`whatsAppChat`, 'delete', query, 'kibochat')
+                  .then(data => {
+                    data = data[0]
+                    callback(null, data)
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              } else {
+                callback(null)
               }
-              utility.callApi(`whatsAppChat`, 'delete', query, 'kibochat')
-                .then(data => {
-                  data = data[0]
-                  callback(null, data)
-                })
-                .catch(err => {
-                  callback(err)
-                })
             }
           ], 10, function (err, results) {
             if (err) {
