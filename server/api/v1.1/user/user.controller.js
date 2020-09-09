@@ -128,7 +128,7 @@ exports.validateFacebookConnected = function (req, res) {
           buyerFbName: company.user.facebookInfo && company.user.facebookInfo.name ? company.user.facebookInfo.name : '',
           email: company.user.email,
           profilePic: company.user.facebookInfo && company.user.facebookInfo.profilePic ? company.user.facebookInfo.profilePic : ''
-        }  
+        }
       }
       sendSuccessResponse(res, 200, dataTosend)
     })
