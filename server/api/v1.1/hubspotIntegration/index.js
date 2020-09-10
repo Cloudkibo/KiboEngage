@@ -16,15 +16,17 @@ router.get('/auth', controller.auth)
 
 router.get('/callback', controller.callback)
 
-router.get('/listForms', auth.isAuthenticated(), controller.getForms)
+router.get('/listForms', auth.isAuthenticated(), auth.isSuperUserActingAsCustomer(), controller.getForms)
 
 router.post('/fetchFields',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.fetchColumnsPayload}),
   controller.fetchColumns)
 
 router.get('/fetchHubspotDefaultColumns',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.fetchHubspotDefaultColumns)
 
 module.exports = router
