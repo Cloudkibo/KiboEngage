@@ -13,6 +13,7 @@ const webhook = require('./webhook.controller')
 
 router.post('/',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.index) // this id will be userid
 
 router.get('/install', // handle installing of app from shopify app store

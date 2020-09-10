@@ -9,8 +9,8 @@ const auth = require('../../../auth/auth.service')
 
 router.get('/',
   auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('sequence_messaging'),
-  auth.isUserAllowedToPerformThisAction('view_sequences'),
+  auth.isSuperUserActingAsCustomer(),
+  auth.isSuperUserActingAsCustomer(),
   controller.index)
 
 module.exports = router

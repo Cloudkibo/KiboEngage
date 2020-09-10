@@ -11,6 +11,7 @@ const validationSchema = require('./validationSchema')
 
 router.post('/allSurveys',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('surveys'),
   auth.isUserAllowedToPerformThisAction('view_surveys'),
   validate({body: validationSchema.createPayload}),
@@ -18,6 +19,7 @@ router.post('/allSurveys',
 
 router.post('/create',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
   auth.isUserAllowedToPerformThisAction('create_surveys'),
   validate({body: validationSchema.createPayload}),
@@ -25,6 +27,7 @@ router.post('/create',
 
 router.post('/edit',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
   auth.isUserAllowedToPerformThisAction('create_surveys'),
   validate({body: validationSchema.createPayload}),
@@ -32,6 +35,7 @@ router.post('/edit',
 
 router.post('/send',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
   auth.isUserAllowedToPerformThisAction('resend_surveys'),
   validate({body: validationSchema.createPayload}),
@@ -39,6 +43,7 @@ router.post('/send',
 
 router.post('/sendSurveyDirectly',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
   auth.isUserAllowedToPerformThisAction('create_surveys'),
   controller.sendSurveyDirectly)
@@ -47,18 +52,21 @@ router.post('/sendSurveyDirectly',
 
 router.get('/showquestions/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('surveys_reports'),
   auth.isUserAllowedToPerformThisAction('view_survey_reports'),
   controller.showQuestions)
 
 router.get('/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('surveys_reports'),
   auth.isUserAllowedToPerformThisAction('view_survey_reports'),
   controller.show) // show survey and responses of the survey
 
 router.delete('/deleteSurvey/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
   auth.isUserAllowedToPerformThisAction('delete_surveys'),
   controller.deleteSurvey)

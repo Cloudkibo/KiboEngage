@@ -69,51 +69,6 @@ function isAuthenticated () {
           })
       }
     })
-    .use(function isSuperUserActingAsCustomer (req, res, next) {
-      if (req.GAMRequest) {
-        next()
-      } else if (req.user.isSuperUser) {
-        if (req.headers.hasOwnProperty('actingasuser')) {
-          let actUserAs
-          apiCaller.callApi(`user/query`, 'post', {domain_email: req.headers.actingasuser})
-            .then(user => {
-              user = user[0]
-              req.user.domain_email = req.headers.actingasuser
-              req.user.facebookInfo = user.facebookInfo
-              actUserAs = user
-              // req.user = user
-              return apiCaller.callApi('companyUser/query', 'post', {userId: actUserAs._id})
-            })
-            .then(companyUserInfo => {
-              req.user.companyId = companyUserInfo.companyId
-              return apiCaller.callApi('permissions/query', 'post', {userId: actUserAs._id})
-            })
-            .then(permissionsGot => {
-              permissionsGot = permissionsGot[0]
-              req.user.permissions = permissionsGot
-              return apiCaller.callApi('companyprofile/query', 'post', {_id: req.user.companyId})
-            })
-            .then(companyProfileGot => {
-              req.user.currentPlan = companyProfileGot.planId
-              req.user.last4 = companyProfileGot.stripe.last4
-              return apiCaller.callApi('permissions_plan/query', 'post', {plan_id: companyProfileGot.planId._id})
-            })
-            .then(permissionsPlan => {
-              permissionsPlan = permissionsPlan[0]
-              req.user.plan = permissionsPlan
-              next()
-            })
-            .catch(err => {
-              return res.status(500)
-                .json({status: 'failed', description: `Internal Server Error: ${err}`})
-            })
-        } else {
-          next()
-        }
-      } else {
-        next()
-      }
-    })
     .use(function sentryContextDefinition (req, res, next) {
       const Raven = require('raven')
       Raven.setContext({
@@ -153,6 +108,60 @@ function isAuthorizedGAMRequest (req, res, next) {
   })
 }
 
+/**
+ * Checks if a super user is acting as customer
+ */
+function isSuperUserActingAsCustomer(modeOfAction) {
+  return compose()
+    .use(function appendCustomerDetails (req, res, next) {
+      if (req.user.actingAsUser) {
+        if(modeOfAction === 'write') {
+          return res.status(403)
+          .json({status: 'failed', description: `You are not allowed to perform this action`})
+        } else {
+          if (req.user.isSuperUser) {
+            let actUserAs = {}
+            apiCaller.callApi(`user/query`, 'post', {domain_email: req.user.actingAsUser.domain_email})
+              .then(user => {
+                user = user[0]
+                req.user.domain_email = req.user.actingAsUser.domain_email
+                req.user.facebookInfo = user.facebookInfo
+                actUserAs = user
+                return apiCaller.callApi('companyUser/query', 'post', {userId: actUserAs._id})
+              })
+              .then(companyUserInfo => {
+                req.user.companyId = companyUserInfo.companyId
+                return apiCaller.callApi('permissions/query', 'post', {userId: actUserAs._id})
+              })
+              .then(permissionsGot => {
+                permissionsGot = permissionsGot[0]
+                req.user.permissions = permissionsGot
+                return apiCaller.callApi('companyprofile/query', 'post', {_id: req.user.companyId})
+              })
+              .then(companyProfileGot => {
+                req.user.currentPlan = companyProfileGot.planId
+                req.user.last4 = companyProfileGot.stripe.last4
+                return apiCaller.callApi('permissions_plan/query', 'post', {plan_id: companyProfileGot.planId._id})
+              })
+              .then(permissionsPlan => {
+                permissionsPlan = permissionsPlan[0]
+                req.user.plan = permissionsPlan
+                next()
+              })
+              .catch(err => {
+                return res.status(500)
+                  .json({status: 'failed', description: `Internal Server Error: ${err}`})
+              })
+            } else {
+              return res.status(403)
+                  .json({status: 'failed', description: `You are not allowed to perform this action`})
+          }
+        }
+      } else {
+        next()
+      }
+    })
+}
 /**
  * Checks if the user role meets the minimum requirements of the route
  */
@@ -423,6 +432,7 @@ function isKiboDash (req, res, next) {
 }
 exports.isAuthenticated = isAuthenticated
 exports.isAuthorizedSuperUser = isAuthorizedSuperUser
+exports.isSuperUserActingAsCustomer = isSuperUserActingAsCustomer
 exports.hasRole = hasRole
 exports.hasRequiredPlan = hasRequiredPlan
 exports.doesPlanPermitsThisAction = doesPlanPermitsThisAction
