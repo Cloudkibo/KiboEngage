@@ -311,7 +311,7 @@ const _updateUserPlatform = (req, res) => {
         })
         .catch(err => {
           logger.serverLog(TAG, `500: Internal server error ${err}`)
-        })               
+        })
     }).catch(err => {
       logger.serverLog(TAG, JSON.stringify(err), 'error')
     })
