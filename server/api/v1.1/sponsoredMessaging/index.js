@@ -9,22 +9,26 @@ const validationSchema = require('./validationSchema')
 
 router.post('/fetchSponsoredMessages',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   attachBuyerInfo(),
   controller.index)
 
 router.post('/',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({ body: validationSchema.createPayload }),
   controller.create)
 
 router.post('/update/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({ body: validationSchema.updatePayload }),
   controller.update
 )
 
 router.post('/send/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({ body: validationSchema.updatePayload }),
   attachBuyerInfo(),
   controller.send
@@ -38,16 +42,19 @@ router.post('/sendInSandbox/:id',
 
 router.delete('/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.delete)
 
 router.get('/insights/:ad_id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   attachBuyerInfo(),
   controller.getInsight
 )
 
 router.get('/adAccounts',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   attachBuyerInfo(),
   controller.adAccounts
 )

@@ -9,6 +9,7 @@ const controller = require('./controller')
 
 router.post('/sendSMS',
   // authenticate
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.sendSMSPayload}),
   middleware.validateNumbers(),
   controller.sendSMS)
@@ -19,6 +20,7 @@ router.post('/receiveSMS',
 
 router.post('/verify',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.verifyPayload}),
   controller.verifyNumber)
 
