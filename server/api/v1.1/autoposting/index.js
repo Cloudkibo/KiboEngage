@@ -12,6 +12,7 @@ const { checkSMP } = require('../../middleware/SMPStatus.middleware')
 
 router.get('/',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   checkSMP(),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
@@ -19,6 +20,7 @@ router.get('/',
 
 router.post('/create',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
   validate({ body: validationSchema.createPayload }),
@@ -26,6 +28,7 @@ router.post('/create',
 
 router.post('/edit',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
   validate({ body: validationSchema.editPayload }),
@@ -33,6 +36,7 @@ router.post('/edit',
 
 router.delete('/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   // auth.doesPlanPermitsThisAction('autoposting'),
   // auth.doesRolePermitsThisAction('autopostingPermission'),
   controller.destroy)

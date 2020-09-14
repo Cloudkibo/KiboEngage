@@ -13,6 +13,7 @@ const multipartyMiddleware = multiparty()
 
 router.post('/allBroadcasts',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   validate({body: validationSchema.allBroadcastsPayload}),
@@ -20,6 +21,7 @@ router.post('/allBroadcasts',
 
 router.post('/sendConversation',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   multipartyMiddleware,
@@ -27,6 +29,7 @@ router.post('/sendConversation',
 
 router.post('/upload',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   multipartyMiddleware,
@@ -34,18 +37,21 @@ router.post('/upload',
 
 router.post('/uploadTemplate',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.uploadForTemplate)
 
 router.get('/delete/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.delete)
 
 router.post('/addButton',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   validate({body: validationSchema.addButtonPayload}),
@@ -53,12 +59,14 @@ router.post('/addButton',
 
 router.post('/addCardAction',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.addCardAction)
 
 router.post('/editButton',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   validate({body: validationSchema.editButtonPayload}),
@@ -66,6 +74,7 @@ router.post('/editButton',
 
 router.delete('/deleteButton/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.deleteButton)
@@ -74,12 +83,14 @@ router.get('/download/:id', controller.download)
 
 router.get('/retrieveReachEstimation/:page_id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   controller.retrieveReachEstimation)
 
 router.post('/retrieveSubscribersCount',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.doesRolePermitsThisAction('broadcastPermission'),
   validate({body: validationSchema.subscriberCountPayload}),
@@ -87,10 +98,12 @@ router.post('/retrieveSubscribersCount',
 
 router.post('/urlMetaData/',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.urlMetaData)
 
 router.post('/sendUserInputComponent/',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.sendUserInputComponent)
 
 module.exports = router

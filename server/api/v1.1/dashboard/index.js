@@ -9,10 +9,12 @@ const controller = require('./dashboard.controller')
 
 router.get('/integrationsData',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.integrationsData)
 
 router.get('/sentVsSeen/:pageId',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.sentVsSeen)
@@ -21,6 +23,7 @@ router.get('/sentVsSeen/:pageId',
 // todo remove this, this is not being used, discuss
 router.post('/enable',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.enable)
@@ -28,6 +31,7 @@ router.post('/enable',
 // router.post('/disable', auth.isAuthenticated(), controller.disable);
 router.get('/stats',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.stats)
@@ -41,40 +45,47 @@ router.get('/toppages',
 // todo remove this, after discuss - this id will be userid, this is bad code
 router.get('/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.index)
 
 router.get('/graphData/:days',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.graphData)
 
 router.post('/sentVsSeenNew',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.sentVsSeenNew)
 
 router.post('/getAllSubscribers/:pageid',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.getAllSubscribers)
 
 router.post('/subscriberSummary',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   // auth.doesPlanPermitsThisAction('dashboard'),
   // auth.doesRolePermitsThisAction('dashboardPermission'),
   controller.subscriberSummary)
 
 router.post('/fetchAutopostingDetails',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.fetchAutopostingDetails)
 
 router.post('/fetchNewsIntegrations',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.fetchNewsIntegrations)
 
 module.exports = router
