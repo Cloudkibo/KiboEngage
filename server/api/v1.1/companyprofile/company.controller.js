@@ -377,12 +377,18 @@ exports.deleteWhatsAppInfo = function (req, res) {
             },
             function (callback) {
               let platform = logicLayer.getPlatformForWhatsApp(company, req.user)
-              utility.callApi(`user/update`, 'post', {query: {_id: req.user._id}, newPayload: {platform: platform}, options: {}})
-                .then(data => {
-                  callback(null)
-                })
-                .catch(err => {
-                  callback(err)
+              utility.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
+                .then(companyUsers => {
+                  let userIds = companyUsers.map(companyUser => companyUser.userId._id)
+                  utility.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: platform} }, options: {multi: true}})
+                    .then(data => {
+                      callback(null)
+                    })
+                    .catch(err => {
+                      callback(err)
+                    })               
+                }).catch(err => {
+                  logger.serverLog(TAG, JSON.stringify(err), 'error')
                 })
             },
             function (callback) {
@@ -404,7 +410,7 @@ exports.deleteWhatsAppInfo = function (req, res) {
                   purpose: 'deleteMany',
                   match: {companyId: req.user.companyId}
                 }
-                utility.callApi(`whatsAppBroadcasts`, 'delete', query, 'kiboengagedblayer')
+                utility.callApi(`whatsAppBroadcasts`, 'delete', query, 'kiboengage')
                   .then(data => {
                     callback(null, data)
                   })
@@ -421,7 +427,7 @@ exports.deleteWhatsAppInfo = function (req, res) {
                   purpose: 'deleteMany',
                   match: {companyId: req.user.companyId}
                 }
-                utility.callApi(`whatsAppBroadcastMessages`, 'delete', query, 'kiboengagedblayer')
+                utility.callApi(`whatsAppBroadcastMessages`, 'delete', query, 'kiboengage')
                   .then(data => {
                     callback(null, data)
                   })
@@ -467,7 +473,6 @@ exports.deleteWhatsAppInfo = function (req, res) {
       sendErrorResponse(res, 500, err)
     })
 }
-
 exports.getAdvancedSettings = function (req, res) {
   utility.callApi('companyprofile/query', 'post', {_id: req.user.companyId})
     .then(company => {
