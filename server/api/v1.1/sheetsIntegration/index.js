@@ -26,7 +26,8 @@ router.get('/callback', controller.callback)
 router.get('/listSpreadSheets', 
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
-  auth.isSuperUserActingAsCustomer(),
+  auth.doesPlanPermitsThisAction('google_sheets_integration'),
+  auth.isUserAllowedToPerformThisAction('manage_integrations'),
   controller.listSpreadSheets)
 
 router.post('/fetchWorksheets',
