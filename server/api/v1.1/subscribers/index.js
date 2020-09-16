@@ -8,7 +8,8 @@ const controller = require('./subscribers.controller')
 router.get('/',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
-  auth.isSuperUserActingAsCustomer(),
+  auth.doesPlanPermitsThisAction('manage_subscribers'),
+  auth.isUserAllowedToPerformThisAction('view_subscribers'),
   controller.index)
 
 router.get('/allSubscribers',
