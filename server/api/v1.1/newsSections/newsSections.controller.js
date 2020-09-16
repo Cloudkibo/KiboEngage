@@ -9,6 +9,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const feedparser = require('feedparser-promised')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const async = require('async')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.create = function (req, res) {
   let data = {
@@ -27,6 +28,11 @@ exports.create = function (req, res) {
     if (err) {
       sendErrorResponse(res, 500, err)
     } else {
+      updateCompanyUsage(
+        req.user.companyId,
+        req.body.integrationType === 'rss' ? 'rss_feeds' : 'news_integration_feeds',
+        1
+      )
       sendSuccessResponse(res, 200, data.savedFeed)
     }
   })
@@ -262,9 +268,21 @@ exports.checkSMP = function (req, res) {
 }
 
 exports.delete = function (req, res) {
-  DataLayer.deleteForRssFeeds({_id: req.params.id})
+  DataLayer.genericFindForRssFeeds({_id: req.params.id})
     .then(result => {
-      sendSuccessResponse(res, 200, result)
+      const feed = result[0]
+      DataLayer.deleteForRssFeeds({_id: req.params.id})
+        .then(result => {
+          updateCompanyUsage(
+            req.user.companyId,
+            feed.integrationType === 'rss' ? 'rss_feeds' : 'news_integration_feeds',
+            -1
+          )
+          sendSuccessResponse(res, 200, result)
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(err)}`)
+        })
     })
     .catch(err => {
       sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(err)}`)

@@ -9,8 +9,8 @@ const feedparser = require('feedparser-promised')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { getScheduledTime } = require('../../global/utility')
-const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -123,6 +123,7 @@ const _addTwitterAccount = (data, next) => {
       autoPostingPayload.payload = payload
       AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
         .then(result => {
+          updateCompanyUsage(data.companyUser.companyId._id, 'twitter_autoposting', 1)
           utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { twitter_autoposting: 1 } }, options: {} })
             .then(updated => {
               data.result = result
@@ -169,6 +170,7 @@ const _addFacebookAccount = (data, next) => {
         autoPostingPayload.accountUniqueName = pageInfo.pageId
         AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
           .then(result => {
+            updateCompanyUsage(data.companyUser.companyId._id, 'facebook_autoposting', 1)
             utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} })
               .then(updated => {
                 data.result = result
@@ -252,6 +254,7 @@ const _addWordpressAccount = (data, next) => {
   autoPostingPayload.accountUniqueName = wordpressUniqueId
   AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
     .then(result => {
+      updateCompanyUsage(data.companyUser.companyId._id, 'wordpress_autoposting', 1)
       utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { wordpress_autoposting: 1 } }, options: {} })
         .then(result => {
           require('./../../../config/socketio').sendMessageToClient({
@@ -352,9 +355,25 @@ exports.edit = function (req, res) {
     })
 }
 
+function decrementCompanyUsage (autoposting) {
+  switch (autoposting.subscriptionType) {
+    case 'facebook':
+      updateCompanyUsage(autoposting.companyId, 'facebook_autoposting', -1)
+      break
+    case 'twitter':
+      updateCompanyUsage(autoposting.companyId, 'twitter_autoposting', -1)
+      break
+    case 'wordpress':
+      updateCompanyUsage(autoposting.companyId, 'wordpress_autoposting', -1)
+      break
+    default:
+  }
+}
+
 exports.destroy = function (req, res) {
   AutopostingDataLayer.findOneAutopostingObject(req.params.id, req.user.companyId)
     .then(autoposting => {
+      decrementCompanyUsage(autoposting)
       if (!autoposting) {
         sendErrorResponse(res, 404, '', 'Record not found')
       }
