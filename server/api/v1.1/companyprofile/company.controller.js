@@ -540,7 +540,6 @@ exports.deleteWhatsAppInfo = function (req, res) {
       sendErrorResponse(res, 500, err)
     })
 }
-
 exports.getAdvancedSettings = function (req, res) {
   utility.callApi('companyprofile/query', 'post', {_id: req.user.companyId})
     .then(company => {

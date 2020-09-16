@@ -6,6 +6,6 @@ let auth = require('../../../auth/auth.service')
 
 let router = express.Router()
 
-router.post('/change', auth.isAuthenticated(), controller.change)
+router.post('/change', auth.isAuthenticated(),  auth.isSuperUserActingAsCustomer('write'), controller.change)
 
 module.exports = router

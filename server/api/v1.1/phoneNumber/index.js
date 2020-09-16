@@ -9,6 +9,7 @@ const multipartyMiddleware = multiparty()
 
 router.post('/upload',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('customer_matching'),
   auth.isUserAllowedToPerformThisAction('invite_subscribers_using_phone_number'),
   multipartyMiddleware,
@@ -17,6 +18,7 @@ router.post('/upload',
 
 router.post('/sendNumbers',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('customer_matching'),
   auth.isUserAllowedToPerformThisAction('invite_subscribers_using_phone_number'),
   validate({body: validationSchema.sendNumbersPayload}),
@@ -24,6 +26,7 @@ router.post('/sendNumbers',
 
 router.get('/pendingSubscription/:name',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('customer_matching'),
   auth.isUserAllowedToPerformThisAction('invite_subscribers_using_phone_number'),
   controller.pendingSubscription)

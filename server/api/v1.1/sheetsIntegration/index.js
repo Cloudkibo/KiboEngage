@@ -23,14 +23,16 @@ router.get('/auth', controller.auth)
 
 router.get('/callback', controller.callback)
 
-router.get('/listSpreadSheets',
+router.get('/listSpreadSheets', 
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('google_sheets_integration'),
   auth.isUserAllowedToPerformThisAction('manage_integrations'),
   controller.listSpreadSheets)
 
 router.post('/fetchWorksheets',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('google_sheets_integration'),
   auth.isUserAllowedToPerformThisAction('manage_integrations'),
   validate({body: validationSchema.fetchWorksheetsPayload}),
@@ -38,6 +40,7 @@ router.post('/fetchWorksheets',
 
 router.post('/fetchColumns',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('google_sheets_integration'),
   auth.isUserAllowedToPerformThisAction('manage_integrations'),
   validate({body: validationSchema.fetchColumnsPayload}),
