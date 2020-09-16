@@ -9,28 +9,19 @@ const { attachProviderInfo } = require('../../middleware/whatsApp.middleware')
 
 router.get('/members', // fetch team acount members (users)
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('team_members_management'),
   auth.isUserAllowedToPerformThisAction('view_members'),
   controller.members)
 
 router.get('/getAutomatedOptions',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.getAutomatedOptions)
-
-router.get('/getAdvancedSettings',
-  auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('advanced_settings'),
-  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
-  controller.getAdvancedSettings)
-
-router.post('/updateAdvancedSettings',
-  auth.isAuthenticated(),
-  auth.doesPlanPermitsThisAction('advanced_settings'),
-  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
-  controller.updateAdvancedSettings)
 
 router.post('/invite', // invite user to jion team account
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('invite_members'),
   auth.isUserAllowedToPerformThisAction('invite_members'),
   controller.invite)
@@ -41,10 +32,12 @@ router.get('/getKeys',
 
 router.post('/setCard',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.setCard)
 
 router.post('/updatePlan',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.updatePlan)
 
 router.post('/updateRole', // update user role
@@ -55,6 +48,7 @@ router.post('/updateRole', // update user role
 
 router.post('/updateAutomatedOptions',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.hasRole('buyer'),
   controller.updateAutomatedOptions)
 
@@ -64,37 +58,44 @@ router.get('/switchToBasicPlan',
 
 router.post('/updatePlatform',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.updatePlatformPayload}),
   controller.updatePlatform)
 
 router.post('/fetchValidCallerIds',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.fetchValidCallerIds}),
   controller.fetchValidCallerIds)
 
 router.post('/updatePlatformWhatsApp',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.updatePlatformWhatsApp}),
   controller.updatePlatformWhatsApp)
 
 router.post('/disconnect',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.disconnect}),
   controller.disconnect)
 
 router.post('/deleteWhatsAppInfo',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.deleteWhatsAppInfo}),
   controller.deleteWhatsAppInfo)
 
 router.get('/getAdvancedSettings',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('advanced_settings'),
   auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   controller.getAdvancedSettings)
 
 router.post('/updateAdvancedSettings',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('advanced_settings'),
   auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   validate({body: validationSchema.advancedSettingsPayload}),
@@ -102,16 +103,19 @@ router.post('/updateAdvancedSettings',
 
 router.post('/disableMember',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.disableMember}),
   controller.disableMember)
 
 router.post('/enableMember',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.enableMember}),
   controller.enableMember)
 
 router.get('/getWhatsAppMessageTemplates',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   attachProviderInfo(),
   controller.getWhatsAppMessageTemplates)
 

@@ -10,20 +10,24 @@ const { attachProviderInfo } = require('../../middleware/whatsApp.middleware')
 
 router.post('/',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.payload}),
   controller.index)
 
 router.post('/update/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.update)
 
 router.post('/getDuplicateSubscribers',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   multipartyMiddleware,
   controller.getDuplicateSubscribers)
 
 router.post('/sendMessage',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   attachProviderInfo(),
   multipartyMiddleware,
   controller.sendMessage)

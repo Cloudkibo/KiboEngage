@@ -169,4 +169,9 @@ router.get('/sendWhatsAppMetricsEmail',
   auth.isAuthorizedSuperUser(),
   controller.sendWhatsAppMetricsEmail)
 
+router.post('/actingAsUser',
+  validate({body: validationSchema.actingAsUserPayload}),
+  auth.isAuthorizedSuperUser(),
+  controller.actingAsUser)
+
 module.exports = router
