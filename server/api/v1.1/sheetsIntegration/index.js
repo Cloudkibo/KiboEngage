@@ -23,7 +23,7 @@ router.get('/auth', controller.auth)
 
 router.get('/callback', controller.callback)
 
-router.get('/listSpreadSheets',
+router.get('/listSpreadSheets', 
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('google_sheets_integration'),

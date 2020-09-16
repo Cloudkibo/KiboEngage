@@ -56,31 +56,31 @@ exports.getAll = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
-          // add paid plan check later
-          // if (planUsage.segmentation_lists !== -1 && companyUsage.segmentation_lists >= planUsage.segmentation_lists) {
-          //   return res.status(500).json({
-          //     status: 'failed',
-          //     description: `Your lists limit has reached. Please upgrade your plan to premium in order to create more lists.`
-          //   })
-          // }
-          async.parallelLimit([
-            function (callback) {
-              createList(req, callback)
-            }
-          ], 10, function (err, results) {
-            if (err) {
-              sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
-            } else {
-              logger.serverLog(TAG, 'assigning tag to subscribers', 'debug')
-              sendSuccessResponse(res, 200, 'List created successfully!')
-            }
-          })
+          if (planUsage.segmentation_lists !== -1 && companyUsage.segmentation_lists >= planUsage.segmentation_lists) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your lists limit has reached. Please upgrade your plan to create more lists.`
+            })
+          } else {
+            async.parallelLimit([
+              function (callback) {
+                createList(req, callback)
+              }
+            ], 10, function (err, results) {
+              if (err) {
+                sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
+              } else {
+                logger.serverLog(TAG, 'assigning tag to subscribers', 'debug')
+                sendSuccessResponse(res, 200, 'List created successfully!')
+              }
+            })
+          }
         })
         .catch(error => {
           sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)

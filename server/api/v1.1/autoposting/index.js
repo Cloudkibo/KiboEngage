@@ -37,7 +37,6 @@ router.post('/edit',
 router.delete('/:id',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
- 
   auth.doesPlanPermitsThisAction('autoposting'),
   auth.isUserAllowedToPerformThisAction('delete_autoposting_feeds'),
   controller.destroy)

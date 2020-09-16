@@ -36,19 +36,40 @@ exports.viewPost = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  getPayloadToSave(req.user, req.body)
-    .then(payloadToSave => {
-      utility.callApi(`comment_capture`, 'post', payloadToSave)
-        .then(postCreated => {
-          updateCompanyUsage(req.user.companyId, 'comment_capture_rules', 1)
-          sendSuccessResponse(res, 200, postCreated)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage.comment_capture_rules !== -1 && companyUsage.comment_capture_rules >= planUsage.comment_capture_rules) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your comment capture rules limit has reached. Please upgrade your plan to create more rules.`
+            })
+          } else {
+            getPayloadToSave(req.user, req.body)
+              .then(payloadToSave => {
+                utility.callApi(`comment_capture`, 'post', payloadToSave)
+                  .then(postCreated => {
+                    updateCompanyUsage(req.user.companyId, 'comment_capture_rules', 1)
+                    sendSuccessResponse(res, 200, postCreated)
+                  })
+                  .catch((err) => {
+                    sendErrorResponse(res, 500, `Failed to save post ${err}`)
+                  })
+              })
+              .catch((err) => {
+                sendErrorResponse(res, 500, `${err}`)
+              })
+          }
         })
-        .catch((err) => {
-          sendErrorResponse(res, 500, `Failed to save post ${err}`)
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to company usage ${JSON.stringify(error)}`)
         })
     })
-    .catch((err) => {
-      sendErrorResponse(res, 500, `${err}`)
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
 
