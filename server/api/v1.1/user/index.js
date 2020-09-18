@@ -73,7 +73,6 @@ router.get('/validateFacebookConnected',
 
 router.post('/updatePlatform',
   auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.platformPayload}),
   controller.updatePlatform)
 
