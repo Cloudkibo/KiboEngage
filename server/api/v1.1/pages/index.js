@@ -22,7 +22,7 @@ router.post('/allConnectedPages',
 
 router.get('/allpages',
   auth.isAuthenticated(),
-   auth.isSuperUserActingAsCustomer(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('manage_pages'),
   auth.isUserAllowedToPerformThisAction('manage_facebook_pages'),
   controller.allPages)

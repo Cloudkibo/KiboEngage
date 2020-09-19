@@ -38,7 +38,7 @@ router.delete('/:id',
 
 router.get('/getQRCode/:pageId',
   auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer('write'),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('messenger_code'),
   auth.isUserAllowedToPerformThisAction('view_messenger_codes'),
   controller.getQRCode)

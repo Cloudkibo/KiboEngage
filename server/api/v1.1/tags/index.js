@@ -63,7 +63,7 @@ router.post('/unassign',
 
 router.post('/subscribertags',
   auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer('write'),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('tags'),
   auth.isUserAllowedToPerformThisAction('view_tags'),
   validate({body: validationSchema.subscriberTagsPayload}),
