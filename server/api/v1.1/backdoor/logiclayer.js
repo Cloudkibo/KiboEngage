@@ -1119,14 +1119,19 @@ function prepareLineChartData (activeSubscribers, messagesSent, templateMessages
   }
   return dataChart
 }
-exports.getActingAsUserPayload = function (body) {
+
+exports.getActingAsUserPayload = function (req, actingUser, platforms) {
   let updated = {}
-  if (body.type === 'set') {
+  if (req.body.type === 'set') {
     updated = {
-      actingAsUser: {domain_email: body.domain_email, name: body.name}
+      actingAsUser: {domain_email: actingUser.domain_email, actingUser: actingUser, platforms: platforms, superUserPlatform: req.user.platform},
+      platform: actingUser.platform
     }
   } else {
-    updated = {$unset: {actingAsUser: 1}}
+    updated = {
+      $unset: {actingAsUser: 1},
+      platform: req.user.actingAsUser.superUserPlatform
+   }
   }
   return updated
 }
