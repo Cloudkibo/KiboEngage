@@ -18,6 +18,7 @@ exports.members = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch members ${err}`)
     })
 }
+
 exports.getAutomatedOptions = function (req, res) {
   utility.callApi(`companyprofile/getAutomatedOptions`, 'get', {}, 'accounts', req.headers.authorization)
     .then(payload => {
@@ -26,6 +27,8 @@ exports.getAutomatedOptions = function (req, res) {
           if (users.length > 0) {
             let user = users[0]
             payload.facebookInfo = user.facebookInfo
+            sendSuccessResponse(res, 200, payload)
+          } else {
             sendSuccessResponse(res, 200, payload)
           }      
         }).catch(error => {
