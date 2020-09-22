@@ -1127,8 +1127,7 @@ exports.getActingAsUserPayload = function (body, actingUser) {
     }
   } else {
     updated = {
-      $unset: {actingAsUser: 1},
-      platform: req.user.actingAsUser.superUserPlatform
+      $unset: {actingAsUser: 1}
    }
   }
   return updated
