@@ -1121,7 +1121,7 @@ function prepareLineChartData (activeSubscribers, messagesSent, templateMessages
 }
 exports.getActingAsUserPayload = function (body, actingUser) {
   let updated = {}
-  if (req.body.type === 'set') {
+  if (body.type === 'set') {
     updated = {
       actingAsUser: {domain_email: body.domain_email, name: body.name, actingUserplatform: actingUser.platform}
     }
