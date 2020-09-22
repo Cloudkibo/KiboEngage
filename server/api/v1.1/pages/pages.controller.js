@@ -167,6 +167,7 @@ exports.enable = function (req, res) {
                                     text: 'Hi {{user_full_name}}! Thanks for getting in touch with us on Messenger. Please send us any questions you may have'
                                   }]
                               }
+                              req.body = {...req.body, ...{query}}
                               utility.callApi('pages/query', 'post', {_id: req.body._id})
                                 .then(pages => {
                                   let page = pages[0]
@@ -253,18 +254,16 @@ exports.enable = function (req, res) {
                                                   sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
                                                 }
                                               })
-                                            // require('./../../../config/socketio').sendMessageToClient({
-                                            //   room_id: req.body.companyId,
-                                            //   body: {
-                                            //     action: 'page_connect',
-                                            //     payload: {
-                                            //       page_id: page.pageId,
-                                            //       user_id: req.user._id,
-                                            //       user_name: req.user.name,
-                                            //       company_id: req.body.companyId
-                                            //     }
-                                            //   }
-                                            // })
+                                            require('./../../../config/socketio').sendMessageToClient({
+                                              room_id: req.body.companyId,
+                                              body: {
+                                                action: 'page_connect',
+                                                payload: {
+                                                  data: req.body,
+                                                  company_id: req.body.companyId
+                                                }
+                                              }
+                                            })
                                             sendSuccessResponse(res, 200, 'Page connected successfully!')
                                           })
                                         })
@@ -356,18 +355,18 @@ exports.disable = function (req, res) {
                     })
                 })
             }
-            // require('./../../../config/socketio').sendMessageToClient({
-            //   room_id: req.body.companyId,
-            //   body: {
-            //     action: 'page_disconnect',
-            //     payload: {
-            //       page_id: req.body.pageId,
-            //       user_id: req.user._id,
-            //       user_name: req.user.name,
-            //       company_id: req.body.companyId
-            //     }
-            //   }
-            // })
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: req.body.companyId,
+              body: {
+                action: 'page_disconnect',
+                payload: {
+                  page_id: req.body.pageId,
+                  user_id: req.user._id,
+                  user_name: req.user.name,
+                  company_id: req.body.companyId
+                }
+              }
+            })
 
             utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true}) // fetch all pages of company
               .then(connectedPages => {
