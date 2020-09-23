@@ -8,11 +8,14 @@ const validate = require('express-jsonschema').validate
 
 var router = express.Router()
 
-router.get('/', auth.isAuthenticated(), controller.index)
+router.get('/', auth.isAuthenticated(), 
+auth.isSuperUserActingAsCustomer(),
+controller.index)
 router.post('/',
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.createPayload}),
   controller.create)
-router.post('/fetch', auth.isAuthenticated(), controller.fetch)
+router.post('/fetch', auth.isAuthenticated(), auth.isSuperUserActingAsCustomer(), controller.fetch)
 // router.post('/updatecompanyprofile', auth.isAuthenticated(), controller.updatecompanyprofile)
 // router.get('/:id', auth.isAuthenticated(), controller.show)
 // router.post('/', auth.isAuthenticated(), controller.create)

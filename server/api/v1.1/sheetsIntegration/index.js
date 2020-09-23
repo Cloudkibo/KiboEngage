@@ -23,15 +23,20 @@ router.get('/auth', controller.auth)
 
 router.get('/callback', controller.callback)
 
-router.get('/listSpreadSheets', auth.isAuthenticated(), controller.listSpreadSheets)
+router.get('/listSpreadSheets', 
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
+  controller.listSpreadSheets)
 
 router.post('/fetchWorksheets',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.fetchWorksheetsPayload}),
   controller.fetchWorksheets)
 
 router.post('/fetchColumns',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.fetchColumnsPayload}),
   controller.fetchColumns)
 

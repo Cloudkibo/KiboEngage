@@ -11,61 +11,74 @@ const validate = require('express-jsonschema').validate
 
 router.get('/allMessages/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.allMessages)
 
 router.get('/subscriberSequences/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.subscriberSequences)
 
 router.get('/allSequences',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.allSequences)
 
 router.delete('/deleteSequence/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.deleteSequence)
 
 router.delete('/deleteMessage/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.deleteMessage)
 
 router.post('/createMessage',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.createMessagePayload}),
   controller.createMessage)
 
 router.post('/editMessage',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.editMessagePayload}),
   controller.editMessage)
 
 router.post('/setSchedule',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.setSchedulePayload}),
   controller.setSchedule)
 
 router.post('/createSequence',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.createSequencePayload}),
   controller.createSequence)
 
 router.post('/editSequence',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.editSequencePayload}),
   controller.editSequence)
 
 router.post('/getAll',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   validate({body: validationSchema.getAllPayload}),
   controller.getAll) // pagination
 
 router.post('/subscribeToSequence',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.subscribeToSequencePayload}),
   controller.subscribeToSequence)
 
 router.post('/unsubscribeToSequence',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.unsubscribeToSequencePayload}),
   controller.unsubscribeToSequence)
 
@@ -75,11 +88,13 @@ router.post('/testScheduler',
 
 router.post('/updateTrigger',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.updateTriggerPayload}),
   controller.updateTrigger)
 
 router.post('/updateSegmentation',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.updateSegmentationPayload}),
   controller.updateSegmentation)
 

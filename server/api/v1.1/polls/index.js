@@ -10,12 +10,14 @@ const validationSchema = require('./validationSchema')
 
 router.get('/all/:days',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   controller.index)
 
 router.post('/allPolls',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   validate({body: validationSchema.allPollsPayload}),
@@ -23,6 +25,7 @@ router.post('/allPolls',
 
 router.post('/create',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   validate({body: validationSchema.createPayload}),
@@ -30,12 +33,14 @@ router.post('/create',
 
 router.post('/send',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   controller.send)
 
 router.post('/sendPollDirectly',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   validate({body: validationSchema.createPayload}),
@@ -43,18 +48,21 @@ router.post('/sendPollDirectly',
 
 router.get('/responses/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   controller.getresponses)
 
 router.get('/allResponses',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   controller.getAllResponses)
 
 router.delete('/deletePoll/:id',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('polls'),
   auth.doesRolePermitsThisAction('pollsPermission'),
   controller.deletePoll)
