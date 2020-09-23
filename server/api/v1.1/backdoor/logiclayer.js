@@ -708,7 +708,7 @@ exports.getMessagesCountForUser = function (companyUser, body, isFacebookInboxMe
   let findCriteria = {
     format: format,
     company_id: companyUser.companyId && companyUser.companyId !== '' ? companyUser.companyId : {$exists: true},
-    replied_by: isFacebookInboxMessages ? {$exists: false} : {$exists: true} 
+    replied_by: isFacebookInboxMessages ? {$exists: false} : {$exists: true}
   }
   if (body.days && body.days !== '') {
     let startDate = new Date() // Current date

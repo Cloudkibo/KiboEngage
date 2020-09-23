@@ -1864,13 +1864,13 @@ exports.actingAsUser = function (req, res) {
           })
       })
       .catch(err => {
-        sendErrorResponse(res, 500,  `Unable to get company user ${err}`)
+        sendErrorResponse(res, 500, `Unable to get company user ${err}`)
       })
   } else {
     let updated = LogicLayer.getActingAsUserPayload(req.body, null)
     utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: updated, options: {}})
       .then(updatedUser => {
-        utility.callApi('user/update', 'post', {query: {domain_email: req.body.domain_email}, newPayload: {platform:req.user.actingAsUser.actingUserplatform}, options: {}})
+        utility.callApi('user/update', 'post', {query: {domain_email: req.body.domain_email}, newPayload: {platform: req.user.actingAsUser.actingUserplatform}, options: {}})
           .then(updatedActingUser => {
             sendSuccessResponse(res, 200, updatedUser)
           })
