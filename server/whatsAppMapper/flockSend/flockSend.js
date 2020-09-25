@@ -100,10 +100,16 @@ exports.sendInvitationTemplate = (body) => {
 }
 
 exports.getNormalizedMessageStatusData = (event) => {
-  return {
-    messageId: event.id,
-    status: event.status
-  }
+  return new Promise((resolve, reject) => {
+    try {
+      resolve({
+        messageId: event.id,
+        status: event.status
+      })
+    } catch (err) {
+      reject(err)
+    }
+  })
 }
 
 exports.setWebhook = (body) => {
@@ -113,7 +119,8 @@ exports.setWebhook = (body) => {
         flockSendApiCaller('update-send-message-webhook', 'post', {
           token: body.accessToken,
           webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend',
-          webhook_status: 1})
+          webhook_status: 1
+        })
           .then(response => {
             callback()
           })
@@ -125,7 +132,8 @@ exports.setWebhook = (body) => {
         flockSendApiCaller('update-listen-webhook', 'post', {
           token: body.accessToken,
           webhook_url: 'https://webhook.cloudkibo.com/webhooks/flockSend',
-          webhook_status: 1})
+          webhook_status: 1
+        })
           .then(response => {
             callback()
           })

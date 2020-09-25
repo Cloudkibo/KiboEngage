@@ -19,6 +19,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
 const _ = require('lodash')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.allSurveys = function (req, res) {
   callApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -69,7 +70,7 @@ exports.allSurveys = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId})
@@ -267,7 +268,7 @@ exports.submitresponse = function (req, res) {
 
 exports.send = function (req, res) {
   let abort = false
-  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId})
@@ -292,7 +293,7 @@ exports.send = function (req, res) {
 }
 exports.sendSurveyDirectly = function (req, res) {
   let abort = false
-  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan._id})
+  callApi.callApi('featureUsage/planQuery', 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       callApi.callApi('featureUsage/companyQuery', 'post', {companyId: req.user.companyId})
@@ -330,6 +331,8 @@ exports.sendSurveyDirectly = function (req, res) {
 exports.deleteSurvey = function (req, res) {
   surveyDataLayer.deleteForSurveys(req.params.id)
     .then(survey => {
+      // update company usage
+      updateCompanyUsage(req.user.companyId, 'surveys', -1)
       SurveyPageDataLayer.deleteSurveyPage({surveyId: req.params.id})
         .then(surveypages => {
           surveyResponseDataLayer.removeAllSurveyResponse(req.params.id)
@@ -531,6 +534,8 @@ function createSurvey (req, callback) {
   let surveyPayload = surveyLogicLayer.createSurveyPayload(req)
   surveyDataLayer.createSurvey(surveyPayload)
     .then(survey => {
+      // update company usage
+      updateCompanyUsage(req.user.companyId, 'surveys', 1)
       for (let question in req.body.questions) {
         const surveyQuestion = {
           statement: req.body.questions[question].statement, // question statement

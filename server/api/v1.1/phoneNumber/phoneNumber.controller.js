@@ -7,6 +7,7 @@ const csv = require('csv-parser')
 let request = require('request')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.upload = function (req, res) {
   let directory = logicLayer.directory(req)
@@ -70,15 +71,8 @@ exports.upload = function (req, res) {
                                   fileName: [newFileName],
                                   hasSubscribed: false })
                                   .then(saved => {
-                                    utility.callApi(`featureUsage/updateCompany`, 'put', {
-                                      query: {companyId: companyUser.companyId._id},
-                                      newPayload: { $inc: { phone_invitation: 1 } },
-                                      options: {}
-                                    })
-                                      .then(updated => {})
-                                      .catch(error => {
-                                        logger.serverLog(TAG, `Failed to update company usage ${JSON.stringify(error)}`, 'error')
-                                      })
+                                    logger.serverLog(TAG, 'phone number saved successfully!', 'debug')
+                                    updateCompanyUsage(req.user.companyId, 'phone_invitation', 1)
                                   })
                                   .catch(error => {
                                     logger.serverLog(TAG, `Failed to save phone number ${JSON.stringify(error)}`, 'error')
@@ -245,16 +239,8 @@ exports.sendNumbers = function (req, res) {
                             fileName: ['Other'],
                             hasSubscribed: false })
                             .then(saved => {
-                              utility.callApi(`featureUsage/updateCompany`, 'put', {
-                                query: {companyId: req.body.companyId},
-                                newPayload: { $inc: { phone_invitation: 1 } },
-                                options: {}
-                              })
-                                .then(updated => {
-                                })
-                                .catch(error => {
-                                  sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
-                                })
+                              logger.serverLog(TAG, 'phone number saved successfully!', 'debug')
+                              updateCompanyUsage(req.user.companyId, 'phone_invitation', 1)
                             })
                             .catch(error => {
                               sendErrorResponse(res, 500, `Failed to update number ${JSON.stringify(error)}`)

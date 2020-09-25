@@ -8,7 +8,7 @@ const AutopostingDataLayer = require('../autoposting/autoposting.datalayer')
 let config = require('./../../../config/environment')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
-// const util = require('util')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
@@ -137,15 +137,16 @@ exports.enable = function (req, res) {
     .then(companyUser => {
       utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
         .then(planUsage => {
+          planUsage = planUsage[0]
           utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id})
             .then(companyUsage => {
-              // add paid plan check later
-              // if (planUsage.facebook_pages !== -1 && companyUsage.facebook_pages >= planUsage.facebook_pages) {
-              //   return res.status(500).json({
-              //     status: 'failed',
-              //     description: `Your pages limit has reached. Please upgrade your plan to premium in order to connect more pages.`
-              //   })
-              // }
+              companyUsage = companyUsage[0]
+              if (planUsage.facebook_pages !== -1 && companyUsage.facebook_pages >= planUsage.facebook_pages) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Your pages limit has reached. Please upgrade your plan to connect more pages.`
+                })
+              }
               utility.callApi(`pages/${req.body._id}`, 'get', {}) // fetch page
                 .then(page => {
                   needle('get', `https://graph.facebook.com/v6.0/me?access_token=${page.accessToken}`)
@@ -184,23 +185,14 @@ exports.enable = function (req, res) {
                                   // query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                   utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
                                     .then(connectPage => {
+                                      // update company usage
+                                      updateCompanyUsage(req.user.companyId, 'facebook_pages', 1)
                                       utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
                                         .then(whitelistDomains => {
                                         })
                                         .catch(error => {
                                           logger.serverLog(TAG,
                                             `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
-                                        })
-                                      utility.callApi(`featureUsage/updateCompany`, 'put', {
-                                        query: {companyId: req.body.companyId},
-                                        newPayload: { $inc: { facebook_pages: 1 } },
-                                        options: {}
-                                      })
-                                        .then(updated => {
-                                          // console.log('update company')
-                                        })
-                                        .catch(error => {
-                                          sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
                                         })
                                       utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
                                         .then(updatedSubscriber => {
@@ -316,20 +308,10 @@ exports.enable = function (req, res) {
 exports.disable = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', {connected: false}) // disconnect page
     .then(disconnectPage => {
+      updateCompanyUsage(req.user.companyId, 'facebook_pages', -1)
       logger.serverLog(TAG, 'updated page successfully', 'debug')
       utility.callApi(`subscribers/update`, 'put', {query: {pageId: req.body._id}, newPayload: {isEnabledByPage: false}, options: {multi: true}}) // update subscribers
         .then(updatedSubscriber => {
-          utility.callApi(`featureUsage/updateCompany`, 'put', {
-            query: {companyId: req.body.companyId},
-            newPayload: { $inc: { facebook_pages: -1 } },
-            options: {}
-          })
-            .then(updated => {
-              logger.serverLog(TAG, 'company updated successfully', 'debug')
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
-            })
           const options = {
             url: `https://graph.facebook.com/v6.0/${req.body.pageId}/subscribed_apps?access_token=${req.body.accessToken}`,
             qs: {access_token: req.body.accessToken},

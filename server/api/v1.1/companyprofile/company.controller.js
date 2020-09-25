@@ -18,10 +18,22 @@ exports.members = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch members ${err}`)
     })
 }
+
 exports.getAutomatedOptions = function (req, res) {
   utility.callApi(`companyprofile/getAutomatedOptions`, 'get', {}, 'accounts', req.headers.authorization)
     .then(payload => {
-      sendSuccessResponse(res, 200, payload)
+      utility.callApi(`user/query`, 'post', {_id: payload.ownerId, connectFacebook: true}, 'accounts', req.headers.authorization)
+        .then(users => {
+          if (users.length > 0) {
+            let user = users[0]
+            payload.facebook = user.facebookInfo
+            sendSuccessResponse(res, 200, payload)
+          } else {
+            sendSuccessResponse(res, 200, payload)
+          }      
+        }).catch(error => {
+          sendErrorResponse(res, 500, `Failed to fetching user details ${JSON.stringify(error)}`)
+        })
     })
     .catch(err => {
       sendErrorResponse(res, 500, `Failed to fetch automated options ${err}`)
@@ -35,6 +47,16 @@ exports.getAdvancedSettings = function (req, res) {
     })
     .catch(err => {
       sendErrorResponse(res, 500, `Failed to fetch advanced settings in company profile ${err}`)
+    })
+}
+
+exports.switchToBasicPlan = function (req, res) {
+  utility.callApi(`companyprofile/switchToBasicPlan`, 'get', {}, 'accounts', req.headers.authorization)
+    .then(updatedProfile => {
+      sendSuccessResponse(res, 200, updatedProfile)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
     })
 }
 
@@ -57,15 +79,66 @@ exports.updateAdvancedSettings = function (req, res) {
     })
 }
 exports.invite = function (req, res) {
-  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, 'accounts', req.headers.authorization)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage.members !== -1 && companyUsage.members >= planUsage.members) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your members limit has reached. Please upgrade your plan to invite more members.`
+            })
+          } else {
+            utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, 'accounts', req.headers.authorization)
+              .then((result) => {
+                logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+                logger.serverLog(TAG, result, 'debug')
+                sendSuccessResponse(res, 200, result)
+              })
+              .catch((err) => {
+                logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+                logger.serverLog(TAG, err, 'debug')
+                sendErrorResponse(res, 500, err)
+              })
+          }
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to company usage ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
+    })
+}
+
+exports.getKeys = function (req, res) {
+  utility.callApi('companyprofile/getKeys', 'get', {}, 'accounts', req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
-      logger.serverLog(TAG, result, 'debug')
+      res.status(200).json({status: 'success', captchaKey: result.captchaKey, stripeKey: result.stripeKey})
+    })
+    .catch((err) => {
+      sendErrorResponse(res, 500, err)
+    })
+}
+
+exports.updatePlan = function (req, res) {
+  utility.callApi('companyprofile/updatePlan', 'post', req.body, 'accounts', req.headers.authorization)
+    .then((payload, description) => {
+      sendSuccessResponse(res, 200, payload, description)
+    })
+    .catch((err) => {
+      sendErrorResponse(res, 500, '', err)
+    })
+}
+
+exports.setCard = function (req, res) {
+  utility.callApi('companyprofile/setCard', 'post', req.body, 'accounts', req.headers.authorization)
+    .then((result) => {
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
-      logger.serverLog(TAG, err, 'debug')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -308,14 +381,20 @@ exports.disconnect = function (req, res) {
       let platform = logicLayer.getPlatformForSms(company, req.user)
       utility.callApi(`companyprofile/update`, 'put', {query: {_id: req.user.companyId}, newPayload: updated, options: {}})
         .then(updatedProfile => {
-          utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: platform}, options: {}})
-            .then(updated => {
-              sendSuccessResponse(res, 200, updatedProfile)
-            })
-            .catch(err => {
+          utility.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
+            .then(companyUsers => {
+              let userIds = companyUsers.map(companyUser => companyUser.userId._id)
+              utility.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: platform} }, options: {multi: true}})
+                .then(data => {
+                  sendSuccessResponse(res, 200, updatedProfile)
+                })
+                .catch(err => {
+                  sendErrorResponse(res, 500, err)
+                })               
+            }).catch(err => {
+              logger.serverLog(TAG, JSON.stringify(err), 'error')
               sendErrorResponse(res, 500, err)
             })
-          sendSuccessResponse(res, 200, updatedProfile)
         })
         .catch(err => {
           sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
