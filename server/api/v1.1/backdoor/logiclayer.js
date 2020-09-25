@@ -78,7 +78,7 @@ exports.getAllPagesCriteria = function (userid, body) {
 
 exports.getSubscribersCountForPages = function (page) {
   let countCriteria = [
-    { $match: {pageId: page._id}},
+    { $match: {pageId: page._id} },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
   return countCriteria
@@ -914,7 +914,7 @@ exports.queryForActiveSubscribers = function (body) {
 }
 exports.queryForCompaniesCount = function (body) {
   let countCriteria = [
-    { $match: {whatsApp: { $exists: true, $ne: null }}},
+    { $match: {whatsApp: {$exists: true, $ne: null}} },
     { $group: { _id: null, count: { $sum: 1 } } }
   ]
   return countCriteria
@@ -1118,4 +1118,17 @@ function prepareLineChartData (activeSubscribers, messagesSent, templateMessages
     }
   }
   return dataChart
+}
+exports.getActingAsUserPayload = function (body, actingUser) {
+  let updated = {}
+  if (body.type === 'set') {
+    updated = {
+      actingAsUser: {domain_email: body.domain_email, name: body.name, actingUserplatform: actingUser.platform}
+    }
+  } else {
+    updated = {
+      $unset: {actingAsUser: 1}
+    }
+  }
+  return updated
 }
