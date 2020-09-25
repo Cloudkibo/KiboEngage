@@ -31,11 +31,6 @@ router.get('/getKeys',
   auth.isSuperUserActingAsCustomer(),
   controller.getKeys)
 
-router.post('/invite',
-  auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer('write'),
-  controller.invite)
-
 router.post('/setCard',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
