@@ -9,6 +9,7 @@ const auth = require('../../../auth/auth.service')
 
 router.get('/',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
   controller.index)
 
 module.exports = router

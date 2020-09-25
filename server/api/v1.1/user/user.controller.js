@@ -12,8 +12,14 @@ exports.index = function (req, res) {
     .then(user => {
       utility.callApi(`companyUser/query`, 'post', {userId: user._id}, 'accounts', req.headers.authorization)
         .then(companyUser => {
+          var superUser = {}
           user.expoListToken = companyUser.expoListToken
-          sendSuccessResponse(res, 200, user)
+          if (req.superUser) {
+            superUser = req.superUser
+          } else {
+            superUser = null
+          }
+          sendSuccessResponse(res, 200, {user, superUser})
         }).catch(error => {
           logger.serverLog(TAG, `Error while fetching companyUser details ${util.inspect(error)}`, 'error')
           sendErrorResponse(res, 500, `Failed to fetching companyUser details ${JSON.stringify(error)}`)
@@ -223,7 +229,7 @@ exports.disconnectFacebook = function (req, res) {
       let updated = {connectFacebook: false}
       if (companyProfile.twilio) {
         updated.platform = 'sms'
-      } else if (companyProfile.whatsApp) {
+      } else if (companyProfile.whatsApp && !(companyProfile.whatsApp.connected === false)) {
         updated.platform = 'whatsApp'
       } else {
         updated.platform = ''
