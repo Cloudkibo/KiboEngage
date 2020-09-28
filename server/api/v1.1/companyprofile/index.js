@@ -27,7 +27,7 @@ router.post('/updateAdvancedSettings',
   auth.isSuperUserActingAsCustomer('write'),
   controller.updateAdvancedSettings)
 
-router.post('/invite', 
+router.post('/invite',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   controller.invite)
@@ -51,7 +51,7 @@ router.post('/updatePlatform',
 
 router.post('/fetchValidCallerIds',
   auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer(),
+  auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.fetchValidCallerIds}),
   controller.fetchValidCallerIds)
 
