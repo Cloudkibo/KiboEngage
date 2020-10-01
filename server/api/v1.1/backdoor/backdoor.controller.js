@@ -21,8 +21,8 @@ const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
-  utility.callApi(`user/query`, 'post', criterias.findCriteria)
-    .then(usersData => {
+  utility.callApi(`user/aggregate`, 'post', criterias.countCriteria)
+    .then(usersCount => {
       utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria)
         .then(users => {
           let usersPayload = []
@@ -45,11 +45,12 @@ exports.getAllUsers = function (req, res) {
                         pages: pages.length,
                         subscribers: subscribers.length,
                         domain_email: user.domain_email,
-                        companyId: user.companyId._id
+                        connectFacebook: user.connectFacebook,
+                        companyId: user.companyId
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
-                        sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersData.length})
+                        sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersCount[0].count})
                       }
                     })
                     .catch(error => {
@@ -61,7 +62,7 @@ exports.getAllUsers = function (req, res) {
                 })
             })
           } else {
-            sendSuccessResponse(res, 200, {users: [], count: usersData.length})
+            sendSuccessResponse(res, 200, {users: [], count: usersCount[0].count})
           }
         })
         .catch(error => {
@@ -1851,35 +1852,35 @@ const _getCompaniesCount = (criteria, callback) => {
 exports.actingAsUser = function (req, res) {
   if (req.body.type === 'set') {
     utility.callApi('user/query', 'post', {domain_email: req.body.domain_email})
-    .then(actingUser => {
-      actingUser = actingUser[0]
-      let updated = LogicLayer.getActingAsUserPayload(req.body, actingUser)
-      utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: updated, options: {}})
-        .then(updatedUser => {
-          sendSuccessResponse(res, 200, updatedUser)
-        })
-        .catch(err => {
-          sendErrorResponse(res, 500, err)
-        })
-    })
-    .catch(err => {
-      sendErrorResponse(res, 500,  `Unable to get company user ${err}`)
-    })
+      .then(actingUser => {
+        actingUser = actingUser[0]
+        let updated = LogicLayer.getActingAsUserPayload(req.body, actingUser)
+        utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: updated, options: {}})
+          .then(updatedUser => {
+            sendSuccessResponse(res, 200, updatedUser)
+          })
+          .catch(err => {
+            sendErrorResponse(res, 500, err)
+          })
+      })
+      .catch(err => {
+        sendErrorResponse(res, 500,  `Unable to get company user ${err}`)
+      })
   } else {
     let updated = LogicLayer.getActingAsUserPayload(req.body, null)
     utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: updated, options: {}})
-    .then(updatedUser => {
-      utility.callApi('user/update', 'post', {query: {domain_email: req.body.domain_email}, newPayload: {platform:req.user.actingAsUser.actingUserplatform}, options: {}})
-      .then(updatedActingUser => {
-        sendSuccessResponse(res, 200, updatedUser)
+      .then(updatedUser => {
+        utility.callApi('user/update', 'post', {query: {domain_email: req.body.domain_email}, newPayload: {platform:req.user.actingAsUser.actingUserplatform}, options: {}})
+          .then(updatedActingUser => {
+            sendSuccessResponse(res, 200, updatedUser)
+          })
+          .catch(err => {
+            sendErrorResponse(res, 500, err)
+          })
       })
       .catch(err => {
         sendErrorResponse(res, 500, err)
       })
-    })
-    .catch(err => {
-      sendErrorResponse(res, 500, err)
-    })
   }
 }
 
