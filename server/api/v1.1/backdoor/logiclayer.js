@@ -4,6 +4,7 @@ exports.getCriterias = function (body) {
   let findCriteria = {
     role: 'buyer'
   }
+  let findCriteriaPlatform = {}
   let finalCriteria = {}
   let search = '.*' + body.filter_criteria.search_value + '.*'
   if (body.filter_criteria.search_value !== '') {
@@ -15,11 +16,31 @@ exports.getCriterias = function (body) {
   if (body.filter_criteria.gender_value !== '' && body.filter_criteria.gender_value !== 'all') {
     findCriteria = Object.assign(findCriteria, {'facebookInfo.gender': body.filter_criteria.gender_value})
   }
+  if (body.filter_criteria.platform_value !== '' && body.filter_criteria.platform_value === 'messenger') {
+    findCriteria = Object.assign(findCriteria, {'connectFacebook': true})
+  }
+  if (body.filter_criteria.platform_value !== '' && body.filter_criteria.platform_value === 'sms') {
+    findCriteriaPlatform = Object.assign(findCriteriaPlatform, {'companyId.twilio': {$exists: true}})
+  }
+  if (body.filter_criteria.platform_value !== '' && body.filter_criteria.platform_value === 'whatsApp') {
+    findCriteriaPlatform.$and = [{'companyId.whatsApp': {$exists: true}}, {'companyId.whatsApp.connected': true}]
+  }
+  if (body.filter_criteria.platform_value === 'none') {
+    findCriteriaPlatform.$and = [
+      {'connectFacebook': false},
+      { $or: [
+        {'companyId.whatsApp': {$exists: false}},
+        {'companyId.whatsApp.connected': false}
+      ]},
+      {'companyId.twilio': {$exists: false}}
+    ]
+  }
   if (body.first_page) {
     finalCriteria = [
       { $match: findCriteria },
       { $lookup: { from: 'companyprofiles', localField: '_id', foreignField: 'ownerId', as: 'companyId' } },
       { '$unwind': '$companyId' },
+      { $match: findCriteriaPlatform },
       { $sort: { createdAt: -1 } },
       { $limit: body.number_of_records }
     ]
@@ -28,11 +49,20 @@ exports.getCriterias = function (body) {
       { $match: {$and: [findCriteria, {_id: {$lt: body.last_id}}]} },
       { $lookup: { from: 'companyprofiles', localField: '_id', foreignField: 'ownerId', as: 'companyId' } },
       { '$unwind': '$companyId' },
+      { $match: findCriteriaPlatform },
       { $sort: { createdAt: -1 } },
       { $limit: body.number_of_records }
     ]
   }
+  let countCriteria = [
+    { $match: findCriteria },
+    { $lookup: { from: 'companyprofiles', localField: '_id', foreignField: 'ownerId', as: 'companyId' } },
+    { '$unwind': '$companyId' },
+    { $match: findCriteriaPlatform },
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]
   return {
+    countCriteria,
     findCriteria,
     finalCriteria
   }

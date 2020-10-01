@@ -21,8 +21,8 @@ const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
-  utility.callApi(`user/query`, 'post', criterias.findCriteria)
-    .then(usersData => {
+  utility.callApi(`user/aggregate`, 'post', criterias.countCriteria)
+    .then(usersCount => {
       utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria)
         .then(users => {
           let usersPayload = []
@@ -45,11 +45,12 @@ exports.getAllUsers = function (req, res) {
                         pages: pages.length,
                         subscribers: subscribers.length,
                         domain_email: user.domain_email,
-                        companyId: user.companyId._id
+                        connectFacebook: user.connectFacebook,
+                        companyId: user.companyId
                       })
                       if (usersPayload.length === users.length) {
                         let sorted = sortBy(usersPayload, 'createdAt')
-                        sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersData.length})
+                        sendSuccessResponse(res, 200, {users: sorted.reverse(), count: usersCount[0].count})
                       }
                     })
                     .catch(error => {
@@ -61,7 +62,7 @@ exports.getAllUsers = function (req, res) {
                 })
             })
           } else {
-            sendSuccessResponse(res, 200, {users: [], count: usersData.length})
+            sendSuccessResponse(res, 200, {users: [], count: usersCount[0].count})
           }
         })
         .catch(error => {
