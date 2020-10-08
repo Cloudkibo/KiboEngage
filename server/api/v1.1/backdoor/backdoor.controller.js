@@ -21,10 +21,13 @@ const needle = require('needle')
 
 exports.getAllUsers = function (req, res) {
   let criterias = LogicLayer.getCriterias(req.body)
+  console.log('criterias', JSON.stringify(criterias))
   utility.callApi(`user/aggregate`, 'post', criterias.countCriteria)
     .then(usersCount => {
+      console.log('usersCount', JSON.stringify(usersCount))
       utility.callApi(`user/aggregate`, 'post', criterias.finalCriteria)
         .then(users => {
+          console.log('users', JSON.stringify(users))
           let usersPayload = []
           if (users.length > 0) {
             users.forEach((user) => {
@@ -62,7 +65,7 @@ exports.getAllUsers = function (req, res) {
                 })
             })
           } else {
-            sendSuccessResponse(res, 200, {users: [], count: usersCount[0].count})
+            sendSuccessResponse(res, 200, {users: [], count: usersCount.length > 0 ? usersCount[0].count : 0})
           }
         })
         .catch(error => {
