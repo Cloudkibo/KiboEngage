@@ -62,7 +62,7 @@ exports.getAllUsers = function (req, res) {
                 })
             })
           } else {
-            sendSuccessResponse(res, 200, {users: [], count: usersCount[0].count})
+            sendSuccessResponse(res, 200, {users: [], count: usersCount.length > 0 ? usersCount[0].count : 0})
           }
         })
         .catch(error => {
