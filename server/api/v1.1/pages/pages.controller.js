@@ -245,7 +245,7 @@ exports.enable = function (req, res) {
                                                 if (resp.body.error) {
                                                   logger.serverLog(TAG,
                                                     `Page connect error ${JSON.stringify(
-                                                      resp.body.error)}`, 'error')
+                                                      resp.body.error)}`, 'debug')
                                                   sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
                                                   const errorMessage = resp.body.error.message
                                                   if (errorMessage && errorMessage.includes('administrative permission')) {
