@@ -267,7 +267,6 @@ exports.enable = function (req, res) {
                                                 }
                                               }
                                             })
-                                            sendSuccessResponse(res, 200, 'Page connected successfully!')
                                           })
                                         })
                                         .catch(error => {
