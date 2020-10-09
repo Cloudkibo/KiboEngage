@@ -11,9 +11,9 @@ let { sendOpAlert } = require('./../../global/operationalAlert')
 const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      utility.callApi(`pages/query`, 'post', {companyId: companyuser.companyId}) // fetch all pages of company
+      utility.callApi(`pages/query`, 'post', { companyId: companyuser.companyId }) // fetch all pages of company
         .then(pages => {
           let pagesToSend = logicLayer.removeDuplicates(pages)
           sendSuccessResponse(res, 200, pagesToSend)
@@ -28,27 +28,27 @@ exports.index = function (req, res) {
 }
 
 exports.allPages = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      utility.callApi(`pages/query`, 'post', {connected: true, companyId: companyuser.companyId}) // fetch connected pages
+      utility.callApi(`pages/query`, 'post', { connected: true, companyId: companyuser.companyId }) // fetch connected pages
         .then(pages => {
           let subscribeAggregate = [
-            {$match: {isSubscribed: true, completeInfo: true}},
+            { $match: { isSubscribed: true, completeInfo: true } },
             {
               $group: {
-                _id: {pageId: '$pageId'},
-                count: {$sum: 1}
+                _id: { pageId: '$pageId' },
+                count: { $sum: 1 }
               }
             }
           ]
           utility.callApi(`subscribers/aggregate`, 'post', subscribeAggregate)
             .then(subscribesCount => {
               let unsubscribeAggregate = [
-                {$match: {isSubscribed: false, completeInfo: true}},
+                { $match: { isSubscribed: false, completeInfo: true } },
                 {
                   $group: {
-                    _id: {pageId: '$pageId'},
-                    count: {$sum: 1}
+                    _id: { pageId: '$pageId' },
+                    count: { $sum: 1 }
                   }
                 }
               ]
@@ -77,7 +77,7 @@ exports.allPages = function (req, res) {
 }
 
 exports.connectedPages = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
       let criterias = logicLayer.getCriterias(req.body, companyuser)
       utility.callApi(`pages/aggregate`, 'post', criterias.countCriteria) // fetch connected pages count
@@ -85,22 +85,22 @@ exports.connectedPages = function (req, res) {
           utility.callApi(`pages/aggregate`, 'post', criterias.fetchCriteria) // fetch connected pages
             .then(pages => {
               let subscribeAggregate = [
-                {$match: {isSubscribed: true, completeInfo: true}},
+                { $match: { isSubscribed: true, completeInfo: true } },
                 {
                   $group: {
-                    _id: {pageId: '$pageId'},
-                    count: {$sum: 1}
+                    _id: { pageId: '$pageId' },
+                    count: { $sum: 1 }
                   }
                 }
               ]
               utility.callApi(`subscribers/aggregate`, 'post', subscribeAggregate)
                 .then(subscribesCount => {
                   let unsubscribeAggregate = [
-                    {$match: {isSubscribed: false, completeInfo: true}},
+                    { $match: { isSubscribed: false, completeInfo: true } },
                     {
                       $group: {
-                        _id: {pageId: '$pageId'},
-                        count: {$sum: 1}
+                        _id: { pageId: '$pageId' },
+                        count: { $sum: 1 }
                       }
                     }
                   ]
@@ -109,7 +109,7 @@ exports.connectedPages = function (req, res) {
                       let updatedPages = logicLayer.appendSubUnsub(pages)
                       updatedPages = logicLayer.appendSubscribersCount(updatedPages, subscribesCount)
                       updatedPages = logicLayer.appendUnsubscribesCount(updatedPages, unsubscribesCount)
-                      sendSuccessResponse(res, 200, {pages: updatedPages, count: count.length > 0 ? count[0].count : 0})
+                      sendSuccessResponse(res, 200, { pages: updatedPages, count: count.length > 0 ? count[0].count : 0 })
                     })
                     .catch(error => {
                       sendErrorResponse(res, 500, `Failed to fetch unsubscribes ${JSON.stringify(error)}`)
@@ -133,12 +133,12 @@ exports.connectedPages = function (req, res) {
 }
 
 exports.enable = function (req, res) {
-  utility.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email, populate: 'companyId'})
+  utility.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
-      utility.callApi(`featureUsage/planQuery`, 'post', {planId: companyUser.companyId.planId})
+      utility.callApi(`featureUsage/planQuery`, 'post', { planId: companyUser.companyId.planId })
         .then(planUsage => {
           planUsage = planUsage[0]
-          utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: companyUser.companyId._id})
+          utility.callApi(`featureUsage/companyQuery`, 'post', { companyId: companyUser.companyId._id })
             .then(companyUsage => {
               companyUsage = companyUsage[0]
               if (planUsage.facebook_pages !== -1 && companyUsage.facebook_pages >= planUsage.facebook_pages) {
@@ -153,9 +153,9 @@ exports.enable = function (req, res) {
                     .then(response => {
                       if (response.body.error) {
                         sendOpAlert(response.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
-                        return res.status(400).json({status: 'failed', payload: response.body.error.message, type: 'invalid_permissions'})
+                        return res.status(400).json({ status: 'failed', payload: response.body.error.message, type: 'invalid_permissions' })
                       } else {
-                        utility.callApi(`pages/query`, 'post', {pageId: req.body.pageId, connected: true})
+                        utility.callApi(`pages/query`, 'post', { pageId: req.body.pageId, connected: true })
                           .then(pageConnected => {
                             if (pageConnected.length === 0) {
                               let query = {
@@ -168,8 +168,8 @@ exports.enable = function (req, res) {
                                     text: 'Hi {{user_full_name}}! Thanks for getting in touch with us on Messenger. Please send us any questions you may have'
                                   }]
                               }
-                              req.body = {...req.body, ...{query}}
-                              utility.callApi('pages/query', 'post', {_id: req.body._id})
+                              req.body = { ...req.body, ...{ query } }
+                              utility.callApi('pages/query', 'post', { _id: req.body._id })
                                 .then(pages => {
                                   let page = pages[0]
 
@@ -187,20 +187,20 @@ exports.enable = function (req, res) {
                                     .then(connectPage => {
                                       // update company usage
                                       updateCompanyUsage(req.user.companyId, 'facebook_pages', 1)
-                                      utility.callApi(`pages/whitelistDomain`, 'post', {page_id: page.pageId, whitelistDomains: [`${config.domain}`]}, 'accounts', req.headers.authorization)
+                                      utility.callApi(`pages/whitelistDomain`, 'post', { page_id: page.pageId, whitelistDomains: [`${config.domain}`] }, 'accounts', req.headers.authorization)
                                         .then(whitelistDomains => {
                                         })
                                         .catch(error => {
                                           logger.serverLog(TAG,
                                             `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
                                         })
-                                      utility.callApi(`subscribers/update`, 'put', {query: {pageId: page._id}, newPayload: {isEnabledByPage: true}, options: {}}) // update subscribers
+                                      utility.callApi(`subscribers/update`, 'put', { query: { pageId: page._id }, newPayload: { isEnabledByPage: true }, options: {} }) // update subscribers
                                         .then(updatedSubscriber => {
-                                          const options = {
-                                            url: `https://graph.facebook.com/v6.0/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
-                                            qs: {access_token: page.accessToken},
-                                            method: 'POST'
-                                          }
+                                          // const options = {
+                                          //   url: `https://graph.facebook.com/v6.0/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
+                                          //   qs: {access_token: page.accessToken},
+                                          //   method: 'POST'
+                                          // }
                                           let bodyToSend = {
                                             subscribed_fields: [
                                               'feed', 'conversations', 'mention', 'messages', 'message_echoes', 'message_deliveries', 'messaging_optins', 'messaging_postbacks', 'message_reads', 'messaging_referrals', 'messaging_policy_enforcement']
@@ -215,7 +215,7 @@ exports.enable = function (req, res) {
                                               sendOpAlert(response.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
                                             }
                                             if (response.body.success) {
-                                              let updateConnectedFacebook = {query: {pageId: page.pageId}, newPayload: {connectedFacebook: true}, options: {multi: true}}
+                                              let updateConnectedFacebook = { query: { pageId: page.pageId }, newPayload: { connectedFacebook: true }, options: { multi: true } }
                                               utility.callApi(`pages/update`, 'post', updateConnectedFacebook) // connect page
                                                 .then(updatedPage => {
                                                 })
@@ -236,14 +236,25 @@ exports.enable = function (req, res) {
                                             }
                                             const requesturl = `https://graph.facebook.com/v6.0/me/messenger_profile?access_token=${page.accessToken}`
                                             needle.request('post', requesturl, valueForMenu,
-                                              {json: true}, function (err, resp) {
+                                              { json: true }, function (err, resp) {
                                                 if (err) {
                                                   logger.serverLog(TAG,
                                                     `Internal Server Error ${JSON.stringify(
                                                       err)}`, 'error')
                                                 }
                                                 if (resp.body.error) {
+                                                  logger.serverLog(TAG,
+                                                    `Page connect error ${JSON.stringify(
+                                                      resp.body.error)}`, 'error')
                                                   sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
+                                                  const errorMessage = resp.body.error.message
+                                                  if (errorMessage && errorMessage.includes('administrative permission')) {
+                                                    sendSuccessResponse(res, 200, { adminError: 'Page connected successfully, but certain actions such as setting welcome message will not work due to your page role' })
+                                                  } else {
+                                                    sendSuccessResponse(res, 200, 'Page connected successfully')
+                                                  }
+                                                } else {
+                                                  sendSuccessResponse(res, 200, 'Page connected successfully')
                                                 }
                                               })
                                             require('./../../../config/socketio').sendMessageToClient({
@@ -266,20 +277,20 @@ exports.enable = function (req, res) {
                                     .catch(error => {
                                       sendErrorResponse(res, 500, `Failed to connect page ${JSON.stringify(error)}`)
                                     })
-                                    //   } else {
-                                    //     logger.serverLog(TAG, `Failed to start reach estimation`, 'error')
-                                    //   }
-                                    // })
-                                    // .catch(err => {
-                                    //   logger.serverLog(TAG, `Error at find page ${err}`, 'error')
-                                    // })
+                                  //   } else {
+                                  //     logger.serverLog(TAG, `Failed to start reach estimation`, 'error')
+                                  //   }
+                                  // })
+                                  // .catch(err => {
+                                  //   logger.serverLog(TAG, `Error at find page ${err}`, 'error')
+                                  // })
                                 })
                                 .catch(err => {
                                   logger.serverLog(TAG, `Error at find page ${err}`, 'error')
                                   sendErrorResponse(res, 500, err)
                                 })
                             } else {
-                              sendSuccessResponse(res, 200, {msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name} (${pageConnected[0].userId.email}).`})
+                              sendSuccessResponse(res, 200, { msg: `Page is already connected by ${pageConnected[0].userId.facebookInfo.name} (${pageConnected[0].userId.email}).` })
                             }
                           })
                       }
@@ -306,15 +317,15 @@ exports.enable = function (req, res) {
 }
 
 exports.disable = function (req, res) {
-  utility.callApi(`pages/${req.body._id}`, 'put', {connected: false}) // disconnect page
+  utility.callApi(`pages/${req.body._id}`, 'put', { connected: false }) // disconnect page
     .then(disconnectPage => {
       updateCompanyUsage(req.user.companyId, 'facebook_pages', -1)
       logger.serverLog(TAG, 'updated page successfully', 'debug')
-      utility.callApi(`subscribers/update`, 'put', {query: {pageId: req.body._id}, newPayload: {isEnabledByPage: false}, options: {multi: true}}) // update subscribers
+      utility.callApi(`subscribers/update`, 'put', { query: { pageId: req.body._id }, newPayload: { isEnabledByPage: false }, options: { multi: true } }) // update subscribers
         .then(updatedSubscriber => {
           const options = {
             url: `https://graph.facebook.com/v6.0/${req.body.pageId}/subscribed_apps?access_token=${req.body.accessToken}`,
-            qs: {access_token: req.body.accessToken},
+            qs: { access_token: req.body.accessToken },
             method: 'DELETE'
           }
           needle.delete(options.url, options, (error, response) => {
@@ -327,7 +338,7 @@ exports.disable = function (req, res) {
             if (response.body.success) {
               utility.callApi(`pages/${req.body._id}`, 'get', {}) // fetch page
                 .then(page => {
-                  let updateConnectedFacebook = {query: {pageId: page.pageId}, newPayload: {connectedFacebook: false}, options: {multi: true}}
+                  let updateConnectedFacebook = { query: { pageId: page.pageId }, newPayload: { connectedFacebook: false }, options: { multi: true } }
                   utility.callApi(`pages/update`, 'post', updateConnectedFacebook) // connect page
                     .then(updatedPage => {
                     })
@@ -350,9 +361,9 @@ exports.disable = function (req, res) {
               }
             })
 
-            utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true}) // fetch all pages of company
+            utility.callApi(`pages/query`, 'post', { companyId: req.user.companyId, connected: true }) // fetch all pages of company
               .then(connectedPages => {
-                let autopostingQuery = {companyId: req.user.companyId}
+                let autopostingQuery = { companyId: req.user.companyId }
                 if (connectedPages.length > 0) {
                   autopostingQuery.segmentationPageIds = [req.body.pageId]
                 }
@@ -391,7 +402,7 @@ exports.disable = function (req, res) {
 }
 
 exports.createWelcomeMessage = function (req, res) {
-  utility.callApi(`pages/${req.body._id}`, 'put', {welcomeMessage: req.body.welcomeMessage})
+  utility.callApi(`pages/${req.body._id}`, 'put', { welcomeMessage: req.body.welcomeMessage })
     .then(updatedWelcomeMessage => {
       createMessageBlocks(req.body.linkedMessages ? req.body.linkedMessages : [], req.user, req.body._id, 'welcomeMessage')
         .then(results => {
@@ -409,7 +420,7 @@ exports.createWelcomeMessage = function (req, res) {
 
 function createMessageBlocks (linkedMessages, user, moduleId, moduleType) {
   let messageBlockRequests = []
-  let queryObject = {'module.id': moduleId, 'module.type': 'welcomeMessage'}
+  let queryObject = { 'module.id': moduleId, 'module.type': 'welcomeMessage' }
   for (let i = 0; i < linkedMessages.length; i++) {
     let linkedMessage = linkedMessages[i]
     let data = {
@@ -436,7 +447,7 @@ function createMessageBlocks (linkedMessages, user, moduleId, moduleType) {
 }
 
 exports.enableDisableWelcomeMessage = function (req, res) {
-  utility.callApi(`pages/${req.body._id}`, 'put', {isWelcomeMessageEnabled: req.body.isWelcomeMessageEnabled})
+  utility.callApi(`pages/${req.body._id}`, 'put', { isWelcomeMessageEnabled: req.body.isWelcomeMessageEnabled })
     .then(enabled => {
       sendSuccessResponse(res, 200, 'Operation completed successfully!')
     })
@@ -449,11 +460,11 @@ exports.saveGreetingText = function (req, res) {
   const pageId = req.body.pageId
   const greetingText = req.body.greetingText
 
-  utility.callApi(`pages/${pageId}/greetingText`, 'put', {greetingText: greetingText}, 'accounts', req.headers.authorization)
+  utility.callApi(`pages/${pageId}/greetingText`, 'put', { greetingText: greetingText }, 'accounts', req.headers.authorization)
     .then(updatedGreetingText => {
-      utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email})
+      utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
         .then(companyuser => {
-          utility.callApi(`pages/query`, 'post', {pageId: pageId, companyId: companyuser.companyId})
+          utility.callApi(`pages/query`, 'post', { pageId: pageId, companyId: companyuser.companyId })
             .then(gotPage => {
               const pageToken = gotPage && gotPage[0].accessToken
               if (pageToken) {
@@ -466,7 +477,7 @@ exports.saveGreetingText = function (req, res) {
                     }]
                 }
 
-                needle.request('post', requesturl, valueForMenu, {json: true},
+                needle.request('post', requesturl, valueForMenu, { json: true },
                   function (err, resp) {
                     if (!err) {
                       if (resp.body.error) {
@@ -494,9 +505,9 @@ exports.saveGreetingText = function (req, res) {
 }
 
 exports.addPages = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      utility.callApi(`pages/query`, 'post', {companyId: companyuser.companyId, isApproved: true}) // fetch all pages of company
+      utility.callApi(`pages/query`, 'post', { companyId: companyuser.companyId, isApproved: true }) // fetch all pages of company
         .then(pages => {
           let pagesToSend = logicLayer.removeDuplicates(pages)
           sendSuccessResponse(res, 200, pagesToSend)
@@ -511,9 +522,9 @@ exports.addPages = function (req, res) {
 }
 
 exports.otherPages = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
+  utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
-      utility.callApi(`pages/query`, 'post', {companyId: companyuser.companyId, connected: false, userId: req.user._id}) // fetch all pages of company
+      utility.callApi(`pages/query`, 'post', { companyId: companyuser.companyId, connected: false, userId: req.user._id }) // fetch all pages of company
         .then(pages => {
           sendSuccessResponse(res, 200, pages)
         })
@@ -540,7 +551,7 @@ exports.deleteWhitelistDomain = function (req, res) {
   const pageId = req.body.page_id
   const whitelistDomain = req.body.whitelistDomain
 
-  utility.callApi(`pages/deleteWhitelistDomain`, 'post', {page_id: pageId, whitelistDomain: whitelistDomain}, 'accounts', req.headers.authorization)
+  utility.callApi(`pages/deleteWhitelistDomain`, 'post', { page_id: pageId, whitelistDomain: whitelistDomain }, 'accounts', req.headers.authorization)
     .then(whitelistDomains => {
       sendSuccessResponse(res, 200, whitelistDomains)
     })
@@ -553,7 +564,7 @@ exports.whitelistDomain = function (req, res) {
   const pageId = req.body.page_id
   const whitelistDomains = req.body.whitelistDomains
 
-  utility.callApi(`pages/whitelistDomain`, 'post', {page_id: pageId, whitelistDomains: whitelistDomains}, 'accounts', req.headers.authorization)
+  utility.callApi(`pages/whitelistDomain`, 'post', { page_id: pageId, whitelistDomains: whitelistDomains }, 'accounts', req.headers.authorization)
     .then(whitelistDomains => {
       sendSuccessResponse(res, 200, whitelistDomains)
     })
@@ -570,7 +581,7 @@ exports.isWhitelisted = function (req, res) {
 }
 
 exports.refreshPages = function (req, res) {
-  utility.callApi(`pages/refreshPages`, 'post', {}, 'accounts',  req.headers.authorization)// fetch all pages of company
+  utility.callApi(`pages/refreshPages`, 'post', {}, 'accounts', req.headers.authorization)// fetch all pages of company
     .then(response => {
       sendSuccessResponse(res, 200, response)
     })
