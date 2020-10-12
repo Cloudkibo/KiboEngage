@@ -54,55 +54,67 @@ exports.getAllPages = function (req, res) {
 }
 exports.getUserSummary = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {userId: req.body.userId})
-  .then(companyUser => {
-    async.parallelLimit([
-      function (callback) {
-        utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
-          .then(pages => {
-            let pageIds = []
-            for (let i = 0; i < pages.length; i++) {
-              pageIds.push(pages[i]._id) 
-            }
-            let subscriberCriteria = LogicLayer.getSubscribersCountForUser(req.body, pageIds)
-            utility.callApi(`subscribers/aggregate`, 'post', subscriberCriteria)
-              .then(subscribers => {
-                callback(null, subscribers)
-              })
-              .catch(err => {
-                callback(err)
-              })
-          })
-          .catch(err => {
-            callback(err)
-          })
-      },
-      function (callback) {
-        let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body)
-        utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
-          .then(result => {
-            callback(null, result)
-          })
-          .catch(err => {
-            callback(err)
-          })
-      }
-    ], 10, function (err, results) {
-      if (err) {
-        sendErrorResponse(res, 500, '', `Error in getting user summary ${JSON.stringify(err)}`)
-      } else {
-        let subscribers = results[0]
-        let messagesCount = results[1]
-        let data = {
-          subscribersCount: subscribers[0] ? subscribers[0].count : 0,
-          messagesCount: messagesCount[0] ? messagesCount[0].count : 0
+    .then(companyUser => {
+      async.parallelLimit([
+        function (callback) {
+          utility.callApi(`pages/query`, 'post', {companyId: companyUser.companyId, connected: true})
+            .then(pages => {
+              let pageIds = []
+              for (let i = 0; i < pages.length; i++) {
+                pageIds.push(pages[i]._id) 
+              }
+              let subscriberCriteria = LogicLayer.getSubscribersCountForUser(req.body, pageIds)
+              utility.callApi(`subscribers/aggregate`, 'post', subscriberCriteria)
+                .then(subscribers => {
+                  callback(null, subscribers)
+                })
+                .catch(err => {
+                  callback(err)
+                })
+            })
+            .catch(err => {
+              callback(err)
+            })
+        },
+        function (callback) {
+          let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body, false)
+          utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
+            .then(result => {
+              callback(null, result)
+            })
+            .catch(err => {
+              callback(err)
+            })
+        },
+        function (callback) {
+          let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body, true)
+          utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
+            .then(result => {
+              callback(null, result)
+            })
+            .catch(err => {
+              callback(err)
+            })
         }
-        sendSuccessResponse(res, 200, data)
-      }
+      ], 10, function (err, results) {
+        if (err) {
+          sendErrorResponse(res, 500, '', `Error in getting user summary ${JSON.stringify(err)}`)
+        } else {
+          let subscribers = results[0]
+          let messagesCount = results[1]
+          let facebookInboxMessagesCount = results[2]
+          let data = {
+            subscribersCount: subscribers[0] ? subscribers[0].count : 0,
+            messagesCount: messagesCount[0] ? messagesCount[0].count : 0,
+            facebookInboxMessagesCount: facebookInboxMessagesCount[0] ? facebookInboxMessagesCount[0].count : 0
+          }
+          sendSuccessResponse(res, 200, data)
+        }
+      })
     })
-  })
-  .catch(err => {
-    sendErrorResponse(res, 500, '', `Error in getting companyUser record ${JSON.stringify(err)}`)
-  })
+    .catch(err => {
+      sendErrorResponse(res, 500, '', `Error in getting companyUser record ${JSON.stringify(err)}`)
+    })
 }
 
 exports.allUserBroadcasts = function (req, res) {
