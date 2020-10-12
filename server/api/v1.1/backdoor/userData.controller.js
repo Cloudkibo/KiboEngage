@@ -61,7 +61,7 @@ exports.getUserSummary = function (req, res) {
             .then(pages => {
               let pageIds = []
               for (let i = 0; i < pages.length; i++) {
-                pageIds.push(pages[i]._id) 
+                pageIds.push(pages[i]._id)
               }
               let subscriberCriteria = LogicLayer.getSubscribersCountForUser(req.body, pageIds)
               utility.callApi(`subscribers/aggregate`, 'post', subscriberCriteria)
@@ -77,7 +77,7 @@ exports.getUserSummary = function (req, res) {
             })
         },
         function (callback) {
-          let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body, false, 'convos')
+          let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body, false)
           utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
             .then(result => {
               callback(null, result)
@@ -87,17 +87,7 @@ exports.getUserSummary = function (req, res) {
             })
         },
         function (callback) {
-          let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body, true, 'convos')
-          utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
-            .then(result => {
-              callback(null, result)
-            })
-            .catch(err => {
-              callback(err)
-            })
-        },
-        function (callback) {
-          let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body, true, 'facebook')
+          let messagesCriteria = LogicLayer.getMessagesCountForUser(companyUser, req.body, true)
           utility.callApi(`livechat/query`, 'post', messagesCriteria, 'kibochat')
             .then(result => {
               callback(null, result)
@@ -113,12 +103,10 @@ exports.getUserSummary = function (req, res) {
           let subscribers = results[0]
           let messagesCount = results[1]
           let facebookInboxMessagesCount = results[2]
-          let facebookMessageReceivedCount = results[3]
           let data = {
             subscribersCount: subscribers[0] ? subscribers[0].count : 0,
             messagesCount: messagesCount[0] ? messagesCount[0].count : 0,
-            facebookInboxMessagesCount: facebookInboxMessagesCount[0] ? facebookInboxMessagesCount[0].count : 0,
-            facebookMessageReceived: facebookMessageReceivedCount[0] ? facebookMessageReceivedCount[0].count : 0
+            facebookInboxMessagesCount: facebookInboxMessagesCount[0] ? facebookInboxMessagesCount[0].count : 0
           }
           sendSuccessResponse(res, 200, data)
         }
