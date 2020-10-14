@@ -704,9 +704,9 @@ exports.getPlatformCriteriaForMessages = function (body) {
     group: { _id: null, count: { $sum: 1 } }
   }
 }
-exports.getMessagesCountForUser = function (companyUser, body, isFacebookInboxMessages) {
+exports.getMessagesCountForUser = function (companyUser, body, isFacebookInboxMessages, format) {
   let findCriteria = {
-    format: 'convos',
+    format: format,
     company_id: companyUser.companyId && companyUser.companyId !== '' ? companyUser.companyId : {$exists: true},
     replied_by: isFacebookInboxMessages ? {$exists: false} : {$exists: true}
   }
