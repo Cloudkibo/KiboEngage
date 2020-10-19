@@ -185,13 +185,6 @@ exports.enable = function (req, res) {
                                   // query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                   utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
                                     .then(connectPage => {
-                                      utility.callApi(`pages/whitelistDomain`, 'post', { page_id: page.pageId, whitelistDomains: [`${config.domain}`] }, 'accounts', req.headers.authorization)
-                                        .then(whitelistDomains => {
-                                        })
-                                        .catch(error => {
-                                          logger.serverLog(TAG,
-                                            `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
-                                        })
                                       utility.callApi(`featureUsage/updateCompany`, 'put', {
                                         query: { companyId: req.body.companyId },
                                         newPayload: { $inc: { facebook_pages: 1 } },
@@ -260,9 +253,11 @@ exports.enable = function (req, res) {
                                                   if (errorMessage && errorMessage.includes('administrative permission')) {
                                                     sendSuccessResponse(res, 200, { adminError: 'Page connected successfully, but certain actions such as setting welcome message will not work due to your page role' })
                                                   } else {
+                                                    _updateWhitlistDomain(req, page)
                                                     sendSuccessResponse(res, 200, 'Page connected successfully')
                                                   }
                                                 } else {
+                                                  _updateWhitlistDomain(req, page)
                                                   sendSuccessResponse(res, 200, 'Page connected successfully')
                                                 }
                                               })
