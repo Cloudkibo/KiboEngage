@@ -185,15 +185,25 @@ exports.enable = function (req, res) {
                                   // query.reachEstimationId = reachEstimation.body.reach_estimation_id
                                   utility.callApi(`pages/${req.body._id}`, 'put', query) // connect page
                                     .then(connectPage => {
-                                      // update company usage
-                                      updateCompanyUsage(req.user.companyId, 'facebook_pages', 1)
+                                      utility.callApi(`featureUsage/updateCompany`, 'put', {
+                                        query: { companyId: req.body.companyId },
+                                        newPayload: { $inc: { facebook_pages: 1 } },
+                                        options: {}
+                                      })
+                                        .then(updated => {
+                                          // console.log('update company')
+                                        })
+                                        .catch(error => {
+                                          sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
+                                        })
                                       utility.callApi(`subscribers/update`, 'put', { query: { pageId: page._id }, newPayload: { isEnabledByPage: true }, options: {} }) // update subscribers
                                         .then(updatedSubscriber => {
-                                          // const options = {
-                                          //   url: `https://graph.facebook.com/v6.0/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
-                                          //   qs: {access_token: page.accessToken},
-                                          //   method: 'POST'
-                                          // }
+                                          // eslint-disable-next-line no-unused-vars
+                                          const options = {
+                                            url: `https://graph.facebook.com/v6.0/${page.pageId}/subscribed_apps?access_token=${page.accessToken}`,
+                                            qs: { access_token: page.accessToken },
+                                            method: 'POST'
+                                          }
                                           let bodyToSend = {
                                             subscribed_fields: [
                                               'feed', 'conversations', 'mention', 'messages', 'message_echoes', 'message_deliveries', 'messaging_optins', 'messaging_postbacks', 'message_reads', 'messaging_referrals', 'messaging_policy_enforcement']
@@ -233,13 +243,9 @@ exports.enable = function (req, res) {
                                                 if (err) {
                                                   logger.serverLog(TAG,
                                                     `Internal Server Error ${JSON.stringify(
-                                                      err)}`, 'error')
+                                                      err)}`, 'debug')
                                                 }
                                                 if (resp.body.error) {
-                                                  logger.serverLog(TAG,
-                                                    `Page connect error ${JSON.stringify(
-                                                      resp.body.error)}`, 'debug')
-                                                  sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
                                                   const errorMessage = resp.body.error.message
                                                   if (errorMessage && errorMessage.includes('administrative permission')) {
                                                     sendSuccessResponse(res, 200, { adminError: 'Page connected successfully, but certain actions such as setting welcome message will not work due to your page role' })
@@ -247,6 +253,7 @@ exports.enable = function (req, res) {
                                                     _updateWhitlistDomain(req, page)
                                                     sendSuccessResponse(res, 200, 'Page connected successfully')
                                                   }
+                                                  // sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
                                                 } else {
                                                   _updateWhitlistDomain(req, page)
                                                   sendSuccessResponse(res, 200, 'Page connected successfully')
@@ -310,8 +317,9 @@ exports.enable = function (req, res) {
     })
 }
 
-
 const _updateWhitlistDomain = (req, page) => { 
+  console.log('page.pageId in _updateWhitlistDomain ', page.pageId)
+  console.log('page.pageId in config.domain ', config.domain)
   utility.callApi(`pages/whitelistDomain`, 'post', { page_id: page.pageId, whitelistDomains: [`${config.domain}`] }, 'accounts', req.headers.authorization)
   .then(whitelistDomains => {
   })
