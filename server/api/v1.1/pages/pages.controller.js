@@ -187,13 +187,6 @@ exports.enable = function (req, res) {
                                     .then(connectPage => {
                                       // update company usage
                                       updateCompanyUsage(req.user.companyId, 'facebook_pages', 1)
-                                      utility.callApi(`pages/whitelistDomain`, 'post', { page_id: page.pageId, whitelistDomains: [`${config.domain}`] }, 'accounts', req.headers.authorization)
-                                        .then(whitelistDomains => {
-                                        })
-                                        .catch(error => {
-                                          logger.serverLog(TAG,
-                                            `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
-                                        })
                                       utility.callApi(`subscribers/update`, 'put', { query: { pageId: page._id }, newPayload: { isEnabledByPage: true }, options: {} }) // update subscribers
                                         .then(updatedSubscriber => {
                                           // const options = {
@@ -251,9 +244,11 @@ exports.enable = function (req, res) {
                                                   if (errorMessage && errorMessage.includes('administrative permission')) {
                                                     sendSuccessResponse(res, 200, { adminError: 'Page connected successfully, but certain actions such as setting welcome message will not work due to your page role' })
                                                   } else {
+                                                    _updateWhitlistDomain(req, page)
                                                     sendSuccessResponse(res, 200, 'Page connected successfully')
                                                   }
                                                 } else {
+                                                  _updateWhitlistDomain(req, page)
                                                   sendSuccessResponse(res, 200, 'Page connected successfully')
                                                 }
                                               })
@@ -315,6 +310,16 @@ exports.enable = function (req, res) {
     })
 }
 
+
+const _updateWhitlistDomain = (req, page) => { 
+  utility.callApi(`pages/whitelistDomain`, 'post', { page_id: page.pageId, whitelistDomains: [`${config.domain}`] }, 'accounts', req.headers.authorization)
+  .then(whitelistDomains => {
+  })
+  .catch(error => {
+    logger.serverLog(TAG,
+      `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
+  })
+}
 exports.disable = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', { connected: false }) // disconnect page
     .then(disconnectPage => {
