@@ -163,7 +163,7 @@ const passwordChangeEmailAlert = function (userId, userEmail) {
       }
     })
     .catch(error => {
-      logger.serverLog(TAG, `error: ${JSON.stringify(error)}`, 'error')
+      logger.serverLog(TAG, `error in password change email alert: ${JSON.stringify(error)}`, 'error')
     })
 }
 
