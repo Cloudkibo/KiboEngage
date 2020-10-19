@@ -63,7 +63,7 @@ exports.index = function (req, res) {
                       }
                     })
                   } else {
-                    logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'error')
+                    logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'info')
                   }
                 })
             }
