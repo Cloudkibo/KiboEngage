@@ -43,7 +43,7 @@ exports.pollResponse = function (req, res) {
               return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
             })
         } else {
-          logger.serverLog(TAG, `Poll not found`, 'info')
+          logger.serverLog(TAG, 'poll not found', 'info')
         }
       })
       .catch(err => {
