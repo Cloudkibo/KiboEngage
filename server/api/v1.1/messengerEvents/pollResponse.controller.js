@@ -16,31 +16,35 @@ exports.pollResponse = function (req, res) {
   if (resp.poll_id) {
     PollsDataLayer.findOnePoll(resp.poll_id)
       .then(poll => {
-        callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: poll.companyId, completeInfo: true })
-          .then(subscribers => {
-            let subscriber = subscribers[0]
-            console.log('subscriber found', JSON.stringify(subscriber))
-            if (subscriber) {
-              let message = preparePayloadFacebook(subscriber, subscriber.pageId, {componentType: 'text', text: req.body.entry[0].messaging[0].message.text})
-              saveLiveChat(message)
-              savepoll(req.body.entry[0].messaging[0], resp, subscriber)
-              logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`, 'debug')
-              sequenceController.handlePollSurveyResponse({companyId: poll.companyId, subscriberId: subscriber._id, payload: resp})
-              return res.status(200).json({
-                status: 'success',
-                description: `received the payload`
-              })
-            } else {
-              return res.status(500).json({
-                status: 'failed',
-                description: `no subscriber found`
-              })
-            }
-          })
-          .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
-            return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
-          })
+        if (poll) {
+          callApi(`subscribers/query`, 'post', { senderId: req.body.entry[0].messaging[0].sender.id, companyId: poll.companyId, completeInfo: true })
+            .then(subscribers => {
+              let subscriber = subscribers[0]
+              console.log('subscriber found', JSON.stringify(subscriber))
+              if (subscriber) {
+                let message = preparePayloadFacebook(subscriber, subscriber.pageId, {componentType: 'text', text: req.body.entry[0].messaging[0].message.text})
+                saveLiveChat(message)
+                savepoll(req.body.entry[0].messaging[0], resp, subscriber)
+                logger.serverLog(TAG, `Subscriber Responeds to Poll ${JSON.stringify(subscriber)} ${resp.poll_id}`, 'debug')
+                sequenceController.handlePollSurveyResponse({companyId: poll.companyId, subscriberId: subscriber._id, payload: resp})
+                return res.status(200).json({
+                  status: 'success',
+                  description: `received the payload`
+                })
+              } else {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `no subscriber found`
+                })
+              }
+            })
+            .catch(err => {
+              logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+              return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
+            })
+        } else {
+          logger.serverLog(TAG, 'poll not found', 'info')
+        }
       })
       .catch(err => {
         logger.serverLog(TAG, `Failed to fetch poll ${JSON.stringify(err)}`, 'error')
