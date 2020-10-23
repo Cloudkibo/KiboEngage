@@ -58,7 +58,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
               'text': text,
               'buttons': body.buttons
             }
-          }
+          },
+          'metadata': 'This is a meta data'
         })
       }
       resolve({payload})
@@ -84,7 +85,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
               'attachment': {
                 'type': body.componentType,
                 'payload': {}
-              }
+              },
+              'metadata': 'This is a meta data'
             }),
             'filedata': fileReaderStream
           }
@@ -107,7 +109,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
             'payload': {
               'url': body.fileurl
             }
-          }
+          },
+          'metadata': 'This is a meta data'
         })
       }
       resolve({payload})
@@ -131,7 +134,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
                 }
               ]
             }
-          }
+          },
+          'metadata': 'This is a meta data'
         })
       }
       resolve({payload})
@@ -163,7 +167,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
               'template_type': 'generic',
               'elements': galleryCards
             }
-          }
+          },
+          'metadata': 'This is a meta data'
         })
       }
       resolve({payload})
