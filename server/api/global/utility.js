@@ -145,7 +145,8 @@ const passwordChangeEmailAlert = function (userId, userEmail) {
     },
     newPayload: {
       connectFacebook: false
-    }
+    },
+    options: {}
   }
   callApi(`user/update`, 'post', body)
     .then(response1 => {
