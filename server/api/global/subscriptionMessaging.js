@@ -1,6 +1,7 @@
 const { facebookApiCaller } = require('./facebookApiCaller')
 const logger = require('../../components/logger')
 const TAG = 'global/subscriptionMessaging.js'
+const { sendOpAlert } = require('./operationalAlert')
 
 exports.isApprovedForSMP = (page) => {
   console.log('called isApprovedForSMP', page)
