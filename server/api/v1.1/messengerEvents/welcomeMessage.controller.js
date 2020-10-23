@@ -43,7 +43,7 @@ exports.index = function (req, res) {
                   } else if (resp2.body.error) {
                     sendOpAlert(JSON.stringify(resp2.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
                   }
-                  //logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'debug')
+                  // logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'debug')
                   let pageAccessToken = resp2.body.access_token
                   if (pageAccessToken) {
                     const options = {

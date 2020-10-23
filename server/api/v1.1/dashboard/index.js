@@ -20,7 +20,7 @@ router.get('/sentVsSeen/:pageId',
   auth.doesPlanPermitsThisAction('broadcasts'),
   auth.isUserAllowedToPerformThisAction('view_broadcasts'),
   controller.sentVsSeen)
-  
+
 // todo this is also coded very badly
 //  router.get('/otherPages', auth.isAuthenticated(), controller.otherPages)
 // todo remove this, this is not being used, discuss

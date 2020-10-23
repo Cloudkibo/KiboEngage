@@ -43,7 +43,6 @@ exports.getAutomatedOptions = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch automated options ${err}`)
     })
 }
-
 exports.getAdvancedSettings = function (req, res) {
   utility.callApi(`companyprofile`, 'get', {}, 'accounts', req.headers.authorization)
     .then(payload => {
