@@ -8,10 +8,8 @@ exports.runScript = function () {
     purpose: 'findAll',
     match: {platform: 'whatsApp'}
   }
-  console.log('running script')
   utility.callApi('queue/query', 'post', query, 'kiboengage')
     .then(queues => {
-      console.log('queues got', queues[0])
       queues.forEach(queue => {
         utility.callApi('whatsAppBroadcastMessages/query',
           'post', {purpose: 'findOne', match: {messageId: queue.payload.id}},
