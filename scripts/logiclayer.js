@@ -29,7 +29,8 @@ exports.prepareDataForSurvey = (questions, subscriber, message, currentUser, sur
         text: `${survey.description}\nPlease respond to these questions. \n${firstQuestion.statement}`,
         buttons
       }
-    }
+    },
+    'metadata': 'This is a meta data for tweet'
   }
 
   const data = {
@@ -43,6 +44,7 @@ exports.prepareDataForSurvey = (questions, subscriber, message, currentUser, sur
 exports.prepareDataForPoll = (poll, subscriber) => {
   const messageData = {
     text: poll.statement,
+    'metadata': 'This is a meta data for tweet',
     quick_replies: [
       {
         'content_type': 'text',
@@ -93,11 +95,13 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
               'text': payload.text,
               'buttons': payload.buttons
             }
-          }
+          },
+          'metadata': 'This is a meta data for tweet'
         }
       } else {
         messageData.message = {
-          'text': payload.text
+          'text': payload.text,
+          'metadata': 'This is a meta data for tweet'
         }
       }
     } else if (payload.componentType === 'image') {
@@ -108,7 +112,8 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
             'url': payload.fileurl.url,
             'is_reusable': true
           }
-        }
+        },
+        'metadata': 'This is a meta data for tweet'
       }
     } else if (payload.componentType === 'audio') {
       messageData.message = {
@@ -118,7 +123,8 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
             'url': payload.fileurl.url,
             'is_reusable': true
           }
-        }
+        },
+        'metadata': 'This is a meta data for tweet'
       }
     } else if (payload.componentType === 'video') {
       messageData.message = {
@@ -128,7 +134,8 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
             'url': payload.fileurl.url,
             'is_reusable': true
           }
-        }
+        },
+        'metadata': 'This is a meta data for tweet'
       }
     } else if (payload.componentType === 'file') {
       messageData.message = {
@@ -138,7 +145,8 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
             'url': payload.fileurl.url,
             'is_reusable': true
           }
-        }
+        },
+        'metadata': 'This is a meta data for tweet'
       }
     } else if (payload.componentType === 'card') {
       messageData.message = {
@@ -155,7 +163,8 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
               }
             ]
           }
-        }
+        },
+        'metadata': 'This is a meta data for tweet'
       }
     } else if (payload.componentType === 'media') {
       if (payload.facebookUrl) {
@@ -170,7 +179,8 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
                   url: payload.facebookUrl
                 }
               ]
-            }
+            },
+            'metadata': 'This is a meta data for tweet'
           }
         }
       } else {
@@ -186,7 +196,8 @@ exports.prepareDataForBroadcast = (broadcast, subscriber) => {
                 }
               ]
             }
-          }
+          },
+          'metadata': 'This is a meta data for tweet'
         }
       }
     }
@@ -221,7 +232,8 @@ exports.prepareDataForWordpress = (config, subscriber, newURL) => {
             }
           ]
         }
-      }
+      },
+      'metadata': 'This is a meta data for tweet'
     })
   }
   return messageData
@@ -265,7 +277,8 @@ exports.prepareMessageDataForTwitter = (tweet, subscriber, newURL) => {
             }
           ]
         }
-      }
+      },
+      'metadata': 'This is a meta data for tweet'
     })
   }
   return messageData
@@ -306,7 +319,8 @@ exports.prepareDataForFacebook = (post, subscriber, newURL) => {
             }
           ]
         }
-      }
+      },
+      'metadata': 'This is a meta data for tweet'
     })
   } else if (post.type === 'photo') {
     messageData.message = JSON.stringify({
@@ -331,7 +345,8 @@ exports.prepareDataForFacebook = (post, subscriber, newURL) => {
             }
           ]
         }
-      }
+      },
+      'metadata': 'This is a meta data for tweet'
     })
   } else if (post.type === 'video') {
     messageData.message = JSON.stringify({
@@ -341,7 +356,8 @@ exports.prepareDataForFacebook = (post, subscriber, newURL) => {
           'url': post.link,
           'is_reusable': false
         }
-      }
+      },
+      'metadata': 'This is a meta data for tweet'
     })
   }
   return messageData
