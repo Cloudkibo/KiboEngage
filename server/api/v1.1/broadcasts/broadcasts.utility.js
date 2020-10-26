@@ -150,7 +150,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
             'text': text,
             'buttons': body.buttons
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       })
     }
   } else if (['image', 'audio', 'file', 'video'].indexOf(
@@ -172,7 +173,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
         'attachment': {
           'type': body.componentType,
           'payload': {}
-        }
+        },
+        'metadata': 'This is a meta data'
       }),
       'filedata': fileReaderStream
     }
@@ -192,7 +194,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
           'payload': {
             'url': body.fileurl
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       })
     }
   } else if (body.componentType === 'card') {
@@ -215,7 +218,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
               }
             ]
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       })
     }
   } else if (body.componentType === 'gallery') {
@@ -246,7 +250,8 @@ function prepareSendAPIPayload (subscriberId, body, fname, lname, isResponse) {
             'template_type': 'generic',
             'elements': galleryCards
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       })
     }
   }
@@ -499,7 +504,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'text': text,
           'buttons': removeOldUrlFromButton(body.buttons)
         }
-      }
+      },
+      'metadata': 'This is a meta data'
     }
     if (body.quickReplies && body.quickReplies.length > 0) {
       payload.quick_replies = body.quickReplies
@@ -514,7 +520,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'payload': {
             'attachment_id': body.fileurl.attachment_id
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       }
     } else {
       payload = {
@@ -523,7 +530,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'payload': {
             'url': body.fileurl.url
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       }
     }
     if (body.quickReplies && body.quickReplies.length > 0) {
@@ -540,7 +548,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
         'payload': {
           'url': body.fileurl
         }
-      }
+      },
+      'metadata': 'This is a meta data'
     }
   } else if (body.componentType === 'card') {
     if (body.default_action) {
@@ -559,7 +568,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
               }
             ]
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       }
       if (body.quickReplies && body.quickReplies.length > 0) {
         payload.quick_replies = body.quickReplies
@@ -580,7 +590,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
               }
             ]
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       }
       if (body.quickReplies && body.quickReplies.length > 0) {
         payload.quick_replies = body.quickReplies
@@ -610,7 +621,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
           'template_type': 'generic',
           'elements': galleryCards
         }
-      }
+      },
+      'metadata': 'This is a meta data'
     }
     if (body.quickReplies && body.quickReplies.length > 0) {
       payload.quick_replies = body.quickReplies
@@ -631,7 +643,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
               }
             ]
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       }
     } else {
       payload = {
@@ -647,7 +660,8 @@ function prepareMessageData (subscriberId, body, fname, lname) {
               }
             ]
           }
-        }
+        },
+        'metadata': 'This is a meta data'
       }
     }
     if (body.quickReplies && body.quickReplies.length > 0) {
