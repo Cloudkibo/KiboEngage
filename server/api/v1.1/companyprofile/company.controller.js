@@ -510,6 +510,23 @@ exports.deleteWhatsAppInfo = function (req, res) {
                   purpose: 'deleteMany',
                   match: {companyId: req.user.companyId}
                 }
+                utility.callApi('queue', 'delete', query, 'kiboengage')
+                  .then(data => {
+                    callback(null, data)
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              } else {
+                callback(null)
+              }
+            },
+            function (callback) {
+              if (req.body.type === 'Disconnect' && req.body.connected) {
+                let query = {
+                  purpose: 'deleteMany',
+                  match: {companyId: req.user.companyId}
+                }
                 utility.callApi(`whatsAppBroadcasts`, 'delete', query, 'kiboengage')
                   .then(data => {
                     callback(null, data)
