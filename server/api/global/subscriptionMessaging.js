@@ -1,9 +1,10 @@
 const { facebookApiCaller } = require('./facebookApiCaller')
 const logger = require('../../components/logger')
 const TAG = 'global/subscriptionMessaging.js'
+const { sendOpAlert } = require('./operationalAlert')
+const  {sendEmail} = require('./sendEmail')
 
 exports.isApprovedForSMP = (page) => {
-  console.log('called isApprovedForSMP', page)
   return new Promise((resolve, reject) => {
     if (page.tasks && page.tasks.includes('MANAGE')) {
       facebookApiCaller(
@@ -13,8 +14,11 @@ exports.isApprovedForSMP = (page) => {
       )
         .then(response => {
           if (response.body.error) {
-            console.log(`Failed to check subscription_messaging permission status  ${JSON.stringify(response.body.error)}`)
-            logger.serverLog(TAG, `Failed to check subscription_messaging permission status ${JSON.stringify(response.body.error)}`, 'error')
+            logger.serverLog(TAG, `Failed to check subscription_messaging permission status from Facebook ${JSON.stringify(response.body.error)}`, 'error')
+            if (response.body.error.code === 190) {
+              sendFacebookReconnectEmail(page)
+            }
+            sendOpAlert(response.body.error, `Failed to check subscription_messaging permission status from Facebook ${JSON.stringify(response.body.error)}`, page._id, page.userId, page.companyId)
             resolve(false)
           } else {
             let data = response.body.data
@@ -31,12 +35,21 @@ exports.isApprovedForSMP = (page) => {
           }
         })
         .catch(err => {
-          console.log(`Failed to check subscription_messaging permission status in catch Block ${JSON.stringify(err)}`)
-          logger.serverLog(TAG, `Failed to check subscription_messaging permission status in catch Block ${JSON.stringify(err)}`, 'error')
+          logger.serverLog(TAG, `Failed to check subscription_messaging permission status ${err}`, 'error')
+          sendOpAlert(err, `Failed to check subscription_messaging permission status ${JSON.stringify(err)}`, page._id, page.userId, page.companyId)
           resolve(false)
         })
     } else {
       resolve(true)
     }
   })
+}
+
+const sendFacebookReconnectEmail = function (page) {
+  sendEmail(
+    page.user.email,
+    'KiboPush: Reconnect Facebook Account',
+    'Reconnect Facebook Account on KiboPush',
+    `Your page ${page.pageName} Access Token is expired because of Facebook security reason. Please Reconnect Your Facebook Account with KiboPush.`
+  )
 }
