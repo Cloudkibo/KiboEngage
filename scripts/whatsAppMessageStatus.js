@@ -85,7 +85,7 @@ const _updateCount = (messages, status) => {
       .then(results => {
         resolve('success')
       })
-  }) 
+  })
 }
 function deleteFromQueue (messageId, status, next) {
   utility.callApi(

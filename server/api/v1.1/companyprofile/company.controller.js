@@ -34,7 +34,7 @@ exports.getAutomatedOptions = function (req, res) {
             sendSuccessResponse(res, 200, payload)
           } else {
             sendSuccessResponse(res, 200, payload)
-          }      
+          }
         }).catch(error => {
           sendErrorResponse(res, 500, `Failed to fetching user details ${JSON.stringify(error)}`)
         })
@@ -236,7 +236,7 @@ const _updateUserPlatform = (req, res) => {
         })
         .catch(err => {
           sendErrorResponse(res, 500, '', err)
-        })               
+        })
     }).catch(err => {
       logger.serverLog(TAG, JSON.stringify(err), 'error')
       sendErrorResponse(res, 500, '', err)
@@ -285,7 +285,7 @@ const _updateUser = (data, next) => {
         })
         .catch(err => {
           next(err)
-        })               
+        })
     }).catch(err => {
       logger.serverLog(TAG, JSON.stringify(err), 'error')
     })
@@ -393,7 +393,7 @@ exports.disconnect = function (req, res) {
                 })
                 .catch(err => {
                   sendErrorResponse(res, 500, err)
-                })               
+                })
             }).catch(err => {
               logger.serverLog(TAG, JSON.stringify(err), 'error')
               sendErrorResponse(res, 500, err)
@@ -486,7 +486,7 @@ exports.deleteWhatsAppInfo = function (req, res) {
                     })
                     .catch(err => {
                       callback(err)
-                    })               
+                    })
                 }).catch(err => {
                   logger.serverLog(TAG, JSON.stringify(err), 'error')
                 })
@@ -522,7 +522,7 @@ exports.deleteWhatsAppInfo = function (req, res) {
               }
             },
             function (callback) {
-              if (req.body.type === 'Disconnect' && req.body.connected) {
+              if (req.body.type === 'Disconnect' && req.body.connected && company.whatsApp.provider !== 'flockSend') {
                 let query = {
                   purpose: 'deleteMany',
                   match: {companyId: req.user.companyId}
