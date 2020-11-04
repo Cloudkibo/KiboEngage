@@ -34,7 +34,7 @@ cron.schedule('* * * * *', abandonedCartScript.runScript)
 cron.schedule('0 13 * * *', rssFeedsScript.runRSSScript) //  daily 6 pm pakistan time
 cron.schedule('0 */2 * * *', manualFeedsScript.runScript)
 cron.schedule('* * * * *', sponsoredScheduled.runScheduleSponsored)
-cron.schedule('*/5 * * * * *', whatsAppMessageStatus.runScript)
+cron.schedule('*/30 * * * * *', whatsAppMessageStatus.runScript)
 cron.schedule('0 0 1 * *', whatsAppMonthlyEmail.runScript) // 1st day of every month
 
 require('./config/express')(appObj)
