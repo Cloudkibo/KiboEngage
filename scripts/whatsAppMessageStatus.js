@@ -18,12 +18,14 @@ const updateAndDeleteMessages = function (skipRecords, LimitRecords, status) {
   }
   utility.callApi('queue/query', 'post', query, 'kiboengage')
     .then(queues => {
+      console.log('queues.length', queues.length)
       if (queues.length > 0) {
         let queuesIds = queues.map(queue => queue.payload.id)
         utility.callApi('whatsAppBroadcastMessages/query',
           'post', {purpose: 'findAll', match: {messageId: {$in: queuesIds}}},
           'kiboengage')
           .then(messages => {
+            console.log('messages.length', messages.length)
             if (messages.length > 0) {
               _updateCount(messages, status).then(data => {
                 updateAndDeleteMessages(skipRecords + LimitRecords, LimitRecords, status)
