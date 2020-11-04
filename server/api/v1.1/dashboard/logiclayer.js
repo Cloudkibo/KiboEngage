@@ -54,7 +54,8 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
     {$group: {
       _id: {'year': {$year: '$datetime'}, 'month': {$month: '$datetime'}, 'day': {$dayOfMonth: '$datetime'}},
       count: {$sum: 1}}
-    }
+    },
+    {$sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 }}
   ]
   // logger.serverLog(TAG,
   //   `final query ${JSON.stringify(
