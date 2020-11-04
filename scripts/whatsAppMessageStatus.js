@@ -85,7 +85,25 @@ const _updateCount = (messages, status) => {
       .then(results => {
         resolve('success')
       })
+<<<<<<< HEAD
   })
+=======
+  })
+}
+function deleteFromQueue (messageId, status, next) {
+  utility.callApi(
+    'queue',
+    'delete',
+    {purpose: 'deleteOne', match: {'payload.id': messageId, 'payload.status': status}},
+    'kiboengage')
+    .then(deleted => {
+      next(null, deleted)
+    })
+    .catch(err => {
+      next(err)
+      logger.serverLog(TAG, `Failed to delete whatsapp message from tweets queue ${err}`, 'error')
+    })
+>>>>>>> fix_bug
 }
 function deleteFromQueue (messageId, status, next) {
   utility.callApi(
