@@ -5,7 +5,6 @@ const async = require('async')
 
 exports.runScript = function () {
 
-  console.log('runScript called')
   updateAndDeleteMessages(0, 25, 'seen')
   updateAndDeleteMessages(0, 25, 'delivered')
 }
@@ -21,13 +20,11 @@ const updateAndDeleteMessages = function (skipRecords, LimitRecords, status) {
     .then(queues => {
       if (queues.length > 0) {
         let queuesIds = queues.map(queue => queue.payload.id)
-        console.log('queuesIds', queuesIds)
         utility.callApi('whatsAppBroadcastMessages/query',
           'post', {purpose: 'findAll', match: {messageId: {$in: queuesIds}}},
           'kiboengage')
           .then(messages => {
             if (messages.length > 0) {
-              console.log('messages', messages)
               _updateCount(messages, status).then(data => {
                 updateAndDeleteMessages(skipRecords + LimitRecords, LimitRecords, status)
               })
@@ -47,7 +44,6 @@ const _updateCount = (messages, status) => {
     messages.forEach(message => {
       let broadcastId = message.broadcastId
       let broadcastCount = messages.filter(messageTemp => messageTemp.broadcastId === broadcastId).length
-      console.log('broadcastCount', broadcastCount)
       if (broadcastIds.includes(broadcastId)) {
         requests.push(
           new Promise((resolve, reject) => {
