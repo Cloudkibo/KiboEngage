@@ -46,7 +46,6 @@ const _updateCount = (messages, status) => {
     messages.forEach(message => {
       let broadcastId = message.broadcastId
       let broadcastCount = messages.filter(messageTemp => messageTemp.broadcastId === broadcastId).length
-      console.log('broadcastCount', broadcastCount)
       if (broadcastIds.includes(broadcastId)) {
         requests.push(
           new Promise((resolve, reject) => {
