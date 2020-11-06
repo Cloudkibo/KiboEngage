@@ -85,9 +85,6 @@ const _updateCount = (messages, status) => {
       .then(results => {
         resolve('success')
       })
-<<<<<<< HEAD
-  })
-=======
   })
 }
 function deleteFromQueue (messageId, status, next) {
@@ -100,28 +97,9 @@ function deleteFromQueue (messageId, status, next) {
       next(null, deleted)
     })
     .catch(err => {
-      next(err)
-      logger.serverLog(TAG, `Failed to delete whatsapp message from tweets queue ${err}`, 'error')
-    })
->>>>>>> fix_bug
-}
-function deleteFromQueue (messageId, status, next) {
-  utility.callApi(
-    'queue',
-    'delete',
-    {purpose: 'deleteOne', match: {'payload.id': messageId, 'payload.status': status}},
-    'kiboengage')
-    .then(deleted => {
-      next(null, deleted)
-    })
-    .catch(err => {
-<<<<<<< HEAD
-      next(err)
-      logger.serverLog(TAG, `Failed to delete whatsapp message from tweets queue ${err}`, 'error')
-=======
       const message = err || 'Failed to delete tweet from tweets queue'
       logger.serverLog(message, `${TAG}: deleteFromQueue`, queue, {}, 'error')
->>>>>>> 0d6d4101 (ssend logger errors to sentry)
+      next(err)
     })
 }
 
