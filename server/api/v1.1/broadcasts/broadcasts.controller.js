@@ -696,7 +696,7 @@ exports.urlMetaData = (req, res) => {
       if (!error) {
         return res.status(200).json({
           status: 'success',
-          payload: results.data
+          payload: results
         })
       } else {
         return res.status(500).json({
