@@ -51,7 +51,7 @@ exports.pollResponse = function (req, res) {
         return res.status(500).json({status: 'failed', description: `Failed to fetch poll ${err}`})
       })
   } else {
-    logger.serverLog(TAG, 'poll_id not found in response', 'error')
+    logger.serverLog(TAG, `poll_id not found in reponse`, 'error')
   }
 }
 function savepoll (req, resp, subscriber) {
