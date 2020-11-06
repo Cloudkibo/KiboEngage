@@ -54,11 +54,13 @@ exports.getAllUsers = function (req, res) {
                       }
                     })
                     .catch(error => {
-                      logger.serverLog(TAG, `ERROR in fetching subscribers ${JSON.stringify(error)}`, 'error')
+                      const message = error || 'ERROR in fetching subscribers'
+                      logger.serverLog(message, `${TAG}: exports.getAllUsers`, req.body, {}, 'error')
                     })
                 })
                 .catch(error => {
-                  logger.serverLog(TAG, `ERROR in fetching pages ${JSON.stringify(error)}`, 'error')
+                  const message = error || 'ERROR in fetching pages'
+                  logger.serverLog(message, `${TAG}: exports.getAllUsers`, req.body, {}, 'error')
                 })
             })
           } else {
@@ -407,29 +409,15 @@ exports.sessionsGraph = function (req, res) {
     })
 }
 exports.getAllSubscribers = function (req, res) {
-  var dt = new Date()
-  var utcDate = dt.toUTCString()
-  logger.serverLog(TAG, `starting function time ${utcDate}`, 'info')
   let criteria = LogicLayer.getAllSubscribersCriteria(req.params.pageid, req.body)
   utility.callApi(`subscribers/aggregate`, 'post', criteria.countCriteria)
     .then(subscribersCount => {
-      dt = new Date()
-      utcDate = dt.toUTCString()
-      logger.serverLog(TAG, `subscribers/aggregate count ${utcDate}`, 'info')
-
       utility.callApi(`subscribers/aggregate`, 'post', criteria.finalCriteria)
         .then(subscribers => {
-          dt = new Date()
-          utcDate = dt.toUTCString()
-          logger.serverLog(TAG, `subscribers/aggregate data subscribers ${utcDate}`, 'info')
           let payload = {
             subscribers: subscribers,
             count: subscribers.length > 0 ? subscribersCount[0].count : ''
           }
-          dt = new Date()
-          utcDate = dt.toUTCString()
-          logger.serverLog(TAG, `before send success response ${utcDate}`, 'info')
-
           sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
@@ -496,7 +484,6 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
   ]
   utility.callApi(`pages/aggregate`, 'post', aggregateData)
     .then(pages => {
-      logger.serverLog(TAG, `pages.length in _getPageData ${(pages.length)} `)
       if (pages.length > 0) {
         downloadCSV(pages, req)
           .then(result => {
@@ -538,7 +525,8 @@ const _getPageData = (res, req, skipRecords, LimitRecords, data) => {
             console.log(JSON.stringify(err))
           })
         } catch (err) {
-          logger.serverLog(TAG, `error at parse ${JSON.stringify(err)}`, 'error')
+          const message = err || 'error at parse'
+          logger.serverLog(message, `${TAG}: _getPageData `, req.body, {}, 'error')
         }
       }
     }).catch(error => {
@@ -663,7 +651,8 @@ function downloadCSV (pages, req) {
                   _findPolls.bind(null, pages[i].pageId)
                 ], 10, function (err, results) {
                   if (err) {
-                    logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(err)}`, 'error')
+                    const message = err || 'Failed to fetch broadcasts'
+                    logger.serverLog(message, `${TAG}: downloadCSV`, pages, {}, 'error')
                   } else {
                     let broadcasts = results[0]
                     let surveys = results[1]
@@ -684,21 +673,17 @@ function downloadCSV (pages, req) {
                     })
                   }
                   resolve('success')
-                  // json2csv({ data: info, fields: keys }, function (err, csv) {
-                  //   if (err) {
-                  //     logger.serverLog(TAG, `Error at exporting csv file ${JSON.stringify(err)}`, 'error')
-                  //   }
-                  //   resolve({data: csv})
-                  // })
                 })
               })
 
                 .catch(error => {
-                  logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(error)}`, 'error')
+                  const message = error || 'Failed to fetch broadcasts'
+                  logger.serverLog(message, `${TAG}: downloadCSV`, req.body, {}, 'error')
                 })
             })
             .catch(error => {
-              logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
+              const message = error || 'ERROR in fetching subscribers'
+              logger.serverLog(message, `${TAG}: exports.getAllUsers`, req.body, {}, 'error')
             })
         )
       }
@@ -735,13 +720,15 @@ const _aggregateSubscribers = (data, next) => {
             next(null)
           })
           .catch(err => {
-            logger.serverLog(TAG, `Unable to aggregate subscribers ${JSON.stringify(err)}`)
+            const message = err || 'Unable to aggregate subscribers'
+            logger.serverLog(message, `${TAG}: _aggregateSubscribers`, data, {}, 'error')
             next(err)
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Unable to query subscribers ${JSON.stringify(err)}`)
+      const message = err || 'Unable to query subscribers'
+      logger.serverLog(message, `${TAG}: _aggregateSubscribers`, data, {}, 'error')
       next(err)
     })
 }
@@ -763,7 +750,8 @@ const _aggregatePoll = (data, next) => {
       next(null)
     })
     .catch(err => {
-      logger.serverLog(`Unable to aggregate Polls ${err}`, err)
+      const message = err || 'Unable to aggregate Polls'
+      logger.serverLog(message, `${TAG}: _aggregatePoll`, data, {}, 'error')
       next(err)
     })
 }
@@ -784,7 +772,8 @@ const _aggregateSurvey = (data, next) => {
       next(null)
     })
     .catch(err => {
-      logger.serverLog(`Unable to aggregate Surveys ${err}`, err)
+      const message = err || 'Unable to aggregate Surveys'
+      logger.serverLog(message, `${TAG}: _aggregateSurvey`, data, {}, 'error')
       next(err)
     })
 }
@@ -805,13 +794,13 @@ const _aggregateBroadcast = (data, next) => {
       next(null)
     })
     .catch(err => {
-      logger.serverLog(`Unable to aggregate Broadcasts ${err}`, err)
+      const message = err || 'Unable to aggregate Broadcasts'
+      logger.serverLog(message, `${TAG}: _aggregateBroadcast`, data, {}, 'error')
       next(err)
     })
 }
 
 function calculateSummary (messages, item, callback) {
-  logger.serverLog(TAG, `foreach ${JSON.stringify(item.email)}`)
   utility.callApi(`companyUser/query`, 'post', {domain_email: item.domain_email})
     .then(companyUser => {
       let data = {
@@ -838,7 +827,6 @@ function calculateSummary (messages, item, callback) {
             subject: 'KiboPush: Weekly Summary',
             text: 'Welcome to KiboPush'
           }
-          logger.serverLog(`summary for ${item.domain_email} - Subscribers:${data.subscribers}, Polls:${data.polls}, Surveys:${data.surveys}, Broadcasts: ${data.broadcasts}`)
           message.html = EmailTemplate.getWeeklyUserEmail(item.name, data)
           messages.push(message)
           callback()
@@ -863,8 +851,6 @@ exports.weeklyEmail = function (req, res) {
     .then(result => {
       if (result[0]) {
         sendEmail(match, limit, count, result[0].count, res)
-      } else {
-        logger.serverLog('Unable to get count result')
       }
     })
     .catch(err => {
@@ -876,17 +862,16 @@ function sendEmail (match, limit, count, totalCount, res) {
   var criteria = [{$match: match}, {$limit: limit}]
   utility.callApi(`user/aggregate`, 'post', criteria)
     .then(users => {
-      logger.serverLog('Users', users.length)
       let userData = users
       let messages = []
       if (userData) {
         async.each(users, calculateSummary.bind(null, messages), function (err) {
           if (err) {
-            logger.serverLog(`Unable to calculate weekly summary ${err}`, 'error')
+            const message = err || 'Unable to calculate weekly summary'
+            logger.serverLog(message, `${TAG}: sendEmail`, {match}, {}, 'error')
           } else {
             sgMail.setApiKey(config.SENDGRID_API_KEY)
             sgMail.send(messages).then(() => {
-              logger.serverLog(TAG, `${JSON.stringify(match)}, ${limit}, ${count}, ${totalCount}`)
               count = count + users.length
               if (count < totalCount) {
                 match = {$and: [{isSuperUser: true}, {_id: {$gt: users[users.length - 1]._id}}]}
@@ -902,7 +887,8 @@ function sendEmail (match, limit, count, totalCount, res) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch users ${err}`, 'error')
+      const message = err || 'Failed to fetch users'
+      logger.serverLog(message, `${TAG}: sendEmail`, match, {}, 'error')
     })
 }
 
@@ -1165,7 +1151,8 @@ exports.fetchUniquePages = (req, res) => {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
+      const message = err || 'Failed to fetch unique pages'
+      logger.serverLog(message, `${TAG}: exports.fetchUniquePages`, req.body, {}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch unique pages ${err}`
@@ -1745,7 +1732,8 @@ exports.sendWhatsAppMetricsEmail = function (req, res) {
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch users ${err}`, 'error')
+      const message = err || 'Failed to fetch users'
+      logger.serverLog(message, `${TAG}: exports.sendWhatsAppMetricsEmail`, req.body, {}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }

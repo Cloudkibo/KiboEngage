@@ -21,7 +21,8 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, menus)
         })
         .catch(err => {
-          logger.serverLog(TAG, `Internal Server Error on fetch ${err}`, 'error')
+          const message = err || 'Internal Server Error on fetch'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
           sendErrorResponse(res, 500, '', 'Internal Server Error')
         })
     })
@@ -45,21 +46,24 @@ exports.indexByPage = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                logger.serverLog(TAG, `Internal Server Error on fetch ${err}`, 'error')
+                const message = err || 'Internal Server Error on fetch'
+                logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {}, 'error')
                 sendErrorResponse(res, 500, '', 'Internal Server Error')
               }
             })
         })
         .catch(err => {
           if (err) {
-            logger.serverLog(TAG, `Internal Server Error on fetch ${err}`, 'error')
+            const message = err || 'Internal Server Error on fetch'
+            logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {}, 'error')
             sendErrorResponse(res, 500, '', 'Internal Server Error')
           }
         })
     })
     .catch(err => {
       if (err) {
-        sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {}, 'error')
       }
     })
 }
@@ -68,17 +72,14 @@ exports.create = function (req, res) {
   callApi.callApi('companyuser/query', 'post', {domain_email: req.user.domain_email})
     .then(companyUser => {
       if (!companyUser) {
-        logger.serverLog(TAG, 'The user account does not belong to any company.', 'error')
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
       callApi.callApi('pages/query', 'post', {pageId: req.body.pageId, companyId: companyUser.companyId, connected: true})
         .then(page => {
           page = page[0]
           if (!page) {
-            logger.serverLog(TAG, 'Page not found', 'error')
             sendErrorResponse(res, 404, '', 'Page not found')
           }
-          logger.serverLog(TAG, `page retrieved for menu creation: ${JSON.stringify(page)}`, 'debug')
           callApi.callApi('menu/query', 'post', {pageId: page._id, companyId: page.companyId})
             .then(info => {
               info = info[0]
@@ -103,12 +104,11 @@ exports.create = function (req, res) {
                       }
                     })
                     const requestUrl = `https://graph.facebook.com/v6.0/me/messenger_profile?access_token=${page.accessToken}`
-                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`, 'debug')
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (err) {
-                          logger.serverLog(TAG,
-                            `Internal Server Error ${JSON.stringify(err)}`, 'error')
+                          const message = err || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
                         }
                         if (!err) {
                         }
@@ -131,7 +131,6 @@ exports.create = function (req, res) {
                 })
                   .then(updated => {
                     const requestUrl = `https://graph.facebook.com/v6.0/me/messenger_profile?access_token=${page.accessToken}`
-                    logger.serverLog(TAG, `requestUrl for menu creation ${requestUrl}`, 'debug')
                     require('./../../../config/socketio').sendMessageToClient({
                       room_id: companyUser.companyId,
                       body: {
@@ -144,18 +143,17 @@ exports.create = function (req, res) {
                         }
                       }
                     })
-                    logger.serverLog(TAG, `req.body.payload passed to graph api ${JSON.stringify(req.body.payload)}`, 'debug')
                     needle.request('post', requestUrl, req.body.payload, {json: true},
                       (err, resp) => {
                         if (!err) {
                         }
                         if (err) {
-                          logger.serverLog(TAG,
-                            `Internal Server Error ${JSON.stringify(err)}`, 'error')
+                          const message = err || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
                         }
                         if (resp.body.error) {
-                          sendOpAlert(resp.body.error, 'menu controller in kiboengage', page._id, page.userId, page.companyId)
-                          logger.serverLog(TAG, `Error from facebook graph api: ${JSON.stringify(resp.body.error)}`, 'error')
+                          const message = resp.body.error || 'Error from facebook graph api'
+                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
                           sendErrorResponse(res, 500, '', JSON.stringify(resp.body.error))
                         } else {
                           callApi.callApi('menu/query', 'post', {pageId: page._id, companyId: page.companyId})
@@ -165,7 +163,8 @@ exports.create = function (req, res) {
                             })
                             .catch(err => {
                               if (err) {
-                                logger.serverLog(TAG, `Error occurred in finding menu${JSON.stringify(err)}`, 'error')
+                                const message = err || 'Error occurred in finding menu'
+                                logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
                               }
                             })
                         }
@@ -173,31 +172,32 @@ exports.create = function (req, res) {
                   })
                   .catch(err => {
                     if (err) {
-                      logger.serverLog(TAG,
-                        `Error occurred in finding subscriber${JSON.stringify(
-                          err)}`, 'error')
+                      const message = err || 'Error occurred in finding subscriber'
+                      logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
                     }
                   })
               }
             })
             .catch(err => {
               if (err) {
-                logger.serverLog(TAG,
-                  `Internal Server Error ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to find menu'
+                logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
                 sendErrorResponse(res, 500, '', 'Failed to find menu. Internal Server Error')
               }
             })
         })
         .catch(err => {
           if (err) {
-            logger.serverLog(TAG,
-              `Internal Server Error ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to find page'
+            logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
             sendErrorResponse(res, 500, '', 'Failed to find page. Internal Server Error')
           }
         })
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })

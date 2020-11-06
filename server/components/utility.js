@@ -1,9 +1,7 @@
 const logger = require('./logger')
 const TAG = 'components/utility.js'
 const config = require('./../config/environment')
-const axios = require('axios')
 const utility = require('../api/v1.1/utility')
-logger.serverLog(TAG, 'Server UtilityJS Called: ', 'error')
 
 function validateUrl (str) {
   let regexp = /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/\S*)?$/
@@ -27,11 +25,6 @@ function checkLastMessageAge (subscriberId, req, callback) {
   utility.callApi(`subscribers/query`, 'post', { senderId: subscriberId })
     .then(subscribers => {
       var subscriber = subscribers[0]
-      logger.serverLog(TAG, `subscribers found ${JSON.stringify(subscribers)}`)
-      // utility.callApi(`sessions/query`, 'post', {subscriber_id: subscriber._id}, req.headers.authorization, 'chat')
-      //   .then(sessions => {
-      //     logger.serverLog(TAG, `sessions found ${JSON.stringify(sessions)}`)
-      // var session = sessions[0]
       if (subscriber && subscriber.agent_activity_time) {
         let lastActivity = new Date(subscriber.agent_activity_time)
         let inMiliSeconds = Date.now() - lastActivity
@@ -40,14 +33,10 @@ function checkLastMessageAge (subscriberId, req, callback) {
       } else if (subscriber) {
         callback(null, true)
       }
-      // })
-      // .catch(error => {
-      //   logger.serverLog(TAG, `failed to fetch session ${JSON.stringify(error)}`)
-      //   return callback(error)
-      // })
     })
     .catch(error => {
-      logger.serverLog(TAG, `failed to fetch subscriber ${JSON.stringify(error)}`)
+      const message = error || 'failed to fetch subscriber'
+      logger.serverLog(message, `${TAG}: checkLastMessageAge`, {subscriberId}, {}, 'error')
       return callback(error)
     })
 }

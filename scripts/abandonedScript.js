@@ -19,14 +19,14 @@ exports.runScript = function () {
     .then(data => {
       if (data) {
         if (data.length === 0) return
-        logger.serverLog(TAG, `Checkout Fetched ${JSON.stringify(data)}`)
         for (let i = 0; i < data.length; i++) {
           DataLayer.findOneStoreInfoGeneric({_id: data[i].storeId})
             .then(store => {
               if (store && store.cartAlertEnabled) {
                 utility.sendCheckout(data[i]._id, (err) => {
                   if (err) {
-                    logger.serverLog(TAG, `Error in sending checkout ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to send checkout'
+                    logger.serverLog(message, `${TAG}: exports.runScript`, data, {}, 'error')
                   }
                   if (i === data.length - 1) https.get('https://cronhub.io/finish/65f023a0-9976-11e9-804f-135aa1b0e11c')
                 })
@@ -34,13 +34,15 @@ exports.runScript = function () {
             })
             .catch(err => {
               https.get('https://cronhub.io/finish/65f023a0-9976-11e9-804f-135aa1b0e11c')
-              logger.serverLog(TAG, `No Store found ${JSON.stringify(err)}`)
+              const message = err || 'Failed to find store'
+              logger.serverLog(message, `${TAG}: exports.runScript`, data, {}, 'error')
             })
         }
       }
     })
     .catch(err => {
       https.get('https://cronhub.io/finish/65f023a0-9976-11e9-804f-135aa1b0e11c')
-      logger.serverLog(TAG, `No Checkout found ${JSON.stringify(err)}`)
+      const message = err || 'No checkout found'
+      logger.serverLog(message, `${TAG}: exports.runScript`, {isPurchased: false, scheduled_at: { '$lt': Date.now() }}, {}, 'error')
     })
 }

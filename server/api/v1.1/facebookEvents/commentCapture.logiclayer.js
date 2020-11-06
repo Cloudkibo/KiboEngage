@@ -24,6 +24,7 @@ exports.getSendValue = function (post, body) {
   }
   return send
 }
+
 exports.prepareCommentPayloadToSave = function (value, pageAccessToken) {
   return new Promise(function (resolve, reject) {
     let payload = []
@@ -53,7 +54,8 @@ exports.prepareCommentPayloadToSave = function (value, pageAccessToken) {
         }
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch comment attachment ${err}`, 'error')
+        const message = err || 'Failed to fetch comment attachment'
+        logger.serverLog(message, `${TAG}: exports.prepareCommentPayloadToSave `, {value, pageAccessToken}, {}, 'error')
         resolve(payload)
       })
   })

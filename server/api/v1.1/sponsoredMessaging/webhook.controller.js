@@ -7,7 +7,6 @@ const TAG = 'api/sponsoredMessaging/webhook.controller.js'
 const datalayer = require('./sponsoredMessaging.datalayer')
 
 exports.handleAdAccountStatus = function (payload) {
-  logger.serverLog(TAG, 'Inside the webhook handler of sponsored message', 'info')
   const { field, value } = payload
   if (field === 'disapproved_ad_objects') {
     handleDisapprovedAdObjects(value)
@@ -19,7 +18,6 @@ exports.handleAdAccountStatus = function (payload) {
 }
 
 function handleDisapprovedAdObjects (payload) {
-  logger.serverLog(TAG, `inside handle disapproved ad ${JSON.stringify(payload)}`, 'info')
   const { id, level } = payload
   let queryObject
   let dataToUpdate = { status: 'disapproved', statusFbPayload: payload }
@@ -34,7 +32,6 @@ function handleDisapprovedAdObjects (payload) {
 }
 
 function handleInProcessAdObjects (payload) {
-  logger.serverLog(TAG, `inside handle in process ad ${JSON.stringify(payload)}`, 'info')
   const { id, level } = payload
   let queryObject
   let dataToUpdate = { status: payload.status_name, statusFbPayload: payload }
@@ -51,7 +48,6 @@ function handleInProcessAdObjects (payload) {
 }
 
 function handleWithIssuesAdObjects (payload) {
-  logger.serverLog(TAG, `inside handle with issues ad ${JSON.stringify(payload)}`, 'info')
   const { id, level } = payload
   let queryObject
   let dataToUpdate = { status: 'with_issues', statusFbPayload: payload }
@@ -69,10 +65,10 @@ function updateSponsoredMessaging (queryObject, dataToUpdate) {
   datalayer.genericUpdateSponsoredMessaging(queryObject, dataToUpdate)
     .then(sponsoredMessage => {
       sendToClientUsingSocket(queryObject, dataToUpdate)
-      logger.serverLog(TAG, `Updated sponsored messaging`)
     })
     .catch(error => {
-      logger.serverLog(TAG, `Error on updating sponsored messaging ${JSON.stringify(error)}`)
+      const message = error || 'Error on updating sponsored messaging'
+      logger.serverLog(message, `${TAG}: updateSponsoredMessaging`, {queryObject, dataToUpdate}, {}, 'error')
     })
 }
 
@@ -93,6 +89,7 @@ function sendToClientUsingSocket (queryObject, dataToUpdate) {
       }
     })
     .catch(error => {
-      logger.serverLog(TAG, `Error in fetching sponsored messaging to update client using socket ${JSON.stringify(error)}`)
+      const message = error || 'Error in fetching sponsored messaging to update client using socket'
+      logger.serverLog(message, `${TAG}: sendToClientUsingSocket`, {queryObject, dataToUpdate}, {}, 'error')
     })
 }

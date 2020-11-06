@@ -239,7 +239,8 @@ exports.sendCheckout = function (req, res) {
   } else {
     utility.sendCheckout(req.body.id, (err, result) => {
       if (err) {
-        logger.serverLog(TAG, `Error received from send checkout ${JSON.stringify(err)}`)
+        const message = err || 'Error received from send checkout'
+        logger.serverLog(message, `${TAG}: exports.sendCheckout`, req.body, {}, 'error')
         sendErrorResponse(res, 500, err)
       } else if (result.status === 'Not Found') {
         sendErrorResponse(res, 404, result)

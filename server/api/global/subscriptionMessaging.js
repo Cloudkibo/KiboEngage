@@ -13,8 +13,8 @@ exports.isApprovedForSMP = (page) => {
       )
         .then(response => {
           if (response.body.error) {
-            console.log(`Failed to check subscription_messaging permission status  ${JSON.stringify(response.body.error)}`)
-            logger.serverLog(TAG, `Failed to check subscription_messaging permission status ${JSON.stringify(response.body.error)}`, 'error')
+            const message = response.body.error || 'Failed to check subscription_messaging permission status from Facebook'
+            logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {page}, {}, 'error')
             resolve(false)
           } else {
             let data = response.body.data
@@ -31,8 +31,8 @@ exports.isApprovedForSMP = (page) => {
           }
         })
         .catch(err => {
-          console.log(`Failed to check subscription_messaging permission status in catch Block ${JSON.stringify(err)}`)
-          logger.serverLog(TAG, `Failed to check subscription_messaging permission status in catch Block ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to check subscription_messaging permission status'
+          logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {page}, {}, 'error')
           resolve(false)
         })
     } else {

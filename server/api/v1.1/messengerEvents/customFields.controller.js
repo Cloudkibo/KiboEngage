@@ -27,12 +27,14 @@ exports.index = function (req, res) {
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+            const message = err || 'Failed to fetch subscriber'
+            logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }
 function saveCustomFieldValue (subscriber, resp) {
@@ -47,7 +49,8 @@ function saveCustomFieldValue (subscriber, resp) {
             console.log('updated finally', updated)
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to save custom field value ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to save custom field value'
+            logger.serverLog(message, `${TAG}: saveCustomFieldValue`, {subscriber}, {}, 'error')
           })
       } else {
         let subscribepayload = {
@@ -59,11 +62,13 @@ function saveCustomFieldValue (subscriber, resp) {
           .then(customFieldSubscriber => {
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to save custom field value ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to save custom field value'
+            logger.serverLog(message, `${TAG}: saveCustomFieldValue`, {subscriber}, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch custom field subscriber'
+      logger.serverLog(message, `${TAG}: saveCustomFieldValue`, {subscriber}, {}, 'error')
     })
 }

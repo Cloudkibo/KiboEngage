@@ -292,19 +292,6 @@ function prepareBroadCastPayload (req, companyId) {
   return broadcastPayload
 }
 
-/* function deleteFile (fileurl) {
- logger.serverLog(TAG,
- `Inside deletefile file Broadcast, fileurl = ${fileurl}`)
- // unlink file
- fs.unlink(fileurl.id, function (err) {
- if (err) {
- logger.serverLog(TAG, err)
- } else {
- logger.serverLog(TAG, 'file deleted')
- }
- })
- } */
-
 function parseUrl (text) {
   // eslint-disable-next-line no-useless-escape
   let urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
@@ -329,7 +316,6 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
             if (tagSubscribers.length === 0) {
               return res.status(500).json({status: 'failed', description: `No subscribers match the selected criteria`})
             }
-            logger.serverLog(TAG, `tagSubscribers ${JSON.stringify(tagSubscribers)}`, 'debug')
             let subscribersPayload = []
             for (let i = 0; i < subscribers.length; i++) {
               for (let j = 0; j < tagSubscribers.length; j++) {
@@ -360,11 +346,13 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
             fn(subscribersPayload)
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch tag subscribers'
+            logger.serverLog(message, `${TAG}: applyTagFilterIfNecessary`, req.body, {}, 'error')
           })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch tag  ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch tag'
+        logger.serverLog(message, `${TAG}: applyTagFilterIfNecessary`, req.body, {}, 'error')
       })
   } else {
     fn(subscribers)
@@ -405,7 +393,8 @@ function applySurveyFilterIfNecessary (req, subscribers, fn) {
         fn(subscribersPayload)
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch survey responses ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch survey responses'
+        logger.serverLog(message, `${TAG}: applySurveyFilterIfNecessary`, req.body, {}, 'error')
       })
   } else {
     fn(subscribers)
@@ -445,7 +434,8 @@ function applyPollFilterIfNecessary (req, subscribers, fn) {
         fn(subscribersPayload)
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch poll responses ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch poll responses'
+        logger.serverLog(message, `${TAG}: applyPollFilterIfNecessary`, req.body, {}, 'error')
       })
   } else {
     fn(subscribers)
@@ -669,8 +659,6 @@ function prepareMessageData (subscriberId, body, fname, lname) {
     }
     return payload
   }
-  logger.serverLog(TAG,
-    `Return Payload ${JSON.stringify(payload)}`, 'debug')
 }
 
 /* eslint-disable */
@@ -720,15 +708,14 @@ function uploadOnFacebook (payloadItem, pageAccessToken) {
     },
     function (err, resp) {
       if (err) {
-        logger.serverLog(TAG, `ERROR! unable to upload attachment on Facebook: ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Unable to upload attachment on Facebook'
+        logger.serverLog(message, `${TAG}: uploadOnFacebook`, messageData, {}, 'error')
         return ({status: 'failed', data: err})
       } else {
         if (resp.body.error) {
           sendOpAlert(resp.body.error, 'broadcast utility in kiboengage', '', '', '')
         }
-        logger.serverLog(TAG, `file uploaded on Facebook: ${JSON.stringify(resp.body)}`)
         payloadItem.fileurl.attachment_id = resp.body.attachment_id
-        logger.serverLog(TAG, `broadcast after attachment: ${JSON.stringify(payloadItem)}`, 'debug')
         return ({status: 'success', data: payloadItem})
       }
     })
@@ -748,7 +735,6 @@ function remove_hubspot_data (payload) {
   return payload
 }
 function addModuleIdIfNecessary (payload, broadcastId) {
-  logger.serverLog(TAG, `addModuleIdIfNecessary ${broadcastId}`, 'debug')
   for (let i = 0; i < payload.length; i++) {
     var data = null
     if (payload[i].quickReplies && payload[i].quickReplies.length > 0) {
@@ -791,19 +777,18 @@ function addModuleIdIfNecessary (payload, broadcastId) {
             .then(URLObject => {
               let module = URLObject.module
               module.id = broadcastId
-              logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
               URLObject.module = module
-              logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
               URLDataLayer.updateOneURL(URLObject._id, {'module': module})
                 .then(savedurl => {
-                  logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to update url'
+                  logger.serverLog(message, `${TAG}: addModuleIdIfNecessary`, payload, {}, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
+              const message = err || 'Failed to fetch URL object'
+              logger.serverLog(message, `${TAG}: addModuleIdIfNecessary`, payload, {}, 'error')
             })
         }
       })
@@ -820,11 +805,13 @@ function addModuleIdIfNecessary (payload, broadcastId) {
                   .then(savedurl => {
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
+                    const message = err || 'Failed to update url'
+                    logger.serverLog(message, `${TAG}: addModuleIdIfNecessary`, payload, {}, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to fetch URL object'
+                logger.serverLog(message, `${TAG}: addModuleIdIfNecessary`, payload, {}, 'error')
               })
           }
         })
@@ -914,7 +901,6 @@ function getSubscriberInfoFromFB (sender, page) {
       method: 'GET'
     }
     needle.get(options.url, options, (error, response) => {
-      logger.serverLog(TAG, `Subscriber response git from facebook: ${JSON.stringify(response.body)}`, 'debug')
       if (error) {
         reject(error)
       } else {

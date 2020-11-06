@@ -1,7 +1,7 @@
 const AutopostingMessages = require('./autopostingMessages.datalayer')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
-const TAG = 'api/v1/autopostingMessage/autopostingMessage.controller.js'
+const TAG = 'api/v1.1/autopostingMessage/autopostingMessage.controller.js'
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
@@ -38,7 +38,8 @@ exports.getMessages = function (req, res) {
     _fetchAutopostingMessages.bind(null, data)
   ], 10, function (err, results) {
     if (err) {
-      logger.serverLog(TAG, `Failed to fetch autoposting messages. ${JSON.stringify(err)}`)
+      const message = err || 'Failed to fetch autoposting messages'
+      logger.serverLog(message, `${TAG}: exports.getMessages`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', 'Failed to fetch autoposting messages')
     } else {
       let messagesCount = results[0]

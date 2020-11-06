@@ -131,12 +131,12 @@ module.exports = function (app) {
         res.render('landingPage', { landingPage })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Error occured in landingPage ${req.params.id} ${err}`)
+        const message = err || 'Error occured in landingPage'
+        logger.serverLog(message, `${TAG}: /landingPage/${req.params.id}`, {}, {}, 'error')
       })
   })
 
   app.post('/landingPage/:id', (req, res) => {
-    logger.serverLog(TAG, 'post request of landingPage is hit')
     let landingPage = req.body
     landingPage.state = req.body.submittedState.state
     landingPage.state.title = req.body.submittedState.title

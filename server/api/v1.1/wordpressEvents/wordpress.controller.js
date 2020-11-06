@@ -10,10 +10,8 @@ const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
 
 exports.postPublish = function (req, res) {
-  logger.serverLog(TAG, `Wordpress post received : ${JSON.stringify(req.body)}`)
   let wpUrl = req.body.guid
   let wordpressUniqueId = wpUrl.split('/')[0] + wpUrl.split('/')[1] + '//' + wpUrl.split('/')[2]
-  logger.serverLog(TAG, `Wordpress unique id:  ${JSON.stringify(wordpressUniqueId)}`)
   AutoPosting.findAllAutopostingObjectsUsingQuery({ accountUniqueName: wordpressUniqueId, isActive: true })
     .then(autopostings => {
       autopostings.forEach(postingItem => {
@@ -100,34 +98,35 @@ exports.postPublish = function (req, res) {
                                         let subscriberIds = tagSubscribers.map((ts) => ts.subscriberId._id)
                                         subsFindCriteria['_id'] = {$in: subscriberIds}
                                         sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
-                                        logger.serverLog(TAG, 'Conversation sent successfully!')
-                                      } else {
-                                        logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
                                       }
                                     })
                                     .catch(err => {
-                                      logger.serverLog(TAG, err)
+                                      const message = err || 'Internal server error'
+                                      logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
                                     })
                                 })
                                 .catch(err => {
-                                  logger.serverLog(TAG, err)
+                                  const message = err || 'Internal server error'
+                                  logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
                                 })
                             } else {
                               sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
-                              logger.serverLog(TAG, 'Conversation sent successfully!')
                             }
                           })
                           .catch(err => {
-                            logger.serverLog(`Failed to create url object ${JSON.stringify(err)}`, 'error')
+                            const message = err || 'Failed to create url object'
+                            logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(`Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
+                        const message = err || 'Failed to create autoposting message'
+                        logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(`Failed to fetch subscriber count ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to fetch subscriber count'
+                  logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
                 })
             })
           })

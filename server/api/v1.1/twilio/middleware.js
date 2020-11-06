@@ -5,8 +5,8 @@
 const compose = require('composable-middleware')
 const config = require('../../../config/environment')
 const async = require('async')
-const logger = require('../../../components/logger')
-const TAG = 'twilio/middleware.js'
+// const logger = require('../../../components/logger')
+// const TAG = 'twilio/middleware.js'
 
 function validateNumbers () {
   return compose()
@@ -20,7 +20,6 @@ function validateNumbers () {
             cb()
           })
           .catch(err => {
-            logger.serverLog(TAG, `Invalid number - ${err}`, 'error')
             invalidNumbers.push(number)
             cb()
           })

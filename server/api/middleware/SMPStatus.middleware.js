@@ -44,7 +44,6 @@ function checkStatusForEachPage (connectedPages) {
         })
     }, function (err) {
       if (err) {
-        logger.serverLog(TAG, `Failed to fetch subscription messaging status of connected pages ${err}`, 'error')
         reject(err)
       } else {
         resolve(statusArray)

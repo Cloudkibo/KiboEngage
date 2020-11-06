@@ -57,7 +57,6 @@ exports.create = function (req, res) {
         }
         utility.callApi('pageadminsubscriptions', 'put', updatedData, 'kiboengage')
           .then(updated => {
-            logger.serverLog(TAG, 'pageadminsubscription updated successfuly')
             require('./../../../config/socketio').sendMessageToClient({
               room_id: req.body.companyId,
               body: {

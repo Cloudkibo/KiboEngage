@@ -62,8 +62,9 @@ exports.callback = function (req, res) {
                       res.redirect('/successMessage')
                     })
                     .catch(err => {
+                      const message = err || 'Error in Integrations Hubspot on update callback'
+                      logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
                       res.redirect('/ErrorMessage')
-                      logger.serverLog(TAG, 'Error in Integrations Hubspot on update callback' + err, 'error')
                       res.status(500).send('Internal Error Occurred.')
                     })
                 } else {
@@ -81,15 +82,17 @@ exports.callback = function (req, res) {
                       res.redirect('/successMessage')
                     })
                     .catch(err => {
+                      const message = err || 'Error in Integrations Hubspot on create callback'
+                      logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
                       res.redirect('/ErrorMessage')
-                      logger.serverLog(TAG, 'Error in Integrations Hubspot on create callback' + err, 'error')
                       res.status(500).send('Internal Error Occurred.')
                     })
                 }
               })
               .catch(err => {
+                const message = err || 'Error in Integrations Hubspot on fetch callback'
+                logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
                 res.redirect('/ErrorMessage')
-                logger.serverLog(TAG, 'Error in Integrations Hubspot on fetch callback' + err, 'error')
                 res.status(500).send('Internal Error Occurred.')
               })
           } else {

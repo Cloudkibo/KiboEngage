@@ -24,7 +24,8 @@ exports.trackDeliveryWhatsApp = function (req, res) {
       .then(updated => {
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to update broadcast ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to update broadcast'
+        logger.serverLog(message, `${TAG}: exports.trackDeliveryWhatsApp`, req.body, {}, 'error')
       })
   }
 }
@@ -45,15 +46,18 @@ function updateChatSeen (body) {
               .then(updated => {
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to update chat seen ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to update chat seen'
+                logger.serverLog(message, `${TAG}: updateChatSeen`, body, {}, 'error')
               })
           }
         })
         .catch(error => {
-          logger.serverLog(TAG, `Failed to fetch contact ${JSON.stringify(error)}`, 'error')
+          const message = error || 'Failed to fetch contact'
+          logger.serverLog(message, `${TAG}: updateChatSeen`, body, {}, 'error')
         })
     })
     .catch(error => {
-      logger.serverLog(TAG, `Failed to company profile ${JSON.stringify(error)}`, 'error')
+      const message = error || 'Failed to company profile'
+      logger.serverLog(message, `${TAG}: updateChatSeen`, body, {}, 'error')
     })
 }

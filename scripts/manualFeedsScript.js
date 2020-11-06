@@ -16,12 +16,14 @@ exports.runScript = () => {
     .then(rssFeeds => {
       async.eachSeries(rssFeeds, _handleRSSFeed, function (err) {
         if (err) {
-          logger.serverLog(TAG, err, 'error')
+          const message = err || 'rss feeds error'
+          logger.serverLog(message, `${TAG}: exports.runScript`, rssFeeds, {}, 'error')
         }
       })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch rss feeds ${err}`, 'error')
+      const message = err || 'Failed to fetch rss feeds'
+      logger.serverLog(message, `${TAG}: exports.runScript`, {}, {}, 'error')
     })
 }
 
@@ -66,7 +68,8 @@ const _prepareFeeds = (data, next) => {
         callback()
       })
       .catch((err) => {
-        logger.serverLog(TAG, err, `In Prepare Message Data Rss Integration ${err}`)
+        const message = err || 'error'
+        logger.serverLog(message, `${TAG}: _prepareFeeds`, data, {}, 'error')
         callback(err)
       })
   }, function (err) {
@@ -86,7 +89,8 @@ const _fetchNonDefaultFeeds = (data, next) => {
       next()
     })
     .catch((err) => {
-      logger.serverLog(TAG, err, `In Fetch Non Default Feeds Rss Integration ${err}`)
+      const message = err || 'In Fetch Non Default Feeds Rss Integration'
+      logger.serverLog(message, `${TAG}: _fetchNonDefaultFeeds`, data, {}, 'error')
       next(err)
     })
 }
@@ -101,10 +105,12 @@ const _shouldShowMoreTopics = (data, next) => {
       next()
     })
     .catch((err) => {
-      logger.serverLog(TAG, err, 'In Prepare Message Data Rss Integration')
+      const message = err || 'In Prepare Message Data Rss Integration'
+      logger.serverLog(message, `${TAG}: _shouldShowMoreTopics`, data, {}, 'error')
       next(err)
     })
 }
+
 const _fetchPage = (data, next) => {
   callApi(`pages/query`, 'post', {_id: data.rssFeed.pageIds[0]})
     .then(pages => {
@@ -112,7 +118,8 @@ const _fetchPage = (data, next) => {
       next()
     })
     .catch((err) => {
-      logger.serverLog(TAG, err, `In fetch page Rss Integration ${err}`)
+      const message = err || 'In fetch page Rss Integration'
+      logger.serverLog(message, `${TAG}: _fetchPage`, data, {}, 'error')
       next(err)
     })
 }
@@ -135,7 +142,8 @@ const sendFeed = (criteria, page, feed, rssFeedPost, parsedFeeds, rssFeedIds) =>
         else resolve(subscribers)
       })
       .catch((err) => {
-        logger.serverLog(TAG, err, `In Send Feed Rss Integration ${err}`)
+        const message = err || 'In Send Feed Rss Integration'
+        logger.serverLog(message, `${TAG}: sendFeed`, criteria, {}, 'error')
         reject(err)
       })
   })
@@ -152,15 +160,15 @@ const sendFeed = (criteria, page, feed, rssFeedPost, parsedFeeds, rssFeedIds) =>
             sendFeed(criteria, page, feed, rssFeedPost, parsedFeeds, rssFeedIds)
           })
           .catch(err => {
-            logger.serverLog(TAG, err, `In Prepare Batch Data ${err}`)
+            const message = err || 'In Prepare Batch Data'
+            logger.serverLog(message, `${TAG}: sendFeed`, subscribers, {}, 'error')
           })
-      } else {
-        logger.serverLog(TAG, 'Feed sent successfully!')
       }
       // return prepareBatchData(subscribers, payload, page, rssFeedPost)
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'error'
+      logger.serverLog(message, `${TAG}: sendFeed`, {}, {}, 'error')
     })
 }
 
@@ -221,7 +229,8 @@ const prepareMessage = (subscriber, parsedFeeds, feed, rssFeedIds, rssFeedPosts)
         }
       })
       .catch((err) => {
-        logger.serverLog(TAG, err, `In Prepare Message ${err}`)
+        const message = err || 'In Prepare Message'
+        logger.serverLog(message, `${TAG}: prepareMessage`, subscriber, {}, 'error')
         reject(err)
       })
   })
@@ -258,7 +267,8 @@ const prepareBatchData = (subscribers, page, rssFeedPost, feed, parsedFeeds, rss
           }
         })
         .catch((err) => {
-          logger.serverLog(TAG, err, `In Prepare Message ${err}`)
+          const message = err || 'In Prepare Batch Data'
+          logger.serverLog(message, `${TAG}: prepareBatchData`, subscribers, {}, 'error')
           callback(err)
         })
     }, function (err) {
@@ -323,7 +333,6 @@ const prepareMessageData = (feed, showMoreTopics, rssFeedPosts, page) => {
     }
     getMetaData(feed, rssFeedPosts, page)
       .then(gallery => {
-        logger.serverLog(TAG, `gallery.length ${gallery.length} for feed.title`)
         let messageData = [{
           text: `Here are your daily updates from ${feed.title} News:`
         }, {
@@ -339,7 +348,8 @@ const prepareMessageData = (feed, showMoreTopics, rssFeedPosts, page) => {
         resolve(messageData)
       })
       .catch(err => {
-        logger.serverLog(TAG, err, `In Prepare Message Data ${err}`)
+        const message = err || 'In Prepare Message Data'
+        logger.serverLog(message, `${TAG}: prepareMessage`, feed, {}, 'error')
         reject(err)
       })
   })
@@ -372,7 +382,8 @@ function getMetaData (rssFeed, rssFeedPosts, page) {
             }
           })
           .catch((err) => {
-            logger.serverLog(TAG, `Error from open graph ${err}`)
+            const message = err || 'Error from open graph'
+            logger.serverLog(message, `${TAG}: getMetaData`, rssFeed, {}, 'error')
           })
       } else {
         callback()
@@ -432,12 +443,14 @@ const saveRssFeedPostSubscribers = (postSubscribers) => {
         next()
       })
       .catch(err => {
-        logger.serverLog(TAG, err, 'In save rss eed Rss Integration')
+        const message = err || 'In save rss feed Rss Integration'
+        logger.serverLog(message, `${TAG}: _saveRssFeedPostSubscribers`, postSubscribers, {}, 'error')
         next(err)
       })
   }, function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to save RssFeedPostSubscribers ${err}`, 'error')
+      const message = err || 'Failed to save RssFeedPostSubscribers'
+      logger.serverLog(message, `${TAG}: _saveRssFeedPostSubscribers`, postSubscribers, {}, 'error')
     }
   })
 }
@@ -446,10 +459,10 @@ const _removeSubsWaitingForUserInput = (subscribers, waitingForUserInput) => {
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds, waitingForUserInput: { '$ne': null }}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
-      logger.serverLog(TAG, `Succesfully updated subscriber _removeSubsWaitingForUserInput in RSS Feed`)
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update subscriber in RSS FEED ${JSON.stringify(err)}`)
+      const message = err || 'Failed to update subscriber in RSS FEED'
+      logger.serverLog(message, `${TAG}: _removeSubsWaitingForUserInput`, subscribers, {}, 'error')
     })
 }
 exports.getMetaData = getMetaData

@@ -39,7 +39,8 @@ exports.index = function (req, res) {
         req.body.message = message
         _sendNextMessage(req, res)
       }).catch(err => {
-        logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+        const message = err || 'Failed to fetch page'
+        logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
       })
   } else {
     _sendNextMessage(req, res)
@@ -50,10 +51,10 @@ const _savePageBroadcast = (data) => {
   BroadcastPageDataLayer.createForBroadcastPage(data)
     .then(savedpagebroadcast => {
       require('../../global/messageStatistics').record('broadcast')
-      logger.serverLog(TAG, 'page broadcast object saved in db')
     })
     .catch(error => {
-      logger.serverLog(`Failed to create page_broadcast ${JSON.stringify(error)}`)
+      const message = error || 'Failed to create page_broadcast'
+      logger.serverLog(message, `${TAG}: _savePageBroadcast`, data, {}, 'error')
     })
 }
 
@@ -94,10 +95,10 @@ const _subscriberUpdate = (subscriber, waitingForUserInput) => {
   console.log('_subscriberUpdate', subscriber)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriber.data[0]._id}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {}})
     .then(updated => {
-      logger.serverLog(TAG, `Succesfully updated subscriber`)
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
+      const message = err || 'Failed to update subscriber'
+      logger.serverLog(message, `${TAG}: _subscriberUpdate`, {subscriber, waitingForUserInput}, {}, 'error')
     })
 }
 
@@ -116,7 +117,6 @@ const _sendNextMessage = (req, res) => {
             callApi(`pages/query`, 'post', {_id: req.body.payload.pageId})
               .then(pages => {
                 if (_checkTypeValidation(broadcast_payload, req.body.message) || req.body.message.quick_reply) {
-                  logger.serverLog(TAG, `True _checkTypeValidation ${JSON.stringify(payload)}`)
                   if (!req.body.message.quick_reply) {
                     _saveData(req, res, broadcast_payload, sub, req.body.message, pages[0])
                   }
@@ -129,7 +129,6 @@ const _sendNextMessage = (req, res) => {
                   }
                 } else {
                   if (waitingForUserInput.incorrectTries > 0) {
-                    logger.serverLog(TAG, `False _checkTypeValidation`)
                     waitingForUserInput.incorrectTries = waitingForUserInput.incorrectTries - 1
                     _subscriberUpdate(subscriber, waitingForUserInput)
                     let validationMessage = _createValidationMessage(broadcast_payload.retryMessage, broadcast_payload.skipButtonText)
@@ -141,7 +140,8 @@ const _sendNextMessage = (req, res) => {
                 }
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch page'
+                logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {}, 'error')
               })
           } else {
             console.log('called function component index')
@@ -150,11 +150,13 @@ const _sendNextMessage = (req, res) => {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch broadcast ${err}`, 'error')
+          const message = err || 'Failed to fetch broadcast'
+          logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+      const message = err || 'Failed to fetch subscriber'
+      logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {}, 'error')
     })
 }
 
@@ -194,7 +196,8 @@ const _saveIntoHubspot = (req, res, broadcastPayload, subscribers, message, page
         }
       }
     }).catch(err => {
-      logger.serverLog(TAG, `Failed to fetch integrations ${err}`, 'error')
+      const message = err || 'Failed to fetch integrations'
+      logger.serverLog(message, `${TAG}: _saveIntoHubspot`, {broadcastPayload}, {}, 'error')
     })
 }
 
@@ -209,9 +212,11 @@ const _insertOrUpdateContact = (broadcastPayload, subscribers, message, integrat
       let hubspotUrl = `https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/${customFieldValue}/`
       _sendToHubspot(integration, hubspotUrl, payload, 'post')
     }).catch((err) => {
-      logger.serverLog(TAG, `Failed to fetch custom field subscriber for hubspot ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch custom field subscriber for hubspot'
+      logger.serverLog(message, `${TAG}: _insertOrUpdateContact`, {broadcastPayload}, {}, 'error')
     })
 }
+
 const _submitForm = (broadcastPayload, subscribers, message, page, integration) => {
   let payload = {
     submittedAt: '' + Date.now(),
@@ -235,7 +240,6 @@ const _submitForm = (broadcastPayload, subscribers, message, page, integration) 
 }
 
 function _sendToHubspot (integration, hubspotUrl, payload, method) {
-  console.log('sendToHubspot', payload)
   return new Promise((resolve, reject) => {
     let newTokens
     refreshAuthToken(integration.integrationPayload.refresh_token)
@@ -248,11 +252,11 @@ function _sendToHubspot (integration, hubspotUrl, payload, method) {
       })
       .then(result => {
         resolve(result)
-        logger.serverLog(TAG, `Success in sending data to hubspot form`)
       })
       .catch(err => {
+        const message = err || 'Failed to send data to hubspot form'
+        logger.serverLog(message, `${TAG}: _sendToHubspot`, {payload}, {}, 'error')
         reject(err)
-        logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
       })
   })
 }
@@ -291,7 +295,8 @@ function _getIdentityCustomFieldValue (lookUpValue, subscriber) {
         }
       })
       .catch((err) => {
-        logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch custom field subscriber'
+        logger.serverLog(message, `${TAG}: _getIdentityCustomFieldValue`, {lookUpValue, subscriber}, {}, 'error')
         reject(err)
       })
   })
@@ -321,7 +326,6 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
             getLookUpValue(resp.lookUpValue, subscribers[0])
               .then(lookUpValue => {
                 if (lookUpValue !== '') {
-                  logger.serverLog(TAG, `lookUpValue userInput Controller ${JSON.stringify(lookUpValue)}`)
                   var request = {
                     spreadsheetId: resp.spreadSheet,
                     range: resp.worksheetName,
@@ -330,7 +334,8 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                   }
                   sheets.spreadsheets.values.get(request, function (err, response) {
                     if (err) {
-                      logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
+                      const message = err || 'Failed to fetch google sheets data'
+                      logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {}, 'error')
                     } else {
                       let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
                       if (range) {
@@ -342,13 +347,15 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                   })
                 }
               }).catch(err => {
-                logger.serverLog(TAG, `Failed to get LookUp Value ${err}`, 'error')
+                const message = err || 'Failed to get LookUp Value'
+                logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {}, 'error')
               })
           }
         }
       }
     }).catch(err => {
-      logger.serverLog(TAG, `Failed to fetch integrations ${err}`, 'error')
+      const message = err || 'Failed to fetch integrations'
+      logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {}, 'error')
     })
 }
 
@@ -371,9 +378,6 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
           data.push(null)
         }
       }
-      logger.serverLog(TAG, ` resp.googleSheetColumn updateRow function ${resp.googleSheetColumn}`)
-      logger.serverLog(TAG, ` range in updateRow function ${range}`)
-      logger.serverLog(TAG, ` data to send update row userinput controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -389,11 +393,13 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
       console.log('request.range in update', request.range)
       sheets.spreadsheets.values.update(request, function (err, response) {
         if (err) {
-          logger.serverLog(TAG, `Failed to update row ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to update row'
+          logger.serverLog(message, `${TAG}: _updateRow`, req.body, {}, 'error')
         }
       })
     }).catch(err => {
-      logger.serverLog(TAG, `Failed to fetch columns in update row ${err}`, 'error')
+      const message = err || 'Failed to fetch columns in update row'
+      logger.serverLog(message, `${TAG}: _updateRow`, req.body, {}, 'error')
     })
 }
 
@@ -408,9 +414,7 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
   req.body.sheetId = resp.worksheet
   fetchColumns(req, res)
     .then(Columns => {
-      logger.serverLog(TAG, `fetchColumns ${JSON.stringify(Columns)}`, 'error')
       createDataInsertRow(resp, Columns, subscribers, message, updateRow).then(data => {
-        logger.serverLog(TAG, ` data to send insert row userinput controller ${JSON.stringify(data)}`)
         let dataToSend = [data]
         let request = {
           spreadsheetId: resp.spreadSheet,
@@ -427,7 +431,8 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
         sheets.spreadsheets.values.append(request, function (err, response) {
           console.log('response in googlesheet insert', response.data)
           if (err) {
-            logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to update row'
+            logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
           } else {
             callApi(`subscribers/query`, 'post', {pageId: subscribers[0].pageId, senderId: subscribers[0].senderId, companyId: subscribers[0].companyId})
               .then(sub => {
@@ -436,21 +441,23 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
                 waitingForUserInput.googleSheetRange = response.data.updates.updatedRange.split(':')[0]
                 waitingForUserInput.spreadSheet = resp.spreadSheet
                 waitingForUserInput.worksheet = resp.worksheet
-                logger.serverLog(TAG, ` waitingForUserInput after response ${waitingForUserInput}`)
                 let subscriber = {
                   data: sub
                 }
                 _subscriberUpdate(subscriber, waitingForUserInput)
               }).catch(err => {
-                logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+                const message = err || 'Failed to fetch subscriber'
+                logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
               })
           }
         })
       }).catch(err => {
-        logger.serverLog(TAG, `Failed to create data  for insert row ${err}`, 'error')
+        const message = err || 'Failed to create data  for insert row'
+        logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
       })
     }).catch(err => {
-      logger.serverLog(TAG, `Failed to fetch columns in insert row ${err}`, 'error')
+      const message = err || 'Failed to fetch columns in insert row'
+      logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
     })
 }
 
@@ -489,7 +496,8 @@ const createDataInsertRow = (resp, Columns, subscribers, message, updateRow) => 
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to fetch custom field subscriber'
+                  logger.serverLog(message, `${TAG}: createDataInsertRow`, {resp}, {}, 'error')
                 })
             }
           } else {

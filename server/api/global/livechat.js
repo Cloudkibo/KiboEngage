@@ -5,9 +5,11 @@ const TAG = 'api/global/livechat.js'
 exports.saveLiveChat = function (message) {
   callApi('livechat', 'post', message, 'kibochat', '')
     .then(saved => {
-      logger.serverLog('Live chat saved successfully!')
     })
-    .catch(err => logger.serverLog(TAG, `Failed to saveLiveChat ${err}`))
+    .catch((err) => {
+      const message = err || 'Failed to saveLiveChat'
+      logger.serverLog(message, `${TAG}: exports.saveLiveChat`, message, {}, 'error')
+    })
 }
 
 exports.preparePayload = function (user, subscriber, page, message) {

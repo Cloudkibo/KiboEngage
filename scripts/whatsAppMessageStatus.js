@@ -35,7 +35,8 @@ const updateAndDeleteMessages = function (skipRecords, LimitRecords, status) {
       } // else we don't need to do anything
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch queues ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch queues'
+      logger.serverLog(message, `${TAG}: exports.runScript`, {}, {}, 'error')
     })
 }
 
@@ -46,7 +47,6 @@ const _updateCount = (messages, status) => {
     messages.forEach(message => {
       let broadcastId = message.broadcastId
       let broadcastCount = messages.filter(messageTemp => messageTemp.broadcastId === broadcastId).length
-      console.log('broadcastCount', broadcastCount)
       if (broadcastIds.includes(broadcastId)) {
         requests.push(
           new Promise((resolve, reject) => {
@@ -85,7 +85,7 @@ const _updateCount = (messages, status) => {
       .then(results => {
         resolve('success')
       })
-  }) 
+  })
 }
 function deleteFromQueue (messageId, status, next) {
   utility.callApi(
@@ -97,8 +97,9 @@ function deleteFromQueue (messageId, status, next) {
       next(null, deleted)
     })
     .catch(err => {
+      const message = err || 'Failed to delete tweet from tweets queue'
+      logger.serverLog(message, `${TAG}: deleteFromQueue`, queue, {}, 'error')
       next(err)
-      logger.serverLog(TAG, `Failed to delete whatsapp message from tweets queue ${err}`, 'error')
     })
 }
 

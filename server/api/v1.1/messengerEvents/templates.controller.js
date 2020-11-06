@@ -15,7 +15,6 @@ exports.index = function (req, res) {
   let resp = JSON.parse(req.body.entry[0].messaging[0].message.quick_reply.payload)
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
-  let payloadToSend
   let aggregateData = [
     {$match: { pageId: pageId, connected: true }},
     {$lookup: {from: 'users', foreignField: '_id', localField: 'userId', as: 'userId'}},
@@ -27,15 +26,12 @@ exports.index = function (req, res) {
   }
   callApi(`templates/broadcast/query`, 'post', query, 'kiboengage')
     .then(template => {
-      logger.serverLog(TAG, `retrieved template ${JSON.stringify(template)}`, 'debug')
       callApi(`pages/aggregate`, 'post', aggregateData)
         .then(page => {
           page = page[0]
           callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
             .then(subscriber => {
               subscriber = subscriber[0]
-              logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
-
               let attachmentIdRequests = []
               for (let i = 0; i < template.payload.length; i++) {
                 if (template.payload[i].fileurl && template.payload[i].fileurl.url) {
@@ -46,7 +42,6 @@ exports.index = function (req, res) {
                     id: template.payload[i].fileurl.id,
                     name: template.payload[i].fileurl.name
                   }
-                  logger.serverLog(TAG, `uploading template ${JSON.stringify(dataToSend)}`, 'debug')
                   attachmentIdRequests.push(new Promise((resolve, reject) => {
                     callApi('uploadTemplate', 'post', dataToSend, 'accounts')
                       .then(uploadedResponse => {
@@ -54,7 +49,8 @@ exports.index = function (req, res) {
                         resolve(uploadedResponse)
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to upload template ${err}`, 'error')
+                        const message = err || 'Failed to upload template'
+                        logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                         reject(err)
                       })
                   }))
@@ -70,14 +66,14 @@ exports.index = function (req, res) {
                       `https://graph.facebook.com/v6.0/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
                       (err, resp2) => {
                         if (err) {
-                          logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
+                          const message = err || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                         }
                         if (resp2.body.error && resp2.body.error.code === 190) {
                           passwordChangeEmailAlert(page.userId._id, page.userId.email)
                         } else if (resp2.body.error) {
                           sendOpAlert(JSON.stringify(resp2.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
                         }
-                        logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'error')
                         let pageAccessToken = resp2.body.access_token
                         if (pageAccessToken) {
                           const options = {
@@ -86,7 +82,6 @@ exports.index = function (req, res) {
                             method: 'GET'
 
                           }
-                          logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
                           needle.get(options.url, options, (error, response) => {
                             if (error) {
                             } else {
@@ -96,25 +91,27 @@ exports.index = function (req, res) {
                               broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                             }
                           })
-                        } else {
-                          logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'error')
                         }
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to retrieve attachment id ${err}`, 'error')
+                  const message = err || 'Failed to retrieve attachment id'
+                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+              const message = err || 'Failed to fetch subscriber'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
             })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch page'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch template ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch template'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }

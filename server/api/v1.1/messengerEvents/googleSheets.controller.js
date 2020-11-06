@@ -47,22 +47,24 @@ exports.index = function (req, res) {
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch integrations ${err}`, 'error')
+                  const message = err || 'Failed to fetch integrations'
+                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+            const message = err || 'Failed to fetch subscriber'
+            logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }
 
 function insertRow (resp, subscriber, oauth2Client) {
-  logger.serverLog(TAG, ` Mapping response from Facebook ${JSON.stringify(resp)}`)
   async.eachOf(resp.mapping, function (item, index, cb) {
     let data = {
       mapping: resp.mapping,
@@ -73,10 +75,10 @@ function insertRow (resp, subscriber, oauth2Client) {
     getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch data to send'
+      logger.serverLog(message, `${TAG}: insertRow`, {resp, subscriber}, {}, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
-      logger.serverLog(TAG, ` data to send in Insert Row googleSheet Controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -92,7 +94,8 @@ function insertRow (resp, subscriber, oauth2Client) {
       }
       sheets.spreadsheets.values.append(request, function (err, response) {
         if (err) {
-          logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to insert row'
+          logger.serverLog(message, `${TAG}: insertRow`, {resp, subscriber}, {}, 'error')
         }
       })
     }
@@ -102,7 +105,6 @@ function insertRow (resp, subscriber, oauth2Client) {
 function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
   getLookUpValue(resp.lookUpValue, subscriber)
     .then(lookUpValue => {
-      logger.serverLog(TAG, `lookUpValue google sheets data ${JSON.stringify(lookUpValue)}`)
       if (lookUpValue !== '') {
         var request = {
           spreadsheetId: resp.spreadSheet,
@@ -112,10 +114,10 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
         }
         sheets.spreadsheets.values.get(request, function (err, response) {
           if (err) {
-            logger.serverLog(TAG, `Failed to fetch google sheets data ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch google sheets data'
+            logger.serverLog(message, `${TAG}: performGoogleSheetAction`, {type, resp, subscriber}, {}, 'error')
           } else {
             let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
-            logger.serverLog(TAG, `lookUpValue google sheets range ${JSON.stringify(range)}`)
             if (range) {
               if (type === 'get_row_by_value') {
                 getRowByValue(resp, subscriber, range, response.data.values)
@@ -135,7 +137,6 @@ function performGoogleSheetAction (type, resp, subscriber, oauth2Client) {
                     }
                   }
                 }
-                logger.serverLog(TAG, `mapping google sheets  ${JSON.stringify(resp.mapping)}`)
                 insertRow(resp, subscriber, oauth2Client)
               }
             }
@@ -175,7 +176,8 @@ function getRowByValue (resp, subscriber, cellAddress, sheetData) {
       .then(updated => {
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to udpate subscriber'
+        logger.serverLog(message, `${TAG}: getRowByValue`, {resp, subscriber}, {}, 'error')
       })
   }
 }
@@ -191,10 +193,10 @@ function updateRow (resp, subscriber, oauth2Client, range) {
     getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch data to send'
+      logger.serverLog(message, `${TAG}: updateRow`, {resp, subscriber}, {}, 'error')
     } else {
       let data = resp.mapping.map(item => item.value)
-      logger.serverLog(TAG, ` data to send in updateRow googleSheet Controller ${JSON.stringify(data)}`)
       let dataToSend = [data]
       let request = {
         spreadsheetId: resp.spreadSheet,
@@ -209,7 +211,8 @@ function updateRow (resp, subscriber, oauth2Client, range) {
       }
       sheets.spreadsheets.values.update(request, function (err, response) {
         if (err) {
-          logger.serverLog(TAG, `Failed to insert row ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to insert row'
+          logger.serverLog(message, `${TAG}: updateRow`, {resp, subscriber}, {}, 'error')
         }
       })
     }
