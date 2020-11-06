@@ -159,13 +159,15 @@ const passwordChangeEmailAlert = function (userId, userEmail) {
       if (config.env === 'production') {
         transporter.sendMail(email, function (err, data) {
           if (err) {
-            logger.serverLog(TAG, `error in sending Alert email: ${JSON.stringify(err)}`, 'error')
+            const message = err || 'error in sending Alert email'
+            logger.serverLog(message, `${TAG}: passwordChangeEmailAlert`, {userId}, {}, 'error')
           }
         })
       }
     })
     .catch(error => {
-      logger.serverLog(TAG, `error in password change email alert: ${JSON.stringify(error)}`, 'error')
+      const message = error || 'error in password change email alert'
+      logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {userId}, {}, 'error')
     })
 }
 

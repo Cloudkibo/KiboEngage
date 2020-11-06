@@ -13,10 +13,10 @@ function addToMessageQueue (sequenceId, messageId, subscriberId, companyId, sche
   }
   SequenceMessageQueueDatalayer.create(sequenceQueuePayload)
     .then(result => {
-      logger.serverLog(TAG, 'Message queue created', 'debug')
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to insert record in message queue ${err}`, 'error')
+      const message = err || 'Failed to insert record in message queue'
+      logger.serverLog(message, `${TAG}: addToMessageQueue`, sequenceQueuePayload, {}, 'error')
     })
 }
 
@@ -29,7 +29,8 @@ function checkParentMessageTrigger (message) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to find message record ${err}`, 'error')
+      const message = err || 'Failed to find message record'
+      logger.serverLog(message, `${TAG}: checkParentMessageTrigger`, message, {}, 'error')
     })
 }
 
@@ -68,14 +69,15 @@ const setSequenceTrigger = function (companyId, subscriberId, trigger) {
                           addToMessageQueue(sequence._id, utcDate, message._id)
                         })
                       }
-                      logger.serverLog(TAG, `Subscribed to sequence successfully`, 'debug')
                     })
                     .catch(err => {
-                      return logger.serverLog(TAG, `ERROR saving sequence subscriber ${JSON.stringify(err)}`, 'error')
+                      const message = err || 'Error saving sequence subscriber'
+                      logger.serverLog(message, `${TAG}: setSequenceTrigger`, {companyId, subscriberId, trigger}, {}, 'error')
                     })
                 })
                 .catch(err => {
-                  return logger.serverLog(TAG, `ERROR getting sequence message${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Error getting sequence message'
+                  logger.serverLog(message, `${TAG}: setSequenceTrigger`, {companyId, subscriberId, trigger}, {}, 'error')
                 })
             }
           }
@@ -83,7 +85,8 @@ const setSequenceTrigger = function (companyId, subscriberId, trigger) {
       }
     })
     .catch(err => {
-      return logger.serverLog(TAG, `ERROR getting sequence ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Error getting sequence'
+      logger.serverLog(message, `${TAG}: setSequenceTrigger`, {companyId, subscriberId, trigger}, {}, 'error')
     })
 }
 

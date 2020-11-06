@@ -12,7 +12,8 @@ exports.index = function (req, res) {
       sendSuccessResponse(res, 200, sequenceQueue)
     })
     .catch(err => {
-      logger.serverLog(TAG, JSON.stringify(err), 'error')
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }

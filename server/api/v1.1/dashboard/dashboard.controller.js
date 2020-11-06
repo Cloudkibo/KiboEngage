@@ -78,9 +78,6 @@ exports.sentVsSeen = function (req, res) {
                                           PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
                                             .then(pollResponseCount => {
                                               let responsesCount = []
-                                              // logger.serverLog(TAG,
-                                              //   `counts for dashboard poll response ${JSON.stringify(
-                                              //     pollResponseCount)}`, 'debug')
                                               for (let a = 0; a < polls.length; a++) {
                                                 for (let b = 0; b < pollResponseCount.length; b++) {
                                                   if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
@@ -156,7 +153,8 @@ exports.sentVsSeen = function (req, res) {
                                     })
                                     .catch(err => {
                                       if (err) {
-                                        logger.serverLog(TAG, `Error: ${err}`, 'error')
+                                        const message = err || 'Internal Server Error'
+                                        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {}, 'error')
                                         sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                       }
                                     })
@@ -271,9 +269,6 @@ exports.sentVsSeenNew = function (req, res) {
                                                 PollResponsesDataLayer.aggregateForPollResponse({}, groupPollAggregate)
                                                   .then(pollResponseCount => {
                                                     let responsesCount = []
-                                                    // logger.serverLog(TAG,
-                                                    //   `counts for dashboard poll response ${JSON.stringify(
-                                                    //     pollResponseCount)}`, 'debug')
                                                     for (let a = 0; a < polls.length; a++) {
                                                       for (let b = 0; b < pollResponseCount.length; b++) {
                                                         if (polls[a]._id.toString() === pollResponseCount[b]._id.toString()) {
@@ -333,7 +328,6 @@ exports.sentVsSeenNew = function (req, res) {
                                                         datacounts.poll.pollResponseCount = sum
                                                       }
                                                     }
-                                                    // logger.serverLog(TAG, `datacounts ${JSON.stringify(datacounts)}`, 'debug')
                                                     graphDataNew(req.body, companyUser, result.pageIds)
                                                       .then(result => {
                                                         sendSuccessResponse(res, 200, {datacounts, graphDatas: result})
@@ -350,14 +344,16 @@ exports.sentVsSeenNew = function (req, res) {
                                               })
                                               .catch(err => {
                                                 if (err) {
-                                                  logger.serverLog(TAG, `Error: ${err}`, 'error')
+                                                  const message = err || 'Internal Server Error'
+                                                  logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {}, 'error')
                                                   sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                                 }
                                               })
                                           })
                                           .catch(err => {
                                             if (err) {
-                                              logger.serverLog(TAG, `Error: ${err}`, 'error')
+                                              const message = err || 'Internal Server Error'
+                                              logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {}, 'error')
                                               sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                             }
                                           })
@@ -489,7 +485,8 @@ exports.otherPages = function (req, res) {
       sendSuccessResponse(res, 200, pages)
     })
     .catch(err => {
-      logger.serverLog(TAG, `Error: ${err}`, 'error')
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.otherPages`, req.body, {}, 'error')
     })
 }
 
@@ -519,7 +516,6 @@ exports.stats = function (req, res) {
                 payload.totalPages = allPagesWithoutDuplicates.length
                 callApi.callApi('subscribers/query', 'post', {companyId: companyUser.companyId, completeInfo: true, isSubscribed: true, pageId: {$in: result.pageIds}})
                   .then(subscribers => {
-                    // logger.serverLog(TAG, `subscribers retrieved: ${subscribers}`, 'debug')
                     payload.subscribers = subscribers.length
                     BroadcastsDataLayer.findBroadcastsWithSortLimit({companyId: companyUser.companyId}, {'datetime': 1}, 10)
                       .then(recentBroadcasts => {
@@ -689,7 +685,6 @@ function graphDataNew (body, companyUser, pageIds) {
       count: {$sum: 1}}
     PageBroadcastDataLayer.aggregateForBroadcasts(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
       .then(broadcastsgraphdata => {
-        logger.serverLog(TAG, `broadcastsgraphdata ${broadcastsgraphdata}`, 'debug')
         PagePollDataLayer.aggregateForPolls(LogicLayer.getCriterias(body, companyUser), groupAggregate)
           .then(pollsgraphdata => {
             PageSurveyDataLayer.aggregateForSurveys(LogicLayer.getCriterias(body, companyUser, false, pageIds), groupAggregate)
@@ -730,8 +725,6 @@ exports.toppages = function (req, res) {
               }
             }])
             .then(gotSubscribersCount => {
-              logger.serverLog(TAG, `pages: ${pages}`, 'debug')
-              logger.serverLog(TAG, `gotSubscribersCount ${gotSubscribersCount}`, 'debug')
               let pagesPayload = []
               for (let i = 0; i < pages.length; i++) {
                 pagesPayload.push({
@@ -746,7 +739,6 @@ exports.toppages = function (req, res) {
                   subscribers: 0
                 })
               }
-              logger.serverLog(TAG, `pagesPayload: ${pagesPayload}`, 'debug')
               for (let i = 0; i < pagesPayload.length; i++) {
                 for (let j = 0; j < gotSubscribersCount.length; j++) {
                   if (pagesPayload[i]._id.toString() ===

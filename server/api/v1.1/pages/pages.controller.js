@@ -222,8 +222,8 @@ exports.enable = function (req, res) {
                                                 .then(updatedPage => {
                                                 })
                                                 .catch(error => {
-                                                  logger.serverLog(TAG,
-                                                    `Failed to updatedPage ${JSON.stringify(error)}`, 'error')
+                                                  const message = error || 'Failed to updatedPage'
+                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
                                                 })
                                             }
                                             var valueForMenu = {
@@ -240,15 +240,12 @@ exports.enable = function (req, res) {
                                             needle.request('post', requesturl, valueForMenu,
                                               { json: true }, function (err, resp) {
                                                 if (err) {
-                                                  logger.serverLog(TAG,
-                                                    `Internal Server Error ${JSON.stringify(
-                                                      err)}`, 'debug')
+                                                  const message = error || 'Internal Server Error'
+                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
                                                 }
                                                 if (resp.body.error) {
-                                                  logger.serverLog(TAG,
-                                                    `Page connect error ${JSON.stringify(
-                                                      resp.body.error)}`, 'error')
-                                                  sendOpAlert(resp.body.error, 'pages controller in kiboengage', page._id, page.userId, page.companyId)
+                                                  const message = resp.body.error || 'Page connect error'
+                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
                                                   const errorMessage = resp.body.error.message
                                                   if (errorMessage && errorMessage.includes('administrative permission')) {
                                                     sendSuccessResponse(res, 200, { adminError: 'Page connected successfully, but certain actions such as setting welcome message will not work due to your page role' })
@@ -280,16 +277,10 @@ exports.enable = function (req, res) {
                                     .catch(error => {
                                       sendErrorResponse(res, 500, `Failed to connect page ${JSON.stringify(error)}`)
                                     })
-                                  //   } else {
-                                  //     logger.serverLog(TAG, `Failed to start reach estimation`, 'error')
-                                  //   }
-                                  // })
-                                  // .catch(err => {
-                                  //   logger.serverLog(TAG, `Error at find page ${err}`, 'error')
-                                  // })
                                 })
                                 .catch(err => {
-                                  logger.serverLog(TAG, `Error at find page ${err}`, 'error')
+                                  const message = err || 'Error at find page'
+                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
                                   sendErrorResponse(res, 500, err)
                                 })
                             } else {
@@ -319,35 +310,21 @@ exports.enable = function (req, res) {
     })
 }
 
-const _updateWhitlistDomain = (req, page) => {
-  console.log('page.pageId in _updateWhitlistDomain ', page.pageId)
-  console.log('page.pageId in config.domain ', config.domain)
+const _updateWhiteListDomain = (req, page) => {
   utility.callApi(`pages/whitelistDomain`, 'post', { page_id: page.pageId, whitelistDomains: [`${config.domain}`] }, 'accounts', req.headers.authorization)
-  .then(whitelistDomains => {
-  })
-  .catch(error => {
-    logger.serverLog(TAG,
-      `Failed to whitelist domain ${JSON.stringify(error)}`, 'error')
-  })
+    .then(whitelistDomains => {
+    })
+    .catch(error => {
+      const message = error || 'Failed to whitelist domain'
+      logger.serverLog(message, `${TAG}: _updateWhiteListDomain`, req.body, {}, 'error')
+    })
 }
 exports.disable = function (req, res) {
   utility.callApi(`pages/${req.body._id}`, 'put', { connected: false }) // disconnect page
     .then(disconnectPage => {
-      updateCompanyUsage(req.user.companyId, 'facebook_pages', -1)
-      logger.serverLog(TAG, 'updated page successfully', 'debug')
       utility.callApi(`subscribers/update`, 'put', { query: { pageId: req.body._id }, newPayload: { isEnabledByPage: false }, options: { multi: true } }) // update subscribers
         .then(updatedSubscriber => {
-          utility.callApi(`featureUsage/updateCompany`, 'put', {
-            query: { companyId: req.body.companyId },
-            newPayload: { $inc: { facebook_pages: -1 } },
-            options: {}
-          })
-            .then(updated => {
-              logger.serverLog(TAG, 'company updated successfully', 'debug')
-            })
-            .catch(error => {
-              sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
-            })
+          updateCompanyUsage(req.user.companyId, 'facebook_pages', -1)
           const options = {
             url: `https://graph.facebook.com/v6.0/${req.body.pageId}/subscribed_apps?access_token=${req.body.accessToken}`,
             qs: { access_token: req.body.accessToken },
@@ -368,8 +345,8 @@ exports.disable = function (req, res) {
                     .then(updatedPage => {
                     })
                     .catch(error => {
-                      logger.serverLog(TAG,
-                        `Failed to updatedPage ${JSON.stringify(error)}`, 'error')
+                      const message = error || 'Failed to updatedPage'
+                      logger.serverLog(message, `${TAG}: exports.disable`, req.body, {}, 'error')
                     })
                 })
             }
@@ -434,7 +411,8 @@ exports.createWelcomeMessage = function (req, res) {
           sendSuccessResponse(res, 200, 'Welcome Message updated successfully!')
         })
         .catch(err => {
-          logger.serverLog(TAG, err)
+          const message = err || 'Failed to create linked message blocks'
+          logger.serverLog(message, `${TAG}: exports.createWelcomeMessage`, req.body, {}, 'error')
           sendErrorResponse(res, 500, `Failed to create linked message blocks ${JSON.stringify(err)}`)
         })
     })
@@ -511,8 +489,8 @@ exports.saveGreetingText = function (req, res) {
                       sendSuccessResponse(res, 200, 'Operation completed successfully!')
                     }
                     if (err) {
-                      logger.serverLog(TAG,
-                        `Internal Server Error ${JSON.stringify(err)}`, 'error')
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.saveGreetingText`, req.body, {}, 'error')
                     }
                   })
               } else {

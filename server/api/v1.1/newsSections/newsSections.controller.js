@@ -174,7 +174,8 @@ function _updateSubscriptionCount (data, next) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+          const message = err || 'Failed to fetch subscribers'
+          logger.serverLog(message, `${TAG}: _updateSubscriptionCount`, data, {}, 'error')
           next(err)
         })
     } else {
@@ -326,7 +327,8 @@ function _checkDefaultFeed (data, next) {
                   next(null, data)
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to update default values ${err}`)
+                  const message = err || 'Failed to update default values'
+                  logger.serverLog(message, `${TAG}: _checkDefaultFeed`, data, {}, 'error')
                   next(err)
                 })
             })
@@ -366,7 +368,8 @@ function _getSubscriptionsCount (data, next) {
         }
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+        const message = err || 'Failed to fetch subscribers'
+        logger.serverLog(message, `${TAG}: _getSubscriptionsCount`, data, {}, 'error')
         next(err)
       })
   } else {
@@ -431,7 +434,8 @@ const _validateFeedUrl = (data, next) => {
         }
       })
       .catch((err) => {
-        logger.serverLog(TAG, `Invalid Feed URL provided ${err}`)
+        const message = err || 'Invalid Feed URL provided'
+        logger.serverLog(message, `${TAG}: _validateFeedUrl`, data, {}, 'error')
         next(`Invalid Feed URL provided`)
       })
   } else {
@@ -493,7 +497,6 @@ const _prepareMessageData = (data, next) => {
   }
   LogicLayer.getMetaData(data.body.stories ? data.body.stories : data.feed, data.body, data.page)
     .then(gallery => {
-      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = [{
         text: `Here are your daily updates from ${data.body.title} News:`
       }, {

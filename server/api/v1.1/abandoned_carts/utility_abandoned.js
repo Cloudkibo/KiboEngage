@@ -10,8 +10,6 @@ let { sendOpAlert } = require('./../../global/operationalAlert')
 // This function needs store Object as well because from store will we read the shop URL and token
 // We also need to pass callback because shopify makes a async call and we need the result back in calling function
 function fetchProductDetails (productIds, store, callBack) {
-  logger.serverLog(TAG, JSON.stringify(productIds))
-
   const shopify = new Shopify({
     shopName: store.shopUrl,
     accessToken: store.shopToken
@@ -35,7 +33,6 @@ function fetchProductDetails (productIds, store, callBack) {
 function sendToFacebook (checkout, store, details) {
   utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true })
     .then(page => {
-      logger.serverLog(TAG, `SHOPIFY Got the page info ${JSON.stringify(page)}`)
       page = page[0]
       let gallery = []
       let payload = {}
@@ -70,24 +67,23 @@ function sendToFacebook (checkout, store, details) {
           'message': payload
         }
       }
-      logger.serverLog(TAG, `SHOPIFY Sending the following info ${JSON.stringify(options)}`)
       request(options, function (error, response, body) {
-        logger.serverLog(TAG, `SHOPIFY Sent the abandoned cart successfully ${JSON.stringify(response)} ${JSON.stringify(body)} ${JSON.stringify(error)}`)
-        if (!error && response.statusCode === 200) {
-          return logger.serverLog(TAG, `SHOPIFY Sent the abandoned cart successfully`)
-        } else {
+        if (error && response.statusCode !== 200) {
           sendOpAlert(body.error, 'utility abandoned in kiboengage', page._id, page.userId, page.companyId)
-          return logger.serverLog(TAG, `SHOPIFY Batch send error ${JSON.stringify(response)}`)
+          const message = error || 'SHOPIFY Batch send error'
+          logger.serverLog(message, `${TAG}: sendToFacebook`, {checkout, store, details}, {}, 'error')
         }
       })
     })
-    .catch(err => logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: sendToFacebook`, {checkout, store, details}, {}, 'error')
+    })
 }
 
 function sendOrderStatusToFacebook (order, statusMessage, store) {
   utilityAPI.callApi(`pages/query`, 'post', { pageId: store.pageId, connected: true })
     .then(page => {
-      logger.serverLog(TAG, `SHOPIFY Got the page info ${JSON.stringify(page)}`)
       page = page[0]
       let payload = {}
       payload = {
@@ -103,31 +99,18 @@ function sendOrderStatusToFacebook (order, statusMessage, store) {
           'message': payload
         }
       }
-      logger.serverLog(TAG, `SHOPIFY Sending the following info ${JSON.stringify(options)}`)
       request(options, function (error, response, body) {
-        logger.serverLog(TAG, `SHOPIFY Sent the order status successfully ${JSON.stringify(response)} ${JSON.stringify(body)} ${JSON.stringify(error)}`)
-        if (!error && response.statusCode === 200) {
-          sendOpAlert(body.error, 'utility abandoned in kiboengage', page._id, page.userId, page.companyId)
-          return logger.serverLog(TAG, `SHOPIFY Sent the order status successfully`)
-        } else {
-          return logger.serverLog(TAG, `SHOPIFY Batch send error ${JSON.stringify(response)}`)
+        if (error && response.statusCode !== 200) {
+          const message = error || 'sending order status to facebook error'
+          return logger.serverLog(message, `${TAG}: sendOrderStatusToFacebook`, order, {}, 'error')
         }
       })
     })
-    .catch(err => logger.serverLog(TAG, `Internal Server Error ${JSON.stringify(err)}`))
+    .catch(err => {
+      const message = err || 'Internal server error'
+      logger.serverLog(message, `${TAG}: sendOrderStatusToFacebook`, order, {}, 'error')
+    })
 }
-
-// const send = (batchMessages, page) => {
-//   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
-//     if (err) {
-//       return logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
-//     }
-//     logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
-//   })
-//   const form = r.form()
-//   form.append('access_token', page.accessToken)
-//   form.append('batch', batchMessages)
-// }
 
 const sendOrderStatus = (id, statusMessage, cb) => {
   dataLayer.findOneOrderInfoGeneric({ orderId: id })
@@ -153,20 +136,20 @@ const sendCheckout = (id, cb) => {
           .then(store => {
             fetchProductDetails(checkout.productIds, store, (err, details) => {
               if (err) {
-                logger.serverLog(TAG, `Error in fetching product details ${JSON.stringify(err)}`)
+                const message = err || 'Error in fetching product details'
+                logger.serverLog(message, `${TAG}: sendCheckout`, {id, cb}, {}, 'error')
                 return cb(err, null)
               }
-              logger.serverLog(TAG, 'Product Details: ' + details)
               sendToFacebook(checkout, store, details)
               // checkout.status = 'sent'
               // checkout.sentCount = checkout.sentCount + 1
               dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: store._id }, { $inc: { totalPushSent: 1 } })
-                .then(updated => logger.serverLog(TAG, `Done updating store analytics ${JSON.stringify(updated)}`))
+                .then(updated => {})
                 .catch(err => cb(err, null))
               dataLayer.findOneCheckOutInfoObjectAndUpdate(
                 { _id: id, sentCount: { '$lt': 3 } },
                 {status: 'sent', sentCount: checkout.sentCount + 1})
-                .then(updated => logger.serverLog(TAG, `Done updating store analytics ${JSON.stringify(updated)}`))
+                .then(updated => {})
                 .catch(err => cb(err, null))
               cb(null, { status: 'Success', payload: 'Checkout Sent' })
             })

@@ -39,17 +39,18 @@ exports.changeSubscription = function (req, res) {
           _sendSubscriptionMessage.bind(null, data)
         ], function (err) {
           if (err) {
-            logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
-          } else {
-            logger.serverLog(TAG, 'Subscrption successfully')
+            const message = err || 'Failed to subscribe or unsubscribe'
+            logger.serverLog(message, `${TAG}: exports.changeSubscription`, req.body, {}, 'error')
           }
         })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch feed ${err}`, 'error')
+      const message = err || 'Failed to fetch feed'
+      logger.serverLog(message, `${TAG}: exports.changeSubscription`, req.body, {}, 'error')
     })
 }
+
 exports.showMoreTopics = function (req, res) {
   res.status(200).json({
     status: 'success',
@@ -75,9 +76,8 @@ exports.showMoreTopics = function (req, res) {
     _sendMessage.bind(null, data)
   ], function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
-    } else {
-      logger.serverLog(TAG, 'Subscrption successfully')
+      const message = err || 'Failed to subscribe or unsubscribe'
+      logger.serverLog(message, `${TAG}: exports.showMoreTopics`, req.body, {}, 'error')
     }
   })
 }
@@ -198,14 +198,15 @@ const _prepareMoreTopics = (data, next) => {
   data.messageData = messageData
   next()
 }
+
 const _sendMessage = (data, next) => {
   facebookApiCaller('v3.3', `me/messages?access_token=${data.page.accessToken}`, 'post', data.messageData)
     .then(response => {
       if (response.body.error) {
-        logger.serverLog(TAG, `Failed to send more topics ${JSON.stringify(response.body.error)}`, 'error')
+        const message = response.body.error || 'Failed to send more topics'
+        logger.serverLog(message, `${TAG}: _sendMessage`, {data}, {}, 'error')
         next(response.body.error)
       } else {
-        logger.serverLog(TAG, `More Topics Sent successfully!`)
         next()
       }
     })
@@ -213,6 +214,7 @@ const _sendMessage = (data, next) => {
       next(err)
     })
 }
+
 const _sendSubscriptionMessage = (data, next) => {
   let buttons = []
   if (data.resp.rssFeedId && data.resp.rssFeedId !== '') {
@@ -245,10 +247,10 @@ const _sendSubscriptionMessage = (data, next) => {
   facebookApiCaller('v3.3', `me/messages?access_token=${data.page.accessToken}`, 'post', messageData)
     .then(response => {
       if (response.body.error) {
-        logger.serverLog(TAG, `Failed to send subcription message ${JSON.stringify(response.body.error)}`, 'error')
+        const message = response.body.error || 'Failed to send subcription message'
+        logger.serverLog(message, `${TAG}: _sendSubscriptionMessage`, data, {}, 'error')
         next(response.body.error)
       } else {
-        logger.serverLog(TAG, `Subscription Message Sent successfully!`)
         next()
       }
     })
@@ -281,9 +283,8 @@ exports.sendTopicFeed = function (req, res) {
     _sendMessage.bind(null, data)
   ], function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to subscribe or unsubscribe ${err}`, 'error')
-    } else {
-      logger.serverLog(TAG, 'Topic feed sent successfully')
+      const message = err || 'Failed to subscribe or unsubscribe'
+      logger.serverLog(message, `${TAG}: exports.sendTopicFeed`, req.body, {}, 'error')
     }
   })
 }
@@ -362,7 +363,6 @@ const _prepareQuickReplies = (data, next) => {
 const _prepareMessageData = (data, next) => {
   getMetaData(data.feed ? data.feed : data.rssFeed.stories, data.rssFeed, data.page)
     .then(gallery => {
-      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
         'recipient': {'id': data.sender},
         'message': JSON.stringify({
@@ -411,7 +411,8 @@ function getMetaData (feed, rssFeed, page) {
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Error from open graph ${err}`)
+            const message = err || 'Error from open graph'
+            logger.serverLog(message, `${TAG}: getMetaData`, {feed, rssFeed, page}, {}, 'error')
           })
       } else {
         callback()

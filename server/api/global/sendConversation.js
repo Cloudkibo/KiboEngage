@@ -25,7 +25,6 @@ const sendUsingBatchAPI = (module, payload, subscribers, page, user, result, sav
         let batch = _prepareBatchData(module, payload, subscribers, page, user, recordObj)
         _callBatchAPI(JSON.stringify(batch), page.accessToken)
           .then(response => {
-            logger.serverLog(TAG, `batch_api response ${JSON.stringify(response)}`)
             result = _prepareReport(module, payload.length, response, subscribers, result, saveMsgRecord, recordObj)
             if (subscribers.criteria) {
               subscribers.criteria['_id'] = {$gt: subscribers[subscribers.length - 1]._id}
@@ -33,14 +32,14 @@ const sendUsingBatchAPI = (module, payload, subscribers, page, user, result, sav
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to send using batch api ${err}`, 'error')
+            const message = err || 'Failed to send using batch api'
+            logger.serverLog(message, `${TAG}: sendUsingBatchAPI`, payload, {}, 'error')
           })
-      } else {
-        logger.serverLog(TAG, result)
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscribers ${err}`, 'error')
+      const message = err || 'Failed to fetch subscribers'
+      logger.serverLog(message, `${TAG}: sendUsingBatchAPI`, payload, {}, 'error')
     })
 }
 
@@ -48,7 +47,8 @@ const _callBatchAPI = (batch, accessToken) => {
   return new Promise((resolve, reject) => {
     const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
       if (err) {
-        logger.serverLog(TAG, `Batch api error ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Batch api error'
+        logger.serverLog(message, `${TAG}: _callBatchAPI`, batch, {}, 'error')
       } else {
         body = JSON.parse(body)
         resolve(body)
@@ -127,7 +127,8 @@ const saveAutomationMessages = (user, subscriber, page, message) => {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'error in saving automation messages'
+      logger.serverLog(message, `${TAG}: saveAutomationMessages`, user, {}, 'error')
     })
 }
 
@@ -170,10 +171,10 @@ const _updateSubsForUserInput = (subscribers, waitingForUserInput) => {
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
-      logger.serverLog(TAG, `Succesfully updated subscriber`)
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
+      const message = err || 'Failed to update subscriber'
+      logger.serverLog(message, `${TAG}: _updateSubsForUserInput`, subscribers, {}, 'error')
     })
 }
 
@@ -181,10 +182,10 @@ const _removeSubsWaitingForUserInput = (subscribers, waitingForUserInput) => {
   let subscriberIds = subscribers.map(subscriber => subscriber._id)
   callApi(`subscribers/update`, 'put', {query: {_id: subscriberIds, waitingForUserInput: { '$ne': null }}, newPayload: {waitingForUserInput: waitingForUserInput}, options: {multi: true}})
     .then(updated => {
-      logger.serverLog(TAG, `Succesfully updated subscriber _removeSubsWaitingForUserInput`)
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update subscriber ${JSON.stringify(err)}`)
+      const message = err || 'Failed to update subscriber'
+      logger.serverLog(message, `${TAG}: _removeSubsWaitingForUserInput`, subscribers, {}, 'error')
     })
 }
 

@@ -32,7 +32,8 @@ function forTweetPost (postId, verb) {
     .then(updated => {
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update likes count ${err}`, 'error')
+      const message = err || 'Failed to update likes count'
+      logger.serverLog(message, `${TAG}: forTweetPost`, {postId, verb}, {}, 'error')
     })
 }
 function forCommentCapturePost (postId, verb, body) {
@@ -75,29 +76,34 @@ function newComment (postId, verb, body) {
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch post1 ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to fetch post1'
+                  logger.serverLog(message, `${TAG}: newComment`, {postId, verb, body}, {}, 'error')
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch page'
+            logger.serverLog(message, `${TAG}: newComment`, {postId, verb, body}, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch post ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch post'
+      logger.serverLog(message, `${TAG}: newComment`, {postId, verb, body}, {}, 'error')
     })
 }
+
 function updatePositiveMatch (postId) {
   let newPayload = { $inc: { positiveMatchCount: 1 } }
   utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
     .then(updated => {
-      logger.serverLog(TAG, `Match count updated ${JSON.stringify(updated)}`, 'updated')
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update Positive Match Count ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to update Positive Match Count'
+      logger.serverLog(message, `${TAG}: updatePositiveMatch`, {postId}, {}, 'error')
     })
 }
+
 function updateCommentsCount (body, verb, postId, commentCountForPost) {
   let page = body.entry[0].changes[0].value.post_id.split('_')
   if (page[0] !== body.entry[0].changes[0].value.from.id) {
@@ -106,7 +112,8 @@ function updateCommentsCount (body, verb, postId, commentCountForPost) {
       .then(updated => {
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to update facebook post'
+        logger.serverLog(message, `${TAG}: updateCommentsCount`, {postId, verb, body, commentCountForPost}, {}, 'error')
       })
   }
 }
@@ -114,10 +121,10 @@ function updateDeletedCount (postId, commentCountForPost) {
   let newPayload = { $inc: { deletedComments: commentCountForPost } }
   utility.callApi(`comment_capture/update`, 'put', {query: { _id: postId }, newPayload: newPayload, options: {}})
     .then(updated => {
-      logger.serverLog(TAG, `Deleted count updated ${JSON.stringify(updated)}`, 'updated')
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update Deleted Count ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to update Deleted Count'
+      logger.serverLog(message, `${TAG}: updateDeletedCount`, {postId, commentCountForPost}, {}, 'error')
     })
 }
 
@@ -143,7 +150,8 @@ function send1stReplyToFacebook (post, body) {
     `https://graph.facebook.com/v5.0/me/messages?access_token=${post.pageId.accessToken}`,
     messageData, (err, resp) => {
       if (err) {
-        logger.serverLog(TAG, err, 'error')
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: send1stReplyToFacebook`, {post, body}, {}, 'error')
       } else if (resp.body.error) {
         sendOpAlert(resp.body.error, 'comment controller in kiboengage', post.pageId._id, post.pageId.companyId, post.userId._id)
       }
@@ -163,7 +171,8 @@ function createSubscriber (post, body) {
           .then(updated => {
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to update facebook post'
+            logger.serverLog(message, `${TAG}: createSubscriber`, {post, body}, {}, 'error')
           })
         let payload = {
           companyId: post.companyId._id,
@@ -178,7 +187,8 @@ function createSubscriber (post, body) {
           .then(subscriberCreated => {
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to create subscriber ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to create subscriber'
+            logger.serverLog(message, `${TAG}: createSubscriber`, {post, body}, {}, 'error')
           })
       } else {
         if (subscriber.awaitingCommentReply && subscriber.awaitingCommentReply.postId && subscriber.awaitingCommentReply.postId === post._id) {
@@ -193,14 +203,16 @@ function createSubscriber (post, body) {
               .then(updated => {
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to update subscriber'
+                logger.serverLog(message, `${TAG}: createSubscriber`, {post, body}, {}, 'error')
               })
           }
         }
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+      const message = err || 'Failed to fetch subscriber'
+      logger.serverLog(message, `${TAG}: createSubscriber`, {post, body}, {}, 'error')
     })
 }
 
@@ -226,15 +238,18 @@ function saveComment (post, body, send) {
                 .then(commentSaved => {
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to save comment ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to save comment'
+                  logger.serverLog(message, `${TAG}: saveComment`, {post, body, send}, {}, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to find susbcriber of comment ${JSON.stringify(err)}`, 'error')
+              const message = err || 'Failed to find susbcriber of comment'
+              logger.serverLog(message, `${TAG}: saveComment`, {post, body, send}, {}, 'error')
             })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch parent comment ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch parent comment'
+          logger.serverLog(message, `${TAG}: saveComment`, {post, body, send}, {}, 'error')
         })
     })
 }
@@ -255,18 +270,21 @@ function editComment (body) {
                     .then(updated => {
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `Failed to update comment ${JSON.stringify(err)}`, 'error')
+                      const message = err || 'Failed to update comment'
+                      logger.serverLog(message, `${TAG}: editComment`, body, {}, 'error')
                     })
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch page'
+            logger.serverLog(message, `${TAG}: editComment`, body, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch comment ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch comment'
+      logger.serverLog(message, `${TAG}: editComment`, body, {}, 'error')
     })
 }
 
@@ -281,7 +299,8 @@ function deleteComment (body) {
           .then(deleted => {
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch page'
+            logger.serverLog(message, `${TAG}: deleteComment`, body, {}, 'error')
           })
         if (comment.childCommentCount > 0) {
           utility.callApi(`comment_capture/comments/delete`, 'post', {parentId: comment._id})
@@ -290,7 +309,8 @@ function deleteComment (body) {
               updateDeletedCount(comment.postId, commentCountForPost)
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+              const message = err || 'Failed to fetch page'
+              logger.serverLog(message, `${TAG}: deleteComment`, body, {}, 'error')
             })
         } else {
           updateDeletedCount(comment.postId, commentCountForPost)
@@ -300,13 +320,15 @@ function deleteComment (body) {
             .then(updated => {
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to update facebook post ${JSON.stringify(err)}`, 'error')
+              const message = err || 'Failed to update facebook post'
+              logger.serverLog(message, `${TAG}: deleteComment`, body, {}, 'error')
             })
         }
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch comment ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch comment'
+      logger.serverLog(message, `${TAG}: deleteComment`, body, {}, 'error')
     })
 }
 
@@ -366,11 +388,13 @@ exports.sendSecondReplyToComment = function (req, res) {
   broadcastUtility.getBatchData(post.secondReply.payload, subscriber.senderId, req.body.page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
   updateSubscriberAwaitingReply(subscriber._id)
 }
+
 function updateSubscriberAwaitingReply (subscriberId) {
   utility.callApi(`subscribers/update`, 'put', {query: {_id: subscriberId}, newPayload: {awaitingCommentReply: {sendSecondMessage: false}}, options: {}})
     .then(updated => {
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to update subscriber'
+      logger.serverLog(message, `${TAG}: updateSubscriberAwaitingReply`, {subscriberId}, {}, 'error')
     })
 }

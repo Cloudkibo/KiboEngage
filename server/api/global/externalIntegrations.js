@@ -55,7 +55,8 @@ exports.getLookUpValue = (lookUpValue, subscriber) => {
           }
         })
         .catch((err) => {
-          logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch custom field subscriber'
+          logger.serverLog(message, `${TAG}: exports.getLookUpValue`, lookUpValue, {}, 'error')
           resolve('')
         })
     } else {
@@ -107,7 +108,8 @@ exports.getDataForSubscriberValues = (data, callback) => {
         }
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch custom field subscriber'
+        logger.serverLog(message, `${TAG}: exports.getDataForSubscriberValues`, data, {}, 'error')
         callback(err)
       })
   } else {

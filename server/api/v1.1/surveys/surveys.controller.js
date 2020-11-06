@@ -360,10 +360,10 @@ const _savePageSurvey = (data) => {
   SurveyPageDataLayer.createForSurveyPage(data)
     .then(savedpagebroadcast => {
       require('../../global/messageStatistics').record('surveys')
-      logger.serverLog(TAG, 'page survey object saved in db')
     })
     .catch(error => {
-      logger.serverLog(`Failed to create page_survey ${JSON.stringify(error)}`)
+      const message = error || 'Failed to create page_survey'
+      logger.serverLog(message, `${TAG}: _savePageSurvey`, data, {}, 'error')
     })
 }
 
@@ -438,7 +438,8 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                             sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
                           })
                           .catch(error => {
-                            logger.serverLog(TAG, error)
+                            const message = error || 'Failed to fetch lists'
+                            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
                             sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
                           })
                       } else {
@@ -489,7 +490,8 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                   }
                                 })
                                 .catch(err => {
-                                  logger.serverLog(TAG, err)
+                                  const message = err || 'Failed to fetch tag subscribers or survey responses'
+                                  logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
                                   sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers or survey responses')
                                 })
                             } else {
@@ -498,13 +500,15 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                             }
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, err)
+                            const message = err || 'Failed to fetch tags'
+                            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
                             sendErrorResponse(res, 500, `Failed to fetch tags`)
                           })
                       }
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, err, 'error')
+                      const message = err || 'Failed to fetch survey'
+                      logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
                       sendErrorResponse(res, 500, '', 'Failed to fetch survey')
                     })
                 } else {
@@ -512,12 +516,14 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                 }
               })
               .catch(err => {
-                logger.serverLog(TAG, err, 'error')
+                const message = err || 'Failed to fetch survey questions'
+                logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
                 sendErrorResponse(res, 500, '', 'Failed to fetch survey questions')
               })
           })
           .catch(err => {
-            logger.serverLog(TAG, err, 'error')
+            const message = err || 'Failed to fetch user'
+            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
             sendErrorResponse(res, 500, '', 'Failed to fetch user')
           })
       } else {
@@ -525,7 +531,8 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', 'Failed to fetch page')
     })
 }

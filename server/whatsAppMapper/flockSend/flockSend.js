@@ -25,7 +25,8 @@ exports.sendBroadcastMessages = (body) => {
                   .then(response => {
                   })
                   .catch(error => {
-                    logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
+                    const message = error || 'Failed to save broadcast'
+                    logger.serverLog(message, `${TAG}: exports.sendBroadcastMessages`, body, {}, 'error')
                   })
               }
               if (key === body.payload.length - 1 && parsed.data.length > 0) {
@@ -63,7 +64,8 @@ function saveWhatsAppBroadcastMessages (data, body) {
     .then(companyUser => {
     })
     .catch(error => {
-      logger.serverLog(TAG, `Failed to save broadcast messages ${error}`, 'error')
+      const message = error || 'Failed to save broadcast messages'
+      logger.serverLog(message, `${TAG}: saveWhatsAppBroadcastMessages`, body, {}, 'error')
     })
 }
 exports.getTemplates = (body) => {

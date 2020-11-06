@@ -26,14 +26,17 @@ exports.index = function (req, res) {
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch landingPage ${JSON.stringify(err)}`, 'error')
+              const message = err || 'Failed to fetch landingPage'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
             })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch subscriber'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }
