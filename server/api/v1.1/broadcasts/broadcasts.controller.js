@@ -681,11 +681,12 @@ exports.urlMetaData = (req, res) => {
   if (url) {
     let options = {url}
     ogs(options, (error, results) => {
+      console.log('url metadata error', error)
       console.log('url metadata results', results)
       if (!error) {
         return res.status(200).json({
           status: 'success',
-          payload: results.data
+          payload: results
         })
       } else {
         return res.status(500).json({

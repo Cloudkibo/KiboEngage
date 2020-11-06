@@ -89,6 +89,7 @@ function savepoll (req, resp, subscriber) {
                   if (error) {
                     const message = err || 'Internal Server Error'
                     logger.serverLog(message, `${TAG}: savepoll`, req.body, {}, 'error')
+                  }
                 })
             }
           } else {

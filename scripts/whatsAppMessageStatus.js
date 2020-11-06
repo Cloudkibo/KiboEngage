@@ -4,7 +4,6 @@ const TAG = 'scripts/whatsAppMessageStatus.js'
 const async = require('async')
 
 exports.runScript = function () {
-
   updateAndDeleteMessages(0, 25, 'seen')
   updateAndDeleteMessages(0, 25, 'delivered')
 }
@@ -83,7 +82,7 @@ const _updateCount = (messages, status) => {
       .then(results => {
         resolve('success')
       })
-  }) 
+  })
 }
 function deleteFromQueue (messageId, status, next) {
   utility.callApi(
@@ -95,13 +94,9 @@ function deleteFromQueue (messageId, status, next) {
       next(null, deleted)
     })
     .catch(err => {
-<<<<<<< HEAD
       next(err)
-      logger.serverLog(TAG, `Failed to delete whatsapp message from tweets queue ${err}`, 'error')
-=======
-      const message = err || 'Failed to delete tweet from tweets queue'
-      logger.serverLog(message, `${TAG}: deleteFromQueue`, queue, {}, 'error')
->>>>>>> 0d6d4101 (ssend logger errors to sentry)
+      const message = err || 'Failed to delete whatsapp message from tweets queue'
+      logger.serverLog(message, `${TAG}: deleteFromQueue`, {messageId, status}, {}, 'error')
     })
 }
 
