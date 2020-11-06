@@ -32,21 +32,23 @@ exports.runRSSScript = () => {
                   _updateScheduledTime.bind(null, autoposting)
                 ], function (err) {
                   if (err) {
-                    logger.serverLog(TAG, `Failed to send rss updates. ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to update subscriber in RSS Feed'
+                    logger.serverLog(message, `${TAG}: runRSSScript`, autopostings, {}, 'error')
                   } else {
-                    logger.serverLog(TAG, `RSS updates sent Successfullyf for url ${autoposting.subscriptionUrl}`)
                   }
                 })
               })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(err)}`, 'error')
+              const message = err || 'Failed to fetch pages'
+              logger.serverLog(message, `${TAG}: runRSSScript`, autopostings, {}, 'error')
             })
         }
       })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch autoposting objects ${err}`, 'error')
+      const message = err || 'Failed to fetch autoposting objects'
+      logger.serverLog(message, `${TAG}: runRSSScript`, {}, {}, 'error')
     })
 }
 
@@ -126,11 +128,11 @@ const _savePostObject = (data, next) => {
   }
   callApi(`autoposting_fb_post`, 'post', newPost, 'kiboengage')
     .then(created => {
-      logger.serverLog(TAG, 'Fb post object created successfully!', 'debug')
       next()
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to create post object ${err}`, 'error')
+      const message = err || 'Failed to fetch autoposting objects'
+      logger.serverLog(message, `${TAG}: _savePostObject`, data, {}, 'error')
       next(err)
     })
 }
@@ -156,16 +158,17 @@ const _postRSSUpdatesOnFacebook = (data, next) => {
   facebookApiCaller('v3.3', `${data.page.pageId}/feed?access_token=${data.page.accessToken}`, 'post', data.messageData)
     .then(response => {
       if (response.body.error) {
-        logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+        const message = response.body.error
+        logger.serverLog(message, `${TAG}: _postRSSUpdatesOnFacebook`, data, {}, 'error')
         next(response.body.error)
       } else {
-        logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
         data.postId = response.body.post_id ? response.body.post_id : response.body.id
         next()
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+      const message = err || 'Failed to post on facebook'
+      logger.serverLog(message, `${TAG}: _postRSSUpdatesOnFacebook`, data, {}, 'error')
       next(err)
     })
 }
@@ -245,11 +248,11 @@ const _sendBroadcast = (data, next) => {
   }
   AutoPostingMessage.createAutopostingMessage(newMsg)
     .then(savedMsg => {
-      logger.serverLog(TAG, `rss broadcast successfully sent ${savedMsg}`, 'debug')
       next()
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to create autoposting message ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to create autoposting message'
+      logger.serverLog(message, `${TAG}: _sendBroadcast`, data, {}, 'error')
       next(err)
     })
 }
@@ -294,7 +297,6 @@ const _parseFeed = (data, next) => {
 const _prepareMessageData = (data, next) => {
   getMetaData(data.feed)
     .then(gallery => {
-      logger.serverLog(TAG, `gallery.length ${gallery.length}`)
       let messageData = {
         attachment: {
           type: 'template',
@@ -314,13 +316,13 @@ const _prepareMessageData = (data, next) => {
 
 function getMetaData (feed) {
   return new Promise((resolve, reject) => {
-    logger.serverLog(TAG, `feed.length ${feed.length}`)
     let gallery = []
     let length = feed.length < 10 ? feed.length : 10
     for (let i = 0; i < length; i++) {
       og(feed[i].link, (err, meta) => {
         if (err) {
-          logger.serverLog(TAG, 'error in fetching metdata', 'error')
+          const message = err || 'error in fetching metadata'
+          logger.serverLog(message, `${TAG}: getMetaData`, feed, {}, 'error')
         }
         if (meta && meta.title && meta.image) {
           gallery.push({

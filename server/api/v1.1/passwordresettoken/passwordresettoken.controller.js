@@ -7,12 +7,11 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 exports.change = function (req, res) {
   utility.callApi('reset_password/change', 'post', {old_password: req.body.old_password, new_password: req.body.new_password}, 'accounts', req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
-      logger.serverLog(TAG, result, 'debug')
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.change`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', err.error.description)
     })
   /* let userId = req.user._id

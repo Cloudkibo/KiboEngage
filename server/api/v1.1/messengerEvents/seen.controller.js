@@ -15,7 +15,6 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  logger.serverLog(TAG, `in seen ${JSON.stringify(req.body)}`)
   let data = req.body.entry[0].messaging[0]
   async.parallelLimit([
     _updateBroadcastSeen.bind(null, data),
@@ -25,9 +24,8 @@ exports.index = function (req, res) {
     _updateSequenceSeen.bind(null, data)
   ], 10, function (err) {
     if (err) {
-      logger.serverLog(TAG, `ERROR at seen controller ${err}`, 'error')
-    } else {
-      logger.serverLog(TAG, 'seen controller updated the seen count successfully!')
+      const message = err || 'ERROR at seen controller'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     }
   })
 }

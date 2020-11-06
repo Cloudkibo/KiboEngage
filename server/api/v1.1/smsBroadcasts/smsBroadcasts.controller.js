@@ -56,11 +56,11 @@ exports.sendBroadcast = function (req, res) {
                         statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${broadcast._id}`
                       })
                       .then(response => {
-                        logger.serverLog(TAG, `response from twilio ${JSON.stringify(response)}`)
                         resolve(response)
                       })
                       .catch(error => {
-                        logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+                        const message = error || 'error at sending message'
+                        logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {}, 'error')
                         reject(error)
                       })
                   }))
@@ -96,22 +96,20 @@ exports.getCount = function (req, res) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch  ${err}`)
+      const message = err || 'Failed to fetch count'
+      logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch count`)
     })
 }
 exports.getTwilioNumbers = function (req, res) {
-  logger.serverLog(TAG, `called function getTwilioNumbers`)
   let numbers = []
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }) // fetch company user
     .then(companyuser => {
-      logger.serverLog(TAG, `called function after fetching companyUser ${companyuser}`)
       let accountSid = companyuser.companyId.twilio.accountSID
       let authToken = companyuser.companyId.twilio.authToken
       let client = require('twilio')(accountSid, authToken)
       client.incomingPhoneNumbers
         .list().then((incomingPhoneNumbers) => {
-          logger.serverLog(TAG, `incomingPhoneNumbers ${incomingPhoneNumbers}`)
           for (let i = 0; i < incomingPhoneNumbers.length; i++) {
             numbers.push(incomingPhoneNumbers[i].phoneNumber)
             if (i === incomingPhoneNumbers.length - 1) {
@@ -121,7 +119,8 @@ exports.getTwilioNumbers = function (req, res) {
         })
     })
     .catch(error => {
-      logger.serverLog(TAG, `error at  getTwilioNumbers ${error}`, 'error')
+      const message = error || 'error at  getTwilioNumbers'
+      logger.serverLog(message, `${TAG}:exports.getTwilioNumbers`, req.body, {}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

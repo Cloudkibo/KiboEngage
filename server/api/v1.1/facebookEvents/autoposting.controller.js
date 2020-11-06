@@ -20,7 +20,6 @@ exports.autoposting = function (req, res) {
         utility.callApi(`pages/query`, 'post', pagesFindCriteria)
           .then(pages => {
             pages.forEach(page => {
-              logger.serverLog(TAG, `page is in sendFB ${page}`)
               let subscribersData = [
                 {$match: {pageId: page._id, companyId: page.companyId, completeInfo: true}},
                 {$group: {_id: null, count: {$sum: 1}}}
@@ -64,48 +63,52 @@ exports.autoposting = function (req, res) {
                                             subsFindCriteria['_id'] = {$in: subscriberIds}
                                             _countUpdate(subsFindCriteria, req.body.entry[0].changes[0].value.post_id)
                                             sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
-                                            logger.serverLog(TAG, 'Conversation sent successfully!')
-                                          } else {
-                                            logger.serverLog(TAG, 'No subscribers match the given criteria', 'error')
                                           }
                                         })
                                         .catch(err => {
-                                          logger.serverLog(TAG, err)
+                                          const message = err || 'Internal Server Error'
+                                          logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
                                         })
                                     })
                                     .catch(err => {
-                                      logger.serverLog(TAG, err)
+                                      const message = err || 'Internal Server Error'
+                                      logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
                                     })
                                 } else {
                                   _countUpdate(subsFindCriteria, req.body.entry[0].changes[0].value.post_id)
                                   sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
-                                  logger.serverLog(TAG, 'Conversation sent successfully!')
                                 }
                               }).catch(err => {
-                                logger.serverLog(TAG, err)
+                                const message = err || 'Internal Server Error'
+                                logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
                               })
                           })
                           .catch(err => {
-                            logger.serverLog(`Failed to prepare data`, err)
+                            const message = err || 'Failed to prepare data'
+                            logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to create autoposting message ${err}`, 'error')
+                        const message = err || 'Failed to create autoposting message'
+                        logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch subscriber count ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to fetch subscriber count'
+                  logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
                 })
             })
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch pages'
+            logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
           })
       })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch autopostings ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch autopostings'
+      logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
     })
 }
 
@@ -118,11 +121,12 @@ const _countUpdate = (subsFindCriteria, messageId) => {
       console.log('response.count', response[0].count)
       AutopostingMessagesDataLayer.findOneAutopostingMessageAndUpdate({message_id: messageId}, {sent: response[0].count}, {})
         .then(Autopostingresponse => {
-          logger.serverLog(TAG, 'updated successfully Subscriber Count')
         }).catch(err => {
-          logger.serverLog(TAG, err)
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _countUpdate`, {subsFindCriteria, messageId}, {}, 'error')
         })
     }).catch(err => {
-      logger.serverLog(TAG, err)
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _countUpdate`, {subsFindCriteria, messageId}, {}, 'error')
     })
 }

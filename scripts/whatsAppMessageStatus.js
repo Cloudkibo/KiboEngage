@@ -33,7 +33,8 @@ const updateAndDeleteMessages = function (skipRecords, LimitRecords, status) {
       } // else we don't need to do anything
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch queues ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch queues'
+      logger.serverLog(message, `${TAG}: exports.runScript`, {}, {}, 'error')
     })
 }
 
@@ -94,8 +95,13 @@ function deleteFromQueue (messageId, status, next) {
       next(null, deleted)
     })
     .catch(err => {
+<<<<<<< HEAD
       next(err)
       logger.serverLog(TAG, `Failed to delete whatsapp message from tweets queue ${err}`, 'error')
+=======
+      const message = err || 'Failed to delete tweet from tweets queue'
+      logger.serverLog(message, `${TAG}: deleteFromQueue`, queue, {}, 'error')
+>>>>>>> 0d6d4101 (ssend logger errors to sentry)
     })
 }
 

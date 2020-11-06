@@ -57,9 +57,6 @@ exports.queryForSubscribersGraph = function (body, companyUser, isSubscribed, pa
     },
     {$sort: { '_id.year': -1, '_id.month': -1, '_id.day': -1 }}
   ]
-  // logger.serverLog(TAG,
-  //   `final query ${JSON.stringify(
-  //     query)}`, 'debug')
   return query
 }
 exports.getCriteriasForAutopostingByType = function (req) {

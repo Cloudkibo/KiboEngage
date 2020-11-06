@@ -34,7 +34,7 @@ exports.getAutomatedOptions = function (req, res) {
             sendSuccessResponse(res, 200, payload)
           } else {
             sendSuccessResponse(res, 200, payload)
-          }      
+          }
         }).catch(error => {
           sendErrorResponse(res, 500, `Failed to fetching user details ${JSON.stringify(error)}`)
         })
@@ -74,13 +74,9 @@ exports.updateAdvancedSettings = function (req, res) {
 exports.invite = function (req, res) {
   utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, 'accounts', req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
-      logger.serverLog(TAG, result, 'debug')
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
-      logger.serverLog(TAG, err, 'debug')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -88,8 +84,6 @@ exports.invite = function (req, res) {
 exports.updateRole = function (req, res) {
   utility.callApi('companyprofile/updateRole', 'post', {role: req.body.role, domain_email: req.body.domain_email}, 'accounts', req.headers.authorization)
     .then((result) => {
-      logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
-      logger.serverLog(TAG, result, 'debug')
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
@@ -175,9 +169,10 @@ const _updateUserPlatform = (req, res) => {
         })
         .catch(err => {
           sendErrorResponse(res, 500, '', err)
-        })               
+        })
     }).catch(err => {
-      logger.serverLog(TAG, JSON.stringify(err), 'error')
+      const message = err
+      logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', err)
     })
 }
@@ -224,9 +219,10 @@ const _updateUser = (data, next) => {
         })
         .catch(err => {
           next(err)
-        })               
+        })
     }).catch(err => {
-      logger.serverLog(TAG, JSON.stringify(err), 'error')
+      const message = err
+      logger.serverLog(message, `${TAG}: _updateUser`, data, {}, 'error')
     })
 }
 const _setWebhook = (data, next) => {
@@ -360,15 +356,16 @@ exports.fetchValidCallerIds = function (req, res) {
               if (phone.length === 0) {
                 utility.callApi(`contacts`, 'post', contact)
                   .then(saved => {
-                    logger.serverLog(TAG, `Contact saved successfully ${JSON.stringify(saved)}`, 'success')
                   })
                   .catch(error => {
-                    logger.serverLog(TAG, `Failed to save contact ${JSON.stringify(error)}`, 'error')
+                    const message = error || 'Failed to save contact'
+                    logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
                   })
               }
             })
             .catch(error => {
-              logger.serverLog(TAG, `Failed to fetch contact ${JSON.stringify(error)}`, 'error')
+              const message = error || 'Failed to fetch contact'
+              logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
             })
           if (index === (callerIds.length - 1)) {
             sendSuccessResponse(res, 200, 'Contacts updated successfully')
@@ -419,9 +416,10 @@ exports.deleteWhatsAppInfo = function (req, res) {
                     })
                     .catch(err => {
                       callback(err)
-                    })               
+                    })
                 }).catch(err => {
-                  logger.serverLog(TAG, JSON.stringify(err), 'error')
+                  const message = err
+                  logger.serverLog(message, `${TAG}: deleteWhatsAppInfo`, req.body, {}, 'error')
                 })
             },
             function (callback) {
@@ -491,7 +489,8 @@ exports.deleteWhatsAppInfo = function (req, res) {
             }
           ], 10, function (err, results) {
             if (err) {
-              logger.serverLog(TAG, err, 'error')
+              const message = err || 'Failed to delete whatsapp info'
+              logger.serverLog(message, `${TAG}: deleteWhatsAppInfo`, req.body, {}, 'error')
               sendErrorResponse(res, 500, `Failed to delete whatsapp info ${err}`)
             } else {
               if (req.body.type === 'Disconnect' && req.body.connected && company.whatsApp.provider === 'flockSend') {
@@ -556,7 +555,8 @@ exports.getAdvancedSettings = function (req, res) {
       sendSuccessResponse(res, 200, {saveAutomationMessages: company.saveAutomationMessages})
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Failed to fetch advanced settings'
+      logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
       sendErrorResponse(res, 500, null, 'Failed to fetch advanced settings')
     })
 }
@@ -567,7 +567,8 @@ exports.updateAdvancedSettings = function (req, res) {
       sendSuccessResponse(res, 200, null, 'Updated successfully!')
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Failed to update advanced settings'
+      logger.serverLog(message, `${TAG}: updateAdvancedSettings`, req.body, {}, 'error')
       sendErrorResponse(res, 500, null, 'Failed to update advanced settings')
     })
 }
@@ -575,19 +576,18 @@ exports.updateAdvancedSettings = function (req, res) {
 exports.disableMember = function (req, res) {
   utility.callApi('user/authenticatePassword', 'post', {email: req.user.email, password: req.body.password})
     .then(authenticated => {
-      logger.serverLog(TAG, `authenticated ${JSON.stringify('authenticated')}`)
       utility.callApi('companyprofile/disableMember', 'post', {memberId: req.body.memberId}, 'accounts', req.headers.authorization)
         .then(result => {
           sendSuccessResponse(res, 200, result, 'Member has been deactivated')
         })
         .catch(err => {
-          logger.serverLog(TAG, err, 'error')
+          const message = err || 'Failed to deactivate member'
+          logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
           sendErrorResponse(res, 500, null, 'Failed to deactivate member')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
-      sendErrorResponse(res, 500, 'Incorrect password', `Incorrect password`)
+      sendErrorResponse(res, 500, err, `Incorrect password`)
     })
 }
 
@@ -597,8 +597,7 @@ exports.enableMember = function (req, res) {
       sendSuccessResponse(res, 200, result, 'Member has been activated')
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
-      sendErrorResponse(res, 500, 'Incorrect password', `Incorrect password`)
+      sendErrorResponse(res, 500, err, `Incorrect password`)
     })
 }
 

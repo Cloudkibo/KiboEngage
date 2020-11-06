@@ -21,12 +21,14 @@ exports.messageStatus = function (req, res) {
             .then(queue => {
             })
             .catch((err) => {
-              logger.serverLog(`Failed to create queue ${err}`, 'error')
+              const message = err || 'Failed to create queue'
+              logger.serverLog(message, `${TAG}: exports.messageStatus`, req.body, {}, 'error')
             })
         }
       })
       .catch((err) => {
-        logger.serverLog(TAG, `Failed to fetch whatsAppBroadcastMessages data ${err}`, 'error')
+        const message = err || 'Failed to fetch whatsAppBroadcastMessages data'
+        logger.serverLog(message, `${TAG}: exports.messageStatus`, req.body, {}, 'error')
       })
   }
 }
@@ -40,7 +42,8 @@ function updateCount (message, body) {
     .then(message => {
     })
     .catch((err) => {
-      logger.serverLog(`Failed to update message ${err}`, 'error')
+      const message = err || 'Failed to update message'
+      logger.serverLog(message, `${TAG}: updateCount`, {message, body}, {}, 'error')
     })
   let broadcastCountUpdate = {
     purpose: 'updateOne',
@@ -52,7 +55,8 @@ function updateCount (message, body) {
     .then(broadcast => {
     })
     .catch((err) => {
-      logger.serverLog(`Failed to update broadcast ${err}`, 'error')
+      const message = err || 'Failed to update broadcast'
+      logger.serverLog(message, `${TAG}: updateCount`, {message, body}, {}, 'error')
     })
 }
 

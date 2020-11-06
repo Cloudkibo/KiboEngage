@@ -1,7 +1,6 @@
 const { facebookApiCaller } = require('./facebookApiCaller')
 const logger = require('../../components/logger')
 const TAG = 'global/subscriptionMessaging.js'
-const { sendOpAlert } = require('./operationalAlert')
 
 exports.isApprovedForSMP = (page) => {
   return new Promise((resolve, reject) => {
@@ -13,8 +12,8 @@ exports.isApprovedForSMP = (page) => {
       )
         .then(response => {
           if (response.body.error) {
-            logger.serverLog(TAG, `Failed to check subscription_messaging permission status from Facebook ${JSON.stringify(response.body.error)}`, 'error')
-            sendOpAlert(response.body.error, `Failed to check subscription_messaging permission status from Facebook ${JSON.stringify(response.body.error)}`, page._id, page.userId, page.companyId)
+            const message = response.body.error || 'Failed to check subscription_messaging permission status from Facebook'
+            logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {page}, {}, 'error')
             resolve(false)
           } else {
             let data = response.body.data
@@ -31,8 +30,8 @@ exports.isApprovedForSMP = (page) => {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to check subscription_messaging permission status ${err}`, 'error')
-          sendOpAlert(err, `Failed to check subscription_messaging permission status ${JSON.stringify(err)}`, page._id, page.userId, page.companyId)
+          const message = err || 'Failed to check subscription_messaging permission status'
+          logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {page}, {}, 'error')
           resolve(false)
         })
     } else {

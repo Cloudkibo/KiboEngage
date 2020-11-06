@@ -7,7 +7,6 @@ const { refreshAuthToken, saveNewTokens, callHubspotApi } = require('./../hubspo
 const { getDataForSubscriberValues } = require('./../../global/externalIntegrations')
 
 exports.index = function (req, res) {
-  console.log('called hubspot controller', req.body)
   res.status(200).json({
     status: 'success',
     description: `received the payload`
@@ -18,7 +17,6 @@ exports.index = function (req, res) {
   } else {
     resp = JSON.parse(req.body.entry[0].messaging[0].postback.payload)
   }
-  logger.serverLog(TAG, `Success in sending data ${JSON.stringify(resp)}`)
   const sender = req.body.entry[0].messaging[0].sender.id
   const pageId = req.body.entry[0].messaging[0].recipient.id
   callApi(`pages/query`, 'post', { pageId: pageId, connected: true })
@@ -47,17 +45,20 @@ exports.index = function (req, res) {
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch integrations ${err}`, 'error')
+                  const message = err || 'Failed to fetch integrations'
+                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                 })
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+            const message = err || 'Failed to fetch subscriber'
+            logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }
 
@@ -72,7 +73,8 @@ function submitForm (resp, subscriber, page, integration) {
     getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch data to send'
+      logger.serverLog(message, `${TAG}: submitForm`, {resp, subscriber, page}, {}, 'error')
     } else {
       let data = resp.mapping.map(item => {
         return { name: item.hubspotColumn, value: item.value }
@@ -112,7 +114,8 @@ function insertContact (resp, subscriber, integration) {
     getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch data to send'
+      logger.serverLog(message, `${TAG}: insertContact`, {resp, subscriber}, {}, 'error')
     } else {
       let data = resp.mapping.map(item => {
         return { property: item.hubspotColumn, value: item.value }
@@ -140,7 +143,8 @@ function insertOrUpdateContact (resp, subscriber, integration) {
         getDataForSubscriberValues(data, cb)
       }, function (err) {
         if (err) {
-          logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch data to send'
+          logger.serverLog(message, `${TAG}: insertOrUpdateContact`, {resp, subscriber}, {}, 'error')
         } else {
           let data = resp.mapping.map(item => {
             return { property: item.hubspotColumn, value: item.value }
@@ -155,7 +159,8 @@ function insertOrUpdateContact (resp, subscriber, integration) {
       })
     })
     .catch((err) => {
-      logger.serverLog(TAG, `Failed to fetch custom field subscriber for hubspot ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch custom field subscriber for hubspot'
+      logger.serverLog(message, `${TAG}: insertOrUpdateContact`, {resp, subscriber}, {}, 'error')
     })
 }
 
@@ -170,7 +175,8 @@ function updateContact (resp, subscriber, integration) {
     getDataForSubscriberValues(data, cb)
   }, function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to fetch data to send ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch data to send'
+      logger.serverLog(message, `${TAG}: updateContact`, {resp, subscriber}, {}, 'error')
     } else {
       let data = resp.mapping.map(item => {
         return { property: item.hubspotColumn, value: item.value }
@@ -197,11 +203,13 @@ function getContact (resp, subscriber, integration) {
           updateSubscriberData(resp, subscriber, hubspotContact.properties)
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to send data to hubspot form ${(err)}`, 'error')
+          const message = err || 'Failed to fetch data to send'
+          logger.serverLog(message, `${TAG}: getContact`, {resp, subscriber}, {}, 'error')
         })
     })
     .catch((err) => {
-      logger.serverLog(TAG, `Failed to work with data for hubspot ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to work with data for hubspot'
+      logger.serverLog(message, `${TAG}: getContact`, {resp, subscriber}, {}, 'error')
     })
 }
 
@@ -226,7 +234,8 @@ function updateSubscriberData (resp, subscriber, hubspotContact) {
       .then(updated => {
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to update subscriber'
+        logger.serverLog(message, `${TAG}: updateSubscriberData`, {resp, subscriber}, {}, 'error')
       })
   }
 }
@@ -249,7 +258,8 @@ function getIdentityCustomFieldValue (lookUpValue, subscriber) {
         }
       })
       .catch((err) => {
-        logger.serverLog(TAG, `Failed to fetch custom field subscriber ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch custom field subscriber'
+        logger.serverLog(message, `${TAG}: getIdentityCustomFieldValue`, {lookUpValue, subscriber}, {}, 'error')
         reject(err)
       })
   })
@@ -269,11 +279,11 @@ function sendToHubspot (integration, hubspotUrl, payload, method) {
       })
       .then(result => {
         resolve(result)
-        logger.serverLog(TAG, `Success in sending data to hubspot form`)
       })
       .catch(err => {
         reject(err)
-        logger.serverLog(TAG, `Failed to send data to hubspot form ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to send data to hubspot form'
+        logger.serverLog(message, `${TAG}: sendToHubspot`, {integration, hubspotUrl, payload, method}, {}, 'error')
       })
   })
 }

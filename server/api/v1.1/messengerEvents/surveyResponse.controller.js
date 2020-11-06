@@ -11,7 +11,6 @@ let { sendOpAlert } = require('./../../global/operationalAlert')
 const sequenceController = require('./sequence.controller')
 
 exports.surveyResponse = function (req, res) {
-  logger.serverLog(TAG, `in surveyResponse ${JSON.stringify(req.body)}`)
   for (let i = 0; i < req.body.entry[0].messaging.length; i++) {
     const event = req.body.entry[0].messaging[i]
     let resp = JSON.parse(event.postback.payload)
@@ -24,7 +23,6 @@ exports.surveyResponse = function (req, res) {
               let message = preparePayloadFacebook(subscriber, subscriber.pageId, {componentType: 'text', text: event.postback.title})
               saveLiveChat(message)
               savesurvey(event, subscriber)
-              logger.serverLog(TAG, `Subscriber Responeds to Survey ${JSON.stringify(subscriber)} ${resp.survey_id}`, 'debug')
               sequenceController.handlePollSurveyResponse({companyId: survey.companyId, subscriberId: subscriber._id, payload: resp})
               res.status(200).json({
                 status: 'success',
@@ -35,7 +33,8 @@ exports.surveyResponse = function (req, res) {
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch subscriber'
+            logger.serverLog(message, `${TAG}: exports.surveyResponse`, req.body, {}, 'error')
             return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
           })
       })
@@ -62,7 +61,8 @@ function savesurvey (req, subscriber) {
       if (webhook && webhook.isEnabled) {
         needle.get(webhook.webhook_url, (err, r) => {
           if (err) {
-            logger.serverLog(TAG, err, 'error')
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
           } else if (r.statusCode === 200) {
             if (webhook && webhook.optIn.SURVEY_RESPONSE) {
               var data = {
@@ -71,7 +71,10 @@ function savesurvey (req, subscriber) {
               }
               needle.post(webhook.webhook_url, data,
                 (error, response) => {
-                  if (error) logger.serverLog(TAG, err, 'error')
+                  if (error) {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+                  }
                 })
             }
           } else {
@@ -81,7 +84,8 @@ function savesurvey (req, subscriber) {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
     })
   SurveyResponseDataLayer.genericUpdateForResponse({
     surveyId: resp.survey_id,
@@ -89,8 +93,6 @@ function savesurvey (req, subscriber) {
     subscriberId: subscriber._id
   }, { response: resp.option, datetime: Date.now() }, { upsert: true })
     .then(surveyresponse => {
-      logger.serverLog(TAG,
-        `Raw${JSON.stringify(surveyresponse)}`, 'debug')
       // send the next question
       SurveyQuestionDataLayer.genericfindForSurveyQuestions({surveyId: resp.survey_id, _id: { $gt: resp.question_id }})
         .then(questions => {
@@ -122,7 +124,8 @@ function savesurvey (req, subscriber) {
               `https://graph.facebook.com/v6.0/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
                 if (err3) {
-                  logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
+                  const message = err3 || 'Page access token from graph api Error'
+                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
                 }
                 if (response.body.error) {
                   sendOpAlert(response.body.error, 'survey response in kiboengage', '', '', '')
@@ -156,14 +159,19 @@ function savesurvey (req, subscriber) {
               .then(updated => {
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to update survey ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to update survey'
+                logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
               })
             needle.get(
               `https://graph.facebook.com/v6.0/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
-                if (err3) logger.serverLog(TAG, `Page accesstoken from graph api Error${JSON.stringify(err3)}`, 'error')
+                if (err3) {
+                  const message = err3 || 'Page access token from graph api Error'
+                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+                }
                 if (response.body.error) {
-                  sendOpAlert(response.body.error, 'survey response in kiboengage', '', '', '')
+                  const message = response.body.error || 'Page access token from graph api Error'
+                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
                 }
                 const messageData = {
                   text: 'Thank you. Response submitted successfully.'
@@ -186,10 +194,12 @@ function savesurvey (req, subscriber) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch questions ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch questions'
+          logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to update survey response ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to update survey response'
+      logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
     })
 }

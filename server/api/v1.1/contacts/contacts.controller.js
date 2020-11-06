@@ -53,7 +53,8 @@ exports.uploadFile = function (req, res) {
       _saveContacts.bind(null, data)
     ], function (err) {
       if (err) {
-        logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
+        const message = err || 'Failed to create autoposting'
+        logger.serverLog(message, `${TAG}: uploadFile`, req.body, {}, 'error')
         sendErrorResponse(res, 500, '', err)
       } else {
         sendSuccessResponse(res, 200, 'Contacts saved successfully')
@@ -93,7 +94,8 @@ const _saveContacts = (data, next) => {
                 .then(saved => {
                 })
                 .catch(error => {
-                  logger.serverLog(TAG, `Failed to save contact ${JSON.stringify(error)}`, 'error')
+                  const message = error || 'Failed to save contact'
+                  logger.serverLog(message, `${TAG}: _saveContacts`, data, {}, 'error')
                 })
             } else if (data.body.listId !== 'master') {
               phone = phone[0]
@@ -111,13 +113,15 @@ const _saveContacts = (data, next) => {
                   .then(updated => {
                   })
                   .catch(error => {
-                    logger.serverLog(TAG, `Failed to update contact ${JSON.stringify(error)}`, 'error')
+                    const message = error || 'Failed to update contact'
+                    logger.serverLog(message, `${TAG}: _saveContacts`, data, {}, 'error')
                   })
               }
             }
           })
           .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch contacts ${JSON.stringify(error)}`, 'error')
+            const message = error || 'Failed to fetch contacts'
+            logger.serverLog(message, `${TAG}: _saveContacts`, data, {}, 'error')
           })
       }
     })
@@ -141,7 +145,8 @@ exports.uploadNumbers = function (req, res) {
                 .then(saved => {
                 })
                 .catch(error => {
-                  logger.serverLog(TAG, `Failed to save contact ${JSON.stringify(error)}`, 'error')
+                  const message = error || 'Failed to save contact'
+                  logger.serverLog(message, `${TAG}: uploadNumbers`, req.body, {}, 'error')
                 })
             }
             if (i === req.body.numbers.length - 1) {
@@ -149,7 +154,8 @@ exports.uploadNumbers = function (req, res) {
             }
           })
           .catch(error => {
-            logger.serverLog(TAG, `Failed to fetch contact ${JSON.stringify(error)}`, 'error')
+            const message = error || 'Failed to fetch contact'
+            logger.serverLog(message, `${TAG}: uploadNumbers`, req.body, {}, 'error')
           })
       }
     })

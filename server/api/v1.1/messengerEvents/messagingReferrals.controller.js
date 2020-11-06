@@ -25,7 +25,8 @@ exports.index = function (req, res) {
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`, 'error')
+              const message = err || 'Failed to fetch page referral'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
             })
           callApi(`messenger_code/query`, 'post', { pageId: page._id, companyId: page.companyId })
             .then(messegerCode => {
@@ -35,14 +36,17 @@ exports.index = function (req, res) {
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch page referral ${JSON.stringify(err)}`, 'error')
+              const message = err || 'Failed to fetch page referral'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
             })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch landingPage'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }

@@ -7,7 +7,6 @@ const compose = require('composable-middleware')
 const apiCaller = require('../api/v1.1/utility')
 const needle = require('needle')
 const _ = require('lodash')
-const util = require('util')
 const logger = require('../components/logger')
 const requestPromise = require('request-promise')
 const TAG = 'auth/auth.service.js'
@@ -49,7 +48,6 @@ function isAuthenticated () {
         }
         requestPromise(options)
           .then(result => {
-            //logger.serverLog(TAG, `response got ${JSON.stringify(result)}`)
             if (result.status === 'success') {
               if (result.actingAsUser) {
                 req.user = result.user
@@ -87,7 +85,8 @@ function isAuthorizedGAMRequest (req, res, next) {
   console.log('inside isAuthorizedGAMRequest')
   exec('sh GAM_ip_list.sh', function (err, stdout, stderr) {
     if (err) {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Internal server error'
+      logger.serverLog(message, `${TAG}: isAuthorizedGAMRequest`, req.body, {}, 'error')
       return res.status(500).json({message: 'An unexpected error occurred!'})
     } else {
       const ipRanges = stdout.toString().split('\n')
@@ -105,7 +104,8 @@ function isAuthorizedGAMRequest (req, res, next) {
         }
       } catch (err) {
         if (err) {
-          logger.serverLog(TAG, err, 'error')
+          const message = err || 'Internal server error'
+          logger.serverLog(message, `${TAG}: isAuthorizedGAMRequest`, req.body, {}, 'error')
           return res.status(500).json({message: 'An unexpected error occurred!'})
         }
       }
@@ -116,13 +116,13 @@ function isAuthorizedGAMRequest (req, res, next) {
 /**
  * Checks if a super user is acting as customer
  */
-function isSuperUserActingAsCustomer(modeOfAction) {
+function isSuperUserActingAsCustomer (modeOfAction) {
   return compose()
     .use((req, res, next) => {
       if (req.actingAsUser) {
-        if(modeOfAction === 'write') {
+        if (modeOfAction === 'write') {
           return res.status(403)
-          .json({status: 'failed', description: `You are not allowed to perform this action`})
+            .json({status: 'failed', description: `You are not allowed to perform this action`})
         } else {
           req.superUser = req.user
           req.user = req.actingAsUser
@@ -281,10 +281,12 @@ const _updateUserPlatform = (req, res) => {
         .then(updatedProfile => {
         })
         .catch(err => {
-          logger.serverLog(TAG, `500: Internal server error ${err}`)
-        })               
+          const message = err || 'Internal server error'
+          logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
+        })
     }).catch(err => {
-      logger.serverLog(TAG, JSON.stringify(err), 'error')
+      const message = err || 'Internal server error'
+      logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
     })
 }
 /**
@@ -295,18 +297,12 @@ function fbConnectDone (req, res) {
   console.log('fbPayload', fbPayload)
   let userid = req.cookies.userid
   if (!req.user) {
-    logger.serverLog(TAG, '404: Something went wrong, please try again')
     res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
   }
-  // if (req.user.role !== 'buyer') {
-  //   logger.serverLog(TAG, `User is an ${req.user.role}. Only buyers can connect their Facebook account`)
-  //   res.render('error', {status: 'failed', description: `User is an ${req.user.role}. Only buyers can connect their Facebook account`})
-  // }
   let token = `Bearer ${req.cookies.token}`
   apiCaller.callApi('user', 'get', {}, 'accounts', token)
     .then(user => {
       if (user.facebookInfo && user.facebookInfo.fbId.toString() !== fbPayload.fbId.toString()) {
-        logger.serverLog(TAG, '403: Different Facebook Account Detected')
         res.render('error', {status: 'failed', description: 'Different Facebook Account Detected. Please use the same account that you connected before.'})
       } else {
         apiCaller.callApi(`user/update`, 'post', {query: {_id: userid}, newPayload: {facebookInfo: fbPayload, connectFacebook: true, showIntegrations: false, platform: 'messenger'}, options: {}}, 'accounts', token)
@@ -315,7 +311,6 @@ function fbConnectDone (req, res) {
             apiCaller.callApi(`user/query`, 'post', {_id: userid}, 'accounts', token)
               .then(user => {
                 if (!user) {
-                  logger.serverLog(TAG, '401: Unauthorized')
                   res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
                 }
                 req.user = user[0]
@@ -323,10 +318,10 @@ function fbConnectDone (req, res) {
                 if (user.permissionsRevoked) {
                   apiCaller.callApi('user/update', 'post', {query: {'facebookInfo.fbId': user.facebookInfo.fbId}, newPayload: {permissionsRevoked: false}, options: {multi: true}})
                     .then(resp => {
-                      logger.serverLog(TAG, `response for permissionsRevoked ${util.inspect(resp)}`)
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `500: Internal server error ${err}`)
+                      const message = err || 'Internal server error'
+                      logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
                       res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
                     })
                 }
@@ -337,18 +332,21 @@ function fbConnectDone (req, res) {
                 res.redirect('/')
               })
               .catch(err => {
-                logger.serverLog(TAG, `500: Internal server error ${err}`)
+                const message = err || 'Internal server error'
+                logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
                 res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
               })
           })
           .catch(err => {
-            logger.serverLog(TAG, `500: Internal server error ${err}`)
+            const message = err || 'Internal server error'
+            logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
             res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `500: Internal server error ${err}`)
+      const message = err || 'Internal server error'
+      logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
       res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
     })
 }
@@ -357,10 +355,6 @@ function isAuthorizedWebHookTrigger () {
   return compose().use((req, res, next) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
       req.socket.remoteAddress || req.connection.socket.remoteAddress
-    // logger.serverLog(TAG, req.ip)
-    // logger.serverLog(TAG, ip)
-    // logger.serverLog(TAG, 'This is middleware')
-    // logger.serverLog(TAG, req.body)
     if (ip === '162.243.215.177') next()
     else res.send(403)
   })
@@ -369,11 +363,6 @@ function isItWebhookServer () {
   return compose().use((req, res, next) => {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
       req.socket.remoteAddress || req.connection.socket.remoteAddress
-    // logger.serverLog(TAG, req.ip)
-    // logger.serverLog(TAG, `ip from headers: ${ip}`)
-    // logger.serverLog(TAG, 'This is middleware')
-    // logger.serverLog(TAG, req.body)
-    // logger.serverLog(TAG, `config.webhook_ip ${config.webhook_ip}`)
     if (config.env === 'development') {
       next()
     } else {
@@ -385,7 +374,6 @@ function isItWebhookServer () {
 
 // Auth for kibodash service
 function isKiboDash (req, res, next) {
-  logger.serverLog(TAG, `Request header from KiboDash ${JSON.stringify(req.headers)}`)
   next()
 }
 exports.isAuthenticated = isAuthenticated
@@ -410,28 +398,17 @@ function fetchPages (url, user, req, token) {
   }
   needle.get(url, options, (err, resp) => {
     if (err !== null) {
-      logger.serverLog(TAG, 'error from graph api to get pages list data: ')
-      logger.serverLog(TAG, JSON.stringify(err))
+      const message = err || 'error from graph api to get pages list data'
+      logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
       return
     }
-    // logger.serverLog(TAG, 'resp from graph api to get pages list data: ')
-    // logger.serverLogF(TAG, JSON.stringify(resp.body))
     const data = resp.body.data
     const cursor = resp.body.paging
     apiCaller.callApi(`companyUser/query`, 'post', {domain_email: user.domain_email})
       .then(companyUser => {
-        if (!companyUser) {
-          return logger.serverLog(TAG, {
-            status: 'failed',
-            description: 'The user account does not belong to any company. Please contact support'
-          })
-        }
         // updateUnapprovedPages(data, user, companyUser)
         if (data) {
           data.forEach((item) => {
-            // logger.serverLog(TAG,
-            //   `foreach ${JSON.stringify(item.name)}`)
-            //  createMenuForPage(item)
             const options2 = {
               url: `https://graph.facebook.com/v6.0/${item.id}/?fields=fan_count,username&access_token=${item.access_token}`,
               qs: {access_token: item.access_token},
@@ -439,10 +416,9 @@ function fetchPages (url, user, req, token) {
             }
             needle.get(options2.url, options2, (error, fanCount) => {
               if (error !== null) {
-                return logger.serverLog(TAG, `Error occurred ${error}`)
+                const message = err || 'internal server error'
+                logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
               } else {
-                // logger.serverLog(TAG, `Data by fb for page likes ${JSON.stringify(
-                //   fanCount.body.fan_count)}`)
                 apiCaller.callApi(`pages/query`, 'post', {pageId: item.id, userId: user._id, companyId: companyUser.companyId})
                   .then(pages => {
                     let page = pages[0]
@@ -464,12 +440,10 @@ function fetchPages (url, user, req, token) {
                       // save model to MongoDB
                       apiCaller.callApi(`pages`, 'post', payloadPage)
                         .then(page => {
-                          logger.serverLog(TAG,
-                            `Page ${item.name} created with id ${page.pageId}`)
                         })
                         .catch(err => {
-                          logger.serverLog(TAG,
-                            `failed to create page ${JSON.stringify(err)}`)
+                          const message = err || 'failed to create page'
+                          logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
                         })
                     } else {
                       let updatedPayload = {
@@ -485,31 +459,24 @@ function fetchPages (url, user, req, token) {
                       }
                       apiCaller.callApi(`pages/${page._id}`, 'put', updatedPayload)
                         .then(updated => {
-                          logger.serverLog(TAG,
-                            `page updated successfuly ${JSON.stringify(updated)}`)
-                          // logger.serverLog(TAG, `Likes updated for ${page.pageName}`)
                         })
                         .catch(err => {
-                          logger.serverLog(TAG,
-                            `failed to update page ${JSON.stringify(err)}`)
+                          const message = err || 'failed to update page'
+                          logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
                         })
                     }
                   })
               }
             })
           })
-        } else {
-          logger.serverLog(TAG, 'Empty response from graph API to get pages list data')
         }
       })
       .catch(err => {
-        logger.serverLog(TAG,
-          `Internal Server Error ${JSON.stringify(err)}`)
+        const message = err || 'internal server error'
+        logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
       })
     if (cursor && cursor.next) {
       fetchPages(cursor.next, user, req)
-    } else {
-      logger.serverLog(TAG, 'Undefined Cursor from graph API')
     }
   })
 }
@@ -528,14 +495,11 @@ function updateUnapprovedPages (facebookPages, user, companyUser) {
       })
   }
 }
+
 // eslint-disable-next-line no-unused-vars
 function isAuthorizedKiboAPITrigger (req) {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||
     req.socket.remoteAddress || req.connection.socket.remoteAddress
-  // logger.serverLog(TAG, req.ip)
-  // logger.serverLog(TAG, ip)
-  // logger.serverLog(TAG, 'This call is from KIBOAPI')
-  // logger.serverLog(TAG, req.body)
   // We need to change it to based on the requestee app
   if (config.kiboAPIIP.indexOf(ip) > -1) return true
   else return false

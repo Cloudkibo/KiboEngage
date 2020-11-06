@@ -11,7 +11,6 @@ exports.findIp = function (req, res) {
         return sendErrorResponse(res, 404, '', 'No registered company found.')
       }
       let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress
-      logger.serverLog(TAG, `IP found: ${ip}`, 'debug')
       if (ip.includes('ffff')) {
         let temp = ip.split(':')
         ip = temp[temp.length - 1]

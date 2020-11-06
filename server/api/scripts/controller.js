@@ -149,7 +149,8 @@ exports.performanceTestBroadcast = function (req, res) {
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     if (err) {
-      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`)
+      const message = err || 'Batch send error'
+      logger.serverLog(message, `${TAG}: sendBroadcast`, body, {}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to send broadcast ${JSON.stringify(err)}`
@@ -163,7 +164,6 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
     if (res === 'menu') {
       // we don't need to send res for persistant menu
     } else {
-      // logger.serverLog(TAG, `Batch send response ${JSON.stringify(body)}`)
       if (testBroadcast || (subscriberNumber === (subscribersLength - 1))) {
         return res.status(200)
           .json({status: 'success', description: 'Conversation sent successfully!'})

@@ -39,7 +39,6 @@ exports.getPagePermissions = function (req, res) {
               function (callback) {
                 facebookApiCaller('v4.0', `debug_token?input_token=${page.accessToken}&access_token=${user.facebookInfo.fbToken}`, 'get', {})
                   .then(response => {
-                    logger.serverLog(TAG, `response from debug token ${response.body}`)
                     if (response.body && response.body.data && response.body.data.scopes) {
                       if (response.body.data.scopes.length > 0) {
                         for (let i = 0; i < response.body.data.scopes.length; i++) {
@@ -62,7 +61,6 @@ exports.getPagePermissions = function (req, res) {
               function (callback) {
                 facebookApiCaller('v4.0', `me/messaging_feature_review?access_token=${page.accessToken}`, 'get', {})
                   .then(response => {
-                    logger.serverLog(TAG, `response from messaging_feature_review ${response.body}`)
                     if (response.body && response.body.data) {
                       if (response.body.data.length > 0) {
                         for (let i = 0; i < response.body.data.length; i++) {
@@ -304,7 +302,8 @@ exports.fetchPageTags = (req, res) => {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch unique pages ${err}`, 'debug')
+      const message = err || 'Failed to fetch unique pages'
+      logger.serverLog(message, `${TAG}: exports.fetchPageTags`, req.body, {}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch unique pages ${err}`
@@ -459,7 +458,6 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
       }
       if (statusFilterSucceeded && !req.body.assignedTag && !req.body.unassignedTag) {
         for (let i = 0; subscriberData.length < 10 && i < subscribers.length; i++) {
-          retrievedSubscriberData += 1
           subscriberData.push({
             subscriber: subscribers[i],
             assignedTags: [],
@@ -478,7 +476,6 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
             `https://graph.facebook.com/v4.0/${subscribers[i].senderId}/custom_labels?fields=name&access_token=${req.body.accessToken}`,
             (err, resp) => {
               if (err) {
-                logger.serverLog(TAG, `Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`, 'debug')
                 callback(null, {
                   subscriber: subscribers[i],
                   assignedTags: [],
@@ -486,8 +483,6 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
                 })
                 // callback(`Failed to fetch facebook labels for subscriber ${subscribers[i].senderId} ${err}`)
               } else {
-                logger.serverLog(TAG, `fbSubscriberTags ${i} ${JSON.stringify(resp.body.data)}`, 'debug')
-                logger.serverLog(TAG, `kiboPageTags ${JSON.stringify(pageTags)}`, 'debug')
                 let fbTags = resp.body.data
                 let kiboPageTags = pageTags
                 let assignedTags = []
@@ -581,7 +576,7 @@ function filterSubscribers (req, res, subscribers, pageTags, subscriberData) {
       }
       async.parallelLimit(requests, 30, function (err, results) {
         if (err) {
-          reject(`Failed to fetch facebook tags ${err}`)
+          reject(err)
         } else {
           for (let i = 0; subscriberData.length < 10 && i < results.length; i++) {
             if (results[i]) {

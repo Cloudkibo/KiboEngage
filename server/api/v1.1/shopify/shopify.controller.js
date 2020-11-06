@@ -25,9 +25,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/cart-create`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Carts webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Carts Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Carts Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -35,9 +35,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/checkout-create`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Checkout webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Checkout Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Checkout Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -45,9 +45,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/order-create`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Order webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Order Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Order Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -55,9 +55,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/fulfillments-create`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Fulfillment webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Fulfillment Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Fulfillment Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
     throw err
   })
 
@@ -66,9 +66,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/fulfillments-update`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Fulfillment update webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Fulfillment update Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Fulfillment update Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
     throw err
   })
 
@@ -77,9 +77,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/fulfillment-events-create`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Fulfillment event webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Fulfillment event Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Fulfillment event Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
     throw err
   })
 
@@ -88,9 +88,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/orders-cancelled`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Orders Cancelled webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Orders Cancelled Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Orders Cancelled Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -98,9 +98,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/orders-fulfilled`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'orders fullfilled webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating orders fulfilled Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating orders fulfilled Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -108,9 +108,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/orders-paid`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'orders paid webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating orders paid Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating orders paid Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -118,9 +118,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/orders-updated`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'orders update webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating orders update Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Carts Webhook'
+    logger.serverLog(message, `${TAG}: Error Creating orders update Webhook`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -128,9 +128,9 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/app-uninstall`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'App Uninstall webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating App Uninstall Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating App Uninstall Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 
   shopify.webhook.create({
@@ -138,17 +138,20 @@ function registerWebhooks (shop, token) {
     address: `${config.domain}/api/shopify/theme-publish`,
     format: 'json'
   }).then((response) => {
-    logger.serverLog(TAG, 'Theme Publish webhook created')
   }).catch((err) => {
-    logger.serverLog(TAG, 'Error Creating Theme Publish Webhook' + JSON.stringify(err))
+    const message = err || 'Error Creating Theme Publish Webhook'
+    logger.serverLog(message, `${TAG}: registerWebhooks`, {shop, token}, {}, 'error')
   })
 }
 
 const registerScript = function (shopDomain, accessToken, params) {
   const shopify = new Shopify({ shopName: shopDomain, accessToken: accessToken })
   shopify.scriptTag.create(params).then(
-    response => logger.serverLog(TAG, 'Script posted and created', response),
-    err => logger.serverLog(TAG, `Error creating script. ${JSON.stringify(err.response.body)}`)
+    response => {},
+    err => {
+      const message = err || 'Error creating script'
+      logger.serverLog(message, `${TAG}: registerScript`, {shopDomain, accessToken, params}, {}, 'error')
+    }
   )
 }
 
@@ -283,7 +286,6 @@ exports.callback = function (req, res) {
             return dataLayer.createStoreAnalytics(storeAnalytics)
           })
           .then(storeAnalytics => {
-            logger.serverLog(TAG, `Store analytics created ${storeAnalytics}`)
             return res.redirect('/')
           })
           .catch(err => {

@@ -2,7 +2,6 @@ const logicLayer = require('./subscribers.logiclayer')
 const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/subscribers/subscribers.controller.js'
-const util = require('util')
 const needle = require('needle')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
@@ -87,8 +86,9 @@ exports.getCount = (req, res) => {
         _getSubscribersCount(res, req.body, req.user.companyId, tagIds)
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fecth tags ${err}`)
-        sendErrorResponse(res, 500, `Failed to fecth tags`)
+        const message = err || 'Failed to fetch tags'
+        logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {}, 'error')
+        sendErrorResponse(res, 500, `Failed to fetch tags`)
       })
   } else {
     _getSubscribersCount(res, req.body, req.user.companyId)
@@ -98,7 +98,6 @@ exports.getCount = (req, res) => {
 const _getSubscribersCount = (res, body, companyId, tagIds) => {
   logicLayer.getCountCriteria(body, companyId, tagIds)
     .then(criteria => {
-      logger.serverLog(TAG, `subscriber count criteria ${JSON.stringify(criteria)}`, 'debug')
       utility.callApi(`subscribers/aggregate`, 'post', criteria)
         .then(result => {
           if (result.length > 0) {
@@ -108,7 +107,8 @@ const _getSubscribersCount = (res, body, companyId, tagIds) => {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fecth subscribers ${err}`)
+          const message = err || 'Failed to fetch subscribers'
+          logger.serverLog(message, `${TAG}: _getSubscribersCount`, body, {}, 'error')
           sendErrorResponse(res, 500, `Failed to fecth subscribers`)
         })
     })
@@ -119,31 +119,23 @@ const getAllSubscribers = function (subscribers, count, req, res) {
   var utcDate = dt.toUTCString()
   dt = new Date()
   utcDate = dt.toUTCString()
-  logger.serverLog(TAG, `subscribers/aggregate data subscribers ${utcDate}`, 'info')
   let subscriberIds = logicLayer.getSubscriberIds(subscribers)
-  logger.serverLog(TAG, `subscriberIds: ${util.inspect(subscriberIds)}`, 'debug')
   utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId })
     .then(tags => {
       dt = new Date()
       utcDate = dt.toUTCString()
-      logger.serverLog(TAG, `tags/query ${utcDate}`, 'info')
 
       let tagIds = tags.map((t) => t._id)
       utility.callApi(`tags_subscriber/query`, 'post', { subscriberId: { $in: subscriberIds }, tagId: {$in: tagIds} })
         .then(tagSubscribers => {
           dt = new Date()
           utcDate = dt.toUTCString()
-          logger.serverLog(TAG, `tags_subscriber/query data subscribers ${utcDate}`, 'info')
-          //  logger.serverLog(TAG, `tags subscribers: ${util.inspect(tagSubscribers)}`, 'debug')
           let subscribersPayload = logicLayer.getSusbscribersPayload(subscribers, tagSubscribers, tagIds, req.body.filter_criteria.tag_value)
-          // logger.serverLog(TAG, `subscribersPayload: ${util.inspect(subscribersPayload)}`, 'debug')
           // start append custom Fields
           utility.callApi('custom_fields/query', 'post', { purpose: 'findAll', match: { $or: [{companyId: req.user.companyId}, {default: true}] } })
             .then(customFields => {
               dt = new Date()
               utcDate = dt.toUTCString()
-              logger.serverLog(TAG, `custom_fields/query ${utcDate}`, 'info')
-              // logger.serverLog(TAG, `customFields: ${util.inspect(customFields)}`, 'debug')
               let customFieldIds = customFields.map((cf) => cf._id)
               utility.callApi('custom_field_subscribers/query', 'post', {purpose: 'findAll', match: {subscriberId: {$in: subscriberIds}, customFieldId: {$in: customFieldIds}}})
                 .then(customFieldSubscribers => {
@@ -173,18 +165,12 @@ const getAllSubscribers = function (subscribers, count, req, res) {
 }
 exports.getAll = function (req, res) {
   console.log('in get all')
-  var dt = new Date()
-  var utcDate = dt.toUTCString()
-  logger.serverLog(TAG, `starting function time ${utcDate}`, 'info')
   let tagIDs = []
   let tagValue = []
   if (req.body.filter_criteria.tag_value) {
     tagValue.push(req.body.filter_criteria.tag_value)
     utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: tagValue } })
       .then(tags => {
-        dt = new Date()
-        utcDate = dt.toUTCString()
-        logger.serverLog(TAG, `After tags Query ${utcDate}`, 'info')
         tagIDs = tags.map((tag) => tag._id)
         console.log('tagIDs', tagIDs)
         let criterias = logicLayer.getCriteriasTags(req, tagIDs)
@@ -192,7 +178,6 @@ exports.getAll = function (req, res) {
           .then(count => {
             console.log('subscribers by filter count', count)
 
-            logger.serverLog(TAG, `tags_subscribers/aggregate count ${utcDate}`, 'info')
             utility.callApi(`tags_subscriber/aggregate`, 'post', criterias.fetchCriteria) // fetch subscribers count
               .then(subscribers => {
                 console.log('subscribers by filter', subscribers)
@@ -206,33 +191,30 @@ exports.getAll = function (req, res) {
                 getAllSubscribers(new_subscribers, count, req, res)
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch subscriber data  ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to fetch subscriber data'
+                logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
               })
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch subscriber count  ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch subscriber count'
+            logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
           })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch tag  ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch tag'
+        logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
       })
   } else {
-    dt = new Date()
-    utcDate = dt.toUTCString()
-    logger.serverLog(TAG, `After tags Query Loop  ${utcDate}`, 'info')
     let criterias = logicLayer.getCriterias(req, tagIDs)
     utility.callApi(`subscribers/aggregate`, 'post', criterias.countCriteria) // fetch subscribers count
       .then(count => {
-        dt = new Date()
-        utcDate = dt.toUTCString()
-        logger.serverLog(TAG, `subscribers/aggregate count ${utcDate}`, 'info')
-
         utility.callApi(`subscribers/aggregate`, 'post', criterias.fetchCriteria) // fetch subscribers
           .then(subscribers => {
             getAllSubscribers(subscribers, count, req, res)
           })
           .catch(error => {
-            sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
+            const message = error || 'Failed to fetch subscribers'
+            logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
           })
       })
       .catch(error => {
@@ -248,7 +230,8 @@ exports.subscribeBack = function (req, res) {
       sendSuccessResponse(res, 200, subscriber)
     })
     .catch(error => {
-      sendErrorResponse(res, 500, `Failed to fetch subscriber ${JSON.stringify(error)}`)
+      const message = error || 'Failed to fetch subscriber'
+      logger.serverLog(message, `${TAG}: exports.subscribeBack`, req.body, {}, 'error')
     })
 }
 
@@ -312,8 +295,8 @@ exports.unSubscribe = function (req, res) {
         `https://graph.facebook.com/v6.0/${userPage.pageId}?fields=access_token&access_token=${currentUser.facebookInfo.fbToken}`,
         (err, resp) => {
           if (err) {
-            logger.serverLog(TAG,
-              `Page access token from graph api error ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Page access token from graph api error'
+            logger.serverLog(message, `${TAG}: exports.unSubscribe`, req.body, {}, 'error')
           }
           if (resp.body.error) {
             sendOpAlert(resp.body.error, 'subscribers controller in kiboengage', req.body.page_id, userPage.userId._id, '')
@@ -364,7 +347,8 @@ function saveNotifications (companyUser, subscriber, req) {
   utility.callApi('notifications', 'post', notificationsData, 'kibochat')
     .then(savedNotification => { })
     .catch(error => {
-      logger.serverLog(TAG, `Failed to create notification ${JSON.stringify(error)}`, 'error')
+      const message = error || 'Failed to create notification'
+      logger.serverLog(message, `${TAG}: saveNotifications`, req.body, {}, 'error')
     })
 }
 function subscribeNewsSubscription (subscriberId, companyId) {
@@ -378,20 +362,24 @@ function subscribeNewsSubscription (subscriberId, companyId) {
           .then(updated => {
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to udpate subscription ${err}`, 'error')
+            const message = err || 'Failed to update subscription'
+            logger.serverLog(message, `${TAG}: subscribeNewsSubscription`, {subscriberId, companyId}, {}, 'error')
           })
         NewsSectionsDataLayer.genericUpdateRssFeed({_id: {$in: newsSectionIds}}, {$inc: {subscriptions: 1}}, {})
           .then(updated => {
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to udpate subscription count ${err}`, 'error')
+            const message = err || 'Failed to update subscription count'
+            logger.serverLog(message, `${TAG}: subscribeNewsSubscription`, {subscriberId, companyId}, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to udpate subscriber ${err}`, 'error')
+      const message = err || 'Failed to update subscriber'
+      logger.serverLog(message, `${TAG}: subscribeNewsSubscription`, {subscriberId, companyId}, {}, 'error')
     })
 }
+
 function unSubscribeNewsSubscription (subscriber) {
   NewsSectionsDataLayer.genericFindForRssFeeds({defaultFeed: true, companyId: subscriber.companyId})
     .then(defaultNewsSections => {
@@ -414,11 +402,13 @@ function unSubscribeNewsSubscription (subscriber) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriptions ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch subscriptions'
+          logger.serverLog(message, `${TAG}: unSubscribeNewsSubscription`, {subscriber}, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to default feeds ${err}`, 'error')
+      const message = err || 'Failed to default feeds'
+      logger.serverLog(message, `${TAG}: unSubscribeNewsSubscription`, {subscriber}, {}, 'error')
     })
 }
 function updateSubscriptionCount (query) {
@@ -426,7 +416,8 @@ function updateSubscriptionCount (query) {
     .then(updated => {
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to udpate subscription count for default ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to update subscription count for default'
+      logger.serverLog(message, `${TAG}: updateSubscriptionCount`, {query}, {}, 'error')
     })
 }
 
@@ -435,6 +426,7 @@ function updateSubscription (query) {
     .then(updated => {
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to udpate subscriptions ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to update subscriptions'
+      logger.serverLog(message, `${TAG}: updateSubscription`, {query}, {}, 'error')
     })
 }

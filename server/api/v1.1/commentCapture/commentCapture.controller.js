@@ -149,64 +149,64 @@ function postOnFacebook (payload, pageId, seeMoreLink) {
           facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', payloadToPost.payload)
             .then(response => {
               if (response.body.error) {
-                sendOpAlert(response.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
-                logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                const message = response.body.error || 'Failed to post on facebook'
+                logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
                 reject(JSON.stringify(response.body.error))
               } else {
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
-                logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              const message = err || 'Failed to post on facebook'
+              logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
               reject(err)
             })
         } else if (payloadToPost.type === 'image') {
           facebookApiCaller('v3.3', `${page.pageId}/photos?access_token=${page.accessToken}`, 'post', payloadToPost.payload)
             .then(response => {
               if (response.body.error) {
-                sendOpAlert(response.body.error, 'comment capture controller in kiboengage', page._id, page.userId, page.companyId)
-                logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                const message = response.body.error || 'Failed to post on facebook'
+                logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
                 reject(JSON.stringify(response.body.error))
               } else {
-                logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              const message = err || 'Failed to post on facebook'
+              logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
               reject(err)
             })
         } else if (payloadToPost.type === 'images') {
           facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', payloadToPost.payload)
             .then(response => {
               if (response.body.error) {
-                sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
-                logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                const message = response.body.error || 'Failed to post on facebook'
+                logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
                 reject(JSON.stringify(response.body.error))
               } else {
-                logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              const message = err || 'Failed to post on facebook'
+              logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
               reject(err)
             })
         } else if (payloadToPost.type === 'video') {
           facebookApiCaller('v3.3', `${page.pageId}/videos?access_token=${page.accessToken}`, 'post', payloadToPost.payload)
             .then(response => {
               if (response.body.error) {
-                sendOpAlert(response.body.error, 'twitter controller in kiboengage', page._id, page.userId, page.companyId)
-                logger.serverLog(TAG, `Failed to post on facebook ${JSON.stringify(response.body.error)}`, 'error')
+                const message = response.body.error || 'Failed to post on facebook'
+                logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
                 reject(JSON.stringify(response.body.error))
               } else {
-                logger.serverLog(TAG, `Posted successfully on Facebook ${JSON.stringify(response.body)}`, 'debug')
                 resolve(response.body.post_id ? response.body.post_id : response.body.id)
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to post on facebook ${err}`, 'error')
+              const message = err || 'Failed to post on facebook'
+              logger.serverLog(message, `${TAG}: postOnFacebook`, payload, {}, 'error')
               reject(err)
             })
         }
@@ -246,7 +246,6 @@ exports.postsAnalytics = function (req, res) {
       var aggregateQuery = logicLayer.getAggregateQuery(companyUser.companyId)
       utility.callApi(`comment_capture/aggregate`, 'post', aggregateQuery)
         .then(analytics => {
-          logger.serverLog(TAG, `Analytics ${JSON.stringify(analytics)}`, 'success')
           sendSuccessResponse(res, 200, analytics)
         })
         .catch(error => {

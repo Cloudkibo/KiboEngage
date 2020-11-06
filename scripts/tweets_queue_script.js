@@ -16,16 +16,17 @@ exports.deleteFromQueue = function () {
               '',
               'kiboengage'
             ).then(deleted => {
-              logger.serverLog(TAG, 'Tweet queue object deleted successfully!', 'debug')
             })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to delete tweet from tweets queue ${err}`, 'error')
+                const message = err || 'Failed to delete tweet from tweets queue'
+                logger.serverLog(message, `${TAG}: exports.deleteFromQueue`, tweets, {}, 'error')
               })
           }
         }
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch tweets queue ${err}`, 'error')
+      const message = err || 'Failed to fetch tweets queue'
+      logger.serverLog(message, `${TAG}: exports.deleteFromQueue`, {}, {}, 'error')
     })
 }

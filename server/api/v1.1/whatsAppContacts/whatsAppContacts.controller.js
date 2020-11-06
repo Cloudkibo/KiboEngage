@@ -20,7 +20,7 @@ exports.index = function (req, res) {
           utility.callApi(`whatsAppContacts/aggregate`, 'post', criterias.fetchCriteria) // fetch subscribers
             .then(contacts => {
               var data = {
-                count: count.length > 0 ? count[0].count: 0,
+                count: count.length > 0 ? count[0].count : 0,
                 contacts: contacts
               }
               sendSuccessResponse(res, 200, data)
@@ -103,7 +103,8 @@ const _getDuplicateRecords = (data) => {
           })
           .catch(error => {
             resolve(0)
-            logger.serverLog(TAG, `Failed to fetch contacts ${JSON.stringify(error)}`, 'error')
+            const message = error || 'Failed to fetch contacts'
+            logger.serverLog(message, `${TAG}: _getDuplicateRecords`, data, {}, 'error')
           })
       })
   })
@@ -129,7 +130,8 @@ exports.sendMessage = function (req, res) {
       _sendTemplateMessage.bind(null, data)
     ], function (err) {
       if (err) {
-        logger.serverLog(TAG, `Failed to send template invitation. ${JSON.stringify(err)}`)
+        const message = err || 'Failed to send template invitation'
+        logger.serverLog(message, `${TAG}: exports.sendMessage`, req.body, {}, 'error')
         sendErrorResponse(res, 500, '', err)
       } else {
         sendSuccessResponse(res, 200, 'Message Sent Successfully')
@@ -203,7 +205,8 @@ const _saveSubscriber = (data, contact) => {
       _updateSubscriber(whatsAppContact)
     })
     .catch((err) => {
-      logger.serverLog(TAG, `Failed to create subscriber ${err}`, 'error')
+      const message = err || 'Failed to create subscriber'
+      logger.serverLog(message, `${TAG}: _saveSubscriber`, data, {}, 'error')
     })
 }
 
@@ -213,7 +216,8 @@ const _saveChat = (data, contact) => {
     .then(message => {
     })
     .catch((err) => {
-      logger.serverLog(TAG, `Failed to save chat ${err}`, 'error')
+      const message = err || 'Failed to save chat'
+      logger.serverLog(message, `${TAG}: _saveChat`, data, {}, 'error')
     })
 }
 
@@ -229,11 +233,7 @@ const _updateSubscriber = (contact) => {
   utility.callApi(`whatsAppContacts/update`, 'put', subscriberData)
     .then(updated => {
     }).catch((err) => {
-      logger.serverLog(TAG, `Failed to update subscriber ${err}`, 'error')
+      const message = err || 'Failed to update subscriber'
+      logger.serverLog(message, `${TAG}: _updateSubscriber`, contact, {}, 'error')
     })
 }
-// const _removeDuplicates = (data, next) => {
-//   const unique = data.contacts.map(e => e.number)
-//     .map((e, i, final) => final.indexOf(e) === i && i)
-//     .filter((e) => data.contacts[e]).map(e => data.contacts[e])
-// }
