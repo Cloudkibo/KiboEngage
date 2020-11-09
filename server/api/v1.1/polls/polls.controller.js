@@ -115,8 +115,9 @@ exports.create = function (req, res) {
             }
           ], 10, function (err, results) {
             if (err) {
+              const message = err || 'Failed to create poll'
+              logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
               sendErrorResponse(res, 500, `Failed to create poll ${JSON.stringify(err)}`)
-              logger.serverLog(TAG, err, 'error')
             }
             sendSuccessResponse(res, 200, results[1])
           })
@@ -266,10 +267,10 @@ const _savePagePoll = (data) => {
   PollPageDataLayer.createForPollPage(data)
     .then(savedpagebroadcast => {
       require('../../global/messageStatistics').record('polls')
-      logger.serverLog(TAG, 'page poll object saved in db')
     })
     .catch(error => {
-      logger.serverLog(`Failed to create page_poll ${JSON.stringify(error)}`)
+      const message = error || 'Failed to create page_poll'
+      logger.serverLog(message, `${TAG}: _savePagePoll`, data, {}, 'error')
     })
 }
 
@@ -301,7 +302,8 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
               sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
             })
             .catch(error => {
-              logger.serverLog(TAG, error)
+              const message = error || 'Failed to fetch lists see server logs for more info'
+              logger.serverLog(message, `${TAG}: sendPoll`, req.body, {}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
             })
         } else {
@@ -352,7 +354,8 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
                     }
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, err)
+                    const message = err || 'Failed to fetch tag subscribers or poll responses'
+                    logger.serverLog(message, `${TAG}: sendPoll`, req.body, {}, 'error')
                     sendErrorResponse(res, 500, 'Failed to fetch tag subscribers or poll responses')
                   })
               } else {
@@ -361,7 +364,8 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
               }
             })
             .catch(err => {
-              logger.serverLog(TAG, err)
+              const message = err || 'Failed to fetch tags'
+              logger.serverLog(message, `${TAG}: sendPoll`, req.body, {}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch tags`)
             })
         }
@@ -370,7 +374,8 @@ const sendPoll = (req, res, planUsage, companyUsage, abort) => {
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: sendPoll`, req.body, {}, 'error')
       sendErrorResponse(res, 500, 'Failed to fetch page')
     })
 }

@@ -50,14 +50,16 @@ exports.sendBroadcastMessages = (body) => {
                   })
                   .catch(error => {
                     reject(new Error('fail'))
-                    logger.serverLog(TAG, `Failed to save broadcast ${error}`, 'error')
+                    const message = error || 'Failed to save broadcast'
+                    logger.serverLog(message, `${TAG}: exports.sendBroadcastMessages`, body, {}, 'error')
                   })
                 if (i === body.payload.length - 1 && response.sid) {
                   saveWhatsAppBroadcastMessages(response, body, body.contacts[j])
                 }
               })
               .catch(error => {
-                logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+                const message = error || '`error at sending message'
+                logger.serverLog(message, `${TAG}: exports.sendBroadcastMessages`, body, {}, 'error')
               })
           }, ((body.contacts.length) * i + (j + 1)) * 1000)
         }))
@@ -70,7 +72,7 @@ exports.sendBroadcastMessages = (body) => {
       .catch((err) => reject(err))
   })
 }
-function saveWhatsAppBroadcastMessages(resp, body, contact) {
+function saveWhatsAppBroadcastMessages (resp, body, contact) {
   let dataToInsert = {
     userId: body.userId,
     companyId: body.companyId,
@@ -82,7 +84,8 @@ function saveWhatsAppBroadcastMessages(resp, body, contact) {
     .then(result => {
     })
     .catch(error => {
-      logger.serverLog(TAG, `Failed to save broadcast messages ${error}`, 'error')
+      const message = error || 'Failed to save broadcast messages'
+      logger.serverLog(message, `${TAG}: saveWhatsAppBroadcastMessages`, body, {}, 'error')
     })
 }
 exports.sendInvitationTemplate = (body) => {
@@ -100,7 +103,8 @@ exports.sendInvitationTemplate = (body) => {
               resolve('success')
             })
             .catch(error => {
-              logger.serverLog(TAG, `error at sending message ${error}`, 'error')
+              const message = error || 'error at sending message'
+              logger.serverLog(message, `${TAG}: exports.sendInvitationTemplate`, body, {}, 'error')
             })
         }, 1000)
       }))
@@ -115,7 +119,7 @@ exports.sendInvitationTemplate = (body) => {
 
 exports.getNormalizedMessageStatusData = (event) => {
   return {
-        messageId: event.MessageSid,
-        status: event.MessageStatus === 'read' ? 'seen' : event.MessageStatus
-      }
+    messageId: event.MessageSid,
+    status: event.MessageStatus === 'read' ? 'seen' : event.MessageStatus
+  }
 }

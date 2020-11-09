@@ -1,11 +1,8 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/messengerEvents/menu.controller.js'
 const {callApi} = require('../utility')
-const logicLayer = require('./logiclayer')
-const request = require('request')
 const broadcastUtility = require('../broadcasts/broadcasts.utility')
 const messengerEventsUtility = require('./utility')
-let { sendOpAlert } = require('./../../global/operationalAlert')
 
 exports.index = function (req, res) {
   res.status(200).json({
@@ -36,15 +33,18 @@ exports.index = function (req, res) {
                 }
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch menu ${err}`, 'error')
+                const message = err || 'Failed to fetch menu'
+                logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
               })
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+          const message = err || 'Failed to fetch subscriber'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }

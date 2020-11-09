@@ -26,7 +26,6 @@ exports.index = function (req, res) {
       callApi(`subscribers/query`, 'post', { pageId: page._id, senderId: sender, companyId: page.companyId, completeInfo: true })
         .then(subscriber => {
           subscriber = subscriber[0]
-          logger.serverLog(TAG, `Subscriber ${JSON.stringify(subscriber)}`, 'debug')
           if (page.isWelcomeMessageEnabled) {
             payloadToSend = page.welcomeMessage
             if (subscriber) {
@@ -36,14 +35,14 @@ exports.index = function (req, res) {
                 `https://graph.facebook.com/v6.0/${page.pageId}?fields=access_token&access_token=${page.userId.facebookInfo.fbToken}`,
                 (err, resp2) => {
                   if (err) {
-                    logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                   }
                   if (resp2.body.error && resp2.body.error.code === 190) {
                     passwordChangeEmailAlert(page.userId._id, page.userId.email)
                   } else if (resp2.body.error) {
                     sendOpAlert(JSON.stringify(resp2.body.error), 'welcome message controller in kiboengage', page._id, page.userId, page.companyId)
                   }
-                  // logger.serverLog(TAG, `page access token: ${JSON.stringify(resp2.body)}`, 'debug')
                   let pageAccessToken = resp2.body.access_token
                   if (pageAccessToken) {
                     const options = {
@@ -52,7 +51,6 @@ exports.index = function (req, res) {
                       method: 'GET'
 
                     }
-                    logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'debug')
                     needle.get(options.url, options, (error, response) => {
                       if (error) {
                       } else {
@@ -62,19 +60,19 @@ exports.index = function (req, res) {
                         broadcastUtility.getBatchData(payloadToSend, sender, page, messengerEventsUtility.sendBroadcast, response.body.first_name, response.body.last_name, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                       }
                     })
-                  } else {
-                    logger.serverLog(TAG, `Page Access Token invalid for ${page.pageId}`, 'info')
                   }
                 })
             }
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+          const message = err || 'Failed to fetch subscriber'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }
 
@@ -95,7 +93,8 @@ exports.emailNumberQuickReply = function (req, res) {
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.emailNumberQuickReply`, req.body, {}, 'error')
     })
 }
 
@@ -134,7 +133,8 @@ function getQuickReplyPayload (welcomeMessage, payload, page) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch messageBlock in query ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch messageBlock in query'
+          logger.serverLog(message, `${TAG}: getQuickReplyPayload`, {welcomeMessage, payload, page}, {}, 'error')
         })
     }
   })
@@ -164,7 +164,8 @@ function updateSubscriber (page, sender, payload, value) {
     .then(updated => {
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to udpate subscriber ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to udpate subscriber'
+      logger.serverLog(message, `${TAG}: updateSubscriber`, {sender, payload, page, value}, {}, 'error')
     })
 }
 
@@ -180,11 +181,13 @@ function sendReply (page, sender, payload) {
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch messageBlock in query ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to send reply'
+            logger.serverLog(message, `${TAG}: sendReply`, {sender, payload, page}, {}, 'error')
           })
       }
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+      const message = err || 'Failed to fetch subscriber'
+      logger.serverLog(message, `${TAG}: sendReply`, {sender, payload, page}, {}, 'error')
     })
 }

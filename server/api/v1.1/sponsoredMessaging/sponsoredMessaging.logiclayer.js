@@ -1,6 +1,4 @@
 let { facebook } = require('../../global/prepareMessageData')
-let config = require('./../../../config/environment')
-let PassportFacebookExtension = require('passport-facebook-extension')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/sponsoredMessaging/sponsoredMessaging.logiclayer.js'
 const { facebookApiCallerWithFile, facebookApiCaller } = require('../../global/facebookApiCaller')
@@ -20,8 +18,8 @@ exports.checkFacebookPermissions = async function (facebookInfo) {
     }
     return adsManagementPermissionGiven
   } catch (err) {
-    logger.serverLog(TAG, 'FATAL Error ' + JSON.stringify(err), 'error')
-    logger.serverLog(TAG, 'FATAL Error ' + err, 'error')
+    const message = err || 'Internal Server Error'
+    logger.serverLog(message, `${TAG}: exports.checkFacebookPermissions`, facebookInfo, {}, 'error')
     return false
   }
 }
@@ -257,7 +255,8 @@ function downloadTempImage (imageUrl, cb) {
 function deleteTempImage (imgPath) {
   require('fs').unlink(imgPath, (err) => {
     if (err) {
-      logger.serverLog(TAG, 'ERROR in deleting temp file', 'error')
+      const message = err || 'ERROR in deleting temp file'
+      logger.serverLog(message, `${TAG}: exports.deleteTempImage`, {imgPath}, {}, 'error')
     }
   })
 }

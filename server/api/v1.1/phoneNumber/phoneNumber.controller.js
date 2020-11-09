@@ -77,11 +77,13 @@ exports.upload = function (req, res) {
                                     })
                                       .then(updated => {})
                                       .catch(error => {
-                                        logger.serverLog(TAG, `Failed to update company usage ${JSON.stringify(error)}`, 'error')
+                                        const message = error || 'Failed to update company usage'
+                                        logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                                       })
                                   })
                                   .catch(error => {
-                                    logger.serverLog(TAG, `Failed to save phone number ${JSON.stringify(error)}`, 'error')
+                                    const message = error || 'Failed to save phone number'
+                                    logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                                   })
                               } else {
                                 let filename = logicLayer.getFiles(phone[0], req, newFileName)
@@ -108,25 +110,30 @@ exports.upload = function (req, res) {
                                                 .then(savedList => {
                                                 })
                                                 .catch(error => {
-                                                  logger.serverLog(TAG, `Failed to update list ${JSON.stringify(error)}`, 'error')
+                                                  const message = error || 'Failed to update list'
+                                                  logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                                                 })
                                             })
                                             .catch(error => {
-                                              logger.serverLog(TAG, `Failed to fetch subscribers ${JSON.stringify(error)}`, 'error')
+                                              const message = error || 'Failed to fetch subscribers'
+                                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                                             })
                                         }
                                       })
                                       .catch(error => {
-                                        logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`, 'error')
+                                        const message = error || 'Failed to update number'
+                                        logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                                       })
                                   })
                                   .catch(error => {
-                                    logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`, 'error')
+                                    const message = error || 'Failed to update number'
+                                    logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                                   })
                               }
                             })
                             .catch(error => {
-                              logger.serverLog(TAG, `Failed to update number ${JSON.stringify(error)}`, 'error')
+                              const message = error || 'Failed to update number'
+                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                             })
                           utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId})
                             .then(pages => {
@@ -151,9 +158,8 @@ exports.upload = function (req, res) {
                                   },
                                   function (err, res) {
                                     if (err) {
-                                      return logger.serverLog(TAG,
-                                        `At invite to messenger using phone ${JSON.stringify(
-                                          err)}`, 'error')
+                                      const message = err || 'At invite to messenger using phone error'
+                                      return logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                                     }
                                     if (res.body.error) {
                                       sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage', page._id, page.userId, page.companyId)
@@ -164,7 +170,8 @@ exports.upload = function (req, res) {
                               })
                             })
                             .catch(error => {
-                              logger.serverLog(TAG, `Failed to fetch pages ${JSON.stringify(error)}`, 'error')
+                              const message = error || 'Failed to fetch pages'
+                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
                             })
                           if (respSent === false) {
                             respSent = true
@@ -195,6 +202,7 @@ exports.upload = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
+
 exports.sendNumbers = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' })
     .then(companyUser => {
@@ -220,7 +228,6 @@ exports.sendNumbers = function (req, res) {
               }
               utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {upsert: true}})
                 .then(savedList => {
-                  logger.serverLog('List - Other Saved', savedList, 'debug')
                 })
                 .catch(error => {
                   sendErrorResponse(res, 500, `Failed to update list ${JSON.stringify(error)}`)
@@ -325,9 +332,8 @@ exports.sendNumbers = function (req, res) {
                         },
                         function (err, res) {
                           if (err) {
-                            return logger.serverLog(TAG,
-                              `Error At invite to messenger using phone ${JSON.stringify(
-                                err)}`, 'error')
+                            const message = err || 'Error At invite to messenger using phone'
+                            logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {}, 'error')
                           }
                           if (res.body.error) {
                             sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage', page._id, page.userId, page.companyId)

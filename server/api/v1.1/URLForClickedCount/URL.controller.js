@@ -18,27 +18,22 @@ exports.index = function (req, res) {
             res.end()
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to fetch update autoposting message ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to fetch update autoposting message'
+            logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
           })
       })
       .catch(err => {
-        logger.serverLog(TAG, `Failed to fetch URL object ${JSON.stringify(err)}`, 'error')
+        const message = err || 'Failed to fetch URL object'
+        logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
       })
   }
 }
 
 exports.broadcast = function (req, res) {
-  // console.log('broadcast click count increased')
-  // logger.serverLog(TAG, `broadcast click count increased ${util.inspect(req)}`, 'debug')
-  // const clientIp = requestIp.getClientIp(req)
-  // console.log('clientIp ', clientIp)
-  logger.serverLog(TAG, `request headers ${JSON.stringify(req.headers)}`, 'debug')
   if (!req.headers['user-agent'].startsWith('facebook')) {
-    logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
     URLDataLayer.findOneURL(req.params.id)
       .then(URLObject => {
         if (URLObject) {
-          logger.serverLog(TAG, `URLObject found, incrementing click ${JSON.stringify(URLObject)}`, 'debug')
           BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
             .then(updatedData => {
               res.writeHead(301, {Location: URLObject.originalURL.startsWith('http') ? URLObject.originalURL : `https://${URLObject.originalURL}`})
@@ -46,7 +41,8 @@ exports.broadcast = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.broadcast`, req.body, {}, 'error')
               }
             })
         } else {
@@ -62,13 +58,10 @@ exports.broadcast = function (req, res) {
 }
 
 exports.sponsorMessaging = function (req, res) {
-  logger.serverLog(TAG, `request headers ${JSON.stringify(req.headers)}`, 'debug')
   if (!req.headers['user-agent'].startsWith('facebook')) {
-    logger.serverLog(TAG, `broadcast click count increased ${req.params.id}`, 'debug')
     URLDataLayer.findOneURL(req.params.id)
       .then(URLObject => {
         if (URLObject) {
-          logger.serverLog(TAG, `URLObject found, incrementing click ${JSON.stringify(URLObject)}`, 'debug')
           // BroadcastsDataLayer.updateBroadcast({_id: URLObject.module.id}, {$inc: {clicks: 1}})
           let query = {
             purpose: 'updateAll',
@@ -98,11 +91,9 @@ exports.sponsorMessaging = function (req, res) {
 }
 
 exports.sequence = function (req, res) {
-  logger.serverLog(`Sequence Click Count ${JSON.stringify(req.params.id)}`, 'debug')
   URLDataLayer.findOneURL(req.params.id)
     .then(URLObject => {
       if (URLObject) {
-        logger.serverLog(`Sequence Click Count ${JSON.stringify(URLObject)}`, 'debug')
         SequenceMessagesDataLayer.genericUpdateForSequenceMessages({_id: URLObject.module.id}, {$inc: {clicks: 1}})
           .then(updatedData => {
             let seqMessageId = URLObject.module.id

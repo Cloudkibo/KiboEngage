@@ -46,20 +46,22 @@ exports.index = function (req, res) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch messageBlock in query ${JSON.stringify(err)}`, 'error')
+          const message = err || 'Failed to fetch messageBlock in query'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }
 const _savePageBroadcast = (data) => {
   BroadcastPageDataLayer.createForBroadcastPage(data)
     .then(savedpagebroadcast => {
       require('../../global/messageStatistics').record('broadcast')
-      logger.serverLog(TAG, 'page broadcast object saved in db')
     })
     .catch(error => {
-      logger.serverLog(`Failed to create page_broadcast ${error}`)
+      const message = error || 'Failed to create page_broadcast'
+      logger.serverLog(message, `${TAG}: _savePageBroadcast`, data, {}, 'error')
     })
 }

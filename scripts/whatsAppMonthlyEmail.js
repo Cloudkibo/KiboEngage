@@ -72,17 +72,17 @@ exports.runScript = function () {
               })
           }, function (err) {
             if (err) {
-              logger.serverLog(TAG, `Failed to send montly email ${err}`, 'error')
+              const message = err || 'Failed to send montly email'
+              logger.serverLog(message, `${TAG}: exports.runScript`, {}, {}, 'error')
             } else {
               sgMail.setApiKey(config.SENDGRID_API_KEY)
-              sgMail.send(messages).then(() => {
-                logger.serverLog(TAG, `Monthly email sent successfully!`)
-              })
+              sgMail.send(messages)
             }
           })
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch users ${err}`, 'error')
+      const message = err || 'Failed to fetch users'
+      logger.serverLog(message, `${TAG}: exports.runScript`, {}, {}, 'error')
     })
 }

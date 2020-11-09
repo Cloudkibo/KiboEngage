@@ -187,7 +187,8 @@ exports.getMetaData = function (feed, body, page) {
             }
           })
           .catch(err => {
-            logger.serverLog(TAG, `Error from open graph ${err}`)
+            const message = err || 'Error from open graph'
+            logger.serverLog(message, `${TAG}: exports.getMetaData`, {feed, body, page}, {}, 'error')
           })
       } else {
         callback()

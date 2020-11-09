@@ -76,7 +76,6 @@ exports.create = function (req, res) {
             if (err) {
               sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
             } else {
-              logger.serverLog(TAG, 'assigning tag to subscribers', 'debug')
               sendSuccessResponse(res, 200, 'List created successfully!')
             }
           })
@@ -238,12 +237,14 @@ exports.deleteList = function (req, res) {
                       .then(result => {
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to delete tag subscriber ${JSON.stringify(err)}`, 'error')
+                        const message = err || 'Failed to delete tag subscribers'
+                        logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {}, 'error')
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch tag subscribers ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to fetch tag subscribers'
+                  logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {}, 'error')
                 })
             })
             async.parallelLimit([

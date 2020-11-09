@@ -15,7 +15,6 @@ exports.index = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
-  //  logger.serverLog(TAG, `in delivery' ${JSON.stringify(req.body)}`)
   let data = {
     recipientId: req.body.entry[0].messaging[0].recipient.id,
     senderId: req.body.entry[0].messaging[0].sender.id,
@@ -29,9 +28,8 @@ exports.index = function (req, res) {
     _updateRssFeedSent.bind(null, data)
   ], 10, function (err) {
     if (err) {
-      logger.serverLog(TAG, `ERROR at delivery controller ${JSON.stringify(err)}`, 'error')
-    } else {
-      logger.serverLog(TAG, 'delivery controller updated the send count successfully!')
+      const message = err || 'Error at delivery controller'
+      logger.serverLog(message, `${TAG}: saveCustomFieldValue`, req.body, {}, 'error')
     }
   })
 }

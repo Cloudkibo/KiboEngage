@@ -109,7 +109,8 @@ const _addTwitterAccount = (data, next) => {
   if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
   AutoPostingLogicLayer.findUser(screenName, (err, twitter) => {
     if (err) {
-      logger.serverLog(TAG, `Twitter URL parse Error ${err}`, 'error')
+      const message = err || 'Twitter URL parse Error'
+      logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
     }
     let payload
     if (twitter && !twitter.errors) {
@@ -129,7 +130,8 @@ const _addTwitterAccount = (data, next) => {
               next()
             })
             .catch(err => {
-              logger.serverLog(TAG, err, 'error')
+              const message = err || 'error updating company'
+              logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
               next(err)
             })
           utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
@@ -147,7 +149,8 @@ const _addTwitterAccount = (data, next) => {
           })
         })
         .catch(err => {
-          logger.serverLog(TAG, err, 'error')
+          const message = err || 'error creating autoposting object'
+          logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
           next(err)
         })
     } else {
@@ -175,7 +178,8 @@ const _addFacebookAccount = (data, next) => {
                 next()
               })
               .catch(err => {
-                logger.serverLog(TAG, err, 'error')
+                const message = err || 'error updating company'
+                logger.serverLog(message, `${TAG}: _addFacebookAccount`, data, {}, 'error')
                 next(err)
               })
             require('./../../../config/socketio').sendMessageToClient({
@@ -192,12 +196,14 @@ const _addFacebookAccount = (data, next) => {
             })
           })
           .catch(err => {
-            logger.serverLog(TAG, err, 'error')
+            const message = err || 'error creating autoposting object'
+            logger.serverLog(message, `${TAG}: _addFacebookAccount`, data, {}, 'error')
             next(err)
           })
       })
       .catch(err => {
-        logger.serverLog(TAG, err, 'error')
+        const message = err || 'error fetching pages'
+        logger.serverLog(message, `${TAG}: _addFacebookAccount`, data, {}, 'error')
         next(err)
       })
   } else {
@@ -215,7 +221,8 @@ const _addYouTubeAccount = (data, next) => {
       next()
     })
     .catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'error creating autoposting object'
+      logger.serverLog(message, `${TAG}: _addYouTubeAccount`, data, {}, 'error')
       next(err)
     })
 }
@@ -233,7 +240,8 @@ const _addRSSFeed = (data, next) => {
             next()
           })
           .catch(err => {
-            logger.serverLog(TAG, err, 'error')
+            const message = err || 'error creating autoposting object'
+            logger.serverLog(message, `${TAG}: _addRSSFeed`, data, {}, 'error')
             next(err)
           })
       } else {
@@ -305,7 +313,8 @@ exports.create = function (req, res) {
     _createAutoposting.bind(null, data)
   ], function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to create autoposting. ${JSON.stringify(err)}`)
+      const message = err || 'Failed to create autoposting'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
       // console.log('Failed to create autoposting', err)
       sendErrorResponse(res, 500, '', err)
     } else {
@@ -407,14 +416,15 @@ exports.handleTweetModeration = function (req, res) {
       facebookApiCaller('v3.3', `me/messages?access_token=${postingItem.approvalChannel.pageAccessToken}`, 'post', messageData)
         .then(response => {
           if (response.body.error) {
-            logger.serverLog(TAG, `Failed to send approval message ${JSON.stringify(response.body.error)}`, 'error')
+            const message = response.body.error || 'Failed to send approval message'
+            logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {}, 'error')
           } else {
             sendOpAlert(response.body.error, 'autoposting controller in kiboengage', '', '', '')
-            logger.serverLog(TAG, `Approval message send successfully!`)
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to send approval message ${err}`, 'error')
+          const message = err || 'Failed to send approval message'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
         })
 
       utility.callApi('tweets_queue/query', 'post', query, 'kiboengage')
@@ -440,11 +450,13 @@ exports.handleTweetModeration = function (req, res) {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch tweet queue object ${err}`, 'error')
+          const message = err || 'Failed to fetch tweet queue object'
+          logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch autoposting object ${err}`, 'error')
+      const message = err || 'Failed to fetch autoposting object'
+      logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {}, 'error')
     })
 }
 
@@ -452,9 +464,9 @@ const deleteTweetQueue = (query) => {
   query.purpose = 'deleteOne'
   utility.callApi('tweets_queue', 'delete', query, 'kiboengage')
     .then(deleted => {
-      logger.serverLog(TAG, 'Tweet delete succssfully from queue')
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to delete tweet queue object ${err}`, 'error')
+      const message = err || 'Failed to fetch tweet queue object'
+      logger.serverLog(message, `${TAG}: deleteTweetQueue`, query, {}, 'error')
     })
 }

@@ -40,7 +40,8 @@ exports.index = function (req, res) {
     _getBroadcastPagesData.bind(null, req)
   ], 10, function (err, results) {
     if (err) {
-      logger.serverLog(TAG, `Failed to fetch broadcasts ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch broadcasts'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch broadcasts. See server logs for more info`)
     } else {
       const broadcasts = results[1]
@@ -100,7 +101,6 @@ exports.delete = function (req, res) {
   // unlink file
   fs.unlink(dir + '/' + req.params.id, function (err) {
     if (err) {
-      logger.serverLog(TAG, err, 'error')
       sendErrorResponse(res, 404, '', 'File not found')
     } else {
       sendSuccessResponse(res, 200, 'File deleted successfully')
@@ -242,8 +242,8 @@ exports.download = function (req, res) {
   try {
     res.sendfile(req.params.id, {root: dir})
   } catch (err) {
-    logger.serverLog(TAG,
-      `Inside Download file, err = ${JSON.stringify(err)}`, 'error')
+    const message = err || 'Download file error'
+    logger.serverLog(message, `${TAG}: exports.download`, {id: req.params.id}, {}, 'error')
     sendErrorResponse(res, 404, 'Not Found ' + JSON.stringify(err))
   }
 }
@@ -260,10 +260,6 @@ exports.upload = function (req, res) {
   if (req.files.file.size === 0) {
     sendErrorResponse(res, 400, '', 'No file submitted')
   }
-  logger.serverLog(TAG, `req.files.file ${JSON.stringify(req.files.file.path)}`, 'debug')
-  logger.serverLog(TAG, `req.files.file ${JSON.stringify(req.files.file.name)}`, 'debug')
-  logger.serverLog(TAG, `dir ${JSON.stringify(dir)}`, 'debug')
-  logger.serverLog(TAG, `serverPath ${JSON.stringify(serverPath)}`, 'debug')
 
   let filedata = {
     filePath: req.files.file.path,
@@ -280,8 +276,9 @@ exports.upload = function (req, res) {
     _uploadOnFacebook(null, filedata)
   ], function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to upload file ${JSON.stringify(err)}`)
-      sendErrorResponse(res, 500, '', 'An expexted error occured while uploading the file. See server logs for more info.')
+      const message = err || 'Failed to upload file'
+      logger.serverLog(message, `${TAG}: exports.upload`, {files: req.files}, {}, 'error')
+      sendErrorResponse(res, 500, '', 'An unexpected error occured while uploading the file. See server logs for more info.')
     } else {
       let payload = {
         id: serverPath,
@@ -377,7 +374,6 @@ const _uploadOnFacebook = (filedata, next) => {
         } else if (resp.body.error) {
           next(resp.body.error)
         } else {
-          logger.serverLog(TAG, `file uploaded on Facebook ${JSON.stringify(resp.body)}`)
           filedata.attachment_id = resp.body.attachment_id
           next(null, filedata)
         }
@@ -399,7 +395,8 @@ exports.uploadForTemplate = function (req, res) {
     _uploadOnFacebook(null, filedata)
   ], function (err) {
     if (err) {
-      logger.serverLog(TAG, `Failed to upload file ${JSON.stringify(err)}`)
+      const message = err || 'Failed to upload file'
+      logger.serverLog(message, `${TAG}: exports.uploadForTemplate`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', 'An expexted error occured while uploading the file. See server logs for more info.')
     } else {
       let payload = {
@@ -417,10 +414,8 @@ exports.sendConversation = function (req, res) {
   if (req.body.segmentationPageIds.length !== 1) { // restrict to one page
     sendErrorResponse(res, 400, '', 'Please select only one page')
   } else if (!validateInput.facebookBroadcast(req.body)) { // validate broadcast
-    logger.serverLog(TAG, 'Parameters are missing.', 'error')
     sendErrorResponse(res, 400, '', 'Please fill all the required fields')
   } else {
-    logger.serverLog(TAG, `Send Broadcast endpoint is hit ${JSON.stringify(req.body)}`, 'debug')
     utility.callApi(`pages/query`, 'post', {companyId: req.user.companyId, connected: true, _id: req.body.segmentationPageIds[0]})
       .then(pages => {
         if (pages.length > 0) {
@@ -436,8 +431,8 @@ exports.sendConversation = function (req, res) {
         }
       })
       .catch(err => {
-        logger.serverLog(TAG, err)
-        sendErrorResponse(res, 500, `Failed to fetch page see server logs for more info`)
+        const message = err || 'Failed to fetch page'
+        logger.serverLog(message, `${TAG}: exports.sendConversation`, req.body, {}, 'error')
       })
   }
 }
@@ -445,8 +440,6 @@ exports.sendConversation = function (req, res) {
 const sendBroadcastToSubscribers = (page, payload, req, res) => {
   BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
     .then(broadcast => {
-      logger.serverLog(TAG, `broadcast created ${JSON.stringify(broadcast)}`, 'debug')
-      logger.serverLog(TAG, `creating message blocks ${JSON.stringify(req.body)}`, 'debug')
       createMessageBlocks(req.body.linkedMessages, req.user, broadcast._id, 'broadcast')
         .then(results => {
           // ...
@@ -483,7 +476,8 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                 sendSuccessResponse(res, 200, '', 'Conversation sent successfully!')
               })
               .catch(error => {
-                logger.serverLog(TAG, error)
+                const message = error || 'Failed to fetch lists'
+                logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
                 sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
               })
           } else {
@@ -505,12 +499,14 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                       }
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, err)
+                      const message = err || 'Failed to fetch tag subscribers'
+                      logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
                       sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
                     })
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, err)
+                  const message = err || 'Failed to fetch tags'
+                  logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
                   sendErrorResponse(res, 500, 'Failed to fetch tags')
                 })
             } else {
@@ -520,12 +516,14 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, err)
+          const message = err || 'Failed to create linked message blocks'
+          logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
           sendErrorResponse(res, 500, `Failed to create linked message blocks ${err}`)
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, err)
+      const message = err || 'Failed to create broadcast'
+      logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
       sendErrorResponse(res, 'Failed to create broadcast see server logs for more info')
     })
 }
@@ -534,19 +532,19 @@ const _savePageBroadcast = (data) => {
   BroadcastPageDataLayer.createForBroadcastPage(data)
     .then(savedpagebroadcast => {
       require('../../global/messageStatistics').record('broadcast')
-      logger.serverLog(TAG, 'page broadcast object saved in db')
     })
     .catch(error => {
-      logger.serverLog(`Failed to create page_broadcast ${JSON.stringify(error)}`)
+      const message = error || 'Failed to create page_broadcast'
+      logger.serverLog(message, `${TAG}: _savePageBroadcast`, data, {}, 'error')
     })
 }
 
 const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLength, testBroadcast) => {
   const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
     body = JSON.parse(body)
-    logger.serverLog(TAG, `sendBroadcast Batch send response ${JSON.stringify(body)}`, 'debug')
     if (err) {
-      logger.serverLog(TAG, `Batch send error ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Batch send error'
+      logger.serverLog(message, `${TAG}: sendBroadcast`, body, {}, 'error')
       sendErrorResponse(res, 500, `Failed to send broadcast ${JSON.stringify(err)}`)
     }
 
@@ -567,17 +565,9 @@ const sendBroadcast = (batchMessages, page, res, subscriberNumber, subscribersLe
 
 const sendTestBroadcast = (companyUser, page, payload, req, res) => {
   var testBroadcast = true
-  logger.serverLog(TAG,
-    `companyUser.companyId ${JSON.stringify(companyUser.companyId)}`)
-  logger.serverLog(TAG,
-    `page._id ${JSON.stringify(page._id)}`)
-  logger.serverLog(TAG,
-    `req.user._id ${JSON.stringify(req.user._id)}`)
   PageAdminSubscriptionDataLayer.genericFind({companyId: companyUser.companyId, pageId: page._id, userId: req.user._id})
     .then(subscriptionUser => {
       subscriptionUser = subscriptionUser[0]
-      logger.serverLog(TAG,
-        `subscriptionUser ${JSON.stringify(subscriptionUser)}`)
       let match = {
         companyId: companyUser.companyId,
         pageId: page._id,
@@ -591,16 +581,14 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
           if (subscribers.length > 0) {
             broadcastUtility.getSubscriberInfoFromFB(subscriptionUser.subscriberId, page)
               .then(response => {
-                logger.serverLog(TAG,
-                  `response ${response}`)
                 const subscriber = response.body
                 let fname = subscriber.first_name
                 let lname = subscriber.last_name
                 broadcastUtility.getBatchData(payload, subscriptionUser.subscriberId, page, sendBroadcast, fname, lname, res, null, null, req.body.fbMessageTag, testBroadcast)
               })
               .catch(error => {
-                logger.serverLog(TAG,
-                  `Failed to fetch data from facebook ${JSON.stringify(error)}`)
+                const message = error || 'Failed to fetch data from facebook'
+                logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {}, 'error')
                 sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
               })
           } else {
@@ -608,14 +596,14 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
           }
         })
         .catch(error => {
-          logger.serverLog(TAG,
-            `Failed to fetch subscriber ${JSON.stringify(error)}`)
+          const message = error || 'Failed to fetch subscriber'
+          logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch subscriber ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
-      logger.serverLog(TAG,
-        `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
+      const message = error || 'Failed to fetch adminsubscription'
+      logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
 }
@@ -693,10 +681,12 @@ exports.urlMetaData = (req, res) => {
   if (url) {
     let options = {url}
     ogs(options, (error, results) => {
+      console.log('url metadata error', error)
+      console.log('url metadata results', results)
       if (!error) {
         return res.status(200).json({
           status: 'success',
-          payload: results.data
+          payload: results
         })
       } else {
         return res.status(500).json({
@@ -742,8 +732,8 @@ exports.retrieveSubscribersCount = function (req, res) {
         _getSubscribersCount(req.body, match, res)
       })
       .catch(err => {
-        logger.serverLog(TAG, err)
-        sendErrorResponse(res, 500, 'Failed to fetch list')
+        const message = err || 'Failed to fetch list'
+        logger.serverLog(message, `${TAG}: exports.retrieveSubscribersCount`, req.body, {}, 'error')
       })
   } else if (req.body.segmented) {
     if (req.body.segmentationGender.length > 0) match.gender = {$in: req.body.segmentationGender}
@@ -799,12 +789,10 @@ exports.retrieveSubscribersCount = function (req, res) {
                 _getSubscribersCount(req.body, match, res)
               }
             })
-            .catch(err => {
-              logger.serverLog(TAG, err)
-            })
         })
         .catch(err => {
-          logger.serverLog(TAG, err)
+          const message = err || 'Failed to fetch tags'
+          logger.serverLog(message, `${TAG}: exports.retrieveSubscribersCount`, req.body, {}, 'error')
           sendErrorResponse(res, 500, 'Failed to fetch tags')
         })
     } else {
@@ -865,7 +853,8 @@ const _getSubscribersCount = (body, match, res) => {
             }
           ], 10, function (err, results) {
             if (err) {
-              logger.serverLog(TAG, err)
+              const message = err || 'Failed to get subscribers count'
+              logger.serverLog(message, `${TAG}: _getSubscribersCount`, body, {}, 'error')
               sendErrorResponse(res, 500, 'Failed to get subscribers count')
             } else {
               let payload = {
@@ -878,12 +867,14 @@ const _getSubscribersCount = (body, match, res) => {
           })
         })
         .catch(err => {
-          logger.serverLog(TAG, err)
+          const message = err || 'Failed to get subscribers count'
+          logger.serverLog(message, `${TAG}: _getSubscribersCount`, body, {}, 'error')
           sendErrorResponse(res, 500, 'Failed to get subscribers count')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, err)
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: _getSubscribersCount`, body, {}, 'error')
       sendErrorResponse(res, 500, 'Failed to fetch page')
     })
 }

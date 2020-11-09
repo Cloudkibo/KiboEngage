@@ -33,13 +33,13 @@ module.exports = function (app, httpapp, config) {
   }
 
   server.listen(config.port, () => {
-    logger.serverLog(TAG, `KiboEngage server STARTED on ${
-      config.port} in ${config.env} mode`)
+    logger.serverLog(`KiboEngage server STARTED on ${
+      config.port} in ${config.env} mode`, TAG, {config}, {}, 'info')
   })
 
   httpsServer.listen(config.secure_port, () => {
-    logger.serverLog(TAG, `KiboEngage server STARTED on ${
-      config.secure_port} in ${config.env} mode`)
+    logger.serverLog(`KiboEngage server STARTED on ${
+      config.secure_port} in ${config.env} mode`, TAG, {config}, {}, 'info')
   })
 
   // TODO: we will enable this while doing socket io

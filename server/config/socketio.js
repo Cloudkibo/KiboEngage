@@ -54,18 +54,14 @@ exports.setup = function (socketio) {
 
     // Call onDisconnect.
     socket.on('disconnect', function () {
-      logger.serverLog(TAG, 'On Disconnect Called Server Side')
+      logger.serverLog('Socket Disconnect Called Server Side', TAG, {}, {}, 'info')
       onDisconnect(socket)
-      // logger.serverLog(TAG, `SOCKET ${socket.id} DISCONNECTED AT ${new Date()}`)
     })
 
-    // Call onConnect.
     onConnect(socket)
-    // logger.serverLog(TAG, `SOCKET ${socket.id} CONNECTED at ${socket.connectedAt}`)
   })
 }
 
 exports.sendMessageToClient = function (data) {
-  logger.serverLog(TAG, `Sending message to client using socket.io ${JSON.stringify(data)}`)
   globalSocket.to(data.room_id).emit('message', data.body)
 }

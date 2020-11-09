@@ -79,7 +79,8 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Error from open graph ${err}`)
+          const message = err || 'Error from open graph'
+          logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, tweetId, screenName}, {}, 'error')
         })
     }
   })

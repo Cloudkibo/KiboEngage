@@ -30,7 +30,8 @@ exports.index = function (req, res) {
                       `https://graph.facebook.com/v6.0/${page.pageId}?fields=access_token&access_token=${page.accessToken}`,
                       (err, resp2) => {
                         if (err) {
-                          logger.serverLog(TAG, `ERROR ${JSON.stringify(err)}`, 'error')
+                          const message = err || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                         }
                         if (resp2.body.error) {
                           sendOpAlert(resp2.body.error, 'messenger Ads in KiboEngage', page._id, page.userId, page.companyId)
@@ -42,7 +43,6 @@ exports.index = function (req, res) {
                           method: 'GET'
 
                         }
-                        logger.serverLog(TAG, `options: ${JSON.stringify(options)}`, 'error')
                         needle.get(options.url, options, (error, response) => {
                           if (error) {
                           } else {
@@ -56,18 +56,22 @@ exports.index = function (req, res) {
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to fetch json ad ${err}`, 'error')
+                  const message = err || 'Failed to fetch json ad'
+                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch jsonAd ${err}`, 'error')
+              const message = err || 'Failed to fetch jsonAd'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
             })
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+          const message = err || 'Failed to fetch subscriber'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
     })
 }

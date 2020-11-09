@@ -44,16 +44,16 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                   // checks the age of function using callback
                                   compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                                     if (err) {
-                                      logger.serverLog(TAG, 'inside error')
-                                      logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                      const message = err || 'Internal Server Error on Setup'
+                                      logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                     }
                                     if (isLastMessage) {
-                                      logger.serverLog(TAG, 'inside scheduler suvery send')
                                       needle.post(
                                         `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
                                         data, (err, resp) => {
                                           if (err) {
-                                            logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                            const message = err || 'Internal Server Error on Setup'
+                                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                           }
                                           SurveyPageDataLayer.createForSurveyPage({
                                             pageId: page.pageId,
@@ -66,49 +66,54 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                             .then(saved => {
                                               AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
                                                 .then(result => {
-                                                  logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
                                                 })
                                                 .catch(err => {
-                                                  logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+                                                  const message = err || 'Failed to delete automation queue object'
+                                                  logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                                 })
                                             })
                                             .catch(err => {
-                                              logger.serverLog(TAG, `Failed to create survey page ${JSON.stringify(err)}`)
+                                              const message = err || 'Failed to create survey page'
+                                              logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                             })
                                         })
                                     } else {
-                                      logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                       let timeNow = new Date()
                                       AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                         .then(updated => {
                                         })
                                         .catch(err => {
-                                          logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                          const message = err || 'Failed to update automation queue object'
+                                          logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                         })
                                     }
                                   })
                                 } else {
-                                  logger.serverLog(TAG, 'Survey Questions not found - scheduler')
                                 }
                               })
                               .catch(err => {
-                                logger.serverLog(TAG, `Failed to fetch survey ${JSON.stringify(err)}`)
+                                const message = err || 'Failed to fetch survey'
+                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                               })
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to fetch survey questions ${JSON.stringify(err)}`)
+                            const message = err || 'Failed to fetch survey questions'
+                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
+                        const message = err || 'Failed to fetch user'
+                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                       })
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to fetch page'
+                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch subscriber'
+                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
               })
           } else if (message.type === 'poll') {
           /* Getting the company user who has connected the facebook account */
@@ -128,18 +133,16 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                 // checks the age of function using callback
                                 compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                                   if (err) {
-                                    logger.serverLog(TAG, 'inside error')
-                                    logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                    const message = err || 'Internat Server Error on Setup'
+                                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                   }
                                   if (isLastMessage) {
                                     needle.post(
                                       `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
                                       data, (err, resp) => {
                                         if (err) {
-                                          logger.serverLog(TAG, err)
-                                          logger.serverLog(TAG,
-                                            `Error occured at subscriber :${JSON.stringify(
-                                              subscriber)}`)
+                                          const message = err || 'Error occured at subscriber'
+                                          logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                         }
                                         PollPageDataLayer.createForPollPage({
                                           pageId: page.pageId,
@@ -152,46 +155,52 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                           .then(saved => {
                                             AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
                                               .then(result => {
-                                                logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
                                               })
                                               .catch(err => {
-                                                logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+                                                const message = err || 'Failed to delete automation queue object'
+                                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                               })
                                           })
                                           .catch(err => {
-                                            logger.serverLog(TAG, `Failed to create page poll ${JSON.stringify(err)}`)
+                                            const message = err || 'Failed to create page poll'
+                                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                           })
                                       })
                                   } else {
-                                    logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                     let timeNow = new Date()
                                     AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                       .then(updated => {
                                       })
                                       .catch(err => {
-                                        logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                        const message = err || 'Failed to update automation queue object'
+                                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                       })
                                   }
                                 })
                               })
                               .catch(err => {
-                                logger.serverLog(TAG, `Failed to fetch poll ${JSON.stringify(err)}`)
+                                const message = err || 'Failed to fetch poll'
+                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                               })
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
+                            const message = err || 'Failed to fetch user'
+                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                        const message = err || 'Failed to fetch page'
+                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                       })
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to fetch subscriber'
+                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch autoposting message'
+                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
               })
           } else if (message.type === 'autoposting-wordpress') {
             AutoPostingMessagesDataLayer.findOneAutopostingMessage(message.automatedMessageId, message.companyId)
@@ -209,26 +218,27 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                             // Logic to control the autoposting when last activity is less than 30 minutes
                             compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                               if (err) {
-                                logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                const message = err || 'Internal Server Error on Setup'
+                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                               }
                               if (isLastMessage) {
-                                logger.serverLog(TAG, 'inside autoposting wordpress send')
                                 sendAutopostingMessage(messageData, page, message)
                               } else {
                                 // Logic to add into queue will go here
-                                logger.serverLog(TAG, 'inside adding to autoposting queue')
                                 let timeNow = new Date()
                                 AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                   .then(updated => {
                                   })
                                   .catch(err => {
-                                    logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                    const message = err || 'Failed to update automation queue object'
+                                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                   })
                               }
                             })
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to fetch url object ${JSON.stringify(err)}`)
+                            const message = err || 'Failed to fetch url object'
+                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                           })
                         AutopostingSubscriberMessagesDataLayer.createAutopostingSubscriberMessage({
                           pageId: page.pageId,
@@ -238,22 +248,25 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                           subscriberId: subscriber.senderId
                         })
                           .then(savedSubscriberMsg => {
-                            logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to create autoposting subscriber message ${JSON.stringify(err)}`)
+                            const message = err || 'Failed to create autoposting subscriber message'
+                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                        const message = err || 'Failed to fetch page'
+                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                       })
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to fetch subscriber'
+                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch autoposting message'
+                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
               })
           } else if (message.type === 'autoposting-twitter') {
             let twitterClient = new Twit({
@@ -266,7 +279,8 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
               .then(autopostingMessage => {
                 twitterClient.get('statuses/show/:id', { id: autopostingMessage.message_id }, (err, tweet) => {
                   if (err) {
-                    logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                    const message = err || 'Internal Server Error on Setup'
+                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                   }
                   utility.callApi(`subscribers/${message.subscriberId}`)
                     .then(subscriber => {
@@ -278,20 +292,20 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                             // Logic to control the autoposting when last activity is less than 30 minutes
                             compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                               if (err) {
-                                logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                const message = err || 'Internal Server Error on Setup'
+                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                               }
                               if (isLastMessage) {
-                                logger.serverLog(TAG, 'inside autoposting send')
                                 sendAutopostingMessage(messageData, page, message)
                               } else {
                                 // Logic to add into queue will go here
-                                logger.serverLog(TAG, 'inside adding autoposting-twitter to autoposting queue')
                                 let timeNow = new Date()
                                 AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                   .then(updated => {
                                   })
                                   .catch(err => {
-                                    logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                    const message = err || 'Failed to update automation queue object'
+                                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                   })
                               }
                             })
@@ -310,27 +324,28 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                 // Logic to control the autoposting when last activity is less than 30 minutes
                                 compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                                   if (err) {
-                                    logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                    const message = err || 'Internal Server Error on Setup'
+                                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                   }
 
                                   if (isLastMessage) {
-                                    logger.serverLog(TAG, 'inside autoposting autoposting twitter send')
                                     sendAutopostingMessage(messageData, page, message)
                                   } else {
                                     // Logic to add into queue will go here
-                                    logger.serverLog(TAG, 'inside adding to autoposting queue')
                                     let timeNow = new Date()
                                     AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                       .then(updated => {
                                       })
                                       .catch(err => {
-                                        logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                        const message = err || 'Failed to update automation queue object'
+                                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                       })
                                   }
                                 })
                               })
                               .catch(err => {
-                                logger.serverLog(TAG, `Failed to create url ovject ${JSON.stringify(err)}`)
+                                const message = err || 'Failed to create url object'
+                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                               })
                           }
                           AutopostingSubscriberMessagesDataLayer.createAutopostingSubscriberMessage({
@@ -341,18 +356,20 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                             subscriberId: subscriber.senderId
                           })
                             .then(savedSubscriberMsg => {
-                              logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                             })
                             .catch(err => {
-                              logger.serverLog(TAG, `Failed to create autoposting subscriber message ${JSON.stringify(err)}`)
+                              const message = err || 'Failed to create autoposting subscriber message'
+                              logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                             })
                         })
                         .catch(err => {
-                          logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                          const message = err || 'Failed to fetch page'
+                          logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                         })
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `Failed to fetch subsriber ${JSON.stringify(err)}`)
+                      const message = err || 'Failed to fetch subscriber'
+                      logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                     })
                 })
               })
@@ -367,7 +384,8 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                           `https://graph.facebook.com/v2.6/${message.automatedMessageId}?access_token=${page.accessToken}&fields=id,message,picture,type,attachments,link,from`,
                           data, (err, post) => {
                             if (err) {
-                              logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                              const message = err || 'Internal Server Error on Setup'
+                              logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                             }
                             if (post.type !== 'status') {
                               URLDataLayer.createURLObject({
@@ -384,47 +402,48 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                   // Logic to control the autoposting when last activity is less than 30 minutes
                                   compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                                     if (err) {
-                                      logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                      const message = err || 'Internal Server Error on Setup'
+                                      logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                     }
 
                                     if (isLastMessage) {
-                                      logger.serverLog(TAG, 'inside autoposting facebook send')
                                       sendAutopostingMessage(messageData, page, message)
                                     } else {
                                       // Logic to add into queue will go here
-                                      logger.serverLog(TAG, 'inside adding to autoposting queue')
                                       let timeNow = new Date()
                                       AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                         .then(updated => {
                                         })
                                         .catch(err => {
-                                          logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                          const message = err || 'Failed to update automation queue object'
+                                          logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                         })
                                     }
                                   })
                                 })
                                 .catch(err => {
-                                  logger.serverLog(TAG, `Failed to create url ovject ${JSON.stringify(err)}`)
+                                  const message = err || 'Failed to create url object'
+                                  logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                 })
                             } else {
                               let messageData = LogicLayer.prepareDataForFacebook(post, subscriber)
                               // Logic to control the autoposting when last activity is less than 30 minutes
                               compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                                 if (err) {
-                                  logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                  const message = err || 'Internal Server Error on Setup'
+                                  logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                 }
                                 if (isLastMessage) {
-                                  logger.serverLog(TAG, 'inside autoposting facebook send')
                                   sendAutopostingMessage(messageData, page, message)
                                 } else {
                                   // Logic to add into queue will go here
-                                  logger.serverLog(TAG, 'inside adding to autoposting queue')
                                   let timeNow = new Date()
                                   AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                     .then(updated => {
                                     })
                                     .catch(err => {
-                                      logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                      const message = err || 'Failed to update automation queue object'
+                                      logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                     })
                                 }
                               })
@@ -438,22 +457,25 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                           subscriberId: subscriber.senderId
                         })
                           .then(savedSubscriberMsg => {
-                            logger.serverLog(TAG, `autoposting subsriber message saved for subscriber id ${subscriber.senderId}`)
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to create autoposting subscriber message ${JSON.stringify(err)}`)
+                            const message = err || 'Failed to create autoposting subscriber message'
+                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                        const message = err || 'Failed to fetch page'
+                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                       })
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to fetch subscriber'
+                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch autoposting message ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch autoposting message'
+                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
               })
           } else if (message.type === 'broadcast') {
             utility.callApi(`subscribers/${message.subscriberId}`)
@@ -470,8 +492,8 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                             // checks the age of function using callback
                             compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                               if (err) {
-                                logger.serverLog(TAG, 'inside error')
-                                logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                const message = err || 'Internal Server Error on Setup'
+                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                               }
                               if (isLastMessage) {
                                 for (let i = 0; i < broadcastMessages.length; i++) {
@@ -480,10 +502,8 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                     `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
                                     data, (err, resp) => {
                                       if (err) {
-                                        logger.serverLog(TAG, err)
-                                        logger.serverLog(TAG,
-                                          `Error occured at subscriber :${JSON.stringify(
-                                            subscriber)}`)
+                                        const message = err || 'Error occured at subscriber'
+                                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                       }
                                       BroadcastPageDataLayer.createForBroadcastPage({
                                         pageId: page.pageId,
@@ -496,43 +516,48 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                         .then(saved => {
                                           AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
                                             .then(result => {
-                                              logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
                                             })
                                             .catch(err => {
-                                              logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+                                              const message = err || 'Failed to delete automation queue object'
+                                              logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                             })
                                         })
                                         .catch(err => {
-                                          logger.serverLog(TAG, `Failed to create page broadcast ${JSON.stringify(err)}`)
+                                          const message = err || 'Failed to create page broadcast'
+                                          logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                         })
                                     })
                                 }
                               } else {
-                                logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                 let timeNow = new Date()
                                 AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                   .then(updated => {
                                   })
                                   .catch(err => {
-                                    logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                    const message = err || 'Failed to update automation queue object'
+                                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                   })
                               }
                             })
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to fetch broadcast ${JSON.stringify(err)}`)
+                            const message = err || 'Failed to fetch broadcast'
+                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
+                        const message = err || 'Failed to fetch user'
+                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                       })
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to fetch page'
+                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch subscriber'
+                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
               })
           } else if (message.type === 'message-sequencing') {
             /* Getting the company user who has connected the facebook account */
@@ -550,8 +575,8 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                             // checks the age of function using callback
                             compUtility.checkLastMessageAge(subscriber.senderId, (err, isLastMessage) => {
                               if (err) {
-                                logger.serverLog(TAG, 'inside error')
-                                logger.serverLog(TAG, 'Internal Server Error on Setup ' + JSON.stringify(err))
+                                const message = err || 'Internal Server Error on Setup'
+                                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                               }
                               if (isLastMessage) {
                                 for (let i = 0; i < broadcastMessages.length; i++) {
@@ -560,10 +585,8 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                     `https://graph.facebook.com/v2.6/me/messages?access_token=${page.accessToken}`,
                                     data, (err, resp) => {
                                       if (err) {
-                                        logger.serverLog(TAG, err)
-                                        logger.serverLog(TAG,
-                                          `Error occured at subscriber :${JSON.stringify(
-                                            subscriber)}`)
+                                        const message = err || 'Error occured at subscriber'
+                                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                       }
                                       SequenceMessagingDataLayer.createForSequenceSubscribersMessages({
                                         pageId: page.pageId,
@@ -576,43 +599,48 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
                                         .then(saved => {
                                           AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
                                             .then(result => {
-                                              logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
                                             })
                                             .catch(err => {
-                                              logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+                                              const message = err || 'Failed to delete automation queue object'
+                                              logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                             })
                                         })
                                         .catch(err => {
-                                          logger.serverLog(TAG, `Failed to create page broadcast ${JSON.stringify(err)}`)
+                                          const message = err || 'Failed to create page broadcast'
+                                          logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                         })
                                     })
                                 }
                               } else {
-                                logger.serverLog(TAG, 'agent was engaged just 30 minutes ago ')
                                 let timeNow = new Date()
                                 AutomationQueueDataLayer.updateAutomationQueueObject(message._id, {scheduledTime: timeNow.setMinutes(timeNow.getMinutes() + 30)})
                                   .then(updated => {
                                   })
                                   .catch(err => {
-                                    logger.serverLog(TAG, `Failed to update automation queue object ${JSON.stringify(err)}`)
+                                    const message = err || 'Failed to update automation queue object'
+                                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                                   })
                               }
                             })
                           })
                           .catch(err => {
-                            logger.serverLog(TAG, `Failed to fetch sequence message ${JSON.stringify(err)}`)
+                            const message = err || 'Failed to fetch sequence message'
+                            logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                           })
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to fetch user ${JSON.stringify(err)}`)
+                        const message = err || 'Failed to fetch user'
+                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                       })
                   })
                   .catch(err => {
-                    logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`)
+                    const message = err || 'Failed to fetch page'
+                    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                   })
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch subscriber ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch subscriber'
+                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
               })
           } else if (message.type === 'bot') {
             utility.callApi(`bots/${message.automatedMessageId}`, 'get', {}, 'chat')
@@ -624,21 +652,22 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
 
                   bot.save((err) => {
                     if (err) {
-                      logger.serverLog(TAG, err)
+                      const message = err || 'error'
+                      logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                     }
-                    logger.serverLog(TAG, 'removed sub-bot from queue')
                     AutomationQueueDataLayer.deleteAutomationQueueObject(message._id)
                       .then(result => {
-                        logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
                       })
                       .catch(err => {
-                        logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+                        const message = err || 'Failed to delete automation queue object'
+                        logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
                       })
                   })
                 }
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch bot ${JSON.stringify(err)}`)
+                const message = err || 'Failed to fetch bot'
+                logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, data, {}, 'error')
               })
           }
         }
@@ -646,7 +675,8 @@ AutomationQueueDataLayer.findAllAutomationQueueObjects()
     }
   })
   .catch(err => {
-    logger.serverLog(TAG, `Failed to fetch automation queues ${JSON.stringify(err)}`)
+    const message = err || 'Failed to fetch automation queues'
+    logger.serverLog(message, `${TAG}: AutomationQueueDataLayer.findAllAutomationQueueObjects`, {}, {}, 'error')
   })
 
 function sendAutopostingMessage (messageData, page, savedMsg) {
@@ -660,31 +690,21 @@ function sendAutopostingMessage (messageData, page, savedMsg) {
     },
     function (err, res) {
       if (err) {
-        logger.serverLog(TAG,
-          `At send wordpress broadcast ${JSON.stringify(
-            err)}`)
+        const message = err || 'At send wordpress broadcast'
+        logger.serverLog(message, `${TAG}: sendAutopostingMessage`, messageData, {}, 'error')
       } else {
         if (res.statusCode !== 200) {
-          logger.serverLog(TAG,
-            `At send wordpress broadcast response ${JSON.stringify(
-              res.body.error)}`)
+          const message = res.body.error || 'At send wordpress broadcast response'
+          logger.serverLog(message, `${TAG}: sendAutopostingMessage`, messageData, {}, 'error')
         } else {
           AutomationQueueDataLayer.deleteAutomationQueueObject(savedMsg._id)
             .then(result => {
-              logger.serverLog(TAG, 'successfully deleted ' + JSON.stringify(result))
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to delete automation queue object ${JSON.stringify(err)}`)
+              const message = err || 'Failed to delete automation queue object'
+              logger.serverLog(message, `${TAG}: sendAutopostingMessage`, messageData, {}, 'error')
             })
-          // logger.serverLog(TAG,
-          //   `At send tweet broadcast response ${JSON.stringify(
-          //   res.body.message_id)}`, true)
         }
       }
     })
-  // AutopostingMessages.update({_id: savedMsg._id}, {payload: messageData}, (err, updated) => {
-  //   if (err) {
-  //     logger.serverLog(TAG, `ERROR at updating AutopostingMessages ${JSON.stringify(err)}`)
-  //   }
-  // })
 }

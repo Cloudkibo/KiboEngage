@@ -33,23 +33,28 @@ exports.assignTag = function (req, res) {
                       console.log('tag assigned', newRecord)
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `Failed to assign tag ${JSON.stringify(err)}`, 'error')
+                      const message = err || 'Failed to assign tag'
+                      logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
                     })
                 }
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to tag subscriber ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to tag subscriber'
+                logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
               })
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+          const message = err || 'Failed to fetch subscriber'
+          logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
     })
 }
+
 exports.unAssignTag = function (req, res) {
   res.status(200).json({
     status: 'success',
@@ -78,20 +83,24 @@ exports.unAssignTag = function (req, res) {
                     .then(newRecord => {
                     })
                     .catch(err => {
-                      logger.serverLog(TAG, `Failed to assign tag ${JSON.stringify(err)}`, 'error')
+                      const message = err || 'Failed to unassign tag'
+                      logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
                     })
                 }
               })
               .catch(err => {
-                logger.serverLog(TAG, `Failed to fetch subscriber tag ${JSON.stringify(err)}`, 'error')
+                const message = err || 'Failed to fetch subscriber tag'
+                logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
               })
           }
         })
         .catch(err => {
-          logger.serverLog(TAG, `Failed to fetch subscriber ${err}`, 'error')
+          const message = err || 'Failed to fetch subscriber'
+          logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
         })
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch page ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch page'
+      logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
     })
 }

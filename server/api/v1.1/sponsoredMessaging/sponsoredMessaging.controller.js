@@ -162,19 +162,18 @@ function _updateClickCountId (payload, sponsoredMessageID) {
             .then(URLObject => {
               let module = URLObject.module
               module.id = sponsoredMessageID
-              logger.serverLog(TAG, `URLDataLayer module ${JSON.stringify(module)}`, 'debug')
               URLObject.module = module
-              logger.serverLog(TAG, `URLObject updated module ${JSON.stringify(URLObject)}`, 'debug')
               URLDataLayer.updateOneURL(URLObject._id, {'module': module})
                 .then(savedurl => {
-                  logger.serverLog(TAG, `Updated URLObject ${JSON.stringify(savedurl)}`, 'debug')
                 })
                 .catch(err => {
-                  logger.serverLog(TAG, `Failed to update url ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to update url'
+                  logger.serverLog(message, `${TAG}: _updateClickCountId`, {payload, sponsoredMessageID}, {}, 'error')
                 })
             })
             .catch(err => {
-              logger.serverLog(TAG, `Failed to fetch URL object ${err}`, 'error')
+              const message = err || 'Failed to fetch URL object'
+              logger.serverLog(message, `${TAG}: _updateClickCountId`, {payload, sponsoredMessageID}, {}, 'error')
             })
         }
       })
@@ -189,7 +188,8 @@ exports.send = function (req, res) {
   }
   logiclayer.prepareAdCreativePayload(req.body, facebookInfo.fbToken, (err, creativePayload) => {
     if (err) {
-      return logger.serverLog(TAG, `Error in preparing Ad Creatives ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Error in preparing Ad Creatives'
+      logger.serverLog(message, `${TAG}: _updateClickCountId`, req.body, {}, 'error')
     }
     facebookApiCaller('v6.0', `${req.body.adAccountId}/adcreatives`, 'post', creativePayload)
       .then(adCreativeResp => {
@@ -234,7 +234,8 @@ exports.send = function (req, res) {
         }
       })
       .catch(err => {
-        logger.serverLog(TAG, `error on fb call in send ad creatives  ${err}`)
+        const message = err || 'error on fb call in send ad creatives'
+        logger.serverLog(message, `${TAG}: _updateClickCountId`, req.body, {}, 'error')
         return sendErrorResponse(res, 500, err)
       })
   })
@@ -243,10 +244,10 @@ exports.send = function (req, res) {
 function _storeAdAndCreativeIds (queryObject, dataToUpdate) {
   datalayer.genericUpdateSponsoredMessaging(queryObject, dataToUpdate)
     .then(sponsoredMessage => {
-      logger.serverLog(TAG, `Updated sponsored messaging`)
     })
     .catch(error => {
-      logger.serverLog(TAG, `Error on updating sponsored messaging ${JSON.stringify(error)}`)
+      const message = error || 'Error on updating sponsored messaging'
+      logger.serverLog(message, `${TAG}: _storeAdAndCreativeIds`, {queryObject, dataToUpdate}, {}, 'error')
     })
 }
 
@@ -317,27 +318,21 @@ exports.sendInSandbox = function (req, res) {
             } else {
               let campaignId = campaignResp.body.id
               let adsetPayload = logiclayer.prepareAdsetPayload(sponsoredMessage, campaignId, accesstoken)
-              logger.serverLog(TAG, `adsetPayload ${adsetPayload}`)
               facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adsets`, 'post', adsetPayload)
                 .then(adsetResp => {
                   if (adsetResp.body.error) {
                     sendOpAlert(adsetResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
                     return sendErrorResponse(res, 500, {message: adsetResp.body.error.error_user_msg})
                   } else {
-                    logger.serverLog(TAG, `adsetsResponse ${JSON.stringify(adsetResp.body)}`)
                     let adsetid = adsetResp.body.id
-                    logger.serverLog(TAG, `adsetid ${adsetid}`)
                     let creativePayload = logiclayer.prepareadCreativePayload(sponsoredMessage, accesstoken)
-                    logger.serverLog(TAG, `creativePayload ${creativePayload}`)
                     facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/adcreatives`, 'post', creativePayload)
                       .then(adCreativeResp => {
                         if (adCreativeResp.body.error) {
                           sendOpAlert(adCreativeResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
                           return sendErrorResponse(res, 500, {message: adCreativeResp.body.error.error_user_msg})
                         } else {
-                          logger.serverLog(TAG, `adcreatives ${JSON.stringify(adCreativeResp.body)}`)
                           let messageCreativeId = adCreativeResp.body.id
-                          logger.serverLog(TAG, `messageCreativeId ${messageCreativeId}`)
                           let adPayload = logiclayer.prepareadAdPayload(sponsoredMessage, adsetid, messageCreativeId, accesstoken)
                           facebookApiCaller('v4.0', `act_${req.body.ad_account_id}/ads`, 'post', adPayload)
                             .then(adsResp => {
@@ -345,9 +340,7 @@ exports.sendInSandbox = function (req, res) {
                                 sendOpAlert(adsResp.body.error, 'sponsored messaging controller in kiboengage', '', req.user._id, req.user.companyId)
                                 return sendErrorResponse(res, 500, {message: adsResp.body.error.error_user_msg})
                               } else {
-                                logger.serverLog(TAG, `ads ${JSON.stringify(adsResp.body)}`)
                                 let adId = adsResp.body.id
-                                logger.serverLog(TAG, `ad_id ${adId}`)
                                 // Now since we have got respone from facebook, we shall update our database
                                 let updatePayload = logiclayer.prepareUpdatePayload({ campaign_id: campaignId, ad_id: adId, ad_set_payload: { adset_id: adsetid }, messageCreativeId: messageCreativeId })
                                 utility.callApi(`sponsoredMessaging/${id}`, 'post', updatePayload)

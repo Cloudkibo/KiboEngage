@@ -4,7 +4,6 @@ const TAG = 'scripts/whatsAppMessageStatus.js'
 const async = require('async')
 
 exports.runScript = function () {
-
   updateAndDeleteMessages(0, 25, 'seen')
   updateAndDeleteMessages(0, 25, 'delivered')
 }
@@ -33,7 +32,8 @@ const updateAndDeleteMessages = function (skipRecords, LimitRecords, status) {
       } // else we don't need to do anything
     })
     .catch(err => {
-      logger.serverLog(TAG, `Failed to fetch queues ${JSON.stringify(err)}`, 'error')
+      const message = err || 'Failed to fetch queues'
+      logger.serverLog(message, `${TAG}: exports.runScript`, {}, {}, 'error')
     })
 }
 
@@ -82,7 +82,7 @@ const _updateCount = (messages, status) => {
       .then(results => {
         resolve('success')
       })
-  }) 
+  })
 }
 function deleteFromQueue (messageId, status, next) {
   utility.callApi(
@@ -95,7 +95,8 @@ function deleteFromQueue (messageId, status, next) {
     })
     .catch(err => {
       next(err)
-      logger.serverLog(TAG, `Failed to delete whatsapp message from tweets queue ${err}`, 'error')
+      const message = err || 'Failed to delete whatsapp message from tweets queue'
+      logger.serverLog(message, `${TAG}: deleteFromQueue`, {messageId, status}, {}, 'error')
     })
 }
 

@@ -11,7 +11,6 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
   let interval = setInterval(() => {
     if (current === messageData.length) {
       clearInterval(interval)
-      logger.serverLog(TAG, `Twitter autoposting sent successfully!`)
     } else {
       if (send) {
         send = false
@@ -52,7 +51,8 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                           let dir = path.resolve(__dirname, '../../../../broadcastFiles/userfiles')
                           fs.unlink(dir + '/' + filename, function (err) {
                             if (err) {
-                              logger.serverLog(TAG, err, 'error')
+                              const message = err || 'Internal Server Error'
+                              logger.serverLog(message, `${TAG}: exports.sentUsinInterval`, {messageData, user: req.user}, {}, 'error')
                             } else {
                               console.log('unlinked')
                             }
@@ -63,51 +63,45 @@ exports.sentUsinInterval = function (messageData, page, postingItem, subscribers
                             utility.callApi('autoposting_messages', 'put', {purpose: 'updateOne', match: {_id: postingItem._id}, updated: {messageCreativeId, broadcastFbId: response.broadcast_id, APIName: 'broadcast_api'}}, 'kiboengage')
                               .then(updated => {
                                 require('../../global/messageStatistics').record('autoposting')
-                                logger.serverLog(TAG, 'AUTPOSTING RECORDING FOR PERFORMANCE')
-                                logger.serverLog(TAG, updated)
-                                logger.serverLog(TAG, JSON.stringify(postingItem))
                                 let autopostingType = postingItem.subscriptionType
-                                logger.serverLog(TAG, autopostingType)
                                 require('../../global/messageStatistics').record(`autoposting${autopostingType}`)
                                 current++
                                 send = true
                               })
                               .catch(err => {
-                                logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`)
+                                const message = err || 'Failed to send broadcast'
+                                logger.serverLog(message, `${TAG}: exports.sentUsinInterval`, {user: req.user, messageData}, {}, 'error')
                                 current++
                                 send = true
                               })
                           } else {
-                            logger.serverLog(`user domain email in sentUsinInterval function ${req.user.domain_email}`, 'error')
-                            logger.serverLog(`user name in sentUsinInterval function ${req.user.name}`, 'error')
-                            logger.serverLog(`Failed to send broadcast ${JSON.stringify(response.description)}`, 'error')
                             current++
                             send = true
                           }
                         }
                       })
                       .catch(err => {
-                        logger.serverLog(`user domain email in sentUsinInterval function ${req.user.domain_email}`, 'info')
-                        logger.serverLog(`user name in sentUsinInterval function ${req.user.name}`, 'info')
-                        logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
+                        const message = err || 'Failed to send broadcast'
+                        logger.serverLog(message, `${TAG}: exports.sentUsinInterval`, {user: req.user, messageData}, {}, 'error')
                         current++
                         send = true
                       })
                   }
                 })
                 .catch(err => {
-                  logger.serverLog(`Failed to find tags ${JSON.stringify(err)}`, 'error')
+                  const message = err || 'Failed to find tags'
+                  logger.serverLog(message, `${TAG}: exports.sentUsinInterval`, {user: req.user, messageData}, {}, 'error')
                   current++
                   send = true
                 })
             } else {
-              logger.serverLog(`Failed to send broadcast ${JSON.stringify(messageCreative.description)}`, 'error')
               current++
               send = true
             }
           })
           .catch(err => {
-            logger.serverLog(`Failed to send broadcast ${JSON.stringify(err)}`, 'error')
+            const message = err || 'Failed to send broadcast'
+            logger.serverLog(message, `${TAG}: exports.sentUsinInterval`, {user: req.user, messageData}, {}, 'error')
             current++
             send = true
           })

@@ -3,7 +3,6 @@ const logger = require('../../../components/logger')
 const TAG = 'api/v1/messengerEvents/profilePic.controller'
 
 exports.updateProfilePic = function (req, res) {
-  logger.serverLog(TAG, `in updateProfilePic ${JSON.stringify(req.body)}`)
   callApi(`subscribers/update`, 'put', {query: {senderId: req.body.senderId}, newPayload: {profilePic: req.body.profilePic}, options: {}})
     .then(updated => {
       return res.status(200).json({
