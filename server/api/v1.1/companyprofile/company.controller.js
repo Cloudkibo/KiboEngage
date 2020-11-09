@@ -290,7 +290,7 @@ exports.updatePlatformWhatsApp = function (req, res) {
   ]
   utility.callApi(`companyprofile/aggregate`, 'post', query) // fetch company user
     .then(companyprofile => {
-      if (!companyprofile[0]) {
+      if (!companyprofile[0] || req.body.businessNumber === '+14155238886') {
         let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
         async.series([
           _verifyCredentials.bind(null, data),
