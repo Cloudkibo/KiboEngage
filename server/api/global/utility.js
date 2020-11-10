@@ -169,7 +169,6 @@ const passwordChangeEmailAlert = function (userId, userEmail) {
       logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {userId}, {}, 'error')
     })
 }
-
 const getMailTransporter = function () {
   let transporter = nodemailer.createTransport({
     service: config.nodemailer.service,
