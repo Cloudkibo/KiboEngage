@@ -20,21 +20,14 @@ const httpApp = express()
 
 const appObj = (config.env === 'production' || config.env === 'staging') ? app : httpApp
 
-/* if (config.env === 'production' || config.env === 'staging') {
-  const Raven = require('raven')
-  Raven.config('https://6c7958e0570f455381d6f17122fbd117:d2041f4406ff4b3cb51290d9b8661a7d@sentry.io/292307', {
+if (config.env === 'production' || config.env === 'staging') {
+  Sentry.init({
+    dsn: 'https://6c7958e0570f455381d6f17122fbd117@o132281.ingest.sentry.io/292307',
+    release: 'KiboEngage@1.0.0',
     environment: config.env,
-    parseUser: ['name', 'email', 'domain', 'role', 'emailVerified']
-  }).install()
-  appObj.use(Raven.requestHandler())
-} */
-
-Sentry.init({
-  dsn: 'https://6c7958e0570f455381d6f17122fbd117@o132281.ingest.sentry.io/292307',
-  release: 'KiboEngage@1.0.0',
-  environment: config.env,
-  serverName: 'KiboEngage'
-})
+    serverName: 'KiboEngage'
+  })
+} 
 
 cron.schedule('*/5 * * * * *', SequenceScript.runSequenceMessageQueueScript) // after every five seconds
 cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midnight
