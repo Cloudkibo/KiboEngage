@@ -28,13 +28,14 @@ const appObj = (config.env === 'production' || config.env === 'staging') ? app :
   }).install()
   appObj.use(Raven.requestHandler())
 } */
-
-Sentry.init({
-  dsn: 'https://6c7958e0570f455381d6f17122fbd117@o132281.ingest.sentry.io/292307',
-  release: 'KiboEngage@1.0.0',
-  environment: config.env,
-  serverName: 'KiboEngage'
-})
+if (config.env === 'production' || config.env === 'staging') {
+  Sentry.init({
+    dsn: 'https://6c7958e0570f455381d6f17122fbd117@o132281.ingest.sentry.io/292307',
+    release: 'KiboEngage@1.0.0',
+    environment: config.env,
+    serverName: 'KiboEngage'
+  })
+}
 
 cron.schedule('*/5 * * * * *', SequenceScript.runSequenceMessageQueueScript) // after every five seconds
 cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midnight
