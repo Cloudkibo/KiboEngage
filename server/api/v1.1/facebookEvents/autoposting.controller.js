@@ -118,13 +118,14 @@ const _countUpdate = (subsFindCriteria, messageId) => {
   subscriberCountCriteria.push({$group: {_id: null, count: {$sum: 1}}})
   utility.callApi(`subscribers/aggregate`, 'post', subscriberCountCriteria)
     .then(response => {
-      console.log('response.count', response[0].count)
-      AutopostingMessagesDataLayer.findOneAutopostingMessageAndUpdate({message_id: messageId}, {sent: response[0].count}, {})
-        .then(Autopostingresponse => {
-        }).catch(err => {
-          const message = err || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: _countUpdate`, {subsFindCriteria, messageId}, {}, 'error')
-        })
+      if (response.length > 0) {
+        AutopostingMessagesDataLayer.findOneAutopostingMessageAndUpdate({message_id: messageId}, {sent: response[0].count}, {})
+          .then(Autopostingresponse => {
+          }).catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: _countUpdate`, {subsFindCriteria, messageId}, {}, 'error')
+          })
+      }
     }).catch(err => {
       const message = err || 'Internal Server Error'
       logger.serverLog(message, `${TAG}: _countUpdate`, {subsFindCriteria, messageId}, {}, 'error')
