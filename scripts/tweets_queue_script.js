@@ -13,7 +13,6 @@ exports.deleteFromQueue = function () {
               'tweets_queue',
               'delete',
               {purpose: 'deleteOne', match: {_id: tweet._id}},
-              '',
               'kiboengage'
             ).then(deleted => {
             })
