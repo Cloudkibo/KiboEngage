@@ -2,11 +2,11 @@ const config = require('./config/environment/index')
 const { callApi } = require('./api/v1.1/utility')
 const logger = require('./components/logger')
 const TAG = 'LandingPage'
-const Raven = require('raven')
 const path = require('path')
 const multiparty = require('connect-multiparty')
 const multipartyMiddleware = multiparty()
 const fs = require('fs')
+const Sentry = require('@sentry/node')
 
 module.exports = function (app) {
   const env = app.get('env')
@@ -206,6 +206,7 @@ module.exports = function (app) {
   })
 
   if (env === 'production' || env === 'staging') {
-    app.use(Raven.errorHandler())
+    app.use(Sentry.Handlers.errorHandler())
+    app.use(Sentry.Handlers.requestHandler())
   }
 }
