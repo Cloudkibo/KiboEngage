@@ -3,7 +3,7 @@ const utility = require('../server/api/v1.1/utility')
 const TAG = 'scripts/monodb_script.js'
 
 exports.deleteFromQueue = function () {
-  utility.callApi('tweets_queue', 'get', {}, '', 'kiboengage')
+  utility.callApi('tweets_queue', 'get', {}, 'kiboengage')
     .then(tweets => {
       if (tweets.length > 0) {
         for (let i = 0; i < tweets.length; i++) {
