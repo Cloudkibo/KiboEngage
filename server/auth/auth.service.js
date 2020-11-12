@@ -318,21 +318,25 @@ const _updateUserPlatform = (req, res) => {
       logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
     })
 }
-/**
- * Set token cookie directly for oAuth strategies
-*/
+
+function fbConnectError (req, res) {
+  const description = req.query && req.query.description ? req.query.description : 'Something went wrong, please try again.'
+  return res.render('error', {status: 'failed', description: description})
+}
+
 function fbConnectDone (req, res) {
   let fbPayload = req.user
-  console.log('fbPayload', fbPayload)
   let userid = req.cookies.userid
   if (!req.user) {
-    res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
+    const description = encodeURIComponent('Something went wrong, please try again.')
+    res.redirect(`/auth/facebook/error?description=${description}`)
   }
   let token = `Bearer ${req.cookies.token}`
   apiCaller.callApi('user', 'get', {}, 'accounts', token)
     .then(user => {
       if (user.facebookInfo && user.facebookInfo.fbId.toString() !== fbPayload.fbId.toString()) {
-        res.render('error', {status: 'failed', description: 'Different Facebook Account Detected. Please use the same account that you connected before.'})
+        const description = encodeURIComponent('Different Facebook Account Detected. Please use the same account that you connected before.')
+        res.redirect(`/auth/facebook/error?description=${description}`)
       } else {
         apiCaller.callApi(`user/update`, 'post', {query: {_id: userid}, newPayload: {facebookInfo: fbPayload, connectFacebook: true, showIntegrations: false, platform: 'messenger'}, options: {}}, 'accounts', token)
           .then(updated => {
@@ -340,7 +344,8 @@ function fbConnectDone (req, res) {
             apiCaller.callApi(`user/query`, 'post', {_id: userid}, 'accounts', token)
               .then(user => {
                 if (!user) {
-                  res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
+                  const description = encodeURIComponent('Something went wrong, please try again.')
+                  res.redirect(`/auth/facebook/error?description=${description}`)
                 }
                 req.user = user[0]
                 // set permissionsRevoked to false to indicate that permissions were regranted
@@ -350,8 +355,9 @@ function fbConnectDone (req, res) {
                     })
                     .catch(err => {
                       const message = err || 'Internal server error'
-                      logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
-                      res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
+                      logger.serverLog(message, `${TAG}: exports.fbConnectDone`, fbPayload, {}, 'error')
+                      const description = encodeURIComponent('Something went wrong, please try again.')
+                      res.redirect(`/auth/facebook/error?description=${description}`)
                     })
                 }
                 fetchPages(`https://graph.facebook.com/v6.0/${
@@ -362,23 +368,27 @@ function fbConnectDone (req, res) {
               })
               .catch(err => {
                 const message = err || 'Internal server error'
-                logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
-                res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
+                logger.serverLog(message, `${TAG}: exports.fbConnectDone`, fbPayload, {}, 'error')
+                const description = encodeURIComponent('Something went wrong, please try again.')
+                res.redirect(`/auth/facebook/error?description=${description}`)
               })
           })
           .catch(err => {
             const message = err || 'Internal server error'
-            logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
-            res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
+            logger.serverLog(message, `${TAG}: exports.fbConnectDone`, fbPayload, {}, 'error')
+            const description = encodeURIComponent('Something went wrong, please try again.')
+            res.redirect(`/auth/facebook/error?description=${description}`)
           })
       }
     })
     .catch(err => {
       const message = err || 'Internal server error'
-      logger.serverLog(message, `${TAG}: fbConnectDone`, req.body, {}, 'error')
-      res.render('error', {status: 'failed', description: 'Something went wrong, please try again.'})
+      logger.serverLog(message, `${TAG}: exports.fbConnectDone`, fbPayload, {}, 'error')
+      const description = encodeURIComponent('Something went wrong, please try again.')
+      res.redirect(`/auth/facebook/error?description=${description}`)
     })
 }
+
 // eslint-disable-next-line no-unused-vars
 function isAuthorizedWebHookTrigger () {
   return compose().use((req, res, next) => {
@@ -414,6 +424,7 @@ exports.doesPlanPermitsThisAction = doesPlanPermitsThisAction
 exports.doesRolePermitsThisAction = doesRolePermitsThisAction
 exports.isUserAllowedToPerformThisAction = isUserAllowedToPerformThisAction
 exports.fbConnectDone = fbConnectDone
+exports.fbConnectError = fbConnectError
 exports.fetchPages = fetchPages
 exports.isKiboDash = isKiboDash
 exports.isItWebhookServer = isItWebhookServer
