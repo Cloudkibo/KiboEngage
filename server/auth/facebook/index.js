@@ -10,23 +10,24 @@ const auth = require('../auth.service')
 
 const router = express.Router()
 
-router
-  .get('/', passport.authenticate('facebook', {
-    scope: ['email', 'public_profile', 'pages_show_list', 'pages_messaging_subscriptions', 'manage_pages', 'pages_messaging', 'pages_messaging_phone_number', 'publish_pages', 'ads_read', 'ads_management'], //, 'read_page_mailboxes'],
-    failureRedirect: '/',
-    session: false
-  }))
+router.get('/', passport.authenticate('facebook', {
+  scope: ['email', 'public_profile', 'pages_show_list', 'pages_messaging_subscriptions', 'manage_pages', 'pages_messaging', 'pages_messaging_phone_number', 'publish_pages', 'ads_read', 'ads_management'], //, 'read_page_mailboxes'],
+  failureRedirect: '/',
+  session: false
+}))
 
-  .get('/callback', passport.authenticate('facebook', {
-    failureRedirect: '/',
-    session: false
-  }), auth.fbConnectDone)
+router.get('/callback', passport.authenticate('facebook', {
+  failureRedirect: '/',
+  session: false
+}), auth.fbConnectDone)
 
-  .get('/reauth/sponsoredmessages', passport.authenticate('facebook', {
-    authType: 'rerequest',
-    scope: ['ads_read', 'ads_management'],
-    failureRedirect: '/',
-    session: false
-  }))
+router.get('/reauth/sponsoredmessages', passport.authenticate('facebook', {
+  authType: 'rerequest',
+  scope: ['ads_read', 'ads_management'],
+  failureRedirect: '/',
+  session: false
+}))
+
+router.get('/error', auth.fbConnectError)
 
 module.exports = router
