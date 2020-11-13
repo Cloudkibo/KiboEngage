@@ -303,6 +303,7 @@ function validateApiKeys (req, res, next) {
 }
 
 const _updateUserPlatform = (req, res) => {
+  console.log('req.user', req.user)
   apiCaller.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
     .then(companyUsers => {
       console.log('companyUsers.length', companyUsers.length)
