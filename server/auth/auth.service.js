@@ -302,20 +302,26 @@ function validateApiKeys (req, res, next) {
   }
 }
 
-const _updateUserPlatform = (req, res) => {
+const _updateUserPlatform = (req, res, userid) => {
   console.log('req.user', req.user)
-  apiCaller.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
-    .then(companyUsers => {
-      console.log('companyUsers.length', companyUsers.length)
-      console.log('companyUsers', companyUsers[0])
-      let userIds = companyUsers.map(companyUser => {
-        console.log('companyUser.userId._id', companyUser.userId)
-        return companyUser.userId._id
-      })
-      apiCaller.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: 'messenger'} }, options: {multi: true}})
-        .then(updatedProfile => {
-        })
-        .catch(err => {
+  apiCaller.callApi(`companyProfile/query`, 'post', {ownerId: userid}, 'accounts')
+    .then(companyProfile => {
+      apiCaller.callApi(`companyUser/queryAll`, 'post', {companyId: companyProfile._id}, 'accounts')
+        .then(companyUsers => {
+          console.log('companyUsers.length', companyUsers.length)
+          console.log('companyUsers', companyUsers[0])
+          let userIds = companyUsers.map(companyUser => {
+            console.log('companyUser.userId._id', companyUser.userId)
+            return companyUser.userId._id
+          })
+          apiCaller.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: 'messenger'} }, options: {multi: true}})
+            .then(updatedProfile => {
+            })
+            .catch(err => {
+              const message = err || 'Internal server error'
+              logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
+            })
+        }).catch(err => {
           const message = err || 'Internal server error'
           logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
         })
@@ -346,7 +352,7 @@ function fbConnectDone (req, res) {
       } else {
         apiCaller.callApi(`user/update`, 'post', {query: {_id: userid}, newPayload: {facebookInfo: fbPayload, connectFacebook: true, showIntegrations: false, platform: 'messenger'}, options: {}}, 'accounts', token)
           .then(updated => {
-            _updateUserPlatform(req, res)
+            _updateUserPlatform(req, res, userid)
             apiCaller.callApi(`user/query`, 'post', {_id: userid}, 'accounts', token)
               .then(user => {
                 if (!user) {
