@@ -678,6 +678,9 @@ exports.retrieveReachEstimation = (req, res) => {
 
 exports.urlMetaData = (req, res) => {
   let url = req.body.url
+  if (url.includes('kiboengage.cloudkibo.com') || url.includes('kibochat.cloudkibo.com')) {
+    url = 'https://kibopush.com'
+  }
   if (url) {
     let options = {url}
     ogs(options, (error, results) => {
