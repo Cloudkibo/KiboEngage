@@ -305,8 +305,12 @@ function validateApiKeys (req, res, next) {
 const _updateUserPlatform = (req, res) => {
   apiCaller.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
     .then(companyUsers => {
-      console.log('companyUsers', companyUsers)
-      let userIds = companyUsers.map(companyUser => companyUser.userId._id)
+      console.log('companyUsers.length', companyUsers.length)
+      console.log('companyUsers', companyUsers[0])
+      let userIds = companyUsers.map(companyUser => {
+        console.log('companyUser.userId._id', companyUser.userId)
+        return companyUser.userId._id
+      })
       apiCaller.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: 'messenger'} }, options: {multi: true}})
         .then(updatedProfile => {
         })
