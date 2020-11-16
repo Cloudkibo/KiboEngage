@@ -80,7 +80,11 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
         })
         .catch(err => {
           const message = err || 'Error from open graph'
-          logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, tweetId, screenName}, {}, 'error')
+          logger.serverLog(message,
+            `${TAG}: prepareGalleryForLink`,
+            {urls, savedMsg, tweetId, screenName},
+            {},
+            message.includes('not found') || message.includes('Aborting') ? 'info' : 'error')
         })
     }
   })
