@@ -37,6 +37,8 @@ exports.pollResponse = function (req, res) {
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.pollResponse`, req.body, {user: req.user}, 'error')
               return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
             })
         }

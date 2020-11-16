@@ -25,6 +25,8 @@ exports.create = function (req, res) {
     _saveRSSFeed.bind(null, data)
   ], function (err) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       sendSuccessResponse(res, 200, data.savedFeed)
@@ -53,6 +55,8 @@ exports.preview = function (req, res) {
       _sendPreviewMessage.bind(null, data)
     ], function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.preview`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, err)
       } else {
         sendSuccessResponse(res, 200, data.sentResponse)
@@ -69,6 +73,8 @@ exports.preview = function (req, res) {
       _sendPreviewMessage.bind(null, data)
     ], function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.preview`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, err)
       } else {
         sendSuccessResponse(res, 200, data.sentResponse)
@@ -93,6 +99,8 @@ exports.edit = function (req, res) {
     _updateRSSFeed.bind(null, data)
   ], function (err) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       sendSuccessResponse(res, 200, data.update)

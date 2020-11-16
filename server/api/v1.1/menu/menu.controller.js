@@ -27,6 +27,8 @@ exports.index = function (req, res) {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -121,6 +123,8 @@ exports.create = function (req, res) {
                       })
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
                   })
               } else {
@@ -217,6 +221,8 @@ exports.addWebview = function (req, res) {
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.addWebview`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to find whitelisted_domains ${JSON.stringify(error)}`)
     })
 }

@@ -298,6 +298,8 @@ exports.deleteList = function (req, res) {
               }
             ], 10, function (err, results) {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 50, `Failed to find list ${err}`)
               }
               sendSuccessResponse(res, 200, 'List has been deleted successfully!')
@@ -309,6 +311,8 @@ exports.deleteList = function (req, res) {
               }
             ], 10, function (err, results) {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 50, `Failed to find list ${err}`)
               }
               sendSuccessResponse(res, 200, 'List has been deleted successfully!')

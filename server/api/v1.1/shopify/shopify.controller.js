@@ -297,6 +297,8 @@ exports.callback = function (req, res) {
           })
       })
       .catch((error) => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
         res.status(error.statusCode >= 100 && error.statusCode < 600 ? error.statusCode : 500).send(error.error_description)
       })
   } else {

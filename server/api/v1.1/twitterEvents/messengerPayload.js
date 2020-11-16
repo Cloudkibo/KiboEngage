@@ -20,7 +20,10 @@ const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, pag
       }
     }
     remote(url, function (err, size) {
-      if (err) console.log('err')
+      if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: prepareMessengerPayloadForVideo`, {tweet, savedMsg, tweetId, userName, page}, {}, 'error')
+      }
       let sizeInMb = (size / 1000) / 1000
       if (sizeInMb > 25) {
         chopVideo(url).then(result => {

@@ -203,6 +203,8 @@ exports.sendPollDirectly = function (req, res) {
             }
           ], 10, function (err, result) {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.sendPollDirectly`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to create poll ${JSON.stringify(err)}`)
             }
             let pollCreated = result[0]
