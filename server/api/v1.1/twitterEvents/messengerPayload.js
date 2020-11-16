@@ -87,7 +87,7 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
             `${TAG}: prepareGalleryForLink`,
             {urls, savedMsg, tweetId, screenName},
             {},
-            message === 'Page not found' ? 'info' : 'error')
+            message.includes('not found') || message.includes('Aborting') ? 'info' : 'error')
         })
     }
   })
