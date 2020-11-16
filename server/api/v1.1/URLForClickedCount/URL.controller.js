@@ -19,12 +19,12 @@ exports.index = function (req, res) {
           })
           .catch(err => {
             const message = err || 'Failed to fetch update autoposting message'
-            logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           })
       })
       .catch(err => {
         const message = err || 'Failed to fetch URL object'
-        logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       })
   }
 }
@@ -42,7 +42,7 @@ exports.broadcast = function (req, res) {
             .catch(err => {
               if (err) {
                 const message = err || 'Internal Server Error'
-                logger.serverLog(message, `${TAG}: exports.broadcast`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.broadcast`, req.body, {user: req.user}, 'error')
               }
             })
         } else {
@@ -51,6 +51,8 @@ exports.broadcast = function (req, res) {
       })
       .catch(err => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.broadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
         }
       })
@@ -75,6 +77,8 @@ exports.sponsorMessaging = function (req, res) {
             })
             .catch(err => {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.sponsorMessaging`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
               }
             })
@@ -84,6 +88,8 @@ exports.sponsorMessaging = function (req, res) {
       })
       .catch(err => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sponsorMessaging`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
         }
       })
@@ -124,6 +130,8 @@ exports.sequence = function (req, res) {
               })
               .catch(err => {
                 if (err) {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.sequence`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
                 }
               })
@@ -132,6 +140,8 @@ exports.sequence = function (req, res) {
           })
           .catch(err => {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.sequence`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
             }
           })
@@ -141,6 +151,8 @@ exports.sequence = function (req, res) {
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sequence`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })

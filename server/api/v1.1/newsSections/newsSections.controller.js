@@ -111,6 +111,8 @@ function _fetchFeedToUpdate (data, next) {
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchFeedToUpdate`, data, {}, 'error')
       next(error)
     })
 }
@@ -139,6 +141,8 @@ function _updateSubscriptionCount (data, next) {
                 next()
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: _updateSubscriptionCount`, data, {}, 'error')
                 next(err)
               })
           } else {
@@ -158,6 +162,8 @@ function _updateSubscriptionCount (data, next) {
           next()
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _updateSubscriptionCount`, data, {}, 'error')
           next(err)
         })
     }
@@ -194,6 +200,8 @@ function _saveRSSFeed (data, next) {
       next(null)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _saveRSSFeed`, data, {}, 'error')
       next(error)
     })
 }
@@ -205,6 +213,8 @@ function _updateRSSFeed (data, next) {
       next(null)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateRSSFeed`, data, {}, 'error')
       next(error)
     })
 }
@@ -217,6 +227,8 @@ exports.fetchFeeds = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchFeeds`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -230,6 +242,8 @@ exports.fetchFeeds = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchFeeds`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -239,11 +253,15 @@ exports.fetchFeeds = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchFeeds`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchFeeds`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       let countResponse = results[0]
@@ -258,6 +276,8 @@ exports.checkSMP = function (req, res) {
   if (req.user.SMPStatus) {
     sendSuccessResponse(res, 200, req.user.SMPStatus)
   } else {
+    const message = 'Failed to fetch subscription messaging status'
+    logger.serverLog(message, `${TAG}: exports.checkSMP`, req.body, {user: req.user}, 'error')
     sendErrorResponse(res, 500, `Failed to fetch subscription messaging status`)
   }
 }
@@ -268,6 +288,8 @@ exports.delete = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(err)}`)
     })
 }
@@ -294,6 +316,8 @@ function _checkDefaultFeed (data, next) {
                 })
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: _checkDefaultFeed`, data, {}, 'error')
               next(err)
             })
         } else {
@@ -301,6 +325,8 @@ function _checkDefaultFeed (data, next) {
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _checkDefaultFeed`, data, {}, 'error')
         next(err)
       })
   } else {
@@ -350,6 +376,8 @@ const _validateActiveFeeds = (data, next) => {
         }
       })
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _validateActiveFeeds`, data, {}, 'error')
         next(`Failed to fetch RSS Feeds ${error}`)
       })
   } else {
@@ -377,6 +405,8 @@ const _validateFeedTitle = (data, next) => {
         }
       })
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _validateFeedTitle`, data, {}, 'error')
         next(error)
       })
   } else {
@@ -410,6 +440,8 @@ const _parseFeed = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _parseFeed`, data, {}, 'error')
       next(err)
     })
 }
@@ -420,6 +452,8 @@ const _fetchPage = (data, next) => {
       next()
     })
     .catch((err) => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchPage`, data, {}, 'error')
       next(err)
     })
 }
@@ -434,6 +468,8 @@ const _fetchRssFeeds = (data, next) => {
       next()
     })
     .catch((err) => {
+      const message = err || 'Failed to save broadcast'
+      logger.serverLog(message, `${TAG}: _fetchRssFeeds`, data, {}, 'error')
       next(err)
     })
 }
@@ -444,6 +480,8 @@ const _fetchAdminSubscription = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchAdminSubscription`, data, {}, 'error')
       next(err)
     })
 }
@@ -476,6 +514,8 @@ const _prepareMessageData = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _prepareMessageData`, data, {}, 'error')
       next(err)
     })
 }
@@ -486,6 +526,8 @@ const _prepareBatch = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _prepareBatch`, data, {}, 'error')
       next(err)
     })
 }
@@ -497,6 +539,8 @@ const _sendPreviewMessage = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _sendPreviewMessage`, data, {}, 'error')
       next(err)
     })
 }
@@ -510,6 +554,8 @@ exports.getRssFeedPosts = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getRssFeedPosts`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -519,11 +565,15 @@ exports.getRssFeedPosts = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getRssFeedPosts`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getRssFeedPosts`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       let countResponse = results[0]

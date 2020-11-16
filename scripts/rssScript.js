@@ -184,6 +184,8 @@ const _getSubscribersCount = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _getSubscribersCount`, {data}, {}, 'error')
       next(err)
     })
 }
@@ -197,6 +199,8 @@ const _updateScheduledTime = (autoposting, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateScheduledTime`, {autoposting}, {}, 'error')
       next(err)
     })
 }

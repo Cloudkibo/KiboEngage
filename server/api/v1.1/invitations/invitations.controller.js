@@ -10,6 +10,8 @@ exports.index = function (req, res) {
       sendSuccessResponse(res, 200, invitations)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -20,6 +22,8 @@ exports.cancel = function (req, res) {
       sendSuccessResponse(res, 200, '', 'Invitation has been cancelled.')
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.cancel`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -30,6 +34,8 @@ exports.invite = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.invite`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }

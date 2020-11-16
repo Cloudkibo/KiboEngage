@@ -23,10 +23,14 @@ exports.allLists = function (req, res) {
           sendSuccessResponse(res, 200, lists)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allLists`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allLists`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -42,14 +46,20 @@ exports.getAll = function (req, res) {
               sendSuccessResponse(res, 200, {lists: lists, count: count.length > 0 ? count[0].count : 0})
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch lists ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch list count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -74,6 +84,8 @@ exports.create = function (req, res) {
             }
           ], 10, function (err, results) {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
             } else {
               sendSuccessResponse(res, 200, 'List created successfully!')
@@ -81,10 +93,14 @@ exports.create = function (req, res) {
           })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
     })
 }
@@ -109,9 +125,17 @@ function createList (req, callback) {
         .then(updated => {
           callback(null, 'success')
         })
-        .catch(error => callback(error))
+        .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: createList`, req.body, {user: req.user}, 'error')
+          callback(error)
+        })
     })
-    .catch(error => callback(error))
+    .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: createList`, req.body, {user: req.user}, 'error')
+      callback(error)
+    })
 }
 
 exports.editList = function (req, res) {
@@ -129,6 +153,8 @@ exports.editList = function (req, res) {
       }
     ], 10, function (err, results) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.editList`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Failed to create tag on Facebook ${JSON.stringify(label.error)}`)
       }
       sendSuccessResponse(res, 200, 'List updated successfully!')
@@ -146,6 +172,8 @@ exports.editList = function (req, res) {
       }
     ], 10, function (err, results) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.editList`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Failed to update list`)
       } else {
         sendSuccessResponse(res, 200, 'List updated successfully!')
@@ -160,6 +188,8 @@ function updateList (data, req, callback) {
       callback(null, savedList)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: updateList`, req.body, {user: req.user}, 'error')
       callback(error)
     })
 }
@@ -189,17 +219,23 @@ exports.viewList = function (req, res) {
                           sendSuccessResponse(res, 200, subscribers)
                         })
                         .catch(error => {
+                          const message = error || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.viewList`, req.body, {user: req.user}, 'error')
                           sendErrorResponse(res, 500, `Failed to fetch list content ${JSON.stringify(error)}`)
                         })
                     })
                     .catch(error => {
+                      const message = error || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.viewList`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                     })
                 } else {
-                  sendErrorResponse(res, 500, 'No subscribers found')
+                  sendErrorResponse(res, 400, 'No subscribers found')
                 }
               })
               .catch(error => {
+                const message = error || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.viewList`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, `Failed to fetch numbers ${JSON.stringify(error)}`)
               })
           } else {
@@ -209,15 +245,21 @@ exports.viewList = function (req, res) {
                 sendSuccessResponse(res, 200, subscribers)
               })
               .catch(error => {
+                const message = error || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.viewList`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
               })
           }
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.viewList`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch list ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.viewList`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -238,13 +280,13 @@ exports.deleteList = function (req, res) {
                       })
                       .catch(err => {
                         const message = err || 'Failed to delete tag subscribers'
-                        logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {}, 'error')
+                        logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {user: req.user}, 'error')
                       })
                   }
                 })
                 .catch(err => {
                   const message = err || 'Failed to fetch tag subscribers'
-                  logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {user: req.user}, 'error')
                 })
             })
             async.parallelLimit([
@@ -274,10 +316,14 @@ exports.deleteList = function (req, res) {
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Failed to find tags ${err}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteList`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to find list ${err}`)
     })
 }
@@ -294,10 +340,14 @@ function deleteListFromLocal (req, callback) {
           callback(null, {status: 'success', payload: result})
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: deleteListFromLocal`, req.body, {user: req.user}, 'error')
           callback(error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: deleteListFromLocal`, req.body, {user: req.user}, 'error')
       callback(error)
     })
 }
@@ -318,10 +368,14 @@ function deleteListFromFacebook (req, tags, callback) {
             }
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: deleteListFromFacebook`, req.body, {user: req.user}, 'error')
             callback(err)
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: deleteListFromFacebook`, req.body, {user: req.user}, 'error')
         callback(err)
       })
   })
@@ -346,14 +400,20 @@ exports.repliedPollSubscribers = function (req, res) {
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.repliedPollSubscribers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch poll responses ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.repliedPollSubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch polls ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.repliedPollSubscribers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -372,18 +432,26 @@ exports.repliedSurveySubscribers = function (req, res) {
                   sendSuccessResponse(res, 200, subscribersPayload)
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.repliedSurveySubscribers`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.repliedSurveySubscribers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch survey responses ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.repliedSurveySubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch surveys ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.repliedSurveySubscribers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

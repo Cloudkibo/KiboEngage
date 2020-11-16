@@ -347,12 +347,12 @@ function applyTagFilterIfNecessary (req, subscribers, fn, res) {
           })
           .catch(err => {
             const message = err || 'Failed to fetch tag subscribers'
-            logger.serverLog(message, `${TAG}: applyTagFilterIfNecessary`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: applyTagFilterIfNecessary`, req.body, {user: req.user}, 'error')
           })
       })
       .catch(err => {
         const message = err || 'Failed to fetch tag'
-        logger.serverLog(message, `${TAG}: applyTagFilterIfNecessary`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: applyTagFilterIfNecessary`, req.body, {user: req.user}, 'error')
       })
   } else {
     fn(subscribers)
@@ -394,7 +394,7 @@ function applySurveyFilterIfNecessary (req, subscribers, fn) {
       })
       .catch(err => {
         const message = err || 'Failed to fetch survey responses'
-        logger.serverLog(message, `${TAG}: applySurveyFilterIfNecessary`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: applySurveyFilterIfNecessary`, req.body, {user: req.user}, 'error')
       })
   } else {
     fn(subscribers)
@@ -435,7 +435,7 @@ function applyPollFilterIfNecessary (req, subscribers, fn) {
       })
       .catch(err => {
         const message = err || 'Failed to fetch poll responses'
-        logger.serverLog(message, `${TAG}: applyPollFilterIfNecessary`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: applyPollFilterIfNecessary`, req.body, {user: req.user}, 'error')
       })
   } else {
     fn(subscribers)

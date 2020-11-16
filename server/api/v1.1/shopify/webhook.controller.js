@@ -51,9 +51,17 @@ exports.handleCheckout = function (req, res) {
                 .then(result1 => {
                   dataLayer.createCheckOutInfo(checkout)
                     .then(createdCheckout => res.status(200).json({ status: 'success', payload: createdCheckout }))
-                    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+                    .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.handleCheckout`, req.body, {user: req.user}, 'error')
+                      res.status(500).json({ status: 'failed', error: err })
+                    })
                 })
-                .catch(err => res.status(500).json({ status: 'failed', error: err }))
+                .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.handleCheckout`, req.body, {user: req.user}, 'error')
+                  res.status(500).json({ status: 'failed', error: err })
+                })
             } else {
               return res.status(200).json({ status: 'success', payload: 'cart not found' })
             }
@@ -61,9 +69,17 @@ exports.handleCheckout = function (req, res) {
             return res.status(200).json({ status: 'success', payload: 'cart not found' })
           }
         })
-        .catch(err => res.status(500).json({ status: 'failed', error: err }))
+        .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.handleCheckout`, req.body, {user: req.user}, 'error')
+          res.status(500).json({ status: 'failed', error: err })
+        })
     })
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.handleCheckout`, req.body, {user: req.user}, 'error')
+      res.status(500).json({ status: 'failed', error: err })
+    })
 }
 
 exports.handleCart = function (req, res) {
@@ -89,14 +105,18 @@ exports.handleCart = function (req, res) {
       }
       dataLayer.createCartInfo(cart)
         .then(createdCart => res.status(200).json({ status: 'success', payload: createdCart }))
-        .catch(err => res.status(500).json({ status: 'failed', error: err }))
+        .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.handleCart`, req.body, {user: req.user}, 'error')
+          res.status(500).json({ status: 'failed', error: err })
+        })
     })
     .catch(err => {
       if (Object.keys(err).length === 0) {
         return res.status(200).json({ status: 'failed', error: 'Cannot find storeInfo' })
       } else {
         const message = err || 'Error in cart webhook'
-        logger.serverLog(message, `${TAG}: exports.handleCart`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.handleCart`, req.body, {user: req.user}, 'error')
         return res.status(500).json({ status: 'failed', error: err })
       }
     })
@@ -118,7 +138,7 @@ exports.handleOrder = function (req, res) {
             .then(updated => {})
             .catch(err => {
               const message = err || 'Error in updating checkout on new order'
-              logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {user: req.user}, 'error')
             })
         }
         // Saving the updated info
@@ -137,26 +157,30 @@ exports.handleOrder = function (req, res) {
                   .then(updated => {})
                   .catch(err => {
                     const message = err || 'Error in updating checkout on new order'
-                    logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {user: req.user}, 'error')
                   })
               })
               .catch(err => {
                 const message = err || 'Error in creating order on new order'
-                logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {user: req.user}, 'error')
               })
             return res.status(200).json({ status: 'failed' })
           })
           .catch(err => {
             console.log(err)
             const message = err || 'failed to update the checkout obj for new order'
-            logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {user: req.user}, 'error')
             // res.status(500).json({ status: 'failed', error: err })
           })
       } else {
         return res.status(200).json({ status: 'failed' })
       }
     })
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {user: req.user}, 'error')
+      res.status(500).json({ status: 'failed', error: err })
+    })
 }
 
 exports.handleAppUninstall = function (req, res) {
@@ -179,7 +203,7 @@ exports.handleAppUninstall = function (req, res) {
     })
     .catch((err) => {
       const message = err || 'Error in app uninstall webhook'
-      logger.serverLog(message, `${TAG}: exports.handleAppUninstall`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.handleAppUninstall`, req.body, {user: req.user}, 'error')
       return res.status(500).json({ status: 'failed', error: err })
     })
 }
@@ -196,7 +220,11 @@ exports.serveScript = function (req, res) {
       res.set('Content-Type', 'text/javascript')
       res.send(mainScript.renderJS(pageId, config.facebook.clientID, results.shopUrl))
     })
-    .catch(err => res.status(500).json({ status: 'failed', error: err }))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.handleOrder`, req.body, {user: req.user}, 'error')
+      res.status(500).json({ status: 'failed', error: err })
+    })
 }
 
 exports.handleNewCustomerRefId = function (payload) {
@@ -253,13 +281,13 @@ exports.clickCount = function (req, res) {
         .then(updated => {})
         .catch(err => {
           const message = err || 'Error in updating click count'
-          logger.serverLog(message, `${TAG}: exports.clickCount`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.clickCount`, req.body, {user: req.user}, 'error')
         })
       return res.redirect(result.abandonedCheckoutUrl)
     })
     .catch(err => {
       const message = err || 'Error in click count'
-      logger.serverLog(message, `${TAG}: exports.clickCount`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.clickCount`, req.body, {user: req.user}, 'error')
       return res.status(500).json({ status: 'failed', description: 'Failed to find the checkout' })
     })
 }
@@ -283,7 +311,7 @@ exports.ordersCancelled = function (req, res) {
   utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
     if (err) {
       const message = err || 'Error in sending orde cancel status'
-      return logger.serverLog(message, `${TAG}: exports.ordersCancelled`, req.body, {}, 'error')
+      return logger.serverLog(message, `${TAG}: exports.ordersCancelled`, req.body, {user: req.user}, 'error')
     }
   })
   dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'cancelled' })
@@ -291,7 +319,7 @@ exports.ordersCancelled = function (req, res) {
     })
     .catch((err) => {
       const message = err || 'Order status updated for cancelled failed'
-      logger.serverLog(message, `${TAG}: exports.ordersCancelled`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.ordersCancelled`, req.body, {user: req.user}, 'error')
     })
   return res.status(200).json({ status: 'success' })
 }
@@ -303,7 +331,7 @@ exports.ordersFulfilled = function (req, res) {
   utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
     if (err) {
       const message = err || 'Error in sending orde confirmed status'
-      logger.serverLog(message, `${TAG}: exports.ordersFulfilled`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.ordersFulfilled`, req.body, {user: req.user}, 'error')
     }
   })
   dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'confirmed' })
@@ -311,7 +339,7 @@ exports.ordersFulfilled = function (req, res) {
     })
     .catch((err) => {
       const message = err || 'Order status updated for confirmed failed'
-      logger.serverLog(message, `${TAG}: exports.ordersFulfilled`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.ordersFulfilled`, req.body, {user: req.user}, 'error')
     })
   return res.status(200).json({ status: 'success' })
 }
@@ -325,7 +353,7 @@ exports.ordersPaid = function (req, res) {
   utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
     if (err) {
       const message = err || 'Error in sending order status'
-      logger.serverLog(message, `${TAG}: exports.ordersPaid`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.ordersPaid`, req.body, {user: req.user}, 'error')
     }
   })
   dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'paid' })
@@ -333,7 +361,7 @@ exports.ordersPaid = function (req, res) {
     })
     .catch((err) => {
       const message = err || 'Order status updated for paid failed'
-      logger.serverLog(message, `${TAG}: exports.ordersPaid`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.ordersPaid`, req.body, {user: req.user}, 'error')
     })
   return res.status(200).json({ status: 'success' })
 }
@@ -347,7 +375,7 @@ exports.orderUpdate = function (req, res) {
     utilityAbandonedCart.sendOrderStatus(req.body.id, message, (err, status) => {
       if (err) {
         const message = err || 'Error in sending orde cancel status'
-        logger.serverLog(message, `${TAG}: exports.orderUpdate`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.orderUpdate`, req.body, {user: req.user}, 'error')
       }
     })
     dataLayer.findOneOrderInfoObjectAndUpdate({ orderId: orderId }, { status: 'refunded' })
@@ -355,7 +383,7 @@ exports.orderUpdate = function (req, res) {
       })
       .catch((err) => {
         const message = err || 'Order status updated for refund failed'
-        logger.serverLog(message, `${TAG}: exports.orderUpdate`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.orderUpdate`, req.body, {user: req.user}, 'error')
       })
   }
   return res.status(200).json({ status: 'success' })

@@ -27,6 +27,8 @@ exports.index = function (req, res) {
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, 'Internal server error')
       }
     })
@@ -34,7 +36,11 @@ exports.index = function (req, res) {
 exports.updateStoreInfo = function (req, res) {
   dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.params.id }, req.body)
     .then(result => res.status(200).json({ status: 'success', payload: result }))
-    .catch(err => res.status(500).json({ status: 'Failed', error: err }))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updateStoreInfo`, req.body, {user: req.user}, 'error')
+      res.status(500).json({ status: 'Failed', error: err })
+    })
 }
 exports.getOrders = function (req, res) {
   utilityApi.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -52,6 +58,8 @@ exports.getOrders = function (req, res) {
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getOrders`, req.body, {user: req.user}, 'error')
         return res.status(500).json({
           status: 'failed',
           description: `Internal Server Error ${JSON.stringify(err)}`
@@ -67,6 +75,8 @@ exports.getOrder = function (req, res) {
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getOrder`, req.body, {user: req.user}, 'error')
         return res.status(500).json({
           status: 'failed',
           description: `Internal Server Error ${JSON.stringify(err)}`
@@ -86,7 +96,11 @@ exports.saveStoreInfo = function (req, res) {
   }
   dataLayer.createStoreInfo(store)
     .then(storeInfo => sendSuccessResponse(res, 200, storeInfo))
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.saveStoreInfo`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 // Right now we are not using this API but later on we will use it once we move the webhooks
@@ -101,7 +115,11 @@ exports.saveCartInfo = function (req, res) {
   }
   dataLayer.createCartInfo(cart)
     .then(cartInfo => sendSuccessResponse(res, 200, cartInfo))
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.saveCartInfo`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 // Right now we are not using this API but later on we will use it once we move the webhooks
@@ -118,7 +136,11 @@ exports.saveCheckoutInfo = function (req, res) {
   }
   dataLayer.createCartInfo(checkout)
     .then(checkoutInfo => sendSuccessResponse(res, 200, checkoutInfo))
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.saveCheckoutInfo`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 exports.updateStatusStore = function (req, res) {
@@ -132,7 +154,11 @@ exports.updateStatusStore = function (req, res) {
   }
   dataLayer.findOneStoreInfoObjectAndUpdate({ _id: req.body.shopId }, { isActive: req.body.isActive })
     .then(result => sendSuccessResponse(res, 200, result))
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updateStatusStore`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 exports.deleteAllCartInfo = function (req, res) {
@@ -148,10 +174,16 @@ exports.deleteAllCartInfo = function (req, res) {
       if (result) {
         sendSuccessResponse(res, 200, result)
       } else {
-        sendErrorResponse(res, 404, '', 'The Cart Info deletion failed')
+        const message = 'The Cart Info deletion failed'
+        logger.serverLog(message, `${TAG}: exports.deleteAllCartInfo`, req.body, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, '', 'The Cart Info deletion failed')
       }
     })
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = 'The Cart Info deletion failed'
+      logger.serverLog(message, `${TAG}: exports.deleteAllCartInfo`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 exports.deleteOneCartInfo = function (req, res) {
@@ -168,10 +200,16 @@ exports.deleteOneCartInfo = function (req, res) {
       if (result) {
         sendSuccessResponse(res, 200, result)
       } else {
-        sendErrorResponse(res, 404, '', 'The Cart Info deletion failed')
+        const message = 'The Cart Info deletion failed'
+        logger.serverLog(message, `${TAG}: exports.deleteOneCartInfo`, req.body, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, '', 'The Cart Info deletion failed')
       }
     })
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = 'The Cart Info deletion failed'
+      logger.serverLog(message, `${TAG}: exports.deleteOneCartInfo`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 exports.deleteCheckoutInfo = function (req, res) {
@@ -187,10 +225,16 @@ exports.deleteCheckoutInfo = function (req, res) {
       if (result) {
         sendSuccessResponse(res, 200, result)
       } else {
-        sendErrorResponse(res, 404, '', 'The Checkout Info deletion failed')
+        const message = 'Delete Checkout failed'
+        logger.serverLog(message, `${TAG}: exports.deleteCheckoutInfo`, req.body, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, '', 'The Checkout Info deletion failed')
       }
     })
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'Delete Checkout failed'
+      logger.serverLog(message, `${TAG}: exports.deleteCheckoutInfo`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 exports.deleteAllInfo = function (req, res) {
@@ -220,13 +264,19 @@ exports.deleteAllInfo = function (req, res) {
             })
             .catch(err => {
               if (err) {
-                sendErrorResponse(res, 404, '', 'The All delete Info failed')
+                const message = err || 'The All delete Info failed'
+                logger.serverLog(message, `${TAG}: exports.deleteAllInfo`, req.body, {user: req.user}, 'error')
+                sendErrorResponse(res, 500, '', 'The All delete Info failed')
               }
             })
         }
       }
     })
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'The All delete Info failed'
+      logger.serverLog(message, `${TAG}: exports.deleteAllInfo`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 exports.sendCheckout = function (req, res) {
@@ -240,7 +290,7 @@ exports.sendCheckout = function (req, res) {
     utility.sendCheckout(req.body.id, (err, result) => {
       if (err) {
         const message = err || 'Error received from send checkout'
-        logger.serverLog(message, `${TAG}: exports.sendCheckout`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.sendCheckout`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, err)
       } else if (result.status === 'Not Found') {
         sendErrorResponse(res, 404, result)
@@ -263,12 +313,20 @@ exports.sendAnalytics = function (req, res) {
       if (store) {
         dataLayer.findOneStoreAnalytics(store._id)
           .then(analytics => sendSuccessResponse(res, 200, analytics))
-          .catch(err => sendErrorResponse(res, 500, err))
+          .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.sendAnalytics`, req.body, {user: req.user}, 'error')
+            sendErrorResponse(res, 500, err)
+          })
       } else {
         sendErrorResponse(res, 404, '', 'No analytics found against this store')
       }
     })
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.sendAnalytics`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }
 
 exports.abandonedCheckouts = function (req, res) {
@@ -280,5 +338,9 @@ exports.abandonedCheckouts = function (req, res) {
       return dataLayer.findAllCheckoutInfo({ companyId: companyUser.companyId, isPurchased: false })
     })
     .then(result => sendSuccessResponse(res, 200, result))
-    .catch(err => sendErrorResponse(res, 500, err))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.abandonedCheckouts`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err)
+    })
 }

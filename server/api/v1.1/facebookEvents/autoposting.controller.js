@@ -67,12 +67,12 @@ exports.autoposting = function (req, res) {
                                         })
                                         .catch(err => {
                                           const message = err || 'Internal Server Error'
-                                          logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+                                          logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
                                         })
                                     })
                                     .catch(err => {
                                       const message = err || 'Internal Server Error'
-                                      logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+                                      logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
                                     })
                                 } else {
                                   _countUpdate(subsFindCriteria, req.body.entry[0].changes[0].value.post_id)
@@ -80,35 +80,35 @@ exports.autoposting = function (req, res) {
                                 }
                               }).catch(err => {
                                 const message = err || 'Internal Server Error'
-                                logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+                                logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
                               })
                           })
                           .catch(err => {
                             const message = err || 'Failed to prepare data'
-                            logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+                            logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
                           })
                       })
                       .catch(err => {
                         const message = err || 'Failed to create autoposting message'
-                        logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+                        logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
                       })
                   }
                 })
                 .catch(err => {
                   const message = err || 'Failed to fetch subscriber count'
-                  logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
                 })
             })
           })
           .catch(err => {
             const message = err || 'Failed to fetch pages'
-            logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
           })
       })
     })
     .catch(err => {
       const message = err || 'Failed to fetch autopostings'
-      logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.autoposting`, req.body, {user: req.user}, 'error')
     })
 }
 

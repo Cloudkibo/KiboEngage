@@ -55,6 +55,8 @@ exports.getPagePermissions = function (req, res) {
                     }
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.getPagePermissions`, req.body, {user: req.user}, 'error')
                     callback(err)
                   })
               },
@@ -73,10 +75,14 @@ exports.getPagePermissions = function (req, res) {
                         callback(null, pageLevelPermissions)
                       }
                     } else {
+                      const message = response.body.error || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.getPagePermissions`, req.body, {user: req.user}, 'error')
                       callback(response.body.error)
                     }
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.getPagePermissions`, req.body, {user: req.user}, 'error')
                     callback(err)
                   })
               }
@@ -89,13 +95,19 @@ exports.getPagePermissions = function (req, res) {
             })
           })
           .catch(error => {
+            const message = error || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getPagePermissions`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
           })
       } else {
+        const message = 'Failed to fetch permissions'
+        logger.serverLog(message, `${TAG}: exports.getPagePermissions`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, `Failed to fetch permissions ${JSON.stringify({message: `This page is not connected by any User. So, we cannot fetch this page's permissions`})}`)
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getPagePermissions`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
     })
 }
@@ -124,6 +136,8 @@ exports.fetchPageUsers = (req, res) => {
                     }
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.fetchPageUsers`, req.body, {user: req.user}, 'error')
                     callback(err)
                   })
               } else if (response.body && response.body.error) {
@@ -131,10 +145,14 @@ exports.fetchPageUsers = (req, res) => {
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.fetchPageUsers`, req.body, {user: req.user}, 'error')
               callback(err)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchPageUsers`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }, function (callback) {
@@ -146,15 +164,21 @@ exports.fetchPageUsers = (req, res) => {
               callback(null, {count: pagesCount[0] ? pagesCount[0].count : 0, pageUsers: pageUsers})
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.fetchPageUsers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchPageUsers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch page count ${JSON.stringify(err)}`)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchPageUsers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch page users ${err}`)
     } else {
       getAdminedData(results[0], results[1])
@@ -294,6 +318,8 @@ exports.fetchPageTags = (req, res) => {
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.fetchPageUsers`, req.body, {user: req.user}, 'error')
             return res.status(500).json({
               status: 'failed',
               description: `Failed to fetch page info ${err}`
@@ -303,7 +329,7 @@ exports.fetchPageTags = (req, res) => {
     })
     .catch(err => {
       const message = err || 'Failed to fetch unique pages'
-      logger.serverLog(message, `${TAG}: exports.fetchPageTags`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.fetchPageTags`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch unique pages ${err}`
@@ -326,6 +352,8 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchSubscribersWithTagsNew`, req.body, {user: req.user}, 'error')
           return res.status(500).json({
             status: 'failed',
             description: `Failed to fetch page tags  ${err}`
@@ -333,6 +361,8 @@ exports.fetchSubscribersWithTagsNew = (req, res) => {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchSubscribersWithTagsNew`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch page  ${err}`
@@ -359,6 +389,8 @@ function _fetchSubscribersWithTagsNew (req, res, skip, pageTags, results) {
             }
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: _fetchSubscribersWithTagsNew`, req.body, {user: req.user}, 'error')
             return res.status(500).json({
               status: 'failed',
               description: `Failed to filter subscribers  ${err}`
@@ -374,6 +406,8 @@ function _fetchSubscribersWithTagsNew (req, res, skip, pageTags, results) {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchSubscribersWithTagsNew`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch subscribers  ${err}`
@@ -400,6 +434,8 @@ exports.fetchPageAdmins = (req, res) => {
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchPageAdmins`, req.body, {user: req.user}, 'error')
           return res.status(500).json({
             status: 'failed',
             description: `Failed to fetch page admins ${err}`
@@ -407,6 +443,8 @@ exports.fetchPageAdmins = (req, res) => {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchPageAdmins`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch page ${err}`
@@ -664,6 +702,8 @@ exports.fetchPageOwners = (req, res) => {
       })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchPageOwners`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Failed to fetch page owners for page ${req.params.pageId} ${err}`

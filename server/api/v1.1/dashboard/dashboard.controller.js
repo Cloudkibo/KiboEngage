@@ -32,6 +32,8 @@ exports.index = function (req, res) {
       sendSuccessResponse(res, 200, data)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       if (err) {
         sendErrorResponse(res, 500, '', JSON.stringify(err))
       }
@@ -141,12 +143,16 @@ exports.sentVsSeen = function (req, res) {
                                             })
                                             .catch(err => {
                                               if (err) {
+                                                const message = err || 'Internal Server Error'
+                                                logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                                 sendErrorResponse(res, 500, '', `Error in getting poll response count ${JSON.stringify(err)}`)
                                               }
                                             })
                                         })
                                         .catch(err => {
                                           if (err) {
+                                            const message = err || 'Internal Server Error'
+                                            logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                             sendErrorResponse(res, 500, '', 'Polls not found')
                                           }
                                         })
@@ -154,55 +160,71 @@ exports.sentVsSeen = function (req, res) {
                                     .catch(err => {
                                       if (err) {
                                         const message = err || 'Internal Server Error'
-                                        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {}, 'error')
+                                        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                         sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                       }
                                     })
                                 })
                                 .catch(err => {
                                   if (err) {
+                                    const message = err || 'Internal Server Error'
+                                    logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                     sendErrorResponse(res, 500, '', 'responses count not found')
                                   }
                                 })
                             })
                             .catch(err => {
                               if (err) {
+                                const message = err || 'Internal Server Error'
+                                logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                 sendErrorResponse(res, 500, '', `Error in getting pollSeenCount count ${JSON.stringify(err)}`)
                               }
                             })
                         })
                         .catch(err => {
                           if (err) {
+                            const message = err || 'Internal Server Error'
+                            logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                             sendErrorResponse(res, 500, '', `Error in getting pollSentCount count ${JSON.stringify(err)}`)
                           }
                         })
                     })
                     .catch(err => {
                       if (err) {
+                        const message = err || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                         sendErrorResponse(res, 500, '', `Error in getting surveytSeenCount count ${JSON.stringify(err)}`)
                       }
                     })
                 })
                 .catch(err => {
                   if (err) {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Error in getting surveySentCount count ${JSON.stringify(err)}`)
                   }
                 })
             })
             .catch(err => {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', `Error in getting broadcastSeenCount count ${JSON.stringify(err)}`)
               }
             })
         })
         .catch(err => {
           if (err) {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Error in getting broadcastSentCount count ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
@@ -333,11 +355,15 @@ exports.sentVsSeenNew = function (req, res) {
                                                         sendSuccessResponse(res, 200, {datacounts, graphDatas: result})
                                                       })
                                                       .catch(err => {
+                                                        const message = err || 'Internal Server Error'
+                                                        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                                         sendErrorResponse(res, 500, '', `Error in getting graphdaya ${JSON.stringify(err)}`)
                                                       })
                                                   })
                                                   .catch(err => {
                                                     if (err) {
+                                                      const message = err || 'Internal Server Error'
+                                                      logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                                       sendErrorResponse(res, 500, '', `Error in getting poll response count ${JSON.stringify(err)}`)
                                                     }
                                                   })
@@ -345,7 +371,7 @@ exports.sentVsSeenNew = function (req, res) {
                                               .catch(err => {
                                                 if (err) {
                                                   const message = err || 'Internal Server Error'
-                                                  logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {}, 'error')
+                                                  logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                                   sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                                 }
                                               })
@@ -353,49 +379,63 @@ exports.sentVsSeenNew = function (req, res) {
                                           .catch(err => {
                                             if (err) {
                                               const message = err || 'Internal Server Error'
-                                              logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {}, 'error')
+                                              logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                               sendErrorResponse(res, 500, '', `Internal Server Error${JSON.stringify(err)}`)
                                             }
                                           })
                                       })
                                       .catch(err => {
                                         if (err) {
+                                          const message = err || 'Internal Server Error'
+                                          logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                           sendErrorResponse(res, 500, '', 'responses count not found')
                                         }
                                       })
                                   })
                                   .catch(err => {
                                     if (err) {
+                                      const message = err || 'Internal Server Error'
+                                      logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                       sendErrorResponse(res, 500, '', `Error in getting pollSeenCount count ${JSON.stringify(err)}`)
                                     }
                                   })
                               })
                               .catch(err => {
                                 if (err) {
+                                  const message = err || 'Internal Server Error'
+                                  logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                                   sendErrorResponse(res, 500, '', `Error in getting pollSentCount count ${JSON.stringify(err)}`)
                                 }
                               })
                           })
                           .catch(err => {
                             if (err) {
+                              const message = err || 'Internal Server Error'
+                              logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                               sendErrorResponse(res, 500, '', `Error in getting surveytSeenCount count ${JSON.stringify(err)}`)
                             }
                           })
                       })
                       .catch(err => {
                         if (err) {
+                          const message = err || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                           sendErrorResponse(res, 500, '', `Error in getting surveySentCount count ${JSON.stringify(err)}`)
                         }
                       })
                   })
                   .catch(err => {
                     if (err) {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', `Error in getting broadcastSeenCount count ${JSON.stringify(err)}`)
                     }
                   })
               })
               .catch(err => {
                 if (err) {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Error in getting broadcastSentCount count ${JSON.stringify(err)}`)
                 }
               })
@@ -403,12 +443,16 @@ exports.sentVsSeenNew = function (req, res) {
         })
         .catch(err => {
           if (err) {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Error in getting connected pages ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
@@ -456,12 +500,16 @@ exports.likesVsSubscribers = function (req, res) {
         })
         .catch(err => {
           if (err) {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Error in getting pages subscriber count ${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sentVsSeen`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Error in getting pages ${JSON.stringify(err)}`)
       }
     })
@@ -486,7 +534,7 @@ exports.otherPages = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: exports.otherPages`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.otherPages`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -537,41 +585,55 @@ exports.stats = function (req, res) {
                                         sendSuccessResponse(res, 200, payload)
                                       })
                                       .catch(err => {
+                                        const message = err || 'Internal Server Error'
+                                        logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
                                         sendErrorResponse(res, 500, '', `failed to retrieve sequences ${err}`)
                                       })
                                   })
                                   .catch(err => {
                                     if (err) {
+                                      const message = err || 'Internal Server Error'
+                                      logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
                                       sendErrorResponse(res, 500, '', JSON.stringify(err))
                                     }
                                   })
                               })
                               .catch(err => {
                                 if (err) {
+                                  const message = err || 'Internal Server Error'
+                                  logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
                                   sendErrorResponse(res, 500, '', JSON.stringify(err))
                                 }
                               })
                           })
                           .catch(err => {
                             if (err) {
+                              const message = err || 'Internal Server Error'
+                              logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
                               sendErrorResponse(res, 500, '', JSON.stringify(err))
                             }
                           })
                       })
                       .catch(err => {
                         if (err) {
+                          const message = err || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
                           sendErrorResponse(res, 500, '', JSON.stringify(err))
                         }
                       })
                   })
                   .catch(err => {
                     if (err) {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', JSON.stringify(err))
                     }
                   })
               })
               .catch(err => {
                 if (err) {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', JSON.stringify(err))
                 }
               })
@@ -579,12 +641,16 @@ exports.stats = function (req, res) {
         })
         .catch(err => {
           if (err) {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', JSON.stringify(err))
           }
         })
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.stats`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${err}`)
       }
     })
@@ -653,27 +719,37 @@ exports.graphData = function (req, res) {
                 })
                 .catch(err => {
                   if (err) {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.graphData`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
                   }
                 })
                 .catch(err => {
                   if (err) {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.graphData`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
                   }
                 })
             })
             .catch(err => {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.graphData`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
               }
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.graphData`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Error in getting surveys count ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.graphData`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
@@ -696,14 +772,20 @@ function graphDataNew (body, companyUser, pageIds) {
                 })
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: graphDataNew`, body, {companyUser}, 'error')
                 reject(err)
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: graphDataNew`, body, {companyUser}, 'error')
             reject(err)
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: graphDataNew`, body, {companyUser}, 'error')
         reject(err)
       })
   })
@@ -754,18 +836,24 @@ exports.toppages = function (req, res) {
             })
             .catch(err => {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.toppages`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', `Error in getting pages subscriber count ${err}`)
               }
             })
         })
         .catch(err => {
           if (err) {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.toppages`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Error in getting pages ${err}`)
           }
         })
     })
     .catch(err => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.toppages`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
@@ -798,12 +886,16 @@ exports.getAllSubscribers = function (req, res) {
           })
           .catch(err => {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAllSubscribers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
             }
           })
       })
       .catch(err => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAllSubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', 'Subscribers not found')
         }
       })
@@ -823,12 +915,16 @@ exports.getAllSubscribers = function (req, res) {
           })
           .catch(err => {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAllSubscribers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
             }
           })
       })
       .catch(err => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAllSubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 404, '', 'BroadcastsCount not found')
         }
       })
@@ -848,12 +944,16 @@ exports.getAllSubscribers = function (req, res) {
           })
           .catch(err => {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAllSubscribers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
             }
           })
       })
       .catch(err => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAllSubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 404, '', 'BroadcastsCount not found')
         }
       })
@@ -882,23 +982,33 @@ exports.subscriberSummary = function (req, res) {
                         sendSuccessResponse(res, 200, data)
                       })
                       .catch(err => {
+                        const message = err || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
                         sendErrorResponse(res, 500, '', `Error in getting graphdata ${JSON.stringify(err)}`)
                       })
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
                   })
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
               })
           })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -934,6 +1044,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, autoposting)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -943,6 +1055,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, facebookAutopostingsCame)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -952,6 +1066,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, twitterAutopostingsCame)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -961,6 +1077,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, wordpressAutopostingsCame)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -970,6 +1088,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, facebookAutopostingGraph)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -979,6 +1099,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, twitterAutopostingGraph)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -988,6 +1110,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, wordpressAutopostingGraph)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -997,6 +1121,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, postsInfo)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -1006,6 +1132,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, rssFeedAutopostingsCame)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -1015,6 +1143,8 @@ exports.fetchAutopostingDetails = function (req, res) {
           callback(null, rssFeedAutopostingGraph)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchAutopostingDetails`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
@@ -1060,6 +1190,8 @@ exports.integrationsData = function (req, res) {
       sendSuccessResponse(res, 200, integrationUsages)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.integrationsData`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
     })
 }
@@ -1072,6 +1204,8 @@ exports.fetchNewsIntegrations = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchNewsIntegrations`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -1081,6 +1215,8 @@ exports.fetchNewsIntegrations = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchNewsIntegrations`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -1090,6 +1226,8 @@ exports.fetchNewsIntegrations = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchNewsIntegrations`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -1099,11 +1237,15 @@ exports.fetchNewsIntegrations = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchNewsIntegrations`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchNewsIntegrations`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch news integrations ${err}`)
     } else {
       let newsSections = results[0]

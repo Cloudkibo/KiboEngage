@@ -21,14 +21,20 @@ exports.index = function (req, res) {
               sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: count.length > 0 ? count[0].count : 0})
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch broadcasts count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -60,7 +66,7 @@ exports.sendBroadcast = function (req, res) {
                       })
                       .catch(error => {
                         const message = error || 'error at sending message'
-                        logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {}, 'error')
+                        logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
                         reject(error)
                       })
                   }))
@@ -70,16 +76,26 @@ exports.sendBroadcast = function (req, res) {
                 .then((responses) => {
                   sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
                 })
-                .catch((err) => sendErrorResponse(res, 500, '', `Failed to Send Broadcast to all Subscribers ${err}`))
+                .catch((err) => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
+                  sendErrorResponse(res, 500, '', `Failed to Send Broadcast to all Subscribers ${err}`)
+                })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
         })
     })
@@ -97,7 +113,7 @@ exports.getCount = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Failed to fetch count'
-      logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch count`)
     })
 }
@@ -120,7 +136,7 @@ exports.getTwilioNumbers = function (req, res) {
     })
     .catch(error => {
       const message = error || 'error at  getTwilioNumbers'
-      logger.serverLog(message, `${TAG}:exports.getTwilioNumbers`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}:exports.getTwilioNumbers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

@@ -34,11 +34,13 @@ exports.surveyResponse = function (req, res) {
           })
           .catch(err => {
             const message = err || 'Failed to fetch subscriber'
-            logger.serverLog(message, `${TAG}: exports.surveyResponse`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.surveyResponse`, req.body, {user: req.user}, 'error')
             return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: surveyResponse`, req.body, {user: req.user}, 'error')
         return res.status(500).json({status: 'failed', description: `Failed to fetch survey ${err}`})
       })
   }
@@ -62,7 +64,7 @@ function savesurvey (req, subscriber) {
         needle.get(webhook.webhook_url, (err, r) => {
           if (err) {
             const message = err || 'Internal Server Error'
-            logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
           } else if (r.statusCode === 200) {
             if (webhook && webhook.optIn.SURVEY_RESPONSE) {
               var data = {
@@ -73,7 +75,7 @@ function savesurvey (req, subscriber) {
                 (error, response) => {
                   if (error) {
                     const message = err || 'Internal Server Error'
-                    logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
                   }
                 })
             }
@@ -85,7 +87,7 @@ function savesurvey (req, subscriber) {
     })
     .catch(err => {
       const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
     })
   SurveyResponseDataLayer.genericUpdateForResponse({
     surveyId: resp.survey_id,
@@ -125,7 +127,7 @@ function savesurvey (req, subscriber) {
               (err3, response) => {
                 if (err3) {
                   const message = err3 || 'Page access token from graph api Error'
-                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
                 }
                 if (response.body.error) {
                   sendOpAlert(response.body.error, 'survey response in kiboengage', '', '', '')
@@ -160,18 +162,18 @@ function savesurvey (req, subscriber) {
               })
               .catch(err => {
                 const message = err || 'Failed to update survey'
-                logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
               })
             needle.get(
               `https://graph.facebook.com/v6.0/${req.recipient.id}?fields=access_token&access_token=${resp.userToken}`,
               (err3, response) => {
                 if (err3) {
                   const message = err3 || 'Page access token from graph api Error'
-                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
                 }
                 if (response.body.error) {
                   const message = response.body.error || 'Page access token from graph api Error'
-                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
                 }
                 const messageData = {
                   text: 'Thank you. Response submitted successfully.'
@@ -195,11 +197,11 @@ function savesurvey (req, subscriber) {
         })
         .catch(err => {
           const message = err || 'Failed to fetch questions'
-          logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to update survey response'
-      logger.serverLog(message, `${TAG}: savesurvey`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: savesurvey`, req.body, {user: req.user}, 'error')
     })
 }

@@ -37,6 +37,8 @@ exports.fetchWorksheets = function (req, res) {
       }
       sheets.spreadsheets.get(request, function (err, response) {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchWorksheets`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
         } else {
           let dataToSend = []
@@ -50,6 +52,8 @@ exports.fetchWorksheets = function (req, res) {
       })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchWorksheets`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
     })
 }
@@ -67,6 +71,8 @@ exports.fetchColumns = function (req, res) {
             callback(null, customFields)
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.fetchColumns`, req.body, {user: req.user}, 'error')
             callback(err)
           })
       },
@@ -85,6 +91,8 @@ exports.fetchColumns = function (req, res) {
             }
             sheets.spreadsheets.get(request, function (err, response) {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.sendPollDirectly`, req.body, {user: req.user}, 'error')
                 callback(err)
               } else {
                 callback(null, response)
@@ -92,11 +100,15 @@ exports.fetchColumns = function (req, res) {
             })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.fetchColumns`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
           })
       }
     ], 10, function (err, results) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sendPollDirectly`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Failed to fetch columns ${err}`)
       } else {
         let dataToSend = {
@@ -192,7 +204,7 @@ exports.callback = async function (req, res) {
                 })
                 .catch(err => {
                   const message = err || 'Error in Integrations Sheets on update callback'
-                  logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
                   res.redirect('/ErrorMessage')
                   res.status(500).send('Internal Error Occurred.')
                 })
@@ -211,7 +223,7 @@ exports.callback = async function (req, res) {
                 })
                 .catch(err => {
                   const message = err || 'Error in Integrations Sheets on create callback'
-                  logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
                   res.redirect('/ErrorMessage')
                   res.status(500).send('Internal Error Occurred.')
                 })
@@ -219,11 +231,13 @@ exports.callback = async function (req, res) {
           })
           .catch(err => {
             const message = err || 'Error in Integrations Sheets on fetch callback'
-            logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
             res.redirect('/ErrorMessage')
             res.status(500).send('Internal Error Occurred.')
           })
       } else {
+        const message = 'Internal Error Occurred. Invalid user'
+        logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
         res.redirect('/ErrorMessage')
         res.status(500).send('Internal Error Occurred. Invalid user')
       }
@@ -256,6 +270,8 @@ exports.listSpreadSheets = (req, res) => {
           },
           (err, response) => {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.listSpreadSheets`, req.body, {user: req.user}, 'error')
               return sendErrorResponse(res, 404, err, 'Connection with Google Sheets failed. Please Disconnect and Connect again from Settings.')
             }
             const files = response.data.files

@@ -32,10 +32,14 @@ exports.findIp = function (req, res) {
           sendSuccessResponse(res, 200, response)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.findIp`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', 'Internal Server Error ' + JSON.stringify(err))
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.findIp`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', 'Internal Server Error ' + JSON.stringify(err))
     })
 }

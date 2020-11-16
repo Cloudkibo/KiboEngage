@@ -12,6 +12,8 @@ exports.verify = function (req, res) {
       sendSuccessResponse(res, 200, 'Verify Token Success')
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.verify`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }

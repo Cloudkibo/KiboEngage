@@ -47,12 +47,12 @@ exports.index = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Failed to fetch messageBlock in query'
-          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
     })
 }
 const _savePageBroadcast = (data) => {

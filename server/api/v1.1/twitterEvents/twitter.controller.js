@@ -6,7 +6,6 @@ const utility = require('../utility')
 const _ = require('lodash')
 const logicLayer = require('./logiclayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
-let { sendOpAlert } = require('./../../global/operationalAlert')
 const { prepareSubscribersCriteria } = require('../../global/utility')
 const { sendUsingBatchAPI } = require('../../global/sendConversation')
 const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
@@ -20,6 +19,8 @@ exports.findAutoposting = function (req, res) {
       })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.findAutoposting`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Internal server error while fetching autopots ${err}`
@@ -48,12 +49,12 @@ exports.twitterwebhook = function (req, res) {
                   .then(response => {
                     if (response.body.error) {
                       const message = response.body.error || 'Failed to send approval message'
-                      logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {user: req.user}, 'error')
                     }
                   })
                   .catch(err => {
                     const message = err || 'Failed to send approval message'
-                    logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {user: req.user}, 'error')
                   })
                 let tweetData = {
                   autopostingId: postingItem._id,
@@ -65,12 +66,12 @@ exports.twitterwebhook = function (req, res) {
                   })
                   .catch(err => {
                     const message = err || 'Failed to push tweet in queue'
-                    logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {user: req.user}, 'error')
                   })
               })
               .catch(err => {
                 const message = err || 'Failed to fetch page admin subscription'
-                logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {user: req.user}, 'error')
               })
           } else {
             sendTweet(postingItem, req)
@@ -80,7 +81,7 @@ exports.twitterwebhook = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Internal server error while fetching autoposts'
-      logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.twitterwebhook`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -113,7 +114,7 @@ const sendTweet = (postingItem, req) => {
     })
     .catch(err => {
       const message = err || 'Internal server error while fetching pages'
-      logger.serverLog(message, `${TAG}: sendTweet`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: sendTweet`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -166,12 +167,12 @@ const sendToMessenger = (postingItem, page, req) => {
                             })
                             .catch(err => {
                               const message = err || 'Internal Server Error'
-                              logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {}, 'error')
+                              logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {user: req.user}, 'error')
                             })
                         })
                         .catch(err => {
                           const message = err || 'Internal Server Error'
-                          logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {user: req.user}, 'error')
                         })
                     } else {
                       _countUpdate(subsFindCriteria, req.body.id.toString())
@@ -179,23 +180,23 @@ const sendToMessenger = (postingItem, page, req) => {
                     }
                   }).catch(err => {
                     const message = err || 'Internal Server Error'
-                    logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {user: req.user}, 'error')
                   })
               })
               .catch(err => {
                 const message = err || 'Failed to prepare data'
-                logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {user: req.user}, 'error')
               })
           })
           .catch(err => {
             const message = err || 'Failed to create autoposting message'
-            logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {user: req.user}, 'error')
           })
       }
     })
     .catch(err => {
       const message = err || 'Failed to fetch subscriber count'
-      logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: sendToMessenger`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -225,62 +226,62 @@ const postOnFacebook = (postingItem, page, req) => {
           .then(response => {
             if (response.body.error) {
               const message = response.body.error || 'Failed to post on facebook'
-              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
             } else {
               savePostObject(postingItem, page, req, messageData, response.body.post_id ? response.body.post_id : response.body.id)
             }
           })
           .catch(err => {
             const message = err || 'Failed to post on facebook'
-            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
           })
       } else if (messageData.type === 'image') {
         facebookApiCaller('v3.3', `${page.pageId}/photos?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
               const message = response.body.error || 'Failed to post on facebook'
-              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
             } else {
               savePostObject(postingItem, page, req, messageData, response.body.post_id ? response.body.post_id : response.body.id)
             }
           })
           .catch(err => {
             const message = err || 'Failed to post on facebook'
-            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
           })
       } else if (messageData.type === 'images') {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
               const message = response.body.error || 'Failed to post on facebook'
-              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
             } else {
               savePostObject(postingItem, page, req, messageData, response.body.post_id ? response.body.post_id : response.body.id)
             }
           })
           .catch(err => {
             const message = err || 'Failed to post on facebook'
-            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
           })
       } else if (messageData.type === 'video') {
         facebookApiCaller('v3.3', `${page.pageId}/videos?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
             if (response.body.error) {
               const message = response.body.error || 'Failed to post on facebook'
-              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
             } else {
               savePostObject(postingItem, page, req, messageData, `${page.pageId}_${response.body.id}`)
             }
           })
           .catch(err => {
             const message = err || 'Failed to post on facebook'
-            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
           })
       }
     })
     .catch(err => {
       const message = err || 'Failed to prepare data'
-      logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -301,7 +302,7 @@ const savePostObject = (postingItem, page, req, messageData, postId) => {
     })
     .catch(err => {
       const message = err || 'Failed to create post object'
-      logger.serverLog(message, `${TAG}: savePostObject`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: savePostObject`, req.body, {user: req.user}, 'error')
     })
 }
 

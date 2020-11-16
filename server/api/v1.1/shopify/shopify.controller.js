@@ -177,6 +177,8 @@ exports.index = function (req, res) {
       })
       .catch(err => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           return res.status(500).send('Error in finding companyuser for shopify')
         }
       })
@@ -289,6 +291,8 @@ exports.callback = function (req, res) {
             return res.redirect('/')
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
             return res.status(500).json({ status: 'failed', error: err })
           })
       })

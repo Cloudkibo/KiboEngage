@@ -66,6 +66,8 @@ function isAuthenticated () {
               return res.status(401)
                 .json({status: 'Unauthorized', description: 'jwt expired'})
             } else {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: isAuthenticated`, req.body, {user: req.user}, 'error')
               return res.status(500)
                 .json({status: 'failed', description: `Internal Server Error: ${err}`})
             }
@@ -86,7 +88,7 @@ function isAuthorizedGAMRequest (req, res, next) {
   exec('sh GAM_ip_list.sh', function (err, stdout, stderr) {
     if (err) {
       const message = err || 'Internal server error'
-      logger.serverLog(message, `${TAG}: isAuthorizedGAMRequest`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: isAuthorizedGAMRequest`, req.body, {user: req.user}, 'error')
       return res.status(500).json({message: 'An unexpected error occurred!'})
     } else {
       const ipRanges = stdout.toString().split('\n')
@@ -105,7 +107,7 @@ function isAuthorizedGAMRequest (req, res, next) {
       } catch (err) {
         if (err) {
           const message = err || 'Internal server error'
-          logger.serverLog(message, `${TAG}: isAuthorizedGAMRequest`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: isAuthorizedGAMRequest`, req.body, {user: req.user}, 'error')
           return res.status(500).json({message: 'An unexpected error occurred!'})
         }
       }
@@ -228,6 +230,8 @@ function doesRolePermitsThisAction (action) {
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: doesRolePermitsThisAction`, {action}, {user: req.user}, 'error')
         return res.status(500)
           .json({status: 'failed', description: `Internal Server Error: ${err}`})
       })
@@ -252,6 +256,8 @@ function validateApiKeys (req, res, next) {
               next()
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: validateApiKeys`, req.body, {user: req.user}, 'error')
               return res.status(500)
                 .json({status: 'failed', description: `Internal Server Error: ${err}`})
             })
@@ -263,6 +269,8 @@ function validateApiKeys (req, res, next) {
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: validateApiKeys`, req.body, {user: req.user}, 'error')
         return next(err)
       })
   } else {
@@ -282,11 +290,11 @@ const _updateUserPlatform = (req, res) => {
         })
         .catch(err => {
           const message = err || 'Internal server error'
-          logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {user: req.user}, 'error')
         })
     }).catch(err => {
       const message = err || 'Internal server error'
-      logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -413,7 +421,7 @@ function fetchPages (url, user, req, token) {
   needle.get(url, options, (err, resp) => {
     if (err !== null) {
       const message = err || 'error from graph api to get pages list data'
-      logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: fetchPages`, req.body, {user: req.user}, 'error')
       return
     }
     const data = resp.body.data
@@ -431,7 +439,7 @@ function fetchPages (url, user, req, token) {
             needle.get(options2.url, options2, (error, fanCount) => {
               if (error !== null) {
                 const message = err || 'internal server error'
-                logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: fetchPages`, req.body, {user: req.user}, 'error')
               } else {
                 apiCaller.callApi(`pages/query`, 'post', {pageId: item.id, userId: user._id, companyId: companyUser.companyId})
                   .then(pages => {
@@ -457,7 +465,7 @@ function fetchPages (url, user, req, token) {
                         })
                         .catch(err => {
                           const message = err || 'failed to create page'
-                          logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: fetchPages`, req.body, {user: req.user}, 'error')
                         })
                     } else {
                       let updatedPayload = {
@@ -476,7 +484,7 @@ function fetchPages (url, user, req, token) {
                         })
                         .catch(err => {
                           const message = err || 'failed to update page'
-                          logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: fetchPages`, req.body, {user: req.user}, 'error')
                         })
                     }
                   })
@@ -487,7 +495,7 @@ function fetchPages (url, user, req, token) {
       })
       .catch(err => {
         const message = err || 'internal server error'
-        logger.serverLog(message, `${TAG}: fetchPages`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: fetchPages`, req.body, {user: req.user}, 'error')
       })
     if (cursor && cursor.next) {
       fetchPages(cursor.next, user, req)

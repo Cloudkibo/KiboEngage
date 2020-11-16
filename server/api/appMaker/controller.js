@@ -1,5 +1,5 @@
-// const logger = require('../../../components/logger')
-// const TAG = 'api/api_ngp/api_ngp.controller.js'
+const logger = require('../../components/logger')
+const TAG = 'api/appMaker.js'
 const { sendSuccessResponse, sendErrorResponse } = require('../global/response')
 const async = require('async')
 
@@ -13,9 +13,15 @@ exports.sendTwilioSMS = function (req, res) {
       from: from,
       to: number
     }).then(response => next())
-      .catch(err => next(err))
+      .catch(err => {
+        const message = err || 'Failed to send twilio sms'
+        logger.serverLog(message, `${TAG}: exports.sendTwilioSMS`, {}, {}, 'error')
+        next(err)
+      })
   }, function (err) {
     if (err) {
+      const message = err || 'Failed to send twilio sms'
+      logger.serverLog(message, `${TAG}: exports.sendTwilioSMS`, {}, {}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       sendSuccessResponse(res, 200, 'Success')

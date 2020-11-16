@@ -22,12 +22,12 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, {user, superUser})
         }).catch(error => {
           const message = error || 'Error while fetching companyUser details'
-          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetching companyUser details ${JSON.stringify(error)}`)
         })
     }).catch(error => {
       const message = error || 'Error while fetching user details'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetching user details ${JSON.stringify(error)}`)
     })
 }
@@ -38,7 +38,7 @@ exports.updateChecks = function (req, res) {
       sendSuccessResponse(res, 200, user)
     }).catch(error => {
       const message = error || 'Error while updating checks'
-      logger.serverLog(message, `${TAG}: exports.updateChecks`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.updateChecks`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to update checks ${JSON.stringify(error)}`)
     })
 }
@@ -49,7 +49,7 @@ exports.updateSkipConnect = function (req, res) {
       sendSuccessResponse(res, 200, user)
     }).catch(error => {
       const message = error || 'Error at updateSkipConnect'
-      logger.serverLog(message, `${TAG}: exports.updateSkipConnect`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.updateSkipConnect`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to updateSkipConnect ${JSON.stringify(error)}`)
     })
 }
@@ -60,7 +60,7 @@ exports.updateMode = function (req, res) {
       sendSuccessResponse(res, 200, user)
     }).catch(error => {
       const message = error || 'Error while updating mode'
-      logger.serverLog(message, `${TAG}: exports.updateMode`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.updateMode`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to update mode ${JSON.stringify(error)}`)
     })
 }
@@ -75,7 +75,7 @@ exports.authenticatePassword = function (req, res) {
       sendSuccessResponse(res, 200, status)
     }).catch(error => {
       const message = error || 'Error while authenticating password'
-      logger.serverLog(message, `${TAG}: exports.authenticatePassword`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.authenticatePassword`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to authenticate password ${JSON.stringify(error)}`)
     })
 }
@@ -86,7 +86,7 @@ exports.addAccountType = function (req, res) {
       sendSuccessResponse(res, 200, status)
     }).catch(error => {
       const message = error || 'Error while adding account type'
-      logger.serverLog(message, `${TAG}: exports.addAccountType`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.addAccountType`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to add account type ${JSON.stringify(error)}`)
     })
 }
@@ -97,7 +97,7 @@ exports.enableDelete = function (req, res) {
       sendSuccessResponse(res, 200, updatedUser)
     }).catch(error => {
       const message = error || 'Error while enabling GDPR delete'
-      logger.serverLog(message, `${TAG}: exports.enableDelete`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.enableDelete`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to enable GDPR delete ${JSON.stringify(error)}`)
     })
 }
@@ -108,7 +108,7 @@ exports.cancelDeletion = function (req, res) {
       sendSuccessResponse(res, 200, updatedUser)
     }).catch(error => {
       const message = error || 'Error while disabling GDPR delete'
-      logger.serverLog(message, `${TAG}: exports.cancelDeletion`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.cancelDeletion`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to disable GDPR delete ${JSON.stringify(error)}`)
     })
 }
@@ -135,6 +135,8 @@ exports.validateFacebookConnected = function (req, res) {
       sendSuccessResponse(res, 200, dataTosend)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.validateFacebookConnected`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -146,6 +148,8 @@ exports.validateUserAccessToken = function (req, res) {
         sendSuccessResponse(res, 200, 'User Access Token validated successfully!')
       })
       .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user}, 'error')
         let dataToSend = {
           error: err,
           buyerInfo: {
@@ -171,6 +175,8 @@ exports.validateUserAccessToken = function (req, res) {
             sendSuccessResponse(res, 200, 'User Access Token validated successfully!')
           })
           .catch((err) => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user}, 'error')
             let dataToSend = {
               error: err,
               buyerInfo: {
@@ -203,7 +209,8 @@ function _checkAcessTokenFromFb (facebookInfo, req) {
           }
         })
         .catch((err) => {
-          sendOpAlert(err, 'error validating user access token', '', req.user._id, req.user.companyId)
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _checkAcessTokenFromFb`, {body: req.body, facebookInfo}, {user: req.user}, 'error')
           reject(err)
         })
     } else {
@@ -219,6 +226,8 @@ exports.updateShowIntegrations = function (req, res) {
       sendSuccessResponse(res, 200, 'Updated Successfully!')
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.validateFacebookConnected`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -242,15 +251,19 @@ exports.disconnectFacebook = function (req, res) {
               sendSuccessResponse(res, 200, 'Updated Successfully!')
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.disconnectFacebook`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, err)
             })
         }).catch(err => {
           const message = err || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: exports.disconnectFacebook`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.disconnectFacebook`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.disconnectFacebook`, req.body, {user: req.user}, 'error')
       res.status(500).json({status: 'failed', payload: err})
     })
 }
@@ -261,6 +274,8 @@ exports.updatePlatform = function (req, res) {
       sendSuccessResponse(res, 200, 'Updated Successfully!')
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -271,7 +286,7 @@ exports.updatePicture = function (req, res) {
       sendSuccessResponse(res, 200, updatedUser)
     }).catch(error => {
       const message = error || 'Error while retrieving profile picture for user'
-      logger.serverLog(message, `${TAG}: exports.updatePicture`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.updatePicture`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to retrieve profile picture of user ${JSON.stringify(error)}`)
     })
 }
@@ -284,6 +299,8 @@ exports.logout = function (req, res) {
         payload: 'send response successfully!'
       })
     }).catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.logout`, req.body, {user: req.user}, 'error')
       res.status(500).json({status: 'failed', payload: `failed to sendLogoutEvent ${err}`})
     })
 }

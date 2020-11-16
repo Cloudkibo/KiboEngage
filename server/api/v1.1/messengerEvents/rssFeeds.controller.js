@@ -40,14 +40,14 @@ exports.changeSubscription = function (req, res) {
         ], function (err) {
           if (err) {
             const message = err || 'Failed to subscribe or unsubscribe'
-            logger.serverLog(message, `${TAG}: exports.changeSubscription`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.changeSubscription`, req.body, {user: req.user}, 'error')
           }
         })
       }
     })
     .catch(err => {
       const message = err || 'Failed to fetch feed'
-      logger.serverLog(message, `${TAG}: exports.changeSubscription`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.changeSubscription`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -77,7 +77,7 @@ exports.showMoreTopics = function (req, res) {
   ], function (err) {
     if (err) {
       const message = err || 'Failed to subscribe or unsubscribe'
-      logger.serverLog(message, `${TAG}: exports.showMoreTopics`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.showMoreTopics`, req.body, {user: req.user}, 'error')
     }
   })
 }
@@ -91,6 +91,8 @@ const _fetchPage = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchPage`, data, {}, 'error')
       next(err)
     })
 }
@@ -101,6 +103,8 @@ const _fetchSubscriber = (data, next) => {
       next()
     })
     .catch((err) => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchSubscriber`, data, {}, 'error')
       next(err)
     })
 }
@@ -122,6 +126,8 @@ const _updateSubscription = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateSubscription`, data, {}, 'error')
       next(err)
     })
 }
@@ -135,11 +141,15 @@ const _updateSubscriptionCount = (data, next) => {
               next()
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: _updateSubscriptionCount`, data, {}, 'error')
               next(err)
             })
         } else next()
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _updateSubscriptionCount`, data, {}, 'error')
         next(err)
       })
   } else {
@@ -151,11 +161,15 @@ const _updateSubscriptionCount = (data, next) => {
               next()
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: _updateSubscriptionCount`, data, {}, 'error')
               next(err)
             })
         } else next()
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _updateSubscriptionCount`, data, {}, 'error')
         next(err)
       })
   }
@@ -176,6 +190,8 @@ const _fetchFeeds = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchFeeds`, data, {}, 'error')
       next(err)
     })
 }
@@ -211,6 +227,8 @@ const _sendMessage = (data, next) => {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _sendMessage`, data, {}, 'error')
       next(err)
     })
 }
@@ -255,6 +273,8 @@ const _sendSubscriptionMessage = (data, next) => {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _sendSubscriptionMessage`, data, {}, 'error')
       next(err)
     })
 }
@@ -284,7 +304,7 @@ exports.sendTopicFeed = function (req, res) {
   ], function (err) {
     if (err) {
       const message = err || 'Failed to subscribe or unsubscribe'
-      logger.serverLog(message, `${TAG}: exports.sendTopicFeed`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.sendTopicFeed`, req.body, {user: req.user}, 'error')
     }
   })
 }
@@ -297,6 +317,8 @@ const _fetchFeed = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchFeed`, data, {}, 'error')
       next(err)
     })
 }
@@ -330,6 +352,8 @@ const _prepareQuickReplies = (data, next) => {
           next()
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _prepareQuickReplies`, data, {}, 'error')
           next(err)
         })
     } else {
@@ -352,6 +376,8 @@ const _prepareQuickReplies = (data, next) => {
           next()
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _prepareQuickReplies`, data, {}, 'error')
           next(err)
         })
     }
@@ -380,6 +406,8 @@ const _prepareMessageData = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _prepareMessageData`, data, {}, 'error')
       next(err)
     })
 }
@@ -419,6 +447,8 @@ function getMetaData (feed, rssFeed, page) {
       }
     }, function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: getMetaData`, {feed, rssFeed, page}, {}, 'error')
         reject(err)
       } else {
         resolve(gallery)

@@ -25,6 +25,8 @@ function fetchProductDetails (productIds, store, callBack) {
         }
       })
       .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: fetchProductDetails`, {productIds, store}, {}, 'error')
         return callBack(err, null)
       })
   }
@@ -120,12 +122,20 @@ const sendOrderStatus = (id, statusMessage, cb) => {
           .then(store => {
             sendOrderStatusToFacebook(order, statusMessage, store)
           })
-          .catch(err => cb(err, null))
+          .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: sendOrderStatus`, {id, statusMessage}, {}, 'error')
+            cb(err, null)
+          })
       } else {
         return cb(null, { status: 'Not Found', payload: 'Order not found' })
       }
     })
-    .catch(err => cb(err, null))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: sendOrderStatus`, {id, statusMessage}, {}, 'error')
+      cb(err, null)
+    })
 }
 
 const sendCheckout = (id, cb) => {
@@ -137,7 +147,7 @@ const sendCheckout = (id, cb) => {
             fetchProductDetails(checkout.productIds, store, (err, details) => {
               if (err) {
                 const message = err || 'Error in fetching product details'
-                logger.serverLog(message, `${TAG}: sendCheckout`, {id, cb}, {}, 'error')
+                logger.serverLog(message, `${TAG}: sendCheckout`, {id}, {}, 'error')
                 return cb(err, null)
               }
               sendToFacebook(checkout, store, details)
@@ -145,21 +155,37 @@ const sendCheckout = (id, cb) => {
               // checkout.sentCount = checkout.sentCount + 1
               dataLayer.findOneStoreAnalyticsObjectAndUpdate({ storeId: store._id }, { $inc: { totalPushSent: 1 } })
                 .then(updated => {})
-                .catch(err => cb(err, null))
+                .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: sendCheckout`, {id}, {}, 'error')
+                  cb(err, null)
+                })
               dataLayer.findOneCheckOutInfoObjectAndUpdate(
                 { _id: id, sentCount: { '$lt': 3 } },
                 {status: 'sent', sentCount: checkout.sentCount + 1})
                 .then(updated => {})
-                .catch(err => cb(err, null))
+                .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: sendCheckout`, {id}, {}, 'error')
+                  cb(err, null)
+                })
               cb(null, { status: 'Success', payload: 'Checkout Sent' })
             })
           })
-          .catch(err => cb(err, null))
+          .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: sendCheckout`, {id}, {}, 'error')
+            cb(err, null)
+          })
       } else {
         return cb(null, { status: 'Not Found', payload: 'Checkout not found' })
       }
     })
-    .catch(err => cb(err, null))
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: sendCheckout`, {id}, {}, 'error')
+      cb(err, null)
+    })
 }
 
 exports.sendCheckout = sendCheckout

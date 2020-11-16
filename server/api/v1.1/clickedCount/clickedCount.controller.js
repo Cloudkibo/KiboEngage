@@ -13,7 +13,7 @@ exports.updateClickedCount = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Failed to fetch update clicks for rss'
-          logger.serverLog(message, `${TAG}: exports.updateClickedCount`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.updateClickedCount`, req.body, {user: req.user}, 'error')
         })
     }
   }

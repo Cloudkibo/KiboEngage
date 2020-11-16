@@ -16,10 +16,14 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, {posts, count: count.length > 0 ? count[0].count : 0})
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch posts ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to get posts count ${JSON.stringify(error)}`)
     })
 }
@@ -30,6 +34,8 @@ exports.viewPost = function (req, res) {
       sendSuccessResponse(res, 200, post)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.viewPost`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch post ${JSON.stringify(error)}`)
     })
 }
@@ -42,10 +48,14 @@ exports.create = function (req, res) {
           sendSuccessResponse(res, 200, postCreated)
         })
         .catch((err) => {
+          const message = err || 'Failed to save broadcast'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to save post ${err}`)
         })
     })
     .catch((err) => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `${err}`)
     })
 }
@@ -74,6 +84,8 @@ function getPayloadToSave (user, body) {
           else resolve(payloadToSave)
         })
         .catch((err) => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: getPayloadToSave`, {body}, {user}, 'error')
           reject(err)
         })
     } else if (body.captureOption === 'existing') {
@@ -89,10 +101,14 @@ function getPayloadToSave (user, body) {
               }
             })
             .catch((err) => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: getPayloadToSave`, {body}, {user}, 'error')
               reject(err)
             })
         })
         .catch((err) => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: getPayloadToSave`, {body}, {user}, 'error')
           reject(err)
         })
     } else if (body.captureOption === 'new') {
@@ -103,6 +119,8 @@ function getPayloadToSave (user, body) {
           resolve(payloadToSave)
         })
         .catch((err) => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: getPayloadToSave`, {body}, {user}, 'error')
           reject(err)
         })
     }
@@ -122,6 +140,8 @@ function getExistingPostId (url, pageId) {
               if (!response.body.error) {
                 resolve(`${page.pageId}_${postId}`)
               } else {
+                const message = response.body.error || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: getExistingPostId`, {url, pageId}, {}, 'error')
                 if (response.body.error.message && response.body.error.message === 'Invalid parameter') {
                   reject(new Error('Either post doesn’t exist or it belongs to some other page'))
                 } else {
@@ -130,10 +150,14 @@ function getExistingPostId (url, pageId) {
               }
             })
             .catch((err) => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: getExistingPostId`, {url, pageId}, {}, 'error')
               reject(err)
             })
         })
         .catch((err) => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: getExistingPostId`, {url, pageId}, {}, 'error')
           reject(err)
         })
     }
@@ -227,6 +251,8 @@ exports.edit = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to update post ${JSON.stringify(error)}`)
     })
 }
@@ -236,6 +262,8 @@ exports.delete = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to delete post ${JSON.stringify(error)}`)
     })
 }
@@ -249,6 +277,8 @@ exports.postsAnalytics = function (req, res) {
           sendSuccessResponse(res, 200, analytics)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.postsAnalytics`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to get fetch posts ${JSON.stringify(error)}`)
         })
     })
@@ -266,6 +296,8 @@ exports.getComments = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getComments`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -276,11 +308,15 @@ exports.getComments = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getComments`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getComments`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       let countResponse = results[0]
@@ -298,6 +334,8 @@ exports.getRepliesToComment = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getRepliesToComment`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -308,6 +346,8 @@ exports.getRepliesToComment = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getRepliesToComment`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
@@ -327,6 +367,8 @@ exports.fetchAllComments = function (req, res) {
       sendSuccessResponse(res, 200, comments)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchAllComments`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -359,6 +401,8 @@ exports.fetchPostData = function (req, res) {
             }
           })
           .catch((err) => {
+            const message = err || 'Failed to save broadcast'
+            logger.serverLog(message, `${TAG}: exports.fetchPostData`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
           })
       } else {
@@ -377,11 +421,15 @@ exports.fetchPostData = function (req, res) {
             }
           })
           .catch((err) => {
+            const message = err || 'Failed to save broadcast'
+            logger.serverLog(message, `${TAG}: exports.fetchPostData`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
           })
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchPostData`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to get posts ${JSON.stringify(error)}`)
     })
 }
@@ -393,6 +441,8 @@ exports.fetchGlobalPostData = function (req, res) {
       facebookApiCaller('v3.3', `${page.pageId}/posts?fields=attachments.limit(1){type},message,created_time&limit=${req.body.number_of_records}&pretty=0${paginiationQuery}&access_token=${page.accessToken}`, 'get', {})
         .then(response => {
           if (response.body.error) {
+            const message = response.body.error || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.fetchGlobalPostData`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(response.body.error)}`)
           } else {
             if (response.body.data && response.body.data.length > 0) {
@@ -406,10 +456,14 @@ exports.fetchGlobalPostData = function (req, res) {
           }
         })
         .catch((err) => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchGlobalPostData`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch post data from fb ${JSON.stringify(err)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchGlobalPostData`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to get posts ${JSON.stringify(error)}`)
     })
 }
@@ -442,11 +496,15 @@ function sendGlobalDataPayload (responseBody) {
                 }
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.fetchGlobalPostData`, responseBody, {}, 'error')
                 reject(err)
               })
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchGlobalPostData`, responseBody, {}, 'error')
           reject(err)
         })
     }
@@ -461,6 +519,8 @@ exports.filterComments = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.filterComments`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -470,11 +530,15 @@ exports.filterComments = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.filterComments`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.filterComments`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       let countResponse = results[0]

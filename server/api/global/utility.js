@@ -160,15 +160,13 @@ const passwordChangeEmailAlert = function (userId, userEmail) {
           if (err) {
             const message = err || 'error in sending Alert email'
             logger.serverLog(message, `${TAG}: passwordChangeEmailAlert`, {userId}, {}, 'error')
-          } else {
-            logger.serverLog('send successfully', `${TAG}: passwordChangeEmailAlert`, {userId}, {}, 'info')
           }
         })
       }
     })
     .catch(error => {
       const message = error || 'error in password change email alert'
-      logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {userId}, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.isApprovedForSMP`, {userId, userEmail}, {}, 'error')
     })
 }
 const getMailTransporter = function () {
@@ -235,6 +233,8 @@ const attachBuyerInfo = function () {
         next()
       })
       .catch(error => {
+        const message = error || 'Failed to fetch buyer account'
+        logger.serverLog(message, `${TAG}: attachBuyerInfo`, req.body, {user: req.user}, 'error')
         return res.status(500).json({
           status: 'failed',
           payload: `Failed to fetch buyer account ${JSON.stringify(error)}`
