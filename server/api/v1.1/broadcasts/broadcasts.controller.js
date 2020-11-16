@@ -9,7 +9,6 @@ const needle = require('needle')
 const path = require('path')
 const fs = require('fs')
 let config = require('./../../../config/environment')
-const uniqid = require('uniqid')
 let _ = require('lodash')
 let request = require('request')
 const crypto = require('crypto')
@@ -25,6 +24,7 @@ const { prepareSubscribersCriteria, createMessageBlocks } = require('../../globa
 const PollResponseDataLayer = require('../polls/pollresponse.datalayer')
 const surveyResponseDataLayer = require('../surveys/surveyresponse.datalayer')
 const ogs = require('open-graph-scraper')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   let criteria = BroadcastLogicLayer.getCriterias(req)
@@ -464,7 +464,6 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
     .then(broadcast => {
       createMessageBlocks(req.body.linkedMessages, req.user, broadcast._id, 'broadcast')
         .then(results => {
-          // ...
           require('./../../../config/socketio').sendMessageToClient({
             room_id: req.user.companyId,
             body: {
@@ -708,10 +707,12 @@ exports.retrieveReachEstimation = (req, res) => {
 
 exports.urlMetaData = (req, res) => {
   let url = req.body.url
+  if (url.includes('kiboengage.cloudkibo.com') || url.includes('kibochat.cloudkibo.com')) {
+    url = 'https://kibopush.com'
+  }
   if (url) {
     let options = {url}
     ogs(options, (error, results) => {
-      console.log('url metadata error', error)
       console.log('url metadata results', results)
       if (!error) {
         return res.status(200).json({
@@ -747,6 +748,7 @@ exports.retrieveSubscribersCount = function (req, res) {
     companyId: req.user.companyId,
     completeInfo: true,
     isSubscribed: true,
+    disabledByPlan: false,
     lastMessagedAt: {
       $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))
     }
