@@ -39,7 +39,7 @@ exports.getMessages = function (req, res) {
   ], 10, function (err, results) {
     if (err) {
       const message = err || 'Failed to fetch autoposting messages'
-      logger.serverLog(message, `${TAG}: exports.getMessages`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.getMessages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', 'Failed to fetch autoposting messages')
     } else {
       let messagesCount = results[0]
@@ -64,6 +64,8 @@ const _countAutopostingMessages = (data, next) => {
       next(null, messagesCount)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _countAutopostingMessages`, data, {}, 'error')
       next(err)
     })
 }
@@ -74,6 +76,8 @@ const _fetchAutopostingMessages = (data, next) => {
       next(null, autopostingMessages)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchAutopostingMessages`, data, {}, 'error')
       next(err)
     })
 }
@@ -104,6 +108,8 @@ function populatePages (messages, req) {
             }
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: populatePages`, req.body, {user: req.user}, 'error')
             reject(err)
           })
       }

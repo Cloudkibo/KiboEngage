@@ -25,6 +25,8 @@ exports.index = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -38,6 +40,8 @@ exports.index = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
@@ -61,6 +65,8 @@ exports.create = function (req, res) {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
@@ -72,6 +78,8 @@ exports.update = function (req, res) {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
@@ -107,6 +115,8 @@ function _storeCampaignId (queryObject, dataToUpdate, res) {
       return res.status(201).json({ status: 'success', payload: dataToUpdate.campaignId })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _storeCampaignId`, {queryObject, dataToUpdate}, {}, 'error')
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
@@ -149,6 +159,8 @@ function _storeAdSetId (queryObject, dataToUpdate, res) {
       return res.status(201).json({ status: 'success', payload: dataToUpdate.adSetId })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _storeAdSetId`, {queryObject, dataToUpdate}, {}, 'error')
       return res.status(500).json({ status: 'failed', payload: `Failed to create sponsored message ${JSON.stringify(error)}` })
     })
 }
@@ -191,7 +203,7 @@ exports.send = function (req, res) {
   logiclayer.prepareAdCreativePayload(req.body, facebookInfo.fbToken, (err, creativePayload) => {
     if (err) {
       const message = err || 'Error in preparing Ad Creatives'
-      logger.serverLog(message, `${TAG}: _updateClickCountId`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _updateClickCountId`, req.body, {user: req.user}, 'error')
     }
     facebookApiCaller('v6.0', `${req.body.adAccountId}/adcreatives`, 'post', creativePayload)
       .then(adCreativeResp => {
@@ -226,18 +238,22 @@ exports.send = function (req, res) {
                     }
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.send`, req.body, {user: req.user}, 'error')
                     return sendErrorResponse(res, 500, err)
                   })
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.send`, req.body, {user: req.user}, 'error')
               return sendErrorResponse(res, 500, err)
             })
         }
       })
       .catch(err => {
         const message = err || 'error on fb call in send ad creatives'
-        logger.serverLog(message, `${TAG}: _updateClickCountId`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: _updateClickCountId`, req.body, {user: req.user}, 'error')
         return sendErrorResponse(res, 500, err)
       })
   })
@@ -274,6 +290,8 @@ exports.delete = function (req, res) {
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
       return res.status(500).json({ status: 'failed', payload: `Failed to delete sponsored message ${error}` })
     })
 }
@@ -295,6 +313,8 @@ exports.getInsight = function (req, res) {
         }
       })
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getInsight`, req.body, {user: req.user}, 'error')
         return sendErrorResponse(res, 500, error)
       })
   }
@@ -351,34 +371,46 @@ exports.sendInSandbox = function (req, res) {
                                     sendSuccessResponse(res, 200, sponsoredMessage)
                                   })
                                   .catch(error => {
+                                    const message = error || 'Internal Server Error'
+                                    logger.serverLog(message, `${TAG}: exports.sendInSandbox`, req.body, {user: req.user}, 'error')
                                     return sendErrorResponse(res, 500, error)
                                   })
                               }
                             })
                             .catch(err => {
+                              const message = err || 'Internal Server Error'
+                              logger.serverLog(message, `${TAG}: exports.sendInSandbox`, req.body, {user: req.user}, 'error')
                               return sendErrorResponse(res, 500, err)
                             })
                         }
                       })
                       .catch(err => {
+                        const message = err || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.sendInSandbox`, req.body, {user: req.user}, 'error')
                         return sendErrorResponse(res, 500, err)
                       })
                   }
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.sendInSandbox`, req.body, {user: req.user}, 'error')
                   return sendErrorResponse(res, 500, err)
                 })
             }
           })
           .catch(error => {
+            const message = error || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.sendInSandbox`, req.body, {user: req.user}, 'error')
             return sendErrorResponse(res, 500, error)
           })
       })
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sendInSandbox`, req.body, {user: req.user}, 'error')
         return sendErrorResponse(res, 500, error)
       })
   } else {
-    return sendErrorResponse(res, 500, {message: 'Failed to send sponsored message due missing account_id'})
+    return sendErrorResponse(res, 400, {message: 'Failed to send sponsored message due missing account_id'})
   }
 }
 
@@ -396,6 +428,8 @@ exports.adAccounts = function (req, res) {
       return sendSuccessResponse(res, 200, response.body.data)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.adAccounts`, req.body, {user: req.user}, 'error')
       return sendErrorResponse(res, 500, error)
     })
 }
@@ -414,6 +448,8 @@ exports.fetchCampaigns = function (req, res) {
       return sendSuccessResponse(res, 200, response.body.data)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchCampaigns`, req.body, {user: req.user}, 'error')
       return sendErrorResponse(res, 500, error)
     })
 }
@@ -426,12 +462,15 @@ exports.fetchAdSets = function (req, res) {
   facebookApiCaller('v6.0', `${req.params.ad_campaign_id}/adsets?fields=id,name,start_time,end_time,daily_budget,lifetime_budget,optimization_goal,billing_event,campaign_id,targeting,status,promoted_object&access_token=${facebookInfo.fbToken}`, 'get')
     .then(response => {
       if (response.body.error) {
-        sendOpAlert(response.body.error, 'fetching all ad sets of a user', '', req.user._id, req.user.companyId)
+        const message = response.body.error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.fetchAdSets`, req.body, {user: req.user}, 'error')
         return sendErrorResponse(res, 500, response.body.error)
       }
       return sendSuccessResponse(res, 200, response.body.data)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchAdSets`, req.body, {user: req.user}, 'error')
       return sendErrorResponse(res, 500, error)
     })
 }

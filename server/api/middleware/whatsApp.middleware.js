@@ -1,6 +1,8 @@
 'use strict'
 const compose = require('composable-middleware')
 const utility = require('../v1.1/utility')
+const TAG = 'api/middleware/whatsApp.middleware'
+const logger = require('../../components/logger')
 
 exports.attachProviderInfo = () => {
   return compose().use((req, res, next) => {
@@ -22,6 +24,8 @@ exports.attachProviderInfo = () => {
         next()
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.attachProviderInfo`, req.body, {user: req.user}, 'error')
         return res.status(500)
           .json({ status: 'failed', description: `Internal Server Error: ${err}` })
       })

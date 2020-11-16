@@ -46,19 +46,19 @@ exports.index = function (req, res) {
                 })
                 .catch(err => {
                   const message = err || 'Failed to fetch integrations'
-                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
                 })
             }
           })
           .catch(err => {
             const message = err || 'Failed to fetch subscriber'
-            logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           })
       }
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -281,9 +281,9 @@ function sendToHubspot (integration, hubspotUrl, payload, method) {
         resolve(result)
       })
       .catch(err => {
-        reject(err)
         const message = err || 'Failed to send data to hubspot form'
         logger.serverLog(message, `${TAG}: sendToHubspot`, {integration, hubspotUrl, payload, method}, {}, 'error')
+        reject(err)
       })
   })
 }

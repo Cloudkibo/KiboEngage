@@ -20,6 +20,8 @@ exports.index = function (req, res) {
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Internal Server Error ${JSON.stringify(err)}`)
             })
         }
@@ -28,6 +30,8 @@ exports.index = function (req, res) {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -69,6 +73,8 @@ exports.create = function (req, res) {
             sendSuccessResponse(res, 200, updated)
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, `failed to update page admin subscription ${JSON.stringify(err)}`)
           })
       } else {
@@ -92,11 +98,15 @@ exports.create = function (req, res) {
             sendSuccessResponse(res, 200, updatedRecord)
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
           })
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch page admin subscription ${JSON.stringify(err)}`)
     })
 }
@@ -114,6 +124,8 @@ exports.fetch = function (req, res) {
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.fetch`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
             })
         }
@@ -122,6 +134,8 @@ exports.fetch = function (req, res) {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetch`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }

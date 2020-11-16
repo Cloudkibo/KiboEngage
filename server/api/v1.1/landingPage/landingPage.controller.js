@@ -1,6 +1,8 @@
 const utility = require('../utility')
 const logicLayer = require('./landingPage.logiclayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const logger = require('../../../components/logger')
+const TAG = 'api/landingPage/landingPage.controller.js'
 const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
@@ -14,10 +16,14 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, landingPages)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch landingPages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -41,10 +47,14 @@ exports.update = function (req, res) {
           sendSuccessResponse(res, 200, landingPage)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to create landingPage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to create landingPageState ${(error)}`)
     })
 }
@@ -81,16 +91,22 @@ exports.create = function (req, res) {
               sendSuccessResponse(res, 200, landingPage)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to create landingPage ${JSON.stringify(error)}`)
             })
         }
         // }
         )
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to create landingPageState ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -106,6 +122,8 @@ exports.delete = function (req, res) {
               .then(result => {
               })
               .catch(error => {
+                const message = error || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, `Failed to delete landingPageState ${JSON.stringify(error)}`)
               })
           }
@@ -115,14 +133,20 @@ exports.delete = function (req, res) {
               sendSuccessResponse(res, 200, result)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to delete landingPage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to delete landingPageState ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to delete landingPageState ${JSON.stringify(error)}`)
     })
 }

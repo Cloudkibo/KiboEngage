@@ -129,6 +129,8 @@ exports.prepareAdCreativePayload = function (body, accessToken, cb) {
     let imageUrl = data.attachment.payload.elements[0].image_url
     downloadTempImage(imageUrl, (err, imgPath) => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.prepareAdCreativePayload`, body, {accessToken}, 'error')
         return cb(err)
       }
       let imageName = imgPath.split('/')[1]
@@ -140,6 +142,8 @@ exports.prepareAdCreativePayload = function (body, accessToken, cb) {
       }
       facebookApiCallerWithFile('v6.0', `${body.adAccountId}/adimages`, 'post', imagePayload, (err, respFb) => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.prepareAdCreativePayload`, body, {accessToken}, 'error')
           deleteTempImage(imgPath)
           return cb(err)
         }

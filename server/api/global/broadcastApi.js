@@ -40,6 +40,8 @@ exports.callBroadcastMessagesEndpoint = (messageCreativeId, labels, notlabels, p
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.callBroadcastMessagesEndpoint`, data, {}, 'error')
         reject(err)
       })
   })
@@ -63,6 +65,8 @@ exports.callMessageCreativesEndpoint = (data, pageAccessToken, page, location, m
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.callMessageCreativesEndpoint`, data, {}, 'error')
           reject(err)
         })
     })

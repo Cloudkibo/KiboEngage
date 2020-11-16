@@ -51,25 +51,25 @@ exports.subscriberJoins = function (req, res) {
                       })
                       .catch(err => {
                         const message = err || 'Failed to create sequence subscriber'
-                        logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {}, 'error')
+                        logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {user: req.user}, 'error')
                       })
                   }
                 })
                 .catch(err => {
                   const message = err || 'Failed to fecth sequence messages'
-                  logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {user: req.user}, 'error')
                 })
             })
           }
         })
         .catch(err => {
           const message = err || 'Failed to fetch sequences'
-          logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch sequences'
-      logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.subscriberJoins`, req.body, {user: req.user}, 'error')
     })
 
   return res.status(200).json({
@@ -154,13 +154,13 @@ exports.sendSequenceMessage = (req, res) => {
           })
           .catch(err => {
             const message = err || 'Failed to fetch sequence messages queue'
-            logger.serverLog(message, `${TAG}: exports.sendSequenceMessage`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.sendSequenceMessage`, req.body, {user: req.user}, 'error')
           })
       }
     })
     .catch(err => {
       const message = err || 'Failed to fetch sequence message'
-      logger.serverLog(message, `${TAG}: exports.sendSequenceMessage`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.sendSequenceMessage`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -206,7 +206,7 @@ exports.subscribeToSequence = (req, res) => {
                                   .then(updated => {
                                   }).catch(err => {
                                     const message = err || 'Failed to update sequence subscriber'
-                                    logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+                                    logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
                                   })
                               }
                             } else {
@@ -249,29 +249,29 @@ exports.subscribeToSequence = (req, res) => {
                         })
                         .catch(err => {
                           const message = err || 'Failed to fetch sequence subscriber'
-                          logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
                         })
                     }
                   })
                   .catch(err => {
                     const message = err || 'Failed to fetch sequence subscriber'
-                    logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
                   })
               }
             })
             .catch(err => {
               const message = err || 'Failed to fetch sequence messages'
-              logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
             })
         })
         .catch(err => {
           const message = err || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -337,45 +337,45 @@ exports.unsubscribeFromSequence = (req, res) => {
                                         })
                                         .catch(err => {
                                           const message = err || 'Failed to create sequence subscriber'
-                                          logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+                                          logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
                                         })
                                     }
                                   })
                                   .catch(err => {
                                     const message = err || 'Failed to fetch sequence subscriber'
-                                    logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+                                    logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
                                   })
                               }
                             })
                             .catch(err => {
                               const message = err || 'Failed to fecth sequence messages'
-                              logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+                              logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
                             })
                         })
                       }
                     })
                     .catch(err => {
                       const message = err || 'Failed to fetch sequences'
-                      logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
                     })
                 })
                 .catch(err => {
                   const message = err || 'Failed to create sequence subscriber'
-                  logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
                 })
             })
             .catch(err => {
               const message = err || 'Failed to fetch sequence messages'
-              logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
             })
         })
         .catch(err => {
           const message = err || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.unsubscribeFromSequence`, req.body, {user: req.user}, 'error')
     })
 }

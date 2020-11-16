@@ -4,6 +4,8 @@ const feedparser = require('feedparser-promised')
 const LogicLayer = require('./logiclayer')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const TAG = 'api/v1.1/rss/controller.js'
+const logger = require('../../../components/logger')
 
 exports.fetchRssFeed = function (req, res) {
   let url = req.body.url
@@ -32,6 +34,8 @@ exports.fetchRssFeed = function (req, res) {
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: createPoll`, req.body, {user: req.user}, 'error')
               return res.status(500).json({
                 status: 'failed',
                 payload: err
@@ -40,6 +44,8 @@ exports.fetchRssFeed = function (req, res) {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: createPoll`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         payload: err

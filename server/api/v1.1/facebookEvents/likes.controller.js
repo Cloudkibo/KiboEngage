@@ -23,6 +23,6 @@ exports.handleLikeEvent = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Failed to update likes count'
-      logger.serverLog(message, `${TAG}: handleLikeEvent`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: handleLikeEvent`, req.body, {user: req.user}, 'error')
     })
 }

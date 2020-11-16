@@ -3,6 +3,8 @@ const DataLayer = require('./datalayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const utility = require('../utility')
 const async = require('async')
+const logger = require('../../../components/logger')
+const TAG = 'api/v1.1/backdoor/userData.controller.js'
 
 exports.getAllPages = function (req, res) {
   let criterias = LogicLayer.getAllPagesCriteria(req.params.userid, req.body)
@@ -30,10 +32,14 @@ exports.getAllPages = function (req, res) {
               next()
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAllPages`, req.body, {user: req.user}, 'error')
               next(err)
             })
           }, function (err) {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAllPages`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(err)}`)
             } else {
               let payload = {
@@ -45,10 +51,14 @@ exports.getAllPages = function (req, res) {
           })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAllPages`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getAllPages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch pages count ${JSON.stringify(error)}`)
     })
 }
@@ -69,10 +79,14 @@ exports.getUserSummary = function (req, res) {
                   callback(null, subscribers)
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.getUserSummary`, req.body, {user: req.user}, 'error')
                   callback(err)
                 })
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getUserSummary`, req.body, {user: req.user}, 'error')
               callback(err)
             })
         },
@@ -83,6 +97,8 @@ exports.getUserSummary = function (req, res) {
               callback(null, result)
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getUserSummary`, req.body, {user: req.user}, 'error')
               callback(err)
             })
         },
@@ -93,6 +109,8 @@ exports.getUserSummary = function (req, res) {
               callback(null, result)
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getUserSummary`, req.body, {user: req.user}, 'error')
               callback(err)
             })
         },
@@ -103,6 +121,8 @@ exports.getUserSummary = function (req, res) {
               callback(null, result)
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getUserSummary`, req.body, {user: req.user}, 'error')
               callback(err)
             })
         }
@@ -125,6 +145,8 @@ exports.getUserSummary = function (req, res) {
       })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getUserSummary`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Error in getting companyUser record ${JSON.stringify(err)}`)
     })
 }
@@ -146,10 +168,14 @@ exports.allUserBroadcasts = function (req, res) {
           sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allUserBroadcasts`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allUserBroadcasts`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch broadcasts count ${JSON.stringify(error)}`)
     })
 }
@@ -170,10 +196,14 @@ exports.allUserPolls = function (req, res) {
           sendSuccessResponse(res, 200, payload)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allUserPolls`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to polls ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allUserPolls`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch polls count ${JSON.stringify(error)}`)
     })
 }
@@ -213,6 +243,8 @@ exports.getMessagesCount = function (req, res) {
       sendSuccessResponse(res, 200, data)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getMessagesCount`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Error in getting messages count ${err}`)
     })
 }

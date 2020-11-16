@@ -50,11 +50,15 @@ function saveNotification (webhook, req) {
 
   sendgrid.send(email, function (err, json) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: saveNotification`, {webhook, body: req.body}, {user: req.user}, 'error')
     }
   })
 
   sendgrid.send(email, function (err, json) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: saveNotification`, {webhook, body: req.body}, {user: req.user}, 'error')
     }
   })
 }

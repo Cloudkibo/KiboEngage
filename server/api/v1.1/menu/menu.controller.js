@@ -22,11 +22,13 @@ exports.index = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Internal Server Error on fetch'
-          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', 'Internal Server Error')
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -47,7 +49,7 @@ exports.indexByPage = function (req, res) {
             .catch(err => {
               if (err) {
                 const message = err || 'Internal Server Error on fetch'
-                logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', 'Internal Server Error')
               }
             })
@@ -55,7 +57,7 @@ exports.indexByPage = function (req, res) {
         .catch(err => {
           if (err) {
             const message = err || 'Internal Server Error on fetch'
-            logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', 'Internal Server Error')
           }
         })
@@ -63,7 +65,7 @@ exports.indexByPage = function (req, res) {
     .catch(err => {
       if (err) {
         const message = err || 'Internal Server Error'
-        logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.indexByPage`, req.body, {user: req.user}, 'error')
       }
     })
 }
@@ -108,7 +110,7 @@ exports.create = function (req, res) {
                       (err, resp) => {
                         if (err) {
                           const message = err || 'Internal Server Error'
-                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                         }
                         if (!err) {
                         }
@@ -121,6 +123,8 @@ exports.create = function (req, res) {
                       })
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
                   })
               } else {
@@ -149,11 +153,11 @@ exports.create = function (req, res) {
                         }
                         if (err) {
                           const message = err || 'Internal Server Error'
-                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                         }
                         if (resp.body.error) {
                           const message = resp.body.error || 'Error from facebook graph api'
-                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                           sendErrorResponse(res, 500, '', JSON.stringify(resp.body.error))
                         } else {
                           callApi.callApi('menu/query', 'post', {pageId: page._id, companyId: page.companyId})
@@ -164,7 +168,7 @@ exports.create = function (req, res) {
                             .catch(err => {
                               if (err) {
                                 const message = err || 'Error occurred in finding menu'
-                                logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+                                logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                               }
                             })
                         }
@@ -173,7 +177,7 @@ exports.create = function (req, res) {
                   .catch(err => {
                     if (err) {
                       const message = err || 'Error occurred in finding subscriber'
-                      logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                     }
                   })
               }
@@ -181,7 +185,7 @@ exports.create = function (req, res) {
             .catch(err => {
               if (err) {
                 const message = err || 'Failed to find menu'
-                logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', 'Failed to find menu. Internal Server Error')
               }
             })
@@ -189,7 +193,7 @@ exports.create = function (req, res) {
         .catch(err => {
           if (err) {
             const message = err || 'Failed to find page'
-            logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', 'Failed to find page. Internal Server Error')
           }
         })
@@ -197,7 +201,7 @@ exports.create = function (req, res) {
     .catch(err => {
       if (err) {
         const message = err || 'Internal Server Error'
-        logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
       }
     })
@@ -217,6 +221,8 @@ exports.addWebview = function (req, res) {
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.addWebview`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to find whitelisted_domains ${JSON.stringify(error)}`)
     })
 }

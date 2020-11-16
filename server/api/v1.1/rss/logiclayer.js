@@ -1,4 +1,6 @@
 const og = require('open-graph')
+const logger = require('../../../components/logger')
+const TAG = 'api/v1.1/rss/logiclayer.js'
 
 exports.prepareMessageData = (feed) => {
   return new Promise((resolve, reject) => {
@@ -31,6 +33,8 @@ function getMetaData (feed) {
     for (let i = 0; i < feed.length; i++) {
       og(feed[i].link, (err, meta) => {
         if (err) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: getMetaData`, {feed}, {}, 'error')
           console.log('error in fetching metdata')
         }
         console.log('meta', JSON.stringify(meta))

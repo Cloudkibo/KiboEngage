@@ -49,22 +49,32 @@ exports.allSurveys = function (req, res) {
                       sendSuccessResponse(res, 200, payload)
                     })
                     .catch(error => {
+                      const message = error || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.allSurveys`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, `Failed to response count ${JSON.stringify(error)}`)
                     })
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.allSurveys`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, `Failed to survey pages ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.allSurveys`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to survey ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allSurveys`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to survey count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allSurveys`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
     })
 }
@@ -92,6 +102,8 @@ exports.create = function (req, res) {
             }
           ], 10, function (err, results) {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `failed to create survey ${err}`)
             }
             let survey = results[1]
@@ -99,10 +111,14 @@ exports.create = function (req, res) {
           })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -143,20 +159,28 @@ exports.edit = function (req, res) {
                   .then(success => {
                   })
                   .catch(error => {
+                    const message = error || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, error)
                   })
               }
               sendSuccessResponse(res, 200, res.body.survey)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, error)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -178,14 +202,20 @@ exports.show = function (req, res) {
               }
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.show`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, error)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.show`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.show`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -221,10 +251,14 @@ exports.showQuestions = function (req, res) {
           sendSuccessResponse(res, 200, {survey, questions})
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.showQuestions`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.showQuestions`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -253,6 +287,8 @@ exports.submitresponse = function (req, res) {
       })
 
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.submitresponse`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, error)
       })
   }
@@ -262,6 +298,8 @@ exports.submitresponse = function (req, res) {
       sendSuccessResponse(res, 200, 'Response submitted successfully!')
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.submitresponse`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -284,10 +322,14 @@ exports.send = function (req, res) {
           sendSurvey(req, res, planUsage, companyUsage, abort)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.send`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.send`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -312,6 +354,8 @@ exports.sendSurveyDirectly = function (req, res) {
             }
           ], 10, function (err, result) {
             if (err) {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.sendSurveyDirectly`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to create survey ${JSON.stringify(err)}`)
             }
             let surveyCreated = result[0]
@@ -320,10 +364,14 @@ exports.sendSurveyDirectly = function (req, res) {
           })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sendSurveyDirectly`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.sendSurveyDirectly`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -343,14 +391,20 @@ exports.deleteSurvey = function (req, res) {
                 })
 
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.deleteSurvey`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `failed to survey responses  ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.deleteSurvey`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `failed to survey remove  ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.deleteSurvey`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `failed to survey remove  ${JSON.stringify(error)}`)
         })
     })
@@ -439,7 +493,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                           })
                           .catch(error => {
                             const message = error || 'Failed to fetch lists'
-                            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
+                            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {user: req.user}, 'error')
                             sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
                           })
                       } else {
@@ -491,7 +545,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                                 })
                                 .catch(err => {
                                   const message = err || 'Failed to fetch tag subscribers or survey responses'
-                                  logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
+                                  logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {user: req.user}, 'error')
                                   sendErrorResponse(res, 500, '', 'Failed to fetch tag subscribers or survey responses')
                                 })
                             } else {
@@ -501,14 +555,14 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
                           })
                           .catch(err => {
                             const message = err || 'Failed to fetch tags'
-                            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
+                            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {user: req.user}, 'error')
                             sendErrorResponse(res, 500, `Failed to fetch tags`)
                           })
                       }
                     })
                     .catch(err => {
                       const message = err || 'Failed to fetch survey'
-                      logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', 'Failed to fetch survey')
                     })
                 } else {
@@ -517,13 +571,13 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
               })
               .catch(err => {
                 const message = err || 'Failed to fetch survey questions'
-                logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', 'Failed to fetch survey questions')
               })
           })
           .catch(err => {
             const message = err || 'Failed to fetch user'
-            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', 'Failed to fetch user')
           })
       } else {
@@ -532,7 +586,7 @@ const sendSurvey = (req, res, planUsage, companyUsage, abort) => {
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: sendSurvey`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', 'Failed to fetch page')
     })
 }
@@ -568,11 +622,15 @@ function createSurvey (req, callback) {
             callback(null, survey)
           })
           .catch(error => {
+            const message = error || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: createSurvey`, req.body, {user: req.user}, 'error')
             callback(error)
           })
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: createSurvey`, req.body, {user: req.user}, 'error')
       callback(error)
     })
 }
@@ -588,6 +646,8 @@ function sendWebhook (req, callback) {
           if (webhook && webhook.isEnabled) {
             needle.get(webhook.webhook_url, (err, r) => {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: sendWebhook`, req.body, {user: req.user}, 'error')
                 callback(err)
               } else if (r.statusCode === 200) {
                 if (webhook && webhook.optIn.SURVEY_CREATED) {
@@ -615,10 +675,14 @@ function sendWebhook (req, callback) {
           }
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: sendWebhook`, req.body, {user: req.user}, 'error')
           callback(error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: sendWebhook`, req.body, {user: req.user}, 'error')
       callback(error)
     })
 }

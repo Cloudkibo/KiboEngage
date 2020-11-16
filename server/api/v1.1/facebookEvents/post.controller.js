@@ -17,7 +17,7 @@ exports.handlePostEvent = function (req, res) {
       })
       .catch(err => {
         const message = err || 'Failed to delete post locally'
-        logger.serverLog(message, `${TAG}: exports.handlePostEvent`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.handlePostEvent`, req.body, {user: req.user}, 'error')
       })
   }
   if (verb === 'edited') {
@@ -32,7 +32,7 @@ exports.handlePostEvent = function (req, res) {
               })
               .catch(err => {
                 const message = err || 'Failed to delete post locally'
-                logger.serverLog(message, `${TAG}: exports.handlePostEvent`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.handlePostEvent`, req.body, {user: req.user}, 'error')
               })
           } else {
             editPost(req.body)
@@ -41,7 +41,7 @@ exports.handlePostEvent = function (req, res) {
       })
       .catch(err => {
         const message = err || 'Failed to delete post locally'
-        logger.serverLog(message, `${TAG}: exports.handlePostEvent`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.handlePostEvent`, req.body, {user: req.user}, 'error')
       })
   }
 }

@@ -2,6 +2,8 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const { callApi } = require('../utility')
 const LogicLayer = require('./overlayWidgets.logiclayer.js')
 const async = require('async')
+const logger = require('../../../components/logger')
+const TAG = 'KiboEngage/api/v1.1/pageadminsubscriptions/pageadminsubscriptions.controller'
 const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.delete = function (req, res) {
@@ -11,6 +13,8 @@ exports.delete = function (req, res) {
       sendSuccessResponse(res, 200, deleted)
     })
     .catch(err => {
+      const message = err || 'Failed to create notification'
+      logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to delete overlay widget ${err}`)
     })
 }
@@ -32,6 +36,8 @@ exports.create = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch(err => {
+      const message = err || 'Failed to create notification'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to create overlay widget ${err}`)
     })
 }
@@ -44,6 +50,8 @@ exports.fetchWidgets = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Failed to create notification'
+          logger.serverLog(message, `${TAG}: exports.fetchWidgets`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -53,11 +61,15 @@ exports.fetchWidgets = function (req, res) {
           callback(null, result)
         })
         .catch(err => {
+          const message = err || 'Failed to create notification'
+          logger.serverLog(message, `${TAG}: exports.fetchWidgets`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Failed to create notification'
+      logger.serverLog(message, `${TAG}: exports.fetchWidgets`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     } else {
       let countResponse = results[0]
@@ -79,6 +91,8 @@ exports.update = function (req, res) {
       sendSuccessResponse(res, 200, updated)
     })
     .catch(err => {
+      const message = err || 'Failed to create notification'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to update overlay widget ${err}`)
     })
 }

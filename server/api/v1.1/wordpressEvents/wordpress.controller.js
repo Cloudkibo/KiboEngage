@@ -102,12 +102,12 @@ exports.postPublish = function (req, res) {
                                     })
                                     .catch(err => {
                                       const message = err || 'Internal server error'
-                                      logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
+                                      logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {user: req.user}, 'error')
                                     })
                                 })
                                 .catch(err => {
                                   const message = err || 'Internal server error'
-                                  logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
+                                  logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {user: req.user}, 'error')
                                 })
                             } else {
                               sendUsingBatchAPI('autoposting', messageData, {criteria: subsFindCriteria}, page, '', reportObj)
@@ -115,22 +115,24 @@ exports.postPublish = function (req, res) {
                           })
                           .catch(err => {
                             const message = err || 'Failed to create url object'
-                            logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
+                            logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {user: req.user}, 'error')
                           })
                       })
                       .catch(err => {
                         const message = err || 'Failed to create autoposting message'
-                        logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
+                        logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {user: req.user}, 'error')
                       })
                   }
                 })
                 .catch(err => {
                   const message = err || 'Failed to fetch subscriber count'
-                  logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {user: req.user}, 'error')
                 })
             })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {user: req.user}, 'error')
             return res.status(500).json({
               status: 'failed',
               description: `Internal server error while fetching pages ${err}`
@@ -139,6 +141,8 @@ exports.postPublish = function (req, res) {
       })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.postPublish`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'failed',
         description: `Internal server error while fetching autoposts ${err}`

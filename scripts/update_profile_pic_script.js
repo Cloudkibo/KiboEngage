@@ -20,14 +20,14 @@ function updateSubscribersPic (pageTokens, companyId) {
               })
               .catch(err => {
                 const message = err || 'Failed to update subscriber'
-                logger.serverLog(message, `${TAG}: updateSubscribersPic`, users[i], {}, 'error')
+                logger.serverLog(message, `${TAG}: updateSubscribersPic`, users[i], {pageTokens, companyId}, 'error')
               })
           })
       }
     })
     .catch(err => {
       const message = err || 'Failed to fetch subscribers'
-      logger.serverLog(message, `${TAG}: updateSubscribersPic`, {companyId}, {}, 'error')
+      logger.serverLog(message, `${TAG}: updateSubscribersPic`, {companyId}, {pageTokens, companyId}, 'error')
     })
 }
 

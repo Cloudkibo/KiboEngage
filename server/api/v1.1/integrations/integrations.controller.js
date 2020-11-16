@@ -1,6 +1,7 @@
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { callApi } = require('../utility')
-const { updateCompanyUsage } = require('../../global/billingPricing')
+const logger = require('../../../components/logger')
+const TAG = 'api/integrations/integrations.controller.js'
 
 exports.index = function (req, res) {
   callApi(`integrations/query`, 'post', {companyId: req.user.companyId}, 'accounts', req.headers.authorization)
@@ -8,6 +9,8 @@ exports.index = function (req, res) {
       sendSuccessResponse(res, 200, integrations)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch integrations ${err}`)
     })
 }
@@ -24,6 +27,8 @@ exports.update = function (req, res) {
       sendSuccessResponse(res, 200, integrations)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to update integration ${err}`)
     })
 }

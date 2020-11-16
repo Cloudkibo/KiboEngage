@@ -63,7 +63,7 @@ exports.callback = function (req, res) {
                     })
                     .catch(err => {
                       const message = err || 'Error in Integrations Hubspot on update callback'
-                      logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
                       res.redirect('/ErrorMessage')
                       res.status(500).send('Internal Error Occurred.')
                     })
@@ -83,7 +83,7 @@ exports.callback = function (req, res) {
                     })
                     .catch(err => {
                       const message = err || 'Error in Integrations Hubspot on create callback'
-                      logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
                       res.redirect('/ErrorMessage')
                       res.status(500).send('Internal Error Occurred.')
                     })
@@ -91,7 +91,7 @@ exports.callback = function (req, res) {
               })
               .catch(err => {
                 const message = err || 'Error in Integrations Hubspot on fetch callback'
-                logger.serverLog(message, `${TAG}: exports.callback`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
                 res.redirect('/ErrorMessage')
                 res.status(500).send('Internal Error Occurred.')
               })
@@ -102,6 +102,8 @@ exports.callback = function (req, res) {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.callback`, req.body, {user: req.user}, 'error')
       res.redirect('/ErrorMessage')
       sendErrorResponse(res, 500, err, 'Internal Server Error occurred. Please contact admin.')
     })
@@ -131,6 +133,8 @@ exports.getForms = function (req, res) {
             }
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getForms`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, err, 'Internal Server Error occurred. Please contact admin.')
           })
       } else {
@@ -138,6 +142,8 @@ exports.getForms = function (req, res) {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getForms`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err, 'Internal Server Error occurred. Please contact admin.')
     })
 }
@@ -156,10 +162,14 @@ exports.fetchHubspotDefaultColumns = function (req, res) {
           sendSuccessResponse(res, 200, dataToSend)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchHubspotDefaultColumns`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err, `failed to update custom fields ${err}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchHubspotDefaultColumns`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err, `failed to fetch custom fields ${err}`)
     })
 }
@@ -172,6 +182,8 @@ exports.fetchColumns = function (req, res) {
           callback(null, customFields)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchColumns`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     },
@@ -191,15 +203,21 @@ exports.fetchColumns = function (req, res) {
               callback(null, form)
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.fetchColumns`, req.body, {user: req.user}, 'error')
               callback(err)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.fetchColumns`, req.body, {user: req.user}, 'error')
           callback(err)
         })
     }
   ], 10, function (err, results) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchColumns`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch columns ${JSON.stringify(err)}`)
     } else {
       let dataToSend = {

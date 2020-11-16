@@ -20,6 +20,8 @@ exports.verifyCredentials = (body) => {
         }
       })
       .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.verifyCredentials`, body, {}, 'error')
         reject(err)
       })
   })
@@ -49,9 +51,9 @@ exports.sendBroadcastMessages = (body) => {
                   .then(response => {
                   })
                   .catch(error => {
-                    reject(new Error('fail'))
                     const message = error || 'Failed to save broadcast'
                     logger.serverLog(message, `${TAG}: exports.sendBroadcastMessages`, body, {}, 'error')
+                    reject(new Error('fail'))
                   })
                 if (i === body.payload.length - 1 && response.sid) {
                   saveWhatsAppBroadcastMessages(response, body, body.contacts[j])
@@ -69,7 +71,11 @@ exports.sendBroadcastMessages = (body) => {
       .then((responses) => {
         resolve()
       })
-      .catch((err) => reject(err))
+      .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sendBroadcastMessages`, body, {}, 'error')
+        reject(err)
+      })
   })
 }
 function saveWhatsAppBroadcastMessages (resp, body, contact) {
@@ -113,7 +119,11 @@ exports.sendInvitationTemplate = (body) => {
       .then((responses) => {
         resolve()
       })
-      .catch((err) => reject(err))
+      .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sendInvitationTemplate`, body, {}, 'error')
+        reject(err)
+      })
   })
 }
 

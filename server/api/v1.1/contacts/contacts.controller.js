@@ -25,14 +25,20 @@ exports.index = function (req, res) {
               sendSuccessResponse(res, 200, payload)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch subscriber count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -41,6 +47,8 @@ exports.uploadFile = function (req, res) {
   let directory = phoneNumberLogicLayer.directory(req)
   fs.rename(req.files.file.path, path.join(directory.dir, '/userfiles/', directory.serverPath), err => {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.uploadFile`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', 'internal server error' + JSON.stringify(err))
     }
     let data = {
@@ -54,7 +62,7 @@ exports.uploadFile = function (req, res) {
     ], function (err) {
       if (err) {
         const message = err || 'Failed to create autoposting'
-        logger.serverLog(message, `${TAG}: uploadFile`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: uploadFile`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', err)
       } else {
         sendSuccessResponse(res, 200, 'Contacts saved successfully')
@@ -70,6 +78,8 @@ const _getListId = (data, next) => {
         next(null, data)
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _getListId`, {data}, {}, 'error')
         next(err)
       })
   } else {
@@ -146,7 +156,7 @@ exports.uploadNumbers = function (req, res) {
                 })
                 .catch(error => {
                   const message = error || 'Failed to save contact'
-                  logger.serverLog(message, `${TAG}: uploadNumbers`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: uploadNumbers`, req.body, {user: req.user}, 'error')
                 })
             }
             if (i === req.body.numbers.length - 1) {
@@ -155,11 +165,13 @@ exports.uploadNumbers = function (req, res) {
           })
           .catch(error => {
             const message = error || 'Failed to fetch contact'
-            logger.serverLog(message, `${TAG}: uploadNumbers`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: uploadNumbers`, req.body, {user: req.user}, 'error')
           })
       }
     })
     .catch(error => {
+      const message = error || 'Failed to fetch contact'
+      logger.serverLog(message, `${TAG}: uploadNumbers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -174,6 +186,8 @@ exports.update = function (req, res) {
       sendSuccessResponse(res, 200, updated)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -183,6 +197,8 @@ exports.fetchLists = function (req, res) {
       sendSuccessResponse(res, 200, lists)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchLists`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

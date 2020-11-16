@@ -72,7 +72,7 @@ function findRedisObject (featureName, cb) {
 
 function findAllKeys (fn) {
   client.keys('*', (err, objs) => {
-    if (err) {
+     {
       return fn(`error in message statistics find all keys ${JSON.stringify(err)}`)
     }
     if (objs && objs.length > 0) {

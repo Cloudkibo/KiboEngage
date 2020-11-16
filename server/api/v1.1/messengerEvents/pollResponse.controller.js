@@ -37,13 +37,15 @@ exports.pollResponse = function (req, res) {
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.pollResponse`, req.body, {user: req.user}, 'error')
               return res.status(500).json({status: 'failed', description: `Failed to fetch subscriber ${err}`})
             })
         }
       })
       .catch(err => {
         const message = err || 'Failed to fetch poll'
-        logger.serverLog(message, `${TAG}: exports.pollResponse`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.pollResponse`, req.body, {user: req.user}, 'error')
         return res.status(500).json({status: 'failed', description: `Failed to fetch poll ${err}`})
       })
   }
@@ -77,7 +79,7 @@ function savepoll (req, resp, subscriber) {
         needle.get(webhook.webhook_url, (err, r) => {
           if (err) {
             const message = err || 'Internal Server Error'
-            logger.serverLog(message, `${TAG}: savepoll`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: savepoll`, req.body, {user: req.user}, 'error')
           } else if (r.statusCode === 200) {
             if (webhook && webhook.optIn.POLL_RESPONSE) {
               var data = {
@@ -88,7 +90,7 @@ function savepoll (req, resp, subscriber) {
                 (error, response) => {
                   if (error) {
                     const message = err || 'Internal Server Error'
-                    logger.serverLog(message, `${TAG}: savepoll`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: savepoll`, req.body, {user: req.user}, 'error')
                   }
                 })
             }
@@ -100,7 +102,7 @@ function savepoll (req, resp, subscriber) {
     })
     .catch(err => {
       const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: savepoll`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: savepoll`, req.body, {user: req.user}, 'error')
     })
   if (temp === true) {
     PollResponseDataLayer.createForPollResponse(pollbody)
@@ -109,7 +111,7 @@ function savepoll (req, resp, subscriber) {
       })
       .catch(err => {
         const message = err || 'Failed to create poll response'
-        logger.serverLog(message, `${TAG}: savepoll`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: savepoll`, req.body, {user: req.user}, 'error')
       })
   }
 }

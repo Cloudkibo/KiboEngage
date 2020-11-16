@@ -15,6 +15,8 @@ exports.members = function (req, res) {
       sendSuccessResponse(res, 200, members)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.members`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch members ${err}`)
     })
 }
@@ -36,10 +38,14 @@ exports.getAutomatedOptions = function (req, res) {
             sendSuccessResponse(res, 200, payload)
           }
         }).catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAutomatedOptions`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetching user details ${JSON.stringify(error)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getAutomatedOptions`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch automated options ${err}`)
     })
 }
@@ -49,6 +55,8 @@ exports.getAdvancedSettings = function (req, res) {
       sendSuccessResponse(res, 200, payload)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getAdvancedSettings`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch advanced settings in company profile ${err}`)
     })
 }
@@ -74,10 +82,14 @@ exports.updateAdvancedSettings = function (req, res) {
           sendSuccessResponse(res, 200, updatedProfile)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.updateAdvancedSettings`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updateAdvancedSettings`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
     })
 }
@@ -142,6 +154,8 @@ exports.setCard = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.invite`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -152,6 +166,8 @@ exports.updateRole = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updateRole`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err.error.payload)
     })
 }
@@ -167,10 +183,14 @@ exports.updateAutomatedOptions = function (req, res) {
           sendSuccessResponse(res, 200, updatedProfile)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.updateAutomatedOptions`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updateAutomatedOptions`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
     })
 }
@@ -199,6 +219,8 @@ exports.updatePlatform = function (req, res) {
                       _updateUserPlatform(req, res)
                     })
                     .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', `Failed to update company profile ${err}`)
                     })
                   for (let i = 0; i < incomingPhoneNumbers.length; i++) {
@@ -211,15 +233,21 @@ exports.updatePlatform = function (req, res) {
                       })
                   }
                 } else {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', 'The twilio account doesnot have any twilio number')
                 }
               })
           } else {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 404, '', 'Twilio account not found. Please enter correct details')
           }
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
     })
 }
@@ -233,11 +261,13 @@ const _updateUserPlatform = (req, res) => {
           sendSuccessResponse(res, 200, updatedProfile)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', err)
         })
     }).catch(err => {
       const message = err
-      logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', err)
     })
 }
@@ -267,6 +297,8 @@ const _updateCompanyProfile = (data, next) => {
       next(null, updatedProfile)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateCompanyProfile`, {data}, {}, 'error')
       next(err)
     })
   // } else {
@@ -283,6 +315,8 @@ const _updateUser = (data, next) => {
           next(null, data)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _updateUser`, data, {}, 'error')
           next(err)
         })
     }).catch(err => {
@@ -296,6 +330,8 @@ const _setWebhook = (data, next) => {
       next(null, data)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _setWebhook`, data, {}, 'error')
       next(error)
     })
 }
@@ -305,6 +341,8 @@ const _verifyCredentials = (data, next) => {
       next(null, data)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _verifyCredentials`, data, {}, 'error')
       next(error)
     })
 }
@@ -374,6 +412,8 @@ exports.updatePlatformWhatsApp = function (req, res) {
       }
     })
     .catch((err) => {
+      const message = err || 'Failed to save broadcast'
+      logger.serverLog(message, `${TAG}: exports.updatePlatformWhatsApp`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company ${err}`)
     })
 }
@@ -392,18 +432,25 @@ exports.disconnect = function (req, res) {
                   sendSuccessResponse(res, 200, updatedProfile)
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, err)
                 })
             }).catch(err => {
-              logger.serverLog(TAG, JSON.stringify(err), 'error')
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, err)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company ${JSON.stringify(error)}`)
     })
 }
@@ -430,13 +477,13 @@ exports.fetchValidCallerIds = function (req, res) {
                   })
                   .catch(error => {
                     const message = error || 'Failed to save contact'
-                    logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {user: req.user}, 'error')
                   })
               }
             })
             .catch(error => {
               const message = error || 'Failed to fetch contact'
-              logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {user: req.user}, 'error')
             })
           if (index === (callerIds.length - 1)) {
             sendSuccessResponse(res, 200, 'Contacts updated successfully')
@@ -445,6 +492,8 @@ exports.fetchValidCallerIds = function (req, res) {
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchValidCallerIds`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch valid caller Ids ${JSON.stringify(error)}`)
     })
 }
@@ -473,6 +522,8 @@ exports.deleteWhatsAppInfo = function (req, res) {
                   callback(null, data)
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
                   callback(err)
                 })
             },
@@ -486,11 +537,13 @@ exports.deleteWhatsAppInfo = function (req, res) {
                       callback(null)
                     })
                     .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
                       callback(err)
                     })
                 }).catch(err => {
                   const message = err
-                  logger.serverLog(message, `${TAG}: deleteWhatsAppInfo`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
                 })
             },
             function (callback) {
@@ -500,6 +553,8 @@ exports.deleteWhatsAppInfo = function (req, res) {
                     callback(null, data)
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
                     callback(err)
                   })
               } else {
@@ -534,6 +589,8 @@ exports.deleteWhatsAppInfo = function (req, res) {
                     callback(null, data)
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
                     callback(err)
                   })
               } else {
@@ -551,6 +608,8 @@ exports.deleteWhatsAppInfo = function (req, res) {
                     callback(null, data)
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
                     callback(err)
                   })
               } else {
@@ -569,6 +628,8 @@ exports.deleteWhatsAppInfo = function (req, res) {
                     callback(null, data)
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
                     callback(err)
                   })
               } else {
@@ -578,7 +639,7 @@ exports.deleteWhatsAppInfo = function (req, res) {
           ], 10, function (err, results) {
             if (err) {
               const message = err || 'Failed to delete whatsapp info'
-              logger.serverLog(message, `${TAG}: deleteWhatsAppInfo`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to delete whatsapp info ${err}`)
             } else {
               if (req.body.type === 'Disconnect' && req.body.connected && company.whatsApp.provider === 'flockSend') {
@@ -589,10 +650,14 @@ exports.deleteWhatsAppInfo = function (req, res) {
           })
         })
         .catch((err) => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch((err) => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteWhatsAppInfo`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -619,7 +684,8 @@ const deleteWhatsappMessages = (companyId, skipRecords, LimitRecords) => {
             deleteWhatsappMessages(companyId, skipRecords + 50, LimitRecords)
           })
           .catch(err => {
-            logger.serverLog(TAG, `Failed to delete messages from Whatsapp message Queue  ${err}`, 'error')
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.deleteWhatsappMessages`, {companyId}, {}, 'error')
           })
       } else {
         let query = {
@@ -630,11 +696,13 @@ const deleteWhatsappMessages = (companyId, skipRecords, LimitRecords) => {
           .then(deleted => {
             logger.serverLog(TAG, `Deleted whatsAppBroadcastMessages Succeefully ${JSON.stringify(deleted)}`)
           }).catch(err => {
-            logger.serverLog(TAG, `Failed to delete tweet from Whatsapp message Queue ${err}`, 'error')
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.deleteWhatsappMessages`, {companyId}, {}, 'error')
           })
       }
     }).catch(err => {
-      logger.serverLog(TAG, err, 'error')
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteWhatsappMessages`, {companyId}, {}, 'error')
     })
 }
 exports.getAdvancedSettings = function (req, res) {
@@ -644,7 +712,7 @@ exports.getAdvancedSettings = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Failed to fetch advanced settings'
-      logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, null, 'Failed to fetch advanced settings')
     })
 }
@@ -656,7 +724,7 @@ exports.updateAdvancedSettings = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Failed to update advanced settings'
-      logger.serverLog(message, `${TAG}: updateAdvancedSettings`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: updateAdvancedSettings`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, null, 'Failed to update advanced settings')
     })
 }
@@ -670,7 +738,7 @@ exports.disableMember = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Failed to deactivate member'
-          logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: fetchValidCallerIds`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, null, 'Failed to deactivate member')
         })
     })
@@ -695,6 +763,8 @@ exports.getWhatsAppMessageTemplates = function (req, res) {
       sendSuccessResponse(res, 200, templates, 'Retrieved templates successfully')
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getWhatsAppMessageTemplates`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error, 'Error retrieving templates')
     })
 }

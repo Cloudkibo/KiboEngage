@@ -4,7 +4,6 @@ const TAG = 'scripts/whatsAppMessageStatus.js'
 const async = require('async')
 
 exports.runScript = function () {
-
   updateAndDeleteMessages(0, 25, 'seen')
   updateAndDeleteMessages(0, 25, 'delivered')
 }
@@ -18,14 +17,12 @@ const updateAndDeleteMessages = function (skipRecords, LimitRecords, status) {
   }
   utility.callApi('queue/query', 'post', query, 'kiboengage')
     .then(queues => {
-      console.log('queues.length', queues.length)
       if (queues.length > 0) {
         let queuesIds = queues.map(queue => queue.payload.id)
         utility.callApi('whatsAppBroadcastMessages/query',
           'post', {purpose: 'findAll', match: {messageId: {$in: queuesIds}}},
           'kiboengage')
           .then(messages => {
-            console.log('messages.length', messages.length)
             if (messages.length > 0) {
               _updateCount(messages, status).then(data => {
                 updateAndDeleteMessages(skipRecords + LimitRecords, LimitRecords, status)
@@ -97,9 +94,9 @@ function deleteFromQueue (messageId, status, next) {
       next(null, deleted)
     })
     .catch(err => {
-      const message = err || 'Failed to delete tweet from tweets queue'
-      logger.serverLog(message, `${TAG}: deleteFromQueue`, queue, {}, 'error')
       next(err)
+      const message = err || 'Failed to delete whatsapp message from tweets queue'
+      logger.serverLog(message, `${TAG}: deleteFromQueue`, {messageId, status}, {}, 'error')
     })
 }
 
@@ -114,8 +111,9 @@ const _UpdatewhatsAppBroadcastMessages = (message, status, next) => {
       next(null, message)
     })
     .catch((err) => {
+      const message = err || 'Failed to update message'
+      logger.serverLog(message, `${TAG}: _UpdatewhatsAppBroadcastMessages`, {message, status}, {}, 'error')
       next(err)
-      logger.serverLog(`Failed to update message ${err}`, 'error')
     })
 }
 
@@ -131,7 +129,8 @@ const _UpdatewhatsAppBroadcasts = (message, status, incValue, next) => {
       next(null, broadcast)
     })
     .catch((err) => {
+      const message = err || 'Failed to update broadcast'
+      logger.serverLog(message, `${TAG}: _UpdatewhatsAppBroadcasts`, {message, status}, {}, 'error')
       next(err)
-      logger.serverLog(`Failed to update broadcast ${err}`, 'error')
     })
 }

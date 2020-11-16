@@ -28,10 +28,14 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, data)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -47,6 +51,8 @@ const _fetchCompanyUser = (data, next) => {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchCompanyUser`, data, {}, 'error')
       next(err)
     })
 }
@@ -58,6 +64,8 @@ const _fetchPlanUsage = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchPlanUsage`, data, {}, 'error')
       next(err)
     })
 }
@@ -69,6 +77,8 @@ const _fetchCompanyUsage = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _fetchCompanyUsage`, data, {}, 'error')
       next(err)
     })
 }
@@ -83,6 +93,8 @@ const _countAutoposting = (data, next) => {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _countAutoposting`, data, {}, 'error')
       next(err)
     })
 }
@@ -97,6 +109,8 @@ const _checkAutopostingExistStatus = (data, next) => {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _checkAutopostingExistStatus`, data, {}, 'error')
       next(err)
     })
 }
@@ -251,6 +265,8 @@ const _addRSSFeed = (data, next) => {
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _addRSSFeed`, data, {}, 'error')
       next(err)
     })
 }
@@ -281,6 +297,8 @@ const _addWordpressAccount = (data, next) => {
           next()
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _addWordpressAccount`, data, {}, 'error')
           next(err)
         })
     })
@@ -330,7 +348,7 @@ exports.create = function (req, res) {
             ], function (err) {
               if (err) {
                 const message = err || 'Failed to create autoposting'
-                logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', err)
               } else {
                 sendSuccessResponse(res, 200, data.result)
@@ -339,10 +357,14 @@ exports.create = function (req, res) {
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error while fetching company usage ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error while fetching plan usage ${JSON.stringify(err)}`)
     })
 }
@@ -377,10 +399,14 @@ exports.edit = function (req, res) {
           sendSuccessResponse(res, 200, autopostingUpdated)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error while fetching autoposting${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -424,10 +450,14 @@ exports.destroy = function (req, res) {
           sendSuccessResponse(res, 200, '', 'AutoPosting deleted successfully!')
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.destroy`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `AutoPosting update failed ${err}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.destroy`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching autoposting object  ${err}`)
     })
 }
@@ -457,14 +487,14 @@ exports.handleTweetModeration = function (req, res) {
         .then(response => {
           if (response.body.error) {
             const message = response.body.error || 'Failed to send approval message'
-            logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {user: req.user}, 'error')
           } else {
             sendOpAlert(response.body.error, 'autoposting controller in kiboengage', '', '', '')
           }
         })
         .catch(err => {
           const message = err || 'Failed to send approval message'
-          logger.serverLog(message, `${TAG}: exports.create`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
         })
 
       utility.callApi('tweets_queue/query', 'post', query, 'kiboengage')
@@ -491,12 +521,12 @@ exports.handleTweetModeration = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Failed to fetch tweet queue object'
-          logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch autoposting object'
-      logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.handleTweetModeration`, req.body, {user: req.user}, 'error')
     })
 }
 

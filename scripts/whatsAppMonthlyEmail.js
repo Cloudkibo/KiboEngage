@@ -68,6 +68,8 @@ exports.runScript = function () {
                 next()
               })
               .catch((err) => {
+                const message = err || 'Failed to send montly email'
+                logger.serverLog(message, `${TAG}: exports.runScript`, {}, {}, 'error')
                 next(err)
               })
           }, function (err) {

@@ -39,6 +39,8 @@ exports.policyNotification = function (req, res) {
 
         sendgrid.send(email, function (err, json) {
           if (err) {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.policyNotification`, req.body, {user: req.user}, 'error')
           }
         })
       }
@@ -48,6 +50,8 @@ exports.policyNotification = function (req, res) {
       })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.policyNotification`, req.body, {user: req.user}, 'error')
       return res.status(500).json({
         status: 'error',
         description: `error: ${err}`

@@ -35,6 +35,8 @@ exports.sendBroadcastMessages = (body) => {
             }
           })
           .catch(error => {
+            const message = error || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.sendBroadcastMessages`, body, {}, 'error')
             callback(error)
           })
       } else {
@@ -42,6 +44,8 @@ exports.sendBroadcastMessages = (body) => {
       }
     }, function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sendBroadcastMessages`, body, {}, 'error')
         reject(err)
       } else {
         resolve()
@@ -79,6 +83,8 @@ exports.getTemplates = (body) => {
         resolve(templates)
       })
       .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getTemplates`, body, {}, 'error')
         reject(err)
       })
   })
@@ -96,6 +102,8 @@ exports.sendInvitationTemplate = (body) => {
         }
       })
       .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.sendInvitationTemplate`, body, {}, 'error')
         reject(err)
       })
   })
@@ -127,6 +135,8 @@ exports.setWebhook = (body) => {
             callback()
           })
           .catch((err) => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.setWebhook`, body, {}, 'error')
             reject(err)
           })
       },
@@ -140,11 +150,15 @@ exports.setWebhook = (body) => {
             callback()
           })
           .catch((err) => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.setWebhook`, body, {}, 'error')
             reject(err)
           })
       }
     ], 10, function (err, results) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.setWebhook`, body, {}, 'error')
         reject(err)
       } else {
         resolve()

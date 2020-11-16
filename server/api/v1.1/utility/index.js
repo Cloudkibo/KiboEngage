@@ -39,9 +39,9 @@ exports.callApi = (endpoint, method = 'get', body, type = accounts, token) => {
         }
       })
       .catch(error => {
-        reject(error)
         const message = error || 'error in calling internal APIs'
         logger.serverLog(message, `${TAG}: exports.callApi`, {endpoint, method, body, type, token}, {}, 'error')
+        reject(error)
       })
   })
 }

@@ -41,7 +41,7 @@ exports.index = function (req, res) {
   ], 10, function (err, results) {
     if (err) {
       const message = err || 'Failed to fetch broadcasts'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch broadcasts. See server logs for more info`)
     } else {
       const broadcasts = results[1]
@@ -63,6 +63,8 @@ const _getBroadcastsCount = (criteria, next) => {
       next(null, broadcastsCount)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _getBroadcastsCount`, {criteria}, {}, 'error')
       next(err)
     })
 }
@@ -82,6 +84,8 @@ const _getBroadcastsData = (aggregateData, next) => {
       next(null, broadcasts)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _getBroadcastsData`, {aggregateData}, {}, 'error')
       next(err)
     })
 }
@@ -92,6 +96,8 @@ const _getBroadcastPagesData = (req, next) => {
       next(null, broadcastpages)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _getBroadcastPagesData`, req.body, {user: req.user}, 'error')
       next(err)
     })
 }
@@ -151,6 +157,8 @@ exports.addButton = function (req, res) {
               sendSuccessResponse(res, 200, buttonPayload)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.addButton`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
             })
         }
@@ -183,6 +191,8 @@ exports.editButton = function (req, res) {
               sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.editButton`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
             })
         } else {
@@ -199,6 +209,8 @@ exports.editButton = function (req, res) {
               sendSuccessResponse(res, 200, { id: req.body.id, button: buttonPayload })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.editButton`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
             })
         }
@@ -218,7 +230,7 @@ exports.editButton = function (req, res) {
               }
               sendSuccessResponse(res, 200, {id: req.body.id, button: webViewPayload})
             } else {
-              sendErrorResponse(res, 500, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
+              sendErrorResponse(res, 400, `The given domain is not whitelisted. Please add it to whitelisted domains.`)
             }
           })
       } else {
@@ -233,6 +245,8 @@ exports.deleteButton = function (req, res) {
       sendSuccessResponse(res, 200, '', 'Url deleted successfully!')
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteButton`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to delete url ${JSON.stringify(error)}`)
     })
 }
@@ -308,6 +322,8 @@ const _writeFileStream = (filedata, next) => {
     readData.pipe(writeData)
     next(null)
   } catch (err) {
+    const message = err || 'Internal Server Error'
+    logger.serverLog(message, `${TAG}: _writeFileStream`, {filedata}, {}, 'error')
     next(err)
   }
 }
@@ -321,6 +337,8 @@ const _fetchPage = (filedata, next) => {
         next(null, filedata)
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _fetchPage`, {filedata}, {}, 'error')
         next(err)
       })
   } else {
@@ -340,6 +358,8 @@ const _refreshPageAccessToken = (filedata, next) => {
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _refreshPageAccessToken`, {filedata}, {}, 'error')
         next(err)
       })
   } else {
@@ -372,6 +392,8 @@ const _uploadOnFacebook = (filedata, next) => {
         if (err) {
           next(err)
         } else if (resp.body.error) {
+          const message = resp.body.error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _uploadOnFacebook`, {filedata}, {}, 'error')
           next(resp.body.error)
         } else {
           filedata.attachment_id = resp.body.attachment_id
@@ -396,7 +418,7 @@ exports.uploadForTemplate = function (req, res) {
   ], function (err) {
     if (err) {
       const message = err || 'Failed to upload file'
-      logger.serverLog(message, `${TAG}: exports.uploadForTemplate`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.uploadForTemplate`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', 'An expexted error occured while uploading the file. See server logs for more info.')
     } else {
       let payload = {
@@ -432,7 +454,7 @@ exports.sendConversation = function (req, res) {
       })
       .catch(err => {
         const message = err || 'Failed to fetch page'
-        logger.serverLog(message, `${TAG}: exports.sendConversation`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.sendConversation`, req.body, {user: req.user}, 'error')
       })
   }
 }
@@ -440,8 +462,6 @@ exports.sendConversation = function (req, res) {
 const sendBroadcastToSubscribers = (page, payload, req, res) => {
   BroadcastDataLayer.createForBroadcast(broadcastUtility.prepareBroadCastPayload(req, req.user.companyId))
     .then(broadcast => {
-      // update company usage
-      updateCompanyUsage(req.user.companyId, 'broadcasts', 1)
       createMessageBlocks(req.body.linkedMessages, req.user, broadcast._id, 'broadcast')
         .then(results => {
           require('./../../../config/socketio').sendMessageToClient({
@@ -478,7 +498,7 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
               })
               .catch(error => {
                 const message = error || 'Failed to fetch lists'
-                logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, `Failed to fetch lists see server logs for more info`)
               })
           } else {
@@ -501,13 +521,13 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
                     })
                     .catch(err => {
                       const message = err || 'Failed to fetch tag subscribers'
-                      logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, 'Failed to fetch tag subscribers')
                     })
                 })
                 .catch(err => {
                   const message = err || 'Failed to fetch tags'
-                  logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, 'Failed to fetch tags')
                 })
             } else {
@@ -518,13 +538,13 @@ const sendBroadcastToSubscribers = (page, payload, req, res) => {
         })
         .catch(err => {
           const message = err || 'Failed to create linked message blocks'
-          logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to create linked message blocks ${err}`)
         })
     })
     .catch(err => {
       const message = err || 'Failed to create broadcast'
-      logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: sendBroadcastToSubscribers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 'Failed to create broadcast see server logs for more info')
     })
 }
@@ -589,7 +609,7 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
               })
               .catch(error => {
                 const message = error || 'Failed to fetch data from facebook'
-                logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(error)}`)
               })
           } else {
@@ -598,13 +618,13 @@ const sendTestBroadcast = (companyUser, page, payload, req, res) => {
         })
         .catch(error => {
           const message = error || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch subscriber ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
       const message = error || 'Failed to fetch adminsubscription'
-      logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: sendTestBroadcast`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch adminsubscription ${JSON.stringify(error)}`)
     })
 }
@@ -635,6 +655,8 @@ exports.addCardAction = function (req, res) {
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: addCardAction`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, `Error at checking whitelist domain ${err}`)
       })
   } else {
@@ -651,6 +673,8 @@ exports.addCardAction = function (req, res) {
         sendSuccessResponse(res, 200, buttonPayload)
       })
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: addCardAction`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, `Failed to save url ${JSON.stringify(error)}`)
       })
   }
@@ -669,10 +693,14 @@ exports.retrieveReachEstimation = (req, res) => {
           }
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: addCardAction`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to retrieve reach estimation ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: addCardAction`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
     })
 }
@@ -737,7 +765,7 @@ exports.retrieveSubscribersCount = function (req, res) {
       })
       .catch(err => {
         const message = err || 'Failed to fetch list'
-        logger.serverLog(message, `${TAG}: exports.retrieveSubscribersCount`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.retrieveSubscribersCount`, req.body, {user: req.user}, 'error')
       })
   } else if (req.body.segmented) {
     if (req.body.segmentationGender.length > 0) match.gender = {$in: req.body.segmentationGender}
@@ -796,7 +824,7 @@ exports.retrieveSubscribersCount = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Failed to fetch tags'
-          logger.serverLog(message, `${TAG}: exports.retrieveSubscribersCount`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.retrieveSubscribersCount`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, 'Failed to fetch tags')
         })
     } else {
@@ -833,6 +861,8 @@ const _getSubscribersCount = (body, match, res) => {
                   cb(null, count)
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: _getSubscribersCount`, {body, match}, {}, 'error')
                   cb(err)
                 })
             },
@@ -852,6 +882,8 @@ const _getSubscribersCount = (body, match, res) => {
                   cb(null, count)
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: _getSubscribersCount`, {body, match}, {}, 'error')
                   cb(err)
                 })
             }

@@ -3,6 +3,8 @@ const QuestionsurveydataLayer = require('./surveyQuestion.datalayer')
 const logicLayer = require('./template.logiclayer')
 const callApi = require('../utility/index')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const logger = require('../../../components/logger')
+const TAG = 'server/api/v1.1/templates/templates.controller.js'
 const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.allPolls = function (req, res) {
@@ -11,6 +13,8 @@ exports.allPolls = function (req, res) {
       sendSuccessResponse(res, 200, polls)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allPolls`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -27,10 +31,14 @@ exports.getAllPolls = function (req, res) {
                 sendSuccessResponse(res, 200, { polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, JSON.stringify(err))
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, JSON.stringify(err))
           })
       })
@@ -46,14 +54,20 @@ exports.getAllPolls = function (req, res) {
                 sendErrorResponse(res, 200, { polls: polls, count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(error => {
+                const message = error || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, JSON.stringify(error))
               })
           })
           .catch(error => {
+            const message = error || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, JSON.stringify(error))
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, JSON.stringify(err))
       })
   } else if (req.body.first_page === 'previous') {
@@ -68,14 +82,20 @@ exports.getAllPolls = function (req, res) {
                 sendSuccessResponse(res, 200, { polls: polls.reverse(), count: polls.length > 0 ? pollsCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(error => {
+                const message = error || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, JSON.stringify(error))
               })
           })
           .catch(error => {
+            const message = error || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, JSON.stringify(error))
           })
       })
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getAllPolls`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, JSON.stringify(error))
       })
   }
@@ -93,14 +113,20 @@ exports.getAllSurveys = function (req, res) {
                 sendSuccessResponse(res, 200, { surveys: surveys, count: surveys.length > 0 ? surveysCount.length > 0 ? surveysCount[0].count : 0 : 0, totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, err)
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, err)
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, err)
       })
   } else if (req.body.first_page === 'next') {
@@ -115,14 +141,20 @@ exports.getAllSurveys = function (req, res) {
                 sendSuccessResponse(res, 200, { surveys: surveys, count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, err)
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, err)
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, err)
       })
   } else if (req.body.first_page === 'previous') {
@@ -137,14 +169,20 @@ exports.getAllSurveys = function (req, res) {
                 sendSuccessResponse(res, 200, { surveys: surveys.reverse(), count: surveys.length > 0 ? surveysCount[0].count : '', totalCount: totalCount[0] ? totalCount[0].count : 0 })
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, err)
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, err)
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getAllSurveys`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, err)
       })
   }
@@ -156,6 +194,8 @@ exports.allSurveys = function (req, res) {
       sendSuccessResponse(res, 200, surveys)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allSurveys`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -176,6 +216,8 @@ exports.createPoll = function (req, res) {
       sendSuccessResponse(res, 200, pollCreated)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createPoll`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, 'failed to saved polls')
     })
 }
@@ -203,11 +245,15 @@ exports.createSurvey = function (req, res) {
           .then(question1 => {
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.createSurvey`, req.body, {user: req.user}, 'error')
           })
       }
       sendSuccessResponse(res, 200, survey)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createSurvey`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -223,10 +269,14 @@ exports.allCategories = function (req, res) {
           sendSuccessResponse(res, 200, categories)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allCategories`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allCategories`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -268,10 +318,14 @@ exports.createCategory = function (req, res) {
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.createCategory`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createCategory`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -285,6 +339,8 @@ exports.editCategory = function (req, res) {
       sendSuccessResponse(res, 200, categoryCreated)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.editCategory`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -300,10 +356,14 @@ exports.surveyDetails = function (req, res) {
           sendSuccessResponse(res, 200, { survey, questions })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.surveyDetails`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.surveyDetails`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -316,6 +376,8 @@ exports.pollDetails = function (req, res) {
       sendSuccessResponse(res, 200, poll)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.pollDetails`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -334,10 +396,14 @@ exports.deletePoll = function (req, res) {
           sendSuccessResponse(res, 200)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.deletePoll`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deletePoll`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -354,10 +420,14 @@ exports.deleteCategory = function (req, res) {
           sendSuccessResponse(res, 200)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.deleteCategory`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteCategory`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -377,6 +447,8 @@ exports.deleteSurvey = function (req, res) {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteSurvey`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -400,6 +472,8 @@ exports.editSurvey = function (req, res) {
                 dataLayer.removeQuestion(questions[i]._id)
                   .then(success => { })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.editSurvey`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, err)
                   })
               }
@@ -415,20 +489,28 @@ exports.editSurvey = function (req, res) {
                   .then(survey => {
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.editSurvey`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, err)
                   })
               }
               sendSuccessResponse(res, 200, survey)
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.editSurvey`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, err)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.editSurvey`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.editSurvey`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -450,10 +532,14 @@ exports.editPoll = function (req, res) {
           sendSuccessResponse(res, 200)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.editPoll`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.editPoll`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -486,19 +572,27 @@ exports.createBroadcast = function (req, res) {
                     sendSuccessResponse(res, 200, broadcastCreated)
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, err)
                   })
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, err)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -514,10 +608,14 @@ exports.allBroadcasts = function (req, res) {
           sendSuccessResponse(res, 200, broadcasts)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -558,10 +656,14 @@ exports.getAllBroadcasts = function (req, res) {
                         })
                       })
                       .catch(err => {
+                        const message = err || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
                         sendErrorResponse(res, 500, err)
                       })
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, err)
                   })
               } else if (req.body.first_page === 'next') {
@@ -579,10 +681,14 @@ exports.getAllBroadcasts = function (req, res) {
                         })
                       })
                       .catch(err => {
+                        const message = err || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
                         sendErrorResponse(res, 500, err)
                       })
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, err)
                   })
               } else if (req.body.first_page === 'previous') {
@@ -600,19 +706,27 @@ exports.getAllBroadcasts = function (req, res) {
                         })
                       })
                       .catch(err => {
+                        const message = err || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
                         sendErrorResponse(res, 500, err)
                       })
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, err)
                   })
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, err)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAllBroadcasts`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
@@ -632,10 +746,14 @@ exports.deleteBroadcast = function (req, res) {
           return res.status(500).json({ status: 'success' })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.deleteBroadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, error)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteBroadcast`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -657,6 +775,8 @@ exports.editBroadcast = function (req, res) {
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.editBroadcast`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error)
     })
 }
@@ -670,6 +790,8 @@ exports.broadcastDetails = function (req, res) {
       sendSuccessResponse(res, 200, broadcast)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.broadcastDetails`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -689,10 +811,14 @@ exports.createBotTemplate = function (req, res) {
           sendSuccessResponse(res, 200, botTemplateCreated)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.createBotTemplate`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createBotTemplate`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -708,10 +834,14 @@ exports.allBots = function (req, res) {
           sendSuccessResponse(res, 200, bots)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allBots`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allBots`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -728,6 +858,8 @@ exports.deleteBot = function (req, res) {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteBot`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -748,10 +880,14 @@ exports.editBot = function (req, res) {
           sendSuccessResponse(res, 200, botTemplateFound)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.editBot`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.editBot`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }
@@ -765,6 +901,8 @@ exports.botDetails = function (req, res) {
       sendSuccessResponse(res, 200, bot)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.botDetails`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, err)
     })
 }

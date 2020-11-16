@@ -3,6 +3,8 @@ const compose = require('composable-middleware')
 const utility = require('../v1.1/utility')
 const { isApprovedForSMP } = require('../global/subscriptionMessaging')
 const async = require('async')
+const TAG = 'api/middleware'
+const logger = require('../../components/logger')
 
 exports.checkSMP = () => {
   return compose().use((req, res, next) => {
@@ -24,6 +26,8 @@ exports.checkSMP = () => {
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.checkSMP`, req.body, {user: req.user}, 'error')
         return res.status(500)
           .json({ status: 'failed', description: `Internal Server Error: ${err}` })
       })
@@ -40,10 +44,14 @@ function checkStatusForEachPage (connectedPages) {
           next()
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: checkStatusForEachPage`, {connectedPages}, {}, 'error')
           reject(err)
         })
     }, function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: checkStatusForEachPage`, {connectedPages}, {}, 'error')
         reject(err)
       } else {
         resolve(statusArray)

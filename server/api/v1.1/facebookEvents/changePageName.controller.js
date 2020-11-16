@@ -14,6 +14,6 @@ exports.changePageName = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Failed to update page name'
-      logger.serverLog(message, `${TAG}: _countUpdate`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _countUpdate`, req.body, {user: req.user}, 'error')
     })
 }

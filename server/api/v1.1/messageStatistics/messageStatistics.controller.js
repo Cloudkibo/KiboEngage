@@ -15,7 +15,7 @@ exports.index = function (req, res) {
   getRecords(name, (err, data) => {
     if (err) {
       const message = err || 'Error from Message Statistics on getRecords'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       return sendErrorResponse(res, '500', '', JSON.stringify(err))
     }
     var info = data
@@ -32,7 +32,7 @@ exports.index = function (req, res) {
       res.send(csv)
     } catch (err) {
       const message = err || 'Error from Message Statistics on getRecords'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, '500', '', JSON.stringify(err))
     }
   })
