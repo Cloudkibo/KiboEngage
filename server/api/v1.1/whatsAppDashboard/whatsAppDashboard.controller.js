@@ -2,6 +2,8 @@ const utility = require('../utility')
 const broadcastDataLayer = require('../whatsAppBroadcasts/whatsAppBroadcasts.datalayer')
 const LogicLayer = require('./whatsAppDashboard.logiclayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const logger = require('../../../components/logger')
+const TAG = 'api/whatsAppDashboard/whatsAppDashboard.controller.js'
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -21,14 +23,20 @@ exports.index = function (req, res) {
               sendSuccessResponse(res, 200, payload)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to broadcast count ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch subscriber count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -52,18 +60,26 @@ exports.subscriberSummary = function (req, res) {
                   sendSuccessResponse(res, 200, data)
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Error in getting graphdata ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Error in getting unsubscribers ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Error in getting subscribers ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.subscriberSummary`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }
@@ -88,14 +104,20 @@ exports.sentSeen = function (req, res) {
               sendSuccessResponse(res, 200, payload)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.sentSeen`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch graph ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sentSeen`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to broadcast count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.sentSeen`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

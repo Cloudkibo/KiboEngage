@@ -26,14 +26,20 @@ exports.index = function (req, res) {
               sendSuccessResponse(res, 200, data)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch subscriber count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -58,6 +64,8 @@ exports.update = function (req, res) {
       sendSuccessResponse(res, 200, updated)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -65,6 +73,8 @@ exports.getDuplicateSubscribers = function (req, res) {
   let directory = phoneNumberLogicLayer.directory(req)
   fs.rename(req.files.file.path, path.join(directory.dir, '/userfiles/', directory.serverPath), err => {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getDuplicateSubscribers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', 'internal server error' + JSON.stringify(err))
     }
     let data = {
@@ -102,9 +112,9 @@ const _getDuplicateRecords = (data) => {
             resolve(results.length > 0 ? results[0].count : 0)
           })
           .catch(error => {
-            resolve(0)
             const message = error || 'Failed to fetch contacts'
             logger.serverLog(message, `${TAG}: _getDuplicateRecords`, data, {}, 'error')
+            resolve(0)
           })
       })
   })
@@ -114,6 +124,8 @@ exports.sendMessage = function (req, res) {
   let directory = phoneNumberLogicLayer.directory(req)
   fs.rename(req.files.file.path, path.join(directory.dir, '/userfiles/', directory.serverPath), err => {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.sendMessage`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', 'internal server error' + JSON.stringify(err))
     }
     let data = {
@@ -131,7 +143,7 @@ exports.sendMessage = function (req, res) {
     ], function (err) {
       if (err) {
         const message = err || 'Failed to send template invitation'
-        logger.serverLog(message, `${TAG}: exports.sendMessage`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.sendMessage`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', err)
       } else {
         sendSuccessResponse(res, 200, 'Message Sent Successfully')
@@ -164,6 +176,8 @@ const _sendTemplateMessage = (data, next) => {
         next(null, data)
       })
       .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _sendTemplateMessage`, data, {}, 'error')
         next(error)
       })
   } else {
@@ -190,6 +204,8 @@ const _fetchSubscribers = (data, next) => {
         }
       })
       .catch((err) => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _fetchSubscribers`, data, {}, 'error')
         next(err)
       })
   })

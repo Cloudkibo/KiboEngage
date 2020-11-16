@@ -21,14 +21,20 @@ exports.index = function (req, res) {
               sendSuccessResponse(res, 200, subscribersPayload)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch tags subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -46,14 +52,20 @@ exports.allSubscribers = function (req, res) {
               sendSuccessResponse(res, 200, subscribersPayload)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.allSubscribers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch tags subscribers ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allSubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allSubscribers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -70,10 +82,14 @@ exports.allLocales = function (req, res) {
           sendSuccessResponse(res, 200, locales[0].locales)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allLocales`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch locales ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allLocales`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -87,7 +103,7 @@ exports.getCount = (req, res) => {
       })
       .catch(err => {
         const message = err || 'Failed to fetch tags'
-        logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, `Failed to fetch tags`)
       })
   } else {
@@ -147,19 +163,27 @@ const getAllSubscribers = function (subscribers, count, req, res) {
                   sendSuccessResponse(res, 200, {subscribers: finalPayload, count: count.length > 0 ? count[0].count : 0})
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: getAllSubscribers`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, `Failed to fetch custom_Field_subscribers ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: getAllSubscribers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch custom_Fields ${JSON.stringify(error)}`)
             })
         })
         // end append custom Fields
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: getAllSubscribers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch tags subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: getAllSubscribers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch tags ${JSON.stringify(error)}`)
     })
 }
@@ -192,17 +216,17 @@ exports.getAll = function (req, res) {
               })
               .catch(err => {
                 const message = err || 'Failed to fetch subscriber data'
-                logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
               })
           })
           .catch(err => {
             const message = err || 'Failed to fetch subscriber count'
-            logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
           })
       })
       .catch(err => {
         const message = err || 'Failed to fetch tag'
-        logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
       })
   } else {
     let criterias = logicLayer.getCriterias(req, tagIDs)
@@ -214,7 +238,7 @@ exports.getAll = function (req, res) {
           })
           .catch(error => {
             const message = error || 'Failed to fetch subscribers'
-            logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
           })
       })
       .catch(error => {
@@ -231,7 +255,7 @@ exports.subscribeBack = function (req, res) {
     })
     .catch(error => {
       const message = error || 'Failed to fetch subscriber'
-      logger.serverLog(message, `${TAG}: exports.subscribeBack`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.subscribeBack`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -242,6 +266,8 @@ exports.updatePicture = function (req, res) {
       sendSuccessResponse(res, 200, update)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updatePicture`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to update subscriber data ${JSON.stringify(err)}`)
     })
 }
@@ -252,6 +278,8 @@ exports.updateData = function (req, res) {
       sendSuccessResponse(res, 200, updatedSubscribers)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updateData`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(err)}`)
     })
 }
@@ -296,7 +324,7 @@ exports.unSubscribe = function (req, res) {
         (err, resp) => {
           if (err) {
             const message = err || 'Page access token from graph api error'
-            logger.serverLog(message, `${TAG}: exports.unSubscribe`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports.unSubscribe`, req.body, {user: req.user}, 'error')
           }
           if (resp.body.error) {
             sendOpAlert(resp.body.error, 'subscribers controller in kiboengage', req.body.page_id, userPage.userId._id, '')
@@ -313,6 +341,8 @@ exports.unSubscribe = function (req, res) {
             `https://graph.facebook.com/v6.0/me/messages?access_token=${resp.body.access_token}`,
             data, (err, resp) => {
               if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.unSubscribe`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', JSON.stringify(err))
               }
               if (resp.body.error) {
@@ -334,6 +364,8 @@ exports.unSubscribe = function (req, res) {
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.unSubscribe`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch user ${JSON.stringify(err)}`)
     })
 }
@@ -348,7 +380,7 @@ function saveNotifications (companyUser, subscriber, req) {
     .then(savedNotification => { })
     .catch(error => {
       const message = error || 'Failed to create notification'
-      logger.serverLog(message, `${TAG}: saveNotifications`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: saveNotifications`, req.body, {user: req.user}, 'error')
     })
 }
 function subscribeNewsSubscription (subscriberId, companyId) {

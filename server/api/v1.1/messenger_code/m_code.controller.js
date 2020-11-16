@@ -2,6 +2,9 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const qrcode = require('qrcode')
 const utility = require('../utility')
 const logicLayer = require('./m_code.logiclayer')
+const logger = require('../../../components/logger')
+const { errorHandler } = require('@sentry/node/dist/handlers')
+const TAG = 'api/messenger_code/m_code.controller.js'
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -14,10 +17,14 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, messengerCodes)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch messenger codes ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -28,6 +35,8 @@ exports.getQRCode = function (req, res) {
       sendSuccessResponse(res, 200, response)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getQRCode`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to get QRCode ${JSON.stringify(error)}`)
     })
 }
@@ -37,6 +46,8 @@ exports.delete = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to delete messenger codes ${JSON.stringify(error)}`)
     })
 }
@@ -51,10 +62,14 @@ exports.create = function (req, res) {
           sendSuccessResponse(res, 200, created)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to create messenger codes ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -69,6 +84,8 @@ exports.update = function (req, res) {
           sendSuccessResponse(res, 200, updatedPageReferral)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to update messenger codes ${JSON.stringify(error)}`)
         })
     })

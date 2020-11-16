@@ -34,24 +34,24 @@ exports.assignTag = function (req, res) {
                     })
                     .catch(err => {
                       const message = err || 'Failed to assign tag'
-                      logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {user: req.user}, 'error')
                     })
                 }
               })
               .catch(err => {
                 const message = err || 'Failed to tag subscriber'
-                logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {user: req.user}, 'error')
               })
           }
         })
         .catch(err => {
           const message = err || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.assignTag`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -84,23 +84,23 @@ exports.unAssignTag = function (req, res) {
                     })
                     .catch(err => {
                       const message = err || 'Failed to unassign tag'
-                      logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {user: req.user}, 'error')
                     })
                 }
               })
               .catch(err => {
                 const message = err || 'Failed to fetch subscriber tag'
-                logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {user: req.user}, 'error')
               })
           }
         })
         .catch(err => {
           const message = err || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.unAssignTag`, req.body, {user: req.user}, 'error')
     })
 }

@@ -31,7 +31,7 @@ exports.index = function (req, res) {
                       (err, resp2) => {
                         if (err) {
                           const message = err || 'Internal Server Error'
-                          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
                         }
                         if (resp2.body.error) {
                           sendOpAlert(resp2.body.error, 'messenger Ads in KiboEngage', page._id, page.userId, page.companyId)
@@ -57,21 +57,21 @@ exports.index = function (req, res) {
                 })
                 .catch(err => {
                   const message = err || 'Failed to fetch json ad'
-                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
                 })
             })
             .catch(err => {
               const message = err || 'Failed to fetch jsonAd'
-              logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
             })
         })
         .catch(err => {
           const message = err || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
     })
 }

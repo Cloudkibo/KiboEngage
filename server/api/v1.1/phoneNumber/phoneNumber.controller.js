@@ -78,12 +78,12 @@ exports.upload = function (req, res) {
                                       .then(updated => {})
                                       .catch(error => {
                                         const message = error || 'Failed to update company usage'
-                                        logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                                        logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                                       })
                                   })
                                   .catch(error => {
                                     const message = error || 'Failed to save phone number'
-                                    logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                                    logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                                   })
                               } else {
                                 let filename = logicLayer.getFiles(phone[0], req, newFileName)
@@ -111,29 +111,29 @@ exports.upload = function (req, res) {
                                                 })
                                                 .catch(error => {
                                                   const message = error || 'Failed to update list'
-                                                  logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                                                  logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                                                 })
                                             })
                                             .catch(error => {
                                               const message = error || 'Failed to fetch subscribers'
-                                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                                             })
                                         }
                                       })
                                       .catch(error => {
                                         const message = error || 'Failed to update number'
-                                        logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                                        logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                                       })
                                   })
                                   .catch(error => {
                                     const message = error || 'Failed to update number'
-                                    logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                                    logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                                   })
                               }
                             })
                             .catch(error => {
                               const message = error || 'Failed to update number'
-                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                             })
                           utility.callApi(`pages/query`, 'post', {userId: req.user._id, connected: true, pageId: req.body.pageId})
                             .then(pages => {
@@ -159,7 +159,7 @@ exports.upload = function (req, res) {
                                   function (err, res) {
                                     if (err) {
                                       const message = err || 'At invite to messenger using phone error'
-                                      return logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                                      return logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                                     }
                                     if (res.body.error) {
                                       sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage', page._id, page.userId, page.companyId)
@@ -171,14 +171,14 @@ exports.upload = function (req, res) {
                             })
                             .catch(error => {
                               const message = error || 'Failed to fetch pages'
-                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {}, 'error')
+                              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                             })
                           if (respSent === false) {
                             respSent = true
                             sendSuccessResponse(res, 200, '', 'Contacts were invited to your messenger')
                           }
                         } else {
-                          sendErrorResponse(res, 500, '', 'Incorrect column names')
+                          sendErrorResponse(res, 400, '', 'Incorrect column names')
                         }
                       })
                       .on('end', function () {
@@ -187,18 +187,26 @@ exports.upload = function (req, res) {
                   })
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Failed to fetch update list ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch plan usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.upload`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -230,6 +238,8 @@ exports.sendNumbers = function (req, res) {
                 .then(savedList => {
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, `Failed to update list ${JSON.stringify(error)}`)
                 })
               for (let i = 0; i < req.body.numbers.length; i++) {
@@ -260,10 +270,14 @@ exports.sendNumbers = function (req, res) {
                                 .then(updated => {
                                 })
                                 .catch(error => {
+                                  const message = error || 'Internal Server Error'
+                                  logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                                   sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
                                 })
                             })
                             .catch(error => {
+                              const message = error || 'Internal Server Error'
+                              logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                               sendErrorResponse(res, 500, `Failed to update number ${JSON.stringify(error)}`)
                             })
                         } else {
@@ -290,24 +304,34 @@ exports.sendNumbers = function (req, res) {
                                         utility.callApi(`lists/update`, 'post', {query: query, newPayload: update, options: {}})
                                           .then(savedList => {})
                                           .catch(error => {
+                                            const message = error || 'Internal Server Error'
+                                            logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                                             sendErrorResponse(res, 500, `Failed to update list ${JSON.stringify(error)}`)
                                           })
                                       })
                                       .catch(error => {
+                                        const message = error || 'Internal Server Error'
+                                        logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                                         sendErrorResponse(res, 500, `Failed to fetch subscribers ${JSON.stringify(error)}`)
                                       })
                                   }
                                 })
                                 .catch(error => {
+                                  const message = error || 'Internal Server Error'
+                                  logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                                   sendErrorResponse(res, 500, `Failed to fetch number ${JSON.stringify(error)}`)
                                 })
                             })
                             .catch(error => {
+                              const message = error || 'Internal Server Error'
+                              logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                               sendErrorResponse(res, 500, `Failed to update phone number ${JSON.stringify(error)}`)
                             })
                         }
                       })
                       .catch(error => {
+                        const message = error || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                         sendErrorResponse(res, 500, `Failed to fetch numbers ${JSON.stringify(error)}`)
                       })
                     pages.forEach(page => {
@@ -333,7 +357,7 @@ exports.sendNumbers = function (req, res) {
                         function (err, res) {
                           if (err) {
                             const message = err || 'Error At invite to messenger using phone'
-                            logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {}, 'error')
+                            logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                           }
                           if (res.body.error) {
                             sendOpAlert(res.body.error, 'phoneNumber controller in kiboengage', page._id, page.userId, page.companyId)
@@ -342,19 +366,27 @@ exports.sendNumbers = function (req, res) {
                     })
                   })
                   .catch(error => {
+                    const message = error || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, `Failed to fetch connected pages ${JSON.stringify(error)}`)
                   })
               }
               sendSuccessResponse(res, 201, 'Contacts were invited to your messenger')
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch plan usage ${JSON.stringify(error)}`)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sendNumbers`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
         })
     })
@@ -369,10 +401,14 @@ exports.pendingSubscription = function (req, res) {
           sendSuccessResponse(res, 200, phonenumbers)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.pendingSubscription`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch numbers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.pendingSubscription`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }

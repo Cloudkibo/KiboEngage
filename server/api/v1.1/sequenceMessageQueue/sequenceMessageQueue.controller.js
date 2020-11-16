@@ -13,7 +13,7 @@ exports.index = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error ${JSON.stringify(err)}`)
     })
 }

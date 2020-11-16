@@ -22,13 +22,13 @@ exports.messageStatus = function (req, res) {
             })
             .catch((err) => {
               const message = err || 'Failed to create queue'
-              logger.serverLog(message, `${TAG}: exports.messageStatus`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: exports.messageStatus`, req.body, {user: req.user}, 'error')
             })
         }
       })
       .catch((err) => {
         const message = err || 'Failed to fetch whatsAppBroadcastMessages data'
-        logger.serverLog(message, `${TAG}: exports.messageStatus`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.messageStatus`, req.body, {user: req.user}, 'error')
       })
   }
 }

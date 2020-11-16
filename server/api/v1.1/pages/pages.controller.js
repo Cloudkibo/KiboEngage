@@ -19,10 +19,14 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, pagesToSend)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -60,18 +64,26 @@ exports.allPages = function (req, res) {
                   sendSuccessResponse(res, 200, updatedPages)
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, `Failed to fetch unsubscribes ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch subscribes ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch connected pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -112,22 +124,32 @@ exports.connectedPages = function (req, res) {
                       sendSuccessResponse(res, 200, { pages: updatedPages, count: count.length > 0 ? count[0].count : 0 })
                     })
                     .catch(error => {
+                      const message = error || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, `Failed to fetch unsubscribes ${JSON.stringify(error)}`)
                     })
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, `Failed to fetch subscribes ${JSON.stringify(error)}`)
                 })
             })
-            .catch(error => {
+            .catch(error => { 
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch connected pages ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch connected pages count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -222,7 +244,7 @@ exports.enable = function (req, res) {
                                                 })
                                                 .catch(error => {
                                                   const message = error || 'Failed to updatedPage'
-                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
+                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                                                 })
                                             }
                                             var valueForMenu = {
@@ -240,11 +262,11 @@ exports.enable = function (req, res) {
                                               { json: true }, function (err, resp) {
                                                 if (err) {
                                                   const message = error || 'Internal Server Error'
-                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
+                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                                                 }
                                                 if (resp.body.error) {
                                                   const message = resp.body.error || 'Page connect error'
-                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
+                                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                                                   const errorMessage = resp.body.error.message
                                                   if (errorMessage && errorMessage.includes('administrative permission')) {
                                                     sendSuccessResponse(res, 200, { adminError: 'Page connected successfully, but certain actions such as setting welcome message will not work due to your page role' })
@@ -269,17 +291,21 @@ exports.enable = function (req, res) {
                                             })
                                           })
                                         })
-                                        .catch(error => {
+                                        .catch(error => {                                          
+                                          const message = error || 'Internal Server Error'
+                                          logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                                           sendErrorResponse(res, 500, `Failed to update subscriber ${JSON.stringify(error)}`)
                                         })
                                     })
                                     .catch(error => {
+                                      const message = error || 'Internal Server Error'
+                                      logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                                       sendErrorResponse(res, 500, `Failed to connect page ${JSON.stringify(error)}`)
                                     })
                                 })
                                 .catch(err => {
                                   const message = err || 'Error at find page'
-                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {}, 'error')
+                                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                                   sendErrorResponse(res, 500, err)
                                 })
                             } else {
@@ -289,22 +315,32 @@ exports.enable = function (req, res) {
                       }
                     })
                     .catch(error => {
+                      const message = error || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, `Failed to check page token ${JSON.stringify(error)}`)
                     })
                 })
                 .catch(error => {
+                  const message = error || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
                 })
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch plan usage ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -315,7 +351,7 @@ const _updateWhiteListDomain = (req, page) => {
     })
     .catch(error => {
       const message = error || 'Failed to whitelist domain'
-      logger.serverLog(message, `${TAG}: _updateWhiteListDomain`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _updateWhiteListDomain`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -332,6 +368,8 @@ exports.disable = function (req, res) {
             .then(updated => {
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to update company usage ${JSON.stringify(error)}`)
             })
           const options = {
@@ -355,7 +393,7 @@ exports.disable = function (req, res) {
                     })
                     .catch(error => {
                       const message = error || 'Failed to updatedPage'
-                      logger.serverLog(message, `${TAG}: exports.disable`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.disable`, req.body, {user: req.user}, 'error')
                     })
                 })
             }
@@ -404,10 +442,14 @@ exports.disable = function (req, res) {
           })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.disable`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to update subscribers ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.disable`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch page ${JSON.stringify(error)}`)
     })
 }
@@ -421,11 +463,13 @@ exports.createWelcomeMessage = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Failed to create linked message blocks'
-          logger.serverLog(message, `${TAG}: exports.createWelcomeMessage`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.createWelcomeMessage`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to create linked message blocks ${JSON.stringify(err)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createWelcomeMessage`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to update welcome message ${JSON.stringify(error)}`)
     })
 }
@@ -464,6 +508,8 @@ exports.enableDisableWelcomeMessage = function (req, res) {
       sendSuccessResponse(res, 200, 'Operation completed successfully!')
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.enableDisableWelcomeMessage`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to update welcome message ${JSON.stringify(error)}`)
     })
 }
@@ -499,19 +545,25 @@ exports.saveGreetingText = function (req, res) {
                     }
                     if (err) {
                       const message = err || 'Internal Server Error'
-                      logger.serverLog(message, `${TAG}: exports.saveGreetingText`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: exports.saveGreetingText`, req.body, {user: req.user}, 'error')
                     }
                   })
               } else {
+                const message = 'Failed to find page access token to update greeting text message'
+                logger.serverLog(message, `${TAG}: exports.saveGreetingText`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, `Failed to find page access token to update greeting text message`)
               }
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.saveGreetingText`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch companyUser ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.saveGreetingText`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to update greeting text message ${JSON.stringify(error)}`)
     })
 }
@@ -525,10 +577,14 @@ exports.addPages = function (req, res) {
           sendSuccessResponse(res, 200, pagesToSend)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.addPages`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.addPages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -541,10 +597,14 @@ exports.otherPages = function (req, res) {
           sendSuccessResponse(res, 200, pages)
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.otherPages`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch pages ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.otherPages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -556,6 +616,8 @@ exports.fetchWhitelistedDomains = function (req, res) {
       sendSuccessResponse(res, 200, whitelistDomains)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.fetchWhitelistedDomains`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch whitelist domains ${JSON.stringify(error)}`)
     })
 }
@@ -568,6 +630,8 @@ exports.deleteWhitelistDomain = function (req, res) {
       sendSuccessResponse(res, 200, whitelistDomains)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteWhitelistDomain`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to delete whitelist domains ${JSON.stringify(error)}`)
     })
 }
@@ -581,6 +645,8 @@ exports.whitelistDomain = function (req, res) {
       sendSuccessResponse(res, 200, whitelistDomains)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.whitelistDomain`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to save whitelist domains ${JSON.stringify(error)}`)
     })
 }
@@ -598,6 +664,8 @@ exports.refreshPages = function (req, res) {
       sendSuccessResponse(res, 200, response)
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.refreshPages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to refresh pages ${JSON.stringify(error)}`)
     })
 }

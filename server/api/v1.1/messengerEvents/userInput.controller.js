@@ -40,7 +40,7 @@ exports.index = function (req, res) {
         _sendNextMessage(req, res)
       }).catch(err => {
         const message = err || 'Failed to fetch page'
-        logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       })
   } else {
     _sendNextMessage(req, res)
@@ -141,7 +141,7 @@ const _sendNextMessage = (req, res) => {
               })
               .catch(err => {
                 const message = err || 'Failed to fetch page'
-                logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {user: req.user}, 'error')
               })
           } else {
             console.log('called function component index')
@@ -151,12 +151,12 @@ const _sendNextMessage = (req, res) => {
         })
         .catch(err => {
           const message = err || 'Failed to fetch broadcast'
-          logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch subscriber'
-      logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _sendNextMessage`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -335,7 +335,7 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                   sheets.spreadsheets.values.get(request, function (err, response) {
                     if (err) {
                       const message = err || 'Failed to fetch google sheets data'
-                      logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {}, 'error')
+                      logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {user: req.user}, 'error')
                     } else {
                       let range = getLookUpRange(resp.lookUpColumn, lookUpValue, response.data.values)
                       if (range) {
@@ -348,14 +348,14 @@ const _saveIntoGoogleSheet = (req, res, broadcastPayload, subscribers, message) 
                 }
               }).catch(err => {
                 const message = err || 'Failed to get LookUp Value'
-                logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {user: req.user}, 'error')
               })
           }
         }
       }
     }).catch(err => {
       const message = err || 'Failed to fetch integrations'
-      logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _saveIntoGoogleSheet`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -394,12 +394,12 @@ const _updateRow = (req, res, range, broadcastPayload, subscribers, message, oau
       sheets.spreadsheets.values.update(request, function (err, response) {
         if (err) {
           const message = err || 'Failed to update row'
-          logger.serverLog(message, `${TAG}: _updateRow`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: _updateRow`, req.body, {user: req.user}, 'error')
         }
       })
     }).catch(err => {
       const message = err || 'Failed to fetch columns in update row'
-      logger.serverLog(message, `${TAG}: _updateRow`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _updateRow`, req.body, {user: req.user}, 'error')
     })
 }
 
@@ -432,7 +432,7 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
           console.log('response in googlesheet insert', response.data)
           if (err) {
             const message = err || 'Failed to update row'
-            logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
+            logger.serverLog(message, `${TAG}: _insertRow`, req.body, {user: req.user}, 'error')
           } else {
             callApi(`subscribers/query`, 'post', {pageId: subscribers[0].pageId, senderId: subscribers[0].senderId, companyId: subscribers[0].companyId})
               .then(sub => {
@@ -447,17 +447,17 @@ const _insertRow = (req, res, broadcastPayload, subscribers, message, oauth2Clie
                 _subscriberUpdate(subscriber, waitingForUserInput)
               }).catch(err => {
                 const message = err || 'Failed to fetch subscriber'
-                logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: _insertRow`, req.body, {user: req.user}, 'error')
               })
           }
         })
       }).catch(err => {
         const message = err || 'Failed to create data  for insert row'
-        logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: _insertRow`, req.body, {user: req.user}, 'error')
       })
     }).catch(err => {
       const message = err || 'Failed to fetch columns in insert row'
-      logger.serverLog(message, `${TAG}: _insertRow`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: _insertRow`, req.body, {user: req.user}, 'error')
     })
 }
 

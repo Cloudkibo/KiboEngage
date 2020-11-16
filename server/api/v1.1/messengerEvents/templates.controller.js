@@ -50,7 +50,7 @@ exports.index = function (req, res) {
                       })
                       .catch(err => {
                         const message = err || 'Failed to upload template'
-                        logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+                        logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
                         reject(err)
                       })
                   }))
@@ -67,7 +67,7 @@ exports.index = function (req, res) {
                       (err, resp2) => {
                         if (err) {
                           const message = err || 'Internal Server Error'
-                          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
                         }
                         if (resp2.body.error && resp2.body.error.code === 190) {
                           passwordChangeEmailAlert(page.userId._id, page.userId.email)
@@ -97,21 +97,21 @@ exports.index = function (req, res) {
                 })
                 .catch(err => {
                   const message = err || 'Failed to retrieve attachment id'
-                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
                 })
             })
             .catch(err => {
               const message = err || 'Failed to fetch subscriber'
-              logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
             })
         })
         .catch(err => {
           const message = err || 'Failed to fetch page'
-          logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch template'
-      logger.serverLog(message, `${TAG}: exports.index`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
     })
 }

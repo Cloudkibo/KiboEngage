@@ -42,22 +42,22 @@ function unsubscribeFromSequence (sequenceId, req) {
                 })
                 .catch(err => {
                   const message = err || 'Failed to delete SequenceMessageQueue'
-                  logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {}, 'error')
+                  logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {user: req.user}, 'error')
                 })
             })
             .catch(err => {
               const message = err || 'Failed to remove sequence subscriber'
-              logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {}, 'error')
+              logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {user: req.user}, 'error')
             })
         })
         .catch(err => {
           const message = err || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {}, 'error')
+          logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch sequence'
-      logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {}, 'error')
+      logger.serverLog(message, `${TAG}: unsubscribeFromSequence`, {sequenceId}, {user: req.user}, 'error')
     })
 }
 function subscribeToSequence (sequenceId, req) {
@@ -122,27 +122,27 @@ function subscribeToSequence (sequenceId, req) {
                       })
                       .catch(err => {
                         const message = err || 'Failed to create sequence subscriber'
-                        logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {}, 'error')
+                        logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {user: req.user}, 'error')
                       })
                   })
                   .catch(err => {
                     const message = err || 'Failed to fetch sequence messages'
-                    logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {}, 'error')
+                    logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {user: req.user}, 'error')
                   })
               }
             })
             .catch(err => {
               const message = err || 'Failed to fetch sequence subscriber'
-              logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {}, 'error')
+              logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {user: req.user}, 'error')
             })
         })
         .catch(err => {
           const message = err || 'Failed to fetch subscriber'
-          logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {}, 'error')
+          logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {user: req.user}, 'error')
         })
     })
     .catch(err => {
       const message = err || 'Failed to fetch sequence'
-      logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {}, 'error')
+      logger.serverLog(message, `${TAG}: subscribeToSequence`, {sequenceId}, {user: req.user}, 'error')
     })
 }

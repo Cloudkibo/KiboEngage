@@ -1,5 +1,5 @@
 const logger = require('../../../components/logger')
-const CUSTOMFIELD = 'api/custom_field/custom_field.controller.js'
+const TAG = 'api/custom_field/custom_field.controller.js'
 const callApi = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const _ = require('lodash')
@@ -15,12 +15,16 @@ exports.index = function (req, res) {
           sendSuccessResponse(res, 200, customFields)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getCustomFieldSubscribers`, req.body, {user: req.user}, 'error')
           if (err) {
             sendErrorResponse(res, 500, '', `Internal Server Error in fetching customFields${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getCustomFieldSubscribers`, req.body, {user: req.user}, 'error')
       if (err) {
         sendErrorResponse(res, 500, '', `Internal Server Error in fetching customer${JSON.stringify(err)}`)
       }
@@ -42,7 +46,6 @@ exports.create = function (req, res) {
       }
       callApi.callApi('custom_fields/', 'post', customFieldPayload)
         .then(newCustomField => {
-          logger.serverLog(CUSTOMFIELD, `created custom fields ${JSON.stringify(newCustomField)}`)
           require('./../../../config/socketio').sendMessageToClient({
             room_id: companyUser.companyId,
             body: {
@@ -55,10 +58,14 @@ exports.create = function (req, res) {
           sendSuccessResponse(res, 200, newCustomField)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user${JSON.stringify(err)}`)
     })
 }
@@ -89,10 +96,14 @@ exports.update = function (req, res) {
           sendSuccessResponse(res, 200, updated)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `can not find custom field with given information${JSON.stringify(err)}`)
     })
 }
@@ -117,10 +128,14 @@ exports.delete = function (req, res) {
                 sendSuccessResponse(res, 200, 'Custom Field removed successfully')
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', `Failed to remove custom field ${err}`)
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Failed to remove custom field subscriber${err}`)
           })
       } else {
@@ -138,11 +153,15 @@ exports.delete = function (req, res) {
             sendSuccessResponse(res, 200, '', 'Custom Field removed successfully')
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Failed to remove custom field ${err}`)
           })
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to find custom field subsriber${err}`)
     })
 }

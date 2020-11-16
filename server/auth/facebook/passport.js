@@ -53,7 +53,11 @@ exports.setup = function (User, config) {
             const message = err || 'error from graph api to get user data'
             logger.serverLog(message, `${TAG}: exports.setup`, {User, config}, {}, 'error')
           }
-          if (err) return done(err)
+          if (err) {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.setup`, {User, config}, {}, 'error')
+            return done(err)
+          }
 
           let payload = {
             name: resp.body.name,

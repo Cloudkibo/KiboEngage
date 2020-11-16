@@ -5,6 +5,8 @@ const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const {ActionTypes} = require('../../../whatsAppMapper/constants')
 const {whatsAppMapper} = require('../../../whatsAppMapper/whatsAppMapper')
+const logger = require('../../../components/logger')
+const TAG = 'api/whatsAppBroadcasts/whatsAppBroadcasts.controller.js'
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -21,14 +23,20 @@ exports.index = function (req, res) {
               sendSuccessResponse(res, 200, {broadcasts: broadcasts, count: count.length > 0 ? count[0].count : 0})
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch broadcasts ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch broadcasts count ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -47,6 +55,8 @@ function sendBrodcastComponent (req, res, broadcast, contacts) {
       sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: sendBrodcastComponent`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to send broadcast to all subscribers ${error}`)
     })
 }
@@ -62,14 +72,20 @@ exports.sendBroadcast = function (req, res) {
               sendBrodcastComponent(req, res, broadcast, ArrayContact)
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to get subscribers count ${JSON.stringify(error)}`)
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
     })
 }
@@ -93,18 +109,12 @@ function getSubscribersCount (req, res, contacts) {
         } else {
           callback(null, null)
         }
-        // } else {
-        //   callback(null, null)
-        // }
-      // })
-      // .catch(error => {
-      //   reject(error)
-      //   // sendErrorResponse(res, 500, `Failed to fetch livechat Data ${(error)}`)
-      // })
       })
     }
     async.parallelLimit(requests, 30, function (err, results) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: getSubscribersCount`, req.body, {user: req.user}, 'error')
         reject(err)
       } else {
         var finalResults = results.filter(result => result !== null)
@@ -124,10 +134,14 @@ exports.getCount = function (req, res) {
             })
         })
         .catch(error => {
+          const message = error || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, `Failed to fetch fetch contact user ${JSON.stringify(error)}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getCount`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${error}`)
     })
 }

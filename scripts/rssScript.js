@@ -58,6 +58,8 @@ const _performAction = (data, next) => {
       _sendToMessenger.bind(null, data)
     ], function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _performAction`, {data}, {}, 'error')
         next(err)
       } else {
         next()
@@ -68,6 +70,8 @@ const _performAction = (data, next) => {
       _postOnFacebook.bind(null, data)
     ], function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _performAction`, {data}, {}, 'error')
         next(err)
       } else {
         next()
@@ -79,6 +83,8 @@ const _performAction = (data, next) => {
       _postOnFacebook.bind(null, data)
     ], 10, function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _performAction`, {data}, {}, 'error')
         next(err)
       } else {
         next()
@@ -93,6 +99,8 @@ const _sendToMessenger = (data, next) => {
     _sendRSSUpdates.bind(null, data)
   ], function (err) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _sendToMessenger`, {data}, {}, 'error')
       next(err)
     } else {
       next()
@@ -108,6 +116,8 @@ const _postOnFacebook = (data, next) => {
     _savePostObject.bind(null, data)
   ], function (err) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _postOnFacebook`, {data}, {}, 'error')
       next(err)
     } else {
       next()
@@ -184,6 +194,8 @@ const _getSubscribersCount = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _getSubscribersCount`, {data}, {}, 'error')
       next(err)
     })
 }
@@ -197,6 +209,8 @@ const _updateScheduledTime = (autoposting, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateScheduledTime`, {autoposting}, {}, 'error')
       next(err)
     })
 }
@@ -209,6 +223,8 @@ const _sendRSSUpdates = (data, next) => {
     _sendBroadcast.bind(null, data)
   ], function (err) {
     if (err) {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _sendRSSUpdates`, {data}, {}, 'error')
       next(err)
     } else {
       next()
@@ -272,10 +288,14 @@ const _fetchTags = (data, next) => {
             }
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: _fetchTags`, {data}, {}, 'error')
             next(err)
           })
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _fetchTags`, {data}, {}, 'error')
         next(err)
       })
   } else {
@@ -290,6 +310,8 @@ const _parseFeed = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _parseFeed`, {data}, {}, 'error')
       next(err)
     })
 }
@@ -310,6 +332,8 @@ const _prepareMessageData = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _prepareMessageData`, {data}, {}, 'error')
       next(err)
     })
 }

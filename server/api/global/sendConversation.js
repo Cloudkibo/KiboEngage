@@ -33,13 +33,13 @@ const sendUsingBatchAPI = (module, payload, subscribers, page, user, result, sav
           })
           .catch(err => {
             const message = err || 'Failed to send using batch api'
-            logger.serverLog(message, `${TAG}: sendUsingBatchAPI`, payload, {}, 'error')
+            logger.serverLog(message, `${TAG}: sendUsingBatchAPI`, payload, {user}, 'error')
           })
       }
     })
     .catch(err => {
       const message = err || 'Failed to fetch subscribers'
-      logger.serverLog(message, `${TAG}: sendUsingBatchAPI`, payload, {}, 'error')
+      logger.serverLog(message, `${TAG}: sendUsingBatchAPI`, payload, {user}, 'error')
     })
 }
 
@@ -48,7 +48,7 @@ const _callBatchAPI = (batch, accessToken) => {
     const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
       if (err) {
         const message = err || 'Batch api error'
-        logger.serverLog(message, `${TAG}: _callBatchAPI`, batch, {}, 'error')
+        logger.serverLog(message, `${TAG}: _callBatchAPI`, batch, {accessToken}, 'error')
       } else {
         body = JSON.parse(body)
         resolve(body)
@@ -128,7 +128,7 @@ const saveAutomationMessages = (user, subscriber, page, message) => {
     })
     .catch(err => {
       const message = err || 'error in saving automation messages'
-      logger.serverLog(message, `${TAG}: saveAutomationMessages`, user, {}, 'error')
+      logger.serverLog(message, `${TAG}: saveAutomationMessages`, {user, subscriber, page, message}, {}, 'error')
     })
 }
 

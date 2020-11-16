@@ -2,7 +2,7 @@
 // const CUSTOMFIELD = 'api/custom_field/custom_field.controller.js'
 const callApi = require('../utility')
 const logger = require('../../../components/logger')
-const customField = '/api/v1.1/custom_field_subscribers/custom_field_subscriber.controller.js'
+const TAG = '/api/v1.1/custom_field_subscribers/custom_field_subscriber.controller.js'
 const util = require('util')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
@@ -56,7 +56,6 @@ exports.setCustomFieldValue = function (req, res) {
             }
           })
           .then(setCustomFieldValue => {
-            logger.serverLog(customField, `set custom field value for subscriber ${util.inspect(setCustomFieldValue)}`, 'debug')
             if (index === req.body.subscriberIds.length - 1) {
               if (!req.body.user_input) {
                 sendSuccessResponse(res, 200, setCustomFieldValue)
@@ -65,11 +64,15 @@ exports.setCustomFieldValue = function (req, res) {
           })
           .catch(err => {
             sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.setCustomFieldValue`, req.body, {user: req.user}, 'error')
           })
       })
     }
   })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.setCustomFieldValue`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
     })
 }
@@ -82,6 +85,8 @@ exports.getCustomFieldSubscriber = function (req, res) {
       sendSuccessResponse(res, 200, foundCustomFieldSubscriber)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getCustomFieldSubscriber`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server ${(err)}`)
     })
 }
@@ -99,12 +104,16 @@ exports.getCustomFieldSubscribers = function (req, res) {
           sendSuccessResponse(res, 200, foundCustomFieldSubscribers)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getCustomFieldSubscribers`, req.body, {user: req.user}, 'error')
           if (err) {
             sendErrorResponse(res, 500, `Internal Server Error in fetching customFields${JSON.stringify(err)}`)
           }
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getCustomFieldSubscribers`, req.body, {user: req.user}, 'error')
       if (err) {
         sendErrorResponse(res, 500, `Internal Server Error in fetching customer${JSON.stringify(err)}`)
       }

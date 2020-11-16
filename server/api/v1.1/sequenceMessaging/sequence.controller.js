@@ -12,6 +12,8 @@ exports.allMessages = function (req, res) {
       sendSuccessResponse(res, 200, messages)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allMessages`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence messages${JSON.stringify(err)}`)
     })
 }
@@ -41,10 +43,14 @@ exports.allSequences = function (req, res) {
                       }
                     })
                     .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence messages ${JSON.stringify(err)}`)
                 })
             })
@@ -53,10 +59,14 @@ exports.allSequences = function (req, res) {
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequences ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching companyUser ${JSON.stringify(err)}`)
     })
 }
@@ -67,6 +77,8 @@ exports.subscriberSequences = function (req, res) {
       sendSuccessResponse(res, 200, subscribers)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`)
     })
 }
@@ -93,14 +105,20 @@ exports.deleteMessage = function (req, res) {
               sendSuccessResponse(res, 200, result)
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence message queue${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence messages ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching companyUser${JSON.stringify(err)}`)
     })
 }
@@ -131,22 +149,32 @@ exports.deleteSequence = function (req, res) {
                       sendSuccessResponse(res, 200, result)
                     })
                     .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.deleteSequence`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence messages ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.deleteSequence`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence messages queue ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.deleteSequence`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence subscribers ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.deleteSequence`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteSequence`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching companyUser ${JSON.stringify(err)}`)
     })
 }
@@ -190,22 +218,32 @@ exports.createSequence = function (req, res) {
                       sendSuccessResponse(res, 200, sequenceCreated)
                     })
                     .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.createSequence`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.createSequence`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.createSequence`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.createSequence`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createSequence`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
@@ -230,10 +268,14 @@ exports.editSequence = function (req, res) {
           sendErrorResponse(res, 200, '', newSequence)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.editSequence`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in updating sequence ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.editSequence`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error while fetching company user ${JSON.stringify(err)}`)
     })
 }
@@ -284,22 +326,32 @@ exports.createMessage = function (req, res) {
                       sendSuccessResponse(res, 200, messageCreated)
                     })
                     .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.createMessage`, req.body, {user: req.user}, 'error')
                       sendErrorResponse(res, 500, '', `Internal Server Error in updating company usage ${JSON.stringify(err)}`)
                     })
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: exports.createMessage`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, '', `Internal Server Error in saving subscribers ${JSON.stringify(err)}`)
                 })
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.createMessage`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.createMessage`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in fetching company usage ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.createMessage`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
@@ -324,10 +376,14 @@ exports.editMessage = function (req, res) {
           sendSuccessResponse(res, 200, newMessage)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.editMessage`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in updating message ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.editMessage`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
@@ -360,6 +416,8 @@ exports.setSchedule = function (req, res) {
                     sendSuccessResponse(res, 200, message)
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.setSchedule`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Internal Server Error in updating sequence message schedule ${JSON.stringify(err)}`)
                   })
               } else {
@@ -367,14 +425,20 @@ exports.setSchedule = function (req, res) {
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.setSchedule`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error in getting sequence subscribers ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.setSchedule`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in updating schedule ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.setSchedule`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
@@ -410,23 +474,33 @@ exports.getAll = function (req, res) {
                         }
                       })
                       .catch(err => {
+                        const message = err || 'Internal Server Error'
+                        logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
                         sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence subscribers ${JSON.stringify(err)}`)
                       })
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence messages ${JSON.stringify(err)}`)
                   })
               })
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequences ${JSON.stringify(err)}`)
             })
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Internal Server Error in fetching sequence aggregate object ${JSON.stringify(err)}`)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
@@ -480,21 +554,21 @@ exports.subscribeToSequence = function (req, res) {
                   })
                   .catch(err => {
                     const message = err || 'Internal server error in creating sequence subscriber'
-                    logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', 'Failed to subscribe to sequence!')
                   })
               }
             })
             .catch(err => {
               const message = err || 'Internal server error in finding sequence subscriber'
-              logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+              logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', 'Failed to subscribe to sequence!')
             })
         }
       })
       .catch(err => {
         const message = err || 'Internal server error in finding sequence messages'
-        logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {}, 'error')
+        logger.serverLog(message, `${TAG}: exports.subscribeToSequence`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', 'Failed to subscribe to sequence!')
       })
   })
@@ -551,11 +625,13 @@ exports.unsubscribeToSequence = function (req, res) {
                                             })
                                             .catch(err => {
                                               const message = err || 'Failed to create sequence subscriber'
-                                              logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {}, 'error')
+                                              logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
                                             })
                                         }
                                       })
                                       .catch(err => {
+                                        const message = err || 'Internal Server Error'
+                                        logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
                                         sendErrorResponse(res, 500, '', `Internal server error in finding sequence subscriber ${err}`)
                                       })
                                   } else {
@@ -564,7 +640,7 @@ exports.unsubscribeToSequence = function (req, res) {
                                 })
                                 .catch(err => {
                                   const message = err || 'Failed to fecth sequence messages'
-                                  logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {}, 'error')
+                                  logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
                                 })
                             })
                           } else {
@@ -573,24 +649,32 @@ exports.unsubscribeToSequence = function (req, res) {
                         })
                         .catch(err => {
                           const message = err || 'Failed to fecth sequences'
-                          logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {}, 'error')
+                          logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
                         })
                     }
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Error in fetching subscribers ${err}`)
                   })
               })
               .catch(err => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
                 sendErrorResponse(res, 500, '', `Internal server error in creating sequence subscriber ${err}`)
               })
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
             sendErrorResponse(res, 500, '', `Internal server error in finding sequence messages ${err}`)
           })
       })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.unsubscribeToSequence`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user ${JSON.stringify(err)}`)
     })
 }
@@ -604,6 +688,8 @@ exports.testScheduler = function (req, res) {
       sendSuccessResponse(res, 200, sequenceCreated)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.testScheduler`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to insert record ${err}`)
     })
 }
@@ -614,6 +700,8 @@ exports.updateSegmentation = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.updateSegmentation`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to update segmentation ${err}`)
     })
 }
@@ -625,6 +713,8 @@ exports.updateTrigger = function (req, res) {
         sendSuccessResponse(res, 200, sequence)
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.updateTrigger`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Failed to update sequence record ${err}`)
       })
   } else if (req.body.type === 'message') { // Logic to update the trigger if the type is message
@@ -668,11 +758,15 @@ exports.updateTrigger = function (req, res) {
                     sendSuccessResponse(res, 200, savedMessage)
                   })
                   .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.updateTrigger`, req.body, {user: req.user}, 'error')
                     sendErrorResponse(res, 500, '', `Failed to save message ${err}`)
                   })
               }
             })
             .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.updateTrigger`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Failed to fetch message ${err}`)
             })
         } else {
@@ -680,6 +774,8 @@ exports.updateTrigger = function (req, res) {
         }
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.updateTrigger`, req.body, {user: req.user}, 'error')
         sendErrorResponse(res, 500, '', `Failed to update message record ${err}`)
       })
   }

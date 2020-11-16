@@ -28,16 +28,22 @@ exports.normalizeDataForDelivery = function (req, res) {
     .then(result => {
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.normalizeDataForDelivery`, req.body, {user: req.user}, 'error')
     })
   PollPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
     .then(result => {
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.normalizeDataForDelivery`, req.body, {user: req.user}, 'error')
     })
   SurveyPageDataLayer.genericUpdate({sent: null}, {sent: true}, {multi: true})
     .then(result => {
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.normalizeDataForDelivery`, req.body, {user: req.user}, 'error')
     })
   return res.status(200).json({status: 'success', payload: 'Data has been normalized successfully!'})
 }
@@ -77,6 +83,8 @@ exports.addWhitelistDomain = function (req, res) {
                       let requesturl = `https://graph.facebook.com/v6.0/me/messenger_profile?access_token=${accessToken}`
                       needle.request('post', requesturl, whitelistedDomains, {json: true}, function (err, resp) {
                         if (err) {
+                          const message = err || 'Internal Server Error'
+                          logger.serverLog(message, `${TAG}: exports.addWhitelistDomain`, req.body, {user: req.user}, 'error')
                         }
                         if (resp.body.error) {
                           sendOpAlert(resp.body.error, 'scripts in kiboengage', pages[i]._id, pages[i].userId, pages[i].companyId)
@@ -87,11 +95,15 @@ exports.addWhitelistDomain = function (req, res) {
               }
             })
             .catch(error => {
+              const message = error || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.addWhitelistDomain`, req.body, {user: req.user}, 'error')
             })
         }
       }
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.addWhitelistDomain`, req.body, {user: req.user}, 'error')
     })
   return res.status(200).json({status: 'success', payload: 'Domain has been whitelisted'})
 }
@@ -130,6 +142,8 @@ exports.performanceTestBroadcast = function (req, res) {
           }
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.performanceTestBroadcast`, req.body, {user: req.user}, 'error')
           return res.status(500).json({status: 'failed', description: `Failed to send broadcast ${err}`})
         })
     }

@@ -111,8 +111,9 @@ const _UpdatewhatsAppBroadcastMessages = (message, status, next) => {
       next(null, message)
     })
     .catch((err) => {
+      const message = err || 'Failed to update message'
+      logger.serverLog(message, `${TAG}: _UpdatewhatsAppBroadcastMessages`, {message, status}, {}, 'error')
       next(err)
-      logger.serverLog(`Failed to update message ${err}`, 'error')
     })
 }
 
@@ -128,7 +129,8 @@ const _UpdatewhatsAppBroadcasts = (message, status, incValue, next) => {
       next(null, broadcast)
     })
     .catch((err) => {
+      const message = err || 'Failed to update broadcast'
+      logger.serverLog(message, `${TAG}: _UpdatewhatsAppBroadcasts`, {message, status}, {}, 'error')
       next(err)
-      logger.serverLog(`Failed to update broadcast ${err}`, 'error')
     })
 }

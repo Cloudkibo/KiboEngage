@@ -70,7 +70,7 @@ exports.updateProfilePics = function (req, res) {
             (err, resp) => {
               if (err) {
                 const message = err || 'Error in cron script update_profile_pic'
-                logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {}, 'error')
+                logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {user: req.user}, 'error')
               }
               if (resp.body.picture) {
                 utility.callApi(`user/update`, 'post', {query: {_id: user._id}, newPayload: {'facebookInfo.profilePic': resp.body.picture.data.url}, options: {}})
@@ -78,7 +78,7 @@ exports.updateProfilePics = function (req, res) {
                   })
                   .catch(err => {
                     const message = err || 'Failed to update user'
-                    logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {}, 'error')
+                    logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {user: req.user}, 'error')
                   })
               }
             })
@@ -87,7 +87,7 @@ exports.updateProfilePics = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Failed to fetch users'
-      logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {user: req.user}, 'error')
     })
 
   utility.callApi(`companyUser/queryAll`, 'post', {})
@@ -98,6 +98,6 @@ exports.updateProfilePics = function (req, res) {
     })
     .catch(err => {
       const message = err || 'Failed to fetch company users'
-      logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: exports.updateProfilePics`, req.body, {user: req.user}, 'error')
     })
 }

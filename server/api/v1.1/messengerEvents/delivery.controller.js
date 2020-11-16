@@ -29,7 +29,7 @@ exports.index = function (req, res) {
   ], 10, function (err) {
     if (err) {
       const message = err || 'Error at delivery controller'
-      logger.serverLog(message, `${TAG}: saveCustomFieldValue`, req.body, {}, 'error')
+      logger.serverLog(message, `${TAG}: saveCustomFieldValue`, req.body, {user: req.user}, 'error')
     }
   })
 }
@@ -40,6 +40,8 @@ function _updateBroadcastSent (data, next) {
       next(null)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateBroadcastSent`, data, {}, 'error')
       next(err)
     })
 }
@@ -60,10 +62,14 @@ function _updatePollSent (data, next) {
           next(null)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _updatePollSent`, data, {}, 'error')
           next(err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updatePollSent`, data, {}, 'error')
       next(err)
     })
 }
@@ -84,10 +90,14 @@ function _updateSurveySent (data, next) {
           next(null)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: _updateSurveySent`, data, {}, 'error')
           next(err)
         })
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateSurveySent`, data, {}, 'error')
       next(err)
     })
 }
@@ -119,6 +129,8 @@ function _updateSequenceSubscriberMessage (data, next) {
                                       next(null)
                                     })
                                     .catch(err => {
+                                      const message = err || 'Internal Server Error'
+                                      logger.serverLog(message, `${TAG}: _updateSequenceSubscriberMessage`, data, {}, 'error')
                                       next(err)
                                     })
                                 }
@@ -126,25 +138,35 @@ function _updateSequenceSubscriberMessage (data, next) {
                             }
                           })
                           .catch(err => {
+                            const message = err || 'Internal Server Error'
+                            logger.serverLog(message, `${TAG}: _updateSequenceSubscriberMessage`, data, {}, 'error')
                             next(err)
                           })
                       }
                     })
                     .catch(err => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: _updateSequenceSubscriberMessage`, data, {}, 'error')
                       next(err)
                     })
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: _updateSequenceSubscriberMessage`, data, {}, 'error')
                   next(err)
                 })
             }
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: _updateSequenceSubscriberMessage`, data, {}, 'error')
             next(err)
           })
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateSequenceSubscriberMessage`, data, {}, 'error')
       next(err)
     })
 }
@@ -162,16 +184,22 @@ function _updateRssFeedSent (data, next) {
                   next(null)
                 })
                 .catch(err => {
+                  const message = err || 'Internal Server Error'
+                  logger.serverLog(message, `${TAG}: _updateRssFeedSent`, data, {}, 'error')
                   next(err)
                 })
             }
           })
           .catch(err => {
+            const message = err || 'Internal Server Error'
+            logger.serverLog(message, `${TAG}: _updateRssFeedSent`, data, {}, 'error')
             next(err)
           })
       }
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateRssFeedSent`, data, {}, 'error')
       next(err)
     })
 }

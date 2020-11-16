@@ -434,6 +434,8 @@ const _updateScheduledTime = (data, next) => {
       next()
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: _updateScheduledTime`, {data}, {}, 'error')
       next(err)
     })
 }
@@ -452,6 +454,8 @@ const _saveRssFeedPost = (data, next) => {
         callback()
       })
       .catch(err => {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: _saveRssFeedPost`, {data}, {}, 'error')
         callback(err)
       })
   }, function (err) {

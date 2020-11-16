@@ -9,6 +9,8 @@ exports.create = function (req, res) {
       sendSuccessResponse(res, 200, jsonAd)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to create json Ad ${err}`)
     })
 }
@@ -19,6 +21,8 @@ exports.edit = function (req, res) {
       sendSuccessResponse(res, 200, jsonAd)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.edit`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to edit json Ad ${err}`)
     })
 }
@@ -34,10 +38,14 @@ exports.getAll = function (req, res) {
           sendSuccessResponse(res, 200, jsonAds)
         })
         .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
           sendErrorResponse(res, 500, '', `Failed to fetch json Ads ${err}`)
         })
     })
     .catch(error => {
+      const message = error || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getAll`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
@@ -48,6 +56,8 @@ exports.getOne = function (req, res) {
       sendSuccessResponse(res, 200, jsonAd)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.getOne`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch json Ad ${err}`)
     })
 }
@@ -58,6 +68,8 @@ exports.deleteOne = function (req, res) {
       sendSuccessResponse(res, 200, jsonAd)
     })
     .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.deleteOne`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Failed to fetch json Ad ${err}`)
     })
 }

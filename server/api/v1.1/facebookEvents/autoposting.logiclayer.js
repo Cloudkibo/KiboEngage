@@ -3,6 +3,8 @@ const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const config = require('../../../config/environment/index')
 const utility = require('../utility')
 var ogs = require('open-graph-scraper')
+const logger = require('../../../components/logger')
+const TAG = 'api/v1.1/facebookEvents/autoposting.logiclayer.js'
 
 exports.pagesFindCriteria = function (postingItem) {
   let pagesFindCriteria = {
@@ -178,7 +180,8 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
       options = {'url': urls[i]}
       ogs(options, (err, meta) => {
         if (err) {
-          console.log('error in fetching metdata')
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, postId}, {}, 'error')
         }
         if (meta !== {} && meta.data && meta.data.ogTitle && meta.data.ogDescription && meta.data.ogImage) {
           gallery.push({

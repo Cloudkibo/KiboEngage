@@ -195,6 +195,8 @@ exports.getMetaData = function (feed, body, page) {
       }
     }, function (err) {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.getMetaData`, {feed, body, page}, {}, 'error')
         reject(err)
       } else {
         resolve(gallery)
@@ -224,6 +226,8 @@ exports.callBatchAPI = (page, batch) => {
   return new Promise((resolve, reject) => {
     const r = request.post('https://graph.facebook.com', (err, httpResponse, body) => {
       if (err) {
+        const message = err || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.callBatchAPI`, {page, batch}, {}, 'error')
         reject(err)
       } else {
         body = JSON.parse(body)
