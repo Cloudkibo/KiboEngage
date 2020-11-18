@@ -10,7 +10,7 @@ exports.findIp = function (req, res) {
       if (!company || company.length < 1) {
         return sendErrorResponse(res, 404, '', 'No registered company found.')
       }
-      let ip = req.headers['x-forwarded-for'] || (req.connection && req.connection.remoteAddress) || (req.socket && req.socket.remoteAddress) || (req.connection && req.connection.socket.remoteAddress)
+      let ip = req.headers['x-forwarded-for'] || (req.connection && req.connection.remoteAddress) || (req.socket && req.socket.remoteAddress) || (req.connection && req.connection.socket && req.connection.socket.remoteAddress)
       if (ip.includes('ffff')) {
         let temp = ip.split(':')
         ip = temp[temp.length - 1]
