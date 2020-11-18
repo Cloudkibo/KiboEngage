@@ -328,7 +328,6 @@ const _updateUserPlatform = (req, res, userid) => {
               logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {}, 'error')
             })
         }).catch(err => {
-        .catch(err => {
           const message = err || 'Internal server error'
           logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {user: req.user}, 'error')
         })
