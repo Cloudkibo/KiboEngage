@@ -24,7 +24,8 @@ if (config.env === 'production' || config.env === 'staging') {
     dsn: 'https://6c7958e0570f455381d6f17122fbd117@o132281.ingest.sentry.io/292307',
     release: 'KiboEngage@1.0.0',
     environment: config.env,
-    serverName: 'KiboEngage'
+    serverName: 'KiboEngage',
+    sendDefaultPii: true
   })
 }
 
