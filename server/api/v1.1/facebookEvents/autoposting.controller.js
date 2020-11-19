@@ -9,6 +9,7 @@ const { sendUsingBatchAPI } = require('../../global/sendConversation')
 const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 
 exports.autoposting = function (req, res) {
+  console.log('autoposting event got', req.body.entry[0].changes[0].value)
   res.status(200).json({
     status: 'success',
     description: `received the payload`
