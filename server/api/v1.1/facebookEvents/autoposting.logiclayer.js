@@ -102,7 +102,7 @@ const handlePost = (tagline, body, savedMsg) => {
     } else if (body.item === 'share') { // link or shared post
       if (body.link.includes('http')) { //  simple link sharing
         getUrls(body.message).then(urls => {
-          prepareFacbookPayloadForLink(urls, savedMsg, body.post_id, body.body.from.name).then(result => {
+          prepareFacbookPayloadForLink(urls, savedMsg, body.post_id, body.from.name).then(result => {
             payload.push(result.messageData)
             if (!result.showButton && button) { // remove button from text
               payload[0] = {
