@@ -182,38 +182,39 @@ const _addFacebookAccount = (data, next) => {
         let pageInfo = pagesInfo[0]
         if (!pageInfo) {
           next('Facebook page not found.')
-        }
-        autoPostingPayload.accountUniqueName = pageInfo.pageId
-        AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-          .then(result => {
-            utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} })
-              .then(updated => {
-                data.result = result
-                next()
-              })
-              .catch(err => {
-                const message = err || 'error updating company'
-                logger.serverLog(message, `${TAG}: _addFacebookAccount`, data, {}, 'error')
-                next(err)
-              })
-            require('./../../../config/socketio').sendMessageToClient({
-              room_id: data.companyUser.companyId._id,
-              body: {
-                action: 'autoposting_created',
-                payload: {
-                  autoposting_id: result._id,
-                  user_id: data.user._id,
-                  user_name: data.user.name,
-                  payload: result
+        } else {
+          autoPostingPayload.accountUniqueName = pageInfo.pageId
+          AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+            .then(result => {
+              utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { facebook_autoposting: 1 } }, options: {} })
+                .then(updated => {
+                  data.result = result
+                  next()
+                })
+                .catch(err => {
+                  const message = err || 'error updating company'
+                  logger.serverLog(message, `${TAG}: _addFacebookAccount`, data, {}, 'error')
+                  next(err)
+                })
+              require('./../../../config/socketio').sendMessageToClient({
+                room_id: data.companyUser.companyId._id,
+                body: {
+                  action: 'autoposting_created',
+                  payload: {
+                    autoposting_id: result._id,
+                    user_id: data.user._id,
+                    user_name: data.user.name,
+                    payload: result
+                  }
                 }
-              }
+              })
             })
-          })
-          .catch(err => {
-            const message = err || 'error creating autoposting object'
-            logger.serverLog(message, `${TAG}: _addFacebookAccount`, data, {}, 'error')
-            next(err)
-          })
+            .catch(err => {
+              const message = err || 'error creating autoposting object'
+              logger.serverLog(message, `${TAG}: _addFacebookAccount`, data, {}, 'error')
+              next(err)
+            })
+        }
       })
       .catch(err => {
         const message = err || 'error fetching pages'
