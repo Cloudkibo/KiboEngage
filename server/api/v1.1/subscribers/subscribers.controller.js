@@ -266,8 +266,8 @@ exports.updatePicture = function (req, res) {
       sendSuccessResponse(res, 200, update)
     })
     .catch(err => {
-      const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: exports.updatePicture`, req.body, {user: req.user}, 'error')
+      const message = err || 'Unable to update picture'
+      logger.serverLog(message, `${TAG}: exports.updatePicture`, req.body, {user: req.user}, 'debug')
       sendErrorResponse(res, 500, `Failed to update subscriber data ${JSON.stringify(err)}`)
     })
 }
