@@ -2,10 +2,12 @@ const logger = require('../../../components/logger')
 const TAG = '/api/v1.1/jsonAd/jsonAd.controller.js'
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { callApi } = require('../utility')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.create = function (req, res) {
   callApi(`jsonAd/create`, 'post', req.body, 'accounts', req.headers.authorization)
     .then(jsonAd => {
+      updateCompanyUsage(req.user.companyId, 'json_ads', 1)
       sendSuccessResponse(res, 200, jsonAd)
     })
     .catch(err => {
@@ -65,6 +67,7 @@ exports.getOne = function (req, res) {
 exports.deleteOne = function (req, res) {
   callApi(`jsonAd/delete/${req.params.id}`, 'delete', {})
     .then(jsonAd => {
+      updateCompanyUsage(req.user.companyId, 'json_ads', -1)
       sendSuccessResponse(res, 200, jsonAd)
     })
     .catch(err => {
