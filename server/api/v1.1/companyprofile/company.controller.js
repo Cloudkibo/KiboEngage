@@ -430,14 +430,14 @@ exports.disconnect = function (req, res) {
               utility.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: platform} }, options: {multi: true}})
                 .then(data => {
                   sendSuccessResponse(res, 200, updatedProfile)
-                })
-                .catch(err => {
-                  const message = err || 'Internal Server Error'
+                }).catch(err => {
+                  const message = err || 'Failed to update user'
                   logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
                   sendErrorResponse(res, 500, err)
                 })
-            }).catch(err => {
-              const message = err || 'Internal Server Error'
+            })
+            .catch(err => {
+              const message = err || 'Failed to fetch company user'
               logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, err)
             })
