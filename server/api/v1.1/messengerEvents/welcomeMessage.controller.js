@@ -91,6 +91,10 @@ exports.emailNumberQuickReply = function (req, res) {
         .then(quickReplyPayload => {
           performActions(page, sender, quickReplyPayload, payload)
         })
+        .catch(err => {
+          const message = err || 'Failed to get quickReplyPayload'
+          logger.serverLog(message, `${TAG}: exports.emailNumberQuickReply`, req.body, {user: req.user, page}, 'error')
+        })
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
@@ -133,8 +137,7 @@ function getQuickReplyPayload (welcomeMessage, payload, page) {
           }
         })
         .catch(err => {
-          const message = err || 'Failed to fetch messageBlock in query'
-          logger.serverLog(message, `${TAG}: getQuickReplyPayload`, {welcomeMessage, payload, page}, {}, 'error')
+          reject(err)
         })
     }
   })
