@@ -333,8 +333,8 @@ exports.create = function (req, res) {
   ], function (err) {
     if (err) {
       const message = err || 'Failed to create autoposting'
-      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
-      // console.log('Failed to create autoposting', err)
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user},
+        message.includes('not found') ? 'info' : 'error')
       sendErrorResponse(res, 500, '', err)
     } else {
       sendSuccessResponse(res, 200, data.result)
