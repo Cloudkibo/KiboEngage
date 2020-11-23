@@ -346,6 +346,22 @@ const _verifyCredentials = (data, next) => {
       next(error)
     })
 }
+
+const _checkTwilioVersion = (data, next) => {
+  whatsAppMapper(data.body.provider, ActionTypes.CHECK_TWILLO_VERSION, data.body)
+    .then(response => {
+      if (response.body.type === 'Trial' && !data.isSuperUser) {
+        next(new Error('This is a trial account. Please connect a paid version of Twilio account.'))
+      } else {
+        next(null, data)
+      }
+    })
+    .catch(error => {
+      const message = error || 'error in whatsapp mapper'
+      logger.serverLog(message, `${TAG}: exports._checkTwilioVersion`, {}, { data }, 'error')
+      next(error)
+    })
+}
 exports.updatePlatformWhatsApp = function (req, res) {
   // let query = {
   //   _id: req.user.companyId,
@@ -394,9 +410,10 @@ exports.updatePlatformWhatsApp = function (req, res) {
   utility.callApi(`companyprofile/aggregate`, 'post', query) // fetch company user
     .then(companyprofile => {
       if (!companyprofile[0] || req.body.businessNumber === '+14155238886') {
-        let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id}
+        let data = {body: req.body, companyId: req.user.companyId, userId: req.user._id, isSuperUser: req.user.isSuperUser}
         async.series([
           _verifyCredentials.bind(null, data),
+          _checkTwilioVersion.bind(null, data),
           _updateCompanyProfile.bind(null, data),
           _updateUser.bind(null, data),
           _setWebhook.bind(null, data)
@@ -417,6 +434,7 @@ exports.updatePlatformWhatsApp = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company ${err}`)
     })
 }
+
 exports.disconnect = function (req, res) {
   utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
     .then(company => {

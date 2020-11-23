@@ -23,6 +23,8 @@ function callAction (action, data, provider) {
       return provider.setWebhook(data)
     case ActionTypes.VERIFY_CREDENTIALS:
       return provider.verifyCredentials(data)
+    case ActionTypes.CHECK_TWILLO_VERSION:
+      return provider.checkTwillioVersion(data)
     default: break
   }
 }
