@@ -352,6 +352,7 @@ exports.updatePlatformWhatsApp = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company ${err}`)
     })
 }
+
 exports.disconnect = function (req, res) {
   utility.callApi(`companyprofile/query`, 'post', {ownerId: req.user._id})
     .then(company => {
@@ -359,16 +360,23 @@ exports.disconnect = function (req, res) {
       let platform = logicLayer.getPlatformForSms(company, req.user)
       utility.callApi(`companyprofile/update`, 'put', {query: {_id: req.user.companyId}, newPayload: updated, options: {}})
         .then(updatedProfile => {
-          utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: platform}, options: {}})
-            .then(updated => {
-              sendSuccessResponse(res, 200, updatedProfile)
+          utility.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
+            .then(companyUsers => {
+              let userIds = companyUsers.map(companyUser => companyUser.userId._id)
+              utility.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: platform} }, options: {multi: true}})
+                .then(data => {
+                  sendSuccessResponse(res, 200, updatedProfile)
+                }).catch(err => {
+                  const message = err || 'Failed to update user'
+                  logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
+                  sendErrorResponse(res, 500, err)
+                })
             })
             .catch(err => {
-              const message = err || 'Internal Server Error'
+              const message = err || 'Failed to fetch company user'
               logger.serverLog(message, `${TAG}: exports.disconnect`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, err)
             })
-          sendSuccessResponse(res, 200, updatedProfile)
         })
         .catch(err => {
           const message = err || 'Internal Server Error'
