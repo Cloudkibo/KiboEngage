@@ -423,6 +423,10 @@ exports.updatePlatformWhatsApp = function (req, res) {
           _setWebhook.bind(null, data)
         ], function (err) {
           if (err) {
+            if (!err.message || !err.message.includes('trial account')) {
+              const message = err || 'error in async series call'
+              logger.serverLog(message, `${TAG}: exports.updatePlatformWhatsApp`, req.body, { user: req.user }, 'error')
+            }
             sendErrorResponse(res, 500, '', `${err}`)
           } else {
             sendSuccessResponse(res, 200, {description: 'updated successfully', showModal: req.body.changeWhatsAppTwilio})
