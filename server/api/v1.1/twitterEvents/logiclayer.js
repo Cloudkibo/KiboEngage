@@ -2,7 +2,6 @@ const MessengerPayload = require('./messengerPayload')
 const FacebookPayload = require('./facebookPayload')
 
 exports.handleTwitterPayload = function (req, savedMsg, page, actionType) {
-  console.log('in handleTwitterPayload')
   return new Promise((resolve, reject) => {
     // console.log('in handleTwitterPayload', JSON.stringify(req.body))
     let tagline = ''
