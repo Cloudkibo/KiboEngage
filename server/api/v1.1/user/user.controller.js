@@ -149,8 +149,7 @@ exports.validateUserAccessToken = function (req, res) {
       })
       .catch((err) => {
         const message = err || 'Internal Server Error'
-        logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user},
-          message.includes('Facebook Info not found') ? 'info' : 'error')
+        logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user}, 'error')
         let dataToSend = {
           error: err,
           buyerInfo: {
@@ -177,8 +176,7 @@ exports.validateUserAccessToken = function (req, res) {
           })
           .catch((err) => {
             const message = err || 'Internal Server Error'
-            logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user},
-              message.includes('Facebook Info not found') ? 'info' : 'error')
+            logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user}, 'error')
             let dataToSend = {
               error: err,
               buyerInfo: {
