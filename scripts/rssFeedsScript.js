@@ -24,7 +24,8 @@ exports.runRSSScript = () => {
     })
     .catch(err => {
       const message = err || 'Failed to fetch rss feeds'
-      logger.serverLog(message, `${TAG}: runRSSScript`, {}, {}, 'error')
+      logger.serverLog(message, `${TAG}: runRSSScript`, {}, {},
+        message.includes('Not a feed') ? 'info' : 'error')
     })
 }
 
