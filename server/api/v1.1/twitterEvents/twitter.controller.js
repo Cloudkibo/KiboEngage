@@ -221,11 +221,9 @@ const _countUpdate = (subsFindCriteria, messageId) => {
 const postOnFacebook = (postingItem, page, req) => {
   logicLayer.handleTwitterPayload(req, {}, page, 'facebook')
     .then(messageData => {
-      console.log('messageData', messageData)
       if (messageData.type === 'text') {
         facebookApiCaller('v3.3', `${page.pageId}/feed?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
-            console.log('response.body got in text', response.body)
             if (response.body.error) {
               const message = response.body.error || 'Failed to post on facebook'
               logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
@@ -240,7 +238,6 @@ const postOnFacebook = (postingItem, page, req) => {
       } else if (messageData.type === 'image') {
         facebookApiCaller('v3.3', `${page.pageId}/photos?access_token=${page.accessToken}`, 'post', messageData.payload)
           .then(response => {
-            console.log('response.body got', response.body)
             if (response.body.error) {
               const message = response.body.error || 'Failed to post on facebook'
               logger.serverLog(message, `${TAG}: postOnFacebook`, req.body, {user: req.user}, 'error')
