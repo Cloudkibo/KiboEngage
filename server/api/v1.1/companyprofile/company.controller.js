@@ -341,8 +341,6 @@ const _verifyCredentials = (data, next) => {
       next(null, data)
     })
     .catch(error => {
-      const message = error || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: _verifyCredentials`, data, {}, 'error')
       next(error)
     })
 }
