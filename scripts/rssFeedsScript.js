@@ -20,7 +20,7 @@ exports.runRSSScript = () => {
       async.eachSeries(rssFeeds, _handleRSSFeed, function (err) {
         if (err) {
           const message = err || 'error'
-          logger.serverLog(message, `${TAG}: runRSSScript`, rssFeeds, {},
+          logger.serverLog(message, `${TAG}: runRSSScript`, {}, {},
             message.includes('Not a feed') ? 'info' : 'error')
         }
       })
