@@ -18,7 +18,7 @@ exports.runRSSScript = () => {
       async.eachSeries(rssFeeds, _handleRSSFeed, function (err) {
         if (err) {
           const message = err || 'error'
-          logger.serverLog(message, `${TAG}: runRSSScript`, {}, {},
+          logger.serverLog(message, `${TAG}: runRSSScript`, rssFeeds, {},
             message.includes('Not a feed') ? 'info' : 'error')
         }
       })
@@ -73,14 +73,10 @@ const _prepareFeeds = (data, next) => {
             callback()
           })
           .catch((err) => {
-            const message = err || 'In Prepare Message Data Rss Integration'
-            logger.serverLog(message, `${TAG}: _prepareFeeds`, data, {}, 'error')
             callback(err)
           })
       })
       .catch((err) => {
-        const message = err || 'In Parse Feed Rss Integration'
-        logger.serverLog(message, `${TAG}: _prepareFeeds`, data, {}, 'error')
         callback(err)
       })
   }, function (err) {
@@ -494,8 +490,6 @@ function parseFeed (feed) {
         resolve(feed)
       })
       .catch(err => {
-        const message = err || 'In Parse Feed Rss Integration'
-        logger.serverLog(message, `${TAG}: parseFeed`, feed, {}, 'error')
         reject(err)
       })
   })
