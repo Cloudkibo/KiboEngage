@@ -1,7 +1,6 @@
 const utility = require('../utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/user/user.controller.js'
-const util = require('util')
 const config = require('./../../../config/environment/index')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
@@ -149,7 +148,8 @@ exports.validateUserAccessToken = function (req, res) {
       })
       .catch((err) => {
         const message = err || 'Internal Server Error'
-        logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user}, 'error')
+        logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user},
+          message.message && message.message.includes('Facebook Info not found') ? 'info' : 'error')
         let dataToSend = {
           error: err,
           buyerInfo: {
@@ -176,7 +176,8 @@ exports.validateUserAccessToken = function (req, res) {
           })
           .catch((err) => {
             const message = err || 'Internal Server Error'
-            logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user}, 'error')
+            logger.serverLog(message, `${TAG}: exports.validateUserAccessToken`, req.body, {user: req.user},
+              message.message && message.message.includes('Facebook Info not found') ? 'info' : 'error')
             let dataToSend = {
               error: err,
               buyerInfo: {
