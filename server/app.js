@@ -33,8 +33,7 @@ cron.schedule('*/5 * * * * *', SequenceScript.runSequenceMessageQueueScript) // 
 cron.schedule('0 0 * * * *', TweetsQueueScript.deleteFromQueue) // daily at midnight
 cron.schedule('* * * * *', abandonedCartScript.runScript)
 // cron.schedule('0 8 * * *', rssFeedsScript.runRSSScript) //  everyday at 8 AM
-// cron.schedule('0 13 * * *', rssFeedsScript.runRSSScript) //  daily 6 pm pakistan time
-cron.schedule('* * * * *', rssFeedsScript.runRSSScript) //  daily 6 pm pakistan time
+cron.schedule('0 13 * * *', rssFeedsScript.runRSSScript) //  daily 6 pm pakistan time
 cron.schedule('0 */2 * * *', manualFeedsScript.runScript)
 cron.schedule('* * * * *', sponsoredScheduled.runScheduleSponsored)
 cron.schedule('*/30 * * * * *', whatsAppMessageStatus.runScript)
