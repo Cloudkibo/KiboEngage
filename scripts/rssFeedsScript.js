@@ -11,6 +11,8 @@ const RssSubscriptionsDataLayer = require('../server/api/v1.1/newsSections/newsS
 const request = require('request')
 const config = require('../server/config/environment/index')
 const url = require('url')
+const sgMail = require('@sendgrid/mail')
+const logiclayer = require('./logiclayer')
 
 exports.runRSSScript = () => {
   RSSFeedsDataLayer.genericFindForRssFeeds({isActive: true, defaultFeed: true, integrationType: 'rss'})
@@ -18,13 +20,15 @@ exports.runRSSScript = () => {
       async.eachSeries(rssFeeds, _handleRSSFeed, function (err) {
         if (err) {
           const message = err || 'error'
-          logger.serverLog(message, `${TAG}: runRSSScript`, {}, {}, 'error')
+          logger.serverLog(message, `${TAG}: runRSSScript`, {}, {},
+            message.includes('Not a feed') ? 'info' : 'error')
         }
       })
     })
     .catch(err => {
       const message = err || 'Failed to fetch rss feeds'
-      logger.serverLog(message, `${TAG}: runRSSScript`, {}, {}, 'error')
+      logger.serverLog(message, `${TAG}: runRSSScript`, {}, {},
+        message.includes('Not a feed') ? 'info' : 'error')
     })
 }
 
@@ -71,14 +75,11 @@ const _prepareFeeds = (data, next) => {
             callback()
           })
           .catch((err) => {
-            const message = err || 'In Prepare Message Data Rss Integration'
-            logger.serverLog(message, `${TAG}: _prepareFeeds`, data, {}, 'error')
             callback(err)
           })
       })
       .catch((err) => {
-        const message = err || 'In Parse Feed Rss Integration'
-        logger.serverLog(message, `${TAG}: _prepareFeeds`, data, {}, 'error')
+        updateFeedAndSendEmail(err, data.rssFeed)
         callback(err)
       })
   }, function (err) {
@@ -88,6 +89,45 @@ const _prepareFeeds = (data, next) => {
       next()
     }
   })
+}
+
+function updateFeedAndSendEmail (err, rssFeed) {
+  if (err.includes('Not a feed')) {
+    RSSFeedsDataLayer.genericUpdateRssFeed({_id: rssFeed._id}, {isActive: false}, {})
+      .then(updated => {
+      })
+      .catch((err) => {
+        const message = err || 'Failed to update rss feed'
+        logger.serverLog(message, `${TAG}: updateFeedAndSendEmail`, rssFeed, {}, 'error')
+      })
+    let companyAggregation = [
+      {'$match': {_id: rssFeed.companyId}},
+      { '$lookup': { from: 'users', localField: 'ownerId', foreignField: '_id', as: 'user' } },
+      { '$unwind': '$user' }
+    ]
+    callApi(`companyprofile/aggregate`, 'post', companyAggregation)
+      .then(company => {
+        company = company[0]
+        sgMail.setApiKey(config.SENDGRID_API_KEY)
+        const msg = {
+          to: company.user.email,
+          from: 'support@cloudkibo.com',
+          subject: 'KiboPush: Rss Integration Failed'
+        }
+        msg.html = logiclayer.getEmailBody(rssFeed.feedUrl, company.user.name)
+        sgMail.send(msg)
+          .then(response => {
+          })
+          .catch(err => {
+            const message = err || 'Failed to send email'
+            return logger.serverLog(message, `${TAG}: updateFeedAndSendEmail`, rssFeed, {}, 'error')
+          })
+      })
+      .catch(err => {
+        const message = err || 'Failed to send email'
+        return logger.serverLog(message, `${TAG}: exports.sendEmail`, rssFeed, 'error')
+      })
+  }
 }
 
 const _fetchNonDefaultFeeds = (data, next) => {
@@ -492,9 +532,7 @@ function parseFeed (feed) {
         resolve(feed)
       })
       .catch(err => {
-        const message = err || 'In Parse Feed Rss Integration'
-        logger.serverLog(message, `${TAG}: parseFeed`, feed, {}, 'error')
-        reject(err)
+        reject(err.message ? err.message : err)
       })
   })
 }
