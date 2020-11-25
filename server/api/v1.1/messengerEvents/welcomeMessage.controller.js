@@ -93,7 +93,8 @@ exports.emailNumberQuickReply = function (req, res) {
         })
         .catch(err => {
           const message = err || 'Failed to get quickReplyPayload'
-          logger.serverLog(message, `${TAG}: exports.emailNumberQuickReply`, req.body, {user: req.user, page}, 'error')
+          logger.serverLog(message, `${TAG}: exports.emailNumberQuickReply`, req.body, {user: req.user, page},
+            message.message && message.message.includes('Message Block not found') ? 'info' : 'error')
         })
     })
     .catch(err => {
@@ -131,9 +132,9 @@ function getQuickReplyPayload (welcomeMessage, payload, page) {
         .then(messageBlock => {
           if (messageBlock) {
             quickReplyPayload = searchQuickReply(messageBlock.payload[messageBlock.payload.length - 1].quickReplies, payload)
-            quickReplyPayload ? resolve(quickReplyPayload) : reject(Error)
+            quickReplyPayload ? resolve(quickReplyPayload) : reject(new Error('Message Block not found'))
           } else {
-            reject(Error)
+            reject(new Error('Message Block not found'))
           }
         })
         .catch(err => {
