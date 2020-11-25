@@ -314,12 +314,23 @@ exports.createMessage = function (req, res) {
                   .then(messageCreated => {
                     utility.callApi(`featureUsage/updateCompany`, 'put', {query: {companyId: companyUser.companyId._id}, newPayload: {$inc: { messages_per_sequence: 1 }}, options: {}})
                       .then(result => {
-                        if (messageCreated.trigger.event === 'none') {
-                          let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
-                          SequenceUtility.addToMessageQueue(req.body.sequenceId, utcDate, messageCreated._id)
-                        } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
-                          SequenceUtility.checkParentMessageTrigger(messageCreated)
-                        }
+                        SequenceDatalayer.genericFindForSequenceSubscribers({ sequenceId: req.body.sequenceId })
+                          .then(subscribers => {
+                            if (subscribers.length > 0) {
+                              subscribers.forEach(subscriber => {
+                                if (messageCreated.trigger.event === 'none') {
+                                  let utcDate = SequenceUtility.setScheduleDate(messageCreated.schedule)
+                                  SequenceUtility.addToMessageQueue(req.body.sequenceId, messageCreated._id, subscriber.subscriberId, companyUser.companyId._id, utcDate)
+                                } else if (['does_not_see', 'does_not_click'].indexOf(messageCreated.trigger.event) > -1) {
+                                  SequenceUtility.checkParentMessageTrigger(messageCreated, subscriber.subscriberId, companyUser.companyId._id)
+                                }
+                              })
+                            }
+                          })
+                          .catch(err => {
+                            const message = err || 'Failed to fetch sequence subscribers'
+                            logger.serverLog(message, `${TAG}: exports.createMessage`, req.body, {user: req.user}, 'error')
+                          })
                         require('./../../../config/socketio').sendMessageToClient({
                           room_id: companyUser.companyId._id,
                           body: {
