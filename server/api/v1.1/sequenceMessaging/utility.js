@@ -20,12 +20,12 @@ function addToMessageQueue (sequenceId, messageId, subscriberId, companyId, sche
     })
 }
 
-function checkParentMessageTrigger (message) {
+function checkParentMessageTrigger (message, subscriberId, companyId) {
   SequenceDatalayer.genericFindForSequenceMessages({_id: message.trigger.value})
     .then(foundMessage => {
       if (foundMessage.trigger.event === 'none') {
         let utcDate = setScheduleDate(message.schedule)
-        addToMessageQueue(message.sequenceId, utcDate, message._id)
+        addToMessageQueue(message.sequenceId, message._id, subscriberId, companyId, utcDate)
       }
     })
     .catch(err => {
