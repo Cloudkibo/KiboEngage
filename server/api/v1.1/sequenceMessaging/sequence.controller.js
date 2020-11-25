@@ -106,7 +106,7 @@ exports.deleteMessage = function (req, res) {
             })
             .catch(err => {
               const message = err || 'Internal Server Error'
-              logger.serverLog(message, `${TAG}: exports.quences`, req.body, {user: req.user}, 'error')
+              logger.serverLog(message, `${TAG}: exports.allSequences`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, '', `Internal Server Error in deleting sequence message queue${JSON.stringify(err)}`)
             })
         })
