@@ -3,6 +3,7 @@ const logger = require('../../components/logger')
 const TAG = 'global/subscriptionMessaging.js'
 
 exports.isApprovedForSMP = (page) => {
+  console.log('called isApprovedForSMP', page)
   return new Promise((resolve, reject) => {
     if (page.tasks && page.tasks.includes('MANAGE')) {
       facebookApiCaller(
