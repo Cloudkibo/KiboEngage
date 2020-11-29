@@ -62,6 +62,7 @@ exports.create = function (req, res) {
 exports.edit = function (req, res) {
   var url = req.body.webhook_url + '?token=' + req.body.token
   needle.get(url, (err, r) => {
+    console.log('response from url', r.body)
     if (err) {
       let errorMsg = 'The URL could not be validated. Callback verification failed with the Status Code = ' + r.statusCode
       sendErrorResponse(res, 400, errorMsg)

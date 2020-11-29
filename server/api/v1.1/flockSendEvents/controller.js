@@ -7,6 +7,7 @@ exports.messageStatus = function (req, res) {
     status: 'success',
     description: `received the payload`
   })
+  console.log('recieve the message status', req.body.status)
   if (req.body.status === 'delivered' || req.body.status === 'seen') {
     let query = {
       purpose: 'findOne',
