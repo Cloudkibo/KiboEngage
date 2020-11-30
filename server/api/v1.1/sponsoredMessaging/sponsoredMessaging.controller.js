@@ -10,6 +10,7 @@ const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { kiboengage } = require('../../global/constants').serverConstants
 const config = require('./../../../config/environment')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   let facebookInfo = req.user.facebookInfo
@@ -60,6 +61,7 @@ exports.create = function (req, res) {
   let payload = logiclayer.preparePayload(req.user.companyId, req.user._id, req.body)
   datalayer.createForSponsoredMessaging(payload)
     .then(sponsoredMessage => {
+      updateCompanyUsage(req.user.companyId, 'sponsored_broadcasts', 1)
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
     .catch(error => {
@@ -284,6 +286,7 @@ function _sendToClientUsingSocket (body, message) {
 exports.delete = function (req, res) {
   datalayer.deleteForSponsoredMessaging({ _id: req.params.id })
     .then(sponsoredMessage => {
+      updateCompanyUsage(req.user.companyId, 'sponsored_broadcasts', -1)
       return res.status(201).json({ status: 'success', payload: sponsoredMessage })
     })
     .catch(error => {

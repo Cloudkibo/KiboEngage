@@ -151,6 +151,7 @@ exports.sendMessage = function (req, res) {
     })
   })
 }
+
 const _parseFile = (data, next) => {
   let phoneColumn = data.body.phoneColumn
   let nameColumn = data.body.nameColumn
