@@ -22,7 +22,7 @@ const appObj = (config.env === 'production' || config.env === 'staging') ? app :
 if (config.env === 'production' || config.env === 'staging') {
   Sentry.init({
     dsn: 'https://6c7958e0570f455381d6f17122fbd117@o132281.ingest.sentry.io/292307',
-    release: 'KiboEngage@1.0.0',
+    release: `KiboEngage-${config.env}@1.0.0`,
     environment: config.env,
     serverName: 'KiboEngage',
     sendDefaultPii: true
