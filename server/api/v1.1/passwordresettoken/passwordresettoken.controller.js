@@ -10,11 +10,9 @@ exports.change = function (req, res) {
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
-      console.log('err', err)
-      console.log('err description', JSON.stringify(err))
       const message = err || 'Internal Server Error'
       logger.serverLog(message, `${TAG}: exports.change`, req.body, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, '', err.error.description)
+      sendErrorResponse(res, 500, '', err)
     })
   /* let userId = req.user._id
   let oldPass = String(req.body.old_password)
