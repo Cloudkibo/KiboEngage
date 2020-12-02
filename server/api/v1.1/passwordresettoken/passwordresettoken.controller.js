@@ -5,7 +5,7 @@ const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 function isPasswordWrong (err) {
-  if (err && err === `Wrong current password.`) {
+  if (err && err.message === `Wrong current password.`) {
     return true
   } else {
     return false
