@@ -56,6 +56,7 @@ router.post('/updateAutomatedOptions',
 
 router.get('/switchToBasicPlan',
   auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
   controller.switchToBasicPlan)
 
 router.post('/updatePlatform',

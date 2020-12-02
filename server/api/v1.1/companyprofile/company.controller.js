@@ -245,13 +245,13 @@ exports.updatePlatform = function (req, res) {
                   }
                 } else {
                   const message = err || 'Internal Server Error'
-                  logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
+                  logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'info')
                   sendErrorResponse(res, 500, '', 'The twilio account doesnot have any twilio number')
                 }
               })
           } else {
             const message = err || 'Internal Server Error'
-            logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
+            logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'info')
             sendErrorResponse(res, 404, '', 'Twilio account not found. Please enter correct details')
           }
         })
