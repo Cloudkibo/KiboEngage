@@ -4,15 +4,25 @@ const TAG = 'api/passwordresettoken/passwordresettoken.controller.js'
 const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
+function isPasswordWrong (err) {
+  if (err && err === `Wrong current password.`) {
+    return true
+  } else {
+    return false
+  }
+}
 exports.change = function (req, res) {
   utility.callApi('reset_password/change', 'post', {old_password: req.body.old_password, new_password: req.body.new_password}, 'accounts', req.headers.authorization)
     .then((result) => {
       sendSuccessResponse(res, 200, result)
     })
     .catch((err) => {
-      const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: exports.change`, req.body, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, '', err)
+      let userError = isPasswordWrong(err)
+      if (!userError) {
+        const message = err || 'Error in Password change'
+        logger.serverLog(message, `${TAG}: exports.change`, req.body, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, '', err.error.description)
+      }
     })
   /* let userId = req.user._id
   let oldPass = String(req.body.old_password)
