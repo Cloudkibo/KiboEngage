@@ -87,15 +87,18 @@ exports.emailNumberQuickReply = function (req, res) {
   callApi(`pages/query`, 'post', {pageId: pageId, connected: true})
     .then(page => {
       page = page[0]
-      getQuickReplyPayload(page.welcomeMessage, payload, page)
-        .then(quickReplyPayload => {
-          performActions(page, sender, quickReplyPayload, payload)
-        })
-        .catch(err => {
-          const message = err || 'Failed to get quickReplyPayload'
-          logger.serverLog(message, `${TAG}: exports.emailNumberQuickReply`, req.body, {user: req.user, page},
-            message.message && message.message.includes('Message Block not found') ? 'info' : 'error')
-        })
+      var welcomeMessage = page.welcomeMessage
+      if (welcomeMessage.length > 0 && welcomeMessage[welcomeMessage.length - 1].quickReplies) {
+        getQuickReplyPayload(welcomeMessage, payload, page)
+          .then(quickReplyPayload => {
+            performActions(page, sender, quickReplyPayload, payload)
+          })
+          .catch(err => {
+            const message = err || 'Failed to get quickReplyPayload'
+            logger.serverLog(message, `${TAG}: exports.emailNumberQuickReply`, req.body, {user: req.user, page},
+              message.message && message.message.includes('Message Block not found') ? 'info' : 'error')
+          })
+      }
     })
     .catch(err => {
       const message = err || 'Failed to fetch page'
