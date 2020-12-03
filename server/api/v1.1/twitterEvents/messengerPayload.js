@@ -40,6 +40,7 @@ const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, pag
 const prepareMessengerPayloadForLink = (urls, savedMsg, tweetId, userName, screenName) => {
   return new Promise(function (resolve, reject) {
     prepareGalleryForLink(urls, savedMsg, tweetId, screenName).then(gallery => {
+      console.log('gallery', gallery)
       let messageData = {
         'attachment': {
           'type': 'template',
@@ -82,6 +83,8 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
           }
         })
         .catch(err => {
+          console.log('error.message', err.message)
+          console.log('error from scrapper', err)
           const message = err || 'Error from open graph'
           logger.serverLog(message,
             `${TAG}: prepareGalleryForLink`,
