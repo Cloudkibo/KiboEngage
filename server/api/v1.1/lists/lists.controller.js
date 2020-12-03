@@ -11,6 +11,7 @@ const TAG = 'api/lists/lists.controller.js'
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.allLists = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -65,32 +66,32 @@ exports.getAll = function (req, res) {
 }
 
 exports.create = function (req, res) {
-  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan._id})
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
     .then(planUsage => {
       planUsage = planUsage[0]
       utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
         .then(companyUsage => {
           companyUsage = companyUsage[0]
-          // add paid plan check later
-          // if (planUsage.segmentation_lists !== -1 && companyUsage.segmentation_lists >= planUsage.segmentation_lists) {
-          //   return res.status(500).json({
-          //     status: 'failed',
-          //     description: `Your lists limit has reached. Please upgrade your plan to premium in order to create more lists.`
-          //   })
-          // }
-          async.parallelLimit([
-            function (callback) {
-              createList(req, callback)
-            }
-          ], 10, function (err, results) {
-            if (err) {
-              const message = err || 'Internal Server Error'
-              logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
-              sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
-            } else {
-              sendSuccessResponse(res, 200, 'List created successfully!')
-            }
-          })
+          if (planUsage.segmentation_lists !== -1 && companyUsage.segmentation_lists >= planUsage.segmentation_lists) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your lists limit has reached. Please upgrade your plan to create more lists.`
+            })
+          } else {
+            async.parallelLimit([
+              function (callback) {
+                createList(req, callback)
+              }
+            ], 10, function (err, results) {
+              if (err) {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
+                sendErrorResponse(res, 500, `Failed to create list ${JSON.stringify(err)}`)
+              } else {
+                sendSuccessResponse(res, 200, 'List created successfully!')
+              }
+            })
+          }
         })
         .catch(error => {
           const message = error || 'Internal Server Error'
@@ -135,6 +136,7 @@ function createList (req, callback) {
       const message = error || 'Internal Server Error'
       logger.serverLog(message, `${TAG}: createList`, req.body, {user: req.user}, 'error')
       callback(error)
+      updateCompanyUsage(req.user.companyId, 'segmentation_lists', 1)
     })
 }
 
@@ -348,6 +350,7 @@ function deleteListFromLocal (req, callback) {
           logger.serverLog(message, `${TAG}: deleteListFromLocal`, req.body, {user: req.user}, 'error')
           callback(error)
         })
+      updateCompanyUsage(req.user.companyId, 'segmentation_lists', -1)
     })
     .catch(error => {
       const message = error || 'Internal Server Error'
