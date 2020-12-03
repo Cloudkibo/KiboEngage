@@ -12,7 +12,7 @@ exports.change = function (req, res) {
     .catch((err) => {
       const message = err || 'Internal Server Error'
       logger.serverLog(message, `${TAG}: exports.change`, req.body, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, '', err.error.description)
+      sendErrorResponse(res, 500, '', err)
     })
   /* let userId = req.user._id
   let oldPass = String(req.body.old_password)
