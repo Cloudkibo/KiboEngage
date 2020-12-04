@@ -31,6 +31,15 @@ exports.index = function (req, res) {
     })
 }
 
+function isAlreadyExistCustomField (err, customFieldName) {
+
+  if (err && err === `${customFieldName} custom field already exists`) {
+    return true
+  } else {
+    return false
+  }
+}
+
 exports.create = function (req, res) {
   callApi.callApi('companyUser/query', 'post', { domain_email: req.user.domain_email })
     .then(companyUser => {
@@ -58,14 +67,17 @@ exports.create = function (req, res) {
           sendSuccessResponse(res, 200, newCustomField)
         })
         .catch(err => {
-          const message = err || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
-          sendErrorResponse(res, 500, '', err)
+          let userError = isAlreadyExistCustomField(req.body.name)
+          if (!userError) {
+            const message = err || 'Internal Server Error in custom fields'
+            logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
+            sendErrorResponse(res, 500, '', err)
+          }
         })
     })
     .catch(err => {
-      const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
+      const message = err || 'Internal Server Error in fetching company user'
+      logger.serverLog(message, `${TAG}: exports.index`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `Internal Server Error in fetching company user${JSON.stringify(err)}`)
     })
 }
@@ -96,13 +108,16 @@ exports.update = function (req, res) {
           sendSuccessResponse(res, 200, updated)
         })
         .catch(err => {
-          const message = err || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
-          sendErrorResponse(res, 500, '', err)
+          let userError = isAlreadyExistCustomField(req.body.updated.name)
+          if (!userError) {
+            const message = err || 'Internal Server Error in updating custom fields'
+            logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
+            sendErrorResponse(res, 500, '', err)
+          }
         })
     })
     .catch(err => {
-      const message = err || 'Internal Server Error'
+      const message = err || 'Internal Server Error in finding custom fields'
       logger.serverLog(message, `${TAG}: exports.update`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, '', `can not find custom field with given information${JSON.stringify(err)}`)
     })
