@@ -177,13 +177,13 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
     })
     let length = urls.length
     for (let i = 0; i < length; i++) {
-      openGraphScrapper(urls[i].expanded_url)
+      openGraphScrapper(urls[i])
         .then(meta => {
-          if (meta && meta !== {} && meta.ogTitle && meta.ogImage && meta.ogImage.url) {
+          if (meta !== {} && meta.data && meta.data.ogTitle && meta.data.ogDescription && meta.data.ogImage) {
             gallery.push({
-              'title': meta.ogTitle,
-              'subtitle': 'kibopush.com',
-              'image_url': meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url,
+              'title': meta.data.ogTitle,
+              'subtitle': meta.data.ogDescription,
+              'image_url': meta.data.ogImage.url,
               'buttons': buttons
             })
             if (i === length - 1) {
