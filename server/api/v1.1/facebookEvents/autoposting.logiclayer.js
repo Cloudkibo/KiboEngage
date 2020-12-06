@@ -2,7 +2,7 @@ let _ = require('lodash')
 const URLDataLayer = require('../URLForClickedCount/URL.datalayer')
 const config = require('../../../config/environment/index')
 const utility = require('../utility')
-var ogs = require('open-graph-scraper')
+const {openGraphScrapper} = require('../../global/utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/v1.1/facebookEvents/autoposting.logiclayer.js'
 
@@ -175,30 +175,34 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
     prepareViewPostButton(savedMsg, postId).then(button => {
       buttons.push(button)
     })
-    let options
-    for (let i = 0; i < urls.length; i++) {
-      options = {'url': urls[i]}
-      ogs(options, (err, meta) => {
-        if (err) {
-          const message = err || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, postId}, {}, 'error')
-        }
-        if (meta !== {} && meta.data && meta.data.ogTitle && meta.data.ogDescription && meta.data.ogImage) {
-          gallery.push({
-            'title': meta.data.ogTitle,
-            'subtitle': meta.data.ogDescription,
-            'image_url': meta.data.ogImage.url,
-            'buttons': buttons
-          })
-          if (i === urls.length - 1) {
-            resolve(gallery)
+    let length = urls.length
+    for (let i = 0; i < length; i++) {
+      openGraphScrapper(urls[i].expanded_url)
+        .then(meta => {
+          if (meta && meta !== {} && meta.ogTitle && meta.ogImage && meta.ogImage.url) {
+            gallery.push({
+              'title': meta.ogTitle,
+              'subtitle': 'kibopush.com',
+              'image_url': meta.ogImage.url.constructor === Array ? meta.ogImage.url[0] : meta.ogImage.url,
+              'buttons': buttons
+            })
+            if (i === length - 1) {
+              resolve(gallery)
+            }
+          } else {
+            if (i === length - 1) {
+              resolve(gallery)
+            }
           }
-        } else {
-          if (i === urls.length - 1) {
-            resolve(gallery)
+        })
+        .catch(err => {
+          if (err === 'Must scrape an HTML page') {
+            resolve([])
+          } else {
+            const message = err || 'Error from open graph'
+            logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, postId}, {}, 'error')           
           }
-        }
-      })
+        })
     }
   })
 }

@@ -83,7 +83,7 @@ const prepareGalleryForLink = (urls, savedMsg, tweetId, screenName) => {
         })
         .catch(err => {
           if (err === 'Must scrape an HTML page') {
-            resolve(gallery)
+            resolve([])
           } else {
             const message = err || 'Error from open graph'
             logger.serverLog(message,
