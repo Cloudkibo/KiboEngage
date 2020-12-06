@@ -197,7 +197,7 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
         })
         .catch(err => {
           if (err === 'Must scrape an HTML page') {
-            resolve([])
+            resolve(gallery)
           } else {
             const message = err || 'Error from open graph'
             logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, postId}, {}, 'error')           
