@@ -18,18 +18,24 @@ router.get('/', auth.isAuthenticated(), auth.isSuperUserActingAsCustomer(), cont
 router.post('/create',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('webhook'),
+  auth.isUserAllowedToPerformThisAction('manage_webhooks'),
   validate({body: validationSchema.createPayload}),
   controller.create)
 
 router.post('/edit',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('webhook'),
+  auth.isUserAllowedToPerformThisAction('manage_webhooks'),
   validate({body: validationSchema.editPayload}),
   controller.edit)
 
 router.post('/enabled',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('webhook'),
+  auth.isUserAllowedToPerformThisAction('manage_webhooks'),
   validate({body: validationSchema.enablePayload}),
   controller.enabled)
 
