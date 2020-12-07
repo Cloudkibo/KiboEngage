@@ -5,7 +5,7 @@ const utility = require('../utility')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 
 function isPasswordWrong (err) {
-  if (err === 'Wrong current password.') {
+  if (err === `Wrong current password.`) {
     return true
   } else {
     return false
@@ -22,7 +22,7 @@ exports.change = function (req, res) {
         const message = err || 'Error in Password change'
         logger.serverLog(message, `${TAG}: exports.change`, req.body, {user: req.user}, 'error')
       }
-      sendErrorResponse(res, 500, '', err)
+       sendErrorResponse(res, 500, '', err)
     })
   /* let userId = req.user._id
   let oldPass = String(req.body.old_password)
