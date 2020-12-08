@@ -18,7 +18,6 @@ exports.index = function (req, res) {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      console.log('statusArrayinController', req.user.SMPStatus)
       AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({ companyId: companyUser.companyId }, req.headers.authorization)
         .then(autoposting => {
           let data = {
@@ -123,52 +122,52 @@ const _addTwitterAccount = (data, next) => {
   if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
   AutoPostingLogicLayer.findUser(screenName, (err, twitter) => {
     if (err) {
-      const message = err || 'Twitter URL parse Error'
-      logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
-    }
-    let payload
-    if (twitter && !twitter.errors) {
-      autoPostingPayload.accountUniqueName = twitter.screen_name
-      payload = {
-        id: twitter.id_str,
-        name: twitter.name,
-        screen_name: twitter.screen_name,
-        profile_image_url: twitter.profile_image_url_https
-      }
-      autoPostingPayload.payload = payload
-      AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-        .then(result => {
-          utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { twitter_autoposting: 1 } }, options: {} })
-            .then(updated => {
-              data.result = result
-              next()
-            })
-            .catch(err => {
-              const message = err || 'error updating company'
-              logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
-              next(err)
-            })
-          utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: data.companyUser.companyId._id,
-            body: {
-              action: 'autoposting_created',
-              payload: {
-                autoposting_id: result._id,
-                user_id: data.user._id,
-                user_name: data.user.name,
-                payload: result
-              }
-            }
-          })
-        })
-        .catch(err => {
-          const message = err || 'error creating autoposting object'
-          logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
-          next(err)
-        })
-    } else {
       next('Twitter account not found.')
+    } else {
+      let payload
+      if (twitter && !twitter.errors) {
+        autoPostingPayload.accountUniqueName = twitter.screen_name
+        payload = {
+          id: twitter.id_str,
+          name: twitter.name,
+          screen_name: twitter.screen_name,
+          profile_image_url: twitter.profile_image_url_https
+        }
+        autoPostingPayload.payload = payload
+        AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+          .then(result => {
+            utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { twitter_autoposting: 1 } }, options: {} })
+              .then(updated => {
+                data.result = result
+                next()
+              })
+              .catch(err => {
+                const message = err || 'error updating company'
+                logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
+                next(err)
+              })
+            utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: data.companyUser.companyId._id,
+              body: {
+                action: 'autoposting_created',
+                payload: {
+                  autoposting_id: result._id,
+                  user_id: data.user._id,
+                  user_name: data.user.name,
+                  payload: result
+                }
+              }
+            })
+          })
+          .catch(err => {
+            const message = err || 'error creating autoposting object'
+            logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
+            next(err)
+          })
+      } else {
+        next('Twitter account not found.')
+      }
     }
   })
 }
