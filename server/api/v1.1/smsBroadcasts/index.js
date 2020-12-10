@@ -28,4 +28,9 @@ router.get('/getTwilioNumbers',
   auth.isSuperUserActingAsCustomer(),
   controller.getTwilioNumbers)
 
+router.get('/:id/analytics',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
+  controller.analytics)
+
 module.exports = router

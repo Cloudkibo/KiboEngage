@@ -5,6 +5,7 @@ let config = require('./../../../config/environment')
 const logger = require('../../../components/logger')
 const TAG = 'smsBroadcasts.controller.js'
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
+const async = require('async')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -50,6 +51,7 @@ exports.sendBroadcast = function (req, res) {
               let authToken = companyUser.companyId.twilio.authToken
               let client = require('twilio')(accountSid, authToken)
               let requests = []
+              let sent = 0
               for (let i = 0; i < contacts.length; i++) {
                 var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
                 if (matchCriteria) {
@@ -62,7 +64,21 @@ exports.sendBroadcast = function (req, res) {
                         statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${broadcast._id}`
                       })
                       .then(response => {
-                        resolve(response)
+                        sent = sent + 1
+                        let updatePayload = {
+                          query: {_id: contacts[i]._id},
+                          newPayload: {$set: {waitingForBroadcastResponse: {status: true, broadcastId: broadcast._id}}},
+                          options: {}
+                        }
+                        utility.callApi(`contacts/update`, 'put', updatePayload)
+                          .then(updated => {
+                            resolve(response)
+                          })
+                          .catch((err) => {
+                            const message = err || 'error at updating contact'
+                            logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
+                            reject(err)
+                          })
                       })
                       .catch(error => {
                         const message = error || 'error at sending message'
@@ -75,6 +91,13 @@ exports.sendBroadcast = function (req, res) {
               Promise.all(requests)
                 .then((responses) => {
                   sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
+                  dataLayer.updateBroadcast({_id: broadcast._id}, {sent: sent})
+                    .then(updated => {
+                    })
+                    .catch((err) => {
+                      const message = err || 'Internal Server Error'
+                      logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
+                    })
                 })
                 .catch((err) => {
                   const message = err || 'Internal Server Error'
@@ -139,4 +162,64 @@ exports.getTwilioNumbers = function (req, res) {
       logger.serverLog(message, `${TAG}:exports.getTwilioNumbers`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
+}
+exports.analytics = function (req, res) {
+  async.parallelLimit([
+    function (cb) {
+      let query = {
+        purpose: 'findOne',
+        match: {_id: req.params.id, companyId: req.user.companyId}
+      }
+      utility.callApi(`smsBroadcasts/query`, 'post', query, 'kiboengage')
+        .then(broadcast => {
+          cb(null, broadcast)
+        })
+        .catch(error => {
+          cb(error)
+        })
+    },
+    function (cb) {
+      let query = {
+        purpose: 'aggregate',
+        match: {broadcastId: req.params.id},
+        group: { _id: null, count: { $sum: 1 } }
+      }
+      utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
+        .then(responded => {
+          cb(null, responded)
+        })
+        .catch(error => {
+          cb(error)
+        })
+    },
+    function (cb) {
+      let query = {
+        purpose: 'aggregate',
+        match: {broadcastId: req.params.id},
+        group: { _id: {$toLower: '$response.text'}, count: { $sum: 1 } }
+      }
+      utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
+        .then(responses => {
+          cb(null, responses)
+        })
+        .catch(error => {
+          cb(error)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      const message = err || 'Failed to get analytics'
+      logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, 'Failed to get analytics')
+    } else {
+      let payload = {
+        payload: results[0] ? results[0].payload[0].text : '',
+        sent: results[0] ? results[0].sent : 0,
+        delivered: results[0].delivered,
+        responded: results[1].length > 0 ? results[1][0].count : 0,
+        responses: results[2].length > 0 ? results[2] : []
+      }
+      sendSuccessResponse(res, 200, payload)
+    }
+  })
 }

@@ -5,7 +5,8 @@ function prepareBroadCastPayload (req, companyId) {
     userId: req.user._id,
     companyId,
     title: req.body.title,
-    phoneNumber: req.body.phoneNumber
+    phoneNumber: req.body.phoneNumber,
+    followUp: req.body.followUp ? req.body.followUp : false
   }
   if (req.body.segmentation) {
     broadcastPayload.segmentation = req.body.segmentation
