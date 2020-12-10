@@ -9,8 +9,8 @@ const feedparser = require('feedparser-promised')
 const async = require('async')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const { getScheduledTime } = require('../../global/utility')
-const { isApprovedForSMP } = require('../../global/subscriptionMessaging')
 let { sendOpAlert } = require('./../../global/operationalAlert')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -18,7 +18,6 @@ exports.index = function (req, res) {
       if (!companyUser) {
         sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
       }
-      console.log('statusArrayinController', req.user.SMPStatus)
       AutopostingDataLayer.findAllAutopostingObjectsUsingQuery({ companyId: companyUser.companyId }, req.headers.authorization)
         .then(autoposting => {
           let data = {
@@ -131,52 +130,52 @@ const _addTwitterAccount = (data, next) => {
   if (screenName.indexOf('/') > -1) screenName = screenName.substring(0, screenName.length - 1)
   AutoPostingLogicLayer.findUser(screenName, (err, twitter) => {
     if (err) {
-      const message = err || 'Twitter URL parse Error'
-      logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
-    }
-    let payload
-    if (twitter && !twitter.errors) {
-      autoPostingPayload.accountUniqueName = twitter.screen_name
-      payload = {
-        id: twitter.id_str,
-        name: twitter.name,
-        screen_name: twitter.screen_name,
-        profile_image_url: twitter.profile_image_url_https
-      }
-      autoPostingPayload.payload = payload
-      AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
-        .then(result => {
-          utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { twitter_autoposting: 1 } }, options: {} })
-            .then(updated => {
-              data.result = result
-              next()
-            })
-            .catch(err => {
-              const message = err || 'error updating company'
-              logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
-              next(err)
-            })
-          utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: data.companyUser.companyId._id,
-            body: {
-              action: 'autoposting_created',
-              payload: {
-                autoposting_id: result._id,
-                user_id: data.user._id,
-                user_name: data.user.name,
-                payload: result
-              }
-            }
-          })
-        })
-        .catch(err => {
-          const message = err || 'error creating autoposting object'
-          logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
-          next(err)
-        })
-    } else {
       next('Twitter account not found.')
+    } else {
+      let payload
+      if (twitter && !twitter.errors) {
+        autoPostingPayload.accountUniqueName = twitter.screen_name
+        payload = {
+          id: twitter.id_str,
+          name: twitter.name,
+          screen_name: twitter.screen_name,
+          profile_image_url: twitter.profile_image_url_https
+        }
+        autoPostingPayload.payload = payload
+        AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
+          .then(result => {
+            utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { twitter_autoposting: 1 } }, options: {} })
+              .then(updated => {
+                data.result = result
+                next()
+              })
+              .catch(err => {
+                const message = err || 'error updating company'
+                logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
+                next(err)
+              })
+            utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
+            require('./../../../config/socketio').sendMessageToClient({
+              room_id: data.companyUser.companyId._id,
+              body: {
+                action: 'autoposting_created',
+                payload: {
+                  autoposting_id: result._id,
+                  user_id: data.user._id,
+                  user_name: data.user.name,
+                  payload: result
+                }
+              }
+            })
+          })
+          .catch(err => {
+            const message = err || 'error creating autoposting object'
+            logger.serverLog(message, `${TAG}: _addTwitterAccount`, data, {}, 'error')
+            next(err)
+          })
+      } else {
+        next('Twitter account not found.')
+      }
     }
   })
 }
@@ -285,6 +284,7 @@ const _addWordpressAccount = (data, next) => {
   autoPostingPayload.accountUniqueName = wordpressUniqueId
   AutopostingDataLayer.createAutopostingObject(autoPostingPayload)
     .then(result => {
+      updateCompanyUsage(data.companyUser.companyId._id, 'wordpress_autoposting', 1)
       utility.callApi('featureUsage/updateCompany', 'put', { query: { companyId: data.companyUser.companyId._id }, newPayload: { $inc: { wordpress_autoposting: 1 } }, options: {} })
         .then(result => {
           require('./../../../config/socketio').sendMessageToClient({
@@ -325,30 +325,56 @@ const _createAutoposting = (data, next) => {
 }
 
 exports.create = function (req, res) {
-  let data = {
-    user: req.user,
-    subscriptionType: req.body.subscriptionType,
-    subscriptionUrl: req.body.subscriptionUrl,
-    autoPostingPayload: AutoPostingLogicLayer.prepareAutopostingPayload(req)
-  }
-  async.series([
-    _fetchCompanyUser.bind(null, data),
-    _fetchPlanUsage.bind(null, data),
-    _fetchCompanyUsage.bind(null, data),
-    _countAutoposting.bind(null, data),
-    _checkAutopostingExistStatus.bind(null, data),
-    _createAutoposting.bind(null, data)
-  ], function (err) {
-    if (err) {
-      if (!_isUserError(err)) {
-        const message = err || 'Failed to create autoposting'
-        logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, message.includes('not found') ? 'info' : 'error')
-      }
-      sendErrorResponse(res, 500, '', err)
-    } else {
-      sendSuccessResponse(res, 200, data.result)
-    }
-  })
+  const usage = `${req.body.subscriptionType}_autoposting`
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage[usage] !== -1 && companyUsage[usage] >= planUsage[usage]) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your ${req.body.subscriptionType} autoposting limit has reached. Please upgrade your plan to create more autoposting.`
+            })
+          } else {
+            let data = {
+              user: req.user,
+              subscriptionType: req.body.subscriptionType,
+              subscriptionUrl: req.body.subscriptionUrl,
+              autoPostingPayload: AutoPostingLogicLayer.prepareAutopostingPayload(req)
+            }
+            async.series([
+              _fetchCompanyUser.bind(null, data),
+              _fetchPlanUsage.bind(null, data),
+              _fetchCompanyUsage.bind(null, data),
+              _countAutoposting.bind(null, data),
+              _checkAutopostingExistStatus.bind(null, data),
+              _createAutoposting.bind(null, data)
+            ], function (err) {
+              if (err) {
+                if (!_isUserError(err)) {
+                    const message = err || 'Failed to create autoposting'
+                    logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, message.includes('not found') ? 'info' : 'error')
+                  }
+                 sendErrorResponse(res, 500, '', err)
+              } else {
+                sendSuccessResponse(res, 200, data.result)
+              }
+            })
+          }
+        })
+        .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
+          sendErrorResponse(res, 500, '', `Internal Server Error while fetching company usage ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(err => {
+      const message = err || 'Internal Server Error'
+      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, '', `Internal Server Error while fetching plan usage ${JSON.stringify(err)}`)
+    })
 }
 
 exports.edit = function (req, res) {
@@ -393,9 +419,25 @@ exports.edit = function (req, res) {
     })
 }
 
+function decrementCompanyUsage (autoposting) {
+  switch (autoposting.subscriptionType) {
+    case 'facebook':
+      updateCompanyUsage(autoposting.companyId, 'facebook_autoposting', -1)
+      break
+    case 'twitter':
+      updateCompanyUsage(autoposting.companyId, 'twitter_autoposting', -1)
+      break
+    case 'wordpress':
+      updateCompanyUsage(autoposting.companyId, 'wordpress_autoposting', -1)
+      break
+    default:
+  }
+}
+
 exports.destroy = function (req, res) {
   AutopostingDataLayer.findOneAutopostingObject(req.params.id, req.user.companyId)
     .then(autoposting => {
+      decrementCompanyUsage(autoposting)
       if (!autoposting) {
         sendErrorResponse(res, 404, '', 'Record not found')
       }
