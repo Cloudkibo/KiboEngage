@@ -163,63 +163,38 @@ exports.getTwilioNumbers = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
+
+function _getResponses (responsesArray, n) {
+  let sortedArray = responsesArray.slice().sort((a, b) => {
+    return b.count - a.count
+  })
+  let responses = sortedArray.slice(0, n)
+  let othersCount = sortedArray.slice(n).reduce((accum, item) => accum + item.count, 0)
+  responses.push({_id: 'others', count: othersCount})
+  return responses
+}
 exports.analytics = function (req, res) {
-  async.parallelLimit([
-    function (cb) {
-      let query = {
-        purpose: 'findOne',
-        match: {_id: req.params.id, companyId: req.user.companyId}
+  let query = {
+    purpose: 'aggregate',
+    match: {broadcastId: req.params.id},
+    group: { _id: {$toLower: '$response.text'}, count: { $sum: 1 } }
+  }
+  utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
+    .then(result => {
+      let responses = result.length > 0 ? result : []
+      let responded = result.length > 0 ? result.reduce((accum, item) => accum + item.count, 0) : 0
+      if (result.length > 5) {
+        responses = _getResponses(result, 4)
       }
-      utility.callApi(`smsBroadcasts/query`, 'post', query, 'kiboengage')
-        .then(broadcast => {
-          cb(null, broadcast)
-        })
-        .catch(error => {
-          cb(error)
-        })
-    },
-    function (cb) {
-      let query = {
-        purpose: 'aggregate',
-        match: {broadcastId: req.params.id},
-        group: { _id: null, count: { $sum: 1 } }
-      }
-      utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
-        .then(responded => {
-          cb(null, responded)
-        })
-        .catch(error => {
-          cb(error)
-        })
-    },
-    function (cb) {
-      let query = {
-        purpose: 'aggregate',
-        match: {broadcastId: req.params.id},
-        group: { _id: {$toLower: '$response.text'}, count: { $sum: 1 } }
-      }
-      utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
-        .then(responses => {
-          cb(null, responses)
-        })
-        .catch(error => {
-          cb(error)
-        })
-    }
-  ], 10, function (err, results) {
-    if (err) {
-      const message = err || 'Failed to get analytics'
-      logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, 'Failed to get analytics')
-    } else {
       let payload = {
-        payload: results[0] ? results[0].payload[0].text : '',
-        sent: results[0] ? results[0].sent : 0,
-        delivered: results[0].delivered,
-        responded: results[1].length > 0 ? results[1][0].count : 0,
-        responses: results[2].length > 0 ? results[2] : []
+        responded: responded,
+        responses: responses
       }
       sendSuccessResponse(res, 200, payload)
-    }
-  })
+    })
+    .catch(error => {
+      const message = error || 'Failed to get analytics'
+      logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user, query}, 'error')
+      sendErrorResponse(res, 500, 'Failed to get analytics')
+    })
 }
