@@ -15,7 +15,7 @@ exports.trackDeliverySms = function (req, res) {
       })
       .catch(err => {
         const message = err || 'Failed to update sms broadcast'
-        logger.serverLog(message, `${TAG}: exports.trackDeliveryWhatsApp`, req.body, {user: req.user}, 'error')
+        logger.serverLog(message, `${TAG}: exports.trackDeliverySms`, req.body, {}, 'error')
       })
   }
 }

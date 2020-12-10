@@ -168,11 +168,10 @@ exports.analytics = function (req, res) {
     function (cb) {
       let query = {
         purpose: 'findOne',
-        match: {_id: req.params.id}
+        match: {_id: req.params.id, companyId: req.user.companyId}
       }
       utility.callApi(`smsBroadcasts/query`, 'post', query, 'kiboengage')
         .then(broadcast => {
-          console.log('broadcast', broadcast)
           cb(null, broadcast)
         })
         .catch(error => {
@@ -209,14 +208,13 @@ exports.analytics = function (req, res) {
     }
   ], 10, function (err, results) {
     if (err) {
-      console.log('err got', err)
       const message = err || 'Failed to get analytics'
       logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user}, 'error')
       sendErrorResponse(res, 500, 'Failed to get analytics')
     } else {
-      console.log('results[0]', results[0])
       let payload = {
-        sent: results[0].sent,
+        payload: results[0] ? results[0].payload[0].text : '',
+        sent: results[0] ? results[0].sent : 0,
         delivered: results[0].delivered,
         responded: results[1].length > 0 ? results[1][0].count : 0,
         responses: results[2].length > 0 ? results[2] : []
