@@ -115,6 +115,14 @@ const _checkAutopostingExistStatus = (data, next) => {
     })
 }
 
+const _isUserError = (err) => {
+  if (err === 'Feed already exist') {
+    return true
+  } else {
+    return false
+  }
+}
+
 const _addTwitterAccount = (data, next) => {
   let autoPostingPayload = data.autoPostingPayload
   let url = data.subscriptionUrl
@@ -332,9 +340,10 @@ exports.create = function (req, res) {
     _createAutoposting.bind(null, data)
   ], function (err) {
     if (err) {
-      const message = err || 'Failed to create autoposting'
-      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user},
-        message.includes('not found') ? 'info' : 'error')
+      if (!_isUserError(err)) {
+        const message = err || 'Failed to create autoposting'
+        logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, message.includes('not found') ? 'info' : 'error')
+      }
       sendErrorResponse(res, 500, '', err)
     } else {
       sendSuccessResponse(res, 200, data.result)
