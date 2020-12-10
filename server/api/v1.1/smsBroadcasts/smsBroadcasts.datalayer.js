@@ -24,3 +24,11 @@ exports.aggregateForBroadcasts = (match, group, lookup, limit, sort, skip) => {
 
   return callApi(`smsBroadcasts/query`, 'post', query, 'kiboengage')
 }
+exports.updateBroadcast = (match, updated) => {
+  let query = {
+    purpose: 'updateOne',
+    match: match,
+    updated: updated
+  }
+  return callApi(`smsBroadcasts`, 'put', query, 'kiboengage')
+}
