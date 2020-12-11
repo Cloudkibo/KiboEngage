@@ -302,58 +302,64 @@ const _createBroadcast = (data, next) => {
     })
 }
 const _sendBroadcast = (data, next) => {
-  utility.callApi(`companyprofile/query`, 'post', {_id: data.companyId})
-    .then(company => {
-      let accountSid = company.twilio.accountSID
-      let authToken = company.twilio.authToken
-      let client = require('twilio')(accountSid, authToken)
-      let requests = []
-      let sent = 0
-      for (let i = 0; i < data.contacts.length; i++) {
-        requests.push(new Promise((resolve, reject) => {
-          client.messages
-            .create({
-              body: data.body.message[0].text,
-              from: data.body.phoneNumber,
-              to: data.contacts[i].number,
-              statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${data.broadcast._id}`
-            })
-            .then(response => {
-              sent = sent + 1
-              resolve(response)
-            })
-            .catch(error => {
-              const message = error || 'error at sending broadcast'
-              logger.serverLog(message, `${TAG}: _sendBroadcast`, data, {}, 'error')
-              reject(error)
-            })
-        }))
-      }
-      Promise.all(requests)
-        .then((responses) => {
-          next(null, data)
-          let updatePayload = {
-            query: {_id: {$in: data.contactIds}},
-            newPayload: {$set: {waitingForBroadcastResponse: {status: true, broadcastId: data.broadcast._id}}},
-            options: {multi: true}
-          }
-          utility.callApi(`contacts/update`, 'put', updatePayload)
-            .then(updated => {
-            })
-            .catch((err) => {
-              const message = err || 'error at updating contact'
-              logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
-            })
-          dataLayer.updateBroadcast({_id: data.broadcast._id}, {sent: sent})
-            .then(updated => {
-            })
-            .catch((err) => {
-              const message = err || 'Internal Server Error'
-              logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
-            })
-        })
-        .catch((err) => {
-          next(err)
-        })
-    })
+  if (data.contacts.length > 0) {
+    utility.callApi(`companyprofile/query`, 'post', {_id: data.companyId})
+      .then(company => {
+        let accountSid = company.twilio.accountSID
+        let authToken = company.twilio.authToken
+        let client = require('twilio')(accountSid, authToken)
+        let requests = []
+        let sent = 0
+        for (let i = 0; i < data.contacts.length; i++) {
+          requests.push(new Promise((resolve, reject) => {
+            client.messages
+              .create({
+                body: data.body.message[0].text,
+                from: data.body.phoneNumber,
+                to: data.contacts[i].number,
+                statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${data.broadcast._id}`
+              })
+              .then(response => {
+                sent = sent + 1
+                resolve(response)
+              })
+              .catch(error => {
+                const message = error || 'error at sending broadcast'
+                logger.serverLog(message, `${TAG}: _sendBroadcast`, data, {}, 'error')
+                reject(error)
+              })
+          }))
+        }
+        Promise.all(requests)
+          .then((responses) => {
+            next(null, data)
+            let updatePayload = {
+              query: {_id: {$in: data.contactIds}},
+              newPayload: {$set: {waitingForBroadcastResponse: {status: true, broadcastId: data.broadcast._id}}},
+              options: {multi: true}
+            }
+            utility.callApi(`contacts/update`, 'put', updatePayload)
+              .then(updated => {
+                console.log('updated contact', updated)
+              })
+              .catch((err) => {
+                const message = err || 'error at updating contact'
+                logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
+              })
+            dataLayer.updateBroadcast({_id: data.broadcast._id}, {sent: sent})
+              .then(updated => {
+                console.log('updated broadcast', updated)
+              })
+              .catch((err) => {
+                const message = err || 'Internal Server Error'
+                logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
+              })
+          })
+          .catch((err) => {
+            next(err)
+          })
+      })
+  } else {
+    next()
+  }
 }
