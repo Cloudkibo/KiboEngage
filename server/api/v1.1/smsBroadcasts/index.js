@@ -33,4 +33,16 @@ router.get('/:id/analytics',
   auth.isSuperUserActingAsCustomer(),
   controller.analytics)
 
+router.post('/:id/responses',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
+  validate({body: validationSchema.responsesPayload}),
+  controller.responses)
+
+router.post('/sendFollowupBroadcast',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
+  validate({body: validationSchema.followupPayload}),
+  controller.sendFollowupBroadcast)
+
 module.exports = router
