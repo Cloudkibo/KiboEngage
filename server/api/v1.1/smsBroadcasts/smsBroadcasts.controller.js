@@ -237,7 +237,7 @@ exports.sendFollowupBroadcast = function (req, res) {
     userId: req.user._id
   }
   async.series([
-    _getSubscriberIds.bind(null, data),
+    _getSubscribers.bind(null, data),
     _createBroadcast.bind(null, data),
     _sendBroadcast.bind(null, data)
   ], function (err) {
@@ -251,7 +251,7 @@ exports.sendFollowupBroadcast = function (req, res) {
   })
 }
 
-const _getSubscriberIds = (data, next) => {
+const _getSubscribers = (data, next) => {
   if (data.body.broadcasts.length === 0 && data.body.responses.length === 0) {
     utility.callApi(`contacts/query`, 'post', {isSubscribed: true, companyId: data.companyId})
       .then(contacts => {
