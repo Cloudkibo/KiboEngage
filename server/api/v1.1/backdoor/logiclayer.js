@@ -483,7 +483,6 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
-      { $sort: { datetime: -1 } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -509,7 +508,6 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   } else if (body.first_page === 'previous') {
     recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
     finalCriteria = [
-      { $sort: { datetime: -1 } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
