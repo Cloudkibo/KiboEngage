@@ -3,6 +3,7 @@ const logicLayer = require('./pageReferrals.logiclayer')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const logger = require('../../../components/logger')
 const TAG = 'api/v2/pages/pages.controller.js'
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -40,6 +41,7 @@ exports.view = function (req, res) {
 exports.delete = function (req, res) {
   utility.callApi(`pageReferrals/${req.params.id}`, 'delete', {})
     .then(result => {
+      updateCompanyUsage(req.user.companyId, 'messenger_ref_urls', -1)
       sendSuccessResponse(res, 200, result)
     })
     .catch(error => {
@@ -64,6 +66,7 @@ exports.create = function (req, res) {
                 } else {
                   utility.callApi(`pageReferrals`, 'post', logicLayer.createPayload(companyUser, req.body))
                     .then(craetedPageReferral => {
+                      updateCompanyUsage(req.user.companyId, 'messenger_ref_urls', 1)
                       sendSuccessResponse(res, 200, craetedPageReferral)
                     })
                     .catch(error => {

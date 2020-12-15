@@ -206,6 +206,35 @@ function doesPlanPermitsThisAction (action) {
       })
   })
 }
+
+function isUserAllowedToPerformThisAction (action) {
+  if (!action) throw new Error('Action needs to be set')
+  return compose().use((req, res, next) => {
+    apiCaller.callApi(`permissions/query`, 'post', {userId: req.user._id})
+      .then(permissions => {
+        if (permissions.length > 0) {
+          const permission = permissions[0]
+          if (permission[action]) {
+            next()
+          } else {
+            return res.status(403).json({
+              status: 'failed',
+              description: 'You do not have the permission to perform this action. Please contact admin.'
+            })
+          }
+        } else {
+          return res.status(500).json({
+            status: 'failed',
+            description: 'Fatal Error. Permissions not set. Please contact support.'
+          })
+        }
+      })
+      .catch(err => {
+        return res.status(500).json({status: 'failed', description: `Internal Server Error: ${err}`})
+      })
+  })
+}
+
 function doesRolePermitsThisAction (action) {
   if (!action) throw new Error('Action needs to be set')
   return compose().use(function meetsRequirements (req, res, next) {
@@ -320,10 +349,6 @@ function fbConnectDone (req, res) {
     const description = encodeURIComponent('Something went wrong, please try again.')
     res.redirect(`/auth/facebook/error?description=${description}`)
   }
-  // if (req.user.role !== 'buyer') {
-  //   logger.serverLog(TAG, `User is an ${req.user.role}. Only buyers can connect their Facebook account`)
-  //   res.render('error', {status: 'failed', description: `User is an ${req.user.role}. Only buyers can connect their Facebook account`})
-  // }
   let token = `Bearer ${req.cookies.token}`
   apiCaller.callApi('user', 'get', {}, 'accounts', token)
     .then(user => {
@@ -381,6 +406,7 @@ function fbConnectDone (req, res) {
       res.redirect(`/auth/facebook/error?description=${description}`)
     })
 }
+
 // eslint-disable-next-line no-unused-vars
 function isAuthorizedWebHookTrigger () {
   return compose().use((req, res, next) => {
@@ -414,11 +440,13 @@ exports.hasRole = hasRole
 exports.hasRequiredPlan = hasRequiredPlan
 exports.doesPlanPermitsThisAction = doesPlanPermitsThisAction
 exports.doesRolePermitsThisAction = doesRolePermitsThisAction
+exports.isUserAllowedToPerformThisAction = isUserAllowedToPerformThisAction
 exports.fbConnectDone = fbConnectDone
 exports.fbConnectError = fbConnectError
 exports.fetchPages = fetchPages
 exports.isKiboDash = isKiboDash
 exports.isItWebhookServer = isItWebhookServer
+exports.validateApiKeys = validateApiKeys
 // This functionality will be exposed in later stages
 // exports.isAuthorizedWebHookTrigger = isAuthorizedWebHookTrigger;
 function fetchPages (url, user, req, token) {
@@ -512,22 +540,21 @@ function fetchPages (url, user, req, token) {
     }
   })
 }
-function updateUnapprovedPages (facebookPages, user, companyUser) {
-  if (facebookPages.length > 0) {
-    let fbPages = facebookPages.map(item => item.id)
-    apiCaller.callApi(`pages/query`, 'post', {userId: user._id, companyId: companyUser.companyId})
-      .then(localPages => {
-        for (let i = 0; i < localPages.length; i++) {
-          if (!fbPages.includes(localPages[i].pageId)) {
-            apiCaller.callApi(`pages/${localPages[i]._id}`, 'put', {isApproved: false, connected: false})
-              .then(updated => {
-              })
-          }
-        }
-      })
-  }
-}
-
+// function updateUnapprovedPages (facebookPages, user, companyUser) {
+//   if (facebookPages.length > 0) {
+//     let fbPages = facebookPages.map(item => item.id)
+//     apiCaller.callApi(`pages/query`, 'post', {userId: user._id, companyId: companyUser.companyId})
+//       .then(localPages => {
+//         for (let i = 0; i < localPages.length; i++) {
+//           if (!fbPages.includes(localPages[i].pageId)) {
+//             apiCaller.callApi(`pages/${localPages[i]._id}`, 'put', {isApproved: false, connected: false})
+//               .then(updated => {
+//               })
+//           }
+//         }
+//       })
+//   }
+// }
 // eslint-disable-next-line no-unused-vars
 function isAuthorizedKiboAPITrigger (req) {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress ||

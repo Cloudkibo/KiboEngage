@@ -12,4 +12,3 @@ router.get('/',
   auth.isSuperUserActingAsCustomer(),
   controller.index)
 
-module.exports = router
