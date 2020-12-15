@@ -633,6 +633,7 @@ exports.topPagesCriteria = function (body) {
     { $limit: body.limit },
     { $lookup: { from: 'pages', localField: '_id', foreignField: '_id', as: 'page' } },
     {'$unwind': '$page'},
+    {$match: {'page.connected': true}},
     { $lookup: { from: 'users', localField: 'page.userId', foreignField: '_id', as: 'user' } },
     {'$unwind': '$user'}
   ]
