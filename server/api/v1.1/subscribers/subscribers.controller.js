@@ -40,7 +40,6 @@ exports.index = function (req, res) {
 }
 
 exports.allSubscribers = function (req, res) {
-  console.log('in all subscribers')
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
     .then(companyuser => {
       utility.callApi(`subscribers/query`, 'post', { companyId: companyuser.companyId, isEnabledByPage: true, completeInfo: true }) // fetch subscribers of company
@@ -188,7 +187,6 @@ const getAllSubscribers = function (subscribers, count, req, res) {
     })
 }
 exports.getAll = function (req, res) {
-  console.log('in get all')
   let tagIDs = []
   let tagValue = []
   if (req.body.filter_criteria.tag_value) {
@@ -196,22 +194,17 @@ exports.getAll = function (req, res) {
     utility.callApi(`tags/query`, 'post', { companyId: req.user.companyId, tag: { $in: tagValue } })
       .then(tags => {
         tagIDs = tags.map((tag) => tag._id)
-        console.log('tagIDs', tagIDs)
         let criterias = logicLayer.getCriteriasTags(req, tagIDs)
         utility.callApi(`tags_subscriber/aggregate`, 'post', criterias.countCriteria) // fetch subscribers count
           .then(count => {
-            console.log('subscribers by filter count', count)
-
             utility.callApi(`tags_subscriber/aggregate`, 'post', criterias.fetchCriteria) // fetch subscribers count
               .then(subscribers => {
-                console.log('subscribers by filter', subscribers)
                 let new_subscribers = []
                 subscribers.forEach((subscriber, index) => {
                   let new_subscriber = subscriber.Subscribers
                   new_subscriber.pageId = subscriber.pageId
                   new_subscribers.push(new_subscriber)
                 })
-                console.log('new_subscribers', new_subscribers)
                 getAllSubscribers(new_subscribers, count, req, res)
               })
               .catch(err => {
@@ -260,7 +253,6 @@ exports.subscribeBack = function (req, res) {
 }
 
 exports.updatePicture = function (req, res) {
-  // console.log('hit the updatePicture endpoint', req.body)
   utility.callApi('subscribers/updatePicture', 'post', req.body)
     .then(update => {
       sendSuccessResponse(res, 200, update)
