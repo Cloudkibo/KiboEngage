@@ -458,7 +458,6 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
       recordsToSkip = Math.abs(body.current_page * body.number_of_records)
     }
     finalCriteria = [
-      { $match: findCriteria },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -476,6 +475,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
         '_id': 1,
         'tags_subscriber': 1
       }},
+      { $match: findCriteria },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
@@ -483,7 +483,6 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   } else if (body.first_page === 'next') {
     recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $lt: body.last_id } }] } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -501,6 +500,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
         '_id': 1,
         'tags_subscriber': 1
       }},
+      { $match: { $and: [findCriteria, { _id: { $lt: body.last_id } }] } },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
@@ -508,7 +508,6 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   } else if (body.first_page === 'previous') {
     recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
     finalCriteria = [
-      { $match: { $and: [findCriteria, { _id: { $gt: body.last_id } }] } },
       { $project: {
         'fullName': { '$concat': [ '$firstName', ' ', '$lastName' ] },
         'firstName': 1,
@@ -526,6 +525,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
         '_id': 1,
         'tags_subscriber': 1
       }},
+      { $match: { $and: [findCriteria, { _id: { $gt: body.last_id } }] } },
       { $sort: { datetime: -1 } },
       { $skip: recordsToSkip },
       { $limit: body.number_of_records }
@@ -533,6 +533,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   }
   return { countCriteria: countCriteria, finalCriteria: finalCriteria }
 }
+
 exports.getCriteriasForAutopostingByType = function (req) {
   let matchAggregate = {
     'datetime': req.body.days === 'all' ? { $exists: true } : {
