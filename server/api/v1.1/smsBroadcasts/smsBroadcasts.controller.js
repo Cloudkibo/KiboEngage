@@ -234,12 +234,17 @@ exports.sendFollowupBroadcast = function (req, res) {
   let data = {
     body: req.body,
     companyId: req.user.companyId,
-    userId: req.user._id
+    userId: req.user._id,
+    sent: 0
   }
+  let query = logicLayer.getCriteriaForFollowUp(data.body, data.companyId)
+  data.query = query
   async.series([
-    _getSubscribers.bind(null, data),
+    _getSubscribersCount.bind(null, data),
     _createBroadcast.bind(null, data),
-    _sendBroadcast.bind(null, data)
+    _fetchCompany.bind(null, data),
+    _getSubscribers.bind(null, data),
+    _updateBroadcast.bind(null, data)
   ], function (err) {
     if (err) {
       const message = err || 'Failed to sendFollowupBroadcast'
@@ -250,37 +255,62 @@ exports.sendFollowupBroadcast = function (req, res) {
     }
   })
 }
-
-const _getSubscribers = (data, next) => {
-  if (data.body.broadcasts.length === 0 && data.body.responses.length === 0) {
-    utility.callApi(`contacts/query`, 'post', {isSubscribed: true, companyId: data.companyId})
-      .then(contacts => {
-        data.contactIds = contacts.map(c => c._id)
-        data.contacts = contacts
+const _fetchCompany = (data, next) => {
+  utility.callApi(`companyprofile/query`, 'post', {_id: data.companyId})
+    .then(company => {
+      let accountSid = company.twilio.accountSID
+      let authToken = company.twilio.authToken
+      let client = require('twilio')(accountSid, authToken)
+      data.client = client
+      next()
+    })
+    .catch((err) => {
+      next(err)
+    })
+}
+const _getSubscribersCount = (data, next) => {
+  let query = JSON.parse(JSON.stringify(data.query))
+  query.group = { _id: null, count: { $sum: 1 } }
+  utility.callApi(`broadcasts/responses/query`, 'post', data.query, 'kiboengage')
+    .then(result => {
+      if (result.length > 0) {
         next(null, data)
-      })
-      .catch((err) => {
-        next(err)
-      })
-  } else {
-    let query = logicLayer.getCriteriaForFollowUp(data.body, data.companyId)
-    utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
-      .then(result => {
+      } else {
+        next('No contacts match the provided criteria')
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
+}
+const _getSubscribers = (data, next) => {
+  utility.callApi(`broadcasts/responses/query`, 'post', data.query, 'kiboengage')
+    .then(result => {
+      if (result.length > 0) {
         let subscriberIds = result.map(r => r.customerId)
         utility.callApi(`contacts/query`, 'post', {_id: {$in: subscriberIds}})
           .then(contacts => {
             data.contactIds = subscriberIds
             data.contacts = contacts
-            next(null, data)
+            _sendBroadcast(data)
+              .then(r => {
+                data.query.match['_id'] = {$gt: result[result.length - 1]._id}
+                _getSubscribers(data, next)
+              })
+              .catch((err) => {
+                next(err)
+              })
           })
           .catch((err) => {
             next(err)
           })
-      })
-      .catch(error => {
-        next(error)
-      })
-  }
+      } else {
+        next(null, data)
+      }
+    })
+    .catch(error => {
+      next(error)
+    })
 }
 const _createBroadcast = (data, next) => {
   let broadcastPayload = {
@@ -301,65 +331,53 @@ const _createBroadcast = (data, next) => {
       next(err)
     })
 }
+const _updateBroadcast = (data, next) => {
+  dataLayer.updateBroadcast({_id: data.broadcast._id}, {sent: data.sent})
+    .then(updated => {
+      next()
+    })
+    .catch((err) => {
+      next(err)
+    })
+}
 const _sendBroadcast = (data, next) => {
-  if (data.contacts.length > 0) {
-    utility.callApi(`companyprofile/query`, 'post', {_id: data.companyId})
-      .then(company => {
-        let accountSid = company.twilio.accountSID
-        let authToken = company.twilio.authToken
-        let client = require('twilio')(accountSid, authToken)
-        let requests = []
-        let sent = 0
-        for (let i = 0; i < data.contacts.length; i++) {
-          requests.push(new Promise((resolve, reject) => {
-            client.messages
-              .create({
-                body: data.body.message[0].text,
-                from: data.body.phoneNumber,
-                to: data.contacts[i].number,
-                statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${data.broadcast._id}`
-              })
-              .then(response => {
-                sent = sent + 1
-                resolve(response)
-              })
-              .catch(error => {
-                const message = error || 'error at sending broadcast'
-                logger.serverLog(message, `${TAG}: _sendBroadcast`, data, {}, 'error')
-                reject(error)
-              })
-          }))
+  return new Promise((resolve, reject) => {
+    let requests = []
+    for (let i = 0; i < data.contacts.length; i++) {
+      requests.push(new Promise((resolve, reject) => {
+        data.client.messages
+          .create({
+            body: data.body.message[0].text,
+            from: data.body.phoneNumber,
+            to: data.contacts[i].number,
+            statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${data.broadcast._id}`
+          })
+          .then(response => {
+            data.sent = data.sent + 1
+            resolve(response)
+          })
+          .catch(error => {
+            const message = error || 'error at sending broadcast'
+            logger.serverLog(message, `${TAG}: _sendBroadcast`, data, {}, 'error')
+            reject(error)
+          })
+      }))
+    }
+    Promise.all(requests)
+      .then((responses) => {
+        resolve()
+        let updatePayload = {
+          query: {_id: {$in: data.contactIds}},
+          newPayload: {$set: {waitingForBroadcastResponse: {status: true, broadcastId: data.broadcast._id}}},
+          options: {multi: true}
         }
-        Promise.all(requests)
-          .then((responses) => {
-            next(null, data)
-            let updatePayload = {
-              query: {_id: {$in: data.contactIds}},
-              newPayload: {$set: {waitingForBroadcastResponse: {status: true, broadcastId: data.broadcast._id}}},
-              options: {multi: true}
-            }
-            utility.callApi(`contacts/update`, 'put', updatePayload)
-              .then(updated => {
-                console.log('updated contact', updated)
-              })
-              .catch((err) => {
-                const message = err || 'error at updating contact'
-                logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
-              })
-            dataLayer.updateBroadcast({_id: data.broadcast._id}, {sent: sent})
-              .then(updated => {
-                console.log('updated broadcast', updated)
-              })
-              .catch((err) => {
-                const message = err || 'Internal Server Error'
-                logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
-              })
+        utility.callApi(`contacts/update`, 'put', updatePayload)
+          .then(updated => {
           })
           .catch((err) => {
-            next(err)
+            const message = err || 'error at updating contact'
+            logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
           })
       })
-  } else {
-    next()
-  }
+  })
 }

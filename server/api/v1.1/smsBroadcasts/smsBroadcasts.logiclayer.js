@@ -202,10 +202,12 @@ exports.getCriteriaForFollowUp = function (body, companyId) {
     body.keywords.forEach((value, index) => {
       body.keywords[index] = `.*${value}.*`
     })
+    criteria['response.text'] = {'$in': body.keywords}
   }
   let finalCriteria = {
     purpose: 'aggregate',
-    match: criteria
+    match: criteria,
+    limit: 50
   }
   return finalCriteria
 }
