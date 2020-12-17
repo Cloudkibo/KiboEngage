@@ -81,7 +81,7 @@ exports.getAllUsers = function (req, res) {
 }
 
 exports.allLocales = function (req, res) {
-  utility.callApi(`pages/query`, 'post', {_id: req.params.pageid, connected: true})
+  utility.callApi(`pages/query`, 'post', {_id: req.params.pageid})
     .then(pages => {
       let page = pages[0]
       let aggregateObject = [
