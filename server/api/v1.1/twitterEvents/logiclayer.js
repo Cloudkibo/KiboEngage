@@ -242,8 +242,14 @@ const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, 
         resolve(payload)
       } else if (tweet.media[0].type === 'animated_gif' || tweet.media[0].type === 'video') {
         MessengerPayload.prepareMessengerPayloadForVideo(tweet, savedMsg, tweetId, userName, page, screenName).then(result => {
-          payload.push(result)
-          resolve(payload)
+          if (result.attachment) {
+            payload.push(result)
+            resolve(payload)
+          } else {
+            let text = payload[0].text + '\n' + result.url
+            let data = MessengerPayload.prepareMessengerPayloadForText('text', {text}, savedMsg, tweetId, true, screenName)
+            payload[0] = data
+          }
         })
       }
     } else if (urls.length > 0 && button) {

@@ -8,6 +8,13 @@ const {openGraphScrapper} = require('../../global/utility')
 const logger = require('../../../components/logger')
 const TAG = 'api/twitterEvents/messengerPayload.js'
 
+const isDetermineFileSizeError = (err) => {
+  if (err && err.message === 'Unable to determine file size') {
+    return true
+  } else {
+    return false
+  }
+}
 const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, page) => {
   return new Promise((resolve, reject) => {
     let url = getVideoURL(tweet.media[0].video_info.variants)
@@ -21,8 +28,12 @@ const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, pag
     }
     remote(url, function (err, size) {
       if (err) {
-        const message = err || 'Internal Server Error'
-        logger.serverLog(message, `${TAG}: prepareMessengerPayloadForVideo`, {tweet, savedMsg, tweetId, userName, page}, {}, 'error')
+        if (!isDetermineFileSizeError(err)) {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: prepareMessengerPayloadForVideo`, {tweet, savedMsg, tweetId, userName, page}, {}, 'error')  
+        } else {
+          resolve({url: url})
+        }
       }
       let sizeInMb = (size / 1000) / 1000
       if (sizeInMb > 25) {
