@@ -245,20 +245,16 @@ exports.sendFollowupBroadcast = function (req, res) {
     _fetchCompany.bind(null, data)
   ], function (err) {
     if (err) {
-      console.log('err in functin', err)
       const message = err || 'Failed to sendFollowupBroadcast'
       logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
       sendErrorResponse(res, 500, '', err)
     } else {
-      console.log('calling _getSubscribers')
       _getSubscribers(data)
         .then(resp => {
-          console.log('outside _getSubscribers')
           _updateBroadcast(resp)
           sendSuccessResponse(res, 200, 'Broadcast sent successfully')
         })
         .catch((err) => {
-          console.log('in catch', err)
           const message = err || 'Failed to sendFollowupBroadcast'
           logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
           sendErrorResponse(res, 500, '', err)
@@ -298,29 +294,29 @@ const _getSubscribers = (data) => {
   return new Promise((resolve, reject) => {
     utility.callApi(`broadcasts/responses/query`, 'post', data.query, 'kiboengage')
       .then(result => {
-        console.log('result', result.length)
         if (result.length > 0) {
           let subscriberIds = result.map(r => r.customerId)
           utility.callApi(`contacts/query`, 'post', {_id: {$in: subscriberIds}})
             .then(contacts => {
               data.contactIds = subscriberIds
               data.contacts = contacts
-              // _sendBroadcast(data)
-              //   .then(r => {
-              //     data.query.match['_id'] = {$gt: result[result.length - 1]._id}
-              //     _getSubscribers(data)
-              //   })
-              //   .catch((err) => {
-              //     reject(err)
-              //   })
-              data.query.match['_id'] = {$gt: result[result.length - 1]._id}
+              _sendBroadcast(data)
+                .then(r => {
+                  data.query.match['_id'] = {$gt: result[result.length - 1]._id}
                   _getSubscribers(data)
+                    .then(s => resolve(data))
+                    .catch((err) => {
+                      reject(err)
+                    })
+                })
+                .catch((err) => {
+                  reject(err)
+                })
             })
             .catch((err) => {
               reject(err)
             })
         } else {
-          console.log('resolving from _getSubscribers')
           resolve(data)
         }
       })
@@ -382,7 +378,6 @@ const _sendBroadcast = (data, next) => {
     }
     Promise.all(requests)
       .then((responses) => {
-        console.log('resolving from _sendBroadcast')
         resolve()
         let updatePayload = {
           query: {_id: {$in: data.contactIds}},
