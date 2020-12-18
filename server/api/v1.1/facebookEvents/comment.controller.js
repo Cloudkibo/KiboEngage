@@ -251,6 +251,9 @@ function saveComment (post, body, send) {
           const message = err || 'Failed to fetch parent comment'
           logger.serverLog(message, `${TAG}: saveComment`, {post, body, send}, {}, 'error')
         })
+    }).catch(err => {
+      const message = err || 'Failed to fetch comment'
+      logger.serverLog(message, `${TAG}: saveComment`, {post, body, send}, {}, 'error')
     })
 }
 
