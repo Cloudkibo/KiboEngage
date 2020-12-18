@@ -65,8 +65,8 @@ exports.create = function (req, res) {
       const message = err || 'Internal Server Error'
       if (!isPostAlreadyExist(message)) {
         logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
-        sendErrorResponse(res, 500, `${err}`)
       }
+      sendErrorResponse(res, 500, `${err}`)
     })
 }
 
