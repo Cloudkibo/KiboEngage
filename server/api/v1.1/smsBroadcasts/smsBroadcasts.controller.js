@@ -210,8 +210,8 @@ exports.responses = function (req, res) {
             let response = result.filter(r => r.customerId === c._id)[0]
             return {
               _id: response._id,
-              number: c.name,
-              name: c.number,
+              number: c.number,
+              name: c.name,
               datetime: response.datetime,
               text: response.response.text
             }
