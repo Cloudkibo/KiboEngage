@@ -165,16 +165,15 @@ exports.getTwilioNumbers = function (req, res) {
 }
 
 function _getResponses (responsesArray, n, getCounts) {
+  let othersCount
   let sortedArray = responsesArray.slice().sort((a, b) => {
     return b.count - a.count
   })
   let responses = sortedArray.slice(0, n)
   if (getCounts) {
-    let othersCount = sortedArray.slice(n).reduce((accum, item) => accum + item.count, 0)
-    responses.push({_id: 'others', count: othersCount})
-  } else {
-    responses.push({_id: 'others'})
+    othersCount = sortedArray.slice(n).reduce((accum, item) => accum + item.count, 0)
   }
+  responses.push({_id: 'others', count: othersCount})
   return responses
 }
 exports.analytics = function (req, res) {
