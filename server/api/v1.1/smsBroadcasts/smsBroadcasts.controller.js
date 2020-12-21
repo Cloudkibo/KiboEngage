@@ -164,27 +164,26 @@ exports.getTwilioNumbers = function (req, res) {
     })
 }
 
-function _getResponses (responsesArray, n) {
+function _getResponses (responsesArray, n, getCounts) {
   let sortedArray = responsesArray.slice().sort((a, b) => {
     return b.count - a.count
   })
   let responses = sortedArray.slice(0, n)
-  let othersCount = sortedArray.slice(n).reduce((accum, item) => accum + item.count, 0)
-  responses.push({_id: 'others', count: othersCount})
+  if (getCounts) {
+    let othersCount = sortedArray.slice(n).reduce((accum, item) => accum + item.count, 0)
+    responses.push({_id: 'others', count: othersCount})
+  } else {
+    responses.push({_id: 'others'})
+  }
   return responses
 }
 exports.analytics = function (req, res) {
-  let query = {
-    purpose: 'aggregate',
-    match: {broadcastId: req.params.id},
-    group: { _id: {$toLower: '$response.text'}, count: { $sum: 1 } }
-  }
-  utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
+  _fetchUniqueResponses(req.params.id)
     .then(result => {
       let responses = result.length > 0 ? result : []
       let responded = result.length > 0 ? result.reduce((accum, item) => accum + item.count, 0) : 0
       if (result.length > 5) {
-        responses = _getResponses(result, 4)
+        responses = _getResponses(result, 4, true)
       }
       let payload = {
         responded: responded,
@@ -194,41 +193,70 @@ exports.analytics = function (req, res) {
     })
     .catch(error => {
       const message = error || 'Failed to get analytics'
-      logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user, query}, 'error')
+      logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user}, 'error')
       sendErrorResponse(res, 500, 'Failed to get analytics')
     })
 }
+
+const _fetchUniqueResponses = (broadcastId) => {
+  let query = {
+    purpose: 'aggregate',
+    match: {broadcastId: broadcastId},
+    group: { _id: {$toLower: '$response.text'}, count: { $sum: 1 } }
+  }
+  return utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
+}
 exports.responses = function (req, res) {
-  let query = logicLayer.getCriteriaForResponses(req.body, req.params.id)
-  utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
-    .then(result => {
-      let subscriberIds = result.map(r => r.customerId)
-      utility.callApi(`contacts/query`, 'post', {
-        _id: {$in: subscriberIds}})
-        .then(contacts => {
-          let payloadToSend = contacts.map(c => {
-            let response = result.filter(r => r.customerId === c._id)[0]
-            return {
-              _id: response._id,
-              number: c.number,
-              name: c.name,
-              datetime: response.datetime,
-              text: response.response.text
-            }
+  if (req.body.purpose === 'unique_responses') {
+    _fetchUniqueResponses(req.params.id)
+      .then(result => {
+        let responses = result.length > 0 ? result : []
+        if (result.length > 5) {
+          responses = _getResponses(result, 4)
+        }
+        console.log('responses', responses)
+        let payload = responses.map(r => r._id)
+        sendSuccessResponse(res, 200, payload)
+      })
+      .catch(error => {
+        const message = error || 'Failed to get analytics'
+        logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, 'Failed to get analytics')
+      })
+  } else {
+    let query = logicLayer.getCriteriaForResponses(req.body, req.params.id)
+    utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
+      .then(result => {
+        let subscriberIds = result.map(r => r.customerId)
+        utility.callApi(`contacts/query`, 'post', {
+          _id: {$in: subscriberIds}})
+          .then(contacts => {
+            let payloadToSend = contacts.map(c => {
+              let response = result.filter(r => r.customerId === c._id)[0]
+              return {
+                _id: response._id,
+                number: c.number,
+                name: c.name,
+                datetime: response.datetime,
+                text: response.response.text
+              }
+            })
+            sendSuccessResponse(res, 200, payloadToSend)
           })
-          sendSuccessResponse(res, 200, payloadToSend)
-        })
-        .catch(error => {
-          const message = error || 'Failed to get contacts'
-          logger.serverLog(message, `${TAG}: exports.responses`, req.body, {user: req.user, query}, 'error')
-          sendErrorResponse(res, 500, 'Failed to get analytics')
-        })
-    })
-    .catch(error => {
-      const message = error || 'Failed to get responses'
-      logger.serverLog(message, `${TAG}: exports.responses`, req.body, {user: req.user, query}, 'error')
-      sendErrorResponse(res, 500, 'Failed to get analytics')
-    })
+          .catch(error => {
+            console.log('error got', error)
+            const message = error || 'Failed to get contacts'
+            logger.serverLog(message, `${TAG}: exports.responses`, req.body, {user: req.user, query}, 'error')
+            sendErrorResponse(res, 500, 'Failed to get responses')
+          })
+      })
+      .catch(error => {
+        console.log('error got', error)
+        const message = error || 'Failed to get responses'
+        logger.serverLog(message, `${TAG}: exports.responses`, req.body, {user: req.user, query}, 'error')
+        sendErrorResponse(res, 500, 'Failed to get responses')
+      })
+  }
 }
 exports.sendFollowupBroadcast = function (req, res) {
   let data = {

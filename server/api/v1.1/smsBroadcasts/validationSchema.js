@@ -33,6 +33,10 @@ exports.payload = {
     first_page: {
       type: 'string',
       required: true
+    },
+    title: {
+      type: 'string',
+      required: false
     }
   }
 }
@@ -53,14 +57,13 @@ exports.responsesPayload = {
     },
     'operator': {
       'type': 'string'
+    },
+    'purpose': {
+      'type': 'string'
     }
   },
   'required': [
-    'last_id',
-    'number_of_records',
-    'first_page',
-    'responses',
-    'responses'
+    'purpose'
   ]
 }
 exports.followupPayload = {
