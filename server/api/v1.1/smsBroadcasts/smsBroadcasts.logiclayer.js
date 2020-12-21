@@ -213,4 +213,16 @@ exports.getCriteriaForFollowUp = function (body, companyId) {
   return finalCriteria
 }
 
+exports.getCriteriaForUniqueResponses = function (broadcastId, getCounts) {
+  let query = {
+    purpose: 'aggregate',
+    match: {broadcastId: broadcastId},
+    group: { _id: {$toLower: '$response.text'} }
+  }
+  if (getCounts) {
+    query.group['count'] = { $sum: 1 }
+  }
+  return query
+}
+
 exports.prepareBroadCastPayload = prepareBroadCastPayload

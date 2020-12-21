@@ -177,7 +177,8 @@ function _getResponses (responsesArray, n, getCounts) {
   return responses
 }
 exports.analytics = function (req, res) {
-  _fetchUniqueResponses(req.params.id)
+  let query = logicLayer.getCriteriaForUniqueResponses(req.params.id, true)
+  utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
     .then(result => {
       let responses = result.length > 0 ? result : []
       let responded = result.length > 0 ? result.reduce((accum, item) => accum + item.count, 0) : 0
@@ -197,17 +198,10 @@ exports.analytics = function (req, res) {
     })
 }
 
-const _fetchUniqueResponses = (broadcastId) => {
-  let query = {
-    purpose: 'aggregate',
-    match: {broadcastId: broadcastId},
-    group: { _id: {$toLower: '$response.text'}, count: { $sum: 1 } }
-  }
-  return utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
-}
 exports.responses = function (req, res) {
   if (req.body.purpose === 'unique_responses') {
-    _fetchUniqueResponses(req.params.id)
+    let query = logicLayer.getCriteriaForUniqueResponses(req.params.id, true)
+    utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
       .then(result => {
         let responses = result.length > 0 ? result : []
         if (result.length > 5) {
