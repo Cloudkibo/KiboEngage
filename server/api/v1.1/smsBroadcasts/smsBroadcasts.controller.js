@@ -200,7 +200,7 @@ exports.analytics = function (req, res) {
 
 exports.responses = function (req, res) {
   if (req.body.purpose === 'unique_responses') {
-    let query = logicLayer.getCriteriaForUniqueResponses(req.params.id, true)
+    let query = logicLayer.getCriteriaForUniqueResponses(req.params.id)
     utility.callApi(`broadcasts/responses/query`, 'post', query, 'kiboengage')
       .then(result => {
         let responses = result.length > 0 ? result : []
