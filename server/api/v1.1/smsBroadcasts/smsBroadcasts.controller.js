@@ -213,7 +213,6 @@ exports.responses = function (req, res) {
         if (result.length > 5) {
           responses = _getResponses(result, 4)
         }
-        console.log('responses', responses)
         let payload = responses.map(r => r._id)
         sendSuccessResponse(res, 200, payload)
       })
@@ -243,14 +242,12 @@ exports.responses = function (req, res) {
             sendSuccessResponse(res, 200, payloadToSend)
           })
           .catch(error => {
-            console.log('error got', error)
             const message = error || 'Failed to get contacts'
             logger.serverLog(message, `${TAG}: exports.responses`, req.body, {user: req.user, query}, 'error')
             sendErrorResponse(res, 500, 'Failed to get responses')
           })
       })
       .catch(error => {
-        console.log('error got', error)
         const message = error || 'Failed to get responses'
         logger.serverLog(message, `${TAG}: exports.responses`, req.body, {user: req.user, query}, 'error')
         sendErrorResponse(res, 500, 'Failed to get responses')
