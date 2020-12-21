@@ -211,9 +211,9 @@ exports.responses = function (req, res) {
         sendSuccessResponse(res, 200, payload)
       })
       .catch(error => {
-        const message = error || 'Failed to get analytics'
-        logger.serverLog(message, `${TAG}: exports.analytics`, req.params.id, {user: req.user}, 'error')
-        sendErrorResponse(res, 500, 'Failed to get analytics')
+        const message = error || 'Failed to get responses'
+        logger.serverLog(message, `${TAG}: exports.responses`, req.params.id, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, 'Failed to get responses')
       })
   } else {
     let query = logicLayer.getCriteriaForResponses(req.body, req.params.id)
