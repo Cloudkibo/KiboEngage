@@ -19,7 +19,8 @@ exports.getCriterias = function (body, companyUser) {
   let finalCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    companyId: companyUser.companyId
+    companyId: companyUser.companyId,
+    title: body.title && body.title !== '' ? {$regex: '.*' + body.title + '.*', $options: 'i'} : {$exists: true}
   }
   let countCriteria = [
     { $match: findCriteria },
@@ -210,6 +211,18 @@ exports.getCriteriaForFollowUp = function (body, companyId) {
     limit: 50
   }
   return finalCriteria
+}
+
+exports.getCriteriaForUniqueResponses = function (broadcastId, getCounts) {
+  let query = {
+    purpose: 'aggregate',
+    match: {broadcastId: broadcastId},
+    group: { _id: {$toLower: '$response.text'} }
+  }
+  if (getCounts) {
+    query.group['count'] = { $sum: 1 }
+  }
+  return query
 }
 
 exports.prepareBroadCastPayload = prepareBroadCastPayload
