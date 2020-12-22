@@ -226,8 +226,8 @@ function saveComment (post, body, send) {
         senderName: value.from.name,
         senderFbId: value.from.id,
         commentPayload: commentPayload,
-        postFbLink: value.post.permalink_url,
-        postFbId: value.post.id,
+        postFbLink: value.post ? value.post.permalink_url : `https://www.facebook.com/${value.post_id}`,
+        postFbId: value.post ? value.post.id : value.post_id,
         replySentOnMessenger: value.from.id === post.pageId.pageId ? false : send
       }
       checkParentOfComment(commentToSave, value)
