@@ -245,7 +245,7 @@ const attachBuyerInfo = function () {
 }
 
 const openGraphScrapper = function (url) {
-  let options = {url}
+  let options = {url: url, timeout: 10000, retry: 3}
   return new Promise((resolve, reject) => {
     ogs(options, (error, results) => {
       if (error) {
