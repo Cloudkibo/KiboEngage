@@ -712,7 +712,7 @@ exports.urlMetaData = (req, res) => {
     url = 'https://kibopush.com'
   }
   if (url) {
-    let options = {url}
+    let options = {url: url, timeout: '20000 ms', retry: 3}
     ogs(options, (error, results) => {
       console.log('url metadata error', error)
       console.log('url metadata results', results)
