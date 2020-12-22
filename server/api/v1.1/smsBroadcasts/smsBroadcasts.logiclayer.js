@@ -20,7 +20,7 @@ exports.getCriterias = function (body, companyUser) {
   let recordsToSkip = 0
   findCriteria = {
     companyId: companyUser.companyId,
-    title: body.title && body.title !== '' ? {$regex: '.*' + body.title + '.*', $options: 'i'} : {$exists: true}
+    title: body.title && body.title !== '' ? {$regex: body.title} : {$exists: true}
   }
   let countCriteria = [
     { $match: findCriteria },
