@@ -253,6 +253,40 @@ exports.removePage = function (req, res) {
   }
 }
 
+exports.removeAgent = function (req, res) {
+  for (let i = 0; i < req.body.agentId.length; i++) {
+    let agentPayload = logicLayer.getTeamAgentsPayload({_id: req.body.teamId}, req.user.companyId, req.body.agentId[i])
+    utility.callApi(`teams/agents`, 'delete', agentPayload) // delete agent
+      .then(deletedAgent => {
+      })
+      .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.removeAgent`, req.body, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, `Failed to delete team agent ${JSON.stringify(error)}`)
+      })
+    if (i === req.body.agentId.length - 1) {
+      sendSuccessResponse(res, 200, 'Agent deleted successfully!')
+    }
+  }
+}
+
+exports.removePage = function (req, res) {
+  for (let i = 0; i < req.body.pageId.length; i++) {
+    let pagePayload = logicLayer.getTeamPagesPayload({_id: req.body.teamId}, req.user.companyId, req.body.pageId[i])
+    utility.callApi(`teams/pages`, 'delete', pagePayload) // delete page
+      .then(craetedPage => {
+      })
+      .catch(error => {
+        const message = error || 'Internal Server Error'
+        logger.serverLog(message, `${TAG}: exports.removePage`, req.body, {user: req.user}, 'error')
+        sendErrorResponse(res, 500, `Failed to delete team page ${JSON.stringify(error)}`)
+      })
+    if (i === req.body.pageId.length - 1) {
+      sendSuccessResponse(res, 200, 'Page deleted successfully!')
+    }
+  }
+}
+
 exports.fetchAgents = function (req, res) {
   utility.callApi(`teams/agents/query`, 'post', {teamId: req.params.id, companyId: req.user.companyId}) // fetch agents
     .then(agents => {
