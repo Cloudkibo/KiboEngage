@@ -21,6 +21,9 @@ exports.update = function (req, res) {
   req.body.userId = req.user._id
   callApi(`integrations/update`, 'put', {query: {_id: req.params.id}, newPayload: req.body, options: {}}, 'accounts', req.headers.authorization)
     .then(integrations => {
+      if (!req.body.enabled) {
+        updateCompanyUsage(req.user.companyId, 'external_integrations', -1)
+      }
       sendSuccessResponse(res, 200, integrations)
     })
     .catch(err => {
