@@ -193,12 +193,14 @@ exports.getCriteriaForFollowUp = function (body, companyId) {
     companyId: companyId,
     broadcastId: body.broadcasts && body.broadcasts.length > 0 ? {'$in': body.broadcasts} : {$exists: true}
   }
-  if (body.operator === 'nin' && body.responses.length > 0) {
-    body.responses.forEach((value, index) => {
-      body.responses[index] = `^${value}`
-    })
+  if (body.responses.length > 0) {
+    if (body.operator === 'nin' && body.responses.length > 0) {
+      body.responses.forEach((value, index) => {
+        body.responses[index] = `^${value}`
+      })
+    }
+    criteria['response.text'] = body.operator === 'in' ? {'$in': body.responses} : {'$nin': body.responses}
   }
-  criteria['response.text'] = body.operator === 'in' ? {'$in': body.responses} : {'$nin': body.responses}
   if (body.keywords.length > 0) {
     body.keywords.forEach((value, index) => {
       body.keywords[index] = `.*${value}.*`
