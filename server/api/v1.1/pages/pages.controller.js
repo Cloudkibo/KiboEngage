@@ -423,7 +423,7 @@ exports.disable = function (req, res) {
                       let autoposting = autopostings[i]
                       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
                         .then(result => {
-                          utility.callApi('twitter/restart', 'get', {}, 'webhook')
+                          utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
                             .then(result => {})
                             .catch(err => {
                               const message = err || 'Error at twitter restart'
