@@ -194,7 +194,7 @@ exports.getCriteriaForFollowUp = function (body, companyId) {
     broadcastId: body.broadcasts && body.broadcasts.length > 0 ? {'$in': body.broadcasts} : {$exists: true}
   }
   if (body.responses.length > 0) {
-    if (body.operator === 'nin' && body.responses.length > 0) {
+    if (body.operator === 'nin') {
       body.responses.forEach((value, index) => {
         body.responses[index] = `^${value}`
       })
