@@ -5,7 +5,8 @@ function prepareBroadCastPayload (req, companyId) {
     userId: req.user._id,
     companyId,
     title: req.body.title,
-    phoneNumber: req.body.phoneNumber
+    phoneNumber: req.body.phoneNumber,
+    followUp: req.body.followUp ? req.body.followUp : false
   }
   if (req.body.segmentation) {
     broadcastPayload.segmentation = req.body.segmentation
@@ -18,7 +19,8 @@ exports.getCriterias = function (body, companyUser) {
   let finalCriteria = {}
   let recordsToSkip = 0
   findCriteria = {
-    companyId: companyUser.companyId
+    companyId: companyUser.companyId,
+    title: body.title && body.title !== '' ? {$regex: body.title} : {$exists: true}
   }
   let countCriteria = [
     { $match: findCriteria },
@@ -146,4 +148,83 @@ exports.prepareQueryToGetContacts = function (body, companyId) {
   }
   return query
 }
+
+exports.getCriteriaForResponses = function (body, broadcastId) {
+  let finalCriteria = {
+    purpose: 'aggregate'
+  }
+  let recordsToSkip = 0
+  let findCriteria = {broadcastId: broadcastId}
+  if (body.operator === 'nin') {
+    body.responses.forEach((value, index) => {
+      body.responses[index] = `^${value}`
+    })
+  }
+  findCriteria['response.text'] = body.operator === 'in' ? {'$in': body.responses} : {'$nin': body.responses}
+  if (body.first_page === 'first') {
+    finalCriteria.match = findCriteria
+    finalCriteria.sort = { datetime: -1 }
+    finalCriteria.skip = recordsToSkip
+    finalCriteria.limit = body.number_of_records
+  } else if (body.first_page === 'next') {
+    recordsToSkip = Math.abs(((body.requested_page - 1) - (body.current_page))) * body.number_of_records
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $lt: body.last_id }
+    finalCriteria.match = finalFindCriteria
+    finalCriteria.sort = { datetime: -1 }
+    finalCriteria.skip = recordsToSkip
+    finalCriteria.limit = body.number_of_records
+  } else if (body.first_page === 'previous') {
+    recordsToSkip = Math.abs(body.requested_page * body.number_of_records)
+    let finalFindCriteria = {}
+    Object.assign(finalFindCriteria, findCriteria)
+    finalFindCriteria._id = { $gt: body.last_id }
+    finalCriteria.match = finalFindCriteria
+    finalCriteria.sort = { datetime: -1 }
+    finalCriteria.skip = recordsToSkip
+    finalCriteria.limit = body.number_of_records
+  }
+  return finalCriteria
+}
+
+exports.getCriteriaForFollowUp = function (body, companyId) {
+  let criteria = {
+    companyId: companyId,
+    broadcastId: body.broadcasts && body.broadcasts.length > 0 ? {'$in': body.broadcasts} : {$exists: true}
+  }
+  if (body.responses.length > 0) {
+    if (body.operator === 'nin') {
+      body.responses.forEach((value, index) => {
+        body.responses[index] = `^${value}`
+      })
+    }
+    criteria['response.text'] = body.operator === 'in' ? {'$in': body.responses} : {'$nin': body.responses}
+  }
+  if (body.keywords.length > 0) {
+    body.keywords.forEach((value, index) => {
+      body.keywords[index] = `.*${value}.*`
+    })
+    criteria['response.text'] = {'$in': body.keywords}
+  }
+  let finalCriteria = {
+    purpose: 'aggregate',
+    match: criteria,
+    limit: 50
+  }
+  return finalCriteria
+}
+
+exports.getCriteriaForUniqueResponses = function (broadcastId, getCounts) {
+  let query = {
+    purpose: 'aggregate',
+    match: {broadcastId: broadcastId},
+    group: { _id: {$toLower: '$response.text'} }
+  }
+  if (getCounts) {
+    query.group['count'] = { $sum: 1 }
+  }
+  return query
+}
+
 exports.prepareBroadCastPayload = prepareBroadCastPayload
