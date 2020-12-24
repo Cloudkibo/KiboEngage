@@ -75,14 +75,10 @@ exports.sendBroadcast = function (req, res) {
                             resolve(response)
                           })
                           .catch((err) => {
-                            const message = err || 'error at updating contact'
-                            logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
                             reject(err)
                           })
                       })
                       .catch(error => {
-                        const message = error || 'error at sending message'
-                        logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
                         reject(error)
                       })
                   }))
