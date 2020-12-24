@@ -40,6 +40,14 @@ exports.viewPost = function (req, res) {
     })
 }
 
+const isPostAlreadyExist = function (err) {
+  if (err && err.message && (err.message.includes('create another global post') || err.message.includes('create only one comment capture'))) {
+    return true
+  } else {
+    return false
+  }
+}
+
 exports.create = function (req, res) {
   getPayloadToSave(req.user, req.body)
     .then(payloadToSave => {
@@ -55,7 +63,9 @@ exports.create = function (req, res) {
     })
     .catch((err) => {
       const message = err || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
+      if (!isPostAlreadyExist(message)) {
+        logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
+      }
       sendErrorResponse(res, 500, `${err}`)
     })
 }

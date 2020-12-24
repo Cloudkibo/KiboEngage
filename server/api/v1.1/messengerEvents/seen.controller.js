@@ -125,12 +125,10 @@ function _updateSequenceSeen (data, next) {
                                         let utcDate = SequenceUtility.setScheduleDate(seqQueue[i].sequenceMessageId.schedule)
                                         SequenceMessageQueueDataLayer.genericUpdate({_id: seqQueue[i]._id}, {queueScheduledTime: utcDate}, {})
                                           .then(updated => {
-                                            next(null)
                                           })
                                           .catch(err => {
                                             const message = err || 'Internal Server Error'
                                             logger.serverLog(message, `${TAG}: _updateSequenceSeen`, data, {}, 'error')
-                                            next(err)
                                           })
                                       }
                                     }
@@ -139,9 +137,9 @@ function _updateSequenceSeen (data, next) {
                                 .catch(err => {
                                   const message = err || 'Internal Server Error'
                                   logger.serverLog(message, `${TAG}: _updateSequenceSeen`, data, {}, 'error')
-                                  next(err)
                                 })
                             }
+                            next()
                           })
                           .catch(err => {
                             const message = err || 'Internal Server Error'

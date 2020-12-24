@@ -135,7 +135,7 @@ exports.connectedPages = function (req, res) {
                   sendErrorResponse(res, 500, `Failed to fetch subscribes ${JSON.stringify(error)}`)
                 })
             })
-            .catch(error => { 
+            .catch(error => {
               const message = error || 'Internal Server Error'
               logger.serverLog(message, `${TAG}: exports.allPages`, req.body, {user: req.user}, 'error')
               sendErrorResponse(res, 500, `Failed to fetch connected pages ${JSON.stringify(error)}`)
@@ -302,7 +302,7 @@ exports.enable = function (req, res) {
                                             })
                                           })
                                         })
-                                        .catch(error => {                                          
+                                        .catch(error => {
                                           const message = error || 'Internal Server Error'
                                           logger.serverLog(message, `${TAG}: exports.enable`, req.body, {user: req.user}, 'error')
                                           sendErrorResponse(res, 500, `Failed to update subscriber ${JSON.stringify(error)}`)
@@ -433,7 +433,12 @@ exports.disable = function (req, res) {
                       let autoposting = autopostings[i]
                       AutopostingDataLayer.deleteAutopostingObject(autoposting._id)
                         .then(result => {
-                          utility.callApi('twitter/restart', 'get', {}, 'webhook')
+                          utility.callApi('api/twitter/restart', 'get', {}, 'webhook')
+                            .then(result => {})
+                            .catch(err => {
+                              const message = err || 'Error at twitter restart'
+                              logger.serverLog(message, `${TAG}: disable`, {}, {}, 'error')
+                            })
                           require('./../../../config/socketio').sendMessageToClient({
                             room_id: autoposting.companyId,
                             body: {

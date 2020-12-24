@@ -65,7 +65,7 @@ exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
 exports.handleFacebookPayload = function (body, savedMsg) {
   return new Promise((resolve, reject) => {
     let tagline = ''
-    if (body.item === 'share' && !body.link.includes('http')) {
+    if (body.item === 'share' && body.link && !body.link.includes('http')) {
       let originalPage = body.link.split('/')
       let query = { $or: [ { pageId: originalPage[1] }, { pageUserName: originalPage[1] } ] }
       utility.callApi(`pages/query`, 'post', query)
@@ -179,11 +179,11 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
     for (let i = 0; i < length; i++) {
       openGraphScrapper(urls[i])
         .then(meta => {
-          if (meta !== {} && meta.data && meta.data.ogTitle && meta.data.ogDescription && meta.data.ogImage) {
+          if (meta && meta !== {} && meta.ogTitle && meta.ogDescription && meta.ogImage) {
             gallery.push({
-              'title': meta.data.ogTitle,
-              'subtitle': meta.data.ogDescription,
-              'image_url': meta.data.ogImage.url,
+              'title': meta.ogTitle,
+              'subtitle': meta.ogDescription,
+              'image_url': meta.ogImage.url,
               'buttons': buttons
             })
             if (i === length - 1) {
@@ -200,7 +200,7 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
             resolve(gallery)
           } else {
             const message = err || 'Error from open graph'
-            logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, postId}, {}, 'error')           
+            logger.serverLog(message, `${TAG}: prepareGalleryForLink`, {urls, savedMsg, postId}, {}, 'error')
           }
         })
     }
