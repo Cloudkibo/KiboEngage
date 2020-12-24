@@ -67,14 +67,15 @@ exports.handleFacebookPayload = function (body, savedMsg) {
     let tagline = ''
     console.log('body in handleFacebookPayload', body)
     if (body.item === 'share' && body.link && !body.link.includes('http')) {
-      console.log('body.link', body.link)
-      let originalPage = body.link.split('/')
-      console.log('originalPage', originalPage)
-      let query = { $or: [ { pageId: originalPage[1] }, { pageUserName: originalPage[1] } ] }
+      let originalPage = body.link.split('=')
+      let query = { pageId: originalPage[originalPage.length - 1] }
       utility.callApi(`pages/query`, 'post', query)
         .then(pages => {
-          console.log('pages in handleFacebookPayload', pages)
-          tagline = `${body.from.name} shared ${pages[0].pageName}'s post:`
+          if (pages && pages.length > 0) {
+            tagline = `${body.from.name} shared ${pages[0].pageName}'s post:`
+          } else {
+            tagline = `${body.from.name} shared:`
+          }
           handlePost(tagline, body, savedMsg).then(result => {
             resolve(result)
           })
