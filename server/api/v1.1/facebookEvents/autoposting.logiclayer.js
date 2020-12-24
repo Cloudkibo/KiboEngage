@@ -66,11 +66,15 @@ exports.handleFacebookPayload = function (body, savedMsg) {
   return new Promise((resolve, reject) => {
     let tagline = ''
     if (body.item === 'share' && body.link && !body.link.includes('http')) {
-      let originalPage = body.link.split('/')
-      let query = { $or: [ { pageId: originalPage[1] }, { pageUserName: originalPage[1] } ] }
+      let originalPage = body.link.split('=')
+      let query = { pageId: originalPage[originalPage.length - 1] }
       utility.callApi(`pages/query`, 'post', query)
         .then(pages => {
-          tagline = `${body.from.name} shared ${pages[0].pageName}'s post:`
+          if (pages && pages.length > 0) {
+            tagline = `${body.from.name} shared ${pages[0].pageName}'s post:`
+          } else {
+            tagline = `${body.from.name} shared:`
+          }
           handlePost(tagline, body, savedMsg).then(result => {
             resolve(result)
           })
