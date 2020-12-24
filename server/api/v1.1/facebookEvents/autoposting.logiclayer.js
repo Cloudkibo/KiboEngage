@@ -65,6 +65,7 @@ exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
 exports.handleFacebookPayload = function (body, savedMsg) {
   return new Promise((resolve, reject) => {
     let tagline = ''
+    console.log('body in handleFacebookPayload', body)
     if (body.item === 'share' && body.link && !body.link.includes('http')) {
       let originalPage = body.link.split('=')
       let query = { pageId: originalPage[originalPage.length - 1] }

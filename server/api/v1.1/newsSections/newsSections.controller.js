@@ -9,29 +9,58 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 const feedparser = require('feedparser-promised')
 const PageAdminSubscriptionDataLayer = require('../pageadminsubscriptions/pageadminsubscriptions.datalayer')
 const async = require('async')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.create = function (req, res) {
-  let data = {
-    body: req.body,
-    companyId: req.user.companyId,
-    userId: req.user._id
-  }
-  async.series([
-    _validateActiveFeeds.bind(null, data),
-    _validateFeedUrl.bind(null, data),
-    _validateFeedTitle.bind(null, data),
-    _getSubscriptionsCount.bind(null, data),
-    _checkDefaultFeed.bind(null, data),
-    _saveRSSFeed.bind(null, data)
-  ], function (err) {
-    if (err) {
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage.news_integration_feeds !== -1 && companyUsage.news_integration_feeds >= planUsage.news_integration_feeds) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your news integration feeds limit has reached. Please upgrade your plan to create more feeds.`
+            })
+          } else {
+            let data = {
+              body: req.body,
+              companyId: req.user.companyId,
+              userId: req.user._id
+            }
+            async.series([
+              _validateActiveFeeds.bind(null, data),
+              _validateFeedUrl.bind(null, data),
+              _validateFeedTitle.bind(null, data),
+              _getSubscriptionsCount.bind(null, data),
+              _checkDefaultFeed.bind(null, data),
+              _saveRSSFeed.bind(null, data)
+            ], function (err) {
+              if (err) {
+                sendErrorResponse(res, 500, err)
+              } else {
+                updateCompanyUsage(
+                  req.user.companyId,
+                  req.body.integrationType === 'rss' ? 'rss_feeds' : 'news_integration_feeds',
+                  1
+                )
+                sendSuccessResponse(res, 200, data.savedFeed)
+              }
+            })
+          }
+        })
+        .catch(err => {
+          const message = err || 'Internal Server Error'
+          logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
+          sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(err)}`)
+        })
+    })
+    .catch(err => {
       const message = err || 'Internal Server Error'
       logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, err)
-    } else {
-      sendSuccessResponse(res, 200, data.savedFeed)
-    }
-  })
+      sendErrorResponse(res, 500, `Failed to fetch company usage ${JSON.stringify(err)}`)
+    })
 }
 exports.preview = function (req, res) {
   let data = {
@@ -291,9 +320,21 @@ exports.checkSMP = function (req, res) {
 }
 
 exports.delete = function (req, res) {
-  DataLayer.deleteForRssFeeds({_id: req.params.id})
+  DataLayer.genericFindForRssFeeds({_id: req.params.id})
     .then(result => {
-      sendSuccessResponse(res, 200, result)
+      const feed = result[0]
+      DataLayer.deleteForRssFeeds({_id: req.params.id})
+        .then(result => {
+          updateCompanyUsage(
+            req.user.companyId,
+            feed.integrationType === 'rss' ? 'rss_feeds' : 'news_integration_feeds',
+            -1
+          )
+          sendSuccessResponse(res, 200, result)
+        })
+        .catch(err => {
+          sendErrorResponse(res, 500, `Failed to delete feed ${JSON.stringify(err)}`)
+        })
     })
     .catch(err => {
       const message = err || 'Internal Server Error'

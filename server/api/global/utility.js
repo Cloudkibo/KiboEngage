@@ -45,6 +45,7 @@ exports.prepareSubscribersCriteria = (body, page, lists, payloadLength, isApprov
       pageId: page._id,
       companyId: page.companyId,
       isSubscribed: true,
+      disabledByPlan: false,
       completeInfo: true,
       lastMessagedAt: (!smp) ? {
         $gt: new Date((new Date().getTime() - (24 * 60 * 60 * 1000)))

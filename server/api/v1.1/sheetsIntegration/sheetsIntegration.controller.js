@@ -16,6 +16,7 @@ const {
 var sheets = google.sheets('v4')
 const { callApi } = require('../utility')
 const async = require('async')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.fetchWorksheets = function (req, res) {
   const oauth2Client = new google.auth.OAuth2(
@@ -219,6 +220,7 @@ exports.callback = async function (req, res) {
               }
               dataLayer.create(payload)
                 .then(created => {
+                  updateCompanyUsage(companyId, 'external_integrations', 1)
                   res.redirect('/successMessage')
                 })
                 .catch(err => {
