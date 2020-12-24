@@ -251,7 +251,7 @@ const openGraphScrapper = function (url) {
       if (error) {
         reject(results.error)
       } else {
-        resolve(results.data)
+        resolve(results.data ? results.data : results)
       }
     })
   })
