@@ -260,7 +260,11 @@ exports.sendFollowupBroadcast = function (req, res) {
   ], function (err) {
     if (err) {
       const message = err || 'Failed to sendFollowupBroadcast'
-      logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
+      logger.serverLog(message,
+        `${TAG}: exports.sendFollowupBroadcast`,
+        req.body,
+        {data},
+        message.includes('No contacts') ? 'info' : 'error')
       sendErrorResponse(res, 500, '', err)
     } else {
       _getSubscribers(data)
