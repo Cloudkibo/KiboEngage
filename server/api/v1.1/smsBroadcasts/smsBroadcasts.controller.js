@@ -83,16 +83,16 @@ const _getContacts = (data) => {
   })
 }
 exports.sendBroadcast = function (req, res) {
+  let query = logicLayer.prepareQueryToGetContacts(req.body, req.user.companyId)
   req.body.message = req.body.payload
   let data = {
     body: req.body,
     companyId: req.user.companyId,
     userId: req.user._id,
     sent: 0,
-    followUp: false
+    followUp: false,
+    query: query
   }
-  let query = logicLayer.prepareQueryToGetContacts(data.body, data.companyId)
-  data.query = query
   async.series([
     _getContactsCount.bind(null, data),
     _createBroadcast.bind(null, data),
