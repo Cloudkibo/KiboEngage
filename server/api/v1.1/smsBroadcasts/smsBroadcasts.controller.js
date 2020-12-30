@@ -39,103 +39,103 @@ exports.index = function (req, res) {
       sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
     })
 }
-
-exports.sendBroadcast = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email, populate: 'companyId'}) // fetch company user
-    .then(companyUser => {
-      dataLayer.createBroadcast(logicLayer.prepareBroadCastPayload(req, companyUser.companyId._id))
-        .then(broadcast => {
-          utility.callApi(`contacts/query`, 'post', logicLayer.prepareQueryToGetContacts(req.body, req.user.companyId)) // fetch company user
-            .then(contacts => {
-              let accountSid = companyUser.companyId.twilio.accountSID
-              let authToken = companyUser.companyId.twilio.authToken
-              let client = require('twilio')(accountSid, authToken)
-              let requests = []
-              let sent = 0
-              for (let i = 0; i < contacts.length; i++) {
-                var matchCriteria = logicLayer.checkFilterValues(req.body.segmentation, contacts[i])
-                if (matchCriteria) {
-                  requests.push(new Promise((resolve, reject) => {
-                    client.messages
-                      .create({
-                        body: req.body.payload[0].text,
-                        from: req.body.phoneNumber,
-                        to: contacts[i].number,
-                        statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${broadcast._id}`
-                      })
-                      .then(response => {
-                        sent = sent + 1
-                        let updatePayload = {
-                          query: {_id: contacts[i]._id},
-                          newPayload: {$set: {waitingForBroadcastResponse: {status: true, broadcastId: broadcast._id}}},
-                          options: {}
-                        }
-                        utility.callApi(`contacts/update`, 'put', updatePayload)
-                          .then(updated => {
-                            resolve(response)
-                          })
-                          .catch((err) => {
-                            reject(err)
-                          })
-                      })
-                      .catch(error => {
-                        const message = error || 'error at sending broadcast'
-                        logger.serverLog(message, `${TAG}: _sendBroadcast`, broadcast, {contact: contacts[i]},
-                          error.message.includes('unverified') ? 'info' : 'error')
-                        resolve()
-                      })
-                  }))
-                }
-              }
-              Promise.all(requests)
-                .then((responses) => {
-                  require('./../../../config/socketio').sendMessageToClient({
-                    room_id: req.user.companyId,
-                    body: {
-                      action: 'new_sms_broadcast',
-                      payload: {
-                        broadcast: broadcast,
-                        sent: sent,
-                        user_id: req.user._id
-                      }
-                    }
-                  })
-                  sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
-                  dataLayer.updateBroadcast({_id: broadcast._id}, {sent: sent})
-                    .then(updated => {
-                    })
-                    .catch((err) => {
-                      const message = err || 'Internal Server Error'
-                      logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
-                    })
-                })
-                .catch((err) => {
-                  const message = err || 'Internal Server Error'
-                  logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
-                  sendErrorResponse(res, 500, '', `Failed to Send Broadcast to all Subscribers ${err}`)
-                })
-            })
-            .catch(error => {
-              const message = error || 'Internal Server Error'
-              logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
-              sendErrorResponse(res, 500, `Failed to fetch contacts ${JSON.stringify(error)}`)
-            })
-        })
-        .catch(error => {
-          const message = error || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
-          sendErrorResponse(res, 500, `Failed to create broadcast ${JSON.stringify(error)}`)
-        })
-        .catch(error => {
-          const message = error || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: exports.sendBroadcast`, req.body, {user: req.user}, 'error')
-          sendErrorResponse(res, 500, `Failed to fetch company user ${JSON.stringify(error)}`)
-        })
+const _getContactsCount = (data, next) => {
+  let query = JSON.parse(JSON.stringify(data.query))
+  query.push({$group: { _id: null, count: { $sum: 1 } }})
+  utility.callApi(`contacts/aggregate`, 'post', query) // fetch company user
+    .then(result => {
+      if (result.length > 0) {
+        next(null, data)
+      } else {
+        next('No contacts match the provided criteria')
+      }
     })
+    .catch(error => {
+      next(error)
+    })
+}
+const _getContacts = (data) => {
+  return new Promise((resolve, reject) => {
+    utility.callApi(`contacts/aggregate`, 'post', data.query)
+      .then(contacts => {
+        if (contacts.length > 0) {
+          data.contactIds = contacts.map(c => c._id)
+          data.contacts = contacts
+          _sendBroadcast(data)
+            .then(r => {
+              data.query[0].$match['_id'] = {$gt: contacts[contacts.length - 1]._id}
+              _getContacts(data)
+                .then(s => resolve(data))
+                .catch((err) => {
+                  reject(err)
+                })
+            })
+            .catch((err) => {
+              reject(err)
+            })
+        } else {
+          resolve(data)
+        }
+      })
+      .catch((err) => {
+        reject(err)
+      })
+  })
+}
+exports.sendBroadcast = function (req, res) {
+  req.body.message = req.body.payload
+  let data = {
+    body: req.body,
+    companyId: req.user.companyId,
+    userId: req.user._id,
+    sent: 0,
+    followUp: false
+  }
+  let query = logicLayer.prepareQueryToGetContacts(data.body, data.companyId)
+  data.query = query
+  async.series([
+    _getContactsCount.bind(null, data),
+    _createBroadcast.bind(null, data),
+    _fetchCompany.bind(null, data)
+  ], function (err) {
+    if (err) {
+      const message = err || 'Failed to sendFollowupBroadcast'
+      logger.serverLog(message,
+        `${TAG}: exports.sendBroadcast`,
+        req.body,
+        {data},
+        message.includes('No contacts') ? 'info' : 'error')
+      sendErrorResponse(res, 500, '', err)
+    } else {
+      data.query.push({$limit: 50})
+      _getContacts(data)
+        .then(resp => {
+          _updateBroadcast(resp)
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: req.user.companyId,
+            body: {
+              action: 'new_sms_broadcast',
+              payload: {
+                broadcast: data.broadcast,
+                sent: data.sent,
+                user_id: req.user._id
+              }
+            }
+          })
+          sendSuccessResponse(res, 200, '', 'Broadcast sent successfully')
+        })
+        .catch((err) => {
+          const message = err || 'Failed to sendBroadcast'
+          logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
+          sendErrorResponse(res, 500, '', err)
+        })
+    }
+  })
 }
 
 exports.getCount = function (req, res) {
-  var criteria = logicLayer.checkFilterValuesForGetCount(req.body, req.user.companyId)
+  var criteria = logicLayer.prepareQueryToGetContacts(req.body, req.user.companyId)
+  criteria.push({$group: { _id: null, count: { $sum: 1 } }})
   utility.callApi(`contacts/aggregate`, 'post', criteria)
     .then(result => {
       if (result.length > 0) {
@@ -263,7 +263,8 @@ exports.sendFollowupBroadcast = function (req, res) {
     body: req.body,
     companyId: req.user.companyId,
     userId: req.user._id,
-    sent: 0
+    sent: 0,
+    followUp: true
   }
   let query = logicLayer.getCriteriaForFollowUp(data.body, data.companyId)
   data.query = query
@@ -281,6 +282,7 @@ exports.sendFollowupBroadcast = function (req, res) {
         message.includes('No contacts') ? 'info' : 'error')
       sendErrorResponse(res, 500, '', err)
     } else {
+      data.query.limit = 50
       _getSubscribers(data)
         .then(resp => {
           _updateBroadcast(resp)
@@ -376,7 +378,10 @@ const _createBroadcast = (data, next) => {
     companyId: data.companyId,
     title: data.body.title,
     phoneNumber: data.body.phoneNumber,
-    followUp: true
+    followUp: data.body.followUp
+  }
+  if (data.body.segmentation) {
+    broadcastPayload.segmentation = data.body.segmentation
   }
   dataLayer.createBroadcast(broadcastPayload)
     .then(broadcast => {
@@ -433,7 +438,7 @@ const _sendBroadcast = (data, next) => {
           })
           .catch((err) => {
             const message = err || 'error at updating contact'
-            logger.serverLog(message, `${TAG}: exports.sendBroadcast`, data, {}, 'error')
+            logger.serverLog(message, `${TAG}: exports._sendBroadcast`, data, {}, 'error')
           })
       })
   })
