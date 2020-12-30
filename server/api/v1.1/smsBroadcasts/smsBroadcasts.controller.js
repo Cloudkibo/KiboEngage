@@ -99,7 +99,7 @@ exports.sendBroadcast = function (req, res) {
     _fetchCompany.bind(null, data)
   ], function (err) {
     if (err) {
-      const message = err || 'Failed to sendFollowupBroadcast'
+      const message = err || 'Failed to send broadcast'
       logger.serverLog(message,
         `${TAG}: exports.sendBroadcast`,
         req.body,
