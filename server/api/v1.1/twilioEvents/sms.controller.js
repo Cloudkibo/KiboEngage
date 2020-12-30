@@ -12,6 +12,15 @@ exports.trackDeliverySms = function (req, res) {
     }
     callApi(`smsBroadcasts`, 'put', query, 'kiboengage')
       .then(updated => {
+        require('./../../../config/socketio').sendMessageToClient({
+          room_id: req.user.companyId,
+          body: {
+            action: 'sms_broadcast_delivery',
+            payload: {
+              broadcastId: req.params.id
+            }
+          }
+        })
       })
       .catch(err => {
         const message = err || 'Failed to update sms broadcast'
