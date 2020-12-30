@@ -79,13 +79,27 @@ exports.sendBroadcast = function (req, res) {
                           })
                       })
                       .catch(error => {
-                        reject(error)
+                        const message = error || 'error at sending broadcast'
+                        logger.serverLog(message, `${TAG}: _sendBroadcast`, broadcast, {contact: contacts[i]},
+                          error.message.includes('unverified') ? 'info' : 'error')
+                        resolve()
                       })
                   }))
                 }
               }
               Promise.all(requests)
                 .then((responses) => {
+                  require('./../../../config/socketio').sendMessageToClient({
+                    room_id: req.user.companyId,
+                    body: {
+                      action: 'new_sms_broadcast',
+                      payload: {
+                        broadcast: broadcast,
+                        sent: sent,
+                        user_id: req.user._id
+                      }
+                    }
+                  })
                   sendSuccessResponse(res, 200, '', 'Conversation sent successfully')
                   dataLayer.updateBroadcast({_id: broadcast._id}, {sent: sent})
                     .then(updated => {
@@ -270,6 +284,17 @@ exports.sendFollowupBroadcast = function (req, res) {
       _getSubscribers(data)
         .then(resp => {
           _updateBroadcast(resp)
+          require('./../../../config/socketio').sendMessageToClient({
+            room_id: req.user.companyId,
+            body: {
+              action: 'new_sms_broadcast',
+              payload: {
+                broadcast: data.broadcast,
+                sent: data.sent,
+                user_id: req.user._id
+              }
+            }
+          })
           sendSuccessResponse(res, 200, 'Broadcast sent successfully')
         })
         .catch((err) => {
@@ -389,7 +414,8 @@ const _sendBroadcast = (data, next) => {
           })
           .catch(error => {
             const message = error || 'error at sending broadcast'
-            logger.serverLog(message, `${TAG}: _sendBroadcast`, data, {contact: data.contacts[i]}, 'error')
+            logger.serverLog(message, `${TAG}: _sendBroadcast`, data, {contact: data.contacts[i]},
+              error.message.includes('unverified') ? 'info' : 'error')
             resolve()
           })
       }))
