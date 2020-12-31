@@ -12,15 +12,24 @@ exports.trackDeliverySms = function (req, res) {
     }
     callApi(`smsBroadcasts`, 'put', query, 'kiboengage')
       .then(updated => {
-        require('./../../../config/socketio').sendMessageToClient({
-          room_id: req.user.companyId,
-          body: {
-            action: 'sms_broadcast_delivery',
-            payload: {
-              broadcastId: req.params.id
+        callApi(`smsBroadcasts/query`, 'post', {purpose: 'findOne', match: {_id: req.params.id}}, 'kiboengage')
+          .then(broadcast => {
+            if (broadcast) {
+              require('./../../../config/socketio').sendMessageToClient({
+                room_id: broadcast.companyId,
+                body: {
+                  action: 'sms_broadcast_delivery',
+                  payload: {
+                    broadcast: broadcast
+                  }
+                }
+              })
             }
-          }
-        })
+          })
+          .catch(err => {
+            const message = err || 'Failed to fetch sms broadcast'
+            logger.serverLog(message, `${TAG}: exports.trackDeliverySms`, req.body, {}, 'error')
+          })
       })
       .catch(err => {
         const message = err || 'Failed to update sms broadcast'
