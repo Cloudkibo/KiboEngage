@@ -84,9 +84,10 @@ exports.facebook = (body, fname, lname) => {
   } else if (['image', 'audio', 'file', 'video'].indexOf(
     body.componentType) > -1) {
     if (body.fileurl && body.fileurl.attachment_id) {
+      console.log('body.file.componentType', body.file.componentType)
       payload = {
         'attachment': {
-          'type': body.componentType,
+          'type': body.file ? body.file.componentType : body.componentType,
           'payload': {
             'attachment_id': body.fileurl.attachment_id
           }
