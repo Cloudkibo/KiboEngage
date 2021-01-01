@@ -86,7 +86,7 @@ exports.facebook = (body, fname, lname) => {
     if (body.fileurl && body.fileurl.attachment_id) {
       payload = {
         'attachment': {
-          'type': body.componentType,
+          'type': body.file ? body.file.componentType : body.componentType,
           'payload': {
             'attachment_id': body.fileurl.attachment_id
           }
