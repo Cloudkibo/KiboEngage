@@ -1,19 +1,3 @@
-function prepareBroadCastPayload (req, companyId) {
-  let broadcastPayload = {
-    platform: req.body.platform,
-    payload: req.body.payload,
-    userId: req.user._id,
-    companyId,
-    title: req.body.title,
-    phoneNumber: req.body.phoneNumber,
-    followUp: req.body.followUp ? req.body.followUp : false
-  }
-  if (req.body.segmentation) {
-    broadcastPayload.segmentation = req.body.segmentation
-  }
-  return broadcastPayload
-}
-
 exports.getCriterias = function (body, companyUser) {
   let findCriteria = {}
   let finalCriteria = {}
@@ -63,81 +47,6 @@ exports.getCriterias = function (body, companyUser) {
   return { countCriteria: countCriteria, fetchCriteria: finalCriteria }
 }
 
-exports.checkFilterValues = function (values, data) {
-  var matchCriteria = true
-  if (values && values.length > 0) {
-    for (var i = 0; i < values.length; i++) {
-      var filter = values[i]
-      if (filter.criteria === 'is') {
-        if (data[`${filter.condition}`] === filter.text) {
-          matchCriteria = true
-        } else {
-          matchCriteria = false
-          break
-        }
-      } else if (filter.criteria === 'contains') {
-        if (data[`${filter.condition}`].toLowerCase().includes(filter.text.toLowerCase())) {
-          matchCriteria = true
-        } else {
-          matchCriteria = false
-          break
-        }
-      } else if (filter.criteria === 'begins') {
-        var subText = data[`${filter.condition}`].substring(0, filter.text.length)
-        if (subText.toLowerCase() === filter.text.toLowerCase()) {
-          matchCriteria = true
-        } else {
-          matchCriteria = false
-          break
-        }
-      }
-    }
-  }
-  return matchCriteria
-}
-
-exports.checkFilterValuesForGetCount = function (body, companyId) {
-  let matchCriteria = {
-    companyId,
-    isSubscribed: true
-  }
-  if (body.listIds && body.listIds.length > 0) {
-    matchCriteria = {listIds: {$in: body.listIds}}
-  } else if (body.segmentation && body.segmentation.length > 0) {
-    matchCriteria = _checkFilterCondition(body.segmentation, matchCriteria)
-  }
-  let countCriteria = [
-    { $match: matchCriteria },
-    { $group: { _id: null, count: { $sum: 1 } } }
-  ]
-  return countCriteria
-}
-
-const _checkFilterCondition = (values, matchCriteria) => {
-  for (var i = 0; i < values.length; i++) {
-    var filter = values[i]
-    if (filter.criteria === 'is') {
-      if (filter.condition === 'number' && filter.text.includes('+')) {
-        matchCriteria[`${filter.condition}`] = {$regex: `^\\${filter.text}$`, $options: 'i'}
-      } else {
-        matchCriteria[`${filter.condition}`] = {$regex: `^${filter.text}$`, $options: 'i'}
-      }
-    } else if (filter.criteria === 'contains') {
-      if (filter.condition === 'number' && filter.text.includes('+')) {
-        matchCriteria[`${filter.condition}`] = {$regex: `.*\\${filter.text}.*`, $options: 'i'}
-      } else {
-        matchCriteria[`${filter.condition}`] = {$regex: `.*${filter.text}.*`, $options: 'i'}
-      }
-    } else if (filter.criteria === 'begins') {
-      if (filter.condition === 'number' && filter.text.includes('+')) {
-        matchCriteria[`${filter.condition}`] = {$regex: `^\\${filter.text}`, $options: 'i'}
-      } else {
-        matchCriteria[`${filter.condition}`] = {$regex: `^${filter.text}`, $options: 'i'}
-      }
-    }
-  }
-  return matchCriteria
-}
 exports.prepareQueryToGetContacts = function (body, companyId) {
   let query = {
     companyId: companyId,
@@ -146,7 +55,34 @@ exports.prepareQueryToGetContacts = function (body, companyId) {
   if (body.listIds && body.listIds.length > 0) {
     query.listIds = {$in: body.listIds}
   }
-  return query
+  if (body.segmentation && body.segmentation.length > 0) {
+    for (var i = 0; i < body.segmentation.length; i++) {
+      var filter = body.segmentation[i]
+      if (filter.criteria === 'is') {
+        if (filter.condition === 'number' && filter.text.includes('+')) {
+          query[`${filter.condition}`] = {$regex: `^\\${filter.text}$`, $options: 'i'}
+        } else {
+          query[`${filter.condition}`] = {$regex: `^${filter.text}$`, $options: 'i'}
+        }
+      } else if (filter.criteria === 'contains') {
+        if (filter.condition === 'number' && filter.text.includes('+')) {
+          query[`${filter.condition}`] = {$regex: `.*\\${filter.text}.*`, $options: 'i'}
+        } else {
+          query[`${filter.condition}`] = {$regex: `.*${filter.text}.*`, $options: 'i'}
+        }
+      } else if (filter.criteria === 'begins') {
+        if (filter.condition === 'number' && filter.text.includes('+')) {
+          query[`${filter.condition}`] = {$regex: `^\\${filter.text}`, $options: 'i'}
+        } else {
+          query[`${filter.condition}`] = {$regex: `^${filter.text}`, $options: 'i'}
+        }
+      }
+    }
+  }
+  let finalCriteria = [
+    {$match: query}
+  ]
+  return finalCriteria
 }
 
 exports.getCriteriaForResponses = function (body, broadcastId) {
@@ -209,8 +145,7 @@ exports.getCriteriaForFollowUp = function (body, companyId) {
   }
   let finalCriteria = {
     purpose: 'aggregate',
-    match: criteria,
-    limit: 50
+    match: criteria
   }
   return finalCriteria
 }
@@ -226,5 +161,3 @@ exports.getCriteriaForUniqueResponses = function (broadcastId, getCounts) {
   }
   return query
 }
-
-exports.prepareBroadCastPayload = prepareBroadCastPayload
