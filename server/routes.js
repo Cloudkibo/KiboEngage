@@ -121,7 +121,6 @@ module.exports = function (app) {
   })
 
   app.post('/api/receiveSocketEvent', (req, res) => {
-    console.log('inside engage')
     require('./config/socketio').sendMessageToClient(req.body)
     return res.status(201).json({ status: 'success', description: 'socket event received' })
   })
