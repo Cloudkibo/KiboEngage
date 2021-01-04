@@ -121,6 +121,11 @@ module.exports = function (app) {
     res.sendFile(path.join(__dirname, '../../KiboPush/client/public/js', 'bundle.js'))
   })
 
+  app.post('/api/receiveSocketEvent', (req, res) => {
+    require('./config/socketio').sendMessageToClient(req.body)
+    return res.status(201).json({ status: 'success', description: 'socket event received' })
+  })
+
   app.get('/landingPage/:id', (req, res) => {
     callApi('landingPage/query', 'post', { _id: req.params.id })
       .then(landingPages => {
