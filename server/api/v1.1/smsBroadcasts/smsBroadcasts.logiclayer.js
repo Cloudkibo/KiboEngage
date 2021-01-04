@@ -6,6 +6,9 @@ exports.getCriterias = function (body, companyUser) {
     companyId: companyUser.companyId,
     title: body.title && body.title !== '' ? {$regex: body.title} : {$exists: true}
   }
+  if (body.filter_criteria && body.filter_criteria.followup_value && body.filter_criteria.followup_value !== '' && body.filter_criteria.followup_value !== 'all') {
+    findCriteria.followUp = body.filter_criteria.followup_value === 'yes'
+  }
   let countCriteria = [
     { $match: findCriteria },
     { $group: { _id: null, count: { $sum: 1 } } }
