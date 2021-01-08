@@ -22,6 +22,8 @@ exports.index = function (req, res) {
             callApi('menu/query', 'post', {pageId: page._id, companyId: page.companyId})
               .then(menu => {
                 menu = menu[0]
+                console.log('menu in controller', menu)
+                console.log('replyPayload', replyPayload)
                 if (menu) {
                   if (replyPayload.action && menu.jsonStructure[replyPayload.index]) {
                     broadcastUtility.getBatchData(JSON.parse(menu.jsonStructure[replyPayload.index].payload), subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
@@ -29,6 +31,7 @@ exports.index = function (req, res) {
                     broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                   }
                 } else {
+                  console.log('else condition true')
                   broadcastUtility.getBatchData(replyPayload, subscriber.senderId, page, messengerEventsUtility.sendBroadcast, subscriber.firstName, subscriber.lastName, '', 0, 1, 'NON_PROMOTIONAL_SUBSCRIPTION')
                 }
               })
