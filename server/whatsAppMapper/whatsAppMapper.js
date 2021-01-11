@@ -1,9 +1,11 @@
 const flockSend = require('./flockSend/flockSend')
 const twilio = require('./twilio/twilio')
+const cequens = require('../whatsAppMapper/cequens/cequens')
 const { ActionTypes } = require('./constants')
 const providers = [
   { key: 'flockSend', value: flockSend },
-  { key: 'twilio', value: twilio }
+  { key: 'twilio', value: twilio },
+  { key: 'cequens', value: cequens }
 ]
 
 exports.whatsAppMapper = (provider, action, data, callback) => {
