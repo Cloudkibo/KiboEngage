@@ -15,7 +15,8 @@ exports.index = function (req, res) {
       }
       utility.callApi(`messenger_code/query`, 'post', {companyId: companyUser.companyId})
         .then(messengerCodes => {
-          sendSuccessResponse(res, 200, messengerCodes)
+          let codes = messengerCodes.filter(messengerCode => messengerCode.pageId.connected === true)
+          sendSuccessResponse(res, 200, codes)
         })
         .catch(error => {
           const message = error || 'Internal Server Error'
