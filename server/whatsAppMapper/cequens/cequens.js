@@ -125,3 +125,9 @@ function saveWhatsAppBroadcastMessages (resp, body, contact) {
       logger.serverLog(message, `${TAG}: saveWhatsAppBroadcastMessages`, body, {}, 'error')
     })
 }
+exports.getNormalizedMessageStatusData = (event) => {
+  return {
+    messageId: event.statuses[0].id,
+    status: event.statuses[0].status === 'read' ? 'seen' : event.statuses[0].status
+  }
+}
