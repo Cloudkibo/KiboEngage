@@ -5,6 +5,7 @@ const logicLayer = require('./m_code.logiclayer')
 const logger = require('../../../components/logger')
 const { errorHandler } = require('@sentry/node/dist/handlers')
 const TAG = 'api/messenger_code/m_code.controller.js'
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email })
@@ -14,7 +15,8 @@ exports.index = function (req, res) {
       }
       utility.callApi(`messenger_code/query`, 'post', {companyId: companyUser.companyId})
         .then(messengerCodes => {
-          sendSuccessResponse(res, 200, messengerCodes)
+          let codes = messengerCodes.filter(messengerCode => messengerCode.pageId.connected === true)
+          sendSuccessResponse(res, 200, codes)
         })
         .catch(error => {
           const message = error || 'Internal Server Error'
@@ -43,6 +45,7 @@ exports.getQRCode = function (req, res) {
 exports.delete = function (req, res) {
   utility.callApi(`messenger_code/${req.params.id}`, 'delete', {})
     .then(result => {
+      updateCompanyUsage(req.user.companyId, 'messenger_codes', -1)
       sendSuccessResponse(res, 200, result)
     })
     .catch(error => {
@@ -59,6 +62,7 @@ exports.create = function (req, res) {
       }
       utility.callApi(`messenger_code`, 'post', logicLayer.createPayload(companyUser, req.body))
         .then(created => {
+          updateCompanyUsage(req.user.companyId, 'messenger_codes', 1)
           sendSuccessResponse(res, 200, created)
         })
         .catch(error => {

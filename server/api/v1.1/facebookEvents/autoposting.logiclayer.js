@@ -65,6 +65,7 @@ exports.prepareAutomationQueuePayload = function (savedMsg, subscriber) {
 exports.handleFacebookPayload = function (body, savedMsg) {
   return new Promise((resolve, reject) => {
     let tagline = ''
+    console.log('body in handleFacebookPayload', body)
     if (body.item === 'share' && body.link && !body.link.includes('http')) {
       let originalPage = body.link.split('=')
       let query = { pageId: originalPage[originalPage.length - 1] }
@@ -120,6 +121,7 @@ const handlePost = (tagline, body, savedMsg) => {
         })
       } else { //  shared post
         prepareFacbookPayloadForLink([`https://facebook.com${body.link}`], savedMsg, body.post_id, body.from.name).then(result => {
+          console.log('result in Facebook', result)
           payload.push(result.messageData)
           if (!result.showButton && button) { // remove button from text
             payload[0] = {
@@ -158,6 +160,7 @@ const getUrls = (text) => {
 const prepareFacbookPayloadForLink = (urls, savedMsg, postId, pageName) => {
   return new Promise(function (resolve, reject) {
     prepareGalleryForLink(urls, savedMsg, postId).then(gallery => {
+      console.log('gallary', gallery)
       let messageData = {
         'attachment': {
           'type': 'template',
@@ -183,6 +186,7 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
     for (let i = 0; i < length; i++) {
       openGraphScrapper(urls[i])
         .then(meta => {
+          console.log('meta data', meta)
           if (meta && meta !== {} && meta.ogTitle && meta.ogDescription && meta.ogImage) {
             gallery.push({
               'title': meta.ogTitle,
@@ -200,6 +204,7 @@ const prepareGalleryForLink = (urls, savedMsg, postId) => {
           }
         })
         .catch(err => {
+          console.log('catch block')
           if (err === 'Must scrape an HTML page') {
             resolve(gallery)
           } else {

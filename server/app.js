@@ -5,7 +5,6 @@ const config = require('./config/environment/index')
 
 const cron = require('node-cron')
 const Sentry = require('@sentry/node')
-
 const SequenceScript = require('../scripts/sequenceMessageQueueScript.js')
 const TweetsQueueScript = require('../scripts/tweets_queue_script.js')
 const abandonedCartScript = require('../scripts/abandonedScript')

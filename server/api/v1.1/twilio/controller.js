@@ -44,16 +44,20 @@ exports.verifyNumber = function (req, res) {
   callApi('companyprofile/query', 'post', {_id: req.user.companyId})
     .then(company => {
       if (company) {
-        const twilioClient = require('twilio')(company.twilio.accountSID, company.twilio.authToken)
-        middleware.verifyPhoneNumber(req.body.number, twilioClient)
-          .then(valid => {
-            sendSuccessResponse(res, 200, null, 'Number is valid')
-          })
-          .catch(err => {
-            const message = err || 'Internal Server Error'
-            logger.serverLog(message, `${TAG}: exports.verifyNumber`, req.body, {user: req.user}, 'error')
-            sendErrorResponse(res, 403, err, 'Please enter a valid number of format E.164')
-          })
+        if (company.twilio) {
+          const twilioClient = require('twilio')(company.twilio.accountSID, company.twilio.authToken)
+          middleware.verifyPhoneNumber(req.body.number, twilioClient)
+            .then(valid => {
+              sendSuccessResponse(res, 200, null, 'Number is valid')
+            })
+            .catch(err => {
+              const message = err || 'Internal Server Error'
+              logger.serverLog(message, `${TAG}: exports.verifyNumber`, req.body, {user: req.user}, 'error')
+              sendErrorResponse(res, 403, err, 'Please enter a valid number of format E.164')
+            })
+        } else {
+          sendErrorResponse(res, 404, null, 'Twilio account is not connected on your account. Please connect twilio account to use SMS service.')
+        }
       } else {
         sendErrorResponse(res, 404, null, 'User does not belong to any company')
       }
