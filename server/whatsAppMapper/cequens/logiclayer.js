@@ -45,8 +45,7 @@ exports.prepareInvitationPayload = (body, number) => {
 exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
   let MessageObject = {
     to: contact.number.replace(/\D/g, ''),
-    recipient_type: 'individual',
-    preview_url: true
+    recipient_type: 'individual'
   }
   if (payload.componentType === 'text') {
     if (payload.templateName) {
