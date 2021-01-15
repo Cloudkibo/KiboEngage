@@ -256,6 +256,13 @@ const openGraphScrapper = function (url) {
   })
 }
 
+const containsURL = function (text) {
+  /* eslint-disable */
+  var urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig
+  /* eslint-enable */
+  return text.match(urlRegex)
+}
+
 exports.attachBuyerInfo = attachBuyerInfo
 exports.openGraphScrapper = openGraphScrapper
 exports.domainName = domainName
@@ -267,3 +274,4 @@ exports.isEmailAddress = isEmailAddress
 exports.isWebURL = isWebURL
 exports.isNumber = isNumber
 exports.isPhoneNumber = isPhoneNumber
+exports.containsURL = containsURL
