@@ -1,4 +1,5 @@
 var path = require('path')
+const { containsURL } = require('../../api/global/utility')
 
 exports.prepareTemplates = () => {
   let templates = [
@@ -71,6 +72,9 @@ exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
         ]
       }
     } else {
+      if (containsURL(payload.text)) {
+        MessageObject.preview_url = true
+      }
       MessageObject.type = 'text'
       MessageObject['text'] = {
         body: payload.text
