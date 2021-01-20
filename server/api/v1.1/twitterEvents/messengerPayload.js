@@ -9,7 +9,7 @@ const logger = require('../../../components/logger')
 const TAG = 'api/twitterEvents/messengerPayload.js'
 
 const isDetermineFileSizeError = (err) => {
-  if (err && err.message === 'Unable to determine file size') {
+  if (err && (err.message === 'Unable to determine file size' || err.message.includes('Received invalid status code'))) {
     return true
   } else {
     return false
@@ -30,7 +30,7 @@ const prepareMessengerPayloadForVideo = (tweet, savedMsg, tweetId, userName, pag
       if (err) {
         if (!isDetermineFileSizeError(err)) {
           const message = err || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: prepareMessengerPayloadForVideo`, {tweet, savedMsg, tweetId, userName, page}, {}, 'error')  
+          logger.serverLog(message, `${TAG}: prepareMessengerPayloadForVideo`, {tweet, savedMsg, tweetId, userName, page}, {}, 'error')
         } else {
           resolve({url: url})
         }
