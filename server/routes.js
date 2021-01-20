@@ -222,7 +222,7 @@ module.exports = function (app) {
       }
 
       const message = err || `JsonSchemaValidation error`
-      logger.serverLog(message, `${TAG}: ${req.path ? req.path : req.originalUrl}`, req.body, {responseData}, 'error')
+      logger.serverLog(message, `${TAG}: ${req.path ? req.path : req.originalUrl}`, {body: req.body, header: JSON.stringify(req.headers)}, {responseData}, 'error')
 
       res.status(400).json(responseData)
     } else {
