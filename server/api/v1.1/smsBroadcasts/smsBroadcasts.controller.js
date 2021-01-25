@@ -378,7 +378,7 @@ const _createBroadcast = (data, next) => {
     companyId: data.companyId,
     title: data.body.title,
     phoneNumber: data.body.phoneNumber,
-    followUp: data.body.followUp
+    followUp: data.followUp
   }
   if (data.body.segmentation) {
     broadcastPayload.segmentation = data.body.segmentation
