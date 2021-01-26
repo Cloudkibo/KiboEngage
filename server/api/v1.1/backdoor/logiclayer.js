@@ -533,6 +533,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   }
   return { countCriteria: countCriteria, finalCriteria: finalCriteria }
 }
+
 exports.getCriteriasForAutopostingByType = function (req) {
   let matchAggregate = {
     'datetime': req.body.days === 'all' ? { $exists: true } : {
@@ -706,7 +707,7 @@ exports.getMessagesCountForUser = function (companyUser, body, isFacebookInboxMe
   let findCriteria = {
     format: format,
     company_id: companyUser.companyId && companyUser.companyId !== '' ? companyUser.companyId : {$exists: true},
-    replied_by: isFacebookInboxMessages ? {$exists: false} : {$exists: true} 
+    replied_by: isFacebookInboxMessages ? {$exists: false} : {$exists: true}
   }
   if (body.days && body.days !== '') {
     let startDate = new Date() // Current date
