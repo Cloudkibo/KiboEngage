@@ -119,6 +119,15 @@ exports.delete = function (req, res) {
         .then(result => {
           utility.callApi(`landingPage/${req.params.id}`, 'delete', {})
             .then(result => {
+              require('./../../../config/socketio').sendMessageToClient({
+                room_id: req.user.companyId,
+                body: {
+                  action: 'landingPage_delete',
+                  payload: {
+                    landingPageId: req.params.id
+                  }
+                }
+              })
               updateCompanyUsage(req.user.companyId, 'landing_pages', -1)
               sendSuccessResponse(res, 200, result)
             })
