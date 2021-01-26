@@ -115,16 +115,6 @@ exports.delete = function (req, res) {
       let landingPage = landingPages[0]
       utility.callApi(`landingPage/landingPageState/${landingPage.initialState._id}`, 'delete', {})
         .then(result => {
-          if (landingPage.submittedState && landingPage.submittedState.state) {
-            utility.callApi(`landingPage/landingPageState/${landingPage.submittedState.state._id}`, 'delete', {})
-              .then(result => {
-              })
-              .catch(error => {
-                const message = error || 'Internal Server Error'
-                logger.serverLog(message, `${TAG}: exports.delete`, req.body, {user: req.user}, 'error')
-                sendErrorResponse(res, 500, `Failed to delete landingPageState ${JSON.stringify(error)}`)
-              })
-          }
           utility.callApi(`landingPage/${req.params.id}`, 'delete', {})
             .then(result => {
               sendSuccessResponse(res, 200, result)
