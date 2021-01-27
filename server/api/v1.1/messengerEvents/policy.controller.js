@@ -13,8 +13,7 @@ exports.policyNotification = function (req, res) {
       let uniqueUsers = unique(users, '_id')
       for (let i = 0; i < uniqueUsers.length; i++) {
         let user = users[0]
-        let sendgrid = require('sendgrid')(config.sendgrid.username,
-          config.sendgrid.password)
+        let sendgrid = require('sendgrid')(config.SENDGRID_API_KEY)
         let email = new sendgrid.Email({
           to: user.email,
           from: 'support@cloudkibo.com',
