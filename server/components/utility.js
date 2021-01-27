@@ -42,8 +42,7 @@ function checkLastMessageAge (subscriberId, req, callback) {
 }
 
 function getSendGridObject () {
-  let sendgrid = require('sendgrid')(config.sendgrid.username,
-    config.sendgrid.password)
+  let sendgrid = require('sendgrid')(config.SENDGRID_API_KEY)
 
   return sendgrid
 }

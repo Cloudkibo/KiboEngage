@@ -23,9 +23,7 @@ function saveNotification (webhook, req) {
       const message = error || 'Failed to update webhook'
       logger.serverLog(message, `${TAG}: saveNotification`, {webhook}, {}, 'error')
     })
-  let sendgrid = require('sendgrid')(config.sendgrid.username,
-    config.sendgrid.password)
-
+  let sendgrid = require('sendgrid')(config.SENDGRID_API_KEY)
   let email = new sendgrid.Email({
     to: webhook.userId.email,
     from: 'support@cloudkibo.com',
