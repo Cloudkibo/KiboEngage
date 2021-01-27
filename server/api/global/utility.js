@@ -155,7 +155,7 @@ const passwordChangeEmailAlert = function (userId, userEmail) {
       let emailText = 'This is to inform you that you need to reconnect your Facebook account to KiboPush. On the next login on KiboPush, you will be asked to reconnect your Facebook account. This happens in cases when you change your password or disconnect KiboPush app.'
       let email = getPlainEmailObject(userEmail, 'support@cloudkibo.com', 'KiboPush: Reconnect Facebook Account', emailText)
       if (config.env === 'production') {
-        let sendgrid = require('sendgrid')(config.sendgrid.username, config.sendgrid.password)
+        let sendgrid = require('sendgrid')(config.SENDGRID_API_KEY)
         let emailObject = new sendgrid.Email(email)
         sendgrid.send(emailObject, function (err, json) {
           if (err) {

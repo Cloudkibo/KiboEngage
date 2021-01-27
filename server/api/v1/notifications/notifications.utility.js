@@ -20,8 +20,7 @@ function saveNotification (webhook) {
     .catch(error => {
       logger.serverLog(TAG, `Failed to update webhook ${JSON.stringify(error)}`)
     })
-  let sendgrid = require('sendgrid')(config.sendgrid.username,
-    config.sendgrid.password)
+  let sendgrid = require('sendgrid')(config.SENDGRID_API_KEY)
 
   let email = new sendgrid.Email({
     to: webhook.userId.email,
