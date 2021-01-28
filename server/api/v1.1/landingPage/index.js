@@ -9,23 +9,27 @@ const controller = require('./landingPage.controller')
 router.get('/',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
+  auth.doesPlanPermitsThisAction('landing_pages'),
   controller.index)
 
 router.post('/',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('landing_pages'),
   validate({body: validationSchema.createPayload}),
   controller.create)
 
 router.post('/update/:id',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('landing_pages'),
   validate({body: validationSchema.updatePayload}),
   controller.update)
 
 router.delete('/:id',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('landing_pages'),
   controller.delete)
 
 module.exports = router
