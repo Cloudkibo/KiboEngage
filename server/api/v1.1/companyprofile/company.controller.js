@@ -122,8 +122,10 @@ exports.invite = function (req, res) {
                 sendSuccessResponse(res, 200, result)
               })
               .catch((err) => {
-                logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
-                logger.serverLog(TAG, err, 'debug')
+                if (!_isUserError(err, req)) {
+                  const message = err || 'error from invite company profile'
+                  logger.serverLog(message, `${TAG}: exports.invite`, req.body, {user: req.user}, 'error')
+                }
                 sendErrorResponse(res, 500, err)
               })
           }
