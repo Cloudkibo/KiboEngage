@@ -22,7 +22,7 @@ exports.prepareInvitationPayload = (body, number) => {
     recipient_type: 'individual',
     type: 'template',
     template: {
-      namespace: body.payload.templateNameSpace,
+      namespace: body.payload.templateId,
       name: body.payload.templateName,
       language: {
         policy: 'deterministic',
@@ -53,7 +53,7 @@ exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
       let templateArguments = payload.templateArguments.split(',')
       MessageObject.type = 'template'
       MessageObject['template'] = {
-        namespace: payload.templateNameSpace,
+        namespace: payload.templateId,
         name: payload.templateName,
         language: {
           policy: 'deterministic',
