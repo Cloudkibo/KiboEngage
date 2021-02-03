@@ -161,7 +161,7 @@ exports.sendInvitationTemplate = (body) => {
 
 exports.getNormalizedMessageStatusData = (event) => {
   return {
-    messageId: event.payload.id,
+    messageId: event.payload.gsId,
     status: event.payload.type === 'read' ? 'seen' : event.payload.type
   }
 }
