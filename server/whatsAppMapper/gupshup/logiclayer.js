@@ -7,7 +7,7 @@ exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
   let MessageObject = `channel=whatsapp&source=${from}&destination=${to}&src.name=${appName}`
   if (componentType === 'text') {
     if (payload.templateName) {
-      let templateArguments = payload.templateArguments.split(',')
+      let templateArguments = payload.templateArguments ? payload.templateArguments.split(',') : []
       let message = JSON.stringify({
         id: payload.templateId,
         params: templateArguments
@@ -59,9 +59,13 @@ exports.prepareChat = (body, contact, payload) => {
 exports.prepareTemplates = (gupshupTemplates) => {
   let templates = []
   for (let i = 0; i < gupshupTemplates.length; i++) {
-    if (gupshupTemplates[i].status === 'APPROVED' || gupshupTemplates[i].status === 'SANDBOX_REQUESTED') {
+    if (
+      (gupshupTemplates[i].status === 'APPROVED' || gupshupTemplates[i].status === 'SANDBOX_REQUESTED') &&
+      gupshupTemplates[i].templateType === 'TEXT') {
       let template = {}
       template.code = gupshupTemplates[i].languageCode
+      template.type = gupshupTemplates[i].templateType
+      template.vertical = gupshupTemplates[i].vertical
       template.id = gupshupTemplates[i].id
       template.name = gupshupTemplates[i].elementName
       template.text = gupshupTemplates[i].data
@@ -80,7 +84,7 @@ exports.prepareTemplates = (gupshupTemplates) => {
   return templates
 }
 exports.prepareInvitationPayload = (body, number) => {
-  let templateArguments = body.payload.templateArguments.split(',')
+  let templateArguments = body.payload.templateArguments ? body.payload.templateArguments.split(',') : []
   let from = body.whatsApp.businessNumber.replace(/\D/g, '')
   let to = number.replace(/\D/g, '')
   let appName = body.whatsApp.appName
