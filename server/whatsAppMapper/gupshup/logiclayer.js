@@ -17,7 +17,7 @@ exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
       let type = payload.templateType.toLowerCase()
       let message = {type}
       message[type] = {
-        link: 'https://www.buildquickbots.com/whatsapp/media/sample/jpg/sample01.jpg'
+        link: payload.fileurl.url || payload.fileurl
       }
       if (componentType === 'file') {
         message[type].filename = payload.fileName
