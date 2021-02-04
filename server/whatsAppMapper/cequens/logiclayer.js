@@ -5,7 +5,7 @@ exports.prepareTemplates = () => {
   let templates = [
     {
       name: 'cequens_autoreply',
-      namespace: 'c088281d_2079_43e6_820e_5389ef88806d',
+      id: 'c088281d_2079_43e6_820e_5389ef88806d',
       code: 'en',
       text: 'This is automated message regarding to your Ticket No. {{1}}. We have received your request and will get back to you within 1 working day',
       templateArguments: '{{1}}',
@@ -22,7 +22,7 @@ exports.prepareInvitationPayload = (body, number) => {
     recipient_type: 'individual',
     type: 'template',
     template: {
-      namespace: body.payload.templateNameSpace,
+      namespace: body.payload.templateId,
       name: body.payload.templateName,
       language: {
         policy: 'deterministic',
@@ -53,7 +53,7 @@ exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
       let templateArguments = payload.templateArguments.split(',')
       MessageObject.type = 'template'
       MessageObject['template'] = {
-        namespace: payload.templateNameSpace,
+        namespace: payload.templateId,
         name: payload.templateName,
         language: {
           policy: 'deterministic',
