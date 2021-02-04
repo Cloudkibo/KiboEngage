@@ -13,20 +13,22 @@ const auth = require('../../../auth/auth.service')
 router.get('/',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
-  auth.doesPlanPermitsThisAction('invite_team'),
-  auth.doesRolePermitsThisAction('invitationsPermission'),
+  auth.doesPlanPermitsThisAction('invite_members'),
+  auth.isUserAllowedToPerformThisAction('invite_members'),
   controller.index)
 
 router.post('/cancel',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
-  auth.doesPlanPermitsThisAction('invite_team'),
-  auth.doesRolePermitsThisAction('invitationsPermission'),
+  auth.doesPlanPermitsThisAction('invite_members'),
+  auth.isUserAllowedToPerformThisAction('invite_members'),
   controller.cancel)
 
 router.post('/invite',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('invite_members'),
+  auth.isUserAllowedToPerformThisAction('invite_members'),
   validate({body: validationSchema.invitePayload}),
   controller.invite)
 

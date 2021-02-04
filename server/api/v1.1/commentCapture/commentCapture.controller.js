@@ -6,6 +6,7 @@ const { sendErrorResponse, sendSuccessResponse } = require('../../global/respons
 let { sendOpAlert } = require('./../../global/operationalAlert')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
 const async = require('async')
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.index = function (req, res) {
   let criteria = logicLayer.getCriterias(req.body, req.user.companyId)
@@ -49,16 +50,38 @@ const isPostAlreadyExist = function (err) {
 }
 
 exports.create = function (req, res) {
-  getPayloadToSave(req.user, req.body)
-    .then(payloadToSave => {
-      utility.callApi(`comment_capture`, 'post', payloadToSave)
-        .then(postCreated => {
-          sendSuccessResponse(res, 200, postCreated)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage.comment_capture_rules !== -1 && companyUsage.comment_capture_rules >= planUsage.comment_capture_rules) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your comment capture rules limit has reached. Please upgrade your plan to create more rules.`
+            })
+          } else {
+            getPayloadToSave(req.user, req.body)
+              .then(payloadToSave => {
+                utility.callApi(`comment_capture`, 'post', payloadToSave)
+                  .then(postCreated => {
+                    updateCompanyUsage(req.user.companyId, 'comment_capture_rules', 1)
+                    sendSuccessResponse(res, 200, postCreated)
+                  })
+                  .catch((err) => {
+                    sendErrorResponse(res, 500, `Failed to save post ${err}`)
+                  })
+              })
+              .catch((err) => {
+                sendErrorResponse(res, 500, `${err}`)
+              })
+          }
         })
-        .catch((err) => {
-          const message = err || 'Failed to save broadcast'
+        .catch(error => {
+          const message = error || 'Internal Server Error'
           logger.serverLog(message, `${TAG}: exports.create`, req.body, {user: req.user}, 'error')
-          sendErrorResponse(res, 500, `Failed to save post ${err}`)
+          sendErrorResponse(res, 500, `Failed to company usage ${JSON.stringify(error)}`)
         })
     })
     .catch((err) => {
@@ -269,6 +292,7 @@ exports.edit = function (req, res) {
 exports.delete = function (req, res) {
   utility.callApi(`comment_capture/${req.params.id}`, 'delete', {})
     .then(result => {
+      updateCompanyUsage(req.user.companyId, 'comment_capture_rules', -1)
       sendSuccessResponse(res, 200, result)
     })
     .catch(error => {

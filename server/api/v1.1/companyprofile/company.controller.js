@@ -61,6 +61,16 @@ exports.getAdvancedSettings = function (req, res) {
     })
 }
 
+exports.switchToBasicPlan = function (req, res) {
+  utility.callApi(`companyprofile/switchToBasicPlan`, 'get', {}, 'accounts', req.headers.authorization)
+    .then(updatedProfile => {
+      sendSuccessResponse(res, 200, updatedProfile)
+    })
+    .catch(err => {
+      sendErrorResponse(res, 500, `Failed to update company profile ${err}`)
+    })
+}
+
 exports.updateAdvancedSettings = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
     .then(companyUser => {
@@ -93,7 +103,64 @@ const _isUserError = (err, req) => {
 }
 
 exports.invite = function (req, res) {
-  utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, 'accounts', req.headers.authorization)
+  utility.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      utility.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage.members !== -1 && companyUsage.members >= planUsage.members) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your members limit has reached. Please upgrade your plan to invite more members.`
+            })
+          } else {
+            utility.callApi('companyprofile/invite', 'post', {email: req.body.email, name: req.body.name, role: req.body.role}, 'accounts', req.headers.authorization)
+              .then((result) => {
+                logger.serverLog(TAG, 'result from invite endpoint accounts', 'debug')
+                logger.serverLog(TAG, result, 'debug')
+                sendSuccessResponse(res, 200, result)
+              })
+              .catch((err) => {
+                if (!_isUserError(err, req)) {
+                  const message = err || 'error from invite company profile'
+                  logger.serverLog(message, `${TAG}: exports.invite`, req.body, {user: req.user}, 'error')
+                }
+                sendErrorResponse(res, 500, err)
+              })
+          }
+        })
+        .catch(error => {
+          sendErrorResponse(res, 500, `Failed to company usage ${JSON.stringify(error)}`)
+        })
+    })
+    .catch(error => {
+      sendErrorResponse(res, 500, `Failed to plan usage ${JSON.stringify(error)}`)
+    })
+}
+
+exports.getKeys = function (req, res) {
+  utility.callApi('companyprofile/getKeys', 'get', {}, 'accounts', req.headers.authorization)
+    .then((result) => {
+      res.status(200).json({status: 'success', captchaKey: result.captchaKey, stripeKey: result.stripeKey})
+    })
+    .catch((err) => {
+      sendErrorResponse(res, 500, err)
+    })
+}
+
+exports.updatePlan = function (req, res) {
+  utility.callApi('companyprofile/updatePlan', 'post', req.body, 'accounts', req.headers.authorization)
+    .then((payload, description) => {
+      sendSuccessResponse(res, 200, payload, description)
+    })
+    .catch((err) => {
+      sendErrorResponse(res, 500, '', err)
+    })
+}
+
+exports.setCard = function (req, res) {
+  utility.callApi('companyprofile/setCard', 'post', req.body, 'accounts', req.headers.authorization)
     .then((result) => {
       sendSuccessResponse(res, 200, result)
     })
@@ -543,6 +610,23 @@ exports.deleteWhatsAppInfo = function (req, res) {
             },
             function (callback) {
               if (req.body.type === 'Disconnect' && req.body.connected) {
+                let query = {
+                  purpose: 'deleteMany',
+                  match: {companyId: req.user.companyId}
+                }
+                utility.callApi('queue', 'delete', query, 'kiboengage')
+                  .then(data => {
+                    callback(null, data)
+                  })
+                  .catch(err => {
+                    callback(err)
+                  })
+              } else {
+                callback(null)
+              }
+            },
+            function (callback) {
+              if (req.body.type === 'Disconnect' && req.body.connected && company.whatsApp.provider !== 'flockSend') {
                 let query = {
                   purpose: 'deleteMany',
                   match: {companyId: req.user.companyId}
