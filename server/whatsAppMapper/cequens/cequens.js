@@ -3,21 +3,88 @@ const { cequensApiCaller } = require('../../api/global/cequensApiCaller')
 const logger = require('../../components/logger')
 const TAG = 'whatsAppMapper/cequens/cequens.js'
 const utility = require('../../api/v1.1/utility')
+const async = require('async')
 
 exports.setWebhook = (body) => {
   return new Promise((resolve, reject) => {
-    resolve()
+    async.parallelLimit([
+      function (callback) {
+        cequensApiCaller('webhook',
+          'put',
+          body.accessToken,
+          {url: `https://webhook.cloudkibo.com/webhooks/cequens/${body.businessNumber}`,
+            type: 'status'})
+          .then(response => {
+            if (response.body.data) {
+              callback()
+            } else {
+              callback(response.body)
+            }
+          })
+          .catch(error => {
+            reject(error)
+          })
+      },
+      function (callback) {
+        cequensApiCaller('webhook',
+          'put',
+          body.accessToken,
+          {url: `https://webhook.cloudkibo.com/webhooks/cequens/${body.businessNumber}`,
+            type: 'message'})
+          .then(response => {
+            if (response.body.data) {
+              callback()
+            } else {
+              callback(response.body)
+            }
+          })
+          .catch(error => {
+            reject(error)
+          })
+      }
+    ], 10, function (err, results) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve()
+      }
+    })
   })
 }
 exports.verifyCredentials = (body) => {
   return new Promise((resolve, reject) => {
     resolve()
+    // cequensApiCaller(`credentials/${body.clientName}/${body.businessNumber}`,
+    //   'get',
+    //   body.accessToken)
+    //   .then(response => {
+    //     if (response.body.errors) {
+    //       reject(response.body.errors.title)
+    //     } else {
+    //       resolve()
+    //     }
+    //   })
+    //   .catch(error => {
+    //     reject(error)
+    //   })
   })
 }
 exports.getTemplates = (body) => {
   return new Promise((resolve, reject) => {
-    let templates = logicLayer.prepareTemplates()
-    resolve(templates)
+    cequensApiCaller(`templates`,
+      'get',
+      body.whatsApp.accessToken)
+      .then(response => {
+        if (response.body && response.body.data) {
+          let templates = logicLayer.prepareTemplates(response.body.data.commercialTemplates)
+          resolve(templates)
+        } else {
+          reject(response.body)
+        }
+      })
+      .catch(error => {
+        reject(error)
+      })
   })
 }
 exports.sendInvitationTemplate = (body) => {
@@ -27,8 +94,6 @@ exports.sendInvitationTemplate = (body) => {
       requests.push(new Promise((resolve, reject) => {
         setTimeout(() => {
           cequensApiCaller('messages',
-            body.whatsApp.clientName,
-            body.whatsApp.businessNumber,
             'post',
             body.whatsApp.accessToken,
             logicLayer.prepareInvitationPayload(body, body.numbers[j]))
@@ -64,8 +129,6 @@ exports.sendBroadcastMessages = (body) => {
         requests.push(new Promise((resolve, reject) => {
           setTimeout(() => {
             cequensApiCaller('messages',
-              body.whatsApp.clientName,
-              body.whatsApp.businessNumber,
               'post',
               body.whatsApp.accessToken,
               logicLayer.prepareSendMessagePayload(body.whatsApp, body.contacts[j], body.payload[i]))
