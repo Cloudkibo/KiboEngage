@@ -13,7 +13,7 @@ router.post('/allSurveys',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
   auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
+  auth.isUserAllowedToPerformThisAction('view_surveys'),
   validate({body: validationSchema.createPayload}),
   controller.allSurveys)
 
@@ -21,7 +21,7 @@ router.post('/create',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
+  auth.isUserAllowedToPerformThisAction('create_surveys'),
   validate({body: validationSchema.createPayload}),
   controller.create)
 
@@ -29,7 +29,7 @@ router.post('/edit',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
+  auth.isUserAllowedToPerformThisAction('create_surveys'),
   validate({body: validationSchema.createPayload}),
   controller.edit)
 
@@ -37,7 +37,7 @@ router.post('/send',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
+  auth.isUserAllowedToPerformThisAction('resend_surveys'),
   validate({body: validationSchema.createPayload}),
   controller.send)
 
@@ -45,7 +45,7 @@ router.post('/sendSurveyDirectly',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
+  auth.isUserAllowedToPerformThisAction('create_surveys'),
   controller.sendSurveyDirectly)
 
 //  router.post('/submitresponse', controller.submitresponse)
@@ -53,22 +53,22 @@ router.post('/sendSurveyDirectly',
 router.get('/showquestions/:id',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
-  auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
+  auth.doesPlanPermitsThisAction('surveys_reports'),
+  auth.isUserAllowedToPerformThisAction('view_survey_reports'),
   controller.showQuestions)
 
 router.get('/:id',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
-  auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
+  auth.doesPlanPermitsThisAction('surveys_reports'),
+  auth.isUserAllowedToPerformThisAction('view_survey_reports'),
   controller.show) // show survey and responses of the survey
 
 router.delete('/deleteSurvey/:id',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   auth.doesPlanPermitsThisAction('surveys'),
-  auth.doesRolePermitsThisAction('surveyPermission'),
-  controller.deleteSurvey) // show survey and responses of the survey
+  auth.isUserAllowedToPerformThisAction('delete_surveys'),
+  controller.deleteSurvey)
 
 module.exports = router

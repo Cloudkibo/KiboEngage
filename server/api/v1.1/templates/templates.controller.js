@@ -5,6 +5,7 @@ const callApi = require('../utility/index')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const logger = require('../../../components/logger')
 const TAG = 'server/api/v1.1/templates/templates.controller.js'
+const { updateCompanyUsage } = require('../../global/billingPricing')
 
 exports.allPolls = function (req, res) {
   dataLayer.allPolls()
@@ -209,6 +210,9 @@ exports.createPoll = function (req, res) {
   // save model to MongoDB
   dataLayer.createPoll(pollPayload)
     .then(pollCreated => {
+      if (!req.user.isSuperUser) {
+        updateCompanyUsage(req.user.companyId, 'polls_templates', 1)
+      }
       sendSuccessResponse(res, 200, pollCreated)
     })
     .catch(err => {
@@ -226,6 +230,9 @@ exports.createSurvey = function (req, res) {
   dataLayer.createSurveys(surveyPayload)
     .then(survey => {
       // after survey is created, create survey questions
+      if (!req.user.isSuperUser) {
+        updateCompanyUsage(req.user.companyId, 'survey_templates', 1)
+      }
       for (let question in req.body.questions) {
         let options = []
         options = req.body.questions[question].options
@@ -275,18 +282,40 @@ exports.allCategories = function (req, res) {
 }
 
 exports.createCategory = function (req, res) {
-  callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
-    .then(companyUser => {
-      if (!companyUser) {
-        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
-      }
-      let categoryPayload = logicLayer.createDataCategory({ req, companyUser })
-      if (req.user.isSuperUser) {
-        categoryPayload.createdBySuperUser = true
-      }
-      dataLayer.createCategory(categoryPayload)
-        .then(categoryCreated => {
-          sendSuccessResponse(res, 200, categoryCreated)
+  callApi.callApi(`featureUsage/planQuery`, 'post', {planId: req.user.currentPlan})
+    .then(planUsage => {
+      planUsage = planUsage[0]
+      callApi.callApi(`featureUsage/companyQuery`, 'post', {companyId: req.user.companyId})
+        .then(companyUsage => {
+          companyUsage = companyUsage[0]
+          if (planUsage.template_categories !== -1 && companyUsage.template_categories >= planUsage.template_categories) {
+            return res.status(500).json({
+              status: 'failed',
+              description: `Your template categories limit has reached. Please upgrade your plan to create more categories.`
+            })
+          } else {
+            callApi.callApi('companyuser/query', 'post', { domain_email: req.user.domain_email })
+              .then(companyUser => {
+                if (!companyUser) {
+                  sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
+                }
+                let categoryPayload = logicLayer.createDataCategory({ req, companyUser })
+                if (req.user.isSuperUser) {
+                  categoryPayload.createdBySuperUser = true
+                }
+                dataLayer.createCategory(categoryPayload)
+                  .then(categoryCreated => {
+                    updateCompanyUsage(req.user.companyId, 'template_categories', 1)
+                    sendSuccessResponse(res, 200, categoryCreated)
+                  })
+                  .catch(err => {
+                    sendErrorResponse(res, 500, err)
+                  })
+              })
+              .catch(err => {
+                sendErrorResponse(res, 500, err)
+              })
+          }
         })
         .catch(err => {
           const message = err || 'Internal Server Error'
@@ -361,6 +390,9 @@ exports.deletePoll = function (req, res) {
       }
       dataLayer.removePoll(req.params.id)
         .then(success => {
+          if (!req.user.isSuperUser) {
+            updateCompanyUsage(req.user.companyId, 'polls_templates', -1)
+          }
           sendSuccessResponse(res, 200)
         })
         .catch(err => {
@@ -384,6 +416,7 @@ exports.deleteCategory = function (req, res) {
       }
       dataLayer.removeCategory(req.params.id)
         .then(success => {
+          updateCompanyUsage(req.user.companyId, 'template_categories', -1)
           sendSuccessResponse(res, 200)
         })
         .catch(error => {
@@ -407,6 +440,9 @@ exports.deleteSurvey = function (req, res) {
       }
       dataLayer.removeSurvey(req.params.id)
         .then(success => {
+          if (!req.user.companyId) {
+            updateCompanyUsage(req.user.companyId, 'survey_templates', -1)
+          }
           sendSuccessResponse(res, 200)
         })
     })
@@ -517,49 +553,30 @@ exports.createBroadcast = function (req, res) {
           callApi.callApi(`featureUsage/companyQuery`, 'post', { companyId: companyUser.companyId._id })
             .then(companyUsage => {
               companyUsage = companyUsage[0]
-              dataLayer.broadcastFind(companyUser)
-                .then(broadcasts => {
-                  console.log('broadcast template length', broadcasts.length)
-                  if (broadcasts.length >= 10) {
-                    sendErrorResponse(res, 500, {}, 'CANNOT CREATE MORE BROADCAST TEMPLATES!')
-                  } else {
-                    let broadcastPayload = logicLayer.createDataBroadcast(req, companyUser)
-                    if (req.user.isSuperUser) {
-                      broadcastPayload.createdBySuperUser = true
+              if (planUsage.broadcast_templates !== -1 && companyUsage.broadcast_templates >= planUsage.broadcast_templates) {
+                return res.status(500).json({
+                  status: 'failed',
+                  description: `Your broadcast templates limit has reached. Please upgrade your plan to premium in order to create more templates`
+                })
+              } else {
+                let broadcastPayload = logicLayer.createDataBroadcast(req, companyUser)
+                if (req.user.isSuperUser) {
+                  broadcastPayload.createdBySuperUser = true
+                }
+                dataLayer.createBroadcast(broadcastPayload)
+                  .then(broadcastCreated => {
+                    if (!req.user.isSuperUser) {
+                      // update company usage
+                      updateCompanyUsage(req.user.companyId, 'broadcast_templates', 1)
                     }
-                    dataLayer.createBroadcast(broadcastPayload)
-                      .then(broadcastCreated => {
-                        if (!req.user.isSuperUser) {
-                          callApi.callApi('featureUsage/updateCompany', 'put', { query: { companyId: companyUser.companyId._id }, newPayload: { $inc: { broadcast_templates: 1 } }, options: {} })
-                            .then(update => {
-                            })
-                            .catch(err => {
-                              const message = err || 'Internal Server Error'
-                              logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
-                              sendErrorResponse(res, 500, err)
-                            })
-                        }
-                        sendSuccessResponse(res, 200, broadcastCreated)
-                      })
-                      .catch(err => {
-                        const message = err || 'Internal Server Error'
-                        logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
-                        sendErrorResponse(res, 500, err)
-                      })
-                  }
-                })
-                .catch(err => {
-                  const message = err || 'Internal Server Error'
-                  logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
-                  sendErrorResponse(res, 500, err)
-                })
-              // add paid plan check later
-              // if (planUsage.polls !== -1 && companyUsage.polls >= planUsage.polls) {
-              //   return res.status(500).json({
-              //     status: 'failed',
-              //     description: `Your polls limit has reached. Please upgrade your plan to premium in order to create more polls`
-              //   })
-              // }
+                    sendSuccessResponse(res, 200, broadcastCreated)
+                  })
+                  .catch(err => {
+                    const message = err || 'Internal Server Error'
+                    logger.serverLog(message, `${TAG}: exports.createBroadcast`, req.body, {user: req.user}, 'error')
+                    sendErrorResponse(res, 500, err)
+                  })
+              }
             })
             .catch(err => {
               const message = err || 'Internal Server Error'
@@ -723,6 +740,9 @@ exports.deleteBroadcast = function (req, res) {
       }
       dataLayer.removeBroadcast(broadcast)
         .then(success => {
+          if (!req.user.isSuperUser) {
+            updateCompanyUsage(req.user.companyId, 'broadcast_templates', -1)
+          }
           return res.status(500).json({ status: 'success' })
         })
         .catch(error => {

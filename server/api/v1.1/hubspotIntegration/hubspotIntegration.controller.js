@@ -14,6 +14,8 @@ const {
   populateCustomFieldColumns
 } = require('./../../global/externalIntegrations')
 const {defaultFieldcolumn} = require('./hubspotDefaultFields')
+const { updateCompanyUsage } = require('../../global/billingPricing')
+
 exports.auth = function (req, res) {
   // Build the auth URL
   const authUrl =
@@ -76,6 +78,7 @@ exports.callback = function (req, res) {
                   }
                   dataLayer.create(payload)
                     .then(created => {
+                      updateCompanyUsage(companyId, 'external_integrations', 1)
                       res.redirect('/successMessage')
                     })
                     .catch(err => {
