@@ -32,6 +32,7 @@ exports.prepareInvitationPayload = (body, number) => {
 exports.prepareTemplates = () => {
   let templates = [
     {
+      type: 'TEXT',
       name: 'registration_code',
       text: 'Your {{1}} code is {{2}}',
       templateArguments: '{{1}},{{2}}',
@@ -39,6 +40,7 @@ exports.prepareTemplates = () => {
       buttons: []
     },
     {
+      type: 'TEXT',
       name: 'appointment_reminder',
       text: 'Your appointment is coming up on {{1}} at {{2}}',
       templateArguments: '{{1}},{{2}}',
@@ -46,6 +48,7 @@ exports.prepareTemplates = () => {
       buttons: []
     },
     {
+      type: 'TEXT',
       name: 'order_update',
       text: 'Your {{1}} order of {{2}} has shipped and should be delivered on {{3}}. Details: {{4}}',
       templateArguments: '{{1}},{{2}},{{3}},{{4}}',
