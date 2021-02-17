@@ -75,6 +75,7 @@ exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
       MessageObject.type = 'template'
       MessageObject['template'] = {
         namespace: 'c088281d_2079_43e6_820e_5389ef88806d',
+        namespace: payload.templateId,
         name: payload.templateName,
         language: {
           policy: 'deterministic',
