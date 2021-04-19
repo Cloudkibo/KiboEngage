@@ -81,6 +81,7 @@ module.exports = function (app) {
   app.use('/api/whatsAppEvents', require('./api/v1.1/whatsAppEvents'))
   app.use('/api/permissions', require('./api/v1/permissions'))
   app.use('/api/companyPreferences', require('./api/v1.1/companyPreferences'))
+  app.use('/api/plans', require('./api/v1.1/plans'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
