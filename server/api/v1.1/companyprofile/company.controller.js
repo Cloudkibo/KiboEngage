@@ -258,7 +258,7 @@ const _checkTwilioVersion = (data, next) => {
     whatsAppMapper(data.body.provider, ActionTypes.CHECK_TWILLO_VERSION, data.body)
       .then(response => {
         let businessNumbers = response.businessNumbers
-        response = responseVersionResponse
+        response = response.twilioVersionResponse
         if (response.body.type === 'Trial' && !data.body.sandBoxCode) {
           next(new Error('This is a trial account. Please connect a paid version of Twilio account.'))
         } else if (response.body.type === 'full' && !businessNumbers.includes(data.body.businessNumber)) {
