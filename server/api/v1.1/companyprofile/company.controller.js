@@ -1,13 +1,13 @@
 const logger = require('../../../components/logger')
 const TAG = 'api/companyprofile/company.controller.js'
 const utility = require('../utility')
-const needle = require('needle')
-const config = require('../../../config/environment/index')
 const logicLayer = require('./company.logiclayer.js')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const async = require('async')
 const {ActionTypes} = require('../../../whatsAppMapper/constants')
 const {whatsAppMapper} = require('../../../whatsAppMapper/whatsAppMapper')
+const { smsMapper } = require('./../../../smsMapper')
+const smsActionTypes = require('./../../../smsMapper/constants')
 
 exports.members = function (req, res) {
   utility.callApi(`companyprofile/members`, 'get', {}, 'accounts', req.headers.authorization)
@@ -141,88 +141,39 @@ exports.updateAutomatedOptions = function (req, res) {
     })
 }
 
-exports.updatePlatform = function (req, res) {
-  utility.callApi(`companyUser/query`, 'post', {domain_email: req.user.domain_email}) // fetch company user
-    .then(companyUser => {
-      if (!companyUser) {
-        sendErrorResponse(res, 404, '', 'The user account does not belong to any company. Please contact support')
-      }
-      needle.get(
-        `https://${req.body.twilio.accountSID}:${req.body.twilio.authToken}@api.twilio.com/2010-04-01/Accounts`,
-        (err, resp) => {
-          if (err) {
-            sendErrorResponse(res, 401, '', 'unable to authenticate twilio account')
-          }
-          if (resp.statusCode === 200) {
-            let accountSid = req.body.twilio.accountSID
-            let authToken = req.body.twilio.authToken
-            let client = require('twilio')(accountSid, authToken)
-            client.incomingPhoneNumbers
-              .list().then((incomingPhoneNumbers) => {
-                if (incomingPhoneNumbers && incomingPhoneNumbers.length > 0) {
-                  utility.callApi(`companyprofile/update`, 'put', {
-                    query: {_id: companyUser.companyId},
-                    newPayload: {
-                      twilio: {accountSID: req.body.twilio.accountSID, authToken: req.body.twilio.authToken},
-                      planId: req.user.purchasedPlans['sms'] ? req.user.purchasedPlans['sms'] : req.user.purchasedPlans['general']
-                    },
-                    options: {}})
-                    .then(updatedProfile => {
-                      _updateUserPlatform(req, res)
-                    })
-                    .catch(err => {
-                      const message = err || 'Internal Server Error'
-                      logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
-                      sendErrorResponse(res, 500, '', `Failed to update company profile ${err}`)
-                    })
-                  for (let i = 0; i < incomingPhoneNumbers.length; i++) {
-                    client.incomingPhoneNumbers(incomingPhoneNumbers[i].sid)
-                      .update({
-                        accountSid: req.body.twilio.accountSID,
-                        smsUrl: `${config.api_urls['webhook']}/webhooks/twilio/receiveSms`
-                      })
-                      .then(result => {
-                      })
-                  }
-                } else {
-                  const message = err || 'Internal Server Error'
-                  logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'info')
-                  sendErrorResponse(res, 500, '', 'The twilio account doesnot have any twilio number')
-                }
-              })
-          } else {
-            const message = err || 'Internal Server Error'
-            logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'info')
-            sendErrorResponse(res, 404, '', 'Twilio account not found. Please enter correct details')
-          }
-        })
-    })
-    .catch(error => {
-      const message = error || 'Internal Server Error'
-      logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, `Failed to company user ${JSON.stringify(error)}`)
-    })
+exports.connectSMS = async function (req, res) {
+  try {
+    req.body.businessNumber = req.body.businessNumber.replace(/[- )(]/g, '')
+    let query = [
+      {$match: {_id: {$ne: req.user.companyId}, 'sms.businessNumber': req.body.businessNumber, 'sms.provider': req.body.provider}},
+      {$lookup: {from: 'users', localField: 'ownerId', foreignField: '_id', as: 'user'}},
+      {'$unwind': '$user'}
+    ]
+    const companyprofile = await utility.callApi(`companyprofile/aggregate`, 'post', query) // fetch company user
+    if (!companyprofile[0]) {
+      await smsMapper(req.body.provider, smsActionTypes.ActionTypes.VERIFY_CREDENTIALS, req.body)
+      await smsMapper(req.body.provider, smsActionTypes.ActionTypes.SET_WEBHOOK, req.body)
+      await utility.callApi(`companyprofile/update`, 'put', {
+        query: {_id: req.user.companyId},
+        newPayload: {
+          sms: req.body,
+          planId: req.user.purchasedPlans['sms'] ? req.user.purchasedPlans['sms'] : req.user.purchasedPlans['general']
+        },
+        options: {}})
+      const companyUsers = await utility.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
+      let userIds = companyUsers.map(companyUser => companyUser.userId._id)
+      await utility.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: 'sms'} }, options: {multi: true}})
+      sendSuccessResponse(res, 200, 'saved succesfully')
+    } else {
+      sendErrorResponse(res, 500, '', `This number is already connected by ${companyprofile[0].user.email}. Please contact them.`)
+    }
+  } catch (err) {
+    const message = err || 'Failed to connect sms'
+    logger.serverLog(message, `${TAG}: exports.connectSMS`, req.body, { user: req.user }, 'error')
+    sendErrorResponse(res, 500, `Failed to connect sms ${err}`)
+  }
 }
 
-const _updateUserPlatform = (req, res) => {
-  utility.callApi(`companyUser/queryAll`, 'post', {companyId: req.user.companyId}, 'accounts')
-    .then(companyUsers => {
-      let userIds = companyUsers.map(companyUser => companyUser.userId._id)
-      utility.callApi(`user/update`, 'post', {query: {_id: {$in: userIds}}, newPayload: { $set: {platform: 'sms'} }, options: {multi: true}})
-        .then(updatedProfile => {
-          sendSuccessResponse(res, 200, updatedProfile)
-        })
-        .catch(err => {
-          const message = err || 'Internal Server Error'
-          logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {user: req.user}, 'error')
-          sendErrorResponse(res, 500, '', err)
-        })
-    }).catch(err => {
-      const message = err
-      logger.serverLog(message, `${TAG}: _updateUserPlatform`, req.body, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, '', err)
-    })
-}
 const _updateCompanyProfile = (data, next) => {
   // if (!data.body.changeWhatsAppTwilio) {
   //   let newPayload = {twilioWhatsApp: {
@@ -307,7 +258,7 @@ const _checkTwilioVersion = (data, next) => {
     whatsAppMapper(data.body.provider, ActionTypes.CHECK_TWILLO_VERSION, data.body)
       .then(response => {
         let businessNumbers = response.businessNumbers
-        response = response.twilioVersionResponse
+        response = responseVersionResponse
         if (response.body.type === 'Trial' && !data.body.sandBoxCode) {
           next(new Error('This is a trial account. Please connect a paid version of Twilio account.'))
         } else if (response.body.type === 'full' && !businessNumbers.includes(data.body.businessNumber)) {

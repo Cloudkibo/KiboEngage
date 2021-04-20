@@ -43,11 +43,11 @@ router.post('/updateAutomatedOptions',
   auth.hasRole('buyer'),
   controller.updateAutomatedOptions)
 
-router.post('/updatePlatform',
+router.post('/connectSMS',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
-  validate({body: validationSchema.updatePlatformPayload}),
-  controller.updatePlatform)
+  validate({body: validationSchema.connectSMS}),
+  controller.connectSMS)
 
 router.post('/fetchValidCallerIds',
   auth.isAuthenticated(),

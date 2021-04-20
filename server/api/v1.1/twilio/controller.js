@@ -44,8 +44,8 @@ exports.verifyNumber = function (req, res) {
   callApi('companyprofile/query', 'post', {_id: req.user.companyId})
     .then(company => {
       if (company) {
-        if (company.twilio) {
-          const twilioClient = require('twilio')(company.twilio.accountSID, company.twilio.authToken)
+        if (company.sms) {
+          const twilioClient = require('twilio')(company.sms.accountSID, company.sms.authToken)
           middleware.verifyPhoneNumber(req.body.number, twilioClient)
             .then(valid => {
               sendSuccessResponse(res, 200, null, 'Number is valid')
