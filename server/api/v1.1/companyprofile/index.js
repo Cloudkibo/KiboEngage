@@ -54,16 +54,16 @@ router.post('/updateAutomatedOptions',
   auth.hasRole('buyer'),
   controller.updateAutomatedOptions)
 
+router.post('/connectSMS',           
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
+  validate({body: validationSchema.connectSMS}),
+  controller.connectSMS)
+
 router.get('/switchToBasicPlan',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   controller.switchToBasicPlan)
-
-router.post('/updatePlatform',
-  auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer('write'),
-  validate({body: validationSchema.updatePlatformPayload}),
-  controller.updatePlatform)
 
 router.post('/fetchValidCallerIds',
   auth.isAuthenticated(),

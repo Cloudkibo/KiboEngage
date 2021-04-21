@@ -20,7 +20,7 @@ exports.getCriterias = function (body) {
     findCriteria = Object.assign(findCriteria, {'connectFacebook': true})
   }
   if (body.filter_criteria.platform_value !== '' && body.filter_criteria.platform_value === 'sms') {
-    findCriteriaPlatform = Object.assign(findCriteriaPlatform, {'companyId.twilio': {$exists: true}})
+    findCriteriaPlatform = Object.assign(findCriteriaPlatform, {'companyId.sms': {$exists: true}})
   }
   if (body.filter_criteria.platform_value !== '' && body.filter_criteria.platform_value === 'whatsApp') {
     findCriteriaPlatform.$and = [{'companyId.whatsApp': {$exists: true}}, {'companyId.whatsApp.connected': true}]
@@ -32,7 +32,7 @@ exports.getCriterias = function (body) {
         {'companyId.whatsApp': {$exists: false}},
         {'companyId.whatsApp.connected': false}
       ]},
-      {'companyId.twilio': {$exists: false}}
+      {'companyId.sms': {$exists: false}}
     ]
   }
   if (body.first_page) {
