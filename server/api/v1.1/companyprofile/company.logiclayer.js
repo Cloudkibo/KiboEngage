@@ -24,8 +24,7 @@ exports.getPlatformForWhatsApp = function (company, user) {
 exports.sendInHouseEmail = function (user, body) {
   sgMail.setApiKey(config.SENDGRID_API_KEY)
   const msg = {
-    // to: ['sojharo@cloudkibo.com', 'jawaid@cloudkibo.com', 'imran@cloudkibo.com'],
-    to: ['anisha@cloudkibo.com'],
+    to: ['sojharo@cloudkibo.com', 'jawaid@cloudkibo.com', 'imran@cloudkibo.com'],
     from: 'support@cloudkibo.com',
     subject: 'KiboPush: Enterprise plan selected'
   }
