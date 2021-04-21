@@ -154,8 +154,8 @@ exports.getTwilioNumbers = function (req, res) {
   let numbers = []
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email, populate: 'companyId' }) // fetch company user
     .then(companyuser => {
-      let accountSid = companyuser.companyId.twilio.accountSID
-      let authToken = companyuser.companyId.twilio.authToken
+      let accountSid = companyuser.companyId.sms.accountSID
+      let authToken = companyuser.companyId.sms.authToken
       let client = require('twilio')(accountSid, authToken)
       client.incomingPhoneNumbers
         .list().then((incomingPhoneNumbers) => {
@@ -310,8 +310,8 @@ exports.sendFollowupBroadcast = function (req, res) {
 const _fetchCompany = (data, next) => {
   utility.callApi(`companyprofile/query`, 'post', {_id: data.companyId})
     .then(company => {
-      let accountSid = company.twilio.accountSID
-      let authToken = company.twilio.authToken
+      let accountSid = company.sms.accountSID
+      let authToken = company.sms.authToken
       let client = require('twilio')(accountSid, authToken)
       data.client = client
       next()
