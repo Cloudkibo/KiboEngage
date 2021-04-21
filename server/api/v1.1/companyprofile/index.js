@@ -7,9 +7,11 @@ const validationSchema = require('./validationSchema')
 const controller = require('./company.controller')
 const { attachProviderInfo } = require('../../middleware/whatsApp.middleware')
 
-router.get('/members',
+router.get('/members', // fetch team acount members (users)
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
+  auth.doesPlanPermitsThisAction('team_members_management'),
+  auth.isUserAllowedToPerformThisAction('view_members'),
   controller.members)
 
 router.get('/getAutomatedOptions',
@@ -17,24 +19,33 @@ router.get('/getAutomatedOptions',
   auth.isSuperUserActingAsCustomer(),
   controller.getAutomatedOptions)
 
-router.get('/getAdvancedSettings',
-  auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer(),
-  controller.getAdvancedSettings)
-
-router.post('/updateAdvancedSettings',
+router.post('/invite', // invite user to jion team account
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
-  controller.updateAdvancedSettings)
-
-router.post('/invite',
-  auth.isAuthenticated(),
-  auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('invite_members'),
+  auth.isUserAllowedToPerformThisAction('invite_members'),
   controller.invite)
 
-router.post('/updateRole',
+router.get('/getKeys',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
+  controller.getKeys)
+
+router.post('/setCard',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  controller.setCard)
+
+router.post('/updatePlan',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
+  controller.updatePlan)
+
+router.post('/updateRole', // update user role
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('team_members_management'),
+  auth.isUserAllowedToPerformThisAction('update_role'),
   controller.updateRole)
 
 router.post('/updateAutomatedOptions',
@@ -43,11 +54,16 @@ router.post('/updateAutomatedOptions',
   auth.hasRole('buyer'),
   controller.updateAutomatedOptions)
 
-router.post('/connectSMS',
+router.post('/connectSMS',           
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
   validate({body: validationSchema.connectSMS}),
   controller.connectSMS)
+
+router.get('/switchToBasicPlan',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
+  controller.switchToBasicPlan)
 
 router.post('/fetchValidCallerIds',
   auth.isAuthenticated(),
@@ -76,11 +92,15 @@ router.post('/deleteWhatsAppInfo',
 router.get('/getAdvancedSettings',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer(),
+  auth.doesPlanPermitsThisAction('advanced_settings'),
+  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   controller.getAdvancedSettings)
 
 router.post('/updateAdvancedSettings',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
+  auth.doesPlanPermitsThisAction('advanced_settings'),
+  auth.isUserAllowedToPerformThisAction('manage_advanced_settings'),
   validate({body: validationSchema.advancedSettingsPayload}),
   controller.updateAdvancedSettings)
 

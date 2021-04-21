@@ -533,6 +533,7 @@ exports.getAllSubscribersCriteria = function (pageid, body) {
   }
   return { countCriteria: countCriteria, finalCriteria: finalCriteria }
 }
+
 exports.getCriteriasForAutopostingByType = function (req) {
   let matchAggregate = {
     'datetime': req.body.days === 'all' ? { $exists: true } : {

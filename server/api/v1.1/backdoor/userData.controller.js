@@ -71,7 +71,7 @@ exports.getUserSummary = function (req, res) {
             .then(pages => {
               let pageIds = []
               for (let i = 0; i < pages.length; i++) {
-                pageIds.push(pages[i]._id) 
+                pageIds.push(pages[i]._id)
               }
               let subscriberCriteria = LogicLayer.getSubscribersCountForUser(req.body, pageIds)
               utility.callApi(`subscribers/aggregate`, 'post', subscriberCriteria)

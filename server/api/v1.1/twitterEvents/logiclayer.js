@@ -254,6 +254,7 @@ const handleTweetForMessenger = (tagline, text, tweet, urls, savedMsg, tweetId, 
       }
     } else if (urls.length > 0 && button) {
       MessengerPayload.prepareMessengerPayloadForLink(urls, savedMsg, tweetId, userName, screenName).then(linkpayload => {
+        console.log('linkpayload.messageData', linkpayload.messageData)
         payload.push(linkpayload.messageData)
         if (!linkpayload.showButton) { // remove button from text
           payload[0] = {
