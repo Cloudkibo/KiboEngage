@@ -6,6 +6,7 @@ const logger = require('../../../components/logger')
 const TAG = 'smsBroadcasts.controller.js'
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const async = require('async')
+const { incrementCompanyUsageMessage, fetchUsages } = require('../utility/miscApiCalls.controller')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -83,54 +84,66 @@ const _getContacts = (data) => {
   })
 }
 exports.sendBroadcast = function (req, res) {
-  let query = logicLayer.prepareQueryToGetContacts(req.body, req.user.companyId)
-  req.body.message = req.body.payload
-  let data = {
-    body: req.body,
-    companyId: req.user.companyId,
-    userId: req.user._id,
-    sent: 0,
-    followUp: false,
-    query: query
-  }
-  async.series([
-    _getContactsCount.bind(null, data),
-    _createBroadcast.bind(null, data),
-    _fetchCompany.bind(null, data)
-  ], function (err) {
-    if (err) {
-      const message = err || 'Failed to send broadcast'
-      logger.serverLog(message,
-        `${TAG}: exports.sendBroadcast`,
-        req.body,
-        {data},
-        message.includes('No contacts') ? 'info' : 'error')
+  fetchUsages(req.user.companyId, req.user.purchasedPlans['sms'], 'sms')
+    .then(({companyUsage, planUsage}) => {
+      if (companyUsage.messages >= planUsage.messages) {
+        sendErrorResponse(res, 500, '', `You have consumed the resources for current billing cycle. So, you won't be able to send any more messages. Your resources will be reset starting next billing cycle`)
+      } else {
+        let query = logicLayer.prepareQueryToGetContacts(req.body, req.user.companyId)
+        req.body.message = req.body.payload
+        let data = {
+          body: req.body,
+          companyId: req.user.companyId,
+          userId: req.user._id,
+          sent: 0,
+          followUp: false,
+          query: query
+        }
+        async.series([
+          _getContactsCount.bind(null, data),
+          _createBroadcast.bind(null, data),
+          _fetchCompany.bind(null, data)
+        ], function (err) {
+          if (err) {
+            const message = err || 'Failed to send broadcast'
+            logger.serverLog(message,
+              `${TAG}: exports.sendBroadcast`,
+              req.body,
+              {data},
+              message.includes('No contacts') ? 'info' : 'error')
+            sendErrorResponse(res, 500, '', err)
+          } else {
+            data.query.push({$limit: 50})
+            _getContacts(data)
+              .then(resp => {
+                _updateBroadcast(resp)
+                require('./../../../config/socketio').sendMessageToClient({
+                  room_id: req.user.companyId,
+                  body: {
+                    action: 'new_sms_broadcast',
+                    payload: {
+                      broadcast: data.broadcast,
+                      sent: data.sent,
+                      user_id: req.user._id
+                    }
+                  }
+                })
+                sendSuccessResponse(res, 200, '', 'Broadcast sent successfully')
+              })
+              .catch((err) => {
+                const message = err || 'Failed to sendBroadcast'
+                logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
+                sendErrorResponse(res, 500, '', err)
+              })
+          }
+        })
+      }
+    })
+    .catch((err) => {
+      const message = err || 'Failed to fetch usages'
+      logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', err)
-    } else {
-      data.query.push({$limit: 50})
-      _getContacts(data)
-        .then(resp => {
-          _updateBroadcast(resp)
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: req.user.companyId,
-            body: {
-              action: 'new_sms_broadcast',
-              payload: {
-                broadcast: data.broadcast,
-                sent: data.sent,
-                user_id: req.user._id
-              }
-            }
-          })
-          sendSuccessResponse(res, 200, '', 'Broadcast sent successfully')
-        })
-        .catch((err) => {
-          const message = err || 'Failed to sendBroadcast'
-          logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
-          sendErrorResponse(res, 500, '', err)
-        })
-    }
-  })
+    })
 }
 
 exports.getCount = function (req, res) {
@@ -259,53 +272,65 @@ exports.responses = function (req, res) {
   }
 }
 exports.sendFollowupBroadcast = function (req, res) {
-  let data = {
-    body: req.body,
-    companyId: req.user.companyId,
-    userId: req.user._id,
-    sent: 0,
-    followUp: true
-  }
-  let query = logicLayer.getCriteriaForFollowUp(data.body, data.companyId)
-  data.query = query
-  async.series([
-    _getSubscribersCount.bind(null, data),
-    _createBroadcast.bind(null, data),
-    _fetchCompany.bind(null, data)
-  ], function (err) {
-    if (err) {
-      const message = err || 'Failed to sendFollowupBroadcast'
-      logger.serverLog(message,
-        `${TAG}: exports.sendFollowupBroadcast`,
-        req.body,
-        {data},
-        message.includes('No contacts') ? 'info' : 'error')
+  fetchUsages(req.user.companyId, req.user.purchasedPlans['sms'], 'sms')
+    .then(({companyUsage, planUsage}) => {
+      if (companyUsage.messages >= planUsage.messages) {
+        sendErrorResponse(res, 500, '', `You have consumed the resources for current billing cycle. So, you won't be able to send any more messages. Your resources will be reset starting next billing cycle`)
+      } else {
+        let data = {
+          body: req.body,
+          companyId: req.user.companyId,
+          userId: req.user._id,
+          sent: 0,
+          followUp: true
+        }
+        let query = logicLayer.getCriteriaForFollowUp(data.body, data.companyId)
+        data.query = query
+        async.series([
+          _getSubscribersCount.bind(null, data),
+          _createBroadcast.bind(null, data),
+          _fetchCompany.bind(null, data)
+        ], function (err) {
+          if (err) {
+            const message = err || 'Failed to sendFollowupBroadcast'
+            logger.serverLog(message,
+              `${TAG}: exports.sendFollowupBroadcast`,
+              req.body,
+              {data},
+              message.includes('No contacts') ? 'info' : 'error')
+            sendErrorResponse(res, 500, '', err)
+          } else {
+            data.query.limit = 50
+            _getSubscribers(data)
+              .then(resp => {
+                _updateBroadcast(resp)
+                require('./../../../config/socketio').sendMessageToClient({
+                  room_id: req.user.companyId,
+                  body: {
+                    action: 'new_sms_broadcast',
+                    payload: {
+                      broadcast: data.broadcast,
+                      sent: data.sent,
+                      user_id: req.user._id
+                    }
+                  }
+                })
+                sendSuccessResponse(res, 200, 'Broadcast sent successfully')
+              })
+              .catch((err) => {
+                const message = err || 'Failed to sendFollowupBroadcast'
+                logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
+                sendErrorResponse(res, 500, '', err)
+              })
+          }
+        })
+      }
+    })
+    .catch((err) => {
+      const message = err || 'Failed to fetch usages'
+      logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {}, 'error')
       sendErrorResponse(res, 500, '', err)
-    } else {
-      data.query.limit = 50
-      _getSubscribers(data)
-        .then(resp => {
-          _updateBroadcast(resp)
-          require('./../../../config/socketio').sendMessageToClient({
-            room_id: req.user.companyId,
-            body: {
-              action: 'new_sms_broadcast',
-              payload: {
-                broadcast: data.broadcast,
-                sent: data.sent,
-                user_id: req.user._id
-              }
-            }
-          })
-          sendSuccessResponse(res, 200, 'Broadcast sent successfully')
-        })
-        .catch((err) => {
-          const message = err || 'Failed to sendFollowupBroadcast'
-          logger.serverLog(message, `${TAG}: exports.sendFollowupBroadcast`, req.body, {data}, 'error')
-          sendErrorResponse(res, 500, '', err)
-        })
-    }
-  })
+    })
 }
 const _fetchCompany = (data, next) => {
   utility.callApi(`companyprofile/query`, 'post', {_id: data.companyId})
@@ -400,6 +425,7 @@ const _updateBroadcast = (data) => {
       const message = err || 'error at updating broadcast'
       logger.serverLog(message, `${TAG}: _updateBroadcast`, data, {}, 'error')
     })
+  incrementCompanyUsageMessage(data.broadcast.companyId, 'sms', data.sent)
 }
 const _sendBroadcast = (data, next) => {
   return new Promise((resolve, reject) => {
