@@ -18,6 +18,10 @@ function callAction (action, data, provider) {
       return provider.verifyCredentials(data)
     case ActionTypes.SET_WEBHOOK:
       return provider.setWebhook(data)
+    case ActionTypes.CREATE_ORDER:
+      return provider.createOrder(data)
+    case ActionTypes.FETCH_AVAILABLE_NUMBERS:
+      return provider.fetchAvailableNumbers(data)
     default:
   }
 }
