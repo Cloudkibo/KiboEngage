@@ -1,4 +1,6 @@
+const { Client, ApiController } = require('@bandwidth/messaging')
 const numbers = require('@bandwidth/numbers')
+let config = require('../../config/environment')
 const { callApi } = require('../../api/v1.1/utility')
 
 exports.verifyCredentials = (body) => {
@@ -13,18 +15,50 @@ exports.setWebhook = (body) => {
   })
 }
 
-exports.getCompany = (body) => {
+exports.sendTextMessage = ({text, company, subscriber}) => {
   return new Promise((resolve, reject) => {
-    callApi(`companyprofile/query`, 'post', {'sms.accountId': body.AccountSid})
-      .then(company => { resolve(company) })
-      .catch(err => { reject(err) })
+    let data = company.sms.accountType === 'cloudkibo' ? config.sms : company.sms
+    const controller = bandwidthClient(data)
+    controller.createMessage(data.accountId, {
+      applicationId: data.appId,
+      to: [subscriber.number],
+      from: company.sms.businessNumber,
+      text: text
+    })
+      .then(res => {
+        resolve({status: 'success'})
+      })
+      .catch(err => {
+        reject(err)
+      })
   })
 }
 
-exports.fetchAvailableNumbers = ({company, query}) => {
+exports.sendMediaMessage = ({text, mediaUrl, company, subscriber}) => {
+  return new Promise((resolve, reject) => {
+    let data = company.sms.accountType === 'cloudkibo' ? config.sms : company.sms
+    const controller = bandwidthClient(data)
+    controller.createMessage(data.accountId, {
+      applicationId: data.appId,
+      to: [subscriber.number],
+      media: mediaUrl,
+      from: company.sms.businessNumber,
+      text: text
+    })
+      .then(res => {
+        resolve({status: 'success'})
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}
+
+exports.fetchAvailableNumbers = ({query}) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const client = new numbers.Client(company.sms.accountId, company.sms.username, company.sms.password)
+      let data = config.sms
+      const client = new numbers.Client(data.accountId, data.username, data.password)
       const availableNumbers = await numbers.AvailableNumbers.listAsync(client, query)
       if (availableNumbers.telephoneNumberList && availableNumbers.telephoneNumberList.telephoneNumber) {
         resolve(availableNumbers.telephoneNumberList.telephoneNumber)
@@ -39,9 +73,10 @@ exports.fetchAvailableNumbers = ({company, query}) => {
 
 exports.createOrder = ({company, body}) => {
   return new Promise(async (resolve, reject) => {
-    numbers.Client.globalOptions.accountId = company.sms.accountId
-    numbers.Client.globalOptions.userName = company.sms.username
-    numbers.Client.globalOptions.password = company.sms.password
+    let data = config.sms
+    numbers.Client.globalOptions.accountId = data.accountId
+    numbers.Client.globalOptions.userName = data.username
+    numbers.Client.globalOptions.password = data.password
     let order = {
       name: company._id,
       siteId: body.siteId,
@@ -57,4 +92,13 @@ exports.createOrder = ({company, body}) => {
       }
     })
   })
+}
+
+function bandwidthClient (company) {
+  const client = new Client({
+    basicAuthUserName: company.username,
+    basicAuthPassword: company.password
+  })
+  const controller = new ApiController(client)
+  return controller
 }

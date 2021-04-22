@@ -1,12 +1,13 @@
 const logicLayer = require('./smsBroadcasts.logiclayer')
 const dataLayer = require('./smsBroadcasts.datalayer')
 const utility = require('../utility')
-let config = require('./../../../config/environment')
 const logger = require('../../../components/logger')
 const TAG = 'smsBroadcasts.controller.js'
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 const async = require('async')
 const { incrementCompanyUsageMessage, fetchUsages } = require('../utility/miscApiCalls.controller')
+const { ActionTypes } = require('../../../smsMapper/constants')
+const { smsMapper } = require('../../../smsMapper')
 
 exports.index = function (req, res) {
   utility.callApi(`companyUser/query`, 'post', { domain_email: req.user.domain_email }) // fetch company user
@@ -335,10 +336,7 @@ exports.sendFollowupBroadcast = function (req, res) {
 const _fetchCompany = (data, next) => {
   utility.callApi(`companyprofile/query`, 'post', {_id: data.companyId})
     .then(company => {
-      let accountSid = company.sms.accountSID
-      let authToken = company.sms.authToken
-      let client = require('twilio')(accountSid, authToken)
-      data.client = client
+      data.company = company
       next()
     })
     .catch((err) => {
@@ -432,13 +430,11 @@ const _sendBroadcast = (data, next) => {
     let requests = []
     for (let i = 0; i < data.contacts.length; i++) {
       requests.push(new Promise((resolve, reject) => {
-        data.client.messages
-          .create({
-            body: data.body.message[0].text,
-            from: data.body.phoneNumber,
-            to: data.contacts[i].number,
-            statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${data.broadcast._id}`
-          })
+        smsMapper(data.company.sms.provider, ActionTypes.SEND_TEXT_MESSAGE, {
+          text: data.body.message[0].text,
+          company: data.company,
+          subscriber: data.contacts[i]
+        })
           .then(response => {
             data.sent = data.sent + 1
             resolve(response)

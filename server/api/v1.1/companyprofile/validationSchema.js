@@ -19,18 +19,13 @@ exports.invitePayload = {
 exports.connectSMS = {
   'type': 'object',
   'properties': {
-    twilio: {
-      type: 'object',
-      properties: {
-        provider: {
-          type: 'string',
-          required: true
-        },
-        businessNumber: {
-          type: 'string',
-          required: true
-        }
-      }
+    provider: {
+      type: 'string',
+      required: true
+    },
+    businessNumber: {
+      type: 'string',
+      required: true
     }
   }
 }
