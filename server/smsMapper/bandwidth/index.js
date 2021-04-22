@@ -1,6 +1,7 @@
 const { Client, ApiController } = require('@bandwidth/messaging')
 const numbers = require('@bandwidth/numbers')
 let config = require('../../config/environment')
+const { callApi } = require('../../api/v1.1/utility')
 
 exports.verifyCredentials = (body) => {
   return new Promise((resolve, reject) => {
@@ -77,10 +78,10 @@ exports.createOrder = ({company, body}) => {
     numbers.Client.globalOptions.userName = data.username
     numbers.Client.globalOptions.password = data.password
     let order = {
-      name: body.orderName,
+      name: company._id,
       siteId: body.siteId,
       existingTelephoneNumberOrderType: {
-        telephoneNumberList: body.numbers
+        telephoneNumberList: [body.number]
       }
     }
     numbers.Order.create(order, function (err, res) {
