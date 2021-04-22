@@ -47,3 +47,26 @@ exports.setWebhook = (body) => {
       })
   })
 }
+exports.sendTextMessage = ({text, company, subscriber, broadcastId}) => {
+  return new Promise((resolve, reject) => {
+    const client = twilioClient(company)
+    client.messages.create({
+      body: text,
+      from: company.sms.businessNumber,
+      to: subscriber.number,
+      statusCallback: config.api_urls.webhook + `/webhooks/twilio/trackDelivery/${broadcastId}`
+    })
+      .then(res => {
+        resolve({status: 'success'})
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}
+function twilioClient (company) {
+  const accountSid = company.sms.accountSID
+  const authToken = company.sms.authToken
+  const client = require('twilio')(accountSid, authToken)
+  return client
+}

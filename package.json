@@ -31,6 +31,8 @@
   },
   "homepage": "https://github.com/Cloudkibo/KiboEngage/blob/master/README.md",
   "dependencies": {
+    "@bandwidth/messaging": "^3.0.0",
+    "@bandwidth/numbers": "^1.7.0",
     "@sendgrid/mail": "^7.2.0",
     "@sentry/node": "^5.28.0",
     "axios": "^0.18.0",

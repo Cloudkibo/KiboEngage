@@ -153,6 +153,8 @@ exports.connectSMS = async function (req, res) {
     if (!companyprofile[0]) {
       await smsMapper(req.body.provider, smsActionTypes.ActionTypes.VERIFY_CREDENTIALS, req.body)
       await smsMapper(req.body.provider, smsActionTypes.ActionTypes.SET_WEBHOOK, req.body)
+      req.body['accountStatus'] = 'pending'
+      req.body['accountType'] = 'user'
       await utility.callApi(`companyprofile/update`, 'put', {
         query: {_id: req.user.companyId},
         newPayload: {
@@ -694,5 +696,16 @@ exports.getWhatsAppMessageTemplates = function (req, res) {
       const message = error || 'Internal Server Error'
       logger.serverLog(message, `${TAG}: exports.getWhatsAppMessageTemplates`, req.body, {user: req.user}, 'error')
       sendErrorResponse(res, 500, error, 'Error retrieving templates')
+    })
+}
+exports.fetchAvailableNumbers = function (req, res) {
+  smsMapper('bandwidth', smsActionTypes.ActionTypes.FETCH_AVAILABLE_NUMBERS, {query: req.body})
+    .then(numbers => {
+      sendSuccessResponse(res, 200, numbers)
+    })
+    .catch(err => {
+      const message = err || 'Failed to fetch numbers'
+      logger.serverLog(message, `${TAG}: exports.fetchAvailableNumbers`, req.body, {user: req.user}, 'error')
+      sendErrorResponse(res, 500, err, 'Failed to fetch available numbers')
     })
 }

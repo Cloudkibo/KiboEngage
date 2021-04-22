@@ -102,4 +102,9 @@ router.get('/getWhatsAppMessageTemplates',
   attachProviderInfo(),
   controller.getWhatsAppMessageTemplates)
 
+router.get('/fetchAvailableNumbers',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer(),
+  controller.fetchAvailableNumbers)
+
 module.exports = router

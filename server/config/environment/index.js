@@ -63,6 +63,12 @@ const all = {
     sid: 'ACdeb74ff803b2e44e127d0570e6248b3b',
     token: '5c13521c7655811076a9c04d88fac395',
     number: '+14254286230'
+  },
+  sms: {
+    username: process.env.BANDWIDTH_USERNAME,
+    password: process.env.BANDWIDTH_PASSWORD,
+    appId: process.env.BANDWIDTH_APPID,
+    accountId: process.env.BANDWIDTH_ACCOUNTID
   }
 }
 
