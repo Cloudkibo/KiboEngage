@@ -49,6 +49,12 @@ router.post('/connectSMS',
   validate({body: validationSchema.connectSMS}),
   controller.connectSMS)
 
+router.post('/configureSMS',
+  auth.isAuthenticated(),
+  auth.isSuperUserActingAsCustomer('write'),
+  validate({body: validationSchema.configureSMS}),
+  controller.configureSMS)
+
 router.post('/fetchValidCallerIds',
   auth.isAuthenticated(),
   auth.isSuperUserActingAsCustomer('write'),
