@@ -70,3 +70,21 @@ function twilioClient (company) {
   const client = require('twilio')(accountSid, authToken)
   return client
 }
+
+exports.createOrder = ({company, body}) => {
+  return new Promise(async (resolve, reject) => {
+    resolve()
+  })
+}
+
+exports.fetchAvailableNumbers = ({query}) => {
+  return new Promise(async (resolve, reject) => {
+    resolve([])
+  })
+}
+
+exports.portNumber = (body) => {
+  return new Promise(async (resolve, reject) => {
+    resolve()
+  })
+}

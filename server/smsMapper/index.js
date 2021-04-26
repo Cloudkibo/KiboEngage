@@ -26,6 +26,8 @@ function callAction (action, data, provider) {
       return provider.fetchAvailableNumbers(data)
     case ActionTypes.CREATE_ORDER:
       return provider.createOrder(data)
+    case ActionTypes.PORT_NUMBER:
+      return provider.portNumber(data)
     default:
   }
 }
