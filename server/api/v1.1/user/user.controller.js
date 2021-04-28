@@ -5,6 +5,7 @@ const config = require('./../../../config/environment/index')
 const { sendErrorResponse, sendSuccessResponse } = require('../../global/response')
 let { sendOpAlert } = require('./../../global/operationalAlert')
 const { facebookApiCaller } = require('../../global/facebookApiCaller')
+const async = require('async')
 
 exports.index = function (req, res) {
   utility.callApi(`user`, 'get', {}, 'accounts', req.headers.authorization)
@@ -199,7 +200,7 @@ function _checkAcessTokenFromFb (facebookInfo, req) {
       facebookApiCaller('v6.0', `me?access_token=${facebookInfo.fbToken}`, 'get')
         .then(response => {
           if (response.body.error) {
-            if (response.body.error.code && response.body.error.code !== 190) {
+             if (response.body.error.code && response.body.error.code !== 190) {
               sendOpAlert(response.body.error, 'error validating user access token', '', req.user._id, req.user.companyId)
             } else {
               logger.serverLog(TAG, `Session has been invalidated ${JSON.stringify(response.body.error)}`, 'info')
@@ -237,7 +238,7 @@ exports.disconnectFacebook = function (req, res) {
   utility.callApi(`companyProfile/query`, 'post', {ownerId: req.user._id})
     .then(companyProfile => {
       let updated = {connectFacebook: false}
-      if (companyProfile.twilio) {
+      if (companyProfile.sms) {
         updated.platform = 'sms'
       } else if (companyProfile.whatsApp && !(companyProfile.whatsApp.connected === false)) {
         updated.platform = 'whatsApp'
@@ -270,15 +271,37 @@ exports.disconnectFacebook = function (req, res) {
 }
 
 exports.updatePlatform = function (req, res) {
-  utility.callApi('user/update', 'post', {query: {_id: req.user._id}, newPayload: {platform: req.body.platform}, options: {}})
-    .then(updated => {
-      sendSuccessResponse(res, 200, 'Updated Successfully!')
-    })
-    .catch(err => {
-      const message = err || 'Internal Server Error'
+  async.parallelLimit([
+    function (callback) {
+      utility.callApi(`companyprofile/update`, 'put', {
+        query: {_id: req.user.companyId},
+        newPayload: {planId: req.user.purchasedPlans[req.body.platform] ? req.user.purchasedPlans[req.body.platform] : req.user.purchasedPlans['general']},
+        options: {}})
+        .then(updatedProfile => {
+          callback()
+        })
+        .catch(err => {
+          callback(err)
+        })
+    },
+    function (callback) {
+      utility.callApi('user/update', 'post', { query: { _id: req.user._id }, newPayload: { platform: req.body.platform }, options: {} })
+        .then(updated => {
+          callback()
+        })
+        .catch(err => {
+          callback(err)
+        })
+    }
+  ], 10, function (err, results) {
+    if (err) {
+      const message = err || 'Failed to update platform'
       logger.serverLog(message, `${TAG}: exports.updatePlatform`, req.body, {user: req.user}, 'error')
-      sendErrorResponse(res, 500, err)
-    })
+      sendErrorResponse(res, 500, err, 'Failed to update platform')
+    } else {
+      sendSuccessResponse(res, 200, 'Updated successfully')
+    }
+  })
 }
 
 exports.updatePicture = function (req, res) {

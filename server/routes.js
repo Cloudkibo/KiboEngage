@@ -78,9 +78,12 @@ module.exports = function (app) {
   app.use('/api/reroute', require('./api/v1.1/Whatsapp Link Re-Routing'))
   app.use('/api/twilio', require('./api/v1.1/twilio'))
   app.use('/api/flockSendEvents', require('./api/v1.1/flockSendEvents'))
+  app.use('/api/addOns', require('./api/v1.1/addOns'))
   app.use('/api/whatsAppEvents', require('./api/v1.1/whatsAppEvents'))
   app.use('/api/permissions', require('./api/v1/permissions'))
   app.use('/api/companyPreferences', require('./api/v1.1/companyPreferences'))
+  app.use('/api/plans', require('./api/v1.1/plans'))
+  app.use('/api/featureUsage', require('./api/v1.1/featureUsage'))
 
   // auth middleware go here if you authenticate on same server
   app.use('/auth', require('./auth'))
@@ -222,7 +225,7 @@ module.exports = function (app) {
       }
 
       const message = err || `JsonSchemaValidation error`
-      logger.serverLog(message, `${TAG}: ${req.path ? req.path : req.originalUrl}`, req.body, {responseData}, 'error')
+      logger.serverLog(message, `${TAG}: ${req.path ? req.path : req.originalUrl}`, {body: req.body, header: JSON.stringify(req.headers)}, {responseData}, 'error')
 
       res.status(400).json(responseData)
     } else {
