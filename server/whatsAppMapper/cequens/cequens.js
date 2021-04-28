@@ -53,20 +53,19 @@ exports.setWebhook = (body) => {
 }
 exports.verifyCredentials = (body) => {
   return new Promise((resolve, reject) => {
-    resolve()
-    // cequensApiCaller(`credentials/${body.clientName}/${body.businessNumber}`,
-    //   'get',
-    //   body.accessToken)
-    //   .then(response => {
-    //     if (response.body.errors) {
-    //       reject(response.body.errors.title)
-    //     } else {
-    //       resolve()
-    //     }
-    //   })
-    //   .catch(error => {
-    //     reject(error)
-    //   })
+    cequensApiCaller(`credentials/${body.businessNumber}`,
+      'get',
+      body.accessToken)
+      .then(response => {
+        if (response.body.data && response.body.data.status && response.body.data.status === 'valid') {
+          resolve()
+        } else {
+          reject(Error('Cequens account not found. Please enter correct details'))
+        }
+      })
+      .catch(error => {
+        reject(error)
+      })
   })
 }
 exports.getTemplates = (body) => {
@@ -88,7 +87,9 @@ exports.getTemplates = (body) => {
   })
 }
 exports.sendInvitationTemplate = (body) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const namespaceResponse = await cequensApiCaller('templates/namespace', 'get', body.whatsApp.accessToken)
+    const namespace = namespaceResponse.body.data && namespaceResponse.body.data.message_template_namespace
     let requests = []
     for (let j = 0; j < body.numbers.length; j++) {
       requests.push(new Promise((resolve, reject) => {
@@ -96,7 +97,7 @@ exports.sendInvitationTemplate = (body) => {
           cequensApiCaller('messages',
             'post',
             body.whatsApp.accessToken,
-            logicLayer.prepareInvitationPayload(body, body.numbers[j]))
+            logicLayer.prepareInvitationPayload(body, body.numbers[j], namespace))
             .then(response => {
               if (response.body.errors) {
                 const message = response.body.errors.title || 'Error while sending invitation message'
@@ -122,7 +123,9 @@ exports.sendInvitationTemplate = (body) => {
   })
 }
 exports.sendBroadcastMessages = (body) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const namespaceResponse = await cequensApiCaller('templates/namespace', 'get', body.whatsApp.accessToken)
+    const namespace = namespaceResponse.body.data && namespaceResponse.body.data.message_template_namespace
     let requests = []
     for (let i = 0; i < body.payload.length; i++) {
       for (let j = 0; j < body.contacts.length; j++) {
@@ -131,7 +134,7 @@ exports.sendBroadcastMessages = (body) => {
             cequensApiCaller('messages',
               'post',
               body.whatsApp.accessToken,
-              logicLayer.prepareSendMessagePayload(body.whatsApp, body.contacts[j], body.payload[i]))
+              logicLayer.prepareSendMessagePayload(body.whatsApp, body.contacts[j], body.payload[i], namespace))
               .then(response => {
                 if (response.body.errors) {
                   const message = response.body.errors.title || 'Error while sending broadcast message'
