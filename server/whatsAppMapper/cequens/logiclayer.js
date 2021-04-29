@@ -36,14 +36,14 @@ exports.prepareTemplates = (cequensTemplates) => {
   }
   return templates
 }
-exports.prepareInvitationPayload = (body, number) => {
+exports.prepareInvitationPayload = (body, number, namespace) => {
   let templateArguments = body.payload.templateArguments.split(',')
   let MessageObject = {
     to: number.replace(/\D/g, ''),
     recipient_type: 'individual',
     type: 'template',
     template: {
-      namespace: 'c088281d_2079_43e6_820e_5389ef88806d',
+      namespace: namespace,
       name: body.payload.templateName,
       language: {
         policy: 'deterministic',
@@ -64,7 +64,7 @@ exports.prepareInvitationPayload = (body, number) => {
   }
   return MessageObject
 }
-exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
+exports.prepareSendMessagePayload = (whatsApp, contact, payload, namespace) => {
   let MessageObject = {
     to: contact.number.replace(/\D/g, ''),
     recipient_type: 'individual'
@@ -74,8 +74,7 @@ exports.prepareSendMessagePayload = (whatsApp, contact, payload) => {
       let templateArguments = payload.templateArguments.split(',')
       MessageObject.type = 'template'
       MessageObject['template'] = {
-        namespace: 'c088281d_2079_43e6_820e_5389ef88806d',
-        namespace: payload.templateId,
+        namespace: namespace,
         name: payload.templateName,
         language: {
           policy: 'deterministic',
